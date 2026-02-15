@@ -1,0 +1,23 @@
+---
+description: Mirth Connect is the integration engine; Dialysis PDMS focuses on domain and FHIR.
+globs: **/*
+---
+## Mirth Connect (Integration Engine)
+
+**Mirth** (NextGen Connect) handles:
+- Connectivity: MLLP, SFTP, file, REST
+- Transformation: HL7 parsing, field mapping, format conversion
+- Routing: ADT→EHR, ORU→lab, dialysis→FHIR
+- Reliability: Queue, retries, dead-letter, monitoring
+
+**Dialysis PDMS** (.NET) handles:
+- Domain logic, FHIR modeling, validation
+- Clinical workflows (hypotension prediction, alerting)
+- Audit, provenance, consent
+
+### Implications
+
+- Do not implement MLLP listeners, file watchers, or SFTP in .NET for HL7 ingestion.
+- Expose REST APIs for Mirth to call. See `docs/MIRTH-INTEGRATION.md`.
+- APIs must accept JSON payloads that Mirth can produce (e.g. `hl7/stream` with rawMessage, `vitals/ingest` with readings).
+- Include `X-Tenant-Id` and JWT Bearer in API contracts for Mirth destinations.

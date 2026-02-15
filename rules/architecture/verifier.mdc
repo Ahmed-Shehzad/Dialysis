@@ -1,0 +1,18 @@
+---
+description: Enforces strict use of Verifier for all validations. Commands, queries, and integration events must have validators.
+globs: **/*.cs
+---
+## Verifier Usage (Mandatory)
+
+### Validators
+- Every `ICommand`, `ICommand<TResponse>`, `IQuery<TResponse>`, and `INotification` that carries user/external input MUST have a corresponding `AbstractValidator<T>` implementing `IValidator<T>`
+- Use `RuleFor(x => x.Property).NotEmpty()`, `RuleFor(x => x.Property).NotNull()`, `RuleFor(x => x.Property).Must(predicate, message)` for validation rules
+- Validators are registered via Intercessor's AddVerifier (assembly scan)
+
+### Pipeline
+- Commands and queries: ValidationBehavior runs automatically before the handler; throws ValidationException on failure
+- Integration events (INotification): No pipeline; handlers MUST inject IValidator<T> and call ValidateAsync, throw ValidationException on failure
+
+### API Response
+- Register `AddExceptionHandler<ValidationExceptionHandler>()` and `app.UseExceptionHandler(_ => { })` in each web API
+- ValidationException returns 400 Bad Request with `{ errors: [{ property, message }] }`

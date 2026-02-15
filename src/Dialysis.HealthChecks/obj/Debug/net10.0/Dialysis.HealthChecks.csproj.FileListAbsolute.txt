@@ -1,0 +1,12 @@
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/bin/Debug/net10.0/Dialysis.HealthChecks.deps.json
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/bin/Debug/net10.0/Dialysis.HealthChecks.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/bin/Debug/net10.0/Dialysis.HealthChecks.pdb
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.csproj.AssemblyReference.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.GeneratedMSBuildEditorConfig.editorconfig
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.AssemblyInfoInputs.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.AssemblyInfo.cs
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.csproj.CoreCompileInputs.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/refint/Dialysis.HealthChecks.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/Dialysis.HealthChecks.pdb
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.HealthChecks/obj/Debug/net10.0/ref/Dialysis.HealthChecks.dll

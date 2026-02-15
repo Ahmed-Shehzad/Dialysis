@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore Dialysis.slnx
+
+      - name: Build
+        run: dotnet build Dialysis.slnx --no-restore -c Release
+
+      - name: Run unit tests (exclude integration)
+        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Category!=ServiceBus&Category!=E2E&Collection!=Postgres" --verbosity normal
+
+      - name: Run health check integration tests
+        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Collection=Postgres" --verbosity normal
+
+      - name: Run Service Bus integration tests
+        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Category=ServiceBus" --verbosity normal
+
+      - name: Run E2E pipeline tests
+        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Category=E2E" --verbosity normal

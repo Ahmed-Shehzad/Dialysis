@@ -1,0 +1,168 @@
+# CD: Build and push Docker images. Optional K8s deploy when K8S_DEPLOY_ENABLED=true and KUBE_CONFIG secret set.
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/FhirCore.Gateway/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-gateway:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-gateway:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Prediction
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.Prediction/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-prediction:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-prediction:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Alerting
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.Alerting/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-alerting:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-alerting:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Subscriptions
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/FhirCore.Subscriptions/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-fhir-subscriptions:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-fhir-subscriptions:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push HIS Integration
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.HisIntegration/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-his-integration:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-his-integration:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Device Ingestion
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.DeviceIngestion/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-device-ingestion:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-device-ingestion:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Audit Consent
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.AuditConsent/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-audit-consent:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-audit-consent:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Identity Admission
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.IdentityAdmission/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-identity-admission:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-identity-admission:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Analytics
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Dialysis.Analytics/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-analytics:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-analytics:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-k8s:
+    if: vars.K8S_DEPLOY_ENABLED == 'true'
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Deploy to Kubernetes
+        env:
+          NAMESPACE: ${{ vars.K8S_NAMESPACE }}
+          REGISTRY: ${{ vars.CONTAINER_REGISTRY }}
+          DEFAULT_REGISTRY: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          TAG: ${{ github.sha }}
+        run: |
+          NAMESPACE="${NAMESPACE:-dialysis-pdms}"
+          REGISTRY="${REGISTRY:-$DEFAULT_REGISTRY}"
+          for deploy in gateway alerting prediction fhir-subscriptions his-integration device-ingestion audit-consent identity-admission analytics; do
+            kubectl set image deployment/$deploy -n $NAMESPACE $deploy=$REGISTRY/dialysis-$deploy:$TAG --record 2>/dev/null || true
+          done
+          kubectl rollout status deployment/gateway -n $NAMESPACE --timeout=120s 2>/dev/null || true

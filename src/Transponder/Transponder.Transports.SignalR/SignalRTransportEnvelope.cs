@@ -1,0 +1,62 @@
+namespace Transponder.Transports.SignalR;
+
+/// <summary>
+/// Transport envelope sent over SignalR.
+/// </summary>
+public sealed class SignalRTransportEnvelope
+{
+    private SignalRTransportEnvelope(
+        Ulid? messageId,
+        Ulid? correlationId,
+        Ulid? conversationId,
+        string? messageType,
+        string? contentType,
+        DateTimeOffset? sentTime,
+        IReadOnlyDictionary<string, string?> headers,
+        byte[] body)
+    {
+        MessageId = messageId;
+        CorrelationId = correlationId;
+        ConversationId = conversationId;
+        MessageType = messageType;
+        ContentType = contentType;
+        SentTime = sentTime;
+        Headers = headers;
+        Body = body;
+    }
+
+    public Ulid? MessageId { get; }
+
+    public Ulid? CorrelationId { get; }
+
+    public Ulid? ConversationId { get; }
+
+    public string? MessageType { get; }
+
+    public string? ContentType { get; }
+
+    public DateTimeOffset? SentTime { get; }
+
+    public IReadOnlyDictionary<string, string?> Headers { get; }
+
+    public byte[] Body { get; }
+
+    public static SignalRTransportEnvelope From(Transponder.Transports.Abstractions.ITransportMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        var headers = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in message.Headers)
+            headers[entry.Key] = entry.Value?.ToString();
+
+        return new SignalRTransportEnvelope(
+            message.MessageId,
+            message.CorrelationId,
+            message.ConversationId,
+            message.MessageType,
+            message.ContentType,
+            message.SentTime,
+            headers,
+            message.Body.Span.ToArray());
+    }
+}

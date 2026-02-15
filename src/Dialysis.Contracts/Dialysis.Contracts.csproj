@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImportWorkloads>false</ImportWorkloads>
+    <Description>Shared event contracts and DTOs for Dialysis microservices.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Intercessor\Intercessor.csproj" />
+    <ProjectReference Include="..\Transponder\Transponder\Transponder.csproj" />
+  </ItemGroup>
+</Project>

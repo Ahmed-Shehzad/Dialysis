@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "gLJwhiEFt1g=",
+  "success": true,
+  "projectFilePath": "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Transponder/Transponder.Persistence.Redis/Transponder.Persistence.Redis.csproj",
+  "expectedPackageFiles": [
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.caching.abstractions/10.0.3/microsoft.extensions.caching.abstractions.10.0.3.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.caching.stackexchangeredis/10.0.3/microsoft.extensions.caching.stackexchangeredis.10.0.3.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.3/microsoft.extensions.dependencyinjection.abstractions.10.0.3.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.logging.abstractions/10.0.3/microsoft.extensions.logging.abstractions.10.0.3.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.options/10.0.3/microsoft.extensions.options.10.0.3.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.primitives/10.0.3/microsoft.extensions.primitives.10.0.3.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/pipelines.sockets.unofficial/2.2.8/pipelines.sockets.unofficial.2.2.8.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/stackexchange.redis/2.11.0/stackexchange.redis.2.11.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/system.io.hashing/10.0.2/system.io.hashing.10.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

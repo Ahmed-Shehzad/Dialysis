@@ -1,0 +1,27 @@
+---
+description: Enforces C5 (BSI Cloud Computing Compliance Criteria Catalogue). All design and code changes MUST consider C5.
+globs: **/*
+---
+## C5 Compliance (Mandatory)
+
+We **strictly follow C5** (BSI Cloud Computing Compliance Criteria Catalogue, C5:2020). Azure provides the C5-attested foundation; our application layer must align.
+
+### Principles for Every Change
+
+1. **Access Control**: Use least privilege. All APIs require JWT; scope policies (Read/Write/Admin). No anonymous business endpoints except health.
+2. **Audit**: Security-relevant actions MUST be audited (e.g. RecordAudit in AuditConsent). Provenance for FHIR writes.
+3. **Encryption**: Never hardcode secrets. Use configuration / Key Vault. All external traffic over HTTPS.
+4. **Multi-Tenancy**: Tenant isolation via `X-Tenant-Id`, per-tenant DBs, tenant-scoped cache keys.
+5. **Transparency**: Document data flows, jurisdictions, and processing locations. See `docs/C5-COMPLIANCE.md`.
+
+### When Adding or Changing
+
+- **New APIs**: Require auth (JWT); apply appropriate scope policy.
+- **New persistence**: Prefer per-tenant databases; never mix tenant data.
+- **New secrets**: Externalize to config/Key Vault; no commits of credentials.
+- **New integrations**: Prefer Azure C5-in-scope services; document data residency.
+
+### Reference
+
+- Full alignment details: `docs/C5-COMPLIANCE.md`
+- Security checklist: `docs/DEPLOYMENT.md` (Security Checklist)

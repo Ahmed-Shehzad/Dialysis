@@ -1,0 +1,48 @@
+---
+description: SonarQube C# code quality rules (csharpsquid). Apply when writing or reviewing C# code.
+globs: "**/*.cs"
+---
+# Sonar C# Rules
+
+Align with SonarQube C# analyzer. Fix or avoid these issues in code and reviews.
+
+## Unused Code (S4487, S1854)
+
+- **S4487**: Remove unread `private` fields. If a field is written but never read, remove it or fix the logic to use it.
+- Do not leave dead code, unused variables, or unreachable code.
+
+## Exception Handling (S2737, S2486)
+
+- **S2737**: Catch clauses must do more than rethrow. Either remove the catch (let the exception bubble) or add logic (e.g. logging) before rethrowing.
+- Empty catch blocks are noncompliant. At minimum, log the exception before rethrowing.
+- Avoid catching `Exception` when a more specific type is appropriate.
+
+## Loops (S127)
+
+- **S127**: Do not update the loop counter inside a `for` loop body. Use a `while` loop if the counter must change conditionally.
+- Loop stop conditions should be invariant (not change during iteration).
+
+## Cognitive Complexity (S3776)
+
+- Keep methods small and focused. High cognitive complexity makes code hard to test and maintain.
+- Extract complex conditionals or nesting into well-named helper methods.
+
+## Duplication (S1192, S4144)
+
+- Avoid string literals duplicated more than 3 times—use constants.
+- Avoid duplicated code blocks—extract to shared methods.
+
+## Nullable Reference Types
+
+- Use nullable annotations (`string?`, `T?`) consistently. Avoid `!` unless necessary.
+- Check for null before dereference; use null-conditional (`?.`) where appropriate.
+
+## Async / Await (S3168, S6967)
+
+- Do not use blocking calls (e.g. `.Result`, `.GetAwaiter().GetResult()`) on async methods. Use `async`/`await`.
+- In tests, use `async Task` and `await` instead of `.GetAwaiter().GetResult()`.
+
+## Resources & Disposal
+
+- Implement `IDisposable` or `IAsyncDisposable` for types holding unmanaged resources.
+- Use `await using` / `using` for `DbConnection`, `HttpClient`, `ServiceBusClient`, etc.

@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "dgSpecHash": "By6hr9s+F68=",
+  "success": true,
+  "projectFilePath": "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Observability/Dialysis.Observability.csproj",
+  "expectedPackageFiles": [
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.compliance.abstractions/10.3.0/microsoft.extensions.compliance.abstractions.10.3.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.diagnostics.exceptionsummarization/10.3.0/microsoft.extensions.diagnostics.exceptionsummarization.10.3.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.resilience/10.3.0/microsoft.extensions.resilience.10.3.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/microsoft.extensions.telemetry.abstractions/10.3.0/microsoft.extensions.telemetry.abstractions.10.3.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry/1.12.0/opentelemetry.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry.api/1.12.0/opentelemetry.api.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry.api.providerbuilderextensions/1.12.0/opentelemetry.api.providerbuilderextensions.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry.exporter.opentelemetryprotocol/1.12.0/opentelemetry.exporter.opentelemetryprotocol.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry.extensions.hosting/1.12.0/opentelemetry.extensions.hosting.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry.instrumentation.aspnetcore/1.12.0/opentelemetry.instrumentation.aspnetcore.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/opentelemetry.instrumentation.http/1.12.0/opentelemetry.instrumentation.http.1.12.0.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/polly.core/8.4.2/polly.core.8.4.2.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/polly.extensions/8.4.2/polly.extensions.8.4.2.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/polly.ratelimiting/8.4.2/polly.ratelimiting.8.4.2.nupkg.sha512",
+    "/Users/muhammadahmedshehzad/.nuget/packages/ulid/1.4.1/ulid.1.4.1.nupkg.sha512"
+  ],
+  "logs": []
+}

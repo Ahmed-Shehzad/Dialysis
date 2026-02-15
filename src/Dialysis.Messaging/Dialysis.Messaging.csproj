@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Shared Transponder configuration and topology for Dialysis microservices.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Dialysis.Contracts\Dialysis.Contracts.csproj" />
+    <ProjectReference Include="..\Transponder\Transponder.Transports.AzureServiceBus\Transponder.Transports.AzureServiceBus.csproj" />
+    <ProjectReference Include="..\Transponder\Transponder\Transponder.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/bin/Debug/net8.0/MediatR.xml
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/bin/Debug/net8.0/MediatR.deps.json
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/bin/Debug/net8.0/MediatR.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/bin/Debug/net8.0/MediatR.pdb
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.csproj.AssemblyReference.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.GeneratedMSBuildEditorConfig.editorconfig
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.AssemblyInfoInputs.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.AssemblyInfo.cs
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.csproj.CoreCompileInputs.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/refint/MediatR.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/MediatR.pdb
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Sol9/MediatR/obj/Debug/net8.0/ref/MediatR.dll

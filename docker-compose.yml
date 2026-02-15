@@ -1,0 +1,268 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/FhirCore.Gateway/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ServiceBus__ConnectionString: ${SERVICEBUS_CONNECTION_STRING:-}
+      Auth__Authority: ${AUTH_AUTHORITY:-https://localhost:5001}
+      Auth__Audience: ${AUTH_AUDIENCE:-dialysis-api}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  his-integration:
+    build:
+      context: .
+      dockerfile: src/Dialysis.HisIntegration/Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=dialysis_his;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  device-ingestion:
+    build:
+      context: .
+      dockerfile: src/Dialysis.DeviceIngestion/Dockerfile
+    ports:
+      - "5002:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  alerting:
+    build:
+      context: .
+      dockerfile: src/Dialysis.Alerting/Dockerfile
+    ports:
+      - "5003:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Redis: redis:6379
+      ServiceBus__ConnectionString: ${SERVICEBUS_CONNECTION_STRING:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  analytics:
+    build:
+      context: .
+      dockerfile: src/Dialysis.Analytics/Dockerfile
+    ports:
+      - "5008:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Analytics: Host=postgres;Database=postgres;Username=postgres;Password=postgres
+      Analytics__FhirBaseUrl: http://gateway:8080/fhir
+      Analytics__AlertingBaseUrl: http://alerting:8080
+      Analytics__AuditConsentBaseUrl: http://audit-consent:8080
+      Analytics__PublicHealthBaseUrl: http://public-health:8080
+      Auth__Authority: ${AUTH_AUTHORITY:-https://localhost:5001}
+      Auth__Audience: ${AUTH_AUDIENCE:-dialysis-api}
+    depends_on:
+      gateway:
+        condition: service_started
+      alerting:
+        condition: service_started
+      audit-consent:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      public-health:
+        condition: service_started
+
+  public-health:
+    build:
+      context: .
+      dockerfile: src/Dialysis.PublicHealth/Dockerfile
+    ports:
+      - "5009:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      PublicHealth__FhirBaseUrl: http://gateway:8080/fhir
+      Auth__Authority: ${AUTH_AUTHORITY:-https://localhost:5001}
+      Auth__Audience: ${AUTH_AUDIENCE:-dialysis-api}
+    depends_on:
+      - gateway
+
+  registry:
+    build:
+      context: .
+      dockerfile: src/Dialysis.Registry/Dockerfile
+    ports:
+      - "5010:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Registry__FhirBaseUrl: http://gateway:8080/fhir
+      Auth__Authority: ${AUTH_AUTHORITY:-https://localhost:5001}
+      Auth__Audience: ${AUTH_AUDIENCE:-dialysis-api}
+    depends_on:
+      - gateway
+
+  documents:
+    build:
+      context: .
+      dockerfile: src/Dialysis.Documents/Dockerfile
+    ports:
+      - "5011:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Documents__FhirBaseUrl: http://gateway:8080/fhir
+      Documents__TemplatePath: /app/templates
+      Auth__Authority: ${AUTH_AUTHORITY:-https://localhost:5001}
+      Auth__Audience: ${AUTH_AUDIENCE:-dialysis-api}
+    depends_on:
+      - gateway
+
+  ehealth-gateway:
+    build:
+      context: .
+      dockerfile: src/Dialysis.EHealthGateway/Dockerfile
+    ports:
+      - "5012:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      EHealth__Platform: epa
+      EHealth__Jurisdiction: DE
+      Auth__Authority: ${AUTH_AUTHORITY:-https://localhost:5001}
+      Auth__Audience: ${AUTH_AUDIENCE:-dialysis-api}
+    depends_on:
+      - gateway
+
+  audit-consent:
+    build:
+      context: .
+      dockerfile: src/Dialysis.AuditConsent/Dockerfile
+    ports:
+      - "5004:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  identity-admission:
+    build:
+      context: .
+      dockerfile: src/Dialysis.IdentityAdmission/Dockerfile
+    ports:
+      - "5005:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+
+  prediction:
+    build:
+      context: .
+      dockerfile: src/Dialysis.Prediction/Dockerfile
+    ports:
+      - "5007:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ServiceBus__ConnectionString: ${SERVICEBUS_CONNECTION_STRING:-}
+
+  fhir-subscriptions:
+    build:
+      context: .
+      dockerfile: src/FhirCore.Subscriptions/Dockerfile
+    ports:
+      - "5006:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Subscriptions: Host=postgres;Database=fhir_subscriptions;Username=postgres;Password=postgres
+      ServiceBus__ConnectionString: ${SERVICEBUS_CONNECTION_STRING:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mirth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mirthdb
+      POSTGRES_PASSWORD: mirthdb
+      POSTGRES_DB: mirthdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - mirth_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mirthdb -d mirthdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mirth:
+    image: nextgenhealthcare/connect:4.5
+    platform: linux/amd64
+    environment:
+      DATABASE: postgres
+      DATABASE_URL: jdbc:postgresql://mirth-db:5432/mirthdb
+      DATABASE_USERNAME: mirthdb
+      DATABASE_PASSWORD: mirthdb
+      DATABASE_MAX_CONNECTIONS: 20
+      DATABASE_MAX_RETRY: 5
+      DATABASE_RETRY_WAIT: 10000
+      KEYSTORE_STOREPASS: docker_storepass
+      KEYSTORE_KEYPASS: docker_keypass
+      VMOPTIONS: -Xmx512m
+    ports:
+      - "8443:8443"   # Mirth Admin UI (HTTPS)
+      - "2575:2575"   # MLLP (typical default for HL7)
+    volumes:
+      - mirth_appdata:/opt/connect/appdata
+    depends_on:
+      mirth-db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  mirth_pgdata:
+  mirth_appdata:

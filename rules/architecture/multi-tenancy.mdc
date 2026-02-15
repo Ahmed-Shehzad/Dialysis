@@ -1,0 +1,21 @@
+---
+description: Enforces multi-tenancy. Each tenant has its own database; tenant from X-Tenant-Id header.
+globs: **/*.cs
+---
+## Multi-Tenancy (Mandatory)
+
+### Tenant Resolution
+- Header: `X-Tenant-Id` (use `TenantResolutionMiddleware` in each API)
+- Default when omitted: `default`
+- Tenant flows through: ObservationCreated → HypotensionRiskRaised → CreateAlert
+
+### Per-Tenant Database
+- Connection string template: `Tenancy:ConnectionStringTemplate` with `{TenantId}` placeholder
+- Example: `Host=localhost;Database=dialysis_alerting_{TenantId};Username=postgres;Password=postgres`
+- Each service with persistence: use `ITenantConnectionResolver` + `ITenantContext`
+
+### Redis Cache
+- Cache keys MUST include tenant id for isolation (e.g. `alerts:list:{tenantId}`)
+
+### FHIR
+- Clients POSTing to Gateway: include `X-Tenant-Id` so ObservationCreated carries tenant through the pipeline

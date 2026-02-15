@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <ImportWorkloads>false</ImportWorkloads>
+    <Description>FHIR Core Gateway - reverse proxy, ACL, load balancing, auth, validation.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dialysis.Auth\Dialysis.Auth.csproj" />
+    <ProjectReference Include="..\Dialysis.Configuration\Dialysis.Configuration.csproj" />
+    <ProjectReference Include="..\Dialysis.HealthChecks\Dialysis.HealthChecks.csproj" />
+    <ProjectReference Include="..\Dialysis.Observability\Dialysis.Observability.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Firely.Fhir.Validation.R4" />
+    <PackageReference Include="Hl7.Fhir.Specification.R4" />
+    <PackageReference Include="Yarp.ReverseProxy" />
+    <ProjectReference Include="..\Intercessor\Intercessor.csproj" />
+    <ProjectReference Include="..\Verifier\Verifier.csproj" />
+    <ProjectReference Include="..\Dialysis.Contracts\Dialysis.Contracts.csproj" />
+    <ProjectReference Include="..\Dialysis.Messaging\Dialysis.Messaging.csproj" />
+    <ProjectReference Include="..\FhirCore.Packages\FhirCore.Packages.csproj" />
+  </ItemGroup>
+</Project>

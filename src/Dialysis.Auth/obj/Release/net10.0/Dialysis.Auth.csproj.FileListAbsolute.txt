@@ -1,0 +1,12 @@
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/bin/Release/net10.0/Dialysis.Auth.deps.json
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/bin/Release/net10.0/Dialysis.Auth.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/bin/Release/net10.0/Dialysis.Auth.pdb
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.csproj.AssemblyReference.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.GeneratedMSBuildEditorConfig.editorconfig
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.AssemblyInfoInputs.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.AssemblyInfo.cs
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.csproj.CoreCompileInputs.cache
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/refint/Dialysis.Auth.dll
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/Dialysis.Auth.pdb
+/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/src/Dialysis.Auth/obj/Release/net10.0/ref/Dialysis.Auth.dll

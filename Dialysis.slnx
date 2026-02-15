@@ -1,0 +1,68 @@
+<Solution>
+  <Folder Name="/Common/">
+    <Project Path="BuildingBlocks/BuildingBlocks.csproj" />
+    <Project Path="src/Dialysis.Configuration/Dialysis.Configuration.csproj" />
+    <Project Path="src/Dialysis.Messaging/Dialysis.Messaging.csproj" />
+    <Project Path="src/Dialysis.Auth/Dialysis.Auth.csproj" />
+    <Project Path="src/Dialysis.HealthChecks/Dialysis.HealthChecks.csproj" />
+    <Project Path="src/Dialysis.Observability/Dialysis.Observability.csproj" />
+    <Project Path="src/Dialysis.Tenancy/Dialysis.Tenancy.csproj" />
+    <Project Path="src/Intercessor/Intercessor.csproj" />
+    <Project Path="src/Verifier/Verifier.csproj" />
+    <Project Path="src/Dialysis.Contracts/Dialysis.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/Common/Transponder/">
+    <Project Path="src/Transponder/Transponder/Transponder.csproj" />
+    <Project Path="src/Transponder/Transponder.OpenTelemetry/Transponder.OpenTelemetry.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence/Transponder.Persistence.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.EntityFramework/Transponder.Persistence.EntityFramework.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.EntityFramework.PostgreSql/Transponder.Persistence.EntityFramework.PostgreSql.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.EntityFramework.SqlServer/Transponder.Persistence.EntityFramework.SqlServer.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.Redis/Transponder.Persistence.Redis.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.EntityFramework.PostgreSql.Tests/Transponder.Persistence.EntityFramework.PostgreSql.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.EntityFramework.SqlServer.Tests/Transponder.Persistence.EntityFramework.SqlServer.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.EntityFramework.Tests/Transponder.Persistence.EntityFramework.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Persistence.Tests/Transponder.Persistence.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Samples/Transponder.Samples.csproj" />
+    <Project Path="src/Transponder/Transponder.Serilog/Transponder.Serilog.csproj" />
+    <Project Path="src/Transponder/Transponder.Tests/Transponder.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports/Transponder.Transports.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Aws/Transponder.Transports.Aws.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.AzureServiceBus/Transponder.Transports.AzureServiceBus.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Grpc/Transponder.Transports.Grpc.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Grpc.Contracts/Transponder.Transports.Grpc.Contracts.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Kafka/Transponder.Transports.Kafka.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.RabbitMq/Transponder.Transports.RabbitMq.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.SignalR/Transponder.Transports.SignalR.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.SSE/Transponder.Transports.SSE.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Webhooks/Transponder.Transports.Webhooks.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Aws.Tests/Transponder.Transports.Aws.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.AzureServiceBus.Tests/Transponder.Transports.AzureServiceBus.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Grpc.Tests/Transponder.Transports.Grpc.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Kafka.Tests/Transponder.Transports.Kafka.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.RabbitMq.Tests/Transponder.Transports.RabbitMq.Tests.csproj" />
+    <Project Path="src/Transponder/Transponder.Transports.Tests/Transponder.Transports.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Dialysis/">
+    <Project Path="src/Dialysis.ApiClients/Dialysis.ApiClients.csproj" />
+    <Project Path="src/Dialysis.Analytics/Dialysis.Analytics.csproj" />
+    <Project Path="src/Dialysis.Alerting/Dialysis.Alerting.csproj" />
+    <Project Path="src/Dialysis.AuditConsent/Dialysis.AuditConsent.csproj" />
+    <Project Path="src/Dialysis.DeviceIngestion/Dialysis.DeviceIngestion.csproj" />
+    <Project Path="src/Dialysis.HisIntegration/Dialysis.HisIntegration.csproj" />
+    <Project Path="src/Dialysis.IdentityAdmission/Dialysis.IdentityAdmission.csproj" />
+    <Project Path="src/Dialysis.PublicHealth/Dialysis.PublicHealth.csproj" />
+    <Project Path="src/Dialysis.Prediction/Dialysis.Prediction.csproj" />
+    <Project Path="src/Dialysis.Registry/Dialysis.Registry.csproj" />
+    <Project Path="src/Dialysis.Documents/Dialysis.Documents.csproj" />
+    <Project Path="src/Dialysis.EHealthGateway/Dialysis.EHealthGateway.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/Dialysis.Tests/Dialysis.Tests.csproj" />
+  </Folder>
+  <Folder Name="/FHIR.Core/">
+    <Project Path="src/FhirCore.Gateway/FhirCore.Gateway.csproj" />
+    <Project Path="src/FhirCore.Packages/FhirCore.Packages.csproj" />
+    <Project Path="src/FhirCore.Subscriptions/FhirCore.Subscriptions.csproj" />
+  </Folder>
+</Solution>

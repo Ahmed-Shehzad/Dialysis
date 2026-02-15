@@ -1,0 +1,2 @@
+obj/Debug/net10.0/Protos/TransponderTransport.cs \
+obj/Debug/net10.0/Protos/TransponderTransportGrpc.cs: Protos/transponder_transport.proto
