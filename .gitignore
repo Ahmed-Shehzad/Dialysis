@@ -1,6 +1,8 @@
-# .NET
-bin/
-obj/
+# .NET - build outputs (do not commit; run `git rm -r --cached **/bin **/obj` if already tracked)
+**/bin/
+**/obj/
+[Bb]in/
+[Oo]bj/
 [Bb]uild/
 [Ll]og/
 [Ll]ogs/
@@ -11,7 +13,6 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/[Oo]bj/
 [Oo]ut/
 [Tt]est[Rr]esult*/
 *.cache
