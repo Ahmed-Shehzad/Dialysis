@@ -15,17 +15,23 @@ public sealed class DocumentsController : ControllerBase
 {
     private readonly IPdfGenerator _pdfGenerator;
     private readonly IPdfTemplateFiller _templateFiller;
+    private readonly IPdfBarcodeService _barcodeService;
+    private readonly IPdfSignatureService _signatureService;
     private readonly IBundleToPdfConverter _bundleConverter;
     private readonly IDocumentStore _documentStore;
 
     public DocumentsController(
         IPdfGenerator pdfGenerator,
         IPdfTemplateFiller templateFiller,
+        IPdfBarcodeService barcodeService,
+        IPdfSignatureService signatureService,
         IBundleToPdfConverter bundleConverter,
         IDocumentStore documentStore)
     {
         _pdfGenerator = pdfGenerator;
         _templateFiller = templateFiller;
+        _barcodeService = barcodeService;
+        _signatureService = signatureService;
         _bundleConverter = bundleConverter;
         _documentStore = documentStore;
     }
@@ -222,6 +228,103 @@ public sealed class DocumentsController : ControllerBase
         var content = await _documentStore.GetContentAsync(id, cancellationToken);
         if (content == null || content.Length == 0) return NotFound();
         return File(content, "application/pdf", $"document-{id}.pdf");
+    }
+
+    /// <summary>Add a QR code to a PDF at the specified position.</summary>
+    [HttpPost("enhance/add-qrcode")]
+    [Authorize(Policy = "Write")]
+    public async Task<IActionResult> AddQrCode(
+        IFormFile file,
+        [FromForm] string data,
+        [FromForm] int pageIndex = 0,
+        [FromForm] float leftMm = 20,
+        [FromForm] float topMm = 20,
+        [FromForm] float sizeMm = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (file?.ContentType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) != true)
+            return BadRequest(new { error = "File must be application/pdf" });
+        if (string.IsNullOrWhiteSpace(data))
+            return BadRequest(new { error = "data is required" });
+
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, cancellationToken);
+        var pdfBytes = ms.ToArray();
+
+        try
+        {
+            var result = await _barcodeService.AddQrCodeAsync(pdfBytes, data, pageIndex, leftMm, topMm, sizeMm, cancellationToken);
+            return File(result, "application/pdf", $"document-qr-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>Add a 1D barcode (Code128, Code39, EAN13, EAN8) to a PDF.</summary>
+    [HttpPost("enhance/add-barcode")]
+    [Authorize(Policy = "Write")]
+    public async Task<IActionResult> AddBarcode(
+        IFormFile file,
+        [FromForm] string data,
+        [FromForm] string barcodeType = "Code128",
+        [FromForm] int pageIndex = 0,
+        [FromForm] float leftMm = 20,
+        [FromForm] float topMm = 20,
+        [FromForm] float widthMm = 50,
+        [FromForm] float heightMm = 15,
+        CancellationToken cancellationToken = default)
+    {
+        if (file?.ContentType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) != true)
+            return BadRequest(new { error = "File must be application/pdf" });
+        if (string.IsNullOrWhiteSpace(data))
+            return BadRequest(new { error = "data is required" });
+
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, cancellationToken);
+        var pdfBytes = ms.ToArray();
+
+        try
+        {
+            var result = await _barcodeService.AddBarcode1DAsync(pdfBytes, data, barcodeType, pageIndex, leftMm, topMm, widthMm, heightMm, cancellationToken);
+            return File(result, "application/pdf", $"document-barcode-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>Add a signature form field to a PDF for future digital signing.</summary>
+    [HttpPost("enhance/add-signature-field")]
+    [Authorize(Policy = "Write")]
+    public async Task<IActionResult> AddSignatureField(
+        IFormFile file,
+        [FromForm] string fieldName = "Signature1",
+        [FromForm] int pageIndex = 0,
+        [FromForm] float leftMm = 20,
+        [FromForm] float topMm = 250,
+        [FromForm] float widthMm = 50,
+        [FromForm] float heightMm = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (file?.ContentType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) != true)
+            return BadRequest(new { error = "File must be application/pdf" });
+
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, cancellationToken);
+        var pdfBytes = ms.ToArray();
+
+        try
+        {
+            var result = await _signatureService.AddSignatureFieldAsync(pdfBytes, fieldName, pageIndex, leftMm, topMm, widthMm, heightMm, cancellationToken);
+            return File(result, "application/pdf", $"document-signature-field-{DateTime.UtcNow:yyyyMMddHHmmss}.pdf");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
 

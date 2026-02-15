@@ -46,7 +46,7 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="10.0.0" />
     <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="3.7.400" />
     <PackageVersion Include="AWSSDK.SQS" Version="3.7.400" />
-    <PackageVersion Include="Google.Protobuf" Version="3.27.0" />
+    <PackageVersion Include="Google.Protobuf" Version="3.33.2" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
@@ -66,7 +66,6 @@
     <PackageVersion Include="Azure.Identity" Version="1.14.2" />
     <PackageVersion Include="Refit" Version="8.0.0" />
     <PackageVersion Include="Refit.HttpClientFactory" Version="8.0.0" />
-    <PackageVersion Include="QuestPDF" Version="2024.12.1" />
-    <PackageVersion Include="itext" Version="8.0.5" />
+    <PackageVersion Include="GdPicture.API" Version="14.3.23" />
   </ItemGroup>
 </Project>

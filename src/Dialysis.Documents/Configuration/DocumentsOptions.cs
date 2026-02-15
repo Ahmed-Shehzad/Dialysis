@@ -12,4 +12,7 @@ public sealed class DocumentsOptions
 
     /// <summary>Comma-separated template IDs that support calculator pre-fill (e.g. adequacy, dialysis-adequacy). When includeScripts=true, Kt/V and URR are pre-calculated from input fields.</summary>
     public string? CalculatorTemplateIds { get; set; }
+
+    /// <summary>Nutrient (GdPicture) license key. Empty string enables trial mode. Set for production.</summary>
+    public string NutrientLicenseKey { get; set; } = "";
 }

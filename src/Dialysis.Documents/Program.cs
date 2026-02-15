@@ -8,11 +8,16 @@ using Dialysis.Documents.Services;
 using Dialysis.HealthChecks;
 using Dialysis.Observability;
 using Dialysis.Tenancy;
+using GdPicture14;
 using Intercessor;
 using Microsoft.Extensions.Options;
 using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Nutrient (GdPicture) license: empty string = trial mode. Set NutrientLicenseKey in configuration for production.
+var nutrientKey = builder.Configuration.GetSection(DocumentsOptions.SectionName)["NutrientLicenseKey"] ?? "";
+new LicenseManager().RegisterKEY(nutrientKey);
 builder.Configuration.AddKeyVaultIfConfigured();
 
 builder.Services.Configure<DocumentsOptions>(builder.Configuration.GetSection(DocumentsOptions.SectionName));
@@ -33,8 +38,10 @@ builder.Services.AddRefitClient<IFhirBinaryApi>()
     });
 builder.Services.AddScoped<IFhirBinaryClient, RefitFhirBinaryClient>();
 
-builder.Services.AddScoped<IPdfGenerator, QuestPdfGenerator>();
-builder.Services.AddScoped<IPdfTemplateFiller, TextPdfTemplateFiller>();
+builder.Services.AddScoped<IPdfGenerator, NutrientPdfGenerator>();
+builder.Services.AddScoped<IPdfTemplateFiller, NutrientPdfTemplateFiller>();
+builder.Services.AddScoped<IPdfBarcodeService, NutrientPdfBarcodeService>();
+builder.Services.AddScoped<IPdfSignatureService, NutrientPdfSignatureService>();
 builder.Services.AddScoped<IFhirDataResolver, FhirDataResolver>();
 builder.Services.AddScoped<IBundleToPdfConverter, BundleToPdfConverter>();
 builder.Services.AddScoped<IDocumentStore, FhirDocumentStore>();

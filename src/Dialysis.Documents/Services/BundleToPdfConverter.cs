@@ -1,19 +1,24 @@
 using System.Text;
 using Dialysis.ApiClients;
 using Task = System.Threading.Tasks.Task;
+using GdPicture14;
 using Hl7.Fhir.Model;
 using Microsoft.Extensions.Logging;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 namespace Dialysis.Documents.Services;
 
-/// <summary>Converts FHIR Document Bundle (Composition) to PDF using QuestPDF.</summary>
+/// <summary>Converts FHIR Document Bundle (Composition) to PDF using Nutrient .NET SDK (GdPicture).</summary>
 public sealed class BundleToPdfConverter : IBundleToPdfConverter
 {
     private readonly IFhirApi _fhirApi;
     private readonly ILogger<BundleToPdfConverter> _logger;
+
+    private const float PageWidthMm = 210;
+    private const float PageHeightMm = 297;
+    private const float MarginMm = 20;
+    private const float LineSpacingMm = 5;
+    private const float HeaderFontSize = 14;
+    private const float BodyFontSize = 11;
 
     public BundleToPdfConverter(IFhirApi fhirApi, ILogger<BundleToPdfConverter> logger)
     {
@@ -23,8 +28,6 @@ public sealed class BundleToPdfConverter : IBundleToPdfConverter
 
     public Task<byte[]> ConvertAsync(Bundle bundle, CancellationToken cancellationToken = default)
     {
-        QuestPDF.Settings.License = LicenseType.Community;
-
         var composition = bundle.Entry
             .Select(e => e.Resource as Composition)
             .FirstOrDefault(c => c != null);
@@ -38,13 +41,11 @@ public sealed class BundleToPdfConverter : IBundleToPdfConverter
             return Task.FromResult(binaryPdf.Data);
         }
 
-        var doc = composition != null
+        var pdfBytes = composition != null
             ? BuildFromComposition(composition, bundle)
             : BuildFromBundle(bundle);
 
-        using var stream = new MemoryStream();
-        doc.GeneratePdf(stream);
-        return Task.FromResult(stream.ToArray());
+        return Task.FromResult(pdfBytes);
     }
 
     public async Task<byte[]> ConvertFromDocumentReferenceAsync(string documentReferenceId, CancellationToken cancellationToken = default)
@@ -64,76 +65,86 @@ public sealed class BundleToPdfConverter : IBundleToPdfConverter
         throw new InvalidOperationException("DocumentReference has no inline PDF content.");
     }
 
-    private static IDocument BuildFromComposition(Composition composition, Bundle bundle)
+    private static byte[] BuildFromComposition(Composition composition, Bundle bundle)
     {
-        return Document.Create(container =>
+        var lines = new List<string>();
+
+        if (composition.DateElement != null)
+            lines.Add($"Date: {composition.Date}");
+        if (composition.Author?.Any() == true)
+            lines.Add($"Author: {string.Join(", ", composition.Author.Select(a => a.Display ?? a.Reference))}");
+
+        foreach (var section in composition.Section ?? [])
         {
-            container.Page(page =>
+            lines.Add("");
+            lines.Add(section.Title ?? "Section");
+            if (section.Text != null && !string.IsNullOrEmpty(section.Text.Div))
             {
-                page.Size(PageSizes.A4);
-                page.Margin(2, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(11));
-
-                page.Header()
-                    .Text(composition.Title ?? "FHIR Document")
-                    .SemiBold().FontSize(16).FontColor(Colors.Blue.Medium);
-
-                page.Content().Column(column =>
+                lines.Add(section.Text.Div);
+            }
+            else if (section.Entry?.Any() == true)
+            {
+                foreach (var entry in section.Entry)
                 {
-                    column.Spacing(8);
-                    if (composition.DateElement != null)
-                        column.Item().Text($"Date: {composition.Date}");
-                    if (composition.Author?.Any() == true)
-                        column.Item().Text($"Author: {string.Join(", ", composition.Author.Select(a => a.Display ?? a.Reference))}");
+                    var refId = entry.Reference?.Replace("#", "").Trim();
+                    var resource = bundle.Entry
+                        .FirstOrDefault(e => e.Resource?.Id == refId || e.FullUrl?.EndsWith(refId ?? "") == true)
+                        ?.Resource;
+                    if (resource != null)
+                        lines.Add("  " + FormatResourceSummary(resource));
+                }
+            }
+        }
 
-                    foreach (var section in composition.Section ?? [])
-                    {
-                        column.Item().Text(section.Title ?? "Section").SemiBold();
-                        if (section.Text != null)
-                            column.Item().Text(section.Text.Div);
-                        else if (section.Entry?.Any() == true)
-                        {
-                            foreach (var entry in section.Entry)
-                            {
-                                var refId = entry.Reference?.Replace("#", "").Trim();
-                                var resource = bundle.Entry
-                                    .FirstOrDefault(e => e.Resource?.Id == refId || e.FullUrl?.EndsWith(refId ?? "") == true)
-                                    ?.Resource;
-                                if (resource != null)
-                                    column.Item().PaddingLeft(10).Text(FormatResourceSummary(resource));
-                            }
-                        }
-                        column.Item().Height(10);
-                    }
-                });
-            });
-        });
+        return BuildPdf(composition.Title ?? "FHIR Document", lines);
     }
 
-    private static IDocument BuildFromBundle(Bundle bundle)
+    private static byte[] BuildFromBundle(Bundle bundle)
     {
-        return Document.Create(container =>
+        var lines = bundle.Entry
+            .Where(e => e.Resource != null)
+            .Select(e => $"{e.Resource!.TypeName} {e.Resource.Id}: {FormatResourceSummary(e.Resource)}")
+            .ToList();
+        return BuildPdf("FHIR Document Bundle", lines);
+    }
+
+    private static byte[] BuildPdf(string title, List<string> contentLines)
+    {
+        using var pdf = new GdPicturePDF();
+        if (pdf.NewPDF() != GdPictureStatus.OK)
+            throw new InvalidOperationException("Failed to create PDF.");
+
+        pdf.SetMeasurementUnit(PdfMeasurementUnit.PdfMeasurementUnitMillimeter);
+        pdf.SetOrigin(PdfOrigin.PdfOriginTopLeft);
+
+        if (pdf.NewPage(PageWidthMm, PageHeightMm) != GdPictureStatus.OK)
+            throw new InvalidOperationException("Failed to add PDF page.");
+
+        var fontHelv = pdf.AddStandardFont(PdfStandardFont.PdfStandardFontHelvetica);
+        var fontHelvBold = pdf.AddStandardFont(PdfStandardFont.PdfStandardFontHelveticaBold);
+        if (string.IsNullOrEmpty(fontHelv) || string.IsNullOrEmpty(fontHelvBold))
+            throw new InvalidOperationException("Failed to add fonts.");
+
+        float y = MarginMm;
+
+        pdf.SetTextSize(HeaderFontSize);
+        pdf.DrawTextBox(fontHelvBold, MarginMm, y, PageWidthMm - 2 * MarginMm, 10,
+            TextAlignment.TextAlignmentNear, TextAlignment.TextAlignmentNear, title);
+        y += 12;
+
+        pdf.SetTextSize(BodyFontSize);
+
+        foreach (var line in contentLines)
         {
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.Margin(2, Unit.Centimetre);
-                page.DefaultTextStyle(x => x.FontSize(11));
+            if (y > PageHeightMm - MarginMm - 10)
+                break;
+            pdf.DrawText(fontHelv, MarginMm, y, line ?? "");
+            y += BodyFontSize * 0.4f + LineSpacingMm;
+        }
 
-                page.Header()
-                    .Text("FHIR Document Bundle")
-                    .SemiBold().FontSize(16);
-
-                page.Content().Column(column =>
-                {
-                    foreach (var entry in bundle.Entry)
-                    {
-                        if (entry.Resource != null)
-                            column.Item().Text($"{entry.Resource.TypeName} {entry.Resource.Id}: {FormatResourceSummary(entry.Resource)}");
-                    }
-                });
-            });
-        });
+        using var stream = new MemoryStream();
+        pdf.SaveToStream(stream, false, false);
+        return stream.ToArray();
     }
 
     private static string FormatResourceSummary(Resource resource)

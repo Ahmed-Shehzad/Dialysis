@@ -107,7 +107,7 @@ Full design in [FHIR-PDF-EHEALTH-INTEGRATION.md](FHIR-PDF-EHEALTH-INTEGRATION.md
 - `POST /api/v1/documents/generate-pdf` – Generate PDF from FHIR (session summary, patient summary, MeasureReport)
 - `POST /api/v1/documents/fill-template` – Fill AcroForm template from FHIR (prescription, discharge, consent)
 - `POST /api/v1/documents/bundle-to-pdf` – FHIR Document Bundle (Composition) → PDF
-- New project: `Dialysis.Documents` (QuestPDF or equivalent)
+- New project: `Dialysis.Documents` (Nutrient .NET SDK / GdPicture)
 
 ### Phase 13 (Documents) – Complete ✅
 

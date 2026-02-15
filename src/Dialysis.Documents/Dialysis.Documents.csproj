@@ -16,8 +16,7 @@
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Hl7.Fhir.R4" />
-    <PackageReference Include="QuestPDF" />
-    <PackageReference Include="itext" />
+    <PackageReference Include="GdPicture.API" />
     <PackageReference Include="Refit.HttpClientFactory" />
   </ItemGroup>
 </Project>

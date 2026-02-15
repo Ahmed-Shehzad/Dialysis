@@ -275,7 +275,7 @@ Preparation plan for Phases 8–11, organized as **Tier 1** through **Tier 4**. 
 
 | Service | Role | Changes |
 |---------|------|---------|
-| **Dialysis.Documents** | New project | PDF generation (QuestPDF or iText), template fill, bundle conversion |
+| **Dialysis.Documents** | New project | PDF generation (Nutrient SDK), AcroForms fill, signatures, QR/barcodes, bundle conversion |
 
 ### Feature Details
 
@@ -309,13 +309,13 @@ Preparation plan for Phases 8–11, organized as **Tier 1** through **Tier 4**. 
 ### Dependencies
 
 - FHIR Gateway (Patient, Encounter, Observation, Composition)
-- PDF library: QuestPDF (MIT) or iText (AGPL/commercial)
+- PDF library: Nutrient .NET SDK (GdPicture) – commercial license required for production
 - Template storage (blob or filesystem)
 
 ### Preparation Checklist – Tier 5 ✅
 
 - [x] Create `Dialysis.Documents` project
-- [x] Add QuestPDF (or iText) dependency
+- [x] Add Nutrient .NET SDK (GdPicture.API) dependency
 - [x] Implement `IPdfGenerator` – generate PDF from FHIR
 - [x] Implement `IPdfTemplateFiller` – AcroForm fill
 - [x] Implement `IBundleToPdfConverter` – Composition/Bundle → PDF

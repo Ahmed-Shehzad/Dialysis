@@ -1,6 +1,6 @@
 namespace Dialysis.Documents.Services;
 
-/// <summary>Fills AcroForm PDF template fields with values from FHIR (or explicit mappings).</summary>
+/// <summary>Fills AcroForm PDF template fields with values from FHIR (or explicit mappings). Supports AcroForms, calculator fields (Kt/V, URR), and JavaScript.</summary>
 public interface IPdfTemplateFiller
 {
     /// <summary>Fill template PDF with field values. Keys are AcroForm field names; values come from FHIR or explicit mappings.</summary>

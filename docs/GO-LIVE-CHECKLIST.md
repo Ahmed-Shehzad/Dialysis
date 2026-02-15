@@ -43,7 +43,7 @@ Consolidated checklist for production deployment, eHealth certification, and jur
 | Analytics | FhirBaseUrl, ConnectionStrings:Analytics | AuditConsentBaseUrl, PublicHealthBaseUrl | ☐ |
 | PublicHealth | FhirBaseUrl | ReportDeliveryEndpoint, ReportDeliveryFormat | ☐ |
 | Registry | FhirBaseUrl | - | ☐ |
-| Documents | FhirBaseUrl, Documents:TemplatePath | - | ☐ |
+| Documents | FhirBaseUrl, Documents:TemplatePath | Documents:NutrientLicenseKey (production) | ☐ |
 | EHealthGateway | - | DocumentsBaseUrl, FhirBaseUrl, AuditConsentBaseUrl | ☐ |
 | HisIntegration | FhirAdtWriterOptions | AzureConvertData | ☐ |
 | DeviceIngestion | - | - | ☐ |

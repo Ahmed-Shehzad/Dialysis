@@ -1,22 +1,21 @@
 using Dialysis.Documents.Configuration;
-using iText.Forms;
-using iText.Kernel.Pdf;
+using GdPicture14;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Dialysis.Documents.Services;
 
-/// <summary>Fills AcroForm PDF templates using iText.</summary>
-public sealed class TextPdfTemplateFiller : IPdfTemplateFiller
+/// <summary>Fills AcroForm PDF templates using Nutrient .NET SDK (GdPicture).</summary>
+public sealed class NutrientPdfTemplateFiller : IPdfTemplateFiller
 {
     private readonly IFhirDataResolver _fhirResolver;
     private readonly DocumentsOptions _options;
-    private readonly ILogger<TextPdfTemplateFiller> _logger;
+    private readonly ILogger<NutrientPdfTemplateFiller> _logger;
 
-    public TextPdfTemplateFiller(
+    public NutrientPdfTemplateFiller(
         IFhirDataResolver fhirResolver,
         IOptions<DocumentsOptions> options,
-        ILogger<TextPdfTemplateFiller> logger)
+        ILogger<NutrientPdfTemplateFiller> logger)
     {
         _fhirResolver = fhirResolver;
         _options = options.Value;
@@ -67,32 +66,34 @@ public sealed class TextPdfTemplateFiller : IPdfTemplateFiller
         if (includeScripts && IsCalculatorTemplate(templateId))
             PreCalculateAdequacy(fieldValues);
 
-        using var reader = new PdfReader(templatePath);
-        using var outputStream = new MemoryStream();
-        await using var writer = new PdfWriter(outputStream);
-        using var pdfDoc = new PdfDocument(reader, writer);
+        using var pdf = new GdPicturePDF();
+        if (pdf.LoadFromFile(templatePath, false) != GdPictureStatus.OK)
+            throw new InvalidOperationException($"Failed to load PDF template: {templatePath}");
 
-        var form = PdfAcroForm.GetAcroForm(pdfDoc, false);
-        if (form != null)
+        var fieldCount = pdf.GetFormFieldsCount();
+        for (var i = 0; i < fieldCount; i++)
         {
-            var formFields = form.GetAllFormFields();
-            foreach (var kv in fieldValues)
+            var fieldId = pdf.GetFormFieldId(i);
+            if (pdf.GetStat() != GdPictureStatus.OK) break;
+
+            var fieldTitle = pdf.GetFormFieldTitle(fieldId);
+            if (pdf.GetStat() != GdPictureStatus.OK) break;
+
+            if (string.IsNullOrEmpty(fieldTitle)) continue;
+            if (!fieldValues.TryGetValue(fieldTitle, out var value)) continue;
+
+            try
             {
-                if (formFields.TryGetValue(kv.Key, out var field))
-                {
-                    try
-                    {
-                        field.SetValue(kv.Value);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Could not set form field {Field}", kv.Key);
-                    }
-                }
+                pdf.SetFormFieldValue(fieldId, value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not set form field {Field}", fieldTitle);
             }
         }
 
-        pdfDoc.Close();
+        using var outputStream = new MemoryStream();
+        pdf.SaveToStream(outputStream, false, false);
         return outputStream.ToArray();
     }
 
