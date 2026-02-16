@@ -58,7 +58,21 @@
     <Project Path="src/Dialysis.EHealthGateway/Dialysis.EHealthGateway.csproj" />
   </Folder>
   <Folder Name="/Tests/">
-    <Project Path="tests/Dialysis.Tests/Dialysis.Tests.csproj" />
+    <Project Path="tests/Dialysis.TestUtilities/Dialysis.TestUtilities.csproj" />
+    <Project Path="tests/Dialysis.IntegrationFixtures/Dialysis.IntegrationFixtures.csproj" />
+    <Project Path="tests/Dialysis.DeviceIngestion.UnitTests/Dialysis.DeviceIngestion.UnitTests.csproj" />
+    <Project Path="tests/Dialysis.HisIntegration.UnitTests/Dialysis.HisIntegration.UnitTests.csproj" />
+    <Project Path="tests/Dialysis.Alerting.UnitTests/Dialysis.Alerting.UnitTests.csproj" />
+    <Project Path="tests/Dialysis.AuditConsent.UnitTests/Dialysis.AuditConsent.UnitTests.csproj" />
+    <Project Path="tests/Dialysis.Prediction.UnitTests/Dialysis.Prediction.UnitTests.csproj" />
+    <Project Path="tests/Dialysis.IdentityAdmission.UnitTests/Dialysis.IdentityAdmission.UnitTests.csproj" />
+    <Project Path="tests/FhirCore.Subscriptions.UnitTests/FhirCore.Subscriptions.UnitTests.csproj" />
+    <Project Path="tests/Dialysis.Alerting.IntegrationTests/Dialysis.Alerting.IntegrationTests.csproj" />
+    <Project Path="tests/Dialysis.AuditConsent.IntegrationTests/Dialysis.AuditConsent.IntegrationTests.csproj" />
+    <Project Path="tests/Dialysis.HealthChecks.IntegrationTests/Dialysis.HealthChecks.IntegrationTests.csproj" />
+    <Project Path="tests/Dialysis.Messaging.IntegrationTests/Dialysis.Messaging.IntegrationTests.csproj" />
+    <Project Path="tests/FhirCore.Subscriptions.IntegrationTests/FhirCore.Subscriptions.IntegrationTests.csproj" />
+    <Project Path="tests/Dialysis.E2ETests/Dialysis.E2ETests.csproj" />
   </Folder>
   <Folder Name="/FHIR.Core/">
     <Project Path="src/FhirCore.Gateway/FhirCore.Gateway.csproj" />
