@@ -25,6 +25,9 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
+      - name: Set registry path
+        run: echo "REGISTRY_OWNER_LC=$(echo '${{ env.REGISTRY_OWNER_LC }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
@@ -42,8 +45,8 @@ jobs:
           file: src/FhirCore.Gateway/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-gateway:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-gateway:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-gateway:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-gateway:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -54,8 +57,8 @@ jobs:
           file: src/Dialysis.Prediction/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-prediction:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-prediction:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-prediction:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-prediction:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -66,8 +69,8 @@ jobs:
           file: src/Dialysis.Alerting/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-alerting:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-alerting:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-alerting:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-alerting:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -78,8 +81,8 @@ jobs:
           file: src/FhirCore.Subscriptions/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-fhir-subscriptions:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-fhir-subscriptions:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-fhir-subscriptions:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-fhir-subscriptions:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -90,8 +93,8 @@ jobs:
           file: src/Dialysis.HisIntegration/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-his-integration:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-his-integration:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-his-integration:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-his-integration:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -102,8 +105,8 @@ jobs:
           file: src/Dialysis.DeviceIngestion/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-device-ingestion:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-device-ingestion:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-device-ingestion:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-device-ingestion:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -114,8 +117,8 @@ jobs:
           file: src/Dialysis.AuditConsent/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-audit-consent:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-audit-consent:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-audit-consent:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-audit-consent:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -126,8 +129,8 @@ jobs:
           file: src/Dialysis.IdentityAdmission/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-identity-admission:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-identity-admission:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-identity-admission:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-identity-admission:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -138,8 +141,8 @@ jobs:
           file: src/Dialysis.Analytics/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-analytics:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dialysis-analytics:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-analytics:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}/dialysis-analytics:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -152,6 +155,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set registry path
+        run: echo "REGISTRY_OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Configure kubectl
         run: |
           mkdir -p ~/.kube
@@ -162,7 +168,7 @@ jobs:
         env:
           NAMESPACE: ${{ vars.K8S_NAMESPACE }}
           REGISTRY: ${{ vars.CONTAINER_REGISTRY }}
-          DEFAULT_REGISTRY: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          DEFAULT_REGISTRY: ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER_LC }}
           TAG: ${{ github.sha }}
         run: |
           NAMESPACE="${NAMESPACE:-dialysis-pdms}"
