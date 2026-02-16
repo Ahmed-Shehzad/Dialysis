@@ -31,9 +31,23 @@ jobs:
       - name: Build
         run: dotnet build Dialysis.slnx --no-restore -c Release
 
-      # Unit: *UnitTests projects. Integration: *IntegrationTests. E2E (Dialysis.E2ETests) excluded.
+      # Run unit and integration tests by project (excludes E2E). Filtering the solution can fail when projects have 0 matching tests.
       - name: Run unit tests
-        run: dotnet test Dialysis.slnx --no-build -c Release --filter "FullyQualifiedName~UnitTests" --verbosity normal
+        run: |
+          dotnet test tests/Dialysis.DeviceIngestion.UnitTests/Dialysis.DeviceIngestion.UnitTests.csproj \
+            tests/Dialysis.HisIntegration.UnitTests/Dialysis.HisIntegration.UnitTests.csproj \
+            tests/Dialysis.Alerting.UnitTests/Dialysis.Alerting.UnitTests.csproj \
+            tests/Dialysis.AuditConsent.UnitTests/Dialysis.AuditConsent.UnitTests.csproj \
+            tests/Dialysis.Prediction.UnitTests/Dialysis.Prediction.UnitTests.csproj \
+            tests/Dialysis.IdentityAdmission.UnitTests/Dialysis.IdentityAdmission.UnitTests.csproj \
+            tests/FhirCore.Subscriptions.UnitTests/FhirCore.Subscriptions.UnitTests.csproj \
+            --no-build -c Release --verbosity normal
 
       - name: Run integration tests
-        run: dotnet test Dialysis.slnx --no-build -c Release --filter "FullyQualifiedName~IntegrationTests" --verbosity normal
+        run: |
+          dotnet test tests/Dialysis.Alerting.IntegrationTests/Dialysis.Alerting.IntegrationTests.csproj \
+            tests/Dialysis.AuditConsent.IntegrationTests/Dialysis.AuditConsent.IntegrationTests.csproj \
+            tests/Dialysis.HealthChecks.IntegrationTests/Dialysis.HealthChecks.IntegrationTests.csproj \
+            tests/Dialysis.Messaging.IntegrationTests/Dialysis.Messaging.IntegrationTests.csproj \
+            tests/FhirCore.Subscriptions.IntegrationTests/FhirCore.Subscriptions.IntegrationTests.csproj \
+            --no-build -c Release --verbosity normal
