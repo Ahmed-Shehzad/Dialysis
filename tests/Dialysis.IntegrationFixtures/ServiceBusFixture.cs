@@ -25,7 +25,7 @@ public sealed class ServiceBusFixture : IAsyncLifetime
             .Build();
 
         _sqlContainer = new ContainerBuilder()
-            .WithImage("mcr.microsoft.com/azure-sql-edge:latest")
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
             .WithEnvironment("ACCEPT_EULA", "Y")
             .WithEnvironment("MSSQL_SA_PASSWORD", "StrongPassword!1")
             .WithNetwork(_network)
