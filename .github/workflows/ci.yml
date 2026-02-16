@@ -31,14 +31,9 @@ jobs:
       - name: Build
         run: dotnet build Dialysis.slnx --no-restore -c Release
 
-      - name: Run unit tests (exclude integration)
-        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Category!=ServiceBus&Category!=E2E&Collection!=Postgres" --verbosity normal
+      # Unit: *UnitTests projects. Integration: *IntegrationTests. E2E (Dialysis.E2ETests) excluded.
+      - name: Run unit tests
+        run: dotnet test Dialysis.slnx --no-build -c Release --filter "FullyQualifiedName~UnitTests" --verbosity normal
 
-      - name: Run health check integration tests
-        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Collection=Postgres" --verbosity normal
-
-      - name: Run Service Bus integration tests
-        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Category=ServiceBus" --verbosity normal
-
-      - name: Run E2E pipeline tests
-        run: dotnet test Dialysis.slnx --no-build -c Release --filter "Category=E2E" --verbosity normal
+      - name: Run integration tests
+        run: dotnet test Dialysis.slnx --no-build -c Release --filter "FullyQualifiedName~IntegrationTests" --verbosity normal
