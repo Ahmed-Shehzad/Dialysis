@@ -31,23 +31,27 @@ jobs:
       - name: Build
         run: dotnet build Dialysis.slnx --no-restore -c Release
 
-      # Run unit and integration tests by project (excludes E2E). Filtering the solution can fail when projects have 0 matching tests.
+      # Run unit and integration tests by project (excludes E2E). dotnet test accepts only one project per invocation.
       - name: Run unit tests
         run: |
-          dotnet test tests/Dialysis.DeviceIngestion.UnitTests/Dialysis.DeviceIngestion.UnitTests.csproj \
+          for proj in \
+            tests/Dialysis.DeviceIngestion.UnitTests/Dialysis.DeviceIngestion.UnitTests.csproj \
             tests/Dialysis.HisIntegration.UnitTests/Dialysis.HisIntegration.UnitTests.csproj \
             tests/Dialysis.Alerting.UnitTests/Dialysis.Alerting.UnitTests.csproj \
             tests/Dialysis.AuditConsent.UnitTests/Dialysis.AuditConsent.UnitTests.csproj \
             tests/Dialysis.Prediction.UnitTests/Dialysis.Prediction.UnitTests.csproj \
             tests/Dialysis.IdentityAdmission.UnitTests/Dialysis.IdentityAdmission.UnitTests.csproj \
-            tests/FhirCore.Subscriptions.UnitTests/FhirCore.Subscriptions.UnitTests.csproj \
-            --no-build -c Release --verbosity normal
+            tests/FhirCore.Subscriptions.UnitTests/FhirCore.Subscriptions.UnitTests.csproj; do
+            dotnet test "$proj" --no-build -c Release --verbosity normal
+          done
 
       - name: Run integration tests
         run: |
-          dotnet test tests/Dialysis.Alerting.IntegrationTests/Dialysis.Alerting.IntegrationTests.csproj \
+          for proj in \
+            tests/Dialysis.Alerting.IntegrationTests/Dialysis.Alerting.IntegrationTests.csproj \
             tests/Dialysis.AuditConsent.IntegrationTests/Dialysis.AuditConsent.IntegrationTests.csproj \
             tests/Dialysis.HealthChecks.IntegrationTests/Dialysis.HealthChecks.IntegrationTests.csproj \
             tests/Dialysis.Messaging.IntegrationTests/Dialysis.Messaging.IntegrationTests.csproj \
-            tests/FhirCore.Subscriptions.IntegrationTests/FhirCore.Subscriptions.IntegrationTests.csproj \
-            --no-build -c Release --verbosity normal
+            tests/FhirCore.Subscriptions.IntegrationTests/FhirCore.Subscriptions.IntegrationTests.csproj; do
+            dotnet test "$proj" --no-build -c Release --verbosity normal
+          done
