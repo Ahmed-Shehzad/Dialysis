@@ -49,6 +49,13 @@ public sealed class PatientDataService : IPatientDataService
             .OrderByDescending(e => e.PeriodStart)
             .ToListAsync(cancellationToken);
 
-        return new PatientDataAggregate(patient, observations, sessions, conditions, episodes);
+        var meds = await _db.MedicationAdministrations
+            .AsNoTracking()
+            .Where(m => m.TenantId == tenantId && m.PatientId == patientId)
+            .OrderByDescending(m => m.EffectiveAt)
+            .Take(500)
+            .ToListAsync(cancellationToken);
+
+        return new PatientDataAggregate(patient, observations, sessions, conditions, episodes, meds);
     }
 }

@@ -103,6 +103,16 @@
 
 ## What Still Remains to Implement
 
+### Recommended Next Steps (Implemented)
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | **Session completion saga** | Done | Transponder orchestration; EHR push, audit, compensation |
+| 2 | **Web UI** | Done | Nurse UI at `/` – patients, sessions |
+| 3 | **Meds** | Done | MedicationAdministration – `POST/GET /api/v1/meds`, FHIR `/fhir/r4/MedicationAdministration` |
+| 4 | **Care plans / orders** | Done | ServiceRequest – `POST/GET /api/v1/orders` |
+| 5 | **Observability** | Pending | OpenTelemetry tracing/metrics |
+
 ### Optional / Future
 
 | # | Item | Notes |

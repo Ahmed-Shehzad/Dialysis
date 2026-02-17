@@ -24,6 +24,8 @@ public sealed class DialysisDbContext : DbContext
     public DbSet<FailedHl7Message> FailedHl7Messages => Set<FailedHl7Message>();
     public DbSet<IdMapping> IdMappings => Set<IdMapping>();
     public DbSet<LabOrderStatus> LabOrderStatus => Set<LabOrderStatus>();
+    public DbSet<MedicationAdministration> MedicationAdministrations => Set<MedicationAdministration>();
+    public DbSet<ServiceRequest> ServiceRequests => Set<ServiceRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

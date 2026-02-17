@@ -12,7 +12,7 @@ public sealed class FhirBundleBuilder : IFhirBundleBuilder
         var bundle = new global::Hl7.Fhir.Model.Bundle
         {
             Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
-            Total = 1 + data.Conditions.Count + data.Episodes.Count + data.Sessions.Count * 2 + data.Observations.Count
+            Total = 1 + data.Conditions.Count + data.Episodes.Count + data.Sessions.Count * 2 + data.Observations.Count + data.MedicationAdministrations.Count
         };
 
         bundle.Entry.Add(CreateEntry($"{baseUrl}Patient/{data.Patient.LogicalId.Value}", FhirMappers.ToFhirPatient(data.Patient, baseUrl)));
@@ -27,6 +27,8 @@ public sealed class FhirBundleBuilder : IFhirBundleBuilder
             bundle.Entry.Add(CreateEntry($"{baseUrl}Observation/{o.Id}", FhirMappers.ToFhirObservation(o, baseUrl)));
         foreach (var s in data.Sessions)
             bundle.Entry.Add(CreateEntry($"{baseUrl}Procedure/{s.Id}", FhirMappers.ToFhirProcedure(s, baseUrl)));
+        foreach (var m in data.MedicationAdministrations)
+            bundle.Entry.Add(CreateEntry($"{baseUrl}MedicationAdministration/{m.Id}", FhirMappers.ToFhirMedicationAdministration(m, baseUrl)));
 
         return FhirMappers.ToFhirJson(bundle);
     }
@@ -49,6 +51,8 @@ public sealed class FhirBundleBuilder : IFhirBundleBuilder
             bundle.Entry.Add(CreateTransactionEntry($"{baseUrl}Observation/{o.Id}", FhirMappers.ToFhirObservation(o, baseUrl), $"Observation/{o.Id}"));
         foreach (var s in data.Sessions)
             bundle.Entry.Add(CreateTransactionEntry($"{baseUrl}Procedure/{s.Id}", FhirMappers.ToFhirProcedure(s, baseUrl), $"Procedure/{s.Id}"));
+        foreach (var m in data.MedicationAdministrations)
+            bundle.Entry.Add(CreateTransactionEntry($"{baseUrl}MedicationAdministration/{m.Id}", FhirMappers.ToFhirMedicationAdministration(m, baseUrl), $"MedicationAdministration/{m.Id}"));
 
         return FhirMappers.ToFhirJson(bundle);
     }

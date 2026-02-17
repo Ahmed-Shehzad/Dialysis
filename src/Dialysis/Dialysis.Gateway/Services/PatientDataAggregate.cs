@@ -11,4 +11,5 @@ public sealed record PatientDataAggregate(
     IReadOnlyList<Observation> Observations,
     IReadOnlyList<Session> Sessions,
     IReadOnlyList<Condition> Conditions,
-    IReadOnlyList<EpisodeOfCare> Episodes);
+    IReadOnlyList<EpisodeOfCare> Episodes,
+    IReadOnlyList<MedicationAdministration> MedicationAdministrations);

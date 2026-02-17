@@ -1,10 +1,11 @@
+using Dialysis.Gateway.Features.Sessions.Saga;
 using Dialysis.SharedKernel.Abstractions;
 using Dialysis.SharedKernel.ValueObjects;
 
 namespace Dialysis.Gateway.Infrastructure;
 
 /// <summary>
-/// Resolves tenant from HTTP context. Implements ITenantContext for DeviceIngestion.
+/// Resolves tenant from HTTP context or saga scope. Implements ITenantContext for DeviceIngestion.
 /// </summary>
 public sealed class TenantContext : ITenantContext
 {
@@ -19,6 +20,8 @@ public sealed class TenantContext : ITenantContext
     {
         get
         {
+            if (SagaTenantScope.Get() is { } sagaTenant)
+                return sagaTenant;
             var raw = _httpContextAccessor.HttpContext?.Items["TenantId"] as string
                 ?? TenantId.Default;
             return new TenantId(raw);

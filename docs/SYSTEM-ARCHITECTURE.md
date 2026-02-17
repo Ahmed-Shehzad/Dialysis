@@ -288,6 +288,15 @@ ADT (2) → Patient verification at check-in
 2. **Procedure resource** – Map `Session` → FHIR `Procedure` once Session API is live.
 3. **ADT A04 handler** – Parse ADT, create/update Patient by MRN. Complements existing Patient create.
 
+### Recommended Next Steps (Post–Phase 4)
+
+| # | Item | Effort | Notes |
+|---|------|--------|-------|
+| 1 | **Session completion saga** | Medium | Upgrade from choreography to Transponder orchestration; compensation, robustness |
+| 2 | **Web UI** | High | Nurse-facing session documentation and vitals review |
+| 3 | **Meds** | High | MedicationAdministration/MedicationRequest (ESA, iron, heparin, binders) |
+| 4 | **Observability** | Medium | OpenTelemetry tracing/metrics |
+
 ---
 
 ## 4. Domain Data Categories → FHIR Mapping (Reference)

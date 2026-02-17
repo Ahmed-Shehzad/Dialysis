@@ -169,6 +169,70 @@ public static class FhirMappers
         return bundle;
     }
 
+    /// <summary>Map domain MedicationAdministration to FHIR MedicationAdministration.</summary>
+    public static global::Hl7.Fhir.Model.MedicationAdministration ToFhirMedicationAdministration(
+        Dialysis.Domain.Aggregates.MedicationAdministration med, string baseUrl)
+    {
+        var fhir = new global::Hl7.Fhir.Model.MedicationAdministration
+        {
+            Id = med.Id.ToString(),
+            Status = med.Status == "completed"
+                ? global::Hl7.Fhir.Model.MedicationAdministration.MedicationAdministrationStatusCodes.Completed
+                : global::Hl7.Fhir.Model.MedicationAdministration.MedicationAdministrationStatusCodes.InProgress,
+            Medication = new CodeableConcept("http://www.nlm.nih.gov/research/umls/rxnorm", med.MedicationCode, med.MedicationDisplay),
+            Subject = new ResourceReference($"{baseUrl}Patient/{med.PatientId.Value}"),
+            Effective = new FhirDateTime(med.EffectiveAt)
+        };
+        if (!string.IsNullOrWhiteSpace(med.SessionId))
+            fhir.Context = new ResourceReference($"{baseUrl}Encounter/{med.SessionId}");
+        if (!string.IsNullOrWhiteSpace(med.DoseQuantity) || !string.IsNullOrWhiteSpace(med.DoseUnit))
+        {
+            fhir.Dosage = new global::Hl7.Fhir.Model.MedicationAdministration.DosageComponent
+            {
+                Dose = decimal.TryParse(med.DoseQuantity, out var qty)
+                    ? new Quantity(qty, med.DoseUnit ?? "", UcumSystem)
+                    : null,
+                Route = !string.IsNullOrWhiteSpace(med.Route)
+                    ? new CodeableConcept { Text = med.Route }
+                    : null
+            };
+        }
+        if (!string.IsNullOrWhiteSpace(med.ReasonText))
+            fhir.ReasonCode = [new CodeableConcept { Text = med.ReasonText }];
+        return fhir;
+    }
+
+    /// <summary>Map domain ServiceRequest to FHIR ServiceRequest.</summary>
+    public static global::Hl7.Fhir.Model.ServiceRequest ToFhirServiceRequest(
+        Dialysis.Domain.Entities.ServiceRequest order, string baseUrl)
+    {
+        var fhir = new global::Hl7.Fhir.Model.ServiceRequest
+        {
+            Id = order.Id.ToString(),
+            Status = order.Status switch
+            {
+                "active" => global::Hl7.Fhir.Model.RequestStatus.Active,
+                "completed" => global::Hl7.Fhir.Model.RequestStatus.Completed,
+                "cancelled" => global::Hl7.Fhir.Model.RequestStatus.Revoked,
+                _ => global::Hl7.Fhir.Model.RequestStatus.Active
+            },
+            Intent = order.Intent == "plan"
+                ? global::Hl7.Fhir.Model.RequestIntent.Plan
+                : global::Hl7.Fhir.Model.RequestIntent.Order,
+            Code = new CodeableConcept(SnomedSystem, order.Code, order.Display),
+            Subject = new ResourceReference($"{baseUrl}Patient/{order.PatientId.Value}")
+        };
+        if (order.AuthoredOn.HasValue)
+            fhir.AuthoredOn = order.AuthoredOn.Value.ToString("yyyy-MM-ddTHH:mm:sszzz");
+        if (!string.IsNullOrWhiteSpace(order.ReasonText))
+            fhir.ReasonCode = [new CodeableConcept { Text = order.ReasonText }];
+        if (!string.IsNullOrWhiteSpace(order.EncounterId))
+            fhir.Encounter = new ResourceReference($"{baseUrl}Encounter/{order.EncounterId}");
+        if (!string.IsNullOrWhiteSpace(order.Frequency))
+            fhir.Note = [new Annotation { Text = $"Frequency: {order.Frequency}" }];
+        return fhir;
+    }
+
     /// <summary>Map domain Condition to FHIR Condition.</summary>
     public static global::Hl7.Fhir.Model.Condition ToFhirCondition(Dialysis.Domain.Entities.Condition condition, string baseUrl)
     {

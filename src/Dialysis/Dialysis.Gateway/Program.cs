@@ -62,6 +62,8 @@ builder.Services.AddScoped<IAlertRepository, AlertRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IVascularAccessRepository, VascularAccessRepository>();
 builder.Services.AddScoped<IConditionRepository, ConditionRepository>();
+builder.Services.AddScoped<IMedicationAdministrationRepository, MedicationAdministrationRepository>();
+builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
 builder.Services.AddScoped<IEpisodeOfCareRepository, EpisodeOfCareRepository>();
 builder.Services.AddScoped<IProcessedHl7MessageStore, ProcessedHl7MessageStore>();
 builder.Services.AddScoped<IFailedHl7MessageStore, FailedHl7MessageStore>();
@@ -86,7 +88,11 @@ builder.Services.AddScoped<IDeidentificationService, NoOpDeidentificationService
 builder.Services.AddScoped<Dialysis.Gateway.Features.SessionSummary.SessionSummaryPublisher>();
 
 builder.Services.Configure<EventExportOptions>(builder.Configuration.GetSection(EventExportOptions.Section));
+builder.Services.Configure<Dialysis.Gateway.Features.Sessions.SessionCompletionOptions>(
+    builder.Configuration.GetSection(Dialysis.Gateway.Features.Sessions.SessionCompletionOptions.Section));
 var eventExportOpts = builder.Configuration.GetSection(EventExportOptions.Section).Get<EventExportOptions>();
+var sessionCompletionOpts = builder.Configuration.GetSection(Dialysis.Gateway.Features.Sessions.SessionCompletionOptions.Section)
+    .Get<Dialysis.Gateway.Features.Sessions.SessionCompletionOptions>() ?? new Dialysis.Gateway.Features.Sessions.SessionCompletionOptions();
 if (eventExportOpts?.IsConfigured == true)
 {
     var topic = eventExportOpts.Topic.Trim();
@@ -99,9 +105,23 @@ if (eventExportOpts?.IsConfigured == true)
             var topicName = opts.Topic.Trim();
             var hostAddress = new Uri($"sb://dialysis/{topicName}");
             var topology = new MappingAzureServiceBusTopology(
-                new Dictionary<Type, string> { { typeof(EventExportMessage), topicName } });
+                new Dictionary<Type, string>
+                {
+                    { typeof(EventExportMessage), topicName },
+                    { typeof(Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSagaRequest), "session-completion-saga" }
+                });
             return new AzureServiceBusHostSettings(hostAddress, topology, connectionString: opts.ConnectionString);
         });
+        if (sessionCompletionOpts.UseSaga)
+        {
+            opt.TransportBuilder.UseSagaOrchestration(b => b.AddSaga<
+                Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSaga,
+                Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionState>(e =>
+            {
+                var sagaQueue = new Uri($"sb://dialysis/session-completion-saga");
+                e.StartWith<Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSagaRequest>(sagaQueue);
+            }));
+        }
     });
     builder.Services.AddHostedService<TransponderBusHostedService>();
     builder.Services.AddSingleton<IEventExportPublisher, AzureServiceBusEventExportPublisher>();
@@ -174,6 +194,8 @@ if (smartOpts?.IsConfigured == true)
 app.UseAuthorization();
 app.UseTenantResolution();
 app.UseExceptionHandler();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapControllers();
 app.MapHealthChecks("/health/ready").AllowAnonymous();
 
