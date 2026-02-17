@@ -1,0 +1,35 @@
+---
+description: Enforces Intercessor for CQRS and event handling. Commands, queries, domain events use Intercessor; validations use Verifier.
+globs: "**/*.cs"
+alwaysApply: false
+---
+## Intercessor Usage (Mandatory)
+
+### Commands & Command Handlers
+- Commands MUST implement `ICommand` or `ICommand<TResponse>` from `Intercessor.Abstractions`
+- Command handlers MUST implement `ICommandHandler<TCommand>` or `ICommandHandler<TCommand, TResponse>`
+- Controllers inject `ISender` and call `await _sender.SendAsync(command, cancellationToken)`
+- Never inject command handlers directly; use `ISender` only
+
+### Queries & Query Handlers
+- Queries MUST implement `IQuery<TResponse>` from `Intercessor.Abstractions`
+- Query handlers MUST implement `IQueryHandler<TQuery, TResponse>`
+- Controllers inject `ISender` and call `await _sender.SendAsync(query, cancellationToken)`
+- Never inject query handlers directly
+
+### Domain Events & Integration Events
+- Events MUST implement `INotification` from `Intercessor.Abstractions`
+- Event handlers MUST implement `INotificationHandler<TNotification>`
+- Use `IPublisher.PublishAsync(notification, cancellationToken)` to dispatch
+- Workers/consumers that receive external messages deserialize and call `IPublisher.PublishAsync`; business logic lives in handlers
+
+### Registration
+- Each service project MUST call `builder.Services.AddIntercessor(cfg => cfg.RegisterFromAssembly(Assembly.GetExecutingAssembly()))`
+- Handlers discovered via Scrutor assembly scan; no manual handler registration
+
+### Verifier (Validation)
+- Every command, query, and integration event MUST have an `AbstractValidator<T>` implementing `IValidator<T>`
+- Validators auto-discovered via Intercessor's Verifier integration
+- ValidationBehavior runs before handlers; on failure throws `ValidationException`
+- Each web API MUST register `ValidationExceptionHandler` and `UseExceptionHandler` to return 400 with validation errors
+- INotificationHandler implementations MUST validate via injected `IValidator<T>` when no pipeline runs

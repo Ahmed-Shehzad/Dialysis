@@ -1,0 +1,30 @@
+---
+description: Enforces URL path API versioning. All versioned endpoints use api/v{version}/...; health endpoints remain unversioned.
+globs: "**/*Controller*.cs,**/Program.cs"
+alwaysApply: false
+---
+## API Versioning (Mandatory)
+
+### Version Strategy
+- Use **URL path versioning** via `api/v{version:apiVersion}/...` (e.g. `api/v1/patients`, `api/v1/adt/ingest`)
+- Package: `Asp.Versioning.Mvc`
+
+### Controller Requirements
+- API controllers MUST have `[ApiVersion(1.0)]` (or the appropriate version)
+- Route MUST include `api/v{version:apiVersion}/<resource>` (e.g. `[Route("api/v{version:apiVersion}/patients")]`)
+- Health/infrastructure controllers (Route `health`) MUST NOT be versioned
+
+### Registration (Program.cs)
+```csharp
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+}).AddMvc();
+```
+
+### Adding New Versions
+- Add `[ApiVersion(2.0)]` to a new or existing controller
+- Use `[MapToApiVersion(2.0)]` on actions to map specific actions to v2
+- Document new versions in DEPLOYMENT.md and API docs

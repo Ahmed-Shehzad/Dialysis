@@ -1,15 +1,10 @@
 <Solution>
   <Folder Name="/Common/">
+    <Project Path="src/NutrientPDF/NutrientPDF.csproj" />
+    <Project Path="src/NutrientPDF/NutrientPDF.Tests/NutrientPDF.Tests.csproj" />
     <Project Path="BuildingBlocks/BuildingBlocks.csproj" />
-    <Project Path="src/Dialysis.Configuration/Dialysis.Configuration.csproj" />
-    <Project Path="src/Dialysis.Messaging/Dialysis.Messaging.csproj" />
-    <Project Path="src/Dialysis.Auth/Dialysis.Auth.csproj" />
-    <Project Path="src/Dialysis.HealthChecks/Dialysis.HealthChecks.csproj" />
-    <Project Path="src/Dialysis.Observability/Dialysis.Observability.csproj" />
-    <Project Path="src/Dialysis.Tenancy/Dialysis.Tenancy.csproj" />
     <Project Path="src/Intercessor/Intercessor.csproj" />
     <Project Path="src/Verifier/Verifier.csproj" />
-    <Project Path="src/Dialysis.Contracts/Dialysis.Contracts.csproj" />
   </Folder>
   <Folder Name="/Common/Transponder/">
     <Project Path="src/Transponder/Transponder/Transponder.csproj" />
@@ -44,39 +39,14 @@
     <Project Path="src/Transponder/Transponder.Transports.Tests/Transponder.Transports.Tests.csproj" />
   </Folder>
   <Folder Name="/Dialysis/">
-    <Project Path="src/Dialysis.ApiClients/Dialysis.ApiClients.csproj" />
-    <Project Path="src/Dialysis.Analytics/Dialysis.Analytics.csproj" />
-    <Project Path="src/Dialysis.Alerting/Dialysis.Alerting.csproj" />
-    <Project Path="src/Dialysis.AuditConsent/Dialysis.AuditConsent.csproj" />
-    <Project Path="src/Dialysis.DeviceIngestion/Dialysis.DeviceIngestion.csproj" />
-    <Project Path="src/Dialysis.HisIntegration/Dialysis.HisIntegration.csproj" />
-    <Project Path="src/Dialysis.IdentityAdmission/Dialysis.IdentityAdmission.csproj" />
-    <Project Path="src/Dialysis.PublicHealth/Dialysis.PublicHealth.csproj" />
-    <Project Path="src/Dialysis.Prediction/Dialysis.Prediction.csproj" />
-    <Project Path="src/Dialysis.Registry/Dialysis.Registry.csproj" />
-    <Project Path="src/Dialysis.Documents/Dialysis.Documents.csproj" />
-    <Project Path="src/Dialysis.EHealthGateway/Dialysis.EHealthGateway.csproj" />
-  </Folder>
-  <Folder Name="/Tests/">
-    <Project Path="tests/Dialysis.TestUtilities/Dialysis.TestUtilities.csproj" />
-    <Project Path="tests/Dialysis.IntegrationFixtures/Dialysis.IntegrationFixtures.csproj" />
-    <Project Path="tests/Dialysis.DeviceIngestion.UnitTests/Dialysis.DeviceIngestion.UnitTests.csproj" />
-    <Project Path="tests/Dialysis.HisIntegration.UnitTests/Dialysis.HisIntegration.UnitTests.csproj" />
-    <Project Path="tests/Dialysis.Alerting.UnitTests/Dialysis.Alerting.UnitTests.csproj" />
-    <Project Path="tests/Dialysis.AuditConsent.UnitTests/Dialysis.AuditConsent.UnitTests.csproj" />
-    <Project Path="tests/Dialysis.Prediction.UnitTests/Dialysis.Prediction.UnitTests.csproj" />
-    <Project Path="tests/Dialysis.IdentityAdmission.UnitTests/Dialysis.IdentityAdmission.UnitTests.csproj" />
-    <Project Path="tests/FhirCore.Subscriptions.UnitTests/FhirCore.Subscriptions.UnitTests.csproj" />
-    <Project Path="tests/Dialysis.Alerting.IntegrationTests/Dialysis.Alerting.IntegrationTests.csproj" />
-    <Project Path="tests/Dialysis.AuditConsent.IntegrationTests/Dialysis.AuditConsent.IntegrationTests.csproj" />
-    <Project Path="tests/Dialysis.HealthChecks.IntegrationTests/Dialysis.HealthChecks.IntegrationTests.csproj" />
-    <Project Path="tests/Dialysis.Messaging.IntegrationTests/Dialysis.Messaging.IntegrationTests.csproj" />
-    <Project Path="tests/FhirCore.Subscriptions.IntegrationTests/FhirCore.Subscriptions.IntegrationTests.csproj" />
-    <Project Path="tests/Dialysis.E2ETests/Dialysis.E2ETests.csproj" />
-  </Folder>
-  <Folder Name="/FHIR.Core/">
-    <Project Path="src/FhirCore.Gateway/FhirCore.Gateway.csproj" />
-    <Project Path="src/FhirCore.Packages/FhirCore.Packages.csproj" />
-    <Project Path="src/FhirCore.Subscriptions/FhirCore.Subscriptions.csproj" />
+    <Project Path="src/Dialysis/Dialysis.Tests/Dialysis.Tests.csproj" />
+    <Project Path="src/Dialysis/Dialysis.Gateway/Dialysis.Gateway.csproj" />
+    <Project Path="src/Dialysis/Dialysis.SharedKernel/Dialysis.SharedKernel.csproj" />
+    <Project Path="src/Dialysis/Dialysis.Contracts/Dialysis.Contracts.csproj" />
+    <Project Path="src/Dialysis/Dialysis.Domain/Dialysis.Domain.csproj" />
+    <Project Path="src/Dialysis/Dialysis.FhirStore/Dialysis.FhirStore.csproj" />
+    <Project Path="src/Dialysis/Dialysis.Persistence/Dialysis.Persistence.csproj" />
+    <Project Path="src/Dialysis/Dialysis.DeviceIngestion/Dialysis.DeviceIngestion.csproj" />
+    <Project Path="src/Dialysis/Dialysis.Alerting/Dialysis.Alerting.csproj" />
   </Folder>
 </Solution>

@@ -1,0 +1,37 @@
+---
+description: Sonar rule csharpsquid:S3776 – Cognitive Complexity of methods should not be too high.
+globs: "**/*.cs"
+alwaysApply: false
+---
+# S3776 – Cognitive Complexity of Methods
+
+**Rule key:** `csharpsquid:S3776`  
+**Category:** Code Smell  
+**Severity:** Major
+
+## Summary
+
+Cognitive Complexity measures how difficult code is to understand. Methods with high cognitive complexity are hard to test, maintain, and reason about.
+
+## Requirements
+
+- Keep method cognitive complexity low (Sonar default threshold: 15).
+- Break down methods that exceed the threshold into smaller, well-named helpers.
+- Reduce nesting (if/else, switch, loops) by early returns or extraction.
+- Simplify conditionals by extracting complex expressions into named variables or methods.
+
+## Compliance
+
+| Do | Don't |
+|----|-------|
+| Extract nested logic into private methods | Long methods with deep nesting |
+| Use early returns to reduce nesting | Multiple levels of if/else/switch |
+| Split complex conditionals into helpers | Compound boolean expressions spanning many lines |
+| Prefer small, focused methods | One method doing many things |
+
+## Remediation
+
+1. Identify high-complexity methods (Sonar report or IDE SonarLint).
+2. Extract logical blocks into `private` or `static` helper methods with descriptive names.
+3. Replace nested conditionals with guard clauses (`if (!valid) return;`).
+4. Consider Strategy or Command patterns for branching logic.

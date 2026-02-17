@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dialysis.Gateway</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+    <PackageReference Include="Ulid" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dialysis.Alerting\Dialysis.Alerting.csproj" />
+    <ProjectReference Include="..\Dialysis.DeviceIngestion\Dialysis.DeviceIngestion.csproj" />
+    <ProjectReference Include="..\Dialysis.Domain\Dialysis.Domain.csproj" />
+    <ProjectReference Include="..\Dialysis.Persistence\Dialysis.Persistence.csproj" />
+    <ProjectReference Include="..\Dialysis.SharedKernel\Dialysis.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Intercessor\Intercessor.csproj" />
+  </ItemGroup>
+
+</Project>

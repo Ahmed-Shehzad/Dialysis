@@ -1,0 +1,39 @@
+---
+description: Conventional Commit Messages specification. Apply when generating or reviewing commit messages.
+alwaysApply: false
+---
+# Conventional Commits
+
+Use the Conventional Commit Messages specification for commit messages.
+
+## Format
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+## Types
+
+- **fix**: Patches a bug in your codebase (PATCH in Semantic Versioning)
+- **feat**: Introduces a new feature (MINOR in Semantic Versioning)
+- **build**, **chore**, **ci**, **docs**, **style**, **refactor**, **perf**, **test**: Other conventional types
+- **BREAKING CHANGE**: Footer or `!` after type/scope indicates breaking API change (MAJOR)
+
+## Rules
+
+- Commits MUST be prefixed with a type (feat, fix, etc.)
+- A scope MAY be provided in parentheses after the type, e.g. `fix(parser):`
+- A description MUST immediately follow the colon and space
+- A longer body MAY be provided after a blank line
+- Footers MAY be provided; use format `Token: value` or `Token # value`
+- Breaking changes: use `BREAKING CHANGE: description` in footer or `!` in type (e.g. `feat!: ...`)
+
+## Examples
+
+- `feat(auth): add JWT refresh token support`
+- `fix(api): correct null handling in patient lookup`
+- `docs: update deployment instructions`

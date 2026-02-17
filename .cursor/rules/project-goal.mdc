@@ -1,0 +1,14 @@
+---
+description: Overarching project goal – learn healthcare systems, dialysis, FHIR, and .NET architecture
+alwaysApply: true
+---
+# Project Goal
+
+The Dialysis PDMS is a **learning platform**. The goal is to:
+
+1. **Understand healthcare systems** – How EHRs, HIS, LIS, PDMS, and integration engines interact
+2. **Understand dialysis domain** – Workflows, vitals, sessions, hypotension, clinical processes
+3. **Understand FHIR** – How FHIR enables interoperability in such systems
+4. **Apply .NET/C#** – Build and evolve a real system using .NET technologies and FHIR (e.g. Firely SDK)
+
+**Approach:** Theory first for onboarding, then learn by doing through implementation. Each feature should reinforce understanding of healthcare, dialysis, and FHIR.

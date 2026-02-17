@@ -1,0 +1,24 @@
+---
+description: General coding rules including explicit names, performance, security, error handling, and testing.
+alwaysApply: true
+---
+# General Coding Rules
+
+## Variable Names & Style
+- Use explicit, descriptive variable names over short, ambiguous ones
+- Follow consistent coding style; adhere to existing project conventions
+
+## Priorities
+- **Performance**: When suggesting changes, consider and prioritize code performance where applicable
+- **Security**: Always consider security implications when modifying or suggesting code changes
+- **Test Coverage**: Suggest or include appropriate unit tests for new or modified code
+
+## Error Handling & Logging
+- Implement robust error handling and logging where necessary
+
+## Design
+- **Modular Design**: Encourage modular design principles for maintainability and reusability
+- **Version Compatibility**: Ensure suggested changes are compatible with the project's specified language or framework versions
+- **Avoid Magic Numbers**: Replace hardcoded values with named constants for clarity and maintainability
+- **Edge Cases**: When implementing logic, always consider and handle potential edge cases
+- **Assertions**: Include assertions wherever possible to validate assumptions and catch potential errors early

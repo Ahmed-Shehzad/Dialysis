@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <ImportWorkloads>false</ImportWorkloads>
-    <Description>IG/package loader for FHIR StructureDefinitions.</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Hl7.Fhir.R4" />
-  </ItemGroup>
-</Project>

@@ -1,0 +1,10 @@
+---
+description: Don't Repeat Yourself - avoid code duplication and improve maintainability.
+globs: "**/*.*"
+alwaysApply: false
+---
+# DRY Principle
+
+- Follow the DRY (Don't Repeat Yourself) principle; avoid duplicating code or logic
+- Avoid writing the same code more than once. Instead, reuse code using functions, classes, modules, libraries, or other abstractions
+- Modify code in one place if you need to change or update it

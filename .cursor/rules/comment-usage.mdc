@@ -1,0 +1,11 @@
+---
+description: Guidelines for meaningful, minimal comments.
+globs: "**/*.*"
+alwaysApply: false
+---
+# Comment Usage
+
+- Use comments sparingly, and when you do, make them meaningful
+- Don't comment on obvious things. Excessive or unclear comments clutter the codebase and become outdated
+- Use comments to convey the "why" behind specific actions or explain unusual behavior and potential pitfalls
+- Provide meaningful information about the function's behavior and explain unusual behavior and potential pitfalls

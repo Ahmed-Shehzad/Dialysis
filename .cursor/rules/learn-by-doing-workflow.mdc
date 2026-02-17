@@ -1,0 +1,58 @@
+---
+description: Learn-by-doing workflow – Plan → Implement → Explain. Apply for feature development.
+alwaysApply: true
+---
+# Learn-by-Doing Workflow
+
+When developing features or systems, follow this three-phase process:
+
+## Phase 1: Plan It
+
+Before writing code, articulate the design with workflows and diagrams.
+
+- **Capture workflows** – Describe the flow of data, actors, and steps.
+- **Use Mermaid diagrams** – Create visual representations for:
+  - Sequence diagrams (actor interactions)
+  - Flowcharts (decision flows)
+  - Entity-relationship or component diagrams
+- **Output** – Planning doc (e.g. in `docs/` or `*.md`) with Mermaid blocks.
+
+```mermaid
+flowchart LR
+    A[Request] --> B[Handler]
+    B --> C[Domain]
+    C --> D[Persistence]
+```
+
+## Phase 2: Implement It
+
+Build the feature according to the plan.
+
+- **Implement** – Write the code, tests, and infrastructure.
+- **Document in WIKI** – After implementation, update WIKI docs describing:
+  - What was built
+  - How to use it (APIs, endpoints, config)
+  - Where key logic lives
+- **Output** – Working code + WIKI documentation.
+
+## Phase 3: Explanation (System Architecture Updates)
+
+Update the system architecture to reflect what exists.
+
+- **Update architecture docs** – Add or refine:
+  - Component diagrams
+  - Data flow
+  - Module boundaries
+  - New integrations
+- **Keep architecture in sync** – Ensure diagrams match implemented reality.
+- **Output** – Updated architecture documentation (e.g. `docs/SYSTEM-ARCHITECTURE.md`, `healthcare_systems_&_dialysis_architecture.md`).
+
+---
+
+## Summary
+
+| Phase | Action | Output |
+|-------|--------|--------|
+| 1. Plan | Articulate workflows, draw Mermaid diagrams | Planning doc |
+| 2. Implement | Build it, then document in WIKI | Code + WIKI |
+| 3. Explain | Update system architecture docs | Architecture updates |

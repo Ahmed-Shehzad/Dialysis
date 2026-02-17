@@ -1,0 +1,10 @@
+---
+description: Established code-writing standards for the programming language.
+globs: "**/*.*"
+alwaysApply: false
+---
+# Code Writing Standards
+
+- Follow established code-writing standards
+- Know your programming language's conventions in terms of spacing, comments, and naming
+- Consider extending these standards with internal coding rules for your organization (folder structure, naming, function names)

@@ -1,0 +1,9 @@
+---
+description: Encapsulate nested conditionals into functions to improve clarity.
+globs: "**/*.*"
+alwaysApply: false
+---
+# Conditional Encapsulation
+
+- Encapsulate nested if/else statements into other functions to improve readability and clarity
+- Use functions with descriptive names that clarify the logic's purpose and simplify code comprehension
