@@ -151,7 +151,6 @@ graph TB
     subgraph events
         E1[PatientCreated]
         E2[SessionStarted]
-        E3[SessionCompleted]
         E4[ObservationCreated]
         E5[HypotensionRiskRaised]
     end
@@ -159,12 +158,14 @@ graph TB
     subgraph handlers
         H1[PatientCreatedAuditHandler]
         H2[SessionStartedAuditHandler]
-        H3[SessionCompletedAuditHandler]
-        H4[SessionCompletedProcedurePushHandler]
         H5[HypotensionRiskPredictionHandler]
         H6[HypotensionRiskRaisedHandler]
         H7[EventExportForwardingHandler]
         H8[ObservationCreatedAuditHandler]
+        S1[SessionCompletionSaga]
+        S1A[EhrPushStep]
+        S1B[AuditStep]
+        S1C[EventExportStep]
     end
 
     subgraph persistence
@@ -176,14 +177,18 @@ graph TB
 
     T1 --> E1
     T2 --> E2
-    T3 --> E3
+    T3 -->|saga request| S1
     T4 --> E4
     T5 --> E4
 
     E1 --> H1
     E2 --> H2
-    E3 --> H3
-    E3 --> H4
+    S1 --> S1A
+    S1 --> S1B
+    S1 --> S1C
+    S1A -->|EHR push| P3
+    S1B -->|audit| P1
+    S1C -->|event export| P4
     E4 --> H5
     E4 --> H7
     E4 --> H8
@@ -192,22 +197,22 @@ graph TB
 
     H1 --> P1
     H2 --> P1
-    H3 --> P1
     H6 --> P2
-    H4 --> P3
     H7 --> P4
     H8 --> P1
 ```
 
 **Event summary:**
 
-| Event | Trigger | Handlers |
-|-------|---------|----------|
+| Event / flow | Trigger | Handlers |
+|--------------|---------|----------|
 | `PatientCreated` | Patient create | Audit |
 | `SessionStarted` | Session start | Audit |
-| `SessionCompleted` | Session complete | Audit, Procedure push to EHR |
+| **Session complete** | Complete session API | `SessionCompletionSaga` (orchestration) → `EhrPushStep`, `AuditStep`, `EventExportStep`. Requires EventExport (ASB); throws explicit error if not configured. Compensation via Transponder inbox/outbox. |
 | `ObservationCreated` | Vitals/HL7 ingest | Hypotension prediction, Event export, Audit |
 | `HypotensionRiskRaised` | BP &lt; 90 (from ObservationCreated) | Create Alert |
+
+**Note:** Session completion uses Transponder saga orchestration only. EventExport (Azure Service Bus) must be configured. Transponder inbox/outbox and saga persistence use PostgreSQL (same connection, `__TransponderMigrations` history table). Choreography fallback has been removed.
 
 ### 1.5 Data Flow – Session Lifecycle (Planned)
 
@@ -230,7 +235,7 @@ sequenceDiagram
     Nurse->>GW: PUT sessions complete
     GW->>Session: CompleteSession UF goal
     Session->>Repo: Update Session
-    Session->>FHIR: Procedure resource (future)
+    Session->>FHIR: Procedure resource
 ```
 
 ---
@@ -256,6 +261,10 @@ sequenceDiagram
 | Quality bundles (NHSN) | ✅ | `GET /api/v1/quality/bundle` |
 | Cohort queries, export | ✅ | `GET /api/v1/cohorts/query`, `/cohorts/export` |
 | Encounter sync (Session) | ✅ | Session.EncounterId, StartSessionRequest.EncounterId |
+| MedicationAdministration | ✅ | `POST/GET /api/v1/meds`, `GET /fhir/r4/MedicationAdministration` |
+| ServiceRequest (orders) | ✅ | `POST/GET /api/v1/orders` |
+| Session completion saga | ✅ | Transponder orchestration (SessionCompletion:UseSaga); EHR push, audit, compensation |
+| Web UI (nurse) | ✅ | `/` – patients, sessions |
 
 ---
 
@@ -290,12 +299,13 @@ ADT (2) → Patient verification at check-in
 
 ### Recommended Next Steps (Post–Phase 4)
 
-| # | Item | Effort | Notes |
+| # | Item | Status | Notes |
 |---|------|--------|-------|
-| 1 | **Session completion saga** | Medium | Upgrade from choreography to Transponder orchestration; compensation, robustness |
-| 2 | **Web UI** | High | Nurse-facing session documentation and vitals review |
-| 3 | **Meds** | High | MedicationAdministration/MedicationRequest (ESA, iron, heparin, binders) |
-| 4 | **Observability** | Medium | OpenTelemetry tracing/metrics |
+| 1 | **Session completion saga** | ✅ | Transponder orchestration; EHR push, audit, compensation |
+| 2 | **Web UI** | ✅ | Nurse UI at `/` – patients, sessions |
+| 3 | **Meds** | ✅ | MedicationAdministration – `POST/GET /api/v1/meds`, FHIR endpoint |
+| 4 | **Care plans / orders** | ✅ | ServiceRequest – `POST/GET /api/v1/orders` |
+| 5 | **Observability** | 🔲 | OpenTelemetry tracing/metrics |
 
 ---
 
@@ -303,13 +313,13 @@ ADT (2) → Patient verification at check-in
 
 | Domain category | FHIR resources | PDMS status |
 |-----------------|----------------|-------------|
-| Treatments (session, UF, machine settings) | `Procedure`, `Encounter` | Session ✅; Procedure 🔲 |
+| Treatments (session, UF, machine settings) | `Procedure`, `Encounter` | Session ✅; Procedure ✅ |
 | Vitals (pre/post BP, weight, HR) | `Observation` | ✅ |
 | Labs (URR, Kt/V, Hb, ferritin, PTH…) | `Observation`, `DiagnosticReport` | Via HL7 ✅; structured adequacy 🔲 |
-| Meds (ESA, iron, heparin, binders) | `MedicationAdministration`, `MedicationRequest` | 🔲 |
-| Access (fistula, graft, catheter) | `Procedure`, `Device`, `Condition` | 🔲 |
+| Meds (ESA, iron, heparin, binders) | `MedicationAdministration`, `MedicationRequest` | MedicationAdministration ✅; MedicationRequest 🔲 |
+| Access (fistula, graft, catheter) | `Procedure`, `Device`, `Condition` | VascularAccess tracking ✅ |
 | Adverse events (hypotension, cramps) | `Observation`, `Flag` | Alerts ✅; full event model 🔲 |
-| Care plans / orders | `CarePlan`, `ServiceRequest` | 🔲 |
+| Care plans / orders | `CarePlan`, `ServiceRequest` | ServiceRequest ✅; CarePlan 🔲 |
 
 ---
 

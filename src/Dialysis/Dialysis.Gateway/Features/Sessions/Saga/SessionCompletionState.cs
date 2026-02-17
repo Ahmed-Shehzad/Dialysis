@@ -18,4 +18,5 @@ public sealed class SessionCompletionState : ISagaState, ISagaStatusState
     public string TenantId { get; set; } = "";
     public bool EhrPushSucceeded { get; set; }
     public bool AuditRecorded { get; set; }
+    public bool EventExported { get; set; }
 }

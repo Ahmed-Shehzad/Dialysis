@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Transponder\Transponder\Transponder.csproj" />
+    <ProjectReference Include="..\..\Transponder\Transponder.Persistence.EntityFramework.PostgreSql\Transponder.Persistence.EntityFramework.PostgreSql.csproj" />
     <ProjectReference Include="..\..\Transponder\Transponder.Transports.AzureServiceBus\Transponder.Transports.AzureServiceBus.csproj" />
     <ProjectReference Include="..\Dialysis.Alerting\Dialysis.Alerting.csproj" />
     <ProjectReference Include="..\Dialysis.Contracts\Dialysis.Contracts.csproj" />

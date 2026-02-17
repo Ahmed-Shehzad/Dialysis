@@ -103,6 +103,7 @@ A **theory-first, then hands-on** path for developers joining the Dialysis PDMS 
 | Observation | `FhirObservationController`, `ObservationRepository` |
 | Encounter | `FhirEncounterController` |
 | Procedure (session) | `FhirProcedureController` — dialysis procedure |
+| MedicationAdministration | `FhirMedicationAdministrationController`, `MedsController` |
 | EpisodeOfCare | `FhirEpisodeOfCareController` |
 | Condition | `FhirConditionController`, diagnoses |
 | Bundle builder | `FhirBundleBuilder`, `IFhirBundleBuilder` — Patient $everything |

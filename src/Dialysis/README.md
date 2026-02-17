@@ -54,9 +54,15 @@ dotnet run --project src/Dialysis/Dialysis.Gateway/Dialysis.Gateway.csproj
 | GET | `/api/v1/cohorts/query` | Cohort by hasActiveAlert, sessionFrom, sessionTo |
 | GET | `/api/v1/cohorts/export` | Export cohort as JSON/CSV |
 | GET | `/api/v1/quality/bundle` | De-identified quality bundle |
+| POST | `/api/v1/meds` | Record medication administration (ESA, iron, heparin, etc.) |
+| GET | `/api/v1/meds?patientId=` | List medications for patient or session |
+| POST | `/api/v1/orders` | Create order (ServiceRequest) |
+| GET | `/api/v1/orders?patientId=` | List orders for patient |
+| GET | `/` | Web UI – nurse-facing patients and sessions |
 | GET | `/fhir/r4/metadata` | CapabilityStatement (FHIR metadata) |
 | GET | `/fhir/r4/Procedure?patient=` | Dialysis sessions as FHIR Procedure |
-| GET | `/fhir/r4/Patient/{id}/everything` | Bundle: Patient + Observations + Procedures |
+| GET | `/fhir/r4/Patient/{id}/everything` | Bundle: Patient + Observations + Procedures + MedicationAdministrations |
+| GET | `/fhir/r4/MedicationAdministration?patient=` | Search MedicationAdministrations (FHIR R4) |
 | GET | `/fhir/r4/Patient/{id}` | Read Patient (FHIR R4) |
 | GET | `/fhir/r4/Observation?patient={id}` | Search Observations (FHIR R4 Bundle) |
 
@@ -87,4 +93,5 @@ Returns `202 Accepted` with `{ messageId, status: "Accepted" }`. Parses PID (pat
 - **CQRS**: Intercessor (`IngestVitalsCommand` → `IngestVitalsHandler`)
 - **Validation**: Verifier (FluentValidation-style)
 - **Events**: `ObservationCreated` → `HypotensionRiskPredictionHandler` → `HypotensionRiskRaised` → `HypotensionRiskRaisedHandler` (in-process via Intercessor)
+- **Session completion**: Transponder saga orchestration (when `SessionCompletion:UseSaga` + EventExport configured) or event choreography
 - **Multi-tenancy**: `X-Tenant-Id` header (default: `default`)

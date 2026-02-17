@@ -43,6 +43,8 @@ Expose FHIR R4 resources so the PDMS can interoperate with EHRs and FHIR clients
 | GET | `/fhir/r4/EpisodeOfCare/{id}` | Read EpisodeOfCare by ID | ✅ Implemented |
 | POST | `/fhir/r4/EpisodeOfCare` | Create EpisodeOfCare from FHIR | ✅ Implemented |
 | GET | `/fhir/r4/Patient/{id}/$everything` | Patient bulk export (all resources) | ✅ Implemented |
+| GET | `/fhir/r4/MedicationAdministration/{id}` | Read MedicationAdministration by ID | ✅ Implemented |
+| GET | `/fhir/r4/MedicationAdministration?patient={id}` | Search MedicationAdministrations by patient | ✅ Implemented |
 
 **Tenant context**: `X-Tenant-Id` header scopes all reads/writes.
 

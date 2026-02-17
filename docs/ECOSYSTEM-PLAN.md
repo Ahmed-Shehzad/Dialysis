@@ -100,7 +100,7 @@ flowchart TB
 | 0.3 | Repositories: Patient, Observation (CRUD) | ✅ |
 | 0.4 | Multi-tenancy (X-Tenant-Id, per-tenant isolation) | ✅ |
 | 0.5 | Domain events (ObservationCreated) | ✅ |
-| 0.6 | Session aggregate (start/stop, UF, access site) | 🔲 Planned |
+| 0.6 | Session aggregate (start/stop, UF, access site) | ✅ |
 
 **Dependencies:** None.  
 **Exit criteria:** Domain model supports vitals and basic session concepts; events publish correctly.
@@ -126,7 +126,7 @@ flowchart TB
 |------|-------------|--------|
 | 1.2.1 | HL7 ORU for lab results (OBX with LOINC) | ✅ Via HL7 stream |
 | 1.2.2 | Lab result→Observation mapping (LOINC, value, unit) | ✅ In handler |
-| 1.2.3 | Lab order status (ORU with OBR) | 🔲 Optional |
+| 1.2.3 | Lab order status (ORU with OBR) | ✅ OBR parsed; lab_order_status table |
 
 ### 1.3 ADT / Scheduling (Patient Demographics, Encounters)
 
@@ -161,14 +161,14 @@ flowchart TB
 |------|-------------|--------|
 | 2.2.1 | NHSN / quality bundle (de-identified) | ✅ `GET /api/v1/quality/bundle` |
 | 2.2.2 | Vascular access registry fields | ✅ Vascular access API + entity |
-| 2.2.3 | De-identification service integration | 🔲 Future |
+| 2.2.3 | De-identification service integration | ✅ IDeidentificationService; NoOp default |
 
 ### 2.3 Analytics / Data Warehouse
 
 | Step | Deliverable | Status |
 |------|-------------|--------|
 | 2.3.1 | Cohort queries, exports | ✅ `GET /api/v1/cohorts/query`, `/cohorts/export` |
-| 2.3.2 | Event-driven export (e.g. Kafka, ETL) | 🔲 Future |
+| 2.3.2 | Event-driven export (e.g. Kafka, ETL) | ✅ Transponder + Azure Service Bus; IEventExportPublisher |
 
 **Dependencies:** Phase 0, 1.  
 **Exit criteria:** EHR can read Patient and Observation via FHIR; registries path scoped.

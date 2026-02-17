@@ -8,10 +8,10 @@ A concrete system architecture plan for a dialysis-focused platform in .NET. Ass
 
 ### Channels
 
-| Channel | Purpose |
-|---------|---------|
-| **Web UI** | Nurses, clinicians — session documentation, vitals review, alerts |
-| **Admin UI** | Facility ops — config, user management, reports |
+| Channel | Purpose | Status |
+|---------|---------|--------|
+| **Web UI** | Nurses, clinicians — session documentation, vitals review, patients/sessions | ✅ `/` |
+| **Admin UI** | Facility ops — config, user management, reports | 🔲 Planned |
 | **Integration endpoints** | FHIR + HL7 v2 adapter — inbound/outbound interoperability |
 | **Device ingestion** | Dialysis machine data — HL7 ORU, vitals, alarms |
 
@@ -126,13 +126,13 @@ opt.TransportBuilder.UseSagaOrchestration(b => b.AddSaga<SessionCompletionSaga, 
 | Architecture component | Current implementation |
 |------------------------|-------------------------|
 | Dialysis Workflow Service | `Session` aggregate, `SessionsController`, `StartSession` / `CompleteSession` |
-| Clinical Data Service | `Observation`, `Patient`, `EpisodeOfCare`, `Condition`, `VascularAccess` |
-| FHIR Gateway | `FhirPatientController`, `FhirObservationController`, `FhirProcedureController`, `PushToEhrCommandHandler` |
+| Clinical Data Service | `Observation`, `Patient`, `EpisodeOfCare`, `Condition`, `VascularAccess`, `MedicationAdministration`, `ServiceRequest` |
+| FHIR Gateway | `FhirPatientController`, `FhirObservationController`, `FhirProcedureController`, `FhirMedicationAdministrationController`, `PushToEhrCommandHandler` |
 | Integration Service | `ProcessHl7StreamHandler`, HL7/stream endpoint, Mirth config |
 | Identity & Consent | `IPatientIdentifierResolver`, `IIdMappingRepository`, `TenantContext`, audit APIs |
 | Reporting / Analytics | `QualityBundleService`, cohort queries, adequacy |
 | Message broker | Transponder + Azure Service Bus (event export) |
-| Sagas | Transponder available; session completion uses event choreography (SessionCompleted → procedure push, audit) |
+| Sagas | `SessionCompletionSaga` – Transponder saga orchestration only. EventExport (ASB) required. EHR push and Audit via saga steps; compensation via Transponder inbox/outbox. Outbox persistence (PostgreSQL) for durable sends. |
 
 ---
 

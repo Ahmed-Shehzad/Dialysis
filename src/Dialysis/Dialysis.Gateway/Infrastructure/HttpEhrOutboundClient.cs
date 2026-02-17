@@ -70,7 +70,7 @@ public sealed class EhrOutboundOptions
     public const string Section = "Integration";
     public string? FhirBaseUrl { get; set; }
 
-    /// <summary>PDMS FHIR base URL for building resource references in push bundles (e.g. https://pdms.example.com/fhir/r4). Used by SessionCompletedProcedurePushHandler when no HTTP context.</summary>
+    /// <summary>PDMS FHIR base URL for building resource references in push bundles (e.g. https://pdms.example.com/fhir/r4). Used by SessionCompletionSaga for EHR push when no HTTP context.</summary>
     public string? PdmsFhirBaseUrl { get; set; }
 
     /// <summary>SMART on FHIR: OAuth2 token endpoint (or discover from FhirBaseUrl/.well-known/smart-configuration).</summary>

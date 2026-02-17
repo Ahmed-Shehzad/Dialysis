@@ -1,4 +1,3 @@
-using Dialysis.Contracts.Events;
 using Dialysis.Gateway.Features.Sessions.Saga;
 using Dialysis.Persistence;
 using Dialysis.Persistence.Abstractions;
@@ -8,34 +7,32 @@ using Dialysis.SharedKernel.ValueObjects;
 using Intercessor.Abstractions;
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 using Transponder.Abstractions;
 
 namespace Dialysis.Gateway.Features.Sessions;
 
+/// <summary>
+/// Completes session and enqueues to Transponder saga for EHR push and audit.
+/// Session completion uses saga orchestration only (no choreography fallback).
+/// Requires Transponder (EventExport with ASB) to be configured.
+/// </summary>
 public sealed class CompleteSessionCommandHandler : ICommandHandler<CompleteSessionCommand, CompleteSessionResult>
 {
     private readonly DialysisDbContext _db;
     private readonly ISessionRepository _repository;
     private readonly ITenantContext _tenantContext;
-    private readonly IPublisher _publisher;
-    private readonly ISendEndpointProvider? _sendEndpointProvider;
-    private readonly SessionCompletionOptions _options;
+    private readonly ISendEndpointProvider _sendEndpointProvider;
 
     public CompleteSessionCommandHandler(
         DialysisDbContext db,
         ISessionRepository repository,
         ITenantContext tenantContext,
-        IPublisher publisher,
-        IOptions<SessionCompletionOptions> options,
-        ISendEndpointProvider? sendEndpointProvider = null)
+        ISendEndpointProvider sendEndpointProvider)
     {
         _db = db;
         _repository = repository;
         _tenantContext = tenantContext;
-        _publisher = publisher;
-        _options = options.Value;
         _sendEndpointProvider = sendEndpointProvider;
     }
 
@@ -51,19 +48,12 @@ public sealed class CompleteSessionCommandHandler : ICommandHandler<CompleteSess
         session.Complete(request.UfRemovedKg);
         await _repository.SaveChangesAsync(cancellationToken);
 
-        if (_options.UseSaga && _sendEndpointProvider is not null)
-        {
-            var sagaRequest = new SessionCompletionSagaRequest(
-                session.Id.ToString(),
-                session.PatientId.Value,
-                session.TenantId.Value);
-            var endpoint = await _sendEndpointProvider.GetSendEndpointAsync(new Uri("sb://dialysis/session-completion-saga"), cancellationToken);
-            await endpoint.SendAsync(sagaRequest, cancellationToken);
-        }
-        else
-        {
-            await _publisher.PublishAsync(new SessionCompleted(session.Id.ToString(), session.PatientId, session.TenantId), cancellationToken);
-        }
+        var sagaRequest = new SessionCompletionSagaRequest(
+            session.Id.ToString(),
+            session.PatientId.Value,
+            session.TenantId.Value);
+        var endpoint = await _sendEndpointProvider.GetSendEndpointAsync(new Uri("sb://dialysis/session-completion-saga"), cancellationToken);
+        await endpoint.SendAsync(sagaRequest, cancellationToken);
 
         return new CompleteSessionResult(session);
     }

@@ -3,6 +3,8 @@ using System.Reflection;
 using Dialysis.Gateway.Infrastructure;
 using Microsoft.Extensions.Options;
 using Transponder;
+using Transponder.Persistence.EntityFramework.PostgreSql;
+using Transponder.Persistence.EntityFramework.PostgreSql.Abstractions;
 using Transponder.Transports.AzureServiceBus;
 using Dialysis.Gateway.Services;
 using Dialysis.SharedKernel.Abstractions;
@@ -88,17 +90,22 @@ builder.Services.AddScoped<IDeidentificationService, NoOpDeidentificationService
 builder.Services.AddScoped<Dialysis.Gateway.Features.SessionSummary.SessionSummaryPublisher>();
 
 builder.Services.Configure<EventExportOptions>(builder.Configuration.GetSection(EventExportOptions.Section));
-builder.Services.Configure<Dialysis.Gateway.Features.Sessions.SessionCompletionOptions>(
-    builder.Configuration.GetSection(Dialysis.Gateway.Features.Sessions.SessionCompletionOptions.Section));
 var eventExportOpts = builder.Configuration.GetSection(EventExportOptions.Section).Get<EventExportOptions>();
-var sessionCompletionOpts = builder.Configuration.GetSection(Dialysis.Gateway.Features.Sessions.SessionCompletionOptions.Section)
-    .Get<Dialysis.Gateway.Features.Sessions.SessionCompletionOptions>() ?? new Dialysis.Gateway.Features.Sessions.SessionCompletionOptions();
 if (eventExportOpts?.IsConfigured == true)
 {
+    builder.Services.AddScoped<Dialysis.Gateway.Features.Sessions.Saga.Steps.SessionCompletionEhrPushStep>();
+    builder.Services.AddScoped<Dialysis.Gateway.Features.Sessions.Saga.Steps.SessionCompletionAuditStep>();
+    builder.Services.AddScoped<Dialysis.Gateway.Features.Sessions.Saga.Steps.SessionCompletionEventExportStep>();
+    builder.Services.AddSingleton<IPostgreSqlStorageOptions>(new PostgreSqlStorageOptions());
+    builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((sp, opts) =>
+        opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__TransponderMigrations")));
+    builder.Services.AddTransponderPostgreSqlPersistence();
+
     var topic = eventExportOpts.Topic.Trim();
     var address = new Uri($"sb://dialysis/{topic}");
     builder.Services.AddTransponder(address, opt =>
     {
+        opt.UseOutbox();
         opt.TransportBuilder.UseAzureServiceBus(sp =>
         {
             var opts = sp.GetRequiredService<IOptions<EventExportOptions>>().Value;
@@ -112,16 +119,13 @@ if (eventExportOpts?.IsConfigured == true)
                 });
             return new AzureServiceBusHostSettings(hostAddress, topology, connectionString: opts.ConnectionString);
         });
-        if (sessionCompletionOpts.UseSaga)
+        opt.TransportBuilder.UseSagaOrchestration(b => b.AddSaga<
+            Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSaga,
+            Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionState>(e =>
         {
-            opt.TransportBuilder.UseSagaOrchestration(b => b.AddSaga<
-                Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSaga,
-                Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionState>(e =>
-            {
-                var sagaQueue = new Uri($"sb://dialysis/session-completion-saga");
-                e.StartWith<Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSagaRequest>(sagaQueue);
-            }));
-        }
+            var sagaQueue = new Uri("sb://dialysis/session-completion-saga");
+            e.StartWith<Dialysis.Gateway.Features.Sessions.Saga.SessionCompletionSagaRequest>(sagaQueue);
+        }));
     });
     builder.Services.AddHostedService<TransponderBusHostedService>();
     builder.Services.AddSingleton<IEventExportPublisher, AzureServiceBusEventExportPublisher>();
@@ -129,6 +133,8 @@ if (eventExportOpts?.IsConfigured == true)
 else
 {
     builder.Services.AddSingleton<IEventExportPublisher, NoOpEventExportPublisher>();
+    builder.Services.AddSingleton<Transponder.Abstractions.ISendEndpointProvider,
+        Dialysis.Gateway.Features.Sessions.RequireEventExportSendEndpointProvider>();
 }
 
 builder.Services.AddIntercessor(cfg =>
@@ -206,6 +212,12 @@ if (app.Environment.IsDevelopment())
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<DialysisDbContext>();
         db.Database.Migrate();
+        if (eventExportOpts?.IsConfigured == true)
+        {
+            var transponderFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PostgreSqlTransponderDbContext>>();
+            using var transponderDb = transponderFactory.CreateDbContext();
+            transponderDb.Database.Migrate();
+        }
     }
     catch (Exception ex)
     {
