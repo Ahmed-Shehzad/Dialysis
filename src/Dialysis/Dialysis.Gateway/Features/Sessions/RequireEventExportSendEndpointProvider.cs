@@ -10,5 +10,5 @@ internal sealed class RequireEventExportSendEndpointProvider : ISendEndpointProv
 {
     public Task<ISendEndpoint> GetSendEndpointAsync(Uri address, CancellationToken cancellationToken = default)
         => throw new InvalidOperationException(
-            "Session completion requires EventExport to be configured. Set EventExport:ConnectionString and EventExport:Topic, or omit session completion in environments without Azure Service Bus.");
+            "Session completion requires EventExport to be configured. Set EventExport:UseAzureServiceBus=true, EventExport:ConnectionString, and EventExport:Topic in appsettings or environment variables.");
 }
