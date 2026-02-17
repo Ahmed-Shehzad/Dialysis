@@ -1,4 +1,3 @@
-using Dialysis.Contracts.Events;
 using Dialysis.Domain.Aggregates;
 using Dialysis.Persistence.Abstractions;
 using Dialysis.SharedKernel.Abstractions;

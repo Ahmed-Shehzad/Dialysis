@@ -1,23 +1,29 @@
+using Dialysis.Gateway.Features.Health;
+
+using Intercessor.Abstractions;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Gateway.Controllers;
 
 [ApiController]
 [Route("health")]
+[AllowAnonymous]
 public sealed class HealthController : ControllerBase
 {
-    private readonly ILogger<HealthController> _logger;
+    private readonly ISender _sender;
 
-    public HealthController(ILogger<HealthController> logger)
+    public HealthController(ISender sender)
     {
-        _logger = logger;
+        _sender = sender;
     }
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult Get()
+    public async Task<IActionResult> Get(CancellationToken ct)
     {
-        _logger.LogDebug("Health check");
-        return Ok(new { status = "healthy", timestamp = DateTimeOffset.UtcNow });
+        var result = await _sender.SendAsync(new GetHealthQuery(), ct);
+        return Ok(new { status = result.Status, timestamp = result.Timestamp });
     }
 }

@@ -11,10 +11,13 @@
     <ProjectReference Include="..\Dialysis.DeviceIngestion\Dialysis.DeviceIngestion.csproj" />
     <ProjectReference Include="..\Dialysis.Gateway\Dialysis.Gateway.csproj" />
     <ProjectReference Include="..\Dialysis.Domain\Dialysis.Domain.csproj" />
+    <ProjectReference Include="..\Dialysis.Persistence\Dialysis.Persistence.csproj" />
     <ProjectReference Include="..\Dialysis.SharedKernel\Dialysis.SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="Shouldly" />

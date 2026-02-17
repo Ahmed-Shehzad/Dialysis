@@ -64,8 +64,10 @@ Build features following the plan.
 
 | I want to… | Go to |
 |------------|-------|
+| Follow the 5-phase learning path (HL7 → FHIR → SMART → .NET) | [LEARNING-PATH.md](LEARNING-PATH.md) |
 | Understand healthcare systems & dialysis | [Part A: Theory](../src/Dialysis/healthcare_systems_&_dialysis_architecture.md#part-a-theory--learning-path) |
 | See the ecosystem preparation plan | [ECOSYSTEM-PLAN.md](ECOSYSTEM-PLAN.md) |
+| See the concrete platform architecture (services, tech stack, Sagas) | [PLATFORM-ARCHITECTURE.md](PLATFORM-ARCHITECTURE.md) |
 | See the .NET architecture plan | [Part B: Architecture](../src/Dialysis/healthcare_systems_&_dialysis_architecture.md#part-b-dialysis-pdms-architecture-plan) |
 | Understand FHIR + Firely in C# | [§4 FHIR in .NET](../src/Dialysis/healthcare_systems_&_dialysis_architecture.md#4-fhir-in-net-with-firely-sdk) |
 | Implement a feature | [docs/features/](features/) + [Learn-by-Doing](../.cursor/rules/learn-by-doing-workflow.mdc) |

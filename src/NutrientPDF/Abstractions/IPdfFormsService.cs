@@ -1,5 +1,3 @@
-using NutrientPDF.Abstractions.Options;
-
 namespace NutrientPDF.Abstractions;
 
 /// <summary>

@@ -1,8 +1,6 @@
 using Intercessor.Abstractions;
 
 using Microsoft.Extensions.Logging;
-
-using Verifier;
 using Verifier.Abstractions;
 using Verifier.Exceptions;
 

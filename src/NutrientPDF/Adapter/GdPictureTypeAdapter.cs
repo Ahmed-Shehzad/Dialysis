@@ -72,13 +72,13 @@ internal static class GdPictureTypeAdapter
         _ => PdfLayerVisibility.Undefined
     };
 
-    public static GdPicture14.PdfPageLabelStyle ToPdfPageLabelStyle(NutrientPDF.Abstractions.PdfPageLabelStyle s) => s switch
+    public static GdPicture14.PdfPageLabelStyle ToPdfPageLabelStyle(Abstractions.PdfPageLabelStyle s) => s switch
     {
-        NutrientPDF.Abstractions.PdfPageLabelStyle.DecimalArabicNumerals => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleDecimalArabicNumerals,
-        NutrientPDF.Abstractions.PdfPageLabelStyle.UppercaseRomanNumerals => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleUppercaseRomanNumerals,
-        NutrientPDF.Abstractions.PdfPageLabelStyle.LowercaseRomanNumerals => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleLowercaseRomanNumerals,
-        NutrientPDF.Abstractions.PdfPageLabelStyle.UppercaseLetters => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleUppercaseLetters,
-        NutrientPDF.Abstractions.PdfPageLabelStyle.LowercaseLetters => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleLowercaseLetters,
+        Abstractions.PdfPageLabelStyle.DecimalArabicNumerals => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleDecimalArabicNumerals,
+        Abstractions.PdfPageLabelStyle.UppercaseRomanNumerals => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleUppercaseRomanNumerals,
+        Abstractions.PdfPageLabelStyle.LowercaseRomanNumerals => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleLowercaseRomanNumerals,
+        Abstractions.PdfPageLabelStyle.UppercaseLetters => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleUppercaseLetters,
+        Abstractions.PdfPageLabelStyle.LowercaseLetters => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleLowercaseLetters,
         _ => GdPicture14.PdfPageLabelStyle.PdfPageLabelStyleDecimalArabicNumerals
     };
 }

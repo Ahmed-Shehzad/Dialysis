@@ -33,6 +33,7 @@ public sealed class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(s => s.StartedAt).IsRequired();
         builder.Property(s => s.EndedAt);
         builder.Property(s => s.AccessSite).HasMaxLength(64);
+        builder.Property(s => s.EncounterId).HasMaxLength(128);
         builder.Property(s => s.UfRemovedKg).HasPrecision(10, 2);
         builder.Property(s => s.Status)
             .HasConversion<int>()

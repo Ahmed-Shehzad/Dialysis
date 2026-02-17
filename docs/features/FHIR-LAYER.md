@@ -32,6 +32,17 @@ Expose FHIR R4 resources so the PDMS can interoperate with EHRs and FHIR clients
 | POST | `/fhir/r4/Patient` | Create Patient from FHIR resource | ✅ Implemented |
 | GET | `/fhir/r4/Observation?patient={id}` | Search Observations by patient | ✅ Implemented |
 | GET | `/fhir/r4/Observation/{id}` | Read Observation by ID | ✅ Implemented |
+| GET | `/fhir/r4/Procedure?patient={id}` | Search Procedures (sessions) by patient | ✅ Implemented |
+| GET | `/fhir/r4/Procedure/{id}` | Read Procedure by ID | ✅ Implemented |
+| GET | `/fhir/r4/Encounter?patient={id}` | Search Encounters (dialysis visits) by patient | ✅ Implemented |
+| GET | `/fhir/r4/Encounter/{id}` | Read Encounter by ID (Session id) | ✅ Implemented |
+| GET | `/fhir/r4/Condition?patient={id}` | Search Conditions (diagnoses) by patient | ✅ Implemented |
+| GET | `/fhir/r4/Condition/{id}` | Read Condition by ID | ✅ Implemented |
+| POST | `/fhir/r4/Condition` | Create Condition from FHIR | ✅ Implemented |
+| GET | `/fhir/r4/EpisodeOfCare?patient={id}` | Search EpisodesOfCare by patient | ✅ Implemented |
+| GET | `/fhir/r4/EpisodeOfCare/{id}` | Read EpisodeOfCare by ID | ✅ Implemented |
+| POST | `/fhir/r4/EpisodeOfCare` | Create EpisodeOfCare from FHIR | ✅ Implemented |
+| GET | `/fhir/r4/Patient/{id}/$everything` | Patient bulk export (all resources) | ✅ Implemented |
 
 **Tenant context**: `X-Tenant-Id` header scopes all reads/writes.
 

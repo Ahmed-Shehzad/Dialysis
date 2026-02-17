@@ -1,5 +1,3 @@
-using Transponder.Persistence.Abstractions;
-
 namespace Transponder.Persistence.Tests;
 
 public sealed class InMemoryInboxStoreTests

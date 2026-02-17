@@ -35,7 +35,13 @@ public class DocumentProcessor
 - **ValidatingNutrientPdfService:** Validates inputs before delegating.
 - **LoggingNutrientPdfService:** Logs operation names and duration.
 
-`NutrientPdfService` is the primary implementation. Shared infrastructure is factored into `NutrientPdfHelpers` to reduce duplication. Future refactors could split `NutrientPdfService` into handlers (e.g., `PdfConversionHandler`, `PdfFormsHandler`) that each implement one interface, with `NutrientPdfService` as a facade composing them.
+`NutrientPdfService` delegates to specialized handlers per SRP. Handlers implemented:
+- `PdfValidationHandler` — PDF/A validation, IsValidPdf
+- `PdfLayersHandler` — layer (OCG) operations
+- `PdfRedactionHandler` — text and region redaction
+- `PdfSignaturesHandler` — digital signatures
+
+Converter, PageEditor, Forms, and Metadata remain in `NutrientPdfService`; they can be extracted into handlers for further SRP refinement.
 
 ## Open/Closed Principle (OCP)
 

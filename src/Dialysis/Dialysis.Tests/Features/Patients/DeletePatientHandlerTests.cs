@@ -1,9 +1,9 @@
 using Dialysis.DeviceIngestion.Features.Patients.Delete;
 using Dialysis.Domain.Entities;
-using Dialysis.Persistence.Abstractions;
+using Dialysis.Persistence;
 using Dialysis.SharedKernel.ValueObjects;
-using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 using Xunit;
 
@@ -11,28 +11,20 @@ namespace Dialysis.Tests.Features.Patients;
 
 public sealed class DeletePatientHandlerTests
 {
-    private readonly IPatientRepository _repository;
-    private readonly DeletePatientHandler _sut;
-
-    public DeletePatientHandlerTests()
-    {
-        _repository = Substitute.For<IPatientRepository>();
-        _sut = new DeletePatientHandler(_repository, Substitute.For<ILogger<DeletePatientHandler>>());
-    }
-
     [Fact]
     public async Task HandleAsync_returns_false_when_patient_not_found()
     {
         var tenantId = new TenantId("default");
         var logicalId = new PatientId("patient-999");
+        var db = TestDbContextFactory.CreateInMemory();
+        var repository = new PatientRepository(db);
+        var sut = new DeletePatientHandler(db, repository, NullLogger<DeletePatientHandler>.Instance);
+
         var command = new DeletePatientCommand(tenantId, logicalId);
 
-        _repository.GetByIdAsync(tenantId, logicalId, Arg.Any<CancellationToken>()).Returns((Patient?)null);
-
-        var result = await _sut.HandleAsync(command);
+        var result = await sut.HandleAsync(command);
 
         result.ShouldBeFalse();
-        await _repository.DidNotReceive().DeleteAsync(Arg.Any<Patient>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -41,13 +33,17 @@ public sealed class DeletePatientHandlerTests
         var tenantId = new TenantId("default");
         var logicalId = new PatientId("patient-001");
         var patient = Patient.Create(tenantId, logicalId, "Smith", "John", null);
+        var db = await TestDbContextFactory.CreateWithPatientAsync(patient);
+        var repository = new PatientRepository(db);
+        var sut = new DeletePatientHandler(db, repository, NullLogger<DeletePatientHandler>.Instance);
+
         var command = new DeletePatientCommand(tenantId, logicalId);
 
-        _repository.GetByIdAsync(tenantId, logicalId, Arg.Any<CancellationToken>()).Returns(patient);
-
-        var result = await _sut.HandleAsync(command);
+        var result = await sut.HandleAsync(command);
 
         result.ShouldBeTrue();
-        await _repository.Received(1).DeleteAsync(patient, Arg.Any<CancellationToken>());
+        var deleted = await db.Patients.FirstOrDefaultAsync(p =>
+            p.TenantId == tenantId && p.LogicalId == logicalId);
+        deleted.ShouldBeNull();
     }
 }

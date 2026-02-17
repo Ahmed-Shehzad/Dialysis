@@ -1,21 +1,24 @@
 using Dialysis.Domain.Aggregates;
-using Dialysis.Persistence.Abstractions;
+using Dialysis.Persistence;
 
 using Intercessor.Abstractions;
+
+using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.DeviceIngestion.Features.Observations.Search;
 
 public sealed class SearchObservationsQueryHandler : IQueryHandler<SearchObservationsQuery, IReadOnlyList<Observation>>
 {
-    private readonly IObservationRepository _observationRepository;
+    private readonly DialysisDbContext _db;
 
-    public SearchObservationsQueryHandler(IObservationRepository observationRepository)
-    {
-        _observationRepository = observationRepository;
-    }
+    public SearchObservationsQueryHandler(DialysisDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<Observation>> HandleAsync(SearchObservationsQuery request, CancellationToken cancellationToken = default)
     {
-        return await _observationRepository.GetByPatientAsync(request.TenantId, request.PatientId, cancellationToken);
+        return await _db.Observations
+            .AsNoTracking()
+            .Where(o => o.TenantId == request.TenantId && o.PatientId == request.PatientId)
+            .OrderByDescending(o => o.Effective.Value)
+            .ToListAsync(cancellationToken);
     }
 }

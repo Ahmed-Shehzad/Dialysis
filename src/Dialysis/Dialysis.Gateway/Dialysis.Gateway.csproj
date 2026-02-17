@@ -12,6 +12,8 @@
     <PackageReference Include="Hl7.Fhir.R4" />
     <PackageReference Include="Ulid" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Duende.IdentityModel" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
@@ -20,7 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Transponder\Transponder\Transponder.csproj" />
+    <ProjectReference Include="..\..\Transponder\Transponder.Transports.AzureServiceBus\Transponder.Transports.AzureServiceBus.csproj" />
     <ProjectReference Include="..\Dialysis.Alerting\Dialysis.Alerting.csproj" />
+    <ProjectReference Include="..\Dialysis.Contracts\Dialysis.Contracts.csproj" />
     <ProjectReference Include="..\Dialysis.DeviceIngestion\Dialysis.DeviceIngestion.csproj" />
     <ProjectReference Include="..\Dialysis.Domain\Dialysis.Domain.csproj" />
     <ProjectReference Include="..\Dialysis.Persistence\Dialysis.Persistence.csproj" />

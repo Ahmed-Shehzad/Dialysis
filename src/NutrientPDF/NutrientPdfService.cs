@@ -8,6 +8,7 @@ using NutrientPDF.Abstractions;
 using PdfCheckBoxStyleAbstraction = NutrientPDF.Abstractions.PdfCheckBoxStyle;
 using NutrientPDF.Abstractions.Options;
 using NutrientPDF.Adapter;
+using NutrientPDF.Handlers;
 using NutrientPDF.Helpers;
 
 using static NutrientPDF.Helpers.NutrientPdfHelpers;
@@ -16,17 +17,29 @@ namespace NutrientPDF;
 
 /// <summary>
 /// Implementation of <see cref="INutrientPdfService"/> using Nutrient .NET SDK (GdPicture).
+/// Delegates to specialized handlers (Validation, Layers, Redaction, Signatures) per SRP.
 /// </summary>
 public sealed class NutrientPdfService : INutrientPdfService
 {
     private readonly NutrientPdfOptions _options;
-    private static bool _licenseInitialized;
-    private static readonly object LicenseLock = new();
+    private readonly IPdfValidationService _validation;
+    private readonly IPdfLayersService _layers;
+    private readonly IPdfRedactionService _redaction;
+    private readonly IPdfSignaturesService _signatures;
 
-    public NutrientPdfService(IOptions<NutrientPdfOptions> options)
+    public NutrientPdfService(
+        IOptions<NutrientPdfOptions> options,
+        IPdfValidationService validation,
+        IPdfLayersService layers,
+        IPdfRedactionService redaction,
+        IPdfSignaturesService signatures)
     {
         _options = options.Value;
-        EnsureLicenseInitialized();
+        _validation = validation ?? throw new ArgumentNullException(nameof(validation));
+        _layers = layers ?? throw new ArgumentNullException(nameof(layers));
+        _redaction = redaction ?? throw new ArgumentNullException(nameof(redaction));
+        _signatures = signatures ?? throw new ArgumentNullException(nameof(signatures));
+        EnsureLicenseInitialized(_options.LicenseKey ?? string.Empty);
     }
 
     /// <inheritdoc />
@@ -520,71 +533,20 @@ public sealed class NutrientPdfService : INutrientPdfService
         }, cancellationToken);
     }
 
-    // ─── PDF/A Validation ──────────────────────────────────────────────────────
+    // ─── PDF/A Validation (delegated to PdfValidationHandler) ───────────────────
 
-    /// <inheritdoc />
-    public Task<bool> IsValidPdfAAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath, false);
-            var isValid = pdf.IsValidPDFA();
-            pdf.GetStat();
-            pdf.CloseDocument();
-            return isValid;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> IsValidPdfAAsync(Stream sourceStream, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            if (pdf.LoadFromStream(sourceStream, false) != GdPictureStatus.OK)
-                return false;
-            var isValid = pdf.IsValidPDFA();
-            pdf.GetStat();
-            pdf.CloseDocument();
-            return isValid;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<PdfAValidationResult> ValidatePdfAAsync(string sourcePath, PdfAConformance conformance = PdfAConformance.PdfA2a, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath, false);
-            var report = string.Empty;
-            var isValid = pdf.CheckPDFAConformance(GdPictureTypeAdapter.ToPdfValidationConformance(conformance), ref report);
-            pdf.GetStat();
-            pdf.CloseDocument();
-            return new PdfAValidationResult(isValid, report);
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<PdfAValidationResult> ValidatePdfAAsync(Stream sourceStream, PdfAConformance conformance = PdfAConformance.PdfA2a, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            if (pdf.LoadFromStream(sourceStream, false) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus(OpLoadFromStream, pdf.GetStat());
-            var report = string.Empty;
-            var isValid = pdf.CheckPDFAConformance(GdPictureTypeAdapter.ToPdfValidationConformance(conformance), ref report);
-            pdf.GetStat();
-            pdf.CloseDocument();
-            return new PdfAValidationResult(isValid, report);
-        }, cancellationToken);
-    }
+    public Task<bool> IsValidPdfAAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _validation.IsValidPdfAAsync(sourcePath, cancellationToken);
+    public Task<bool> IsValidPdfAAsync(Stream sourceStream, CancellationToken cancellationToken = default) =>
+        _validation.IsValidPdfAAsync(sourceStream, cancellationToken);
+    public Task<PdfAValidationResult> ValidatePdfAAsync(string sourcePath, PdfAConformance conformance = PdfAConformance.PdfA2a, CancellationToken cancellationToken = default) =>
+        _validation.ValidatePdfAAsync(sourcePath, conformance, cancellationToken);
+    public Task<PdfAValidationResult> ValidatePdfAAsync(Stream sourceStream, PdfAConformance conformance = PdfAConformance.PdfA2a, CancellationToken cancellationToken = default) =>
+        _validation.ValidatePdfAAsync(sourceStream, conformance, cancellationToken);
+    public Task<bool> IsValidPdfAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _validation.IsValidPdfAsync(sourcePath, cancellationToken);
+    public Task<bool> IsValidPdfAsync(Stream sourceStream, CancellationToken cancellationToken = default) =>
+        _validation.IsValidPdfAsync(sourceStream, cancellationToken);
 
     // ─── PDF Editor ────────────────────────────────────────────────────────────
 
@@ -921,123 +883,23 @@ public sealed class NutrientPdfService : INutrientPdfService
     }
 
     /// <inheritdoc />
-    public Task SignPdfWithDigitalSignatureAsync(PdfSignatureOptions options, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        return SignPdfWithDigitalSignatureAsync(options.SourcePath, options.OutputPath, options.CertificatePath,
-            options.CertificatePassword, options.SignatureFieldName, options.Position, options.SignerName,
-            options.Reason, options.Location, options.ContactInfo, cancellationToken);
-    }
+    public Task SignPdfWithDigitalSignatureAsync(PdfSignatureOptions options, CancellationToken cancellationToken = default) =>
+        _signatures.SignPdfWithDigitalSignatureAsync(options, cancellationToken);
 
-    // ─── PDF Layers / OCG ────────────────────────────────────────────────────────
+    // ─── PDF Layers (delegated to PdfLayersHandler) ───────────────────────────────
 
-    /// <inheritdoc />
-    public Task<int> GetPdfLayerCountAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            var count = pdf.GetOCGCount();
-            pdf.CloseDocument();
-            return count;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<IReadOnlyList<PdfLayerInfo>> GetPdfLayersAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            var count = pdf.GetOCGCount();
-            var result = new List<PdfLayerInfo>(count);
-            for (var i = 0; i < count; i++)
-            {
-                var id = pdf.GetOCG(i);
-                var title = pdf.GetOCGTitle(id) ?? "";
-                var viewState = GdPictureTypeAdapter.ToPdfLayerVisibility(pdf.GetOCGViewState(id));
-                var printState = GdPictureTypeAdapter.ToPdfLayerVisibility(pdf.GetOCGPrintState(id));
-                var exportState = GdPictureTypeAdapter.ToPdfLayerVisibility(pdf.GetOCGExportState(id));
-                var locked = pdf.GetOCGLockedState(id);
-                result.Add(new PdfLayerInfo(id, title, viewState, printState, exportState, locked));
-            }
-            pdf.CloseDocument();
-            return (IReadOnlyList<PdfLayerInfo>)result;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task FlattenPdfLayersAsync(string sourcePath, string outputPath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            pdf.FlattenVisibleOCGs();
-            pdf.SaveToFile(outputPath);
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task FlattenPdfLayersAsync(Stream sourceStream, Stream outputStream, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        ArgumentNullException.ThrowIfNull(outputStream);
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            if (pdf.LoadFromStream(sourceStream, false) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus(OpLoadFromStream, pdf.GetStat());
-            pdf.FlattenVisibleOCGs();
-            if (pdf.SaveToStream(outputStream) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("SaveToStream", pdf.GetStat());
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task DeletePdfLayerAsync(string sourcePath, string outputPath, int layerId, bool removeContent = false, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            pdf.DeleteOCG(layerId, removeContent);
-            pdf.SaveToFile(outputPath);
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task SetPdfLayerVisibilityAsync(string sourcePath, string outputPath, int layerId, PdfLayerVisibility? viewState = null, PdfLayerVisibility? printState = null, PdfLayerVisibility? exportState = null, bool? locked = null, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            if (viewState.HasValue)
-                pdf.SetOCGViewState(layerId, GdPictureTypeAdapter.ToPdfOcgState(viewState.Value));
-            if (printState.HasValue)
-                pdf.SetOCGPrintState(layerId, GdPictureTypeAdapter.ToPdfOcgState(printState.Value));
-            if (exportState.HasValue)
-                pdf.SetOCGExportState(layerId, GdPictureTypeAdapter.ToPdfOcgState(exportState.Value));
-            if (locked.HasValue)
-                pdf.SetOCGLockedState(layerId, locked.Value);
-            pdf.SaveToFile(outputPath);
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
+    public Task<int> GetPdfLayerCountAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _layers.GetPdfLayerCountAsync(sourcePath, cancellationToken);
+    public Task<IReadOnlyList<PdfLayerInfo>> GetPdfLayersAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _layers.GetPdfLayersAsync(sourcePath, cancellationToken);
+    public Task FlattenPdfLayersAsync(string sourcePath, string outputPath, CancellationToken cancellationToken = default) =>
+        _layers.FlattenPdfLayersAsync(sourcePath, outputPath, cancellationToken);
+    public Task FlattenPdfLayersAsync(Stream sourceStream, Stream outputStream, CancellationToken cancellationToken = default) =>
+        _layers.FlattenPdfLayersAsync(sourceStream, outputStream, cancellationToken);
+    public Task DeletePdfLayerAsync(string sourcePath, string outputPath, int layerId, bool removeContent = false, CancellationToken cancellationToken = default) =>
+        _layers.DeletePdfLayerAsync(sourcePath, outputPath, layerId, removeContent, cancellationToken);
+    public Task SetPdfLayerVisibilityAsync(string sourcePath, string outputPath, int layerId, PdfLayerVisibility? viewState = null, PdfLayerVisibility? printState = null, PdfLayerVisibility? exportState = null, bool? locked = null, CancellationToken cancellationToken = default) =>
+        _layers.SetPdfLayerVisibilityAsync(sourcePath, outputPath, layerId, viewState, printState, exportState, locked, cancellationToken);
 
     /// <inheritdoc />
     public Task AddPdfPageAsync(string sourcePath, string outputPath, float widthPt = 595, float heightPt = 842, int? insertAtPage = null, CancellationToken cancellationToken = default)
@@ -1864,47 +1726,6 @@ public sealed class NutrientPdfService : INutrientPdfService
         }, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public Task<bool> IsValidPdfAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            try
-            {
-                using var pdf = new GdPicturePDF();
-                var status = pdf.LoadFromFile(sourcePath, false);
-                pdf.CloseDocument();
-                return status == GdPictureStatus.OK;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("NutrientPDF: IsValidPdf failed for {0}: {1}", sourcePath, ex.Message);
-                return false;
-            }
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> IsValidPdfAsync(Stream sourceStream, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        return Task.Run(() =>
-        {
-            try
-            {
-                using var pdf = new GdPicturePDF();
-                var status = pdf.LoadFromStream(sourceStream, false);
-                pdf.CloseDocument();
-                return status == GdPictureStatus.OK;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("NutrientPDF: IsValidPdf failed: {0}", ex.Message);
-                return false;
-            }
-        }, cancellationToken);
-    }
 
     /// <inheritdoc />
     public Task OptimizePdfAsync(string sourcePath, string outputPath, PdfOptimizationOptions? options = null, CancellationToken cancellationToken = default)
@@ -2146,74 +1967,16 @@ public sealed class NutrientPdfService : INutrientPdfService
         }, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public Task<int> RedactPdfTextAsync(string sourcePath, string outputPath, string searchText, bool useRegex = false, bool caseSensitive = true, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(searchText);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            if (pdf.LoadFromFile(sourcePath, false) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("LoadFromFile", pdf.GetStat());
-            int occurrences = 0;
-            var status = pdf.SearchAndAddRedactionRegions(searchText, caseSensitive, redactionRed, redactionGreen, redactionBlue, redactionAlpha, ref occurrences);
-            if (status != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("SearchAndAddRedactionRegions", status);
-            if (occurrences > 0)
-            {
-                status = pdf.ApplyRedaction();
-                if (status != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("ApplyRedaction", status);
-            }
-            pdf.SaveToFile(outputPath);
-            pdf.CloseDocument();
-            return occurrences;
-        }, cancellationToken);
-    }
+    // ─── PDF Redaction (delegated to PdfRedactionHandler) ───────────────────────
 
-    /// <inheritdoc />
-    public Task<int> RedactPdfTextAsync(Stream sourceStream, Stream outputStream, string searchText, bool useRegex = false, bool caseSensitive = true, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        ArgumentNullException.ThrowIfNull(outputStream);
-        ArgumentException.ThrowIfNullOrWhiteSpace(searchText);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            if (pdf.LoadFromStream(sourceStream, false) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus(OpLoadFromStream, pdf.GetStat());
-            int occurrences = 0;
-            var status = pdf.SearchAndAddRedactionRegions(searchText, caseSensitive, redactionRed, redactionGreen, redactionBlue, redactionAlpha, ref occurrences);
-            if (status != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("SearchAndAddRedactionRegions", status);
-            if (occurrences > 0)
-            {
-                status = pdf.ApplyRedaction();
-                if (status != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("ApplyRedaction", status);
-            }
-            if (pdf.SaveToStream(outputStream) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("SaveToStream", pdf.GetStat());
-            pdf.CloseDocument();
-            return occurrences;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<int> RedactPdfTextAsync(string sourcePath, string outputPath, RedactPdfTextOptions options, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        return RedactPdfTextAsync(sourcePath, outputPath, options.SearchText, options.UseRegex, options.CaseSensitive, options.Red, options.Green, options.Blue, options.Alpha, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<int> RedactPdfTextAsync(Stream sourceStream, Stream outputStream, RedactPdfTextOptions options, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        return RedactPdfTextAsync(sourceStream, outputStream, options.SearchText, options.UseRegex, options.CaseSensitive, options.Red, options.Green, options.Blue, options.Alpha, cancellationToken);
-    }
+    public Task<int> RedactPdfTextAsync(string sourcePath, string outputPath, string searchText, bool useRegex = false, bool caseSensitive = true, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default) =>
+        _redaction.RedactPdfTextAsync(sourcePath, outputPath, searchText, useRegex, caseSensitive, redactionRed, redactionGreen, redactionBlue, redactionAlpha, cancellationToken);
+    public Task<int> RedactPdfTextAsync(Stream sourceStream, Stream outputStream, string searchText, bool useRegex = false, bool caseSensitive = true, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default) =>
+        _redaction.RedactPdfTextAsync(sourceStream, outputStream, searchText, useRegex, caseSensitive, redactionRed, redactionGreen, redactionBlue, redactionAlpha, cancellationToken);
+    public Task<int> RedactPdfTextAsync(string sourcePath, string outputPath, RedactPdfTextOptions options, CancellationToken cancellationToken = default) =>
+        _redaction.RedactPdfTextAsync(sourcePath, outputPath, options, cancellationToken);
+    public Task<int> RedactPdfTextAsync(Stream sourceStream, Stream outputStream, RedactPdfTextOptions options, CancellationToken cancellationToken = default) =>
+        _redaction.RedactPdfTextAsync(sourceStream, outputStream, options, cancellationToken);
 
     /// <inheritdoc />
     public Task ConvertToSearchablePdfAsync(string sourcePath, string outputPath, string ocrLanguage = "eng", string? ocrResourcePath = null, CancellationToken cancellationToken = default)
@@ -2716,82 +2479,10 @@ public sealed class NutrientPdfService : INutrientPdfService
         return string.IsNullOrEmpty(v) ? null : v;
     }
 
-    /// <inheritdoc />
-    public Task RedactPdfRegionsAsync(string sourcePath, string outputPath, IEnumerable<PdfRedactionRegion> regions, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        ArgumentNullException.ThrowIfNull(regions);
-        var list = regions.ToList();
-        if (list.Count == 0) throw new ArgumentException("At least one region is required.", nameof(regions));
-        return RunAsync(() => RedactRegionsCore(sourcePath, null, null, outputPath, list, redactionRed, redactionGreen, redactionBlue, redactionAlpha, cancellationToken), cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task RedactPdfRegionsAsync(Stream sourceStream, Stream outputStream, IEnumerable<PdfRedactionRegion> regions, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        ArgumentNullException.ThrowIfNull(outputStream);
-        ArgumentNullException.ThrowIfNull(regions);
-        var list = regions.ToList();
-        if (list.Count == 0) throw new ArgumentException("At least one region is required.", nameof(regions));
-        return RunAsync(() => RedactRegionsCore(null, sourceStream, outputStream, null, list, redactionRed, redactionGreen, redactionBlue, redactionAlpha, cancellationToken), cancellationToken);
-    }
-
-    private static void RedactRegionsCore(string? sourcePath, Stream? sourceStream, Stream? outputStream, string? outputPath, List<PdfRedactionRegion> regions, byte r, byte g, byte b, byte a, CancellationToken ct)
-    {
-        var tempIn = sourcePath;
-        var tempOut = outputPath;
-        if (sourceStream != null)
-        {
-            tempIn = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".pdf");
-            using (var fs = File.Create(tempIn))
-                sourceStream.CopyTo(fs);
-        }
-        if (outputStream != null)
-            tempOut = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".pdf");
-        try
-        {
-            using var pdf = new GdPicturePDF();
-            if (pdf.LoadFromFile(tempIn!, false) != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("LoadFromFile", pdf.GetStat());
-            pdf.SetOrigin(PdfOrigin.PdfOriginTopLeft);
-            pdf.SetMeasurementUnit(PdfMeasurementUnit.PdfMeasurementUnitPoint);
-            var currentPage = 0;
-            foreach (var region in regions)
-            {
-                ct.ThrowIfCancellationRequested();
-                if (region.Page != currentPage)
-                {
-                    pdf.SelectPage(region.Page);
-                    currentPage = region.Page;
-                }
-                if (pdf.AddRedactionRegion(region.Left, region.Top, region.Width, region.Height, r, g, b, a) != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("AddRedactionRegion", pdf.GetStat());
-            }
-            if (pdf.ApplyRedaction() != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("ApplyRedaction", pdf.GetStat());
-            if (outputStream != null)
-            {
-                var outPath = tempOut!;
-                if (pdf.SaveToFile(outPath) != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("SaveToFile", pdf.GetStat());
-                pdf.CloseDocument();
-                using (var fs = File.OpenRead(outPath))
-                    fs.CopyTo(outputStream);
-            }
-            else
-            {
-                pdf.SaveToFile(tempOut!);
-                pdf.CloseDocument();
-            }
-        }
-        finally
-        {
-            if (sourceStream != null && tempIn != null) TryDeleteFile(tempIn);
-            if (outputStream != null && tempOut != null) TryDeleteFile(tempOut);
-        }
-    }
+    public Task RedactPdfRegionsAsync(string sourcePath, string outputPath, IEnumerable<PdfRedactionRegion> regions, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default) =>
+        _redaction.RedactPdfRegionsAsync(sourcePath, outputPath, regions, redactionRed, redactionGreen, redactionBlue, redactionAlpha, cancellationToken);
+    public Task RedactPdfRegionsAsync(Stream sourceStream, Stream outputStream, IEnumerable<PdfRedactionRegion> regions, byte redactionRed = 0, byte redactionGreen = 0, byte redactionBlue = 0, byte redactionAlpha = 255, CancellationToken cancellationToken = default) =>
+        _redaction.RedactPdfRegionsAsync(sourceStream, outputStream, regions, redactionRed, redactionGreen, redactionBlue, redactionAlpha, cancellationToken);
 
     /// <inheritdoc />
     public Task<IReadOnlyList<PdfEmbeddedFileInfo>> GetPdfEmbeddedFilesAsync(string sourcePath, CancellationToken cancellationToken = default)
@@ -3153,193 +2844,22 @@ public sealed class NutrientPdfService : INutrientPdfService
         }, cancellationToken);
     }
 
-    // ─── PDF Signatures ─────────────────────────────────────────────────────────
+    // ─── PDF Signatures (delegated to PdfSignaturesHandler) ──────────────────────
 
-    /// <inheritdoc />
-    public Task AddPdfSignatureFieldAsync(string sourcePath, string outputPath, string fieldName, int pageNumber, float left, float top, float width, float height, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
-        if (pageNumber < 1) throw new ArgumentOutOfRangeException(nameof(pageNumber), "Page number must be >= 1.");
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            pdf.SetMeasurementUnit(PdfMeasurementUnit.PdfMeasurementUnitPoint);
-            pdf.SelectPage(pageNumber);
-            pdf.AddSignatureFormField(left, top, width, height, fieldName);
-            pdf.SaveToFile(outputPath);
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task SignPdfWithDigitalSignatureAsync(string sourcePath, string outputPath, string certificatePath, string certificatePassword, string? signatureFieldName = null, PdfSignaturePosition? position = null, string? signerName = null, string? reason = null, string? location = null, string? contactInfo = null, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(certificatePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(certificatePassword);
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath, false);
-            var status = pdf.SetSignatureCertificateFromP12(certificatePath, certificatePassword);
-            if (status != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("Set certificate", status);
-            status = pdf.SetSignatureInfo(signerName ?? "", reason ?? "", location ?? "", contactInfo ?? "");
-            if (status != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("Set signature info", status);
-            if (!string.IsNullOrEmpty(signatureFieldName))
-                pdf.SetSignaturePosFromPlaceHolder(signatureFieldName);
-            else if (position is { } pos)
-            {
-                pdf.SetMeasurementUnit(PdfMeasurementUnit.PdfMeasurementUnitPoint);
-                pdf.SetOrigin(PdfOrigin.PdfOriginTopLeft);
-                pdf.SelectPage(pos.Page);
-                // SetSignaturePos expects (Left, Bottom, Width, Height); Top+Height = bottom in top-left coords
-                pdf.SetSignaturePos(pos.Left, pos.Top + pos.Height, pos.Width, pos.Height);
-            }
-            status = pdf.ApplySignature(outputPath, PdfSignatureMode.PdfSignatureModeAdobePPKMS, true);
-            if (status != GdPictureStatus.OK)
-                throw NutrientPdfException.FromStatus("Apply signature", status);
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task SignPdfWithDigitalSignatureAsync(Stream sourceStream, Stream outputStream, string certificatePath, string certificatePassword, string? signatureFieldName = null, PdfSignaturePosition? position = null, string? signerName = null, string? reason = null, string? location = null, string? contactInfo = null, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(sourceStream);
-        ArgumentNullException.ThrowIfNull(outputStream);
-        ArgumentException.ThrowIfNullOrWhiteSpace(certificatePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(certificatePassword);
-        return RunAsync(() =>
-        {
-            var tempIn = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".pdf");
-            var tempOut = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".pdf");
-            try
-            {
-                using (var fs = File.Create(tempIn))
-                    sourceStream.CopyTo(fs);
-                using var pdf = new GdPicturePDF();
-                if (pdf.LoadFromFile(tempIn, false) != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("LoadFromFile", pdf.GetStat());
-                var status = pdf.SetSignatureCertificateFromP12(certificatePath, certificatePassword);
-                if (status != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("Set certificate", status);
-                status = pdf.SetSignatureInfo(signerName ?? "", reason ?? "", location ?? "", contactInfo ?? "");
-                if (status != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("Set signature info", status);
-                if (!string.IsNullOrEmpty(signatureFieldName))
-                    pdf.SetSignaturePosFromPlaceHolder(signatureFieldName);
-                else if (position is { } pos)
-                {
-                    pdf.SetMeasurementUnit(PdfMeasurementUnit.PdfMeasurementUnitPoint);
-                    pdf.SetOrigin(PdfOrigin.PdfOriginTopLeft);
-                    pdf.SelectPage(pos.Page);
-                    pdf.SetSignaturePos(pos.Left, pos.Top + pos.Height, pos.Width, pos.Height);
-                }
-                status = pdf.ApplySignature(tempOut, PdfSignatureMode.PdfSignatureModeAdobePPKMS, true);
-                if (status != GdPictureStatus.OK)
-                    throw NutrientPdfException.FromStatus("Apply signature", status);
-                pdf.CloseDocument();
-                using (var fs = File.OpenRead(tempOut))
-                    fs.CopyTo(outputStream);
-            }
-            finally
-            {
-                TryDeleteFile(tempIn);
-                TryDeleteFile(tempOut);
-            }
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<int> GetPdfSignatureCountAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            var count = pdf.GetSignatureCount();
-            pdf.CloseDocument();
-            return count;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<IReadOnlyList<PdfSignatureInfo>> GetPdfSignaturesAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            var count = pdf.GetSignatureCount();
-            var result = new List<PdfSignatureInfo>(count);
-            for (var i = 0; i < count; i++)
-            {
-                string sigName = "", sigReason = "", sigLocation = "", sigInfo = "", sigDate = "", certSubject = "", certFriendlyName = "", certIssuer = "";
-                float stampLeft = 0, stampTop = 0, stampWidth = 0, stampHeight = 0;
-                int stampPage = 0, certVersion = 0;
-                bool docValid = false, certValid = false;
-                DateTime certNotBefore = default, certNotAfter = default, signingTime = default;
-                PdfSignatureCertificationLevel sigLevel = PdfSignatureCertificationLevel.NotCertified;
-                pdf.GetSignatureProperties(i, ref sigName, ref sigReason, ref sigLocation, ref sigInfo, ref sigDate,
-                    ref stampLeft, ref stampTop, ref stampWidth, ref stampHeight, ref stampPage,
-                    ref docValid, ref certValid, ref certFriendlyName, ref certIssuer,
-                    ref certNotBefore, ref certNotAfter, ref certSubject, ref certVersion, ref signingTime, ref sigLevel);
-                result.Add(new PdfSignatureInfo(sigName, sigReason, sigLocation, sigInfo, sigDate, stampPage,
-                    certValid, certFriendlyName, certIssuer, certSubject, certNotBefore, certNotAfter));
-            }
-            pdf.CloseDocument();
-            return (IReadOnlyList<PdfSignatureInfo>)result;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<IReadOnlyList<PdfSignatureFieldInfo>> GetPdfSignatureFieldsAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        return Task.Run(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            var fieldCount = pdf.GetFormFieldsCount();
-            var result = new List<PdfSignatureFieldInfo>();
-            for (var i = 0; i < fieldCount; i++)
-            {
-                var fieldId = pdf.GetFormFieldId(i);
-                if (pdf.GetFormFieldType(fieldId) == PdfFormFieldType.PdfFormFieldTypeSignature)
-                {
-                    var name = pdf.GetFormFieldTitle(fieldId) ?? "";
-                    var page = pdf.GetFormFieldPage(fieldId);
-                    result.Add(new PdfSignatureFieldInfo(fieldId, name, page));
-                }
-            }
-            pdf.CloseDocument();
-            return (IReadOnlyList<PdfSignatureFieldInfo>)result;
-        }, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task RemovePdfSignatureAsync(string sourcePath, string outputPath, int signatureIndex, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        if (signatureIndex < 0) throw new ArgumentOutOfRangeException(nameof(signatureIndex), "Signature index must be >= 0.");
-        return RunAsync(() =>
-        {
-            using var pdf = new GdPicturePDF();
-            pdf.LoadFromFile(sourcePath);
-            pdf.RemoveSignature(signatureIndex);
-            pdf.SaveToFile(outputPath);
-            pdf.CloseDocument();
-        }, cancellationToken);
-    }
+    public Task AddPdfSignatureFieldAsync(string sourcePath, string outputPath, string fieldName, int pageNumber, float left, float top, float width, float height, CancellationToken cancellationToken = default) =>
+        _signatures.AddPdfSignatureFieldAsync(sourcePath, outputPath, fieldName, pageNumber, left, top, width, height, cancellationToken);
+    public Task SignPdfWithDigitalSignatureAsync(string sourcePath, string outputPath, string certificatePath, string certificatePassword, string? signatureFieldName = null, PdfSignaturePosition? position = null, string? signerName = null, string? reason = null, string? location = null, string? contactInfo = null, CancellationToken cancellationToken = default) =>
+        _signatures.SignPdfWithDigitalSignatureAsync(sourcePath, outputPath, certificatePath, certificatePassword, signatureFieldName, position, signerName, reason, location, contactInfo, cancellationToken);
+    public Task SignPdfWithDigitalSignatureAsync(Stream sourceStream, Stream outputStream, string certificatePath, string certificatePassword, string? signatureFieldName = null, PdfSignaturePosition? position = null, string? signerName = null, string? reason = null, string? location = null, string? contactInfo = null, CancellationToken cancellationToken = default) =>
+        _signatures.SignPdfWithDigitalSignatureAsync(sourceStream, outputStream, certificatePath, certificatePassword, signatureFieldName, position, signerName, reason, location, contactInfo, cancellationToken);
+    public Task<int> GetPdfSignatureCountAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _signatures.GetPdfSignatureCountAsync(sourcePath, cancellationToken);
+    public Task<IReadOnlyList<PdfSignatureInfo>> GetPdfSignaturesAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _signatures.GetPdfSignaturesAsync(sourcePath, cancellationToken);
+    public Task<IReadOnlyList<PdfSignatureFieldInfo>> GetPdfSignatureFieldsAsync(string sourcePath, CancellationToken cancellationToken = default) =>
+        _signatures.GetPdfSignatureFieldsAsync(sourcePath, cancellationToken);
+    public Task RemovePdfSignatureAsync(string sourcePath, string outputPath, int signatureIndex, CancellationToken cancellationToken = default) =>
+        _signatures.RemovePdfSignatureAsync(sourcePath, outputPath, signatureIndex, cancellationToken);
 
     private static Task ConvertWithFormatAsync(string sourcePath, string outputPath, GdPicture14.DocumentFormat format, CancellationToken ct)
     {
@@ -3439,15 +2959,4 @@ public sealed class NutrientPdfService : INutrientPdfService
             ct.ThrowIfCancellationRequested();
             action();
         }, ct);
-
-    private void EnsureLicenseInitialized()
-    {
-        if (_licenseInitialized) return;
-        lock (LicenseLock)
-        {
-            if (_licenseInitialized) return;
-            new LicenseManager().RegisterKEY(_options.LicenseKey ?? string.Empty);
-            _licenseInitialized = true;
-        }
-    }
 }

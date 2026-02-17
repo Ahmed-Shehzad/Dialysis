@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
-
 using Transponder.Transports.SSE.Abstractions;
 
 namespace Transponder.Transports.SSE;

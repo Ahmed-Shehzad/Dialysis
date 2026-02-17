@@ -1,8 +1,6 @@
 using Dialysis.SharedKernel.Abstractions;
 using Dialysis.SharedKernel.ValueObjects;
 
-using Microsoft.AspNetCore.Http;
-
 namespace Dialysis.Gateway.Infrastructure;
 
 /// <summary>

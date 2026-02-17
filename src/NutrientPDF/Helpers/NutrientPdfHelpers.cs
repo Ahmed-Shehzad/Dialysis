@@ -9,6 +9,22 @@ namespace NutrientPDF.Helpers;
 /// </summary>
 internal static class NutrientPdfHelpers
 {
+    private static bool _licenseInitialized;
+    private static readonly object LicenseLock = new();
+
+    /// <summary>
+    /// Ensures the GdPicture license is initialized once. Thread-safe. Call before any SDK operation.
+    /// </summary>
+    internal static void EnsureLicenseInitialized(string licenseKey)
+    {
+        if (_licenseInitialized) return;
+        lock (LicenseLock)
+        {
+            if (_licenseInitialized) return;
+            new LicenseManager().RegisterKEY(licenseKey ?? string.Empty);
+            _licenseInitialized = true;
+        }
+    }
     internal const string OpLoadFromStream = "LoadFromStream";
     internal const string OpLoadFromFile = "LoadFromFile";
     internal const string OpSaveToStream = "SaveToStream";

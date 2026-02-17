@@ -118,7 +118,7 @@ flowchart TB
 | 1.1.1 | Vitals ingest API (JSON) | ✅ `POST /api/v1/vitals/ingest` |
 | 1.1.2 | Raw HL7 ORU stream (Mirth → PDMS) | ✅ `POST /api/v1/hl7/stream` |
 | 1.1.3 | Mirth destination config (HL7 → JSON → PDMS) | ✅ [docs/mirth/](mirth/README.md) |
-| 1.1.4 | Machine-specific adapters (if vendor-specific formats) | 🔲 Future |
+| 1.1.4 | Machine-specific adapters (if vendor-specific formats) | 🔲 Future (vendor-specific) |
 
 ### 1.2 Lab (LIS)
 
@@ -133,8 +133,8 @@ flowchart TB
 | Step | Deliverable | Status |
 |------|-------------|--------|
 | 1.3.1 | Patient create (REST, FHIR) | ✅ |
-| 1.3.2 | HL7 ADT A04/A08 (register/update patient) | 🔲 Planned |
-| 1.3.3 | Encounter/visit sync (if needed for sessions) | 🔲 Future |
+| 1.3.2 | HL7 ADT A04/A08 (register/update patient) | ✅ Via HL7 stream |
+| 1.3.3 | Encounter/visit sync (if needed for sessions) | ✅ Session.EncounterId |
 
 **Dependencies:** Phase 0.  
 **Exit criteria:** Vitals and lab results flow from devices/lab into PDMS; patient create works.
@@ -152,22 +152,22 @@ flowchart TB
 | 2.1.1 | Patient read/create (FHIR R4) | ✅ |
 | 2.1.2 | Observation read/search (FHIR R4) | ✅ |
 | 2.1.3 | FHIR CapabilityStatement (metadata) | ✅ `GET /fhir/r4/metadata` |
-| 2.1.4 | Procedure (dialysis session) resource | 🔲 When Session exists |
-| 2.1.5 | Bundle export for bulk exchange | 🔲 Future |
+| 2.1.4 | Procedure (dialysis session) resource | ✅ `GET /fhir/r4/Procedure` |
+| 2.1.5 | Bundle export for bulk exchange | ✅ `GET /fhir/r4/Patient/{id}/everything` |
 
 ### 2.2 Registries / Quality Reporting
 
 | Step | Deliverable | Status |
 |------|-------------|--------|
-| 2.2.1 | NHSN / quality bundle (de-identified) | 🔲 Future |
-| 2.2.2 | Vascular access registry fields | 🔲 Future |
+| 2.2.1 | NHSN / quality bundle (de-identified) | ✅ `GET /api/v1/quality/bundle` |
+| 2.2.2 | Vascular access registry fields | ✅ Vascular access API + entity |
 | 2.2.3 | De-identification service integration | 🔲 Future |
 
 ### 2.3 Analytics / Data Warehouse
 
 | Step | Deliverable | Status |
 |------|-------------|--------|
-| 2.3.1 | Cohort queries, exports | 🔲 Future |
+| 2.3.1 | Cohort queries, exports | ✅ `GET /api/v1/cohorts/query`, `/cohorts/export` |
 | 2.3.2 | Event-driven export (e.g. Kafka, ETL) | 🔲 Future |
 
 **Dependencies:** Phase 0, 1.  
@@ -183,8 +183,8 @@ flowchart TB
 |------|-------------|--------|
 | 3.1 | Hypotension risk prediction (rule-based or ML) | ✅ |
 | 3.2 | Alerting (create, acknowledge, notify) | ✅ create via events; `GET/POST /api/v1/alerts` |
-| 3.3 | Session lifecycle (start, vitals, stop, UF) | 🔲 Planned |
-| 3.4 | Audit / consent logging | 🔲 Planned |
+| 3.3 | Session lifecycle (start, vitals, stop, UF) | ✅ `POST/PUT/GET /api/v1/sessions` |
+| 3.4 | Audit / consent logging | ✅ `POST/GET /api/v1/audit` |
 
 **Dependencies:** Phase 0, 1.  
 **Exit criteria:** Alerts fire on risk; sessions tracked.
@@ -199,23 +199,23 @@ flowchart TB
 
 | Step | Deliverable | Status |
 |------|-------------|--------|
-| 4.1.1 | Mirth channels: HL7 → PDMS REST | 🔲 Config / docs |
-| 4.1.2 | PDMS → EHR FHIR (outbound) | 🔲 When EHR ready |
-| 4.1.3 | Error handling, retries, DLQ | 🔲 |
+| 4.1.1 | Mirth channels: HL7 → PDMS REST | ✅ [docs/mirth/](mirth/README.md) + error handling |
+| 4.1.2 | PDMS → EHR FHIR (outbound) | ✅ `POST /api/v1/outbound/ehr/push/{patientId}` (Integration:EhrFhirBaseUrl) |
+| 4.1.3 | Error handling, retries, DLQ | ✅ MSH-10 idempotency; `failed_hl7_messages` DLQ; `GET/POST /api/v1/hl7/failed`, retry |
 
 ### 4.2 Identity / MPI
 
 | Step | Deliverable | Status |
 |------|-------------|--------|
-| 4.2.1 | Patient identifier resolution (MPI or local) | 🔲 When needed |
-| 4.2.2 | Cross-system ID mapping | 🔲 Future |
+| 4.2.1 | Patient identifier resolution (MPI or local) | ✅ `IPatientIdentifierResolver`; `LocalPatientIdentifierResolver` |
+| 4.2.2 | Cross-system ID mapping | ✅ `id_mappings` table; `POST/GET /api/v1/id-mappings` |
 
 ### 4.3 Terminology
 
 | Step | Deliverable | Status |
 |------|-------------|--------|
 | 4.3.1 | LOINC mapping for vitals/lab | ✅ In code |
-| 4.3.2 | Terminology service (external) | 🔲 Optional |
+| 4.3.2 | Terminology service (external) | ✅ `ITerminologyService`; `NoOpTerminologyService` (extensible) |
 | 4.3.3 | ICD-10, SNOMED for diagnoses | 🔲 When needed |
 
 ### 4.4 Billing / Claims (X12)
@@ -284,7 +284,11 @@ ObservationCreated → Prediction → HypotensionRiskRaised → Alerting
 
 ## References
 
+- [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) – **System architecture diagram + prioritized next steps**
 - [GETTING-STARTED.md](GETTING-STARTED.md) – Onboarding path
+- [LEARNING-PATH.md](LEARNING-PATH.md) – **Recommended learning path** (5 phases: HL7, dialysis workflows, FHIR, SMART, .NET) with codebase mappings
+- [PLATFORM-ARCHITECTURE.md](PLATFORM-ARCHITECTURE.md) – **Concrete platform architecture** (channels, core services, tech stack, integration patterns, Transponder Sagas orchestration)
+- [ENVIRONMENT-SPECIFIC-PROPOSAL.md](ENVIRONMENT-SPECIFIC-PROPOSAL.md) – **Environment-driven design** (Germany/EU vs US, minimum dataset, FHIR IG, .NET structure)
 - [healthcare_systems_&_dialysis_architecture.md](../src/Dialysis/healthcare_systems_&_dialysis_architecture.md) – Theory and current architecture
 - [PATIENT-MANAGEMENT.md](features/PATIENT-MANAGEMENT.md) – Patient APIs
 - [FHIR-LAYER.md](features/FHIR-LAYER.md) – FHIR endpoints

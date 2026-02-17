@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using NutrientPDF.Abstractions;
 using NutrientPDF.Decorators;
+using NutrientPDF.Handlers;
 
 namespace NutrientPDF;
 
@@ -24,6 +25,10 @@ public static class Extensions
         if (configure is not null)
             services.Configure(configure);
 
+        services.AddSingleton<IPdfValidationService, PdfValidationHandler>();
+        services.AddSingleton<IPdfLayersService, PdfLayersHandler>();
+        services.AddSingleton<IPdfRedactionService, PdfRedactionHandler>();
+        services.AddSingleton<IPdfSignaturesService, PdfSignaturesHandler>();
         services.AddSingleton<NutrientPdfService>();
 
         services.AddSingleton<INutrientPdfService>(sp =>

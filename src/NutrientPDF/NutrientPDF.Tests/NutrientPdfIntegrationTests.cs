@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Options;
-
-using NutrientPDF;
 using NutrientPDF.Abstractions;
 
 using Shouldly;

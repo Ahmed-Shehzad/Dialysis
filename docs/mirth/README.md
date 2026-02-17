@@ -10,7 +10,7 @@ This guide explains how to integrate Mirth Connect with the Dialysis PDMS to rou
 [HL7 Source]  →  Mirth Channel  →  HTTP Sender  →  PDMS POST /api/v1/hl7/stream
 ```
 
-The PDMS accepts raw HL7 v2 messages at `POST /api/v1/hl7/stream` with a JSON body:
+The PDMS accepts raw HL7 v2 messages at `POST /api/v1/hl7/stream` with a JSON body. Supported message types: **ORU^R01** (vitals/lab), **ADT^A04** (register patient), **ADT^A08** (update patient).
 
 ```json
 { "rawMessage": "MSH|^~\\&|SENDER|FACILITY|..." }
@@ -155,7 +155,7 @@ You can set this per channel or per destination using channel variables (e.g. fr
 - **400**: Bad request (e.g. empty or invalid `rawMessage`).
 - **5xx**: Server error; retry using Mirth’s built-in retry.
 
-Recommended: enable **Respond from destination** in Mirth and check HTTP status; configure retries and a dead letter queue for 5xx.
+Recommended: enable **Respond from destination** in Mirth and check HTTP status; configure retries and a dead letter queue for 5xx. Set **Retry count: 3**, **Retry interval: 10000 ms** in the HTTP Sender. Enable destination queue for DLQ on max retries. The PDMS does not support idempotency keys; deduplicate by MSH-10 in Mirth if needed.
 
 ---
 

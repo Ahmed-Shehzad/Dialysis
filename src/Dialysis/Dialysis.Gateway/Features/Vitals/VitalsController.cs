@@ -41,4 +41,22 @@ public sealed class VitalsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Ingest vitals from raw device output via adapter (Phase 1.1.4). Include X-Device-Adapter and X-Tenant-Id headers.
+    /// </summary>
+    [HttpPost("ingest/raw")]
+    [Consumes("text/plain", "application/octet-stream")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RawIngest(
+        [FromBody] string rawPayload,
+        [FromHeader(Name = "X-Device-Adapter")] string adapterId = "passthrough",
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.SendAsync(new RawIngestVitalsCommand(rawPayload, adapterId), cancellationToken);
+        if (!result.Success)
+            return BadRequest(new { error = result.Error });
+        return Ok(new { observationId = result.ObservationId });
+    }
 }

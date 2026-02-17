@@ -1,7 +1,6 @@
 using Asp.Versioning;
 using Dialysis.DeviceIngestion.Features.Observations.Get;
 using Dialysis.DeviceIngestion.Features.Observations.Search;
-using Dialysis.Gateway.Features.Fhir;
 using Dialysis.SharedKernel.Abstractions;
 using Dialysis.SharedKernel.ValueObjects;
 using Intercessor.Abstractions;

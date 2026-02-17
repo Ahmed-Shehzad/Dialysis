@@ -19,7 +19,7 @@ Patient Data Management System for dialysis workflows. Built with **Vertical Sli
 | **Dialysis.Contracts** | Domain/integration events (`ObservationCreated`) |
 | **Dialysis.Persistence** | Repository abstractions, EF Core, `DialysisDbContext` |
 | **Dialysis.DeviceIngestion** | Module: vitals + HL7 ingestion (vertical slices) |
-| **Dialysis.Alerting** | Module: event handlers (e.g. `ObservationCreatedAlertHandler`) |
+| **Dialysis.Alerting** | Module: event handlers (e.g. `HypotensionRiskPredictionHandler`, `HypotensionRiskRaisedHandler`) |
 | **Dialysis.Gateway** | Composition root, API host, endpoints |
 
 ## Run
@@ -41,7 +41,22 @@ dotnet run --project src/Dialysis/Dialysis.Gateway/Dialysis.Gateway.csproj
 | POST | `/api/v1/hl7/stream` | Accept raw HL7 v2 ORU (Mirth → PDMS), parse PID/OBX, create Observations |
 | GET | `/api/v1/alerts?patientId=` | List alerts for a patient |
 | POST | `/api/v1/alerts/{id}/acknowledge` | Acknowledge an alert |
+| POST | `/api/v1/sessions` | Start dialysis session |
+| GET | `/api/v1/sessions?patientId=` | List sessions for patient |
+| PUT | `/api/v1/sessions/{id}/complete` | Complete session with UF |
+| GET | `/api/v1/session-summary/sessions/{id}` | FHIR bundle: Encounter + Observations + Procedure |
+| POST | `/api/v1/session-summary/publish` | Publish from JSON mock |
+| POST | `/api/v1/audit` | Record audit event |
+| GET | `/api/v1/audit` | Query audit events |
+| GET | `/api/v1/adequacy?patientId=` | Latest URR, Kt/V, Hb, etc. |
+| POST | `/api/v1/vascular-access` | Create vascular access |
+| GET | `/api/v1/vascular-access?patientId=` | List vascular access |
+| GET | `/api/v1/cohorts/query` | Cohort by hasActiveAlert, sessionFrom, sessionTo |
+| GET | `/api/v1/cohorts/export` | Export cohort as JSON/CSV |
+| GET | `/api/v1/quality/bundle` | De-identified quality bundle |
 | GET | `/fhir/r4/metadata` | CapabilityStatement (FHIR metadata) |
+| GET | `/fhir/r4/Procedure?patient=` | Dialysis sessions as FHIR Procedure |
+| GET | `/fhir/r4/Patient/{id}/everything` | Bundle: Patient + Observations + Procedures |
 | GET | `/fhir/r4/Patient/{id}` | Read Patient (FHIR R4) |
 | GET | `/fhir/r4/Observation?patient={id}` | Search Observations (FHIR R4 Bundle) |
 
@@ -71,5 +86,5 @@ Returns `202 Accepted` with `{ messageId, status: "Accepted" }`. Parses PID (pat
 
 - **CQRS**: Intercessor (`IngestVitalsCommand` → `IngestVitalsHandler`)
 - **Validation**: Verifier (FluentValidation-style)
-- **Events**: `ObservationCreated` → `ObservationCreatedAlertHandler` (in-process via Intercessor)
+- **Events**: `ObservationCreated` → `HypotensionRiskPredictionHandler` → `HypotensionRiskRaised` → `HypotensionRiskRaisedHandler` (in-process via Intercessor)
 - **Multi-tenancy**: `X-Tenant-Id` header (default: `default`)

@@ -1,6 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-
 using Transponder.Persistence.Abstractions;
 using Transponder.Persistence.EntityFramework.Abstractions;
 

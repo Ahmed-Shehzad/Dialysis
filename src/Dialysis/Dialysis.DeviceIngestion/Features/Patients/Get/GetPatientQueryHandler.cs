@@ -1,20 +1,21 @@
-using Dialysis.Persistence.Abstractions;
+using Dialysis.Domain.Entities;
+using Dialysis.Persistence;
+using Dialysis.Persistence.Queries;
 
 using Intercessor.Abstractions;
 
 namespace Dialysis.DeviceIngestion.Features.Patients.Get;
 
-public sealed class GetPatientQueryHandler : IQueryHandler<GetPatientQuery, Domain.Entities.Patient?>
+public sealed class GetPatientQueryHandler : IQueryHandler<GetPatientQuery, Patient?>
 {
-    private readonly IPatientRepository _patientRepository;
+    private readonly DialysisDbContext _db;
 
-    public GetPatientQueryHandler(IPatientRepository patientRepository)
-    {
-        _patientRepository = patientRepository;
-    }
+    public GetPatientQueryHandler(DialysisDbContext db) => _db = db;
 
-    public async Task<Domain.Entities.Patient?> HandleAsync(GetPatientQuery request, CancellationToken cancellationToken = default)
+    public async Task<Patient?> HandleAsync(GetPatientQuery request, CancellationToken cancellationToken = default)
     {
-        return await _patientRepository.GetByIdAsync(request.TenantId, request.LogicalId, cancellationToken);
+        var tenantStr = request.TenantId.Value;
+        var logicalIdStr = request.LogicalId.Value;
+        return await CompiledQueries.GetPatientById(_db, tenantStr, logicalIdStr);
     }
 }

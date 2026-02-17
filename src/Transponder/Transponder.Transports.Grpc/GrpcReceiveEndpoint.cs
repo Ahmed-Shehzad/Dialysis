@@ -1,7 +1,4 @@
 using Polly;
-
-using Transponder;
-using Transponder.Transports;
 using Transponder.Transports.Abstractions;
 
 namespace Transponder.Transports.Grpc;

@@ -18,7 +18,10 @@ public sealed class TenantResolutionMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var tenantId = context.Request.Headers[HeaderName].FirstOrDefault() ?? DefaultTenantId;
+        var tenantId = context.Request.Headers[HeaderName].FirstOrDefault();
+        if (string.IsNullOrEmpty(tenantId) && context.User.Identity?.IsAuthenticated == true)
+            tenantId = context.User.FindFirst("tenant_id")?.Value ?? context.User.FindFirst("tenantid")?.Value;
+        tenantId ??= DefaultTenantId;
         context.Items[TenantIdKey] = tenantId;
         context.Response.Headers[HeaderName] = tenantId;
         await _next(context);

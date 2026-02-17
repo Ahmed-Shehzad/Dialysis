@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Logging;
 
 using Transponder.Abstractions;
-using Transponder.Persistence;
-using Transponder.Transports;
 using Transponder.Transports.Abstractions;
 
 namespace Transponder;

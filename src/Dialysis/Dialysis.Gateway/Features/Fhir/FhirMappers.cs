@@ -1,8 +1,4 @@
 using System.Text.Json;
-
-using Dialysis.Domain.Aggregates;
-using Dialysis.Domain.Entities;
-
 using global::Hl7.Fhir.Model;
 using global::Hl7.Fhir.Serialization;
 
@@ -15,22 +11,23 @@ public static class FhirMappers
 {
     private const string LoincSystem = "http://loinc.org";
     private const string UcumSystem = "http://unitsofmeasure.org";
+    private const string SnomedSystem = "http://snomed.info/sct";
 
-    public static global::Hl7.Fhir.Model.Patient ToFhirPatient(Dialysis.Domain.Entities.Patient patient, string baseUrl)
+    public static Patient ToFhirPatient(Dialysis.Domain.Entities.Patient patient, string baseUrl)
     {
-        var fhir = new global::Hl7.Fhir.Model.Patient
+        var fhir = new Patient
         {
             Id = patient.LogicalId.Value,
             Identifier =
             [
-                new global::Hl7.Fhir.Model.Identifier("urn:dialysis:patient", patient.LogicalId.Value)
+                new Identifier("urn:dialysis:patient", patient.LogicalId.Value)
             ],
             Active = true
         };
 
         if (patient.FamilyName is not null || patient.GivenNames is not null)
         {
-            var name = new global::Hl7.Fhir.Model.HumanName
+            var name = new HumanName
             {
                 Family = patient.FamilyName,
                 Given = patient.GivenNames is not null ? [patient.GivenNames] : []
@@ -44,36 +41,36 @@ public static class FhirMappers
         return fhir;
     }
 
-    public static global::Hl7.Fhir.Model.Observation ToFhirObservation(Dialysis.Domain.Aggregates.Observation observation, string baseUrl)
+    public static Observation ToFhirObservation(Dialysis.Domain.Aggregates.Observation observation, string baseUrl)
     {
-        var fhir = new global::Hl7.Fhir.Model.Observation
+        var fhir = new Observation
         {
             Id = observation.Id.ToString(),
-            Status = global::Hl7.Fhir.Model.ObservationStatus.Final,
-            Code = new global::Hl7.Fhir.Model.CodeableConcept(LoincSystem, observation.LoincCode.Value, observation.Display ?? observation.LoincCode.Value),
-            Subject = new global::Hl7.Fhir.Model.ResourceReference($"{baseUrl}Patient/{observation.PatientId.Value}"),
-            Effective = new global::Hl7.Fhir.Model.FhirDateTime(observation.Effective.Value)
+            Status = ObservationStatus.Final,
+            Code = new CodeableConcept(LoincSystem, observation.LoincCode.Value, observation.Display ?? observation.LoincCode.Value),
+            Subject = new ResourceReference($"{baseUrl}Patient/{observation.PatientId.Value}"),
+            Effective = new FhirDateTime(observation.Effective.Value)
         };
 
         if (observation.NumericValue.HasValue && observation.Unit is not null)
         {
-            fhir.Value = new global::Hl7.Fhir.Model.Quantity(observation.NumericValue.Value, observation.Unit.Value, UcumSystem);
+            fhir.Value = new Quantity(observation.NumericValue.Value, observation.Unit.Value, UcumSystem);
         }
 
         return fhir;
     }
 
-    public static global::Hl7.Fhir.Model.Bundle ToFhirSearchBundle(IReadOnlyList<global::Hl7.Fhir.Model.Observation> observations, string baseUrl)
+    public static Bundle ToFhirSearchBundle(IReadOnlyList<Observation> observations, string baseUrl)
     {
-        var bundle = new global::Hl7.Fhir.Model.Bundle
+        var bundle = new Bundle
         {
-            Type = global::Hl7.Fhir.Model.Bundle.BundleType.Searchset,
+            Type = Bundle.BundleType.Searchset,
             Total = observations.Count
         };
 
         foreach (var obs in observations)
         {
-            bundle.Entry.Add(new global::Hl7.Fhir.Model.Bundle.EntryComponent
+            bundle.Entry.Add(new Bundle.EntryComponent
             {
                 FullUrl = $"{baseUrl}Observation/{obs.Id}",
                 Resource = obs
@@ -83,8 +80,146 @@ public static class FhirMappers
         return bundle;
     }
 
+    /// <summary>Map dialysis Session to FHIR Encounter (dialysis visit). 1 Session = 1 Encounter.</summary>
+    public static Encounter ToFhirEncounter(Dialysis.Domain.Aggregates.Session session, string baseUrl)
+    {
+        var status = session.Status == Domain.Aggregates.SessionStatus.Completed
+            ? Encounter.EncounterStatus.Finished
+            : Encounter.EncounterStatus.InProgress;
+
+        var fhir = new Encounter
+        {
+            Id = session.Id.ToString(),
+            Status = status,
+            Class = new Coding("http://terminology.hl7.org/CodeSystem/v3-ActCode", "AMB", "ambulatory"),
+            Type =
+            [
+                new CodeableConcept(SnomedSystem, "108290001", "Dialysis")
+            ],
+            Subject = new ResourceReference($"{baseUrl}Patient/{session.PatientId.Value}"),
+            Period = new Period
+            {
+                Start = session.StartedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                End = session.EndedAt?.ToString("yyyy-MM-ddTHH:mm:sszzz")
+            }
+        };
+        return fhir;
+    }
+
+    /// <summary>Map dialysis Session to FHIR Procedure (hemodialysis).</summary>
+    public static Procedure ToFhirProcedure(Dialysis.Domain.Aggregates.Session session, string baseUrl)
+    {
+        var fhir = new Procedure
+        {
+            Id = session.Id.ToString(),
+            Status = session.Status == Domain.Aggregates.SessionStatus.Completed ? EventStatus.Completed : EventStatus.InProgress,
+            Code = new CodeableConcept(SnomedSystem, "302497006", "Hemodialysis"),
+            Subject = new ResourceReference($"{baseUrl}Patient/{session.PatientId.Value}"),
+            Encounter = new ResourceReference($"{baseUrl}Encounter/{session.Id}")
+        };
+
+        fhir.Performed = new Period
+        {
+            Start = session.StartedAt.ToString("yyyy-MM-ddTHH:mm:sszzz"),
+            End = session.EndedAt?.ToString("yyyy-MM-ddTHH:mm:sszzz")
+        };
+
+        if (session.UfRemovedKg.HasValue)
+        {
+            fhir.Note =
+            [
+                new Annotation
+                {
+                    Text = $"Ultrafiltration removed: {session.UfRemovedKg} kg"
+                }
+            ];
+        }
+
+        if (!string.IsNullOrWhiteSpace(session.AccessSite))
+        {
+            fhir.BodySite =
+            [
+                new CodeableConcept
+                {
+                    Text = session.AccessSite
+                }
+            ];
+        }
+
+        return fhir;
+    }
+
+    public static Bundle ToFhirProcedureSearchBundle(IReadOnlyList<Procedure> procedures, string baseUrl)
+    {
+        var bundle = new Bundle
+        {
+            Type = Bundle.BundleType.Searchset,
+            Total = procedures.Count
+        };
+
+        foreach (var proc in procedures)
+        {
+            bundle.Entry.Add(new Bundle.EntryComponent
+            {
+                FullUrl = $"{baseUrl}Procedure/{proc.Id}",
+                Resource = proc
+            });
+        }
+
+        return bundle;
+    }
+
+    /// <summary>Map domain Condition to FHIR Condition.</summary>
+    public static global::Hl7.Fhir.Model.Condition ToFhirCondition(Dialysis.Domain.Entities.Condition condition, string baseUrl)
+    {
+        var fhir = new global::Hl7.Fhir.Model.Condition
+        {
+            Id = condition.Id.ToString(),
+            ClinicalStatus = new CodeableConcept("http://terminology.hl7.org/CodeSystem/condition-clinical", condition.ClinicalStatus),
+            VerificationStatus = new CodeableConcept("http://terminology.hl7.org/CodeSystem/condition-ver-status", condition.VerificationStatus),
+            Code = new CodeableConcept(condition.CodeSystem, condition.Code, condition.Display),
+            Subject = new ResourceReference($"{baseUrl}Patient/{condition.PatientId.Value}")
+        };
+        if (condition.OnsetDateTime.HasValue)
+            fhir.Onset = new FhirDateTime(condition.OnsetDateTime.Value);
+        if (condition.RecordedDate.HasValue)
+            fhir.RecordedDate = condition.RecordedDate.Value.ToString("yyyy-MM-dd");
+        return fhir;
+    }
+
+    /// <summary>Map domain EpisodeOfCare to FHIR EpisodeOfCare.</summary>
+    public static global::Hl7.Fhir.Model.EpisodeOfCare ToFhirEpisodeOfCare(Dialysis.Domain.Entities.EpisodeOfCare episode, string baseUrl)
+    {
+        var fhir = new global::Hl7.Fhir.Model.EpisodeOfCare
+        {
+            Id = episode.Id.ToString(),
+            Status = Enum.TryParse<global::Hl7.Fhir.Model.EpisodeOfCare.EpisodeOfCareStatus>(episode.Status, ignoreCase: true, out var statusEnum)
+                ? statusEnum
+                : global::Hl7.Fhir.Model.EpisodeOfCare.EpisodeOfCareStatus.Active,
+            Patient = new ResourceReference($"{baseUrl}Patient/{episode.PatientId.Value}")
+        };
+        if (!string.IsNullOrEmpty(episode.Description))
+            fhir.Type = [new CodeableConcept { Text = episode.Description }];
+        if (episode.PeriodStart.HasValue || episode.PeriodEnd.HasValue)
+        {
+            fhir.Period = new Period
+            {
+                Start = episode.PeriodStart?.ToString("yyyy-MM-dd"),
+                End = episode.PeriodEnd?.ToString("yyyy-MM-dd")
+            };
+        }
+        foreach (var condId in episode.DiagnosisConditionIds)
+        {
+            fhir.Diagnosis.Add(new global::Hl7.Fhir.Model.EpisodeOfCare.DiagnosisComponent
+            {
+                Condition = new ResourceReference($"{baseUrl}Condition/{condId}")
+            });
+        }
+        return fhir;
+    }
+
     private static readonly JsonSerializerOptions FhirJsonOptions =
-        new JsonSerializerOptions().ForFhir(global::Hl7.Fhir.Model.ModelInfo.ModelInspector).Pretty();
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector).Pretty();
 
     /// <summary>
     /// Serialize a FHIR resource to JSON using Firely's serializer (FHIR-compliant format).
@@ -100,7 +235,7 @@ public static class FhirMappers
     /// </summary>
     public static (string LogicalId, string? FamilyName, string? GivenNames, DateTime? BirthDate) FromFhirPatientJson(string json)
     {
-        var fhir = JsonSerializer.Deserialize<global::Hl7.Fhir.Model.Patient>(json, FhirJsonOptions)
+        var fhir = JsonSerializer.Deserialize<Patient>(json, FhirJsonOptions)
             ?? throw new ArgumentException("Invalid FHIR Patient JSON.");
 
         var logicalId = fhir.Id

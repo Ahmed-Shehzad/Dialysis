@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using Transponder.Persistence.Abstractions;
-
 namespace Transponder.Persistence.EntityFramework.Tests;
 
 public sealed class EntityFrameworkOutboxStoreTests
