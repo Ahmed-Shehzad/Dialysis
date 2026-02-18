@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 
 using BuildingBlocks;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Abstractions;
@@ -14,10 +15,12 @@ namespace Dialysis.Treatment.Infrastructure.Persistence;
 public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, ITreatmentSessionRepository
 {
     private readonly TreatmentDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public TreatmentSessionRepository(TreatmentDbContext db) : base(db)
+    public TreatmentSessionRepository(TreatmentDbContext db, ITenantContext tenant) : base(db)
     {
         _db = db;
+        _tenant = tenant;
     }
 
     public async Task<TreatmentSession?> GetBySessionIdAsync(SessionId sessionId, CancellationToken cancellationToken = default)
@@ -25,14 +28,14 @@ public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, I
         return await _db.TreatmentSessions
             .AsNoTracking()
             .Include(s => s.Observations)
-            .FirstOrDefaultAsync(s => s.SessionId == sessionId, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TenantId == _tenant.TenantId && s.SessionId == sessionId, cancellationToken);
     }
 
     public async Task<TreatmentSession> GetOrCreateAsync(SessionId sessionId, MedicalRecordNumber? patientMrn, DeviceId? deviceId, CancellationToken cancellationToken = default)
     {
         TreatmentSession? existing = await _db.TreatmentSessions
             .Include(s => s.Observations)
-            .FirstOrDefaultAsync(s => s.SessionId == sessionId, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TenantId == _tenant.TenantId && s.SessionId == sessionId, cancellationToken);
 
         if (existing is not null)
         {
@@ -40,7 +43,7 @@ public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, I
             return existing;
         }
 
-        var session = TreatmentSession.Start(sessionId, patientMrn, deviceId);
+        var session = TreatmentSession.Start(sessionId, patientMrn, deviceId, _tenant.TenantId);
         _ = _db.TreatmentSessions.Add(session);
         return session;
     }
@@ -67,6 +70,26 @@ public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, I
 
     public async override Task<TreatmentSession?> GetAsync(Expression<Func<TreatmentSession, bool>> expression, CancellationToken cancellationToken = default) =>
         await _db.TreatmentSessions.FirstOrDefaultAsync(expression, cancellationToken);
+
+    public async Task<IReadOnlyList<Observation>> GetObservationsInTimeRangeAsync(
+        SessionId sessionId,
+        DateTimeOffset startUtc,
+        DateTimeOffset endUtc,
+        CancellationToken cancellationToken = default)
+    {
+        TreatmentSession? session = await _db.TreatmentSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.TenantId == _tenant.TenantId && s.SessionId == sessionId, cancellationToken);
+        if (session is null) return [];
+
+        return await _db.Observations
+            .AsNoTracking()
+            .Where(o => o.TreatmentSessionId == session.Id &&
+                        o.ObservedAtUtc >= startUtc &&
+                        o.ObservedAtUtc <= endUtc)
+            .OrderBy(o => o.ObservedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
 
     public override void Update(TreatmentSession entity) => _db.Update(entity);
     public override void Update(IEnumerable<TreatmentSession> entities) => _db.UpdateRange(entities);

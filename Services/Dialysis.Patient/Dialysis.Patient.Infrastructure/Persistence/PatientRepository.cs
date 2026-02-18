@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 
 using BuildingBlocks;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Application.Abstractions;
@@ -15,24 +16,51 @@ namespace Dialysis.Patient.Infrastructure.Persistence;
 public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepository
 {
     private readonly PatientDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public PatientRepository(PatientDbContext db) : base(db)
+    public PatientRepository(PatientDbContext db, ITenantContext tenant) : base(db)
     {
         _db = db;
+        _tenant = tenant;
     }
 
     public async Task<PatientDomain?> GetByMrnAsync(MedicalRecordNumber mrn, CancellationToken cancellationToken = default)
     {
         return await _db.Patients
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.MedicalRecordNumber == mrn, cancellationToken);
+            .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.MedicalRecordNumber == mrn, cancellationToken);
+    }
+
+    public async Task<PatientDomain?> GetByPersonNumberAsync(string personNumber, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(personNumber)) return null;
+        return await _db.Patients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.PersonNumber == personNumber, cancellationToken);
+    }
+
+    public async Task<PatientDomain?> GetBySsnAsync(string socialSecurityNumber, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(socialSecurityNumber)) return null;
+        return await _db.Patients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.SocialSecurityNumber == socialSecurityNumber, cancellationToken);
     }
 
     public async Task<IReadOnlyList<PatientDomain>> SearchByNameAsync(Person name, CancellationToken cancellationToken = default)
     {
         return await _db.Patients
             .AsNoTracking()
-            .Where(p => p.Name.FirstName == name.FirstName && p.Name.LastName == name.LastName)
+            .Where(p => p.TenantId == _tenant.TenantId && p.Name.FirstName == name.FirstName && p.Name.LastName == name.LastName)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<PatientDomain>> SearchByLastNameAsync(string lastName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(lastName)) return [];
+        return await _db.Patients
+            .AsNoTracking()
+            .Where(p => p.TenantId == _tenant.TenantId && p.Name.LastName == lastName)
             .ToListAsync(cancellationToken);
     }
 

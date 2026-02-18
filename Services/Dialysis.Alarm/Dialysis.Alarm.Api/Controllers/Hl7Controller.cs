@@ -40,7 +40,7 @@ public sealed class Hl7Controller : ControllerBase
 
         var command = new IngestOruR40MessageCommand(request.RawHl7Message);
         IngestOruR40MessageResponse response = await _sender.SendAsync(command, cancellationToken);
-        var resourceId = response.AlarmIds.Count > 0 ? string.Join(",", response.AlarmIds) : null;
+        string? resourceId = response.AlarmIds.Count > 0 ? string.Join(",", response.AlarmIds) : null;
         await _audit.RecordAsync(new AuditRecordRequest(
             AuditAction.Create, "Alarm", resourceId, User.Identity?.Name,
             AuditOutcome.Success, "HL7 ORU-R40 alarm ingest", _tenant.TenantId), cancellationToken);

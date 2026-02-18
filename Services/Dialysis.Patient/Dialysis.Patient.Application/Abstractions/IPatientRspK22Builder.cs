@@ -11,4 +11,7 @@ public interface IPatientRspK22Builder
     string BuildFromPatients(IReadOnlyList<DomainPatient> patients, QbpQ22ParseResult query);
 
     string BuildNoDataFound(QbpQ22ParseResult query);
+
+    /// <summary>Builds RSP^K22 with application error (AE) or reject (AR).</summary>
+    string BuildError(QbpQ22ParseResult query, string ackCode = "AE");
 }

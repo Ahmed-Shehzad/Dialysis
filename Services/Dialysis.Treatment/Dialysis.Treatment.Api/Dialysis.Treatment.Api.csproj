@@ -7,9 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
         <ProjectReference Include="..\Dialysis.Treatment.Application\Dialysis.Treatment.Application.csproj" />
         <ProjectReference Include="..\Dialysis.Treatment.Infrastructure\Dialysis.Treatment.Infrastructure.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
+        <ProjectReference Include="..\..\..\Transponder\Transponder.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Transports.SignalR\Transponder.Transports.SignalR.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
     </ItemGroup>
 
@@ -17,6 +20,10 @@
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>

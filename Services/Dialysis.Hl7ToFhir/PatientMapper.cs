@@ -46,7 +46,6 @@ public static class PatientMapper
             "M" => AdministrativeGender.Male,
             "F" => AdministrativeGender.Female,
             "O" => AdministrativeGender.Other,
-            "U" => AdministrativeGender.Unknown,
             _ => AdministrativeGender.Unknown
         };
     }

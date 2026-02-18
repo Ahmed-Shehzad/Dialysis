@@ -1,4 +1,5 @@
 using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Domain;
@@ -34,6 +35,7 @@ internal sealed class TreatmentSessionConfiguration : IEntityTypeConfiguration<T
         _ = e.ToTable("TreatmentSessions");
         _ = e.HasKey(x => x.Id);
         _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
+        _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
         _ = e.Property(x => x.SessionId)
             .HasConversion(v => v.Value, v => new SessionId(v))
             .IsRequired();
@@ -44,7 +46,7 @@ internal sealed class TreatmentSessionConfiguration : IEntityTypeConfiguration<T
         _ = e.Property(x => x.Modality).HasConversion(NullableStringConverter<TreatmentModality>(v => v.Value, v => new TreatmentModality(v)));
         _ = e.Property(x => x.Phase).HasConversion(NullableStringConverter<EventPhase>(v => v.Value, v => new EventPhase(v)));
 
-        _ = e.HasIndex(x => x.SessionId).IsUnique();
+        _ = e.HasIndex(x => new { x.TenantId, x.SessionId }).IsUnique();
         _ = e.HasIndex(x => x.DeviceId);
         _ = e.HasIndex(x => x.PatientMrn);
         _ = e.HasIndex(x => x.Status);
@@ -77,6 +79,7 @@ internal sealed class ObservationConfiguration : IEntityTypeConfiguration<Observ
         _ = e.HasIndex(x => x.TreatmentSessionId);
         _ = e.HasIndex(x => new { x.TreatmentSessionId, x.Code, x.SubId });
         _ = e.HasIndex(x => new { x.TreatmentSessionId, x.Level });
+        _ = e.HasIndex(x => new { x.TreatmentSessionId, x.ObservedAtUtc }).HasDatabaseName("IX_Observations_SessionId_ObservedAtUtc");
     }
 
     private static ValueConverter<T?, string?> NullableStringConverter<T>(Func<T, string> toStore, Func<string, T> fromStore)

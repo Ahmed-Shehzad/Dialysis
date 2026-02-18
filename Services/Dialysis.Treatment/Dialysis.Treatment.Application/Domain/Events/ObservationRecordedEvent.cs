@@ -6,7 +6,10 @@ namespace Dialysis.Treatment.Application.Domain.Events;
 
 public sealed record ObservationRecordedEvent(
     Ulid TreatmentSessionId,
+    string SessionId,
     Ulid ObservationId,
     ObservationCode Code,
     string? Value,
-    string? Unit) : DomainEvent;
+    string? Unit,
+    string? SubId,
+    string? ChannelName = null) : DomainEvent;

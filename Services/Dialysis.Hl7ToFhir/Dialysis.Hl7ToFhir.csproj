@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="Hl7.Fhir.R4" />
+        <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.csproj" />
     </ItemGroup>
 
 </Project>

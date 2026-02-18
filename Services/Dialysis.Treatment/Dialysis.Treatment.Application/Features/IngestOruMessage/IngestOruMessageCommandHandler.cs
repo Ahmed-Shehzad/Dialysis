@@ -28,7 +28,9 @@ internal sealed class IngestOruMessageCommandHandler : ICommandHandler<IngestOru
             parseResult.PatientMrn,
             parseResult.DeviceId,
             parseResult.Phase,
-            parseResult.Observations);
+            parseResult.Observations,
+            parseResult.DeviceEui64,
+            parseResult.TherapyId);
 
         RecordObservationResponse response = await _sender.SendAsync(recordCommand, cancellationToken);
         return new IngestOruMessageResponse(response.SessionId, response.ObservationCount, true);

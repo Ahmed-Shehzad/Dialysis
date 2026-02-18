@@ -1,3 +1,5 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Patient.Application.Abstractions;
 
 using Intercessor.Abstractions;
@@ -7,10 +9,12 @@ namespace Dialysis.Patient.Application.Features.RegisterPatient;
 internal sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPatientCommand, RegisterPatientResponse>
 {
     private readonly IPatientRepository _repository;
+    private readonly ITenantContext _tenant;
 
-    public RegisterPatientCommandHandler(IPatientRepository repository)
+    public RegisterPatientCommandHandler(IPatientRepository repository, ITenantContext tenant)
     {
         _repository = repository;
+        _tenant = tenant;
     }
 
     public async Task<RegisterPatientResponse> HandleAsync(RegisterPatientCommand request, CancellationToken cancellationToken = default)
@@ -19,7 +23,8 @@ internal sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPa
             request.MedicalRecordNumber,
             request.Name,
             request.DateOfBirth,
-            request.Gender);
+            request.Gender,
+            _tenant.TenantId);
 
         await _repository.AddAsync(patient, cancellationToken);
 

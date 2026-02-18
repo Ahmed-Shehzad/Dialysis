@@ -32,10 +32,32 @@ internal sealed class ProcessQbpQ22QueryCommandHandler : ICommandHandler<Process
                 new MedicalRecordNumber(query.Mrn), cancellationToken);
             patients = patient is not null ? [patient] : [];
         }
+        else if (!string.IsNullOrWhiteSpace(query.PersonNumber))
+        {
+            Domain.Patient? patient = await _repository.GetByPersonNumberAsync(query.PersonNumber, cancellationToken);
+            patients = patient is not null ? [patient] : [];
+        }
+        else if (!string.IsNullOrWhiteSpace(query.SocialSecurityNumber))
+        {
+            Domain.Patient? patient = await _repository.GetBySsnAsync(query.SocialSecurityNumber, cancellationToken);
+            patients = patient is not null ? [patient] : [];
+        }
+        else if (!string.IsNullOrWhiteSpace(query.UniversalId))
+        {
+            Domain.Patient? patient = await _repository.GetByMrnAsync(
+                new MedicalRecordNumber(query.UniversalId), cancellationToken);
+            patients = patient is not null ? [patient] : [];
+        }
         else
         {
-            patients = await _repository.SearchByNameAsync(
-                new Person(query.FirstName ?? "", query.LastName ?? ""), cancellationToken);
+            string? firstName = query.FirstName;
+            string? lastName = query.LastName;
+            if (!string.IsNullOrWhiteSpace(firstName) && !string.IsNullOrWhiteSpace(lastName))
+                patients = await _repository.SearchByNameAsync(new Person(firstName, lastName), cancellationToken);
+            else if (!string.IsNullOrWhiteSpace(lastName))
+                patients = await _repository.SearchByLastNameAsync(lastName, cancellationToken);
+            else
+                patients = [];
         }
 
         string rspK22 = patients.Count > 0

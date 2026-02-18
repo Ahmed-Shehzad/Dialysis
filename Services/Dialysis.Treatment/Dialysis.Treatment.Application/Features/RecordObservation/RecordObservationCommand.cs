@@ -12,4 +12,6 @@ public sealed record RecordObservationCommand(
     MedicalRecordNumber? PatientMrn,
     DeviceId? DeviceId,
     EventPhase? Phase,
-    IReadOnlyList<ObservationInfo> Observations) : ICommand<RecordObservationResponse>;
+    IReadOnlyList<ObservationInfo> Observations,
+    string? DeviceEui64 = null,
+    string? TherapyId = null) : ICommand<RecordObservationResponse>;

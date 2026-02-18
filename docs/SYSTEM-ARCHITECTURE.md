@@ -10,9 +10,9 @@ The Dialysis PDMS follows **Microservice Architecture**, **Domain Driven Design 
 |---------|------------|
 | Mediator | Intercessor |
 | Validation | Verifier |
-| Messaging | Transponder (Azure Service Bus) |
+| Messaging | Transponder (SignalR, Azure Service Bus, RabbitMQ, Kafka) |
 | Long-running transactions | Transponder Saga Orchestration |
-| Real-time | SignalR |
+| Real-time | SignalR (via Transponder) |
 | Database | PostgreSQL |
 
 ---
@@ -37,7 +37,7 @@ flowchart TB
             TreatmentSvc[Treatment Service - implemented]
             PrescriptionSvc[Prescription Service - implemented]
             DeviceSvc[Device Service]
-            AlarmSvc[Alarm Service]
+            AlarmSvc[Alarm Service - implemented]
         end
     end
 
@@ -279,9 +279,9 @@ sequenceDiagram
 
 **Development**: `Authentication:JwtBearer:DevelopmentBypass: true` in Development allows requests without a valid JWT for local testing.
 
-**Multi-tenancy**: `X-Tenant-Id` header; default `default` when omitted. `TenantResolutionMiddleware` runs early; `ITenantContext` provides tenant for the request. Prescription persistence is tenant-scoped: prescriptions are stored and queried by `TenantId`.
+**Multi-tenancy**: `X-Tenant-Id` header; default `default` when omitted. `TenantResolutionMiddleware` runs early; `ITenantContext` provides tenant for the request. All bounded contexts are tenant-scoped: Prescription, Patient, Treatment, and Alarm persistence filter by `TenantId`.
 
-**Audit**: `IAuditRecorder` logs security-relevant actions (prescription read/ingest, QBP^D01 query) via structured logging. C5 compliant.
+**Audit**: `IAuditRecorder` logs security-relevant actions. Use `AddFhirAuditRecorder()` (Prescription API) to store events for FHIR export: `GET /api/audit-events` returns a FHIR Bundle of `AuditEvent` resources. C5 compliant.
 
 ---
 
@@ -365,11 +365,13 @@ sequenceDiagram
     participant SignalRHub
     participant Clients
 
-    DialysisMachine->>API: HL7 ORU (PCD-01)
+    DialysisMachine->>API: HL7 ORU (PCD-01) / ORU-R40 (PCD-04)
     API->>API: Process and persist
-    API->>SignalRHub: Broadcast observation
+    API->>SignalRHub: Broadcast observation / alarm
     SignalRHub->>Clients: Real-time update
 ```
+
+**Treatment**: Observations via `signalr://group/session:{sessionId}`. **Alarm**: Alarms via `signalr://group/session:{sessionId}` or `signalr://group/device:{deviceId}`.
 
 ---
 
@@ -407,7 +409,61 @@ flowchart LR
 
 ---
 
-## 12. Migrations (EF Core)
+## 12. Treatment FHIR Endpoint
+
+`GET /api/treatment-sessions/{sessionId}/fhir` returns a FHIR R4 Bundle containing a `Procedure` (hemodialysis session) and related `Observation` resources (device observations). Uses `ProcedureMapper` and `ObservationMapper` from Dialysis.Hl7ToFhir.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant TreatmentSessionsController
+    participant GetTreatmentSessionQuery
+    participant ProcedureMapper
+    participant ObservationMapper
+    participant FhirJsonHelper
+
+    Client->>TreatmentSessionsController: GET /api/treatment-sessions/{id}/fhir
+    TreatmentSessionsController->>GetTreatmentSessionQuery: Send(query)
+    GetTreatmentSessionQuery-->>TreatmentSessionsController: GetTreatmentSessionResponse
+    TreatmentSessionsController->>ProcedureMapper: ToFhirProcedure(...)
+    ProcedureMapper-->>TreatmentSessionsController: Procedure
+    TreatmentSessionsController->>ObservationMapper: ToFhirObservation (per obs)
+    ObservationMapper-->>TreatmentSessionsController: Observation[]
+    TreatmentSessionsController->>FhirJsonHelper: ToJson(Bundle)
+    TreatmentSessionsController-->>Client: application/fhir+json (Bundle)
+```
+
+**Response:** `Bundle` (type `collection`) with `Procedure` + `Observation`s. Requires `TreatmentRead` scope. Audited via `IAuditRecorder`.
+
+---
+
+## 14. SignalR Real-Time Observations (Transponder)
+
+The Treatment API uses **Transponder SignalR transport** for real-time device observation broadcast. When an ORU^R01 message is ingested, `ObservationRecordedEvent` is raised; `ObservationRecordedTransponderHandler` sends `ObservationRecordedMessage` via Transponder to `signalr://group/session:{sessionId}`.
+
+**Flow:**
+1. Client connects to Transponder hub at `/transponder/transport` with JWT (`access_token` query param).
+2. Client calls `JoinGroup("session:THERAPY001")` to subscribe to a treatment session.
+3. As HL7 ORU messages are ingested, observations are sent to the group via Transponder (method `Send`).
+4. Client receives `SignalRTransportEnvelope` with serialized `ObservationRecordedMessage` in `Body`.
+
+**Endpoint:** `GET /transponder/transport` (Transponder SignalR hub). Requires `TreatmentRead` or `AlarmRead` policy depending on service.
+
+---
+
+## 14a. Alarm API & SignalR (Transponder)
+
+The Alarm API uses **Transponder SignalR transport** for real-time alarm broadcast. When an ORU^R40 message is ingested, `AlarmRaisedEvent` is raised; `AlarmRaisedTransponderHandler` sends `AlarmRecordedMessage` to `signalr://group/session:{sessionId}` (or `device:{deviceId}` when no session). `AlarmRaisedIntegrationEventHandler` publishes `AlarmRaisedIntegrationEvent` via `IPublishEndpoint` for downstream consumers.
+
+**Alarm REST API:**
+- `GET /api/alarms?deviceId=&sessionId=&from=&to=` – List alarms with optional filters (AlarmRead)
+- `POST /api/hl7/alarm` – Ingest ORU^R40 (AlarmWrite), returns ORA^R41
+
+**OBX-8 interpretation:** Priority (PH/PM/PL), type (SP/ST/SA), abnormality (L/H) are parsed and persisted.
+
+---
+
+## 15. Migrations (EF Core)
 
 Prescription service uses EF Core migrations. Apply on startup in Development via `MigrateAsync()`. To add a new migration:
 

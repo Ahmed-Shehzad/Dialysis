@@ -45,3 +45,6 @@ Always provide links to the real files, not x.md or context-generated files.
 
 ## No Current Implementation
 Don't show or discuss the current implementation unless specifically requested.
+
+## Async Method Naming (IDE1006)
+Async methods must end with the `Async` suffix (e.g. `GetByIdAsync`, `HandleAsync`). Enforced via `.editorconfig` naming rule.

@@ -31,7 +31,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
         string? sessionId = ParseSessionId(segments);
         DateTimeOffset? messageTimestamp = ParseMessageTimestamp(segments);
 
-        var alarms = ParseAlarmGroups(segments, deviceId, sessionId, messageTimestamp);
+        List<AlarmInfo> alarms = ParseAlarmGroups(segments, deviceId, sessionId, messageTimestamp);
 
         return new OruR40ParseResult(deviceId, sessionId, alarms);
     }
@@ -63,7 +63,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
 
     private static List<AlarmInfo> ParseAlarmGroups(string[] segments, string? deviceId, string? sessionId, DateTimeOffset? messageTimestamp)
     {
-        var obxList = segments.Where(s => s.StartsWith("OBX", StringComparison.Ordinal)).ToArray();
+        string[] obxList = segments.Where(s => s.StartsWith("OBX", StringComparison.Ordinal)).ToArray();
         var alarms = new List<AlarmInfo>();
 
         for (int i = 0; i + 4 < obxList.Length; i += 5)
@@ -75,7 +75,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
             DateTimeOffset occurredAt = GetEffectiveTime(obx1, messageTimestamp);
             DeviceId? deviceIdVo = string.IsNullOrWhiteSpace(deviceId) ? null : (DeviceId?)new DeviceId(deviceId);
 
-            var finalParams = createParams with { OccurredAt = occurredAt, DeviceId = deviceIdVo, SessionId = sessionId };
+            AlarmCreateParams finalParams = createParams with { OccurredAt = occurredAt, DeviceId = deviceIdVo, SessionId = sessionId };
             alarms.Add(AlarmInfo.Create(finalParams));
         }
 
@@ -116,19 +116,19 @@ public sealed class OruR40Parser : IOruR40MessageParser
         var activityState = new ActivityState(activityStateRaw);
         var state = new AlarmStateDescriptor(eventPhase, alarmState, activityState);
 
-        AlarmPriority? priority = ParsePriorityFromObx8(obx1);
+        (AlarmPriority? priority, string? interpretationType, string? abnormality) = ParseObx8InterpretationCodes(obx1);
         string? displayName = MandatoryAlarmCatalog.GetDisplayName(sourceCode, eventType);
         string alarmType = displayName ?? eventType;
 
-        createParams = new AlarmCreateParams(alarmType, sourceCode, sourceLimits, state, priority, displayName, null, null, DateTimeOffset.UtcNow);
+        createParams = new AlarmCreateParams(alarmType, sourceCode, sourceLimits, state, priority, interpretationType, abnormality, displayName, null, null, DateTimeOffset.UtcNow);
         return true;
     }
 
     private static bool IsExpectedObxStructure(string obx3, string obx4, string obx5, string eventPhase, string alarmState, string activityState)
     {
-        string code3 = ExtractCodedElementCode(ExtractField(obx3, 3) ?? string.Empty);
-        string code4 = ExtractCodedElementCode(ExtractField(obx4, 3) ?? string.Empty);
-        string code5 = ExtractCodedElementCode(ExtractField(obx5, 3) ?? string.Empty);
+        string code3 = ExtractCodedElementPrimaryId(ExtractField(obx3, 3) ?? string.Empty);
+        string code4 = ExtractCodedElementPrimaryId(ExtractField(obx4, 3) ?? string.Empty);
+        string code5 = ExtractCodedElementPrimaryId(ExtractField(obx5, 3) ?? string.Empty);
 
         return code3 == EventPhaseCode && code4 == AlarmStateCode && code5 == ActivityStateCode
                && !string.IsNullOrEmpty(eventPhase) && !string.IsNullOrEmpty(alarmState) && !string.IsNullOrEmpty(activityState);
@@ -141,18 +141,32 @@ public sealed class OruR40Parser : IOruR40MessageParser
         return string.IsNullOrEmpty(range) ? withUnit : $"{withUnit} ({range})";
     }
 
-    private static AlarmPriority? ParsePriorityFromObx8(string obxSegment)
+    /// <summary>
+    /// Parses OBX-8 interpretation codes: priority (PH/PM/PL/PI/PN/PU), type (SP/ST/SA), abnormality (L/H).
+    /// </summary>
+    private static (AlarmPriority? priority, string? interpretationType, string? abnormality) ParseObx8InterpretationCodes(string obxSegment)
     {
         string? obx8 = ExtractField(obxSegment, 8);
-        if (string.IsNullOrEmpty(obx8)) return null;
+        if (string.IsNullOrEmpty(obx8))
+            return (null, null, null);
+
+        AlarmPriority? priority = null;
+        string? interpretationType = null;
+        string? abnormality = null;
+
         string[] codes = obx8.Split('~');
         foreach (string code in codes)
         {
             string c = code.Trim();
             if (c is "PH" or "PM" or "PL" or "PI" or "PN" or "PU")
-                return new AlarmPriority(c);
+                priority = new AlarmPriority(c);
+            else if (c is "SP" or "ST" or "SA")
+                interpretationType = c;
+            else if (c is "L" or "H")
+                abnormality = c;
         }
-        return null;
+
+        return (priority, interpretationType, abnormality);
     }
 
     private static DateTimeOffset GetEffectiveTime(string obxSegment, DateTimeOffset? fallback)
@@ -166,6 +180,21 @@ public sealed class OruR40Parser : IOruR40MessageParser
         if (string.IsNullOrEmpty(ce)) return string.Empty;
         string[] parts = ce.Split(ComponentSeparator);
         return parts.Length >= 2 ? parts[1] : parts[0];
+    }
+
+    /// <summary>
+    /// Extracts the numeric code for structure validation. Handles both formats:
+    /// 68481^MDC_ATTR_EVT_PHASE^MDC (code first) and MDC_ATTR_EVT_PHASE^68481^MDC (identifier first).
+    /// </summary>
+    private static string ExtractCodedElementPrimaryId(string? ce)
+    {
+        if (string.IsNullOrEmpty(ce)) return string.Empty;
+        string[] parts = ce.Split(ComponentSeparator);
+        foreach (string p in parts)
+            if (p.Length > 0 && p.All(char.IsDigit))
+                return p;
+
+        return parts[0];
     }
 
     private static DateTimeOffset? ParseHl7DateTime(string? raw)

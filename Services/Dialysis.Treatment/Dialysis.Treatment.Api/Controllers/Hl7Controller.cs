@@ -3,6 +3,7 @@ using BuildingBlocks.Tenancy;
 
 using Dialysis.Treatment.Api.Contracts;
 using Dialysis.Treatment.Application.Abstractions;
+using Dialysis.Treatment.Application.Features.IngestOruBatch;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
 
 using Intercessor.Abstractions;
@@ -27,6 +28,21 @@ public sealed class Hl7Controller : ControllerBase
         _audit = audit;
         _tenant = tenant;
         _ackBuilder = ackBuilder;
+    }
+
+    [HttpPost("oru/batch")]
+    [Authorize(Policy = "TreatmentWrite")]
+    [ProducesResponseType(typeof(IngestOruBatchResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> IngestOruBatchAsync(
+        [FromBody] IngestOruBatchRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new IngestOruBatchCommand(request.RawHl7Batch);
+        IngestOruBatchResponse response = await _sender.SendAsync(command, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Create, "Treatment", string.Join(",", response.SessionIds), User.Identity?.Name,
+            AuditOutcome.Success, $"HL7 ORU batch ingest ({response.ProcessedCount} messages)", _tenant.TenantId), cancellationToken);
+        return Ok(response);
     }
 
     [HttpPost("oru")]

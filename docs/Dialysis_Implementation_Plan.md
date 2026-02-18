@@ -74,8 +74,8 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 
 - Phase 1: PDQ integration (patient lookup) – **Done** (Dialysis.Patient; REST + HL7 QBP^Q22/RSP^K22 endpoint)
 - Phase 2: Prescription query/response parser – **Done** (Dialysis.Prescription; QBP^D01 parser, RSP^K22 builder/parser/validator, EF migrations, tenant-scoped)
-- Phase 3: PCD-01 device observation consumer – **Done** (Dialysis.Treatment; ORU^R01 parser, ACK^R01 builder, TreatmentSession aggregate)
-- Phase 4: PCD-04 alert consumer – **Done** (Dialysis.Alarm; ORU^R40 parser, ORA^R41 builder, AlarmEscalationService)
+- Phase 3: PCD-01 device observation consumer – **Done** (Dialysis.Treatment; ORU^R01 parser, ACK^R01 builder, TreatmentSession aggregate; time-series API `GET /api/treatment-sessions/{sessionId}/observations?start=&end=`; EUI-64/Therapy_ID from MSH-3/OBR-3; Transponder integration events)
+- Phase 4: PCD-04 alert consumer – **Done** (Dialysis.Alarm; ORU^R40 parser, ORA^R41 builder, AlarmEscalationService; SignalR + Transponder integration events)
 - Phase 5: HL7-to-FHIR adapter – **Done** (Dialysis.Hl7ToFhir; Observation, DetectedIssue, Procedure, Device, Provenance, Patient, Prescription mappers)
 
 ---
@@ -168,17 +168,24 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 | EF Migrations (Prescription) | Done |
 | Unit tests (parsers, builders, handlers) | Done |
 | Process diagrams (docs/PROCESS-DIAGRAMS.md) | Done |
+| Tenant persistence (Patient, Treatment, Alarm) | Done |
+| FHIR AuditEvent (mapper, store, endpoint) | Done |
+| OBX sub-ID dotted notation (IEEE 11073 containment) | Done |
+| Rx Use column mapping (M/C/O from Table 2) | Done |
+| Prescription conflict handling (Reject/Replace/Ignore) | Done |
+| HL7 Batch Protocol (FHS/BHS/BTS/FTS) | Done |
+| SignalR real-time observation broadcast | Done |
+| Alarm SignalR + Transponder integration events | Done |
+| Time-series observations API | Done |
+| Transponder integration events | Done |
+| EUI-64/Therapy_ID (MSH-3, OBR-3) | Done |
 
 ### Remaining (Lower Priority)
 
 | Gap | Priority | Notes |
 |---|---|---|
-| OBX sub-ID dotted notation (IEEE 11073 containment) | P5 | Needed for full containment hierarchy |
-| Rx Use column mapping (M/C/O from Table 2) | P5 | Map prescription-eligible params |
-| Prescription conflict handling | P5 | Discard / callback / partial accept |
-| HL7 Batch Protocol (FHS/BHS/BTS/FTS) | P5 | Run-sheet capture |
-| Integration test: QBP^D01 → RSP^K22 round-trip | P3 | End-to-end verification |
-| Document JWT claims and Mirth token workflow | P3 | Operational docs |
-| Tenant persistence for Patient, Treatment, Alarm | P4 | Currently Prescription only |
-| FHIR AuditEvent resource (vs structured log) | P4 | Currently logging; no FHIR resource |
+| ~~Integration test: QBP^D01 → RSP^K22 round-trip~~ | ~~P3~~ | **Done** – `ProcessQbpD01IntegrationTests` (handler-level, in-memory EF) |
+| ~~Document JWT claims and Mirth token workflow~~ | ~~P3~~ | **Done** – `JWT-AND-MIRTH-INTEGRATION.md` with endpoints, Mirth workflow, troubleshooting |
+| ~~Tenant persistence for Patient, Treatment, Alarm~~ | ~~P4~~ | **Done** – Prescription, Patient, Treatment, Alarm all tenant-scoped |
+| ~~FHIR AuditEvent resource (vs structured log)~~ | ~~P4~~ | **Done** – AuditEventMapper, FhirAuditRecorder, GET /api/audit-events (Prescription API) |
 

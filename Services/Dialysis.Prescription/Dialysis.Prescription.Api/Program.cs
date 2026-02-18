@@ -4,6 +4,7 @@ using BuildingBlocks.Tenancy;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
+using Dialysis.Prescription.Application.Options;
 using Dialysis.Prescription.Infrastructure.Hl7;
 using Dialysis.Prescription.Infrastructure.Persistence;
 
@@ -46,8 +47,10 @@ builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
 builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();
 builder.Services.AddScoped<IRspK22Validator, RspK22Validator>();
-builder.Services.AddAuditRecorder();
+builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
+builder.Services.Configure<PrescriptionIngestionOptions>(
+    builder.Configuration.GetSection(PrescriptionIngestionOptions.SectionName));
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "prescription-db");
@@ -80,6 +83,13 @@ app.UseExceptionHandler(exceptionHandlerApp =>
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new { errorCode = rspEx.ErrorCode, message = rspEx.Message });
+            return;
+        }
+        if (exception is Dialysis.Prescription.Application.Exceptions.PrescriptionConflictException conflictEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { orderId = conflictEx.OrderId, message = conflictEx.Message });
             return;
         }
         if (exception is ArgumentException argEx)

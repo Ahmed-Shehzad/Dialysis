@@ -13,11 +13,13 @@ public sealed record AlarmInfo(
     AlarmState AlarmState,
     ActivityState ActivityState,
     AlarmPriority? Priority,
+    string? InterpretationType,
+    string? Abnormality,
     string? DisplayName,
     DeviceId? DeviceId,
     string? SessionId,
     DateTimeOffset OccurredAt)
 {
     public static AlarmInfo Create(AlarmCreateParams p) =>
-        new(null, p.AlarmType, p.SourceCode, p.SourceLimits, p.State.EventPhase, p.State.AlarmState, p.State.ActivityState, p.Priority, p.DisplayName, p.DeviceId, p.SessionId, p.OccurredAt);
+        new(null, p.AlarmType, p.SourceCode, p.SourceLimits, p.State.EventPhase, p.State.AlarmState, p.State.ActivityState, p.Priority, p.InterpretationType, p.Abnormality, p.DisplayName, p.DeviceId, p.SessionId, p.OccurredAt);
 }

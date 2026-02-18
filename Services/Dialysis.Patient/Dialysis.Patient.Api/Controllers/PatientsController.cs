@@ -2,6 +2,7 @@ using BuildingBlocks.Abstractions;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
+using Dialysis.Hl7ToFhir;
 using Dialysis.Patient.Api.Contracts;
 using Dialysis.Patient.Application.Domain.ValueObjects;
 using Dialysis.Patient.Application.Features.GetPatientByMrn;
@@ -44,6 +45,34 @@ public sealed class PatientsController : ControllerBase
                 AuditOutcome.Success, "Patient retrieval by MRN", _tenant.TenantId), cancellationToken);
 
         return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpGet("mrn/{mrn}/fhir")]
+    [Authorize(Policy = "PatientRead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetByMrnFhirAsync(string mrn, CancellationToken cancellationToken)
+    {
+        var query = new GetPatientByMrnQuery(new MedicalRecordNumber(mrn));
+        GetPatientByMrnResponse? response = await _sender.SendAsync(query, cancellationToken);
+        if (response is null)
+            return NotFound();
+
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "Patient", mrn, User.Identity?.Name,
+            AuditOutcome.Success, "Patient FHIR retrieval by MRN", _tenant.TenantId), cancellationToken);
+
+        var input = new PatientMappingInput(
+            response.MedicalRecordNumber,
+            response.FirstName,
+            response.LastName,
+            response.DateOfBirth,
+            response.Gender,
+            null);
+        Hl7.Fhir.Model.Patient fhirPatient = PatientMapper.ToFhirPatient(input);
+        fhirPatient.Id = response.Id;
+        string json = FhirJsonHelper.ToJson(fhirPatient);
+        return Content(json, "application/fhir+json");
     }
 
     [HttpGet("search")]

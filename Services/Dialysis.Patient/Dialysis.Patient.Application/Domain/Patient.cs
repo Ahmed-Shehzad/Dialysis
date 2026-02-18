@@ -1,4 +1,5 @@
 using BuildingBlocks;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Application.Domain.Events;
@@ -8,8 +9,10 @@ namespace Dialysis.Patient.Application.Domain;
 
 public sealed class Patient : AggregateRoot
 {
+    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
     public MedicalRecordNumber MedicalRecordNumber { get; private set; }
     public string? PersonNumber { get; private set; }
+    public string? SocialSecurityNumber { get; private set; }
     public Person Name { get; private set; } = null!;
     public DateOnly? DateOfBirth { get; private set; }
     public Gender? Gender { get; private set; }
@@ -20,11 +23,17 @@ public sealed class Patient : AggregateRoot
         MedicalRecordNumber medicalRecordNumber,
         Person name,
         DateOnly? dateOfBirth,
-        Gender? gender)
+        Gender? gender,
+        string? tenantId = null,
+        string? personNumber = null,
+        string? socialSecurityNumber = null)
     {
         var patient = new Patient
         {
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
             MedicalRecordNumber = medicalRecordNumber,
+            PersonNumber = personNumber,
+            SocialSecurityNumber = socialSecurityNumber,
             Name = name,
             DateOfBirth = dateOfBirth,
             Gender = gender
@@ -36,12 +45,14 @@ public sealed class Patient : AggregateRoot
 
     public void UpdateDemographics(
         string? personNumber,
+        string? socialSecurityNumber,
         Person? name,
         DateOnly? dateOfBirth,
         Gender? gender)
     {
         if (name is not null) Name = name;
         PersonNumber = personNumber ?? PersonNumber;
+        SocialSecurityNumber = socialSecurityNumber ?? SocialSecurityNumber;
         DateOfBirth = dateOfBirth ?? DateOfBirth;
         Gender = gender ?? Gender;
         ApplyUpdateDateTime();

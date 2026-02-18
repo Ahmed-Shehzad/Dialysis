@@ -20,13 +20,14 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
 
         string? messageControlId = ParseMessageControlId(segments);
         string? queryTag = ParseQueryTag(segments);
+        string? queryName = ParseQueryName(segments);
 
-        ParseQpdDemographics(segments, out string? mrn, out string? firstName, out string? lastName);
+        ParseQpdDemographics(segments, out string? mrn, out string? personNumber, out string? socialSecurityNumber, out string? universalId, out string? firstName, out string? lastName);
 
-        if (string.IsNullOrWhiteSpace(mrn) && string.IsNullOrWhiteSpace(lastName))
+        if (string.IsNullOrWhiteSpace(mrn) && string.IsNullOrWhiteSpace(personNumber) && string.IsNullOrWhiteSpace(socialSecurityNumber) && string.IsNullOrWhiteSpace(universalId) && string.IsNullOrWhiteSpace(lastName))
             throw new ArgumentException("QBP^Q22 must contain patient MRN in QPD-3 (@PID.3) or patient name (@PID.5).", nameof(hl7Message));
 
-        return new QbpQ22ParseResult(mrn?.Trim(), firstName?.Trim(), lastName?.Trim(), messageControlId, queryTag);
+        return new QbpQ22ParseResult(mrn?.Trim(), firstName?.Trim(), lastName?.Trim(), messageControlId, queryTag, queryName, personNumber?.Trim(), socialSecurityNumber?.Trim(), universalId?.Trim());
     }
 
     private static string? ParseMessageControlId(string[] segments)
@@ -43,9 +44,18 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
         return qpd is null ? null : ExtractField(qpd, 2);
     }
 
-    private static void ParseQpdDemographics(string[] segments, out string? mrn, out string? firstName, out string? lastName)
+    private static string? ParseQueryName(string[] segments)
+    {
+        string? qpd = FindFirstSegment(segments, "QPD");
+        return qpd is null ? null : ExtractField(qpd, 1);
+    }
+
+    private static void ParseQpdDemographics(string[] segments, out string? mrn, out string? personNumber, out string? socialSecurityNumber, out string? universalId, out string? firstName, out string? lastName)
     {
         mrn = null;
+        personNumber = null;
+        socialSecurityNumber = null;
+        universalId = null;
         firstName = null;
         lastName = null;
 
@@ -63,23 +73,21 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
 
             string fieldRef = parts[0].Trim();
             string value = parts[1].Trim();
+            string? identifierType = parts.Length >= 6 ? NullIfEmpty(parts[5]) : null;
 
-            if (fieldRef.Equals("@PID.3.1", StringComparison.OrdinalIgnoreCase) ||
-                fieldRef.Equals("@PID.3", StringComparison.OrdinalIgnoreCase))
-            {
-                mrn = value;
-            }
-            else if (fieldRef.Equals("@PID.5.1", StringComparison.OrdinalIgnoreCase))
-            {
-                lastName = value;
-            }
-            else if (fieldRef.Equals("@PID.5.2", StringComparison.OrdinalIgnoreCase))
-            {
-                firstName = value;
-            }
+            if (fieldRef.Equals("@PID.3.1", StringComparison.OrdinalIgnoreCase) || fieldRef.Equals("@PID.3", StringComparison.OrdinalIgnoreCase))
+                switch (identifierType?.ToUpperInvariant())
+                {
+                    case "PN": personNumber = value; break;
+                    case "SS": socialSecurityNumber = value; break;
+                    case "U": universalId = value; break;
+                    default: mrn = value; break;
+                }
+            else if (fieldRef.Equals("@PID.5.1", StringComparison.OrdinalIgnoreCase)) lastName = value;
+            else if (fieldRef.Equals("@PID.5.2", StringComparison.OrdinalIgnoreCase)) firstName = value;
         }
 
-        if (mrn is null && firstName is null && lastName is null && queryParams.Length > 0)
+        if (mrn is null && personNumber is null && socialSecurityNumber is null && universalId is null && firstName is null && lastName is null && queryParams.Length > 0)
         {
             string[] fallback = qpd3.Split(ComponentSeparator);
             if (fallback.Length >= 2 && !string.IsNullOrWhiteSpace(fallback[1]))

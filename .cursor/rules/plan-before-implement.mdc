@@ -1,0 +1,81 @@
+---
+description: Plan before implementing. Create or update a plan in .cursor/plans before writing any implementation code.
+alwaysApply: true
+---
+# Plan Before Implement
+
+## Rule
+
+**Always create or update a plan before implementing any feature, fix, or change.**
+
+No implementation work (code, config, migrations, tests) should start until a plan exists and is approved or acknowledged.
+
+---
+
+## Where Plans Live
+
+- **Directory**: `.cursor/plans/`
+- **Format**: Markdown files (`.plan.md`)
+- **Example files**: `hl7_alignment_and_diagrams_9a3407d6.plan.md`, `minimal_apis_to_controllers_561b3128.plan.md`
+
+---
+
+## Plan Structure
+
+A plan should include:
+
+1. **Frontmatter**
+   - `name` – Short descriptive title
+   - `overview` – One-sentence summary
+   - `todos` – Checklist of tasks with `id`, `content`, `status`
+   - `isProject` – Optional boolean
+
+2. **Body**
+   - Context and rationale
+   - Alignment with existing docs (e.g. `docs/IMMEDIATE-HIGH-PRIORITY-PLAN.md`, `docs/Dialysis_Implementation_Plan.md`)
+   - Workflows, diagrams (Mermaid) where relevant
+   - Files to create or modify
+   - Dependencies and risks
+
+---
+
+## Workflow
+
+1. **User requests work** – Feature, fix, refactor, integration, etc.
+2. **Create or update plan** – Add a new plan file or extend an existing one in `.cursor/plans/`.
+3. **Present plan** – Summarize scope, todos, and approach.
+4. **Implement only after plan** – Do not begin coding until the plan is in place and the user has agreed or moved forward.
+
+---
+
+## When to Create a New Plan
+
+- New feature or capability
+- Significant refactor or architectural change
+- Multi-step work spanning several files or services
+- When no existing plan covers the scope
+
+---
+
+## When to Update an Existing Plan
+
+- Follow-up work from a prior plan
+- Extending an in-progress initiative
+- Marking todos completed and adding new ones
+
+---
+
+## Exceptions
+
+- **Trivial one-file fixes** (e.g. typo, single-line change) – Plan optional.
+- **Urgent production fix** – Minimal plan (e.g. problem, fix, verification) is still required; full plan can be brief.
+
+---
+
+## Alignment
+
+This rule aligns with:
+
+- **Phase 1: Plan It** in `learn-by-doing-workflow.mdc`
+- Existing plans in `.cursor/plans/`
+- `docs/IMMEDIATE-HIGH-PRIORITY-PLAN.md` and `docs/Dialysis_Implementation_Plan.md`

@@ -12,4 +12,6 @@ public sealed record OruParseResult(
     string? SendingApplication,
     string? SendingFacility,
     DateTimeOffset? MessageTimestamp,
-    IReadOnlyList<ObservationInfo> Observations);
+    IReadOnlyList<ObservationInfo> Observations,
+    string? DeviceEui64 = null,
+    string? TherapyId = null);

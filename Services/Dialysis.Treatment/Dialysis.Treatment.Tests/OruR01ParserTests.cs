@@ -7,10 +7,12 @@ namespace Dialysis.Treatment.Tests;
 
 public sealed class OruR01ParserTests
 {
-    private const string MinimalOruR01 = @"MSH|^~\&||MACH_EUI64|EMR|FAC|20230215120000||ORU^R01^ORU_R01|MSG001|P|2.6
-PID|||MRN123^^^^MR
-OBR|1||THERAPY001^MACH^EUI64|||20230215120000||||||start
-OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM|||||F|||20230215120000|||AMEAS";
+    private const string MinimalOruR01 = """
+                                         MSH|^~\&||MACH_EUI64|EMR|FAC|20230215120000||ORU^R01^ORU_R01|MSG001|P|2.6
+                                         PID|||MRN123^^^^MR
+                                         OBR|1||THERAPY001^MACH^EUI64|||20230215120000||||||start
+                                         OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM|||||F|||20230215120000|||AMEAS
+                                         """;
 
     [Fact]
     public void Parse_ExtractsSessionId()
@@ -51,12 +53,14 @@ OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/mi
     [Fact]
     public void Parse_MultipleObservations_ExtractsAll()
     {
-        const string multiObs = @"MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||ORU^R01^ORU_R01|MSG002|P|2.6
-PID|||MRN456^^^^MR
-OBR|1||THERAPY002^MACH^EUI64
-OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM
-OBX|2|NM|152636^MDC_HDIALY_UF_RATE^MDC|1.1.9.1|500|mL/h^mL/h^UCUM
-OBX|3|NM|150020^MDC_PRESS_BLD_ART^MDC|1.1.3.2|120|mmHg^mmHg^UCUM";
+        const string multiObs = """
+                                MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||ORU^R01^ORU_R01|MSG002|P|2.6
+                                PID|||MRN456^^^^MR
+                                OBR|1||THERAPY002^MACH^EUI64
+                                OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM
+                                OBX|2|NM|152636^MDC_HDIALY_UF_RATE^MDC|1.1.9.1|500|mL/h^mL/h^UCUM
+                                OBX|3|NM|150020^MDC_PRESS_BLD_ART^MDC|1.1.3.2|120|mmHg^mmHg^UCUM
+                                """;
 
         OruParseResult result = new OruR01Parser().Parse(multiObs);
         result.Observations.Count.ShouldBe(3);

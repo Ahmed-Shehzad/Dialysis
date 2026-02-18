@@ -4,6 +4,7 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Domain;
+using Dialysis.Prescription.Application.Domain.Hl7;
 using Dialysis.Prescription.Application.Domain.ValueObjects;
 
 namespace Dialysis.Prescription.Infrastructure.Hl7;
@@ -43,7 +44,7 @@ public sealed class RspK22Parser : IRspK22Parser
         string? msaControlId = ParseMsaControlId(segments);
         string? qpdQueryName = ParseQpdQueryName(segments);
 
-        var settings = ParseObxSettings(segments);
+        List<ProfileSetting> settings = ParseObxSettings(segments);
 
         MedicalRecordNumber mrn = string.IsNullOrWhiteSpace(patientMrn)
             ? throw new ArgumentException("RSP^K22 must contain patient MRN in QPD-3 or PID-3.", nameof(hl7Message))
@@ -160,7 +161,11 @@ public sealed class RspK22Parser : IRspK22Parser
             FlushProfileBuffer(profileBuffer, subId, provenance, settings);
             profileBuffer.Clear();
 
-            if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal numVal)) settings.Add(ProfileSetting.Constant(code, numVal, subId, provenance));
+            if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal numVal))
+            {
+                RxUse? use = PrescriptionRxUseCatalog.Get(code);
+                settings.Add(ProfileSetting.Constant(code, numVal, subId, provenance, use));
+            }
         }
 
         FlushProfileBuffer(profileBuffer, null, null, settings);
@@ -186,7 +191,8 @@ public sealed class RspK22Parser : IRspK22Parser
         if (values.Count == 0) return;
 
         var descriptor = new ProfileDescriptor(type, values, times, halfTime, vendorName);
-        settings.Add(ProfileSetting.Profiled("MDC_HDIALY_PROFILE", descriptor, subId, provenance));
+        RxUse? use = PrescriptionRxUseCatalog.Get("MDC_HDIALY_PROFILE");
+        settings.Add(ProfileSetting.Profiled("MDC_HDIALY_PROFILE", descriptor, subId, provenance, use));
     }
 
     private static IReadOnlyList<decimal> ParseDecimalArray(string? raw)
@@ -202,7 +208,7 @@ public sealed class RspK22Parser : IRspK22Parser
     private static IReadOnlyList<decimal>? ParseNullableDecimalArray(string? raw)
     {
         if (string.IsNullOrEmpty(raw)) return null;
-        var list = ParseDecimalArray(raw);
+        IReadOnlyList<decimal> list = ParseDecimalArray(raw);
         return list.Count == 0 ? null : list;
     }
 

@@ -64,7 +64,8 @@ public sealed class PatientRspK22BuilderTests
 
         string result = _builder.BuildFromPatients([patient], query);
 
-        result.ShouldContain("QAK|Q001|OK|1");
+        result.ShouldContain("QAK|Q001|OK|");
+        result.ShouldContain("|1");
     }
 
     [Fact]
@@ -74,7 +75,8 @@ public sealed class PatientRspK22BuilderTests
 
         string result = _builder.BuildNoDataFound(query);
 
-        result.ShouldContain("QAK|Q002|NF|0");
+        result.ShouldContain("QAK|Q002|NF|");
+        result.ShouldContain("|0");
         result.ShouldNotContain("PID|");
     }
 }

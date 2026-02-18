@@ -93,11 +93,11 @@ MDS (1)
 
 #### 3.1.5 Implementation Tasks
 
-- [ ] Parse incoming RSP^K22 responses with 0..N PID segments
-- [ ] Implement all 6 use cases in the Patient service
-- [ ] Support PID-3 identifier types: MR, PN, SS, U (Machine Identifier = `model/serial`)
-- [ ] Validate response integrity (MSA-2, QAK-1, QAK-3 matching)
-- [ ] Handle `NF` (no data found) and `AE`/`AR` (error/reject) QAK-2 status codes
+- [x] Parse incoming RSP^K22 responses with 0..N PID segments
+- [x] Implement all 6 use cases in the Patient service
+- [x] Support PID-3 identifier types: MR, PN, SS, U (Machine Identifier = `model/serial`)
+- [x] Validate response integrity (MSA-2, QAK-1, QAK-3 matching)
+- [x] Handle `NF` (no data found) and `AE`/`AR` (error/reject) QAK-2 status codes
 
 ---
 
@@ -327,12 +327,34 @@ OBX-17 is **required** for settings, **optional** for measurements.
 - [ ] Track OBX-17 provenance (AMEAS/MMEAS/ASET/MSET/RSET)
 - [ ] Parse OBX-7 reference ranges (formats: `> lower`, `< upper`, `lower-upper`)
 - [ ] Parse OBX-6 UCUM units (ml/min, ml/h, mmHg, mS/cm, °C, %, mmol/L, etc.)
-- [ ] Parse EUI-64 from MSH-3 and Therapy_ID from OBR-3
+- [x] Parse EUI-64 from MSH-3 and Therapy_ID from OBR-3
 - [ ] Generate ACK^R01 response
-- [ ] Support HL7 Batch Protocol (FHS/BHS/MSH.../BTS/FTS) for run sheet capture
-- [ ] Persist treatment session with all observations as time series
-- [ ] Broadcast real-time observations via SignalR
-- [ ] Publish integration events via Transponder
+- [x] Support HL7 Batch Protocol (FHS/BHS/MSH.../BTS/FTS) for run sheet capture
+- [x] Persist treatment session with all observations as time series
+- [x] Broadcast real-time observations via SignalR
+- [x] Publish integration events via Transponder
+
+#### 3.3.11 Treatment API & Integration (Implemented)
+
+**Time-series API**
+
+- `GET /api/treatment-sessions/{sessionId}/observations?start=&end=` – returns observations in UTC time range
+- Query params: `start`, `end` (both optional; default last 4 hours)
+- Response: `GetObservationsInTimeRangeResponse` with `TimeSeriesObservationDto[]` (Code, Value, Unit, SubId, ObservedAtUtc, ChannelName)
+- Index: `(TreatmentSessionId, ObservedAtUtc)` for efficient range queries
+
+**EUI-64 / Therapy_ID**
+
+- Parsed from MSH-3 (Sending Application) and OBR-3 (Filler Order Number: `TherapyID^Machine^EUI64^EUI-64`)
+- Stored on `TreatmentSession.DeviceEui64` and `TreatmentSession.TherapyId`
+- Exposed in `GetTreatmentSessionResponse` and `GET /api/treatment-sessions/{sessionId}`
+
+**Transponder integration events**
+
+- `ObservationRecordedIntegrationEvent` published when observations are recorded
+- Handler: `ObservationRecordedIntegrationEventHandler` → `IPublishEndpoint.PublishAsync`
+- Enables downstream consumers (analytics, FHIR sync, etc.) without tight coupling
+- **Transport note**: With SignalR-only, events reach connected clients. For durable pub/sub to external services, add RabbitMQ or Kafka transport.
 
 ---
 
@@ -425,19 +447,32 @@ stateDiagram-v2
 - MSA-1: AA/AE/AR
 - Optional PRT segment for acknowledging user
 
+#### 3.4.5a Alarm API & Integration (Implemented)
+
+**SignalR real-time broadcast**
+
+- `AlarmRecordedMessage` (Transponder `IMessage`) sent when alarms are raised
+- `AlarmRaisedTransponderHandler` → `signalr://group/session:{sessionId}` or `signalr://group/device:{deviceId}`
+- Hub at `/transponder/transport`, `RequireAuthorization("AlarmRead")`, JWT via `access_token` query
+
+**Transponder integration events**
+
+- `AlarmRaisedIntegrationEvent` published via `IPublishEndpoint.PublishAsync`
+- `AlarmRaisedIntegrationEventHandler` → enables downstream consumers (FHIR DetectedIssue, analytics)
+
 #### 3.4.6 Implementation Tasks
 
 - [ ] Parse ORU^R40 message with strict 5-OBX structure
 - [ ] Extract alarm type (MDC_EVT_LO / MDC_EVT_HI / MDC_EVT_ALARM)
 - [ ] Parse source/limits: numeric (value + reference range) and non-numeric (source channel)
-- [ ] Parse OBX-8 interpretation codes: priority (PH/PM/PL/PI/PN/PU) + type (SP/ST/SA) + abnormality (L/H)
-- [ ] Model alarm lifecycle: event phase (start/continue/end) + state (off/inactive/active/latched) + activity (enabled/audio-paused/audio-off/alarm-paused/alarm-off/alert-acknowledged)
+- [x] Parse OBX-8 interpretation codes: priority (PH/PM/PL/PI/PN/PU) + type (SP/ST/SA) + abnormality (L/H)
+- [x] Model alarm lifecycle: event phase (start/continue/end) + state (off/inactive/active/latched) + activity (enabled/...); RecordAlarmCommandHandler matches continue/end to existing alarms via GetActiveBySourceAsync
 - [ ] Implement keep-alive logic (10-30 second periodic messages while active)
 - [ ] Generate ORA^R41 acknowledgment
 - [ ] Map all mandatory and conditional alarms from Table 3
-- [ ] Broadcast alarms in real-time via SignalR
-- [ ] Publish alarm integration events via Transponder
-- [ ] Persist alarm history with full state transitions
+- [x] Broadcast alarms in real-time via SignalR
+- [x] Publish alarm integration events via Transponder
+- [x] Persist alarm history with full state transitions; AddSourceCodeToAlarms migration; IngestOruR40IntegrationTests (parse→record→repository)
 
 ---
 
@@ -578,9 +613,9 @@ FTS  ── File Trailer (batch count)
 | P1 | 5 | Hl7ToFhir | MDC → FHIR Observation mapping | **Implemented** – MDC catalog, LOINC, UCUM, DetectedIssue severity, Procedure status, Provenance |
 | P1 | 2 | Prescription | QBP^D01/RSP^K22 + profile parsing | Placeholder – needs full profile engine |
 | P2 | 1 | Patient | PDQ (QBP^Q22/RSP^K22) + 6 use cases | Placeholder – needs response parsing |
-| P2 | 3 | Treatment | Batch Protocol (run sheet) | Not started |
+| P2 | 3 | Treatment | Batch Protocol, time-series API, EUI-64/Therapy_ID, Transponder events | **Implemented** – Hl7BatchParser, GET observations?start=&end=, DeviceEui64/TherapyId, ObservationRecordedIntegrationEvent |
 | P3 | 5 | Hl7ToFhir | FHIR AuditEvent, Provenance | Not started |
-| P3 | – | All | SignalR real-time broadcasting | Not started |
+| P3 | – | All | SignalR real-time broadcasting | **Implemented** – Transponder SignalR hub |
 
 ---
 

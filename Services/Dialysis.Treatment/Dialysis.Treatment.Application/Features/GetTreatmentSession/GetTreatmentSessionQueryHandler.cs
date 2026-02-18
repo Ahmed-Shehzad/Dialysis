@@ -1,5 +1,6 @@
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain;
+using Dialysis.Treatment.Application.Domain.ValueObjects;
 
 using Intercessor.Abstractions;
 
@@ -20,11 +21,33 @@ internal sealed class GetTreatmentSessionQueryHandler : IQueryHandler<GetTreatme
         if (session is null)
             return null;
 
+        var observations = session.Observations
+            .Select(o =>
+            {
+                string? channelName = null;
+                if (ContainmentPath.TryParse(o.SubId) is { } path && path.ChannelId is { } cid)
+                    channelName = ContainmentPath.GetChannelName(cid);
+                return new ObservationDto(
+                    o.Code.Value,
+                    o.Value,
+                    o.Unit,
+                    o.SubId,
+                    o.ReferenceRange,
+                    o.Provenance,
+                    o.EffectiveTime,
+                    channelName);
+            })
+            .ToList();
+
         return new GetTreatmentSessionResponse(
-            session.SessionId,
+            session.SessionId.Value,
             session.PatientMrn?.Value,
             session.DeviceId?.Value,
-            session.Status,
-            session.StartedAt);
+            session.DeviceEui64,
+            session.TherapyId,
+            session.Status.Value,
+            session.StartedAt,
+            observations,
+            session.EndedAt);
     }
 }

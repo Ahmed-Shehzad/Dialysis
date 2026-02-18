@@ -10,6 +10,8 @@ public sealed record AlarmCreateParams(
     string? SourceLimits,
     AlarmStateDescriptor State,
     AlarmPriority? Priority,
+    string? InterpretationType,
+    string? Abnormality,
     string? DisplayName,
     DeviceId? DeviceId,
     string? SessionId,

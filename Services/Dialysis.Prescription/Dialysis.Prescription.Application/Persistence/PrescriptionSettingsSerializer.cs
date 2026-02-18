@@ -25,7 +25,7 @@ internal static class PrescriptionSettingsSerializer
     public static List<ProfileSetting> FromJson(string? json)
     {
         if (string.IsNullOrEmpty(json)) return [];
-        var dtos = JsonSerializer.Deserialize<List<SettingDto>>(json, Options);
+        List<SettingDto>? dtos = JsonSerializer.Deserialize<List<SettingDto>>(json, Options);
         if (dtos is null) return [];
         return dtos.Select(FromDto).ToList();
     }

@@ -22,6 +22,8 @@ internal sealed class RecordObservationCommandHandler : ICommandHandler<RecordOb
             request.DeviceId,
             cancellationToken);
 
+        if (request.DeviceEui64 is not null || request.TherapyId is not null)
+            session.SetDeviceIdentity(request.DeviceEui64, request.TherapyId);
         if (request.Phase is not null)
             session.SetPhase(request.Phase.Value);
 

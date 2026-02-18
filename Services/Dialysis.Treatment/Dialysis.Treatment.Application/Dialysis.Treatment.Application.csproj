@@ -7,8 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="Dialysis.Treatment.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
+        <ProjectReference Include="..\..\..\Transponder\Transponder.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
     </ItemGroup>
 

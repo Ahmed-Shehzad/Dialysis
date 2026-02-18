@@ -213,23 +213,18 @@ dotnet_diagnostic.S1075.severity = suggestion
 # Merge collapsible if statements
 dotnet_diagnostic.S1066.severity = suggestion
 
-# Naming rules for async methods.
-dotnet_naming_rule.async_methods_should_be_suffixed_with_async.severity = error
-dotnet_naming_rule.async_methods_should_be_suffixed_with_async.symbols = async_methods
-dotnet_naming_rule.async_methods_should_be_suffixed_with_async.style = async_suffix
+# IDE1006 / Async suffix: async methods must end with 'Async'.
+dotnet_diagnostic.IDE1006.severity = error
 
-# Define the naming style
+dotnet_naming_rule.async_methods_must_end_in_async.symbols = async_methods
+dotnet_naming_rule.async_methods_must_end_in_async.style = async_suffix
+dotnet_naming_rule.async_methods_must_end_in_async.severity = error
+
 dotnet_naming_style.async_suffix.required_suffix = Async
 dotnet_naming_style.async_suffix.capitalization = pascal_case
 
-# Apply it to methods (including test methods)
-dotnet_naming_rule.async_methods_should_end_in_async.symbols = async_methods
-dotnet_naming_rule.async_methods_should_end_in_async.style = async_suffix
-dotnet_naming_rule.async_methods_should_end_in_async.severity = error
-
 dotnet_naming_symbols.async_methods.applicable_kinds = method
 dotnet_naming_symbols.async_methods.required_modifiers = async
-
 dotnet_naming_symbols.async_methods.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 
 
@@ -237,6 +232,12 @@ dotnet_naming_symbols.async_methods.applicable_accessibilities = public, interna
 # Optional: loosen Sonar a bit in tests
 # Note: Async test methods must still use the Async suffix (naming rule applies).
 ########################################
+[**/Migrations/*.cs]
+# EF Core migrations are auto-generated; relax strict rules.
+dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.IDE0055.severity = none
+dotnet_diagnostic.IDE0058.severity = none
+
 [**/*Tests*/**/*.cs]
 dotnet_diagnostic.S1135.severity = suggestion
 dotnet_diagnostic.S125.severity = none

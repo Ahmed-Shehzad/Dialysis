@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 
 using BuildingBlocks;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -14,27 +15,56 @@ namespace Dialysis.Alarm.Infrastructure.Persistence;
 public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
 {
     private readonly AlarmDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public AlarmRepository(AlarmDbContext db) : base(db)
+    public AlarmRepository(AlarmDbContext db, ITenantContext tenant) : base(db)
     {
         _db = db;
+        _tenant = tenant;
     }
 
     public async Task<AlarmDomain?> GetByIdAsync(Ulid alarmId, CancellationToken cancellationToken = default)
     {
         return await _db.Alarms
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == alarmId, cancellationToken);
+            .FirstOrDefaultAsync(a => a.TenantId == _tenant.TenantId && a.Id == alarmId, cancellationToken);
     }
 
     public async Task<IReadOnlyList<AlarmDomain>> GetByDeviceAndSessionAsync(DeviceId? deviceId, string? sessionId, CancellationToken cancellationToken = default)
     {
-        IQueryable<AlarmDomain> query = _db.Alarms.AsNoTracking();
+        return await GetAlarmsAsync(deviceId, sessionId, null, null, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AlarmDomain>> GetAlarmsAsync(DeviceId? deviceId, string? sessionId, DateTimeOffset? fromUtc, DateTimeOffset? toUtc, CancellationToken cancellationToken = default)
+    {
+        IQueryable<AlarmDomain> query = _db.Alarms.AsNoTracking().Where(a => a.TenantId == _tenant.TenantId);
         if (deviceId is not null)
             query = query.Where(a => a.DeviceId == deviceId);
         if (!string.IsNullOrEmpty(sessionId))
             query = query.Where(a => a.SessionId == sessionId);
+        if (fromUtc is not null)
+            query = query.Where(a => a.OccurredAt >= fromUtc.Value);
+        if (toUtc is not null)
+            query = query.Where(a => a.OccurredAt <= toUtc.Value);
         return await query.OrderByDescending(a => a.OccurredAt).ToListAsync(cancellationToken);
+    }
+
+    public async Task<AlarmDomain?> GetActiveBySourceAsync(DeviceId? deviceId, string? sessionId, string? sourceCode, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(sourceCode))
+            return null;
+
+        IQueryable<AlarmDomain> query = _db.Alarms
+            .Where(a => a.TenantId == _tenant.TenantId && a.SourceCode == sourceCode);
+        if (deviceId is not null)
+            query = query.Where(a => a.DeviceId == deviceId);
+        if (!string.IsNullOrEmpty(sessionId))
+            query = query.Where(a => a.SessionId == sessionId);
+
+        return await query
+            .Where(a => a.AlarmState.Value == "active" || a.AlarmState.Value == "latched")
+            .OrderByDescending(a => a.OccurredAt)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async override Task AddAsync(AlarmDomain entity, CancellationToken cancellationToken = default) =>

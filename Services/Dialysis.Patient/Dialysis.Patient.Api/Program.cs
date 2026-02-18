@@ -48,6 +48,8 @@ builder.Services.AddDbContext<PatientDbContext>((sp, o) =>
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IQbpQ22Parser, QbpQ22Parser>();
 builder.Services.AddScoped<IPatientRspK22Builder, PatientRspK22Builder>();
+builder.Services.AddScoped<IRspK22PatientParser, RspK22PatientParser>();
+builder.Services.AddScoped<IRspK22PatientValidator, RspK22PatientValidator>();
 builder.Services.AddAuditRecorder();
 builder.Services.AddTenantResolution();
 
@@ -61,7 +63,7 @@ if (app.Environment.IsDevelopment())
 {
     using IServiceScope scope = app.Services.CreateScope();
     PatientDbContext db = scope.ServiceProvider.GetRequiredService<PatientDbContext>();
-    _ = await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
 app.UseExceptionHandler(exceptionHandlerApp =>

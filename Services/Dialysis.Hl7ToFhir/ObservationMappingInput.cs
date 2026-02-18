@@ -13,4 +13,5 @@ public sealed record ObservationMappingInput(
     string? Provenance,
     DateTimeOffset? EffectiveTime,
     string? DeviceId,
-    string? PatientId);
+    string? PatientId,
+    string? ChannelName = null);

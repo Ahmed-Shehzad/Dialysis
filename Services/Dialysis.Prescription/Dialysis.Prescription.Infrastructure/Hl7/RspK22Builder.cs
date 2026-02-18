@@ -43,9 +43,9 @@ public sealed class RspK22Builder : IRspK22Builder
         };
 
         int obxSetId = 0;
-        foreach (var setting in prescription.Settings)
+        foreach (ProfileSetting setting in prescription.Settings)
         {
-            var obxSegments = BuildObxForSetting(setting, ref obxSetId);
+            IEnumerable<string> obxSegments = BuildObxForSetting(setting, ref obxSetId);
             segments.AddRange(obxSegments);
         }
 

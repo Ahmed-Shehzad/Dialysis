@@ -14,8 +14,8 @@ public sealed class RspK22ValidatorTests
     [Fact]
     public void Validate_MsaAe_ReturnsError()
     {
-        var result = CreateValidResult(msaCode: "AE");
-        var validation = new RspK22Validator().Validate(result);
+        RspK22ParseResult result = CreateValidResult(msaCode: "AE");
+        RspK22ValidationResult validation = new RspK22Validator().Validate(result);
         validation.IsValid.ShouldBeFalse();
         validation.ErrorCode.ShouldBe("MSA_ERROR");
     }
@@ -23,24 +23,24 @@ public sealed class RspK22ValidatorTests
     [Fact]
     public void Validate_MsaAr_ReturnsError()
     {
-        var result = CreateValidResult(msaCode: "AR");
-        var validation = new RspK22Validator().Validate(result);
+        RspK22ParseResult result = CreateValidResult(msaCode: "AR");
+        RspK22ValidationResult validation = new RspK22Validator().Validate(result);
         validation.IsValid.ShouldBeFalse();
     }
 
     [Fact]
     public void Validate_MsaAa_ReturnsSuccess()
     {
-        var result = CreateValidResult(msaCode: "AA");
-        var validation = new RspK22Validator().Validate(result);
+        RspK22ParseResult result = CreateValidResult(msaCode: "AA");
+        RspK22ValidationResult validation = new RspK22Validator().Validate(result);
         validation.IsValid.ShouldBeTrue();
     }
 
     [Fact]
     public void Validate_WrongQueryName_ReturnsError()
     {
-        var result = CreateValidResult(qpdQueryName: "IHE_PDQ_QUERY");
-        var validation = new RspK22Validator().Validate(result);
+        RspK22ParseResult result = CreateValidResult(qpdQueryName: "IHE_PDQ_QUERY");
+        RspK22ValidationResult validation = new RspK22Validator().Validate(result);
         validation.IsValid.ShouldBeFalse();
         validation.ErrorCode.ShouldBe("QPD_MISMATCH");
     }
@@ -48,9 +48,9 @@ public sealed class RspK22ValidatorTests
     [Fact]
     public void Validate_ContextMsa2Mismatch_ReturnsError()
     {
-        var result = CreateValidResult(msaControlId: "XYZ");
+        RspK22ParseResult result = CreateValidResult(msaControlId: "XYZ");
         var context = new RspK22ValidationContext(MessageControlId: "ABC", QueryTag: "Q1");
-        var validation = new RspK22Validator().Validate(result, context);
+        RspK22ValidationResult validation = new RspK22Validator().Validate(result, context);
         validation.IsValid.ShouldBeFalse();
         validation.ErrorCode.ShouldBe("MSA2_MISMATCH");
     }
@@ -58,9 +58,9 @@ public sealed class RspK22ValidatorTests
     [Fact]
     public void Validate_ContextMatching_Succeeds()
     {
-        var result = CreateValidResult(msaControlId: "ABC", queryTag: "Q1");
+        RspK22ParseResult result = CreateValidResult(msaControlId: "ABC", queryTag: "Q1");
         var context = new RspK22ValidationContext(MessageControlId: "ABC", QueryTag: "Q1");
-        var validation = new RspK22Validator().Validate(result, context);
+        RspK22ValidationResult validation = new RspK22Validator().Validate(result, context);
         validation.IsValid.ShouldBeTrue();
     }
 

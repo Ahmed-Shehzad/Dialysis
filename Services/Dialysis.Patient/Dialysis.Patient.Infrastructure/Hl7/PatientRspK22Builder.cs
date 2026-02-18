@@ -19,16 +19,16 @@ public sealed class PatientRspK22Builder : IPatientRspK22Builder
         string messageControlId = query.MessageControlId ?? Ulid.NewUlid().ToString();
         string queryTag = query.QueryTag ?? messageControlId;
 
+        string queryName = query.QueryName ?? "IHE PDQ Query";
         var segments = new List<string>
         {
             BuildMsh(messageControlId),
             BuildMsa("AA", messageControlId),
-            BuildQak(queryTag, "OK", patients.Count),
+            BuildQak(queryTag, "OK", patients.Count, queryName),
             BuildQpd(queryTag, query)
         };
 
-        foreach (DomainPatient patient in patients)
-            segments.Add(BuildPid(patient));
+        segments.AddRange(patients.Select(BuildPid));
 
         return string.Join("\r\n", segments) + "\r\n";
     }
@@ -38,14 +38,32 @@ public sealed class PatientRspK22Builder : IPatientRspK22Builder
         string messageControlId = query.MessageControlId ?? Ulid.NewUlid().ToString();
         string queryTag = query.QueryTag ?? messageControlId;
 
+        string queryName = query.QueryName ?? "IHE PDQ Query";
         var segments = new List<string>
         {
             BuildMsh(messageControlId),
             BuildMsa("AA", messageControlId),
-            BuildQak(queryTag, "NF", 0),
+            BuildQak(queryTag, "NF", 0, queryName),
             BuildQpd(queryTag, query)
         };
 
+        return string.Join("\r\n", segments) + "\r\n";
+    }
+
+    /// <summary>Builds RSP^K22 with application error (AE) or reject (AR).</summary>
+    public string BuildError(QbpQ22ParseResult query, string ackCode = "AE")
+    {
+        string messageControlId = query.MessageControlId ?? Ulid.NewUlid().ToString();
+        string queryTag = query.QueryTag ?? messageControlId;
+        string queryName = query.QueryName ?? "IHE PDQ Query";
+        string msaCode = ackCode is "AR" or "AE" ? ackCode : "AE";
+        var segments = new List<string>
+        {
+            BuildMsh(messageControlId),
+            BuildMsa(msaCode, messageControlId),
+            BuildQak(queryTag, msaCode, 0, queryName),
+            BuildQpd(queryTag, query)
+        };
         return string.Join("\r\n", segments) + "\r\n";
     }
 
@@ -58,8 +76,11 @@ public sealed class PatientRspK22Builder : IPatientRspK22Builder
     private static string BuildMsa(string ackCode, string messageControlId) =>
         $"MSA{FieldSeparator}{ackCode}{FieldSeparator}{messageControlId}";
 
-    private static string BuildQak(string queryTag, string status, int matchCount) =>
-        $"QAK{FieldSeparator}{queryTag}{FieldSeparator}{status}{FieldSeparator}{matchCount}";
+    private static string BuildQak(string queryTag, string status, int matchCount, string? queryName = null)
+    {
+        string qak3 = queryName ?? "";
+        return $"QAK{FieldSeparator}{queryTag}{FieldSeparator}{status}{FieldSeparator}{qak3}{FieldSeparator}{matchCount}";
+    }
 
     private static string BuildQpd(string queryTag, QbpQ22ParseResult query)
     {
@@ -72,13 +93,20 @@ public sealed class PatientRspK22Builder : IPatientRspK22Builder
 
     private static string BuildPid(DomainPatient patient)
     {
-        string mrn = $"{patient.MedicalRecordNumber}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}MR";
+        string pid3 = BuildPid3(patient);
         string name = $"{patient.Name.LastName}{ComponentSeparator}{patient.Name.FirstName}";
         string dob = patient.DateOfBirth.HasValue
             ? patient.DateOfBirth.Value.ToString("yyyyMMdd", CultureInfo.InvariantCulture)
             : "";
         string gender = patient.Gender?.Value ?? "";
 
-        return $"PID{FieldSeparator}{FieldSeparator}{FieldSeparator}{mrn}{FieldSeparator}{FieldSeparator}{name}{FieldSeparator}{FieldSeparator}{dob}{FieldSeparator}{gender}";
+        return $"PID{FieldSeparator}{FieldSeparator}{FieldSeparator}{pid3}{FieldSeparator}{FieldSeparator}{name}{FieldSeparator}{FieldSeparator}{dob}{FieldSeparator}{gender}";
+    }
+
+    private static string BuildPid3(DomainPatient patient)
+    {
+        string id = patient.MedicalRecordNumber.Value;
+        string type = "MR";
+        return $"{id}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}{type}";
     }
 }

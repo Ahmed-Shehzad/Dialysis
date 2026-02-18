@@ -68,8 +68,16 @@ public static class ObservationMapper
             else obs.Value = new FhirString(input.Value);
         }
 
-        if (!string.IsNullOrEmpty(input.SubId))
-            obs.BodySite = new CodeableConcept { Text = input.SubId };
+        if (!string.IsNullOrEmpty(input.SubId) || !string.IsNullOrEmpty(input.ChannelName))
+        {
+            string text = string.IsNullOrEmpty(input.ChannelName)
+                ? input.SubId ?? string.Empty
+                : string.IsNullOrEmpty(input.SubId)
+                    ? input.ChannelName
+                    : $"{input.SubId} ({input.ChannelName})";
+            if (!string.IsNullOrEmpty(text))
+                obs.BodySite = new CodeableConcept { Text = text };
+        }
 
         if (!string.IsNullOrEmpty(input.Provenance))
             obs.Note = [new Annotation { Text = $"Provenance: {input.Provenance}" }];

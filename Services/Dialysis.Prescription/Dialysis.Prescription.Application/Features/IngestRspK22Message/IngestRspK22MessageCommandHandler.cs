@@ -1,6 +1,7 @@
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Prescription.Application.Abstractions;
+using Dialysis.Prescription.Application.Domain;
 using Dialysis.Prescription.Application.Exceptions;
 
 using Intercessor.Abstractions;
@@ -32,6 +33,19 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
         if (!validation.IsValid)
             throw new RspK22ValidationException(validation.ErrorCode!, validation.Message ?? "RSP^K22 validation failed.", validation.Message);
 
+        PrescriptionAggregate? existing = await _repository.GetByOrderIdAsync(result.OrderId, cancellationToken);
+        if (existing is not null)
+            switch (request.ConflictPolicy)
+            {
+                case PrescriptionConflictPolicy.Reject:
+                    throw new PrescriptionConflictException(result.OrderId);
+                case PrescriptionConflictPolicy.Replace:
+                    _repository.Delete(existing);
+                    break;
+                case PrescriptionConflictPolicy.Ignore:
+                    return new IngestRspK22MessageResponse(result.OrderId, result.PatientMrn.Value, result.Settings.Count, true);
+            }
+
         var prescription = PrescriptionAggregate.Create(
             result.OrderId,
             result.PatientMrn,
@@ -40,7 +54,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
             result.CallbackPhone,
             _tenant.TenantId);
 
-        foreach (var setting in result.Settings)
+        foreach (ProfileSetting setting in result.Settings)
             prescription.AddSetting(setting);
 
         await _repository.AddAsync(prescription, cancellationToken);

@@ -4,11 +4,13 @@ using BuildingBlocks.Tenancy;
 using Dialysis.Prescription.Api.Contracts;
 using Dialysis.Prescription.Application.Features.IngestRspK22Message;
 using Dialysis.Prescription.Application.Features.ProcessQbpD01Query;
+using Dialysis.Prescription.Application.Options;
 
 using Intercessor.Abstractions;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Dialysis.Prescription.Api.Controllers;
 
@@ -19,12 +21,14 @@ public sealed class Hl7Controller : ControllerBase
     private readonly ISender _sender;
     private readonly IAuditRecorder _audit;
     private readonly ITenantContext _tenant;
+    private readonly PrescriptionIngestionOptions _ingestionOptions;
 
-    public Hl7Controller(ISender sender, IAuditRecorder audit, ITenantContext tenant)
+    public Hl7Controller(ISender sender, IAuditRecorder audit, ITenantContext tenant, IOptions<PrescriptionIngestionOptions> ingestionOptions)
     {
         _sender = sender;
         _audit = audit;
         _tenant = tenant;
+        _ingestionOptions = ingestionOptions.Value;
     }
 
     [HttpPost("qbp-d01")]
@@ -51,7 +55,10 @@ public sealed class Hl7Controller : ControllerBase
         [FromBody] IngestRspK22MessageRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new IngestRspK22MessageCommand(request.RawHl7Message, request.ValidationContext);
+        var command = new IngestRspK22MessageCommand(
+            request.RawHl7Message,
+            request.ValidationContext,
+            _ingestionOptions.ConflictPolicy);
         IngestRspK22MessageResponse response = await _sender.SendAsync(command, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(
             AuditAction.Create, "Prescription", response.OrderId, User.Identity?.Name,

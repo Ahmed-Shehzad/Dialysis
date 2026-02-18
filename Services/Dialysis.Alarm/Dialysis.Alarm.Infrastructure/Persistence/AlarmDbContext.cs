@@ -1,4 +1,5 @@
 using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
@@ -25,6 +26,13 @@ public sealed class AlarmDbContext : DbContext, IDbContext
             _ = e.ToTable("Alarms");
             _ = e.HasKey(x => x.Id);
             _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
+            _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
+            _ = e.Property(x => x.Priority).HasConversion(
+                v => v.HasValue ? v.Value.Value : null,
+                v => v != null ? new AlarmPriority(v) : (AlarmPriority?)null);
+            _ = e.Property(x => x.SourceCode).HasMaxLength(100);
+            _ = e.Property(x => x.InterpretationType).HasMaxLength(10);
+            _ = e.Property(x => x.Abnormality).HasMaxLength(5);
             _ = e.Property(x => x.EventPhase)
                 .HasConversion(v => v.Value, v => new EventPhase(v))
                 .IsRequired();
@@ -38,8 +46,8 @@ public sealed class AlarmDbContext : DbContext, IDbContext
                 .HasConversion(
                     v => v.HasValue ? v.Value.Value : null,
                     v => v != null ? new DeviceId(v) : (DeviceId?)null);
-            _ = e.HasIndex(x => x.DeviceId);
-            _ = e.HasIndex(x => x.SessionId);
+            _ = e.HasIndex(x => new { x.TenantId, x.DeviceId });
+            _ = e.HasIndex(x => new { x.TenantId, x.SessionId });
             _ = e.HasIndex(x => x.OccurredAt);
             _ = e.Ignore(x => x.DomainEvents);
             _ = e.Ignore(x => x.IntegrationEvents);

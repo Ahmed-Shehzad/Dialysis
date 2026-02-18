@@ -23,9 +23,9 @@ public static class QbpD01Builder
         queryTag ??= DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmsszzz", System.Globalization.CultureInfo.InvariantCulture);
         string msh3 = string.IsNullOrEmpty(sendingApp) ? "EMR^EMR" : sendingApp;
 
-        var msh = $"MSH{FieldSeparator}^~\\&{FieldSeparator}{msh3}{FieldSeparator}Facility{FieldSeparator}{FieldSeparator}{FieldSeparator}{FieldSeparator}QBP{ComponentSeparator}D01{ComponentSeparator}QBP_D01{FieldSeparator}{queryTag}{FieldSeparator}P{FieldSeparator}2.6";
-        var qpd = $"QPD{FieldSeparator}MDC_HDIALY_RX_QUERY{ComponentSeparator}Hemodialysis Prescription Query{ComponentSeparator}MDC{FieldSeparator}{queryTag}{FieldSeparator}@PID.3{ComponentSeparator}{mrn}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}MR";
-        var rcp = $"RCP{FieldSeparator}I{FieldSeparator}{FieldSeparator}RD";
+        string msh = $"MSH{FieldSeparator}^~\\&{FieldSeparator}{msh3}{FieldSeparator}Facility{FieldSeparator}{FieldSeparator}{FieldSeparator}{FieldSeparator}QBP{ComponentSeparator}D01{ComponentSeparator}QBP_D01{FieldSeparator}{queryTag}{FieldSeparator}P{FieldSeparator}2.6";
+        string qpd = $"QPD{FieldSeparator}MDC_HDIALY_RX_QUERY{ComponentSeparator}Hemodialysis Prescription Query{ComponentSeparator}MDC{FieldSeparator}{queryTag}{FieldSeparator}@PID.3{ComponentSeparator}{mrn}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}MR";
+        string rcp = $"RCP{FieldSeparator}I{FieldSeparator}{FieldSeparator}RD";
 
         return $"{msh}\r\n{qpd}\r\n{rcp}\r\n";
     }

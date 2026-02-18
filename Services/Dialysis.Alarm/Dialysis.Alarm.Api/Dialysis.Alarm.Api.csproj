@@ -10,6 +10,8 @@
         <ProjectReference Include="..\Dialysis.Alarm.Application\Dialysis.Alarm.Application.csproj" />
         <ProjectReference Include="..\Dialysis.Alarm.Infrastructure\Dialysis.Alarm.Infrastructure.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
+        <ProjectReference Include="..\..\..\Transponder\Transponder.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Transports.SignalR\Transponder.Transports.SignalR.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
     </ItemGroup>
 
@@ -17,6 +19,10 @@
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>

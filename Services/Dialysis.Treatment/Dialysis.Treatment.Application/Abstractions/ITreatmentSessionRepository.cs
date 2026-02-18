@@ -10,4 +10,9 @@ public interface ITreatmentSessionRepository : IRepository<TreatmentSession>
 {
     Task<TreatmentSession?> GetBySessionIdAsync(SessionId sessionId, CancellationToken cancellationToken = default);
     Task<TreatmentSession> GetOrCreateAsync(SessionId sessionId, MedicalRecordNumber? patientMrn, DeviceId? deviceId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Observation>> GetObservationsInTimeRangeAsync(
+        SessionId sessionId,
+        DateTimeOffset startUtc,
+        DateTimeOffset endUtc,
+        CancellationToken cancellationToken = default);
 }

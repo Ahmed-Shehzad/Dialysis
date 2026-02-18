@@ -26,13 +26,14 @@ public sealed partial class OruR01Parser : IOruMessageParser
 
         ParseMsh(segments, out string? sendingApp, out string? sendingFacility, out DateTimeOffset? messageTimestamp, out string? messageControlId);
         string? patientMrn = ParsePid(segments);
-        ParseObr(segments, out string? sessionId, out string? eventPhaseStr);
+        ParseObr(segments, out string? sessionId, out string? eventPhaseStr, out string? therapyId, out string? deviceEui64);
 
         sessionId ??= messageControlId ?? Ulid.NewUlid().ToString();
 
         EventPhase? phase = !string.IsNullOrEmpty(eventPhaseStr) ? new EventPhase(eventPhaseStr) : null;
 
         string? deviceId = sendingApp;
+        string? eui64 = deviceEui64 ?? sendingApp;
         List<ObservationInfo> observations = ParseAllObx(segments);
 
         return new OruParseResult(
@@ -43,7 +44,9 @@ public sealed partial class OruR01Parser : IOruMessageParser
             sendingApp,
             sendingFacility,
             messageTimestamp,
-            observations);
+            observations,
+            eui64,
+            therapyId ?? sessionId);
     }
 
     // ─── MSH Parsing ─────────────────────────────────────────────────────────
@@ -90,10 +93,12 @@ public sealed partial class OruR01Parser : IOruMessageParser
 
     // ─── OBR Parsing ─────────────────────────────────────────────────────────
 
-    private static void ParseObr(string[] segments, out string? sessionId, out string? eventPhase)
+    private static void ParseObr(string[] segments, out string? sessionId, out string? eventPhase, out string? therapyId, out string? deviceEui64)
     {
         sessionId = null;
         eventPhase = null;
+        therapyId = null;
+        deviceEui64 = null;
 
         string? obr = FindFirstSegment(segments, "OBR");
         if (obr is null) return;
@@ -106,6 +111,10 @@ public sealed partial class OruR01Parser : IOruMessageParser
             string[] parts = fillerOrder.Split(ComponentSeparator);
             if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
                 sessionId = parts[0];
+            if (parts.Length > 0)
+                therapyId = fillerOrder;
+            if (parts.Length > 2 && !string.IsNullOrEmpty(parts[2]))
+                deviceEui64 = parts[2];
         }
 
         string obr12 = SafeField(fields, 12);
@@ -152,7 +161,8 @@ public sealed partial class OruR01Parser : IOruMessageParser
         string? provenance = SafeField(fields, 17);
         string? equipmentId = SafeField(fields, 18);
 
-        ContainmentLevel? level = DetermineContainmentLevel(subId, code);
+        ContainmentPath? path = ContainmentPath.TryParse(subId);
+        ContainmentLevel? level = path?.Level ?? (MdcCodeCatalog.TryGet(code, out MdcCodeDescriptor d) ? d.Level : null);
 
         ObservationStatus? status = !string.IsNullOrEmpty(resultStatus)
             ? new ObservationStatus(resultStatus)
@@ -169,32 +179,6 @@ public sealed partial class OruR01Parser : IOruMessageParser
             provenance,
             equipmentId,
             level);
-    }
-
-    /// <summary>
-    /// Determines the IEEE 11073 containment level from the OBX-4 dotted sub-ID.
-    /// 1 dot = MDS, 2 dots = VMD, 3 dots = Channel, 4 dots = Metric.
-    /// Falls back to the MDC code catalog if sub-ID is absent.
-    /// </summary>
-    private static ContainmentLevel? DetermineContainmentLevel(string? subId, string code)
-    {
-        if (!string.IsNullOrEmpty(subId))
-        {
-            int dotCount = subId.Count(c => c == '.');
-            return dotCount switch
-            {
-                0 => ContainmentLevel.Mds,
-                1 => ContainmentLevel.Vmd,
-                2 => ContainmentLevel.Channel,
-                >= 3 => ContainmentLevel.Metric,
-                _ => null
-            };
-        }
-
-        if (MdcCodeCatalog.TryGet(code, out MdcCodeDescriptor descriptor))
-            return descriptor.Level;
-
-        return null;
     }
 
     // ─── HL7 Coded Element (CE) Parsing ──────────────────────────────────────

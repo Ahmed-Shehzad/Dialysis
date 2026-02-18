@@ -9,6 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <ProjectReference Include="..\Dialysis.Prescription.Application\Dialysis.Prescription.Application.csproj" />
+        <ProjectReference Include="..\..\..\Services\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
         <ProjectReference Include="..\Dialysis.Prescription.Infrastructure\Dialysis.Prescription.Infrastructure.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />

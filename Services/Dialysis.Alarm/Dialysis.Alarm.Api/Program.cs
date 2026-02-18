@@ -15,6 +15,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
+using Transponder;
+using Transponder.Transports.SignalR;
+
 using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -25,6 +28,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         opts.Authority = builder.Configuration["Authentication:JwtBearer:Authority"];
         opts.Audience = builder.Configuration["Authentication:JwtBearer:Audience"] ?? "api://dialysis-pdms";
         opts.RequireHttpsMetadata = builder.Configuration.GetValue("Authentication:JwtBearer:RequireHttpsMetadata", true);
+        opts.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                string? token = ctx.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(token))
+                    ctx.Token = token;
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ScopeOrBypassHandler>();
 builder.Services.AddAuthorizationBuilder()
@@ -32,6 +45,10 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AlarmWrite", p => p.Requirements.Add(new ScopeOrBypassRequirement("Alarm:Write", "Alarm:Admin")));
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
+
+builder.Services.AddTransponder(new Uri("transponder://alarm"), opts =>
+    opts.TransportBuilder.UseSignalR(new Uri("signalr://alarm")));
 
 builder.Services.AddIntercessor(cfg =>
 {
@@ -62,7 +79,7 @@ if (app.Environment.IsDevelopment())
 {
     using IServiceScope scope = app.Services.CreateScope();
     AlarmDbContext db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
-    _ = await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
 app.UseExceptionHandler(exceptionHandlerApp =>
@@ -87,6 +104,7 @@ app.UseAuthorization();
 
 app.MapOpenApi();
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true });
+app.MapHub<TransponderSignalRHub>("/transponder/transport").RequireAuthorization("AlarmRead");
 app.MapControllers();
 
 await app.RunAsync();

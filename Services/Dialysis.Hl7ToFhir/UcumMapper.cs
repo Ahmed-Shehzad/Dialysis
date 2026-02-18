@@ -32,9 +32,5 @@ public static class UcumMapper
     /// <summary>
     /// Resolve OBX-6 unit to UCUM code for FHIR Quantity.
     /// </summary>
-    public static string ToUcumCode(string? unit)
-    {
-        if (string.IsNullOrEmpty(unit)) return string.Empty;
-        return UnitMap.GetValueOrDefault(unit, unit);
-    }
+    public static string ToUcumCode(string? unit) => string.IsNullOrEmpty(unit) ? string.Empty : UnitMap.GetValueOrDefault(unit, unit);
 }
