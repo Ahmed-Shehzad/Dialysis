@@ -1,3 +1,4 @@
+using BuildingBlocks.Authorization;
 using BuildingBlocks.Interceptors;
 
 using Dialysis.Patient.Application.Abstractions;
@@ -6,6 +7,7 @@ using Dialysis.Patient.Infrastructure.Persistence;
 
 using Intercessor;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +15,17 @@ using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opts =>
+    {
+        opts.Authority = builder.Configuration["Authentication:JwtBearer:Authority"];
+        opts.Audience = builder.Configuration["Authentication:JwtBearer:Audience"] ?? "api://dialysis-pdms";
+        opts.RequireHttpsMetadata = builder.Configuration.GetValue("Authentication:JwtBearer:RequireHttpsMetadata", true);
+    });
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ScopeOrBypassHandler>();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("PatientRead", p => p.Requirements.Add(new ScopeOrBypassRequirement("Patient:Read", "Patient:Admin")))
+    .AddPolicy("PatientWrite", p => p.Requirements.Add(new ScopeOrBypassRequirement("Patient:Write", "Patient:Admin")));
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -59,6 +72,9 @@ app.UseExceptionHandler(exceptionHandlerApp =>
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
     });
 });
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapOpenApi();
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true });

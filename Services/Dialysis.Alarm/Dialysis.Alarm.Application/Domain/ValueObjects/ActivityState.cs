@@ -14,7 +14,11 @@ public readonly record struct ActivityState
     }
 
     public static readonly ActivityState Enabled = new("enabled");
-    public static readonly ActivityState Disabled = new("disabled");
+    public static readonly ActivityState AudioPaused = new("audio-paused");
+    public static readonly ActivityState AudioOff = new("audio-off");
+    public static readonly ActivityState AlarmPaused = new("alarm-paused");
+    public static readonly ActivityState AlarmOff = new("alarm-off");
+    public static readonly ActivityState AlertAcknowledged = new("alert-acknowledged");
 
     public override string ToString() => Value;
 

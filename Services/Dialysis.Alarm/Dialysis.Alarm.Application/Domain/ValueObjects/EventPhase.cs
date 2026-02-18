@@ -15,7 +15,7 @@ public readonly record struct EventPhase
     }
 
     public static readonly EventPhase Start = new("start");
-    public static readonly EventPhase Update = new("update");
+    public static readonly EventPhase Continue = new("continue");
     public static readonly EventPhase End = new("end");
 
     public override string ToString() => Value;

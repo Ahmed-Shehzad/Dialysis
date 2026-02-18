@@ -7,13 +7,21 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <ProjectReference Include="..\Dialysis.Prescription.Application\Dialysis.Prescription.Application.csproj" />
+        <ProjectReference Include="..\Dialysis.Prescription.Infrastructure\Dialysis.Prescription.Infrastructure.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
+  <ItemGroup>
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    </ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+  </ItemGroup>
 
 </Project>

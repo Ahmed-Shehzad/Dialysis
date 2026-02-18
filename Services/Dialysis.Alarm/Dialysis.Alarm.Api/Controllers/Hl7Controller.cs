@@ -3,6 +3,7 @@ using Dialysis.Alarm.Application.Features.IngestOruR40Message;
 
 using Intercessor.Abstractions;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Alarm.Api.Controllers;
@@ -19,6 +20,7 @@ public sealed class Hl7Controller : ControllerBase
     }
 
     [HttpPost("alarm")]
+    [Authorize(Policy = "AlarmWrite")]
     [ProducesResponseType(typeof(IngestOruR40MessageResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> IngestAlarmAsync(
         [FromBody] IngestOruR40MessageRequest request,

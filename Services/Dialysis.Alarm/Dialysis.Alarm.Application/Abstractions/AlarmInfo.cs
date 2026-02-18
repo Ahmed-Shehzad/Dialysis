@@ -7,20 +7,17 @@ namespace Dialysis.Alarm.Application.Abstractions;
 public sealed record AlarmInfo(
     Ulid? Id,
     string? AlarmType,
+    string? SourceCode,
     string? SourceLimits,
     EventPhase EventPhase,
     AlarmState AlarmState,
     ActivityState ActivityState,
+    AlarmPriority? Priority,
+    string? DisplayName,
     DeviceId? DeviceId,
     string? SessionId,
     DateTimeOffset OccurredAt)
 {
-    public static AlarmInfo Create(
-        string? alarmType,
-        string? sourceLimits,
-        AlarmStateDescriptor state,
-        DeviceId? deviceId,
-        string? sessionId,
-        DateTimeOffset occurredAt) =>
-        new(null, alarmType, sourceLimits, state.EventPhase, state.AlarmState, state.ActivityState, deviceId, sessionId, occurredAt);
+    public static AlarmInfo Create(AlarmCreateParams p) =>
+        new(null, p.AlarmType, p.SourceCode, p.SourceLimits, p.State.EventPhase, p.State.AlarmState, p.State.ActivityState, p.Priority, p.DisplayName, p.DeviceId, p.SessionId, p.OccurredAt);
 }

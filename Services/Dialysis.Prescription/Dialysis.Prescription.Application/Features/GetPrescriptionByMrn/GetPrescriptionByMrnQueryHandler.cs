@@ -1,15 +1,38 @@
+using BuildingBlocks.ValueObjects;
+
+using Dialysis.Prescription.Application.Abstractions;
+using Dialysis.Prescription.Application.Services;
+
 using Intercessor.Abstractions;
+
+using PrescriptionEntity = Dialysis.Prescription.Application.Domain.Prescription;
 
 namespace Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
 
-/// <summary>
-/// Handles prescription lookup by MRN. TODO: Replace with repository when Phase 2 persistence is added.
-/// </summary>
 internal sealed class GetPrescriptionByMrnQueryHandler : IQueryHandler<GetPrescriptionByMrnQuery, GetPrescriptionByMrnResponse?>
 {
-    public Task<GetPrescriptionByMrnResponse?> HandleAsync(GetPrescriptionByMrnQuery request, CancellationToken cancellationToken = default)
+    private readonly IPrescriptionRepository _repository;
+
+    public GetPrescriptionByMrnQueryHandler(IPrescriptionRepository repository)
     {
-        // Phase 2: Add prescription repository and HL7 QBP^D01/RSP^K22 parsing
-        return Task.FromResult<GetPrescriptionByMrnResponse?>(null);
+        _repository = repository;
+    }
+
+    public async Task<GetPrescriptionByMrnResponse?> HandleAsync(GetPrescriptionByMrnQuery request, CancellationToken cancellationToken = default)
+    {
+        var mrn = new MedicalRecordNumber(request.Mrn);
+        PrescriptionEntity? prescription = await _repository.GetLatestByMrnAsync(mrn, cancellationToken);
+        if (prescription is null) return null;
+
+        decimal? bloodFlow = PrescriptionSettingResolver.GetBloodFlowRateMlMin(prescription.Settings);
+        decimal? ufTarget = PrescriptionSettingResolver.GetUfTargetVolumeMl(prescription.Settings);
+        decimal? ufRate = PrescriptionSettingResolver.GetUfRateMlH(prescription.Settings);
+
+        return new GetPrescriptionByMrnResponse(
+            prescription.OrderId,
+            prescription.Modality ?? string.Empty,
+            bloodFlow,
+            ufTarget,
+            ufRate);
     }
 }

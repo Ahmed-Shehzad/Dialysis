@@ -574,8 +574,8 @@ FTS  ── File Trailer (batch count)
 | Priority | Phase | Service | Scope | Status |
 |---|---|---|---|---|
 | P0 | 3 | Treatment | PCD-01 ORU^R01 parser (full hierarchy) | **Implemented** – Full MDC catalog, IEEE 11073 hierarchy, value tables |
-| P0 | 4 | Alarm | PCD-04 ORU^R40 parser (5-OBX structure) | Skeleton exists – needs Table 3 + lifecycle |
-| P1 | 5 | Hl7ToFhir | MDC → FHIR Observation mapping | Skeleton exists – needs full code catalog |
+| P0 | 4 | Alarm | PCD-04 ORU^R40 parser (5-OBX structure) | **Implemented** – Strict 5-OBX, Table 3 catalog, alarm lifecycle |
+| P1 | 5 | Hl7ToFhir | MDC → FHIR Observation mapping | **Implemented** – MDC catalog, LOINC, UCUM, DetectedIssue severity, Procedure status, Provenance |
 | P1 | 2 | Prescription | QBP^D01/RSP^K22 + profile parsing | Placeholder – needs full profile engine |
 | P2 | 1 | Patient | PDQ (QBP^Q22/RSP^K22) + 6 use cases | Placeholder – needs response parsing |
 | P2 | 3 | Treatment | Batch Protocol (run sheet) | Not started |

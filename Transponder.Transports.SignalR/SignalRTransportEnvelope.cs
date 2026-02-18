@@ -6,7 +6,7 @@ namespace Transponder.Transports.SignalR;
 public sealed class SignalRTransportEnvelope
 {
     private SignalRTransportEnvelope(
-        Transponder.Transports.MessageIdentity identity,
+        MessageIdentity identity,
         string? messageType,
         string? contentType,
         DateTimeOffset? sentTime,
@@ -50,7 +50,7 @@ public sealed class SignalRTransportEnvelope
             headers[entry.Key] = entry.Value?.ToString();
 
         return new SignalRTransportEnvelope(
-            new Transponder.Transports.MessageIdentity(message.MessageId, message.CorrelationId, message.ConversationId),
+            new MessageIdentity(message.MessageId, message.CorrelationId, message.ConversationId),
             message.MessageType,
             message.ContentType,
             message.SentTime,

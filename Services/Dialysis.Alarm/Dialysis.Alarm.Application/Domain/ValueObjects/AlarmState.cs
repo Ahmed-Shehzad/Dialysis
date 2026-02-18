@@ -14,10 +14,12 @@ public readonly record struct AlarmState
         Value = value;
     }
 
-    public static readonly AlarmState Active = new("Active");
-    public static readonly AlarmState Latched = new("Latched");
-    public static readonly AlarmState Acknowledged = new("Acknowledged");
-    public static readonly AlarmState Cleared = new("Cleared");
+    public static readonly AlarmState Off = new("off");
+    public static readonly AlarmState Inactive = new("inactive");
+    public static readonly AlarmState Active = new("active");
+    public static readonly AlarmState Latched = new("latched");
+    public static readonly AlarmState Acknowledged = new("acknowledged");
+    public static readonly AlarmState Cleared = new("cleared");
 
     public override string ToString() => Value;
 

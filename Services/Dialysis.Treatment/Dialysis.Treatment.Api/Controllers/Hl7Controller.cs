@@ -3,6 +3,7 @@ using Dialysis.Treatment.Application.Features.IngestOruMessage;
 
 using Intercessor.Abstractions;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Treatment.Api.Controllers;
@@ -19,6 +20,7 @@ public sealed class Hl7Controller : ControllerBase
     }
 
     [HttpPost("oru")]
+    [Authorize(Policy = "TreatmentWrite")]
     [ProducesResponseType(typeof(IngestOruMessageResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> IngestOruAsync(
         [FromBody] IngestOruMessageRequest request,

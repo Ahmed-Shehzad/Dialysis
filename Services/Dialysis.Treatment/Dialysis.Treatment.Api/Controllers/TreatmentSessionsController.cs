@@ -3,6 +3,7 @@ using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 
 using Intercessor.Abstractions;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Treatment.Api.Controllers;
@@ -19,6 +20,7 @@ public sealed class TreatmentSessionsController : ControllerBase
     }
 
     [HttpGet("{sessionId}")]
+    [Authorize(Policy = "TreatmentRead")]
     [ProducesResponseType(typeof(GetTreatmentSessionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBySessionIdAsync(string sessionId, CancellationToken cancellationToken)

@@ -58,6 +58,8 @@
   <Folder Name="/Services/Dialysis.Prescription/">
     <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj" />
     <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Application/Dialysis.Prescription.Application.csproj" />
+    <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Infrastructure/Dialysis.Prescription.Infrastructure.csproj" />
+    <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Tests/Dialysis.Prescription.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Treatment/">
     <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj" />

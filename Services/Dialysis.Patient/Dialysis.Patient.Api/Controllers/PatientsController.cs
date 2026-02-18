@@ -8,6 +8,7 @@ using Dialysis.Patient.Application.Features.SearchPatients;
 
 using Intercessor.Abstractions;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Patient.Api.Controllers;
@@ -24,6 +25,7 @@ public sealed class PatientsController : ControllerBase
     }
 
     [HttpGet("mrn/{mrn}")]
+    [Authorize(Policy = "PatientRead")]
     [ProducesResponseType(typeof(GetPatientByMrnResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByMrnAsync(string mrn, CancellationToken cancellationToken)
@@ -34,6 +36,7 @@ public sealed class PatientsController : ControllerBase
     }
 
     [HttpGet("search")]
+    [Authorize(Policy = "PatientRead")]
     [ProducesResponseType(typeof(SearchPatientsResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchAsync(
         [FromQuery] string firstName,
@@ -46,6 +49,7 @@ public sealed class PatientsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "PatientWrite")]
     [ProducesResponseType(typeof(RegisterPatientResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> RegisterAsync(
         [FromBody] RegisterPatientRequest request,

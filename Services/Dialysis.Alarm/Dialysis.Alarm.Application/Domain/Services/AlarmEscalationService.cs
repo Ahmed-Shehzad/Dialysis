@@ -18,7 +18,7 @@ public sealed class AlarmEscalationService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public EscalationResult Evaluate(IReadOnlyList<Domain.Alarm> recentAlarms, DeviceId? deviceId)
+    public EscalationResult Evaluate(IReadOnlyList<Alarm> recentAlarms, DeviceId? deviceId)
     {
         var activeAlarms = recentAlarms
             .Where(a => a.AlarmState != AlarmState.Cleared && a.AlarmState != AlarmState.Acknowledged)

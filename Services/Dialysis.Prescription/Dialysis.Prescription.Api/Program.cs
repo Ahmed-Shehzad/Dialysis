@@ -1,14 +1,32 @@
+using BuildingBlocks.Authorization;
+
+using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
+using Dialysis.Prescription.Infrastructure.Hl7;
+using Dialysis.Prescription.Infrastructure.Persistence;
 
 using Intercessor;
-using Intercessor.Abstractions;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 
 using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opts =>
+    {
+        opts.Authority = builder.Configuration["Authentication:JwtBearer:Authority"];
+        opts.Audience = builder.Configuration["Authentication:JwtBearer:Audience"] ?? "api://dialysis-pdms";
+        opts.RequireHttpsMetadata = builder.Configuration.GetValue("Authentication:JwtBearer:RequireHttpsMetadata", true);
+    });
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ScopeOrBypassHandler>();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("PrescriptionRead", p => p.Requirements.Add(new ScopeOrBypassRequirement("Prescription:Read", "Prescription:Admin")))
+    .AddPolicy("PrescriptionWrite", p => p.Requirements.Add(new ScopeOrBypassRequirement("Prescription:Write", "Prescription:Admin")));
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
@@ -17,9 +35,27 @@ builder.Services.AddIntercessor(cfg =>
     cfg.RegisterFromAssembly(typeof(GetPrescriptionByMrnQuery).Assembly);
 });
 
-builder.Services.AddHealthChecks();
+string connectionString = builder.Configuration.GetConnectionString("PrescriptionDb")
+                          ?? "Host=localhost;Database=dialysis_prescription;Username=postgres;Password=postgres";
+
+builder.Services.AddDbContext<PrescriptionDbContext>(o => o.UseNpgsql(connectionString));
+builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
+builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
+builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();
+builder.Services.AddScoped<IRspK22Validator, RspK22Validator>();
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString, name: "prescription-db");
 
 WebApplication app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using IServiceScope scope = app.Services.CreateScope();
+    PrescriptionDbContext db = scope.ServiceProvider.GetRequiredService<PrescriptionDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 app.UseExceptionHandler(exceptionHandlerApp =>
 {
@@ -34,22 +70,29 @@ app.UseExceptionHandler(exceptionHandlerApp =>
             await context.Response.WriteAsJsonAsync(new { errors });
             return;
         }
+        if (exception is Dialysis.Prescription.Application.Exceptions.RspK22ValidationException rspEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { errorCode = rspEx.ErrorCode, message = rspEx.Message });
+            return;
+        }
+        if (exception is ArgumentException argEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { message = argEx.Message });
+            return;
+        }
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
     });
 });
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapOpenApi();
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true });
-
-app.MapGet("/prescriptions/{mrn}", async (string mrn, ISender sender, CancellationToken ct) =>
-{
-    var query = new GetPrescriptionByMrnQuery(mrn);
-    GetPrescriptionByMrnResponse? response = await sender.SendAsync(query, ct);
-    return response is null ? Results.NotFound() : Results.Ok(response);
-})
-.WithName("GetPrescriptionByMrn")
-.WithTags("Prescription")
-.Produces<GetPrescriptionByMrnResponse>()
-.Produces(404);
+app.MapControllers();
 
 await app.RunAsync();
