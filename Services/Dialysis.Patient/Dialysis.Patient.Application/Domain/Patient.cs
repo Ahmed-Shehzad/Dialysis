@@ -9,8 +9,8 @@ namespace Dialysis.Patient.Application.Domain;
 public sealed class Patient : AggregateRoot
 {
     public MedicalRecordNumber MedicalRecordNumber { get; private set; }
-    public string? PersonNumber { get; set; }
-    public PersonName Name { get; private set; } = null!;
+    public string? PersonNumber { get; private set; }
+    public Person Name { get; private set; } = null!;
     public DateOnly? DateOfBirth { get; private set; }
     public Gender? Gender { get; private set; }
 
@@ -18,7 +18,7 @@ public sealed class Patient : AggregateRoot
 
     public static Patient Register(
         MedicalRecordNumber medicalRecordNumber,
-        PersonName name,
+        Person name,
         DateOnly? dateOfBirth,
         Gender? gender)
     {
@@ -36,7 +36,7 @@ public sealed class Patient : AggregateRoot
 
     public void UpdateDemographics(
         string? personNumber,
-        PersonName? name,
+        Person? name,
         DateOnly? dateOfBirth,
         Gender? gender)
     {

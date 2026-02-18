@@ -18,13 +18,13 @@ internal sealed class IngestOruR40MessageCommandHandler : ICommandHandler<Ingest
 
     public async Task<IngestOruR40MessageResponse> HandleAsync(IngestOruR40MessageCommand request, CancellationToken cancellationToken = default)
     {
-        var parseResult = _parser.Parse(request.RawHl7Message);
+        OruR40ParseResult parseResult = _parser.Parse(request.RawHl7Message);
         var alarmIds = new List<string>();
 
-        foreach (var alarm in parseResult.Alarms)
+        foreach (AlarmInfo alarm in parseResult.Alarms)
         {
             var command = new RecordAlarmCommand(alarm);
-            var response = await _sender.SendAsync(command, cancellationToken);
+            RecordAlarmResponse response = await _sender.SendAsync(command, cancellationToken);
             alarmIds.Add(response.AlarmId);
         }
 

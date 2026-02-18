@@ -11,6 +11,6 @@ public sealed class RecordObservationCommandValidator : AbstractValidator<Record
 
         _ = RuleFor(x => x.Observations)
             .NotNull()
-            .Must(o => o is not null && o.Count > 0, "At least one observation is required.");
+            .Must(o => o.Count > 0, "At least one observation is required.");
     }
 }

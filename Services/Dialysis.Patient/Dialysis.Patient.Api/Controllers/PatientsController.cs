@@ -29,7 +29,7 @@ public sealed class PatientsController : ControllerBase
     public async Task<IActionResult> GetByMrnAsync(string mrn, CancellationToken cancellationToken)
     {
         var query = new GetPatientByMrnQuery(new MedicalRecordNumber(mrn));
-        var response = await _sender.SendAsync(query, cancellationToken);
+        GetPatientByMrnResponse? response = await _sender.SendAsync(query, cancellationToken);
         return response is null ? NotFound() : Ok(response);
     }
 
@@ -40,8 +40,8 @@ public sealed class PatientsController : ControllerBase
         [FromQuery] string lastName,
         CancellationToken cancellationToken)
     {
-        var query = new SearchPatientsQuery(new PersonName(firstName, lastName));
-        var response = await _sender.SendAsync(query, cancellationToken);
+        var query = new SearchPatientsQuery(new Person(firstName, lastName));
+        SearchPatientsResponse response = await _sender.SendAsync(query, cancellationToken);
         return Ok(response);
     }
 
@@ -53,11 +53,11 @@ public sealed class PatientsController : ControllerBase
     {
         var command = new RegisterPatientCommand(
             new MedicalRecordNumber(request.MedicalRecordNumber),
-            new PersonName(request.FirstName, request.LastName),
+            new Person(request.FirstName, request.LastName),
             request.DateOfBirth,
             request.Gender is not null ? new Gender(request.Gender) : null);
 
-        var response = await _sender.SendAsync(command, cancellationToken);
+        RegisterPatientResponse response = await _sender.SendAsync(command, cancellationToken);
         return CreatedAtAction(nameof(GetByMrnAsync), new { mrn = request.MedicalRecordNumber }, response);
     }
 }

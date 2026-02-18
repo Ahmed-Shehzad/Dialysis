@@ -1,4 +1,5 @@
 using Dialysis.Treatment.Application.Abstractions;
+using Dialysis.Treatment.Application.Domain;
 
 using Intercessor.Abstractions;
 
@@ -15,7 +16,7 @@ internal sealed class GetTreatmentSessionQueryHandler : IQueryHandler<GetTreatme
 
     public async Task<GetTreatmentSessionResponse?> HandleAsync(GetTreatmentSessionQuery request, CancellationToken cancellationToken = default)
     {
-        var session = await _repository.GetBySessionIdAsync(request.SessionId, cancellationToken);
+        TreatmentSession? session = await _repository.GetBySessionIdAsync(request.SessionId, cancellationToken);
         if (session is null)
             return null;
 

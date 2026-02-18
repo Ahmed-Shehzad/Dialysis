@@ -32,7 +32,7 @@ internal sealed class AzureServiceBusReceiveEndpoint : IReceiveEndpoint
         ArgumentNullException.ThrowIfNull(resiliencePipeline);
 
         _inputAddress = configuration.InputAddress;
-        _handler = configuration.Handler ?? throw new ArgumentNullException(nameof(configuration.Handler));
+        _handler = configuration.Handler ?? throw new ArgumentNullException(nameof(configuration));
         _hostAddress = hostAddress;
         _faultSettings = faultSettings;
         _resiliencePipeline = resiliencePipeline;

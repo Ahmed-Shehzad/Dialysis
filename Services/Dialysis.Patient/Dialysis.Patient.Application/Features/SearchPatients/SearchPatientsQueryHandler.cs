@@ -15,7 +15,7 @@ internal sealed class SearchPatientsQueryHandler : IQueryHandler<SearchPatientsQ
 
     public async Task<SearchPatientsResponse> HandleAsync(SearchPatientsQuery request, CancellationToken cancellationToken = default)
     {
-        var patients = await _repository.SearchByNameAsync(request.Name, cancellationToken);
+        IReadOnlyList<Domain.Patient> patients = await _repository.SearchByNameAsync(request.Name, cancellationToken);
         var matches = patients.Select(p => new PatientMatch(
             p.Id.ToString(),
             p.MedicalRecordNumber,

@@ -6,4 +6,4 @@ namespace Dialysis.Patient.Application.Domain.Events;
 
 public sealed record PatientDemographicsUpdatedEvent(
     Ulid PatientId,
-    PersonName Name) : DomainEvent;
+    Person Name) : DomainEvent;

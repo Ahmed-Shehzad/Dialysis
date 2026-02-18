@@ -8,4 +8,4 @@ namespace Dialysis.Patient.Application.Domain.Events;
 public sealed record PatientRegisteredEvent(
     Ulid PatientId,
     MedicalRecordNumber MedicalRecordNumber,
-    PersonName Name) : DomainEvent;
+    Person Name) : DomainEvent;

@@ -21,7 +21,10 @@ internal sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPa
             request.DateOfBirth,
             request.Gender);
 
-        _ = await _repository.AddAsync(patient, cancellationToken);
+        await _repository.AddAsync(patient, cancellationToken);
+
+        await _repository.SaveChangesAsync(cancellationToken);
+
         return new RegisterPatientResponse(patient.Id.ToString());
     }
 }

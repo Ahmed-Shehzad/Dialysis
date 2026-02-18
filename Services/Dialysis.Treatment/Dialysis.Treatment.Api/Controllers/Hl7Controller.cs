@@ -20,12 +20,12 @@ public sealed class Hl7Controller : ControllerBase
 
     [HttpPost("oru")]
     [ProducesResponseType(typeof(IngestOruMessageResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> IngestOru(
+    public async Task<IActionResult> IngestOruAsync(
         [FromBody] IngestOruMessageRequest request,
         CancellationToken cancellationToken)
     {
         var command = new IngestOruMessageCommand(request.RawHl7Message);
-        var response = await _sender.SendAsync(command, cancellationToken);
+        IngestOruMessageResponse response = await _sender.SendAsync(command, cancellationToken);
         return Ok(response);
     }
 }

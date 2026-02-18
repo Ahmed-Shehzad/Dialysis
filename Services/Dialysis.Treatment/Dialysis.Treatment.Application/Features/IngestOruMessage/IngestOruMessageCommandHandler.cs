@@ -18,7 +18,7 @@ internal sealed class IngestOruMessageCommandHandler : ICommandHandler<IngestOru
 
     public async Task<IngestOruMessageResponse> HandleAsync(IngestOruMessageCommand request, CancellationToken cancellationToken = default)
     {
-        var parseResult = _parser.Parse(request.RawHl7Message);
+        OruParseResult parseResult = _parser.Parse(request.RawHl7Message);
 
         if (parseResult.Observations.Count == 0)
             return new IngestOruMessageResponse(parseResult.SessionId, 0, true);
@@ -27,9 +27,10 @@ internal sealed class IngestOruMessageCommandHandler : ICommandHandler<IngestOru
             parseResult.SessionId,
             parseResult.PatientMrn,
             parseResult.DeviceId,
+            parseResult.Phase,
             parseResult.Observations);
 
-        var response = await _sender.SendAsync(recordCommand, cancellationToken);
+        RecordObservationResponse response = await _sender.SendAsync(recordCommand, cancellationToken);
         return new IngestOruMessageResponse(response.SessionId, response.ObservationCount, true);
     }
 }

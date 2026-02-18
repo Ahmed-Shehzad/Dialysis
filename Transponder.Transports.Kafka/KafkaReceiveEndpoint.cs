@@ -83,7 +83,7 @@ internal sealed class KafkaReceiveEndpoint : IReceiveEndpoint
                 ConsumeResult<string, byte[]>? result = consumer.Consume(cancellationToken);
                 if (result?.Message is null) continue;
 
-                var transportMessage = CreateTransportMessage(result);
+                TransportMessage transportMessage = CreateTransportMessage(result);
                 var context = new KafkaReceiveContext(
                     transportMessage,
                     _hostAddress,
@@ -105,9 +105,9 @@ internal sealed class KafkaReceiveEndpoint : IReceiveEndpoint
 
     private static TransportMessage CreateTransportMessage(ConsumeResult<string, byte[]> result)
     {
-        var headers = KafkaTransportHeaders.ReadHeaders(result.Message.Headers);
-        var parsed = ParseMessageHeaders(headers);
-        var messageId = Ulid.TryParse(result.Message.Key, out Ulid mid) ? mid : (Ulid?)null;
+        Dictionary<string, object?> headers = KafkaTransportHeaders.ReadHeaders(result.Message.Headers);
+        (string? ContentType, string? MessageType, Ulid? CorrelationId, Ulid? ConversationId) parsed = ParseMessageHeaders(headers);
+        Ulid? messageId = Ulid.TryParse(result.Message.Key, out Ulid mid) ? mid : (Ulid?)null;
         return new TransportMessage(
             result.Message.Value ?? [],
             parsed.ContentType,

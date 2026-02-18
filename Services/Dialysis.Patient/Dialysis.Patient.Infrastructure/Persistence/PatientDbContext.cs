@@ -1,3 +1,4 @@
+using BuildingBlocks.Abstractions;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Application.Domain.ValueObjects;
@@ -8,7 +9,7 @@ using PatientDomain = Dialysis.Patient.Application.Domain.Patient;
 
 namespace Dialysis.Patient.Infrastructure.Persistence;
 
-public sealed class PatientDbContext : DbContext
+public sealed class PatientDbContext : DbContext, IDbContext
 {
     public PatientDbContext(DbContextOptions<PatientDbContext> options)
         : base(options)

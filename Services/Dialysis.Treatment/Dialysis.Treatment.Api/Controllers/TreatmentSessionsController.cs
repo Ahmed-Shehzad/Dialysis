@@ -24,7 +24,7 @@ public sealed class TreatmentSessionsController : ControllerBase
     public async Task<IActionResult> GetBySessionIdAsync(string sessionId, CancellationToken cancellationToken)
     {
         var query = new GetTreatmentSessionQuery(new SessionId(sessionId));
-        var response = await _sender.SendAsync(query, cancellationToken);
+        GetTreatmentSessionResponse? response = await _sender.SendAsync(query, cancellationToken);
         return response is null ? NotFound() : Ok(response);
     }
 }

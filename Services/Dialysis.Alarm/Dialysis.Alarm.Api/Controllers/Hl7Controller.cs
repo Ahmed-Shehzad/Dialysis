@@ -20,12 +20,12 @@ public sealed class Hl7Controller : ControllerBase
 
     [HttpPost("alarm")]
     [ProducesResponseType(typeof(IngestOruR40MessageResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> IngestAlarm(
+    public async Task<IActionResult> IngestAlarmAsync(
         [FromBody] IngestOruR40MessageRequest request,
         CancellationToken cancellationToken)
     {
         var command = new IngestOruR40MessageCommand(request.RawHl7Message);
-        var response = await _sender.SendAsync(command, cancellationToken);
+        IngestOruR40MessageResponse response = await _sender.SendAsync(command, cancellationToken);
         return Ok(response);
     }
 }

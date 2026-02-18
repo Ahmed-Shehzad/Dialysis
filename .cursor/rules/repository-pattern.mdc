@@ -1,0 +1,82 @@
+---
+description: Enforces the standard repository pattern across all services
+globs: ["**/*Repository*.cs", "**/I*Repository*.cs"]
+alwaysApply: false
+---
+
+# Repository Pattern (Strict)
+
+Every aggregate root's repository **must** follow the standard structure established by the Patient service. No standalone repository implementations are allowed.
+
+## Required Structure
+
+### 1. DbContext Implements `IDbContext`
+
+Every service's `DbContext` must implement `BuildingBlocks.Abstractions.IDbContext`:
+
+```csharp
+public sealed class {Service}DbContext : DbContext, IDbContext
+```
+
+### 2. Interface Extends `IRepository<T>`
+
+Every repository interface lives in `{Service}.Application/Abstractions/` and extends the base generic interface:
+
+```csharp
+public interface I{Entity}Repository : IRepository<{Entity}>
+{
+    // Only domain-specific query methods here.
+    // Do NOT redeclare AddAsync, GetAsync, Update, Delete, SaveChangesAsync — they come from the base.
+}
+```
+
+### 3. Implementation Extends `Repository<T>`
+
+Every repository implementation lives in `{Service}.Infrastructure/Persistence/` and extends the base class:
+
+```csharp
+public sealed class {Entity}Repository : Repository<{Entity}>, I{Entity}Repository
+{
+    private readonly {Service}DbContext _db;
+
+    public {Entity}Repository({Service}DbContext db) : base(db)
+    {
+        _db = db;
+    }
+
+    // Domain-specific methods from the interface...
+
+    // All base abstract methods must be overridden:
+    public async override Task AddAsync({Entity} entity, CancellationToken ct = default) => ...
+    public async override Task AddAsync(IEnumerable<{Entity}> entities, CancellationToken ct = default) => ...
+    public async override Task<IReadOnlyList<{Entity}>> GetManyAsync(...) => ...
+    public async override Task<{Entity}?> GetAsync(...) => ...
+    public override void Update({Entity} entity) => ...
+    public override void Update(IEnumerable<{Entity}> entities) => ...
+    public override void Delete({Entity} entity) => ...
+    public override void Delete(IEnumerable<{Entity}> entities) => ...
+    // SaveChangesAsync is inherited from Repository<T> — do NOT override.
+}
+```
+
+## Rules
+
+1. **Never** create a repository that does not extend `Repository<T>` and `IRepository<T>`.
+2. **Never** define `SaveAsync` or `SaveChangesAsync` on the domain-specific interface — it is inherited from `IRepository<T>`.
+3. **Never** put DTOs, records, or non-repository types in the repository interface file. Each type gets its own file.
+4. **Always** accept the `DbContext` in the constructor and pass it to `base(db)`.
+5. **Always** use `AsNoTracking()` for read-only queries.
+6. **Always** mark repository implementations as `sealed`.
+7. Repositories are for **aggregate roots only** — child entities are accessed through their parent aggregate.
+
+## Reference: Base Types (BuildingBlocks)
+
+- `IRepository<TEntity>` — defines `GetManyAsync`, `GetAsync`, `AddAsync`, `Update`, `Delete`, `SaveChangesAsync`
+- `Repository<TEntity>` — abstract base implementing `SaveChangesAsync` via `IDbContext`; all other methods are abstract
+- `IDbContext` — exposes `Task<int> SaveChangesAsync(CancellationToken)`
+
+## Reference: Patient Service (Gold Standard)
+
+- `IPatientRepository : IRepository<Patient>` — adds `GetByMrnAsync`, `SearchByNameAsync`
+- `PatientRepository : Repository<Patient>, IPatientRepository` — implements everything, delegates to `PatientDbContext`
+- `PatientDbContext : DbContext, IDbContext`

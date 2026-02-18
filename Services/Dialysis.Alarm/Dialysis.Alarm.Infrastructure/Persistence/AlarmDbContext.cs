@@ -1,3 +1,4 @@
+using BuildingBlocks.Abstractions;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
@@ -8,7 +9,7 @@ using AlarmDomain = Dialysis.Alarm.Application.Domain.Alarm;
 
 namespace Dialysis.Alarm.Infrastructure.Persistence;
 
-public sealed class AlarmDbContext : DbContext
+public sealed class AlarmDbContext : DbContext, IDbContext
 {
     public AlarmDbContext(DbContextOptions<AlarmDbContext> options)
         : base(options)

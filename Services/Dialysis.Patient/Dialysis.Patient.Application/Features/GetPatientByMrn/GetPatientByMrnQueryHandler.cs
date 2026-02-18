@@ -15,7 +15,7 @@ internal sealed class GetPatientByMrnQueryHandler : IQueryHandler<GetPatientByMr
 
     public async Task<GetPatientByMrnResponse?> HandleAsync(GetPatientByMrnQuery request, CancellationToken cancellationToken = default)
     {
-        var patient = await _repository.GetByMrnAsync(request.Mrn, cancellationToken);
+        Domain.Patient? patient = await _repository.GetByMrnAsync(request.Mrn, cancellationToken);
         return patient is null
             ? null
             : new GetPatientByMrnResponse(

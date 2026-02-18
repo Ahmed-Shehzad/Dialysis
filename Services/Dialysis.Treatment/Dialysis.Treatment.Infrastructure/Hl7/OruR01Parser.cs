@@ -1,121 +1,284 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Abstractions;
+using Dialysis.Treatment.Application.Domain.Hl7;
 using Dialysis.Treatment.Application.Domain.ValueObjects;
-
-using Efferent.HL7.V2;
 
 namespace Dialysis.Treatment.Infrastructure.Hl7;
 
 /// <summary>
-/// Parses HL7 ORU^R01 (PCD-01) messages into treatment observations.
+/// Parses HL7 ORU^R01 (PCD-01) messages following the IEEE 11073 containment model.
+/// Handles MDS → VMD → Channel → Metric hierarchy via OBX-4 dotted sub-IDs.
 /// </summary>
-public sealed class OruR01Parser : IOruMessageParser
+public sealed partial class OruR01Parser : IOruMessageParser
 {
-    /// <summary>
-    /// Parse an ORU^R01 message and extract session metadata plus OBX observations.
-    /// </summary>
-    /// <param name="hl7Message">Raw HL7 message (pipe-delimited).</param>
-    /// <returns>Parsed result with SessionId, PatientMrn, DeviceId, and Observations.</returns>
+    private const char FieldSeparator = '|';
+    private const char ComponentSeparator = '^';
+
     public OruParseResult Parse(string hl7Message)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(hl7Message);
 
-        var msg = new Message(hl7Message);
-        if (!msg.ParseMessage(bypassValidation: true))
-            throw new ArgumentException("Invalid HL7 ORU message.", nameof(hl7Message));
+        string[] segments = SplitSegments(hl7Message);
 
-        var sessionId = GetSessionId(msg);
-        var patientMrn = SafeGetValue(msg, "PID", 3);
-        var deviceId = GetDeviceId(msg);
+        ParseMsh(segments, out string? sendingApp, out string? sendingFacility, out DateTimeOffset? messageTimestamp, out string? messageControlId);
+        string? patientMrn = ParsePid(segments);
+        ParseObr(segments, out string? sessionId, out string? eventPhaseStr);
 
-        var observations = new List<ObservationInfo>();
-        var obxIndex = 1;
-        while (true)
-        {
-            var code = SafeGetValue(msg, "OBX", obxIndex, 3);
-            if (string.IsNullOrEmpty(code))
-                break;
+        sessionId ??= messageControlId ?? Ulid.NewUlid().ToString();
 
-            var value = SafeGetValue(msg, "OBX", obxIndex, 5);
-            var unit = SafeGetValue(msg, "OBX", obxIndex, 6);
-            var subId = SafeGetValue(msg, "OBX", obxIndex, 4);
-            var provenance = SafeGetValue(msg, "OBX", obxIndex, 17);
-            var effectiveTimeStr = SafeGetValue(msg, "OBX", obxIndex, 14);
-            DateTimeOffset? effectiveTime = null;
-            if (DateTimeOffset.TryParse(effectiveTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dt))
-                effectiveTime = dt;
+        EventPhase? phase = !string.IsNullOrEmpty(eventPhaseStr) ? new EventPhase(eventPhaseStr) : null;
 
-            observations.Add(new ObservationInfo(new ObservationCode(code), value, unit, subId, provenance, effectiveTime));
-            obxIndex++;
-        }
+        string? deviceId = sendingApp;
+        List<ObservationInfo> observations = ParseAllObx(segments);
 
         return new OruParseResult(
             new SessionId(sessionId),
             !string.IsNullOrWhiteSpace(patientMrn) ? new MedicalRecordNumber(patientMrn) : null,
             !string.IsNullOrWhiteSpace(deviceId) ? new DeviceId(deviceId) : null,
+            phase,
+            sendingApp,
+            sendingFacility,
+            messageTimestamp,
             observations);
     }
 
-    private static string GetSessionId(Message msg)
+    // ─── MSH Parsing ─────────────────────────────────────────────────────────
+
+    private static void ParseMsh(
+        string[] segments,
+        out string? sendingApp,
+        out string? sendingFacility,
+        out DateTimeOffset? messageTimestamp,
+        out string? messageControlId)
     {
-        var obr3 = SafeGetValue(msg, "OBR", 1, 3);
-        if (!string.IsNullOrEmpty(obr3))
-        {
-            var parts = obr3.Split('^');
-            if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
-                return parts[0];
-        }
+        sendingApp = null;
+        sendingFacility = null;
+        messageTimestamp = null;
+        messageControlId = null;
 
-        var msh10 = SafeGetValue(msg, "MSH", 10);
-        if (!string.IsNullOrEmpty(msh10))
-            return msh10;
+        string? msh = FindFirstSegment(segments, "MSH");
+        if (msh is null) return;
 
-        return Guid.NewGuid().ToString("N")[..12];
+        string[] fields = msh.Split(FieldSeparator);
+
+        sendingApp = SafeField(fields, 2);
+        sendingFacility = SafeField(fields, 3);
+        messageTimestamp = ParseHl7DateTime(SafeField(fields, 6));
+        messageControlId = SafeField(fields, 9);
     }
 
-    private static string? GetDeviceId(Message msg)
-    {
-        var msh3 = SafeGetValue(msg, "MSH", 3);
-        if (!string.IsNullOrEmpty(msh3))
-            return msh3;
+    // ─── PID Parsing ─────────────────────────────────────────────────────────
 
-        var obr3 = SafeGetValue(msg, "OBR", 1, 3);
-        if (!string.IsNullOrEmpty(obr3))
+    private static string? ParsePid(string[] segments)
+    {
+        string? pid = FindFirstSegment(segments, "PID");
+        if (pid is null) return null;
+
+        string[] fields = pid.Split(FieldSeparator);
+        string raw = SafeField(fields, 3);
+        if (string.IsNullOrEmpty(raw)) return null;
+
+        string[] components = raw.Split(ComponentSeparator);
+        return components.Length > 0 && !string.IsNullOrEmpty(components[0])
+            ? components[0]
+            : null;
+    }
+
+    // ─── OBR Parsing ─────────────────────────────────────────────────────────
+
+    private static void ParseObr(string[] segments, out string? sessionId, out string? eventPhase)
+    {
+        sessionId = null;
+        eventPhase = null;
+
+        string? obr = FindFirstSegment(segments, "OBR");
+        if (obr is null) return;
+
+        string[] fields = obr.Split(FieldSeparator);
+
+        string fillerOrder = SafeField(fields, 3);
+        if (!string.IsNullOrEmpty(fillerOrder))
         {
-            var parts = obr3.Split('^');
-            if (parts.Length >= 3)
-                return parts[2];
-            if (parts.Length >= 2)
-                return parts[1];
+            string[] parts = fillerOrder.Split(ComponentSeparator);
+            if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
+                sessionId = parts[0];
         }
+
+        string obr12 = SafeField(fields, 12);
+        if (!string.IsNullOrEmpty(obr12))
+            eventPhase = obr12.Split(ComponentSeparator)[0];
+    }
+
+    // ─── OBX Parsing (Full IEEE 11073 Hierarchy) ─────────────────────────────
+
+    private static List<ObservationInfo> ParseAllObx(string[] segments)
+    {
+        var observations = new List<ObservationInfo>();
+
+        foreach (string segment in segments)
+        {
+            if (!segment.StartsWith("OBX", StringComparison.Ordinal))
+                continue;
+
+            ObservationInfo? obs = ParseSingleObx(segment);
+            if (obs is not null)
+                observations.Add(obs);
+        }
+
+        return observations;
+    }
+
+    private static ObservationInfo? ParseSingleObx(string segment)
+    {
+        string[] fields = segment.Split(FieldSeparator);
+        if (fields.Length < 6) return null;
+
+        string obx3Raw = SafeField(fields, 3);
+        if (string.IsNullOrEmpty(obx3Raw)) return null;
+
+        string code = ParseCodedElement(obx3Raw);
+        if (string.IsNullOrEmpty(code)) return null;
+
+        string? value = SafeField(fields, 5);
+        string? unit = ExtractUcumUnit(SafeField(fields, 6));
+        string? subId = SafeField(fields, 4);
+        string? referenceRange = SafeField(fields, 7);
+        string? resultStatus = SafeField(fields, 11);
+        DateTimeOffset? effectiveTime = ParseHl7DateTime(SafeField(fields, 14));
+        string? provenance = SafeField(fields, 17);
+        string? equipmentId = SafeField(fields, 18);
+
+        ContainmentLevel? level = DetermineContainmentLevel(subId, code);
+
+        ObservationStatus? status = !string.IsNullOrEmpty(resultStatus)
+            ? new ObservationStatus(resultStatus)
+            : null;
+
+        return new ObservationInfo(
+            new ObservationCode(code),
+            value,
+            unit,
+            subId,
+            referenceRange,
+            status,
+            effectiveTime,
+            provenance,
+            equipmentId,
+            level);
+    }
+
+    /// <summary>
+    /// Determines the IEEE 11073 containment level from the OBX-4 dotted sub-ID.
+    /// 1 dot = MDS, 2 dots = VMD, 3 dots = Channel, 4 dots = Metric.
+    /// Falls back to the MDC code catalog if sub-ID is absent.
+    /// </summary>
+    private static ContainmentLevel? DetermineContainmentLevel(string? subId, string code)
+    {
+        if (!string.IsNullOrEmpty(subId))
+        {
+            int dotCount = subId.Count(c => c == '.');
+            return dotCount switch
+            {
+                0 => ContainmentLevel.Mds,
+                1 => ContainmentLevel.Vmd,
+                2 => ContainmentLevel.Channel,
+                >= 3 => ContainmentLevel.Metric,
+                _ => null
+            };
+        }
+
+        if (MdcCodeCatalog.TryGet(code, out MdcCodeDescriptor descriptor))
+            return descriptor.Level;
 
         return null;
     }
 
-    private static string SafeGetValue(Message msg, string segment, int fieldIndex)
+    // ─── HL7 Coded Element (CE) Parsing ──────────────────────────────────────
+
+    private static string ParseCodedElement(string raw)
     {
-        try
-        {
-            return msg.GetValue($"{segment}.{fieldIndex}") ?? string.Empty;
-        }
-        catch
-        {
-            return string.Empty;
-        }
+        string[] parts = raw.Split(ComponentSeparator);
+        return parts.Length > 0 ? parts[0] : string.Empty;
     }
 
-    private static string SafeGetValue(Message msg, string segment, int occurrence, int fieldIndex)
+    /// <summary>
+    /// Extracts the unit code from OBX-6 (CE format: code^text^codingSystem).
+    /// </summary>
+    private static string? ExtractUcumUnit(string? obx6)
     {
-        try
+        if (string.IsNullOrEmpty(obx6)) return null;
+        string[] parts = obx6.Split(ComponentSeparator);
+        return parts.Length > 0 && !string.IsNullOrEmpty(parts[0]) ? parts[0] : null;
+    }
+
+    // ─── HL7 DateTime Parsing ────────────────────────────────────────────────
+
+    private static DateTimeOffset? ParseHl7DateTime(string? raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return null;
+
+        string[] formats =
+        [
+            "yyyyMMddHHmmss.ffffzzz",
+            "yyyyMMddHHmmsszzz",
+            "yyyyMMddHHmmss.ffff",
+            "yyyyMMddHHmmss",
+            "yyyyMMddHHmm",
+            "yyyyMMdd"
+        ];
+
+        string normalized = NormalizeHl7Timezone(raw);
+
+        return DateTimeOffset.TryParseExact(
+            normalized,
+            formats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal,
+            out DateTimeOffset dt)
+            ? dt
+            : null;
+    }
+
+    /// <summary>
+    /// HL7 uses +HHMM timezone offsets (no colon). .NET expects +HH:MM for zzz patterns.
+    /// </summary>
+    private static string NormalizeHl7Timezone(string raw)
+    {
+        Match match = Hl7TimezoneRegex().Match(raw);
+        if (match.Success)
         {
-            return msg.GetValue($"{segment}({occurrence}).{fieldIndex}") ?? string.Empty;
+            string tzOffset = match.Groups[1].Value;
+            string sign = tzOffset[..1];
+            string hhmm = tzOffset[1..];
+            if (hhmm.Length == 4)
+                return raw[..match.Index] + sign + hhmm[..2] + ":" + hhmm[2..];
         }
-        catch
-        {
-            return string.Empty;
-        }
+
+        return raw;
+    }
+
+    [GeneratedRegex(@"([+\-]\d{4})$")]
+    private static partial Regex Hl7TimezoneRegex();
+
+    // ─── Segment Utilities ───────────────────────────────────────────────────
+
+    private static string[] SplitSegments(string hl7Message)
+    {
+        string normalized = hl7Message.Replace("\r\n", "\r").Replace("\n", "\r");
+        return normalized.Split('\r', StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static string? FindFirstSegment(string[] segments, string segmentType) => segments.FirstOrDefault(seg => seg.StartsWith(segmentType + FieldSeparator, StringComparison.Ordinal) || seg.Equals(segmentType, StringComparison.Ordinal));
+
+    private static string SafeField(string[] fields, int index)
+    {
+        if (fields[0].StartsWith("MSH", StringComparison.Ordinal))
+            index++;
+
+        return index >= 0 && index < fields.Length ? fields[index].Trim() : string.Empty;
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 using Verifier.Exceptions;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
@@ -19,13 +19,13 @@ builder.Services.AddIntercessor(cfg =>
 
 builder.Services.AddHealthChecks();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseExceptionHandler(exceptionHandlerApp =>
 {
     exceptionHandlerApp.Run(async context =>
     {
-        var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+        Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
         if (exception is ValidationException validationException)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -44,7 +44,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true })
 app.MapGet("/prescriptions/{mrn}", async (string mrn, ISender sender, CancellationToken ct) =>
 {
     var query = new GetPrescriptionByMrnQuery(mrn);
-    var response = await sender.SendAsync(query, ct);
+    GetPrescriptionByMrnResponse? response = await sender.SendAsync(query, ct);
     return response is null ? Results.NotFound() : Results.Ok(response);
 })
 .WithName("GetPrescriptionByMrn")

@@ -8,6 +8,6 @@ namespace Dialysis.Patient.Application.Features.RegisterPatient;
 
 public sealed record RegisterPatientCommand(
     MedicalRecordNumber MedicalRecordNumber,
-    PersonName Name,
+    Person Name,
     DateOnly? DateOfBirth,
     Gender? Gender) : ICommand<RegisterPatientResponse>;

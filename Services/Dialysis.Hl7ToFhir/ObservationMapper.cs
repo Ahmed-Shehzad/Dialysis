@@ -33,12 +33,9 @@ public static class ObservationMapper
         };
 
         if (!string.IsNullOrEmpty(input.Value))
-        {
-            if (decimal.TryParse(input.Value, out decimal numVal))
-                obs.Value = new Quantity { Value = numVal, Unit = input.Unit ?? string.Empty, System = "http://unitsofmeasure.org", Code = input.Unit };
-            else
-                obs.Value = new FhirString(input.Value);
-        }
+            obs.Value = decimal.TryParse(input.Value, out decimal numVal)
+                ? new Quantity { Value = numVal, Unit = input.Unit ?? string.Empty, System = "http://unitsofmeasure.org", Code = input.Unit }
+                : new FhirString(input.Value);
 
         if (!string.IsNullOrEmpty(input.SubId))
             obs.BodySite = new CodeableConcept { Text = input.SubId };

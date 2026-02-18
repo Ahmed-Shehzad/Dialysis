@@ -1,3 +1,6 @@
+using System.Linq.Expressions;
+
+using BuildingBlocks;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Abstractions;
@@ -8,11 +11,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.Treatment.Infrastructure.Persistence;
 
-public sealed class TreatmentSessionRepository : ITreatmentSessionRepository
+public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, ITreatmentSessionRepository
 {
     private readonly TreatmentDbContext _db;
 
-    public TreatmentSessionRepository(TreatmentDbContext db)
+    public TreatmentSessionRepository(TreatmentDbContext db) : base(db)
     {
         _db = db;
     }
@@ -27,7 +30,7 @@ public sealed class TreatmentSessionRepository : ITreatmentSessionRepository
 
     public async Task<TreatmentSession> GetOrCreateAsync(SessionId sessionId, MedicalRecordNumber? patientMrn, DeviceId? deviceId, CancellationToken cancellationToken = default)
     {
-        var existing = await _db.TreatmentSessions
+        TreatmentSession? existing = await _db.TreatmentSessions
             .Include(s => s.Observations)
             .FirstOrDefaultAsync(s => s.SessionId == sessionId, cancellationToken);
 
@@ -42,8 +45,31 @@ public sealed class TreatmentSessionRepository : ITreatmentSessionRepository
         return session;
     }
 
-    public async Task SaveAsync(TreatmentSession session, CancellationToken cancellationToken = default)
+    public async override Task AddAsync(TreatmentSession entity, CancellationToken cancellationToken = default) =>
+        _ = await _db.TreatmentSessions.AddAsync(entity, cancellationToken);
+
+    public async override Task AddAsync(IEnumerable<TreatmentSession> entities, CancellationToken cancellationToken = default) =>
+        await _db.TreatmentSessions.AddRangeAsync(entities, cancellationToken);
+
+    public async override Task<IReadOnlyList<TreatmentSession>> GetManyAsync(
+        Expression<Func<TreatmentSession, bool>> expression,
+        Expression<Func<TreatmentSession, object>>? orderByExpression = null,
+        bool orderByDescending = false,
+        CancellationToken cancellationToken = default)
     {
-        _ = await _db.SaveChangesAsync(cancellationToken);
+        IQueryable<TreatmentSession> query = _db.TreatmentSessions.AsNoTracking().Where(expression);
+
+        if (orderByExpression != null)
+            query = orderByDescending ? query.OrderByDescending(orderByExpression) : query.OrderBy(orderByExpression);
+
+        return await query.ToListAsync(cancellationToken);
     }
+
+    public async override Task<TreatmentSession?> GetAsync(Expression<Func<TreatmentSession, bool>> expression, CancellationToken cancellationToken = default) =>
+        await _db.TreatmentSessions.FirstOrDefaultAsync(expression, cancellationToken);
+
+    public override void Update(TreatmentSession entity) => _db.Update(entity);
+    public override void Update(IEnumerable<TreatmentSession> entities) => _db.UpdateRange(entities);
+    public override void Delete(TreatmentSession entity) => _db.Remove(entity);
+    public override void Delete(IEnumerable<TreatmentSession> entities) => _db.RemoveRange(entities);
 }

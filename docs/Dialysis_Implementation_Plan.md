@@ -86,16 +86,18 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 
 ### 12. FHIR R4 Resource Mapping (HL7 v2 → FHIR)
 
+
 | HL7 v2 Concept            | FHIR R4 Resource                    | Notes                                                             |
 | ------------------------- | ----------------------------------- | ----------------------------------------------------------------- |
-| Dialysis Machine identity | `Device`                            | UDI, manufacturer, model, serial, software version                  |
+| Dialysis Machine identity | `Device`                            | UDI, manufacturer, model, serial, software version                |
 | Patient demographics      | `Patient`                           | From PDQ; link via `Observation.subject`                          |
 | Prescription/Order        | `ServiceRequest` + `DeviceRequest`  | Therapy modality, UF target, blood flow, etc.                     |
-| Treatment observations   | `Observation`                      | Value, unit (UCUM), coding (MDC/11073), effectiveDateTime         |
-| Device observations      | `Observation` with `focus` → Device | Non-patient observations (QI-Core NonPatient Observation pattern)  |
-| Alarms/Events            | `Observation` or `DetectedIssue`    | Clinical alarms as DetectedIssue; device alerts as Observation    |
-| Procedure/session       | `Procedure`                        | Encounter/procedure for dialysis session                          |
-| Provenance               | `Provenance`                       | RSET/MSET/ASET, OBX-17 equivalent                                 |
+| Treatment observations    | `Observation`                       | Value, unit (UCUM), coding (MDC/11073), effectiveDateTime         |
+| Device observations       | `Observation` with `focus` → Device | Non-patient observations (QI-Core NonPatient Observation pattern) |
+| Alarms/Events             | `Observation` or `DetectedIssue`    | Clinical alarms as DetectedIssue; device alerts as Observation    |
+| Procedure/session         | `Procedure`                         | Encounter/procedure for dialysis session                          |
+| Provenance                | `Provenance`                        | RSET/MSET/ASET, OBX-17 equivalent                                 |
+
 
 ### 13. Core FHIR Resources for Dialysis PDMS
 
@@ -143,3 +145,4 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 - **Message transport**: encryption (HTTPS/TLS) for non-LAN; no hardcoded credentials
 - **Audit**: security-relevant actions (prescription download, alarm handling) should be audited
 - **Multi-tenancy**: tenant isolation if PDMS supports multiple care sites
+

@@ -23,31 +23,31 @@ public sealed class OruR40Parser : IOruR40MessageParser
         if (!msg.ParseMessage(bypassValidation: true))
             throw new ArgumentException("Invalid HL7 ORU^R40 message.", nameof(hl7Message));
 
-        var deviceId = SafeGetValue(msg, "MSH", 3);
-        var sessionId = GetSessionId(msg);
+        string deviceId = SafeGetValue(msg, "MSH", 3);
+        string? sessionId = GetSessionId(msg);
 
         var alarms = new List<AlarmInfo>();
-        var obxIndex = 1;
+        int obxIndex = 1;
         while (true)
         {
-            var alarmType = SafeGetValue(msg, "OBX", obxIndex, 3);
+            string alarmType = SafeGetValue(msg, "OBX", obxIndex, 3);
             if (string.IsNullOrEmpty(alarmType))
                 break;
 
-            var sourceLimits = SafeGetValue(msg, "OBX", obxIndex, 5);
-            var eventPhase = SafeGetValue(msg, "OBX", obxIndex, 6) ?? "start";
-            var alarmState = SafeGetValue(msg, "OBX", obxIndex, 7) ?? "active";
-            var activityState = SafeGetValue(msg, "OBX", obxIndex, 8) ?? "enabled";
-            var effectiveTimeStr = SafeGetValue(msg, "OBX", obxIndex, 14);
-            var occurredAt = DateTimeOffset.UtcNow;
-            if (DateTimeOffset.TryParse(effectiveTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dt))
+            string sourceLimits = SafeGetValue(msg, "OBX", obxIndex, 5);
+            string eventPhase = SafeGetValue(msg, "OBX", obxIndex, 6) ?? "start";
+            string alarmState = SafeGetValue(msg, "OBX", obxIndex, 7) ?? "active";
+            string activityState = SafeGetValue(msg, "OBX", obxIndex, 8) ?? "enabled";
+            string effectiveTimeStr = SafeGetValue(msg, "OBX", obxIndex, 14);
+            DateTimeOffset occurredAt = DateTimeOffset.UtcNow;
+            if (DateTimeOffset.TryParse(effectiveTimeStr, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset dt))
                 occurredAt = dt;
 
             var state = new AlarmStateDescriptor(
                 new EventPhase(eventPhase),
                 new AlarmState(alarmState),
                 new ActivityState(activityState));
-            var deviceIdOrNull = string.IsNullOrWhiteSpace(deviceId) ? null : (DeviceId?)new DeviceId(deviceId);
+            DeviceId? deviceIdOrNull = string.IsNullOrWhiteSpace(deviceId) ? null : (DeviceId?)new DeviceId(deviceId);
             alarms.Add(AlarmInfo.Create(alarmType, sourceLimits, state, deviceIdOrNull, sessionId, occurredAt));
             obxIndex++;
         }
@@ -57,10 +57,10 @@ public sealed class OruR40Parser : IOruR40MessageParser
 
     private static string? GetSessionId(Message msg)
     {
-        var obr3 = SafeGetValue(msg, "OBR", 1, 3);
+        string obr3 = SafeGetValue(msg, "OBR", 1, 3);
         if (!string.IsNullOrEmpty(obr3))
         {
-            var parts = obr3.Split('^');
+            string[] parts = obr3.Split('^');
             if (parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
                 return parts[0];
         }

@@ -19,7 +19,8 @@ internal sealed class RecordAlarmCommandHandler : ICommandHandler<RecordAlarmCom
     {
         var alarm = AlarmDomain.Raise(request.Alarm);
 
-        _ = await _repository.AddAsync(alarm, cancellationToken);
+        await _repository.AddAsync(alarm, cancellationToken);
+        await _repository.SaveChangesAsync(cancellationToken);
         return new RecordAlarmResponse(alarm.Id.ToString());
     }
 }
