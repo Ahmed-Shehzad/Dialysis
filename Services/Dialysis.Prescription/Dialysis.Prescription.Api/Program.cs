@@ -1,4 +1,6 @@
+using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Tenancy;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
@@ -44,12 +46,15 @@ builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
 builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();
 builder.Services.AddScoped<IRspK22Validator, RspK22Validator>();
+builder.Services.AddAuditRecorder();
+builder.Services.AddTenantResolution();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "prescription-db");
 
 WebApplication app = builder.Build();
 
+app.UseTenantResolution();
 if (app.Environment.IsDevelopment())
 {
     using IServiceScope scope = app.Services.CreateScope();

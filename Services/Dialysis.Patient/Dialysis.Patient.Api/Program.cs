@@ -1,8 +1,11 @@
+using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 
 using Dialysis.Patient.Application.Abstractions;
 using Dialysis.Patient.Application.Features.GetPatientByMrn;
+using Dialysis.Patient.Infrastructure.Hl7;
 using Dialysis.Patient.Infrastructure.Persistence;
 
 using Intercessor;
@@ -43,12 +46,17 @@ builder.Services.AddDbContext<PatientDbContext>((sp, o) =>
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
+builder.Services.AddScoped<IQbpQ22Parser, QbpQ22Parser>();
+builder.Services.AddScoped<IPatientRspK22Builder, PatientRspK22Builder>();
+builder.Services.AddAuditRecorder();
+builder.Services.AddTenantResolution();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "patient-db");
 
 WebApplication app = builder.Build();
 
+app.UseTenantResolution();
 if (app.Environment.IsDevelopment())
 {
     using IServiceScope scope = app.Services.CreateScope();

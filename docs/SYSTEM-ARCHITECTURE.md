@@ -245,7 +245,74 @@ flowchart TB
 
 ---
 
-## 7. Request Pipeline (Intercessor + Verifier)
+## 6. Authentication & Authorization (C5)
+
+All business endpoints require JWT. Scope policies enforce Read/Write/Admin per bounded context.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant Auth
+    participant Handler
+
+    Client->>API: HTTP Request + Authorization: Bearer <JWT>
+    API->>Auth: Validate JWT
+    Auth->>Auth: Check scope (e.g. Prescription:Read)
+    alt Invalid / Missing
+        Auth-->>API: 401 Unauthorized
+    else Valid
+        API->>Handler: Execute
+        Handler-->>API: Response
+    end
+    API-->>Client: Response
+```
+
+**Scope policies per service:**
+
+| Service | Read | Write |
+|---------|------|-------|
+| Prescription | `Prescription:Read`, `Prescription:Admin` | `Prescription:Write`, `Prescription:Admin` |
+| Patient | `Patient:Read`, `Patient:Admin` | `Patient:Write`, `Patient:Admin` |
+| Treatment | `Treatment:Read`, `Treatment:Admin` | `Treatment:Write`, `Treatment:Admin` |
+| Alarm | `Alarm:Read`, `Alarm:Admin` | `Alarm:Write`, `Alarm:Admin` |
+
+**Development**: `Authentication:JwtBearer:DevelopmentBypass: true` in Development allows requests without a valid JWT for local testing.
+
+**Multi-tenancy**: `X-Tenant-Id` header; default `default` when omitted. `TenantResolutionMiddleware` runs early; `ITenantContext` provides tenant for the request. Prescription persistence is tenant-scoped: prescriptions are stored and queried by `TenantId`.
+
+**Audit**: `IAuditRecorder` logs security-relevant actions (prescription read/ingest, QBP^D01 query) via structured logging. C5 compliant.
+
+---
+
+## 7. Prescription HL7 Flow (QBP^D01 / RSP^K22)
+
+```mermaid
+sequenceDiagram
+    participant Mirth
+    participant Hl7Controller
+    participant QbpD01Parser
+    participant PrescriptionRepo
+    participant RspK22Builder
+
+    Mirth->>Hl7Controller: POST /api/hl7/qbp-d01 (raw QBP^D01)
+    Hl7Controller->>QbpD01Parser: Parse
+    QbpD01Parser-->>Hl7Controller: QbpD01ParseResult (MRN, QueryTag, ...)
+    Hl7Controller->>PrescriptionRepo: GetByMrnAsync(MRN)
+    alt Prescription found
+        PrescriptionRepo-->>Hl7Controller: Prescription
+        Hl7Controller->>RspK22Builder: BuildFromPrescription
+        RspK22Builder-->>Hl7Controller: RSP^K22 HL7
+    else Not found
+        Hl7Controller->>RspK22Builder: BuildNotFound (MSA|NF|...)
+        RspK22Builder-->>Hl7Controller: RSP^K22 HL7
+    end
+    Hl7Controller-->>Mirth: application/x-hl7-v2+er7
+```
+
+---
+
+## 8. Request Pipeline (Intercessor + Verifier)
 
 ```mermaid
 sequenceDiagram
@@ -271,7 +338,7 @@ sequenceDiagram
 
 ---
 
-## 8. Messaging Flow (Transponder + Azure Service Bus)
+## 9. Messaging Flow (Transponder + Azure Service Bus)
 
 ```mermaid
 sequenceDiagram
@@ -289,7 +356,7 @@ sequenceDiagram
 
 ---
 
-## 9. Real-time Flow (SignalR)
+## 10. Real-time Flow (SignalR)
 
 ```mermaid
 sequenceDiagram
@@ -306,7 +373,7 @@ sequenceDiagram
 
 ---
 
-## 10. Data Flow Summary
+## 11. Data Flow Summary
 
 ```mermaid
 flowchart LR
@@ -336,6 +403,19 @@ flowchart LR
     Intercessor --> SignalR
     Intercessor --> Postgres
     Postgres --> FHIR
+```
+
+---
+
+## 12. Migrations (EF Core)
+
+Prescription service uses EF Core migrations. Apply on startup in Development via `MigrateAsync()`. To add a new migration:
+
+```bash
+dotnet ef migrations add <Name> \
+  --project Services/Dialysis.Prescription/Dialysis.Prescription.Infrastructure/Dialysis.Prescription.Infrastructure.csproj \
+  --startup-project Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj \
+  --output-dir Persistence/Migrations
 ```
 
 ---

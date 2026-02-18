@@ -1,4 +1,6 @@
+using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -45,13 +47,17 @@ builder.Services.AddDbContext<AlarmDbContext>((sp, o) =>
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
 builder.Services.AddScoped<IOruR40MessageParser, OruR40Parser>();
+builder.Services.AddSingleton<IOraR41Builder, OraR41Builder>();
 builder.Services.AddSingleton<AlarmEscalationService>();
+builder.Services.AddAuditRecorder();
+builder.Services.AddTenantResolution();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "alarm-db");
 
 WebApplication app = builder.Build();
 
+app.UseTenantResolution();
 if (app.Environment.IsDevelopment())
 {
     using IServiceScope scope = app.Services.CreateScope();

@@ -1,4 +1,5 @@
 using BuildingBlocks;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Persistence;
@@ -12,6 +13,7 @@ public sealed class Prescription : AggregateRoot
 {
     private readonly List<ProfileSetting> _settings = [];
 
+    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
     public string OrderId { get; private set; } = string.Empty;
     public MedicalRecordNumber PatientMrn { get; private set; }
     public string? Modality { get; private set; }
@@ -37,10 +39,11 @@ public sealed class Prescription : AggregateRoot
 
     private Prescription() { }
 
-    public static Prescription Create(string orderId, MedicalRecordNumber patientMrn, string? modality = null, string? orderingProvider = null, string? callbackPhone = null)
+    public static Prescription Create(string orderId, MedicalRecordNumber patientMrn, string? modality = null, string? orderingProvider = null, string? callbackPhone = null, string? tenantId = null)
     {
         return new Prescription
         {
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
             OrderId = orderId,
             PatientMrn = patientMrn,
             Modality = modality,
@@ -50,8 +53,5 @@ public sealed class Prescription : AggregateRoot
         };
     }
 
-    public void AddSetting(ProfileSetting setting)
-    {
-        _settings.Add(setting);
-    }
+    public void AddSetting(ProfileSetting setting) => _settings.Add(setting);
 }

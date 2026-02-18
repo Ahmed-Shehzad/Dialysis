@@ -1,4 +1,5 @@
 using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
         {
             _ = e.ToTable("Prescriptions");
             _ = e.HasKey(x => x.Id);
+            _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
             _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
             _ = e.Property(x => x.OrderId).IsRequired().HasMaxLength(100);
             _ = e.Property(x => x.PatientMrn)
@@ -34,8 +36,8 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
             _ = e.Property(x => x.SettingsJson)
                 .HasColumnName("SettingsJson")
                 .HasColumnType("jsonb");
-            _ = e.HasIndex(x => x.OrderId).IsUnique();
-            _ = e.HasIndex(x => x.PatientMrn);
+            _ = e.HasIndex(x => new { x.TenantId, x.OrderId }).IsUnique();
+            _ = e.HasIndex(x => new { x.TenantId, x.PatientMrn });
             _ = e.Ignore(x => x.Settings);
             _ = e.Ignore(x => x.DomainEvents);
             _ = e.Ignore(x => x.IntegrationEvents);

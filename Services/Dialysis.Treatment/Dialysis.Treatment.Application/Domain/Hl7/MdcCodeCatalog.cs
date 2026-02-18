@@ -152,10 +152,7 @@ public static class MdcCodeCatalog
 
     // ─── HDF VMD ─────────────────────────────────────────────────────────────
 
-    private static void AddHdfChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_HDF", "HDF Channel", Chan, null, null);
-    }
+    private static void AddHdfChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_HDF", "HDF Channel", Chan, null, null);
 
     private static void AddHdfMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -168,10 +165,7 @@ public static class MdcCodeCatalog
 
     // ─── Ultrafiltration VMD ─────────────────────────────────────────────────
 
-    private static void AddUfChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_UF", "UF Channel", Chan, null, null);
-    }
+    private static void AddUfChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_UF", "UF Channel", Chan, null, null);
 
     private static void AddUfMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -185,10 +179,7 @@ public static class MdcCodeCatalog
 
     // ─── Anticoagulation VMD ─────────────────────────────────────────────────
 
-    private static void AddAnticoagChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_ANTICOAG", "Anticoagulation Channel", Chan, null, null);
-    }
+    private static void AddAnticoagChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_ANTICOAG", "Anticoagulation Channel", Chan, null, null);
 
     private static void AddAnticoagMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -204,10 +195,7 @@ public static class MdcCodeCatalog
 
     // ─── Blood Pressure VMD ──────────────────────────────────────────────────
 
-    private static void AddBpChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_BP", "Blood Pressure Channel", Chan, null, null);
-    }
+    private static void AddBpChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_BP", "Blood Pressure Channel", Chan, null, null);
 
     private static void AddBpMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -219,10 +207,7 @@ public static class MdcCodeCatalog
 
     // ─── Temperature VMD ─────────────────────────────────────────────────────
 
-    private static void AddTempChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_TEMP", "Temperature Channel", Chan, null, null);
-    }
+    private static void AddTempChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_TEMP", "Temperature Channel", Chan, null, null);
 
     private static void AddTempMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -235,10 +220,7 @@ public static class MdcCodeCatalog
 
     // ─── Adequacy VMD ────────────────────────────────────────────────────────
 
-    private static void AddAdequacyChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_ADEQUACY", "Adequacy Channel", Chan, null, null);
-    }
+    private static void AddAdequacyChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_ADEQUACY", "Adequacy Channel", Chan, null, null);
 
     private static void AddAdequacyMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -251,10 +233,7 @@ public static class MdcCodeCatalog
 
     // ─── Vascular Access VMD ─────────────────────────────────────────────────
 
-    private static void AddAccessChannels(Dictionary<string, MdcCodeDescriptor> d)
-    {
-        Add(d, "MDC_DIA_CHAN_ACCESS", "Vascular Access Channel", Chan, null, null);
-    }
+    private static void AddAccessChannels(Dictionary<string, MdcCodeDescriptor> d) => Add(d, "MDC_DIA_CHAN_ACCESS", "Vascular Access Channel", Chan, null, null);
 
     private static void AddAccessMetrics(Dictionary<string, MdcCodeDescriptor> d)
     {
@@ -269,8 +248,6 @@ public static class MdcCodeCatalog
         string displayName,
         ContainmentLevel level,
         string? defaultUnit,
-        string? ucumUnit)
-    {
+        string? ucumUnit) =>
         d[code] = new MdcCodeDescriptor(new ObservationCode(code), displayName, level, defaultUnit, ucumUnit);
-    }
 }

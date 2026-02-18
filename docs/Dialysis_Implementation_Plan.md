@@ -72,11 +72,11 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 
 ### 11. Implementation Phases (for PDMS Learning Platform)
 
-- Phase 1: PDQ integration (patient lookup) – **Implemented** (Dialysis.Patient)
-- Phase 2: Prescription query/response parser – **Implemented** (Dialysis.Prescription, placeholder)
-- Phase 3: PCD-01 device observation consumer – **Implemented** (Dialysis.Treatment, POST /hl7/oru)
-- Phase 4: PCD-04 alert consumer – **Implemented** (Dialysis.Alarm, POST /hl7/alarm)
-- Phase 5: HL7-to-FHIR adapter – **Implemented** (Dialysis.Hl7ToFhir mapping layer)
+- Phase 1: PDQ integration (patient lookup) – **Done** (Dialysis.Patient; REST + HL7 QBP^Q22/RSP^K22 endpoint)
+- Phase 2: Prescription query/response parser – **Done** (Dialysis.Prescription; QBP^D01 parser, RSP^K22 builder/parser/validator, EF migrations, tenant-scoped)
+- Phase 3: PCD-01 device observation consumer – **Done** (Dialysis.Treatment; ORU^R01 parser, ACK^R01 builder, TreatmentSession aggregate)
+- Phase 4: PCD-04 alert consumer – **Done** (Dialysis.Alarm; ORU^R40 parser, ORA^R41 builder, AlarmEscalationService)
+- Phase 5: HL7-to-FHIR adapter – **Done** (Dialysis.Hl7ToFhir; Observation, DetectedIssue, Procedure, Device, Provenance, Patient, Prescription mappers)
 
 ---
 
@@ -143,6 +143,42 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 ## C5 Compliance Considerations
 
 - **Message transport**: encryption (HTTPS/TLS) for non-LAN; no hardcoded credentials
-- **Audit**: security-relevant actions (prescription download, alarm handling) should be audited
-- **Multi-tenancy**: tenant isolation if PDMS supports multiple care sites
+- **Audit**: security-relevant actions (prescription download, alarm handling) should be audited – **Done** (IAuditRecorder on all controllers)
+- **Multi-tenancy**: tenant isolation if PDMS supports multiple care sites – **Done** (X-Tenant-Id middleware, tenant-scoped Prescription persistence)
+- **Authentication**: JWT Bearer on all APIs with scope policies (Read/Write/Admin) – **Done**
+- **Authorization**: ScopeOrBypassRequirement with development bypass – **Done**
+
+---
+
+## Gap Analysis (as of Feb 2026)
+
+### Completed
+
+| Feature | Status |
+|---|---|
+| Patient REST + HL7 PDQ (QBP^Q22/RSP^K22) | Done |
+| Prescription HL7 flow (QBP^D01/RSP^K22) | Done |
+| Treatment HL7 (ORU^R01 + ACK^R01) | Done |
+| Alarm HL7 (ORU^R40 + ORA^R41) | Done |
+| JWT Authentication (all APIs) | Done |
+| Scope Policies (Read/Write/Admin) | Done |
+| FHIR Mappers (Observation, DetectedIssue, Procedure, Device, Provenance, Patient, Prescription) | Done |
+| IAuditRecorder (C5 audit) | Done |
+| X-Tenant-Id multi-tenancy | Done |
+| EF Migrations (Prescription) | Done |
+| Unit tests (parsers, builders, handlers) | Done |
+| Process diagrams (docs/PROCESS-DIAGRAMS.md) | Done |
+
+### Remaining (Lower Priority)
+
+| Gap | Priority | Notes |
+|---|---|---|
+| OBX sub-ID dotted notation (IEEE 11073 containment) | P5 | Needed for full containment hierarchy |
+| Rx Use column mapping (M/C/O from Table 2) | P5 | Map prescription-eligible params |
+| Prescription conflict handling | P5 | Discard / callback / partial accept |
+| HL7 Batch Protocol (FHS/BHS/BTS/FTS) | P5 | Run-sheet capture |
+| Integration test: QBP^D01 → RSP^K22 round-trip | P3 | End-to-end verification |
+| Document JWT claims and Mirth token workflow | P3 | Operational docs |
+| Tenant persistence for Patient, Treatment, Alarm | P4 | Currently Prescription only |
+| FHIR AuditEvent resource (vs structured log) | P4 | Currently logging; no FHIR resource |
 

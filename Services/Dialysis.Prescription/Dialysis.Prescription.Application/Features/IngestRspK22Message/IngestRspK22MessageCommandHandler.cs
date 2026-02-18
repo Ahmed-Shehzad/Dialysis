@@ -1,3 +1,5 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Exceptions;
 
@@ -12,12 +14,14 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
     private readonly IRspK22Parser _parser;
     private readonly IRspK22Validator _validator;
     private readonly IPrescriptionRepository _repository;
+    private readonly ITenantContext _tenant;
 
-    public IngestRspK22MessageCommandHandler(IRspK22Parser parser, IRspK22Validator validator, IPrescriptionRepository repository)
+    public IngestRspK22MessageCommandHandler(IRspK22Parser parser, IRspK22Validator validator, IPrescriptionRepository repository, ITenantContext tenant)
     {
         _parser = parser;
         _validator = validator;
         _repository = repository;
+        _tenant = tenant;
     }
 
     public async Task<IngestRspK22MessageResponse> HandleAsync(IngestRspK22MessageCommand request, CancellationToken cancellationToken = default)
@@ -33,7 +37,8 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
             result.PatientMrn,
             result.Modality,
             result.OrderingProvider,
-            result.CallbackPhone);
+            result.CallbackPhone,
+            _tenant.TenantId);
 
         foreach (var setting in result.Settings)
             prescription.AddSetting(setting);

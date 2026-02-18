@@ -1,3 +1,6 @@
+using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Prescription.Api.Contracts;
 using Dialysis.Prescription.Application.Features.IngestRspK22Message;
 using Dialysis.Prescription.Application.Features.ProcessQbpD01Query;
@@ -14,10 +17,14 @@ namespace Dialysis.Prescription.Api.Controllers;
 public sealed class Hl7Controller : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly IAuditRecorder _audit;
+    private readonly ITenantContext _tenant;
 
-    public Hl7Controller(ISender sender)
+    public Hl7Controller(ISender sender, IAuditRecorder audit, ITenantContext tenant)
     {
         _sender = sender;
+        _audit = audit;
+        _tenant = tenant;
     }
 
     [HttpPost("qbp-d01")]
@@ -30,6 +37,9 @@ public sealed class Hl7Controller : ControllerBase
     {
         var command = new ProcessQbpD01QueryCommand(request.RawHl7Message);
         ProcessQbpD01QueryResponse response = await _sender.SendAsync(command, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "Prescription", response.Mrn, User.Identity?.Name,
+            AuditOutcome.Success, "QBP^D01 prescription query", _tenant.TenantId), cancellationToken);
         return Content(response.RspK22Message, "application/x-hl7-v2+er7");
     }
 
@@ -43,6 +53,9 @@ public sealed class Hl7Controller : ControllerBase
     {
         var command = new IngestRspK22MessageCommand(request.RawHl7Message, request.ValidationContext);
         IngestRspK22MessageResponse response = await _sender.SendAsync(command, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Create, "Prescription", response.OrderId, User.Identity?.Name,
+            AuditOutcome.Success, "RSP^K22 prescription ingest", _tenant.TenantId), cancellationToken);
         return Ok(response);
     }
 }

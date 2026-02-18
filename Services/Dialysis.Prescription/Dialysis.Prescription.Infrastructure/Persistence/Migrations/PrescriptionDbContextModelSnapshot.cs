@@ -64,15 +64,22 @@ namespace Dialysis.Prescription.Infrastructure.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("SettingsJson");
 
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("default");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId")
+                    b.HasIndex("TenantId", "OrderId")
                         .IsUnique();
 
-                    b.HasIndex("PatientMrn");
+                    b.HasIndex("TenantId", "PatientMrn");
 
                     b.ToTable("Prescriptions", (string)null);
                 });

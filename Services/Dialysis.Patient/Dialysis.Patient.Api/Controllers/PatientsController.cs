@@ -1,3 +1,5 @@
+using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Api.Contracts;
@@ -18,10 +20,14 @@ namespace Dialysis.Patient.Api.Controllers;
 public sealed class PatientsController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly IAuditRecorder _audit;
+    private readonly ITenantContext _tenant;
 
-    public PatientsController(ISender sender)
+    public PatientsController(ISender sender, IAuditRecorder audit, ITenantContext tenant)
     {
         _sender = sender;
+        _audit = audit;
+        _tenant = tenant;
     }
 
     [HttpGet("mrn/{mrn}")]
@@ -32,6 +38,11 @@ public sealed class PatientsController : ControllerBase
     {
         var query = new GetPatientByMrnQuery(new MedicalRecordNumber(mrn));
         GetPatientByMrnResponse? response = await _sender.SendAsync(query, cancellationToken);
+        if (response is not null)
+            await _audit.RecordAsync(new AuditRecordRequest(
+                AuditAction.Read, "Patient", mrn, User.Identity?.Name,
+                AuditOutcome.Success, "Patient retrieval by MRN", _tenant.TenantId), cancellationToken);
+
         return response is null ? NotFound() : Ok(response);
     }
 
@@ -45,6 +56,9 @@ public sealed class PatientsController : ControllerBase
     {
         var query = new SearchPatientsQuery(new Person(firstName, lastName));
         SearchPatientsResponse response = await _sender.SendAsync(query, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "Patient", null, User.Identity?.Name,
+            AuditOutcome.Success, "Patient search", _tenant.TenantId), cancellationToken);
         return Ok(response);
     }
 
@@ -62,6 +76,9 @@ public sealed class PatientsController : ControllerBase
             request.Gender is not null ? new Gender(request.Gender) : null);
 
         RegisterPatientResponse response = await _sender.SendAsync(command, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Create, "Patient", response.Id, User.Identity?.Name,
+            AuditOutcome.Success, "Patient registration", _tenant.TenantId), cancellationToken);
         return CreatedAtAction(nameof(GetByMrnAsync), new { mrn = request.MedicalRecordNumber }, response);
     }
 }

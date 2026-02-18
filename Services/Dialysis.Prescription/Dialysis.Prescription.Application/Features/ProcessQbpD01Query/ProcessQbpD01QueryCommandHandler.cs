@@ -36,6 +36,6 @@ internal sealed class ProcessQbpD01QueryCommandHandler : ICommandHandler<Process
             ? _rspBuilder.BuildNoDataFound(context, query.Mrn)
             : _rspBuilder.BuildFromPrescription(prescription, context);
 
-        return new ProcessQbpD01QueryResponse(rspK22);
+        return new ProcessQbpD01QueryResponse(rspK22, query.Mrn);
     }
 }

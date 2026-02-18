@@ -1,3 +1,6 @@
+using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Treatment.Application.Domain.ValueObjects;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 
@@ -13,10 +16,14 @@ namespace Dialysis.Treatment.Api.Controllers;
 public sealed class TreatmentSessionsController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly IAuditRecorder _audit;
+    private readonly ITenantContext _tenant;
 
-    public TreatmentSessionsController(ISender sender)
+    public TreatmentSessionsController(ISender sender, IAuditRecorder audit, ITenantContext tenant)
     {
         _sender = sender;
+        _audit = audit;
+        _tenant = tenant;
     }
 
     [HttpGet("{sessionId}")]
@@ -27,6 +34,11 @@ public sealed class TreatmentSessionsController : ControllerBase
     {
         var query = new GetTreatmentSessionQuery(new SessionId(sessionId));
         GetTreatmentSessionResponse? response = await _sender.SendAsync(query, cancellationToken);
+        if (response is not null)
+            await _audit.RecordAsync(new AuditRecordRequest(
+                AuditAction.Read, "TreatmentSession", sessionId, User.Identity?.Name,
+                AuditOutcome.Success, "Treatment session retrieval", _tenant.TenantId), cancellationToken);
+
         return response is null ? NotFound() : Ok(response);
     }
 }

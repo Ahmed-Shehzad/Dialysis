@@ -25,14 +25,16 @@ This document provides a focused plan for the three immediate/high-priority work
 
 ### Implementation Checklist
 
-- [ ] Add `Microsoft.AspNetCore.Authentication.JwtBearer` to `Directory.Packages.props`
-- [ ] Add `Authentication:JwtBearer` configuration schema (Authority, Audience, RequireHttpsMetadata)
-- [ ] Implement shared auth extension (e.g. `BuildingBlocks` or new `Dialysis.Api.Auth` project) to avoid duplication
-- [ ] Update Patient, Treatment, Alarm, Prescription `Program.cs` to use the extension
-- [ ] Add `[Authorize]` to all controllers except health/OpenAPI endpoints
-- [ ] Define scope policies (Read/Write/Admin) and apply per endpoint
+- [x] Add `Microsoft.AspNetCore.Authentication.JwtBearer` to `Directory.Packages.props`
+- [x] Add `Authentication:JwtBearer` configuration schema (Authority, Audience, RequireHttpsMetadata)
+- [x] Wire auth in each API (`AddAuthentication().AddJwtBearer()` in Patient, Treatment, Alarm, Prescription `Program.cs`)
+- [x] Add `[Authorize]` to all controllers except health/OpenAPI endpoints
+- [x] Define scope policies (Read/Write/Admin) via `ScopeOrBypassRequirement` and apply per action
+- [x] Add `Authentication:JwtBearer:DevelopmentBypass` for local testing when `IsDevelopment`
 - [ ] Document JWT claims and how Mirth/integration clients obtain tokens
-- [ ] Add `X-Tenant-Id` handling for multi-tenancy (C5) if applicable
+- [x] Add `X-Tenant-Id` handling for multi-tenancy (C5)
+- [x] Add `IAuditRecorder` (C5 audit) to all controllers
+- [x] Add `TenantResolutionMiddleware` and tenant-scoped Prescription persistence
 
 ### Files to Touch
 
@@ -59,10 +61,10 @@ This document provides a focused plan for the three immediate/high-priority work
 | **RspK22Validator** | Done | MSA-2, QPD-2 (QueryTag), QPD-1 (QueryName), MSA-1 (AA/AE/AR) |
 | **ProfileCalculator** | Done | All 5 profile types with formulas |
 | **PrescriptionSettingResolver** | Done | Resolves values at t=0 for API (BloodFlow, UF rate, UF target) |
-| **RSP^K22 response builder** | **Missing** | Serialize `Prescription` → HL7 RSP^K22 (ORC + OBX hierarchy) |
-| **QBP^D01 parser** | **Missing** | Parse incoming QBP^D01 to extract MRN, MSH-10, QPD-2 for validation context |
-| **Prescription-by-MRN API** | Done | `GET /api/prescriptions/{mrn}` returns JSON; no HL7 outbound |
-| **HL7 endpoint for QBP^D01** | **Missing** | Receive QBP^D01 (e.g. from Mirth), return RSP^K22 as HL7 message |
+| **RSP^K22 response builder** | Done | `RspK22Builder` serializes `Prescription` → HL7 RSP^K22 (ORC + OBX hierarchy) |
+| **QBP^D01 parser** | Done | `QbpD01Parser` extracts MRN, MSH-10, QPD-2, QPD-1 |
+| **Prescription-by-MRN API** | Done | `GET /api/prescriptions/{mrn}` returns JSON |
+| **HL7 endpoint for QBP^D01** | Done | `POST /api/hl7/qbp-d01` receives QBP^D01, returns RSP^K22 (`application/x-hl7-v2+er7`) |
 
 ### What’s Needed
 
@@ -119,13 +121,13 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 
 ### Implementation Checklist
 
-- [ ] Add `IQbpD01Parser` + `QbpD01Parser` (parse QBP^D01 → `QbpD01ParseResult`)
-- [ ] Add `IRspK22Builder` + `RspK22Builder` (Prescription + validation context → HL7 string)
-- [ ] Add `BuildRspK22FromPrescription` command/query or service method
-- [ ] Add `POST /api/hl7/qbp-d01` (or similar) to `Hl7Controller` – accepts raw HL7, returns RSP^K22
-- [ ] Unit tests: `QbpD01Parser`, `RspK22Builder`
+- [x] Add `IQbpD01Parser` + `QbpD01Parser` (parse QBP^D01 → `QbpD01ParseResult`)
+- [x] Add `IRspK22Builder` + `RspK22Builder` (Prescription + validation context → HL7 string)
+- [x] Add `ProcessQbpD01QueryCommand` – parses query, loads prescription by MRN, builds RSP^K22
+- [x] Add `POST /api/hl7/qbp-d01` to `Hl7Controller` – accepts raw HL7, returns RSP^K22
+- [x] Unit tests: `QbpD01Parser`, `RspK22Builder`
 - [ ] Integration test: QBP^D01 → RSP^K22 round-trip
-- [ ] Update docs: `IMPLEMENTATION_PLAN.md` Phase 2 tasks, `SYSTEM-ARCHITECTURE.md` prescription flow
+- [x] Update docs: `SYSTEM-ARCHITECTURE.md` prescription flow
 
 ### Files to Create/Modify
 
@@ -140,11 +142,11 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 
 ---
 
-## 3. Prescription EF Migrations (Optional)
+## 3. Prescription EF Migrations ✓
 
 ### Current State
 
-- **`EnsureCreatedAsync()`** in Prescription `Program.cs` when `IsDevelopment`
+- **`MigrateAsync()`** in Prescription `Program.cs` when `IsDevelopment`
 - **No migrations** – Prescription service has no EF migrations (unlike Transponder’s PostgreSql project)
 - **Schema**: `Prescriptions` table with `Id`, `OrderId`, `PatientMrn`, `Modality`, `OrderingProvider`, `CallbackPhone`, `ReceivedAt`, `SettingsJson` (jsonb)
 
@@ -166,9 +168,9 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 
 ### Implementation Checklist
 
-- [ ] Resolve EF design-time issue: `ProfileDescriptor` constructor binding when running `dotnet ef migrations add` (value converter with complex nested types)
-- [ ] Create `Dialysis.Prescription.Infrastructure/Migrations/` with initial migration
-- [ ] Replace `EnsureCreatedAsync()` with `MigrateAsync()` in `Program.cs`
+- [x] Resolve EF design-time issue (map `SettingsJson` as string; ignore `Settings` property)
+- [x] Create `Dialysis.Prescription.Infrastructure/Migrations/` with initial migration
+- [x] Replace `EnsureCreatedAsync()` with `MigrateAsync()` in `Program.cs`
 - [ ] Verify migration produces schema equivalent to current EnsureCreated
 - [ ] Add migration workflow to docs (how to add new migrations)
 - [ ] Consider: run migrations in CI or at deploy time vs. app startup
@@ -189,9 +191,40 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 
 ---
 
+---
+
+## 4. HL7 Implementation Guide Alignment Matrix
+
+Cross-reference of the Dialysis Machine HL7 Implementation Guide (Rev 4.0) with the current implementation.
+
+| Guide Requirement | HL7 Transaction | Status | Gap |
+|---|---|---|---|
+| Patient Demographics (PDQ) | QBP^Q22 / RSP^K22 | Done | — |
+| Prescription Transfer | QBP^D01 / RSP^K22 | Done | Minor: OBX sub-ID, Rx Use column |
+| Treatment Reporting (PCD-01) | ORU^R01 / ACK^R01 | Done | — |
+| Alarm Reporting (PCD-04) | ORU^R40 / ORA^R41 | Done | — |
+| HL7-to-FHIR Mapping | N/A | Done | — |
+| C5 Auth / Audit / Tenant | N/A | Done | — |
+| Tests | N/A | Done | Additional coverage possible |
+| HL7 Batch Protocol | FHS/BHS/BTS/FTS | Not started | Lower priority |
+
+### Remaining Gaps (Lower Priority)
+
+| Gap | Category | Priority |
+|---|---|---|
+| OBX sub-ID dotted notation for IEEE 11073 containment | Prescription | P5 |
+| Rx Use column (M/C/O from Table 2) | Prescription | P5 |
+| Prescription conflict handling (discard/callback/partial) | Prescription | P5 |
+| HL7 Batch Protocol (FHS/BHS/BTS/FTS) | Treatment | P5 |
+| Integration test: QBP^D01 → RSP^K22 round-trip | Prescription | P3 |
+| Document JWT claims and Mirth token workflow | Auth | P3 |
+
+---
+
 ## References
 
 - `.cursor/rules/c5-compliance.mdc` – Access control, audit, encryption, multi-tenancy
 - `docs/Dialysis_Machine_HL7_Implementation_Guide/IMPLEMENTATION_PLAN.md` – Phase 2 prescription tasks
 - `docs/ARCHITECTURE-CONSTRAINTS.md` – C5, technology stack
 - `Services/Dialysis.Prescription/` – Current RSP^K22 parser, validator, ProfileCalculator, domain model
+- `docs/PROCESS-DIAGRAMS.md` – All process diagrams for supervisor reporting

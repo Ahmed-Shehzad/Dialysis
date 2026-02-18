@@ -46,6 +46,7 @@
     <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj" />
     <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Application/Dialysis.Alarm.Application.csproj" />
     <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Infrastructure/Dialysis.Alarm.Infrastructure.csproj" />
+    <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Tests/Dialysis.Alarm.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Hl7ToFhir/">
     <Project Path="Services/Dialysis.Hl7ToFhir/Dialysis.Hl7ToFhir.csproj" />
@@ -54,6 +55,7 @@
     <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Api/Dialysis.Patient.Api.csproj" />
     <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Application/Dialysis.Patient.Application.csproj" />
     <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Infrastructure/Dialysis.Patient.Infrastructure.csproj" />
+    <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Tests/Dialysis.Patient.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Prescription/">
     <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj" />
@@ -65,5 +67,6 @@
     <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj" />
     <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Application/Dialysis.Treatment.Application.csproj" />
     <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Infrastructure/Dialysis.Treatment.Infrastructure.csproj" />
+    <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Tests/Dialysis.Treatment.Tests.csproj" />
   </Folder>
 </Solution>

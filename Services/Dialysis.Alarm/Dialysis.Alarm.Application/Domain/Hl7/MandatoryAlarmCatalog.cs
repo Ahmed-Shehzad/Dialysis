@@ -40,8 +40,5 @@ public static class MandatoryAlarmCatalog
         return d.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
-    private static void Add(Dictionary<string, string> d, string source, string evt, string name)
-    {
-        d[$"{source}|{evt}"] = name;
-    }
+    private static void Add(Dictionary<string, string> d, string source, string evt, string name) => d[$"{source}|{evt}"] = name;
 }

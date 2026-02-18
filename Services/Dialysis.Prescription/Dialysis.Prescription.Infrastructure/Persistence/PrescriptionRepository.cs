@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 
 using BuildingBlocks;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Abstractions;
@@ -14,24 +15,27 @@ namespace Dialysis.Prescription.Infrastructure.Persistence;
 public sealed class PrescriptionRepository : Repository<PrescriptionEntity>, IPrescriptionRepository
 {
     private readonly PrescriptionDbContext _db;
+    private readonly ITenantContext _tenant;
 
-    public PrescriptionRepository(PrescriptionDbContext db) : base(db)
+    public PrescriptionRepository(PrescriptionDbContext db, ITenantContext tenant) : base(db)
     {
         _db = db;
+        _tenant = tenant;
     }
 
     public async Task<PrescriptionEntity?> GetByOrderIdAsync(string orderId, CancellationToken cancellationToken = default)
     {
         return await _db.Prescriptions
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.OrderId == orderId, cancellationToken);
+            .Where(p => p.TenantId == _tenant.TenantId && p.OrderId == orderId)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<PrescriptionEntity?> GetLatestByMrnAsync(MedicalRecordNumber mrn, CancellationToken cancellationToken = default)
     {
         return await _db.Prescriptions
             .AsNoTracking()
-            .Where(p => p.PatientMrn == mrn)
+            .Where(p => p.TenantId == _tenant.TenantId && p.PatientMrn == mrn)
             .OrderByDescending(p => p.ReceivedAt)
             .FirstOrDefaultAsync(cancellationToken);
     }
