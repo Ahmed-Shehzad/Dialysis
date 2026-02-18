@@ -2,6 +2,8 @@
 
 These rules provide persistent AI guidance for the Dialysis PDMS project. They are sourced from the `rules/` directory and applied by the Cursor agent.
 
+For the mapping between Cursor rules, `.editorconfig`, and build enforcement (EnforceCodeStyleInBuild, SonarAnalyzer), see [docs/RULES-ALIGNMENT.md](../docs/RULES-ALIGNMENT.md).
+
 ## Rule Categories
 
 ### Always-Apply Rules
@@ -14,6 +16,7 @@ These rules provide persistent AI guidance for the Dialysis PDMS project. They a
 ### C# / Sonar (globs: `**/*.cs`)
 - **sonar-csharp** – SonarQube C# code quality (unused code, exceptions, async, disposal)
 - **cognitive-complexity-s3776** – Method complexity threshold, extraction guidance
+- **parameter-count-s107** – Maximum 7 parameters per method; use records/DTOs or split
 - **sonar-security** – Secrets, SQL injection, path traversal, deserialization, crypto
 
 ### Architecture (globs vary)

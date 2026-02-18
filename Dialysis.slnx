@@ -1,0 +1,67 @@
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="BuildingBlocks/BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/" />
+  <Folder Name="/Libraries/FluentValidation/">
+    <Project Path="Verifier/Verifier.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/Mediator/">
+    <Project Path="Intercessor/Intercessor.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/Transponder/">
+    <Project Path="Transponder.OpenTelemetry/Transponder.OpenTelemetry.csproj" />
+    <Project Path="Transponder.Persistence.EntityFramework.PostgreSql.Tests/Transponder.Persistence.EntityFramework.PostgreSql.Tests.csproj" />
+    <Project Path="Transponder.Persistence.EntityFramework.PostgreSql/Transponder.Persistence.EntityFramework.PostgreSql.csproj" />
+    <Project Path="Transponder.Persistence.EntityFramework.SqlServer.Tests/Transponder.Persistence.EntityFramework.SqlServer.Tests.csproj" />
+    <Project Path="Transponder.Persistence.EntityFramework.SqlServer/Transponder.Persistence.EntityFramework.SqlServer.csproj" />
+    <Project Path="Transponder.Persistence.EntityFramework.Tests/Transponder.Persistence.EntityFramework.Tests.csproj" />
+    <Project Path="Transponder.Persistence.EntityFramework/Transponder.Persistence.EntityFramework.csproj" />
+    <Project Path="Transponder.Persistence.Redis/Transponder.Persistence.Redis.csproj" />
+    <Project Path="Transponder.Persistence.Tests/Transponder.Persistence.Tests.csproj" />
+    <Project Path="Transponder.Persistence/Transponder.Persistence.csproj" />
+    <Project Path="Transponder.Samples/Transponder.Samples.csproj" />
+    <Project Path="Transponder.Serilog/Transponder.Serilog.csproj" />
+    <Project Path="Transponder.Tests/Transponder.Tests.csproj" />
+    <Project Path="Transponder.Transports.Aws.Tests/Transponder.Transports.Aws.Tests.csproj" />
+    <Project Path="Transponder.Transports.Aws/Transponder.Transports.Aws.csproj" />
+    <Project Path="Transponder.Transports.AzureServiceBus.Tests/Transponder.Transports.AzureServiceBus.Tests.csproj" />
+    <Project Path="Transponder.Transports.AzureServiceBus/Transponder.Transports.AzureServiceBus.csproj" />
+    <Project Path="Transponder.Transports.Grpc.Contracts/Transponder.Transports.Grpc.Contracts.csproj" />
+    <Project Path="Transponder.Transports.Grpc.Tests/Transponder.Transports.Grpc.Tests.csproj" />
+    <Project Path="Transponder.Transports.Grpc/Transponder.Transports.Grpc.csproj" />
+    <Project Path="Transponder.Transports.Kafka.Tests/Transponder.Transports.Kafka.Tests.csproj" />
+    <Project Path="Transponder.Transports.Kafka/Transponder.Transports.Kafka.csproj" />
+    <Project Path="Transponder.Transports.RabbitMq.Tests/Transponder.Transports.RabbitMq.Tests.csproj" />
+    <Project Path="Transponder.Transports.RabbitMq/Transponder.Transports.RabbitMq.csproj" />
+    <Project Path="Transponder.Transports.SignalR/Transponder.Transports.SignalR.csproj" />
+    <Project Path="Transponder.Transports.SSE/Transponder.Transports.SSE.csproj" />
+    <Project Path="Transponder.Transports.Tests/Transponder.Transports.Tests.csproj" />
+    <Project Path="Transponder.Transports.Webhooks/Transponder.Transports.Webhooks.csproj" />
+    <Project Path="Transponder.Transports/Transponder.Transports.csproj" />
+    <Project Path="Transponder/Transponder.csproj" />
+  </Folder>
+  <Folder Name="/Services/" />
+  <Folder Name="/Services/Dialysis.Alarm/">
+    <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj" />
+    <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Application/Dialysis.Alarm.Application.csproj" />
+    <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Infrastructure/Dialysis.Alarm.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Services/Dialysis.Hl7ToFhir/">
+    <Project Path="Services/Dialysis.Hl7ToFhir/Dialysis.Hl7ToFhir.csproj" />
+  </Folder>
+  <Folder Name="/Services/Dialysis.Patient/">
+    <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Api/Dialysis.Patient.Api.csproj" />
+    <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Application/Dialysis.Patient.Application.csproj" />
+    <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Infrastructure/Dialysis.Patient.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Services/Dialysis.Prescription/">
+    <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj" />
+    <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Application/Dialysis.Prescription.Application.csproj" />
+  </Folder>
+  <Folder Name="/Services/Dialysis.Treatment/">
+    <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj" />
+    <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Application/Dialysis.Treatment.Application.csproj" />
+    <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Infrastructure/Dialysis.Treatment.Infrastructure.csproj" />
+  </Folder>
+</Solution>

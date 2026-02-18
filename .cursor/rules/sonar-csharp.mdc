@@ -23,6 +23,14 @@ Align with SonarQube C# analyzer. Fix or avoid these issues in code and reviews.
 - **S127**: Do not update the loop counter inside a `for` loop body. Use a `while` loop if the counter must change conditionally.
 - Loop stop conditions should be invariant (not change during iteration).
 
+## Parameter Count (S107)
+
+- **S107**: Method should have maximum 7 parameters allowed. Methods with a long parameter list are difficult to use because maintainers must figure out the role of each parameter and keep track of their position.
+- Solutions:
+  - Split the method into smaller ones.
+  - Use a better data structure (e.g. record, class, DTO) that groups related parameters.
+- Threshold: 7 parameters (configurable in SonarQube Quality Profile; enforced via `.editorconfig`).
+
 ## Cognitive Complexity (S3776)
 
 - Keep methods small and focused. High cognitive complexity makes code hard to test and maintain.

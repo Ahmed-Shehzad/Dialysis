@@ -1,0 +1,13 @@
+bin/
+obj/
+/packages/
+dist/
+riderModule.iml
+/_ReSharper.Caches/
+.data/
+K8S/.image-tag
+K8S/helm/sol9/values.local.yaml
+coverage/
+*.dcvr
+*.dcvr.zip
+**/TestResults/

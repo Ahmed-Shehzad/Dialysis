@@ -1,0 +1,35 @@
+---
+description: Sonar rule csharpsquid:S107 – Method should have maximum 7 parameters.
+globs: "**/*.cs"
+alwaysApply: false
+---
+# S107 – Method Should Not Have Too Many Parameters
+
+**Rule key:** `csharpsquid:S107`  
+**Category:** Code Smell  
+**Severity:** Major
+
+## Summary
+
+Methods with a long parameter list are difficult to use because maintainers must figure out the role of each parameter and keep track of their position.
+
+## Requirements
+
+- Maximum **7 parameters** per method (Sonar default threshold).
+- Methods exceeding the threshold must be refactored.
+
+## Compliance
+
+| Do | Don't |
+|----|-------|
+| Split the method into smaller ones | Methods with 8+ parameters |
+| Use a record, class, or DTO to group related parameters | Long parameter lists where meaning is unclear |
+| Use builder or options pattern for optional configuration | Many positional parameters |
+| Pass a single aggregate/context object | Unrelated parameters in one method |
+
+## Remediation
+
+1. **Extract a parameter object**: Group related parameters into a record or class.
+2. **Split the method**: Break into smaller methods, each with a focused responsibility.
+3. **Use options/builder pattern**: For optional or numerous config parameters.
+4. **Introduce a context/holder**: Pass a single object containing all required data.

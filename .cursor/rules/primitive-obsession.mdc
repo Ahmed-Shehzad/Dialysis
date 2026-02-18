@@ -1,0 +1,116 @@
+---
+description: Enforce strongly-typed value objects instead of primitives for domain concepts
+globs: **/*.cs
+alwaysApply: true
+---
+
+# Primitive Obsession Prevention
+
+## Rule
+
+**Never use primitive types (`string`, `int`, `Guid`, `Ulid`, `DateOnly`, etc.) to represent domain concepts.** Always use strongly-typed value objects or enumerations.
+
+## When to Create a Value Object
+
+Create a value object when a primitive represents:
+- An **identifier** (MRN, DeviceId, SessionId, ObservationCode)
+- A **classification** or **status** (AlarmState, EventPhase, Gender, TreatmentSessionStatus)
+- A **composite concept** (PersonName = FirstName + LastName)
+- A **constrained value** with validation rules
+
+## Implementation Pattern
+
+Use `readonly record struct` for single-value wrappers:
+
+```csharp
+public readonly record struct MedicalRecordNumber
+{
+    public string Value { get; }
+
+    public MedicalRecordNumber(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Value = value;
+    }
+
+    public override string ToString() => Value;
+    public static implicit operator string(MedicalRecordNumber mrn) => mrn.Value;
+    public static explicit operator MedicalRecordNumber(string value) => new(value);
+}
+```
+
+For **known finite values**, define static readonly constants:
+
+```csharp
+public static readonly AlarmState Active = new("Active");
+public static readonly AlarmState Cleared = new("Cleared");
+```
+
+Use `sealed record` for multi-value compositions:
+
+```csharp
+public sealed record PersonName(string FirstName, string LastName);
+```
+
+## Layer Responsibilities
+
+| Layer | Uses Value Objects? | Notes |
+|-------|-------------------|-------|
+| Domain Models | **Yes** | Properties are value objects |
+| Domain Events | **Yes** | Event data uses value objects |
+| Domain Services | **Yes** | Parameters and return types |
+| Commands / Queries | **Yes** | Typed parameters |
+| Repository Interfaces | **Yes** | Method signatures |
+| API Request DTOs | **No** | JSON boundary, use primitives |
+| API Response DTOs | **No** | JSON boundary, use primitives |
+| Controllers | **Mapping** | Convert primitives → value objects |
+
+## EF Core Persistence
+
+Use `HasConversion` for single-value types:
+
+```csharp
+e.Property(x => x.MedicalRecordNumber)
+    .HasConversion(v => v.Value, v => new MedicalRecordNumber(v));
+```
+
+Use `OwnsOne` for composite value objects:
+
+```csharp
+e.OwnsOne(x => x.Name, name =>
+{
+    name.Property(n => n.FirstName).HasColumnName("FirstName");
+    name.Property(n => n.LastName).HasColumnName("LastName");
+});
+```
+
+Use nullable conversions for optional value objects:
+
+```csharp
+e.Property(x => x.DeviceId)
+    .HasConversion(
+        v => v.HasValue ? v.Value.Value : null,
+        v => v != null ? new DeviceId(v) : (DeviceId?)null);
+```
+
+## Existing Value Objects
+
+### Shared (BuildingBlocks/ValueObjects/)
+- `DeviceId` — dialysis device identifier
+- `MedicalRecordNumber` — patient MRN (HL7 PID-3)
+
+### Patient Context
+- `PersonName` — first + last name composite (HL7 PID-5)
+- `Gender` — HL7 Table 0001 (M/F/O/U)
+
+### Treatment Context
+- `SessionId` — treatment session ID (HL7 OBR-3)
+- `ObservationCode` — MDC code from IEEE 11073 (HL7 OBX-3)
+- `TreatmentSessionStatus` — Active / Completed
+- `BreachType` — clinical breach classification
+- `ThresholdDirection` — above / below
+
+### Alarm Context
+- `AlarmState` — Active / Latched / Acknowledged / Cleared
+- `EventPhase` — start / update / end
+- `ActivityState` — enabled / disabled

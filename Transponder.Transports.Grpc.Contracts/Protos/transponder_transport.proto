@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+option csharp_namespace = "Transponder.Transports.Grpc";
+
+package transponder.transport;
+
+// Represents a transport-agnostic envelope for gRPC messages including payload, metadata, and identifiers.
+message GrpcTransportMessage {
+  // Serialized message payload.
+  bytes body = 1;
+  // Transport headers as key-value pairs.
+  map<string, string> headers = 2;
+  // MIME content type of the message.
+  string content_type = 3 [json_name = "contentType"];
+  // Unique identifier for the message.
+  string message_id = 4 [json_name = "messageId"];
+  // Identifier for correlating related messages.
+  string correlation_id = 5 [json_name = "correlationId"];
+  // Identifier for the conversation context.
+  string conversation_id = 6 [json_name = "conversationId"];
+  // Type of the message payload.
+  string message_type = 7 [json_name = "messageType"];
+  // Timestamp when the message was sent (Unix milliseconds).
+  int64 sent_time_unix_ms = 8 [json_name = "sentTimeUnixMs"];
+}
+
+// Used to send a message to a specific destination.
+message SendRequest {
+  // Destination address or identifier.
+  string destination = 1;
+  // The message to be sent.
+  GrpcTransportMessage message = 2;
+}
+
+// This message represents the response/acknowledgement for a send operation and may be extended in the future with status or metadata.
+message SendResponse {
+}
+
+// Represents a request to publish a message to all interested subscribers.
+// Unlike SendRequest, this does not target a specific destination and relies
+// on the underlying transport's publish/subscribe semantics.
+message PublishRequest {
+  // The message to be published.
+  GrpcTransportMessage message = 1;
+}
+
+// This message represents the response/acknowledgement for a publish operation and may be extended in the future with status or delivery metadata.
+message PublishResponse {
+}
+
+// The gRPC transport service abstraction.
+service Transport {
+  // Sends a message to a specific destination.
+  rpc Send(SendRequest) returns (SendResponse);
+  // Publishes a message to all subscribers.
+  rpc Publish(PublishRequest) returns (PublishResponse);
+}

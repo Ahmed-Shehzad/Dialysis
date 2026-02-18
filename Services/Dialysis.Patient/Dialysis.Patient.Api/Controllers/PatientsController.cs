@@ -1,0 +1,63 @@
+using BuildingBlocks.ValueObjects;
+
+using Dialysis.Patient.Api.Contracts;
+using Dialysis.Patient.Application.Domain.ValueObjects;
+using Dialysis.Patient.Application.Features.GetPatientByMrn;
+using Dialysis.Patient.Application.Features.RegisterPatient;
+using Dialysis.Patient.Application.Features.SearchPatients;
+
+using Intercessor.Abstractions;
+
+using Microsoft.AspNetCore.Mvc;
+
+namespace Dialysis.Patient.Api.Controllers;
+
+[ApiController]
+[Route("api/patients")]
+public sealed class PatientsController : ControllerBase
+{
+    private readonly ISender _sender;
+
+    public PatientsController(ISender sender)
+    {
+        _sender = sender;
+    }
+
+    [HttpGet("mrn/{mrn}")]
+    [ProducesResponseType(typeof(GetPatientByMrnResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetByMrnAsync(string mrn, CancellationToken cancellationToken)
+    {
+        var query = new GetPatientByMrnQuery(new MedicalRecordNumber(mrn));
+        var response = await _sender.SendAsync(query, cancellationToken);
+        return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(SearchPatientsResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SearchAsync(
+        [FromQuery] string firstName,
+        [FromQuery] string lastName,
+        CancellationToken cancellationToken)
+    {
+        var query = new SearchPatientsQuery(new PersonName(firstName, lastName));
+        var response = await _sender.SendAsync(query, cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(RegisterPatientResponse), StatusCodes.Status201Created)]
+    public async Task<IActionResult> RegisterAsync(
+        [FromBody] RegisterPatientRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new RegisterPatientCommand(
+            new MedicalRecordNumber(request.MedicalRecordNumber),
+            new PersonName(request.FirstName, request.LastName),
+            request.DateOfBirth,
+            request.Gender is not null ? new Gender(request.Gender) : null);
+
+        var response = await _sender.SendAsync(command, cancellationToken);
+        return CreatedAtAction(nameof(GetByMrnAsync), new { mrn = request.MedicalRecordNumber }, response);
+    }
+}

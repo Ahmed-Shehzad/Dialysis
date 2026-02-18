@@ -1,0 +1,14 @@
+**/bin
+**/obj
+**/.vs
+**/.idea
+**/.vscode
+**/*.user
+**/*.suo
+**/*.cache
+**/*.log
+**/TestResults
+**/node_modules
+**/packages
+.git
+.gitignore
