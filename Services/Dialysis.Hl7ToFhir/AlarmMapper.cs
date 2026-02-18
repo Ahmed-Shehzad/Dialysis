@@ -28,15 +28,19 @@ public static class AlarmMapper
             detail += $" | Source/Limits: {input.SourceLimits}";
 
         string codeValue = input.SourceCode ?? input.AlarmType ?? "alarm";
+        var code = new CodeableConcept
+        {
+            Coding = [new Coding(MdcSystem, codeValue, displayName)],
+            Text = displayName
+        };
+
+        if (!string.IsNullOrEmpty(input.InterpretationType))
+            code.Coding.Add(new Coding("urn:ihe:iti:pbcd:alarm-type", input.InterpretationType, MapAlarmTypeToDisplay(input.InterpretationType)));
 
         return new DetectedIssue
         {
             Status = ObservationStatus.Final,
-            Code = new CodeableConcept
-            {
-                Coding = [new Coding(MdcSystem, codeValue, displayName)],
-                Text = displayName
-            },
+            Code = code,
             Severity = severity,
             Detail = detail,
             Identified = new FhirDateTime(input.OccurredAt),
@@ -61,6 +65,17 @@ public static class AlarmMapper
             "PI" => DetectedIssue.DetectedIssueSeverity.Low,
             "PN" => DetectedIssue.DetectedIssueSeverity.Low,
             _ => DetectedIssue.DetectedIssueSeverity.Moderate
+        };
+    }
+
+    private static string MapAlarmTypeToDisplay(string type)
+    {
+        return type.ToUpperInvariant() switch
+        {
+            "SP" => "System",
+            "ST" => "Technical",
+            "SA" => "Advisory",
+            _ => type
         };
     }
 }

@@ -164,14 +164,14 @@ MDS (1)
 
 #### 3.2.7 Implementation Tasks
 
-- [ ] Parse QBP^D01 prescription query
-- [ ] Build RSP^K22 prescription response with ORC + OBX hierarchy
-- [ ] Implement all 5 profile types with formula calculations (exponential, linear, step, constant, vendor)
-- [ ] Parse prescription OBX hierarchy into domain `Prescription` aggregate
-- [ ] Track setting provenance (RSET/MSET/ASET) throughout treatment lifecycle
-- [ ] Handle prescription conflict options (discard, callback, partial accept)
-- [ ] Validate response: MSA-2, QAK-1, QAK-3, QPD-3 matching
-- [ ] Map `Rx Use` column from Table 2 to determine which parameters are prescription-eligible
+- [x] Parse QBP^D01 prescription query
+- [x] Build RSP^K22 prescription response with ORC + OBX hierarchy
+- [x] Implement all 5 profile types with formula calculations (exponential, linear, step, constant, vendor)
+- [x] Parse prescription OBX hierarchy into domain `Prescription` aggregate
+- [x] Track setting provenance (RSET/MSET/ASET) throughout treatment lifecycle
+- [x] Handle prescription conflict options (Reject, Replace, Ignore)
+- [x] Validate response: MSA-2, QAK-1, QAK-3, QPD-3 matching
+- [x] Map `Rx Use` column from Table 2 to determine which parameters are prescription-eligible
 
 ---
 
@@ -318,17 +318,17 @@ OBX-17 is **required** for settings, **optional** for measurements.
 
 #### 3.3.10 Implementation Tasks
 
-- [ ] Parse full ORU^R01 message with IEEE 11073 hierarchy (MDS → VMD → Channel → Metric)
-- [ ] Build domain model for all channels: Machine, Anticoag, Blood, Fluid, Filter, Convective, Safety, Outcomes, UF, NIBP, SpO2, Blood Chemistry
-- [ ] Parse all MDC observation codes from Table 2 (190+ data objects)
-- [ ] Implement conditional channel presence logic based on therapy mode
-- [ ] Parse OBX-4 dotted notation into hierarchical structure
-- [ ] Handle both True/False and Start/Continue/End event reporting
-- [ ] Track OBX-17 provenance (AMEAS/MMEAS/ASET/MSET/RSET)
-- [ ] Parse OBX-7 reference ranges (formats: `> lower`, `< upper`, `lower-upper`)
-- [ ] Parse OBX-6 UCUM units (ml/min, ml/h, mmHg, mS/cm, °C, %, mmol/L, etc.)
+- [x] Parse full ORU^R01 message with IEEE 11073 hierarchy (MDS → VMD → Channel → Metric)
+- [x] Build domain model for all channels: Machine, Anticoag, Blood, Fluid, Filter, Convective, Safety, Outcomes, UF, NIBP, SpO2, Blood Chemistry
+- [x] Parse all MDC observation codes from Table 2 (190+ data objects)
+- [x] Implement conditional channel presence logic based on therapy mode
+- [x] Parse OBX-4 dotted notation into hierarchical structure
+- [x] Handle both True/False and Start/Continue/End event reporting
+- [x] Track OBX-17 provenance (AMEAS/MMEAS/ASET/MSET/RSET)
+- [x] Parse OBX-7 reference ranges (formats: `> lower`, `< upper`, `lower-upper`)
+- [x] Parse OBX-6 UCUM units (ml/min, ml/h, mmHg, mS/cm, °C, %, mmol/L, etc.)
 - [x] Parse EUI-64 from MSH-3 and Therapy_ID from OBR-3
-- [ ] Generate ACK^R01 response
+- [x] Generate ACK^R01 response
 - [x] Support HL7 Batch Protocol (FHS/BHS/MSH.../BTS/FTS) for run sheet capture
 - [x] Persist treatment session with all observations as time series
 - [x] Broadcast real-time observations via SignalR
@@ -462,17 +462,21 @@ stateDiagram-v2
 
 #### 3.4.6 Implementation Tasks
 
-- [ ] Parse ORU^R40 message with strict 5-OBX structure
-- [ ] Extract alarm type (MDC_EVT_LO / MDC_EVT_HI / MDC_EVT_ALARM)
-- [ ] Parse source/limits: numeric (value + reference range) and non-numeric (source channel)
+- [x] Parse ORU^R40 message with strict 5-OBX structure
+- [x] Extract alarm type (MDC_EVT_LO / MDC_EVT_HI / MDC_EVT_ALARM)
+- [x] Parse source/limits: numeric (value + reference range) and non-numeric (source channel)
 - [x] Parse OBX-8 interpretation codes: priority (PH/PM/PL/PI/PN/PU) + type (SP/ST/SA) + abnormality (L/H)
 - [x] Model alarm lifecycle: event phase (start/continue/end) + state (off/inactive/active/latched) + activity (enabled/...); RecordAlarmCommandHandler matches continue/end to existing alarms via GetActiveBySourceAsync
-- [ ] Implement keep-alive logic (10-30 second periodic messages while active)
-- [ ] Generate ORA^R41 acknowledgment
-- [ ] Map all mandatory and conditional alarms from Table 3
+- [x] Implement keep-alive logic (10-30 second periodic messages while active)
+- [x] Generate ORA^R41 acknowledgment
+- [x] Map all mandatory and conditional alarms from Table 3
 - [x] Broadcast alarms in real-time via SignalR
 - [x] Publish alarm integration events via Transponder
 - [x] Persist alarm history with full state transitions; AddSourceCodeToAlarms migration; IngestOruR40IntegrationTests (parse→record→repository)
+
+#### 3.4.7 Phase 4 Planning & Documentation
+
+- Planning doc: `PHASE4_ALARM_PLAN.md` – workflows, 5-OBX structure, alarm lifecycle, component diagram, Table 3 catalog
 
 ---
 
@@ -504,15 +508,19 @@ stateDiagram-v2
 
 #### 3.5.3 Implementation Tasks
 
-- [ ] Map all MDC observation codes to FHIR Observation.code (MDC + optional LOINC)
-- [ ] Map UCUM units from OBX-6 to Observation.valueQuantity.unit
-- [ ] Map alarm priorities (PH/PM/PL) to DetectedIssue.severity (high/moderate/low)
-- [ ] Map alarm types (SP/ST/SA) to DetectedIssue.code
-- [ ] Map treatment session lifecycle to Procedure.status (preparation/in-progress/completed)
-- [ ] Map prescription to ServiceRequest with extensions for UF profiles
-- [ ] Map device identity to FHIR Device resource (UDI, manufacturer, model, serial)
-- [ ] Map OBX-17 provenance to FHIR Provenance resource
-- [ ] Generate FHIR AuditEvent for C5 compliance (message receipt, prescription download, alarm handling)
+- [x] Map all MDC observation codes to FHIR Observation.code (MDC + optional LOINC)
+- [x] Map UCUM units from OBX-6 to Observation.valueQuantity.unit
+- [x] Map alarm priorities (PH/PM/PL) to DetectedIssue.severity (high/moderate/low)
+- [x] Map alarm types (SP/ST/SA) to DetectedIssue.code
+- [x] Map treatment session lifecycle to Procedure.status (preparation/in-progress/completed)
+- [x] Map prescription to ServiceRequest with extensions for UF profiles
+- [x] Map device identity to FHIR Device resource (UDI, manufacturer, model, serial)
+- [x] Map OBX-17 provenance to FHIR Provenance resource
+- [x] Generate FHIR AuditEvent for C5 compliance (message receipt, prescription download, alarm handling)
+
+#### 3.5.4 Phase 5 Planning & Documentation
+
+- Planning doc: `PHASE5_HL7_TO_FHIR_PLAN.md` – resource mapping, code systems, API endpoints
 
 ---
 
@@ -611,10 +619,10 @@ FTS  ── File Trailer (batch count)
 | P0 | 3 | Treatment | PCD-01 ORU^R01 parser (full hierarchy) | **Implemented** – Full MDC catalog, IEEE 11073 hierarchy, value tables |
 | P0 | 4 | Alarm | PCD-04 ORU^R40 parser (5-OBX structure) | **Implemented** – Strict 5-OBX, Table 3 catalog, alarm lifecycle |
 | P1 | 5 | Hl7ToFhir | MDC → FHIR Observation mapping | **Implemented** – MDC catalog, LOINC, UCUM, DetectedIssue severity, Procedure status, Provenance |
-| P1 | 2 | Prescription | QBP^D01/RSP^K22 + profile parsing | Placeholder – needs full profile engine |
+| P1 | 2 | Prescription | QBP^D01/RSP^K22 + profile parsing | **Implemented** – QbpD01Parser, RspK22Builder, RspK22Parser, 5 profile types, RxUse catalog, conflict policies |
 | P2 | 1 | Patient | PDQ (QBP^Q22/RSP^K22) + 6 use cases | Placeholder – needs response parsing |
 | P2 | 3 | Treatment | Batch Protocol, time-series API, EUI-64/Therapy_ID, Transponder events | **Implemented** – Hl7BatchParser, GET observations?start=&end=, DeviceEui64/TherapyId, ObservationRecordedIntegrationEvent |
-| P3 | 5 | Hl7ToFhir | FHIR AuditEvent, Provenance | Not started |
+| P3 | 5 | Hl7ToFhir | FHIR AuditEvent, Provenance | **Implemented** |
 | P3 | – | All | SignalR real-time broadcasting | **Implemented** – Transponder SignalR hub |
 
 ---

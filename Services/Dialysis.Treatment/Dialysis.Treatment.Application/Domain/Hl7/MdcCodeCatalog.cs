@@ -77,6 +77,9 @@ public static class MdcCodeCatalog
         AddTempMetrics(d);
         AddAdequacyMetrics(d);
         AddAccessMetrics(d);
+        AddHdialyMachineMetrics(d);
+        AddHdialyBloodPumpMetrics(d);
+        AddHdialyUfMetrics(d);
     }
 
     // ─── General VMD ─────────────────────────────────────────────────────────
@@ -240,6 +243,46 @@ public static class MdcCodeCatalog
         Add(d, "MDC_DIA_ACCESS_FLOW", "Access Flow Rate", Metric, "mL/min", "mL/min");
         Add(d, "MDC_DIA_ACCESS_RECIRC", "Recirculation Rate", Metric, "%", "%");
         Add(d, "MDC_DIA_BLD_LEAK_DETECT", "Blood Leak Detection", Metric, null, null);
+    }
+
+    // ─── MDC_HDIALY_* (Table 2 Dialysis Implementation Guide) ───────────────────
+    private static void AddHdialyMachineMetrics(Dictionary<string, MdcCodeDescriptor> d)
+    {
+        Add(d, "MDC_HDIALY_MACH_TIME", "Device Time", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_MODE_DESCRIPTION", "Mode Description", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_MODE_OF_OPERATION", "Mode of Operation", Metric, null, null);
+        Add(d, "MDC_TIME_PD_MAINTENANCE_TO_NEXT_SERVICE", "PM Time Remaining", Metric, "hours", "h");
+        Add(d, "MDC_MAINTENANCE_NEXT_SERVICE_DATE", "PM Due Date", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_MAINT_TX_REMAIN", "PM Treatments Remaining", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_BLD_PUMP_ON", "Blood Pump On", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_TX_FLUID_BYPASS", "Fluid Bypass", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_TX_MODALITY", "Treatment Modality", Metric, null, null);
+        Add(d, "MDC_HDIALY_MACH_THERAPY_TIME", "Elapsed Treatment Time", Metric, "min", "min");
+        Add(d, "MDC_HDIALY_MACH_TIME_REMAIN", "Remaining Treatment Time", Metric, "min", "min");
+        Add(d, "MDC_TEMP_ROOM", "Room Temperature", Metric, "°C", "Cel");
+    }
+
+    private static void AddHdialyBloodPumpMetrics(Dictionary<string, MdcCodeDescriptor> d)
+    {
+        Add(d, "MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING", "Blood Flow Rate Setting", Metric, "mL/min", "mL/min");
+        Add(d, "MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE", "Actual Blood Flow Rate", Metric, "mL/min", "mL/min");
+        Add(d, "MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_MEAN", "Average Blood Flow Rate", Metric, "mL/min", "mL/min");
+        Add(d, "MDC_HDIALY_BLD_PRESS_ART", "Arterial Pressure", Metric, "mmHg", "mm[Hg]");
+        Add(d, "MDC_HDIALY_BLD_PUMP_MODE", "Blood Pump Mode", Metric, null, null);
+        Add(d, "MDC_EVT_HDIALY_BLD_PUMP_STOP", "Blood Pump Stop", Metric, null, null);
+        Add(d, "MDC_HDIALY_BLD_PUMP_PRESS_VEN", "Venous Pressure", Metric, "mmHg", "mm[Hg]");
+        Add(d, "MDC_HDIALY_BLOOD_TEMP_VEN", "Venous Temperature", Metric, "°C", "Cel");
+        Add(d, "MDC_HDIALY_BLD_PUMP_BLOOD_PROCESSED_TOTAL", "Total Blood Processed", Metric, "L", "L");
+    }
+
+    private static void AddHdialyUfMetrics(Dictionary<string, MdcCodeDescriptor> d)
+    {
+        Add(d, "MDC_HDIALY_UF_MODE", "UF Mode", Metric, null, null);
+        Add(d, "MDC_HDIALY_UF_RATE_SETTING", "UF Rate Setting", Metric, "mL/h", "mL/h");
+        Add(d, "MDC_HDIALY_UF_RATE", "Actual UF Rate", Metric, "mL/h", "mL/h");
+        Add(d, "MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE", "Target Volume", Metric, "mL", "mL");
+        Add(d, "MDC_HDIALY_UF_ACTUAL_REMOVED_VOL", "Total Removed", Metric, "mL", "mL");
+        Add(d, "MDC_EVT_HDIALY_UF_RATE_RANGE", "UF Rate Out of Range", Metric, null, null);
     }
 
     private static void Add(

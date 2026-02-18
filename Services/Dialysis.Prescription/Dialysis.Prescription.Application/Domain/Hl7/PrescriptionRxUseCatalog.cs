@@ -46,6 +46,16 @@ public static class PrescriptionRxUseCatalog
         d["MDC_HDIALY_UF_ACTUAL_REMOVED_VOL"] = RxUse.M;
         d["MDC_EVT_HDIALY_UF_RATE_RANGE"] = RxUse.M;
         d["MDC_HDIALY_PROFILE"] = RxUse.C;
+        // Pumpable profile mapping (§3.2.6)
+        d["MDC_HDIALY_DIALYSATE_FLOW_MODE"] = RxUse.M;
+        d["MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING"] = RxUse.M;
+        d["MDC_HDIALY_RF_FLOW_MODE"] = RxUse.M;
+        d["MDC_HDIALY_RF_POST_FILTER_FLOW_RATE_SETTING"] = RxUse.M;
+        d["MDC_HDIALY_RF_PRE_FILTER_FLOW_RATE_SETTING"] = RxUse.M;
+        d["MDC_HDIALY_ANTICOAG_MODE"] = RxUse.M;
+        d["MDC_HDIALY_ANTICOAG_INFUS_RATE_SETTING"] = RxUse.M;
+        d["MDC_HDIALY_DIALYSATE_CONC_NA_MODE"] = RxUse.M;
+        d["MDC_HDIALY_DIALYSATE_CONC_NA_SETTING"] = RxUse.M;
         return d.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 

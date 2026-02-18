@@ -5,6 +5,7 @@ public sealed record GetAlarmsResponse(IReadOnlyList<AlarmDto> Alarms);
 public sealed record AlarmDto(
     string Id,
     string? AlarmType,
+    string? SourceCode,
     string? SourceLimits,
     string? Priority,
     string? InterpretationType,

@@ -25,6 +25,11 @@ public sealed class RspK22Builder : IRspK22Builder
         ["MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING"] = "ml/min",
         ["MDC_HDIALY_UF_RATE_SETTING"] = "mL/h",
         ["MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE"] = "mL",
+        ["MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING"] = "ml/min",
+        ["MDC_HDIALY_RF_POST_FILTER_FLOW_RATE_SETTING"] = "ml/min",
+        ["MDC_HDIALY_RF_PRE_FILTER_FLOW_RATE_SETTING"] = "ml/min",
+        ["MDC_HDIALY_ANTICOAG_INFUS_RATE_SETTING"] = "ml/h",
+        ["MDC_HDIALY_DIALYSATE_CONC_NA_SETTING"] = "mmol/L",
     };
 
     public string BuildFromPrescription(PrescriptionEntity prescription, RspK22ValidationContext context)
@@ -77,8 +82,9 @@ public sealed class RspK22Builder : IRspK22Builder
     private static string BuildMsa(string ackCode, string messageControlId) =>
         $"MSA{FieldSeparator}{ackCode}{FieldSeparator}{messageControlId}";
 
+    /// <summary>QAK-1=QueryTag, QAK-2=Status, QAK-3=QueryName per HL7 QAK segment.</summary>
     private static string BuildQak(string queryTag, string queryName, string status) =>
-        $"QAK{FieldSeparator}{queryName}{FieldSeparator}{queryTag}{FieldSeparator}{status}";
+        $"QAK{FieldSeparator}{queryTag}{FieldSeparator}{status}{FieldSeparator}{queryName}";
 
     private static string BuildQpd(string queryTag, string mrn) =>
         $"QPD{FieldSeparator}{PrescriptionQueryName}{ComponentSeparator}{QueryDisplayName}{ComponentSeparator}MDC{FieldSeparator}{queryTag}{FieldSeparator}@PID.3{ComponentSeparator}{mrn}{ComponentSeparator}{ComponentSeparator}{ComponentSeparator}MR";

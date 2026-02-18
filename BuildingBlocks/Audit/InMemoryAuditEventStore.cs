@@ -11,7 +11,7 @@ public sealed class InMemoryAuditEventStore : IAuditEventStore
     private const int DefaultCapacity = 1000;
     private readonly List<AuditRecordRequest> _buffer = [];
     private readonly int _capacity;
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
     public InMemoryAuditEventStore(int capacity = DefaultCapacity)
     {

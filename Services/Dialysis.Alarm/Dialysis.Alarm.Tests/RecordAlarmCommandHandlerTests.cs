@@ -48,7 +48,7 @@ public sealed class RecordAlarmCommandHandlerTests
         DateTimeOffset originalTime = DateTimeOffset.UtcNow.AddMinutes(-5);
         AlarmInfo startInfo = CreateAlarmInfo(EventPhase.Start, "active", sourceCode, deviceId, sessionId, originalTime);
 #pragma warning disable IDE0058
-        await handler.HandleAsync(new RecordAlarmCommand(startInfo));
+        _ = await handler.HandleAsync(new RecordAlarmCommand(startInfo));
 #pragma warning restore IDE0058
 
         DateTimeOffset continueTime = DateTimeOffset.UtcNow.AddMinutes(-2);
@@ -77,7 +77,7 @@ public sealed class RecordAlarmCommandHandlerTests
         string sourceCode = "MDC_PUMP_VEN";
         AlarmInfo startInfo = CreateAlarmInfo(EventPhase.Start, "active", sourceCode, deviceId, sessionId, DateTimeOffset.UtcNow.AddMinutes(-5));
 #pragma warning disable IDE0058
-        await handler.HandleAsync(new RecordAlarmCommand(startInfo));
+        _ = await handler.HandleAsync(new RecordAlarmCommand(startInfo));
 #pragma warning restore IDE0058
 
         AlarmInfo endInfo = CreateAlarmInfo(EventPhase.End, "inactive", sourceCode, deviceId, sessionId, DateTimeOffset.UtcNow);

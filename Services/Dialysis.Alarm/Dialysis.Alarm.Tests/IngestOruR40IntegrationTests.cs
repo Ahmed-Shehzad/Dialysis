@@ -86,10 +86,10 @@ public sealed class IngestOruR40IntegrationTests
             """;
 
         foreach (AlarmInfo alarm in parser.Parse(start).Alarms)
-            await handler.HandleAsync(new RecordAlarmCommand(alarm));
+            _ = await handler.HandleAsync(new RecordAlarmCommand(alarm));
 
         foreach (AlarmInfo alarm in parser.Parse(end).Alarms)
-            await handler.HandleAsync(new RecordAlarmCommand(alarm));
+            _ = await handler.HandleAsync(new RecordAlarmCommand(alarm));
 
         IReadOnlyList<Application.Domain.Alarm> alarms = await repository.GetAlarmsAsync(null, "SESS-LIFE", null, null);
         alarms.Count.ShouldBe(1);

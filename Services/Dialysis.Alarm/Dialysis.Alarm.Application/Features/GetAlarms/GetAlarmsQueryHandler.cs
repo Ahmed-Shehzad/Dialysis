@@ -29,6 +29,7 @@ internal sealed class GetAlarmsQueryHandler : IQueryHandler<GetAlarmsQuery, GetA
             .Select(a => new AlarmDto(
                 a.Id.ToString(),
                 a.AlarmType,
+                a.SourceCode,
                 a.SourceLimits,
                 a.Priority?.Value,
                 a.InterpretationType,

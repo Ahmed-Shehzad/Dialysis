@@ -43,6 +43,18 @@ public static class MdcToFhirCodeCatalog
         Add(d, "MDC_DIA_THERAPY_TIME_ACTUAL", "Actual Therapy Time", null);
         Add(d, "MDC_DIA_THERAPY_TIME_REMAIN", "Remaining Therapy Time", null);
 
+        // MDC_HDIALY_* (Table 2 Dialysis Implementation Guide)
+        Add(d, "MDC_HDIALY_MACH_THERAPY_TIME", "Elapsed Treatment Time", null);
+        Add(d, "MDC_HDIALY_MACH_TIME_REMAIN", "Remaining Treatment Time", null);
+        Add(d, "MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING", "Blood Flow Rate Setting", null);
+        Add(d, "MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE", "Actual Blood Flow Rate", null);
+        Add(d, "MDC_HDIALY_BLD_PRESS_ART", "Arterial Pressure", "99717-1");
+        Add(d, "MDC_HDIALY_BLD_PUMP_PRESS_VEN", "Venous Pressure", "99717-1");
+        Add(d, "MDC_HDIALY_UF_RATE_SETTING", "UF Rate Setting", null);
+        Add(d, "MDC_HDIALY_UF_RATE", "Actual UF Rate", null);
+        Add(d, "MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE", "Target UF Volume", null);
+        Add(d, "MDC_HDIALY_UF_ACTUAL_REMOVED_VOL", "Total UF Removed", null);
+
         return d.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
