@@ -457,9 +457,29 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 
 **Alarm REST API:**
 - `GET /api/alarms?deviceId=&sessionId=&from=&to=` – List alarms with optional filters (AlarmRead)
+- `GET /api/alarms/fhir` – FHIR R4 Bundle of DetectedIssue resources (AlarmRead)
 - `POST /api/hl7/alarm` – Ingest ORU^R40 (AlarmWrite), returns ORA^R41
 
 **OBX-8 interpretation:** Priority (PH/PM/PL), type (SP/ST/SA), abnormality (L/H) are parsed and persisted.
+
+---
+
+## 14b. HL7-to-FHIR Adapter (Phase 5 Complete)
+
+**Dialysis.Hl7ToFhir** provides static mappers consumed by API projects. All IMPLEMENTATION_PLAN Phase 5 tasks are implemented.
+
+| FHIR Resource | Mapper | API Endpoint |
+|---------------|--------|--------------|
+| Procedure | ProcedureMapper | GET /api/treatment-sessions/{id}/fhir |
+| Observation | ObservationMapper | GET /api/treatment-sessions/{id}/fhir |
+| DetectedIssue | AlarmMapper | GET /api/alarms/fhir |
+| ServiceRequest | PrescriptionMapper | GET /api/prescriptions/order/{id}/fhir |
+| Patient | PatientMapper | GET /api/patients/mrn/{mrn}/fhir |
+| Device | DeviceMapper | (used by mappers, not exposed as standalone) |
+| Provenance | ProvenanceMapper | (used when building Provenance for Observations) |
+| AuditEvent | AuditEventMapper | GET /api/audit-events |
+
+**Code systems:** MDC (urn:iso:std:iso:11073:10101), UCUM (http://unitsofmeasure.org), LOINC, SNOMED CT.
 
 ---
 

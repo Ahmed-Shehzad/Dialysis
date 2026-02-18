@@ -620,7 +620,7 @@ FTS  ── File Trailer (batch count)
 | P0 | 4 | Alarm | PCD-04 ORU^R40 parser (5-OBX structure) | **Implemented** – Strict 5-OBX, Table 3 catalog, alarm lifecycle |
 | P1 | 5 | Hl7ToFhir | MDC → FHIR Observation mapping | **Implemented** – MDC catalog, LOINC, UCUM, DetectedIssue severity, Procedure status, Provenance |
 | P1 | 2 | Prescription | QBP^D01/RSP^K22 + profile parsing | **Implemented** – QbpD01Parser, RspK22Builder, RspK22Parser, 5 profile types, RxUse catalog, conflict policies |
-| P2 | 1 | Patient | PDQ (QBP^Q22/RSP^K22) + 6 use cases | Placeholder – needs response parsing |
+| P2 | 1 | Patient | PDQ (QBP^Q22/RSP^K22) + 6 use cases | **Implemented** – RspK22Parser, 6 use cases, MSA/QAK validation, NF/AE/AR handling |
 | P2 | 3 | Treatment | Batch Protocol, time-series API, EUI-64/Therapy_ID, Transponder events | **Implemented** – Hl7BatchParser, GET observations?start=&end=, DeviceEui64/TherapyId, ObservationRecordedIntegrationEvent |
 | P3 | 5 | Hl7ToFhir | FHIR AuditEvent, Provenance | **Implemented** |
 | P3 | – | All | SignalR real-time broadcasting | **Implemented** – Transponder SignalR hub |

@@ -264,9 +264,9 @@ flowchart LR
 | Prescription Transfer | QBP^D01 / RSP^K22 | Done | Prescription |
 | Treatment Reporting (PCD-01) | ORU^R01 / ACK^R01 | Done | Treatment |
 | Alarm Reporting (PCD-04) | ORU^R40 / ORA^R41 | Done | Alarm |
-| HL7-to-FHIR Mapping | N/A | Partial | Hl7ToFhir |
+| HL7-to-FHIR Mapping | N/A | Done | Hl7ToFhir |
 | C5 Auth / Audit / Tenant | N/A | Done | All |
-| HL7 Batch Protocol | FHS/BHS/BTS/FTS | Not started | Treatment |
+| HL7 Batch Protocol | FHS/BHS/BTS/FTS | Done | Treatment |
 
 ---
 
