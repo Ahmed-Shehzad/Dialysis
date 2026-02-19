@@ -44,6 +44,7 @@ public sealed class PatientDbContext : DbContext, IDbContext
                 .HasColumnName("Gender");
             _ = e.Property(x => x.SocialSecurityNumber).HasColumnName("SocialSecurityNumber").HasMaxLength(20);
             _ = e.HasIndex(x => new { x.TenantId, x.MedicalRecordNumber }).IsUnique();
+            _ = e.HasIndex(x => x.TenantId).HasDatabaseName("IX_Patients_TenantId");
             _ = e.Ignore(x => x.DomainEvents);
             _ = e.Ignore(x => x.IntegrationEvents);
         });

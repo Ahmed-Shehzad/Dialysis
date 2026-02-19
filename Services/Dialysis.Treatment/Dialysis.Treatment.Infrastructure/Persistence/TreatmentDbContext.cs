@@ -47,6 +47,7 @@ internal sealed class TreatmentSessionConfiguration : IEntityTypeConfiguration<T
         _ = e.Property(x => x.Phase).HasConversion(NullableStringConverter<EventPhase>(v => v.Value, v => new EventPhase(v)));
 
         _ = e.HasIndex(x => new { x.TenantId, x.SessionId }).IsUnique();
+        _ = e.HasIndex(x => new { x.TenantId, x.StartedAt }).HasDatabaseName("IX_TreatmentSessions_TenantId_StartedAt");
         _ = e.HasIndex(x => x.DeviceId);
         _ = e.HasIndex(x => x.PatientMrn);
         _ = e.HasIndex(x => x.Status);

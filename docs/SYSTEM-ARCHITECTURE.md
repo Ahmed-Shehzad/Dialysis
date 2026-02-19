@@ -180,6 +180,29 @@ Query handlers use the read store; write repositories retain only methods needed
 
 **ReadModel rule**: All query operations in ReadStores must use `AsNoTracking()` on each query (or set `ChangeTracker.QueryTrackingBehavior = NoTracking` on the Read DbContext).
 
+### 3.1 CQRS Architecture Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Same database for read and write | No eventual consistency; simpler ops; ReadModels map to same tables as write entities |
+| Read DbContexts implement `IReadOnlyDbContext` | Marker interface; `SaveChanges` throws to prevent accidental writes |
+| Write repositories slimmed to command-only methods | `GetByIdAsync`, `GetAlarmsAsync`, etc. moved to ReadStores; repositories retain only what command handlers need (e.g. `GetActiveBySourceAsync`, `GetByDeviceEui64Async`, `GetLatestByMrnAsync` for ProcessQbpD01) |
+| Tenant passed explicitly to ReadStores | Handlers inject `ITenantContext` and pass `_tenant.TenantId`; consistent with multi-tenancy rules |
+
+### 3.2 Write Repository Methods (Command-Side Only)
+
+| Service | Write repository methods retained | Purpose |
+|---------|----------------------------------|---------|
+| Patient | `GetByMrnAsync`, `GetByPersonNumberAsync`, `GetBySsnAsync`, `SearchByNameAsync`, `SearchByLastNameAsync` | ProcessQbpQ22, IngestRspK22 need full Patient for HL7 RSP^K22 |
+| Treatment | `AddAsync`, `Update`, `Delete`, `GetBySessionIdAsync` | RecordObservation, IngestOruBatch load session for append |
+| Alarm | `GetActiveBySourceAsync`, `AddAsync`, `Update`, `Delete` | RecordAlarm needs active alarm for continue/end lifecycle |
+| Prescription | `GetByOrderIdAsync`, `GetLatestByMrnAsync`, `AddAsync`, `Update`, `Delete` | IngestRspK22 (order lookup), ProcessQbpD01 (RSP^K22 build from entity) |
+| Device | `GetByDeviceEui64Async`, `AddAsync`, `Update`, `Delete` | RegisterDevice upsert by EUI-64 |
+
+### 3.3 Read DbContext Migrations
+
+Read DbContexts (`XxxReadDbContext`) map to the **same tables** as write DbContexts. They do **not** require separate EF Core migrations. Schema changes are driven by the write DbContext migrations only.
+
 ---
 
 ## 4. Vertical Slice Structure
@@ -314,6 +337,8 @@ sequenceDiagram
 
 ## 7. Prescription HL7 Flow (QBP^D01 / RSP^K22)
 
+**Note:** ProcessQbpD01 uses the **write repository** (`GetLatestByMrnAsync`), not the ReadStore, because `RspK22Builder.BuildFromPrescription` requires the full `Prescription` entity (including `Settings`).
+
 ```mermaid
 sequenceDiagram
     participant Mirth
@@ -325,9 +350,9 @@ sequenceDiagram
     Mirth->>Hl7Controller: POST /api/hl7/qbp-d01 (raw QBP^D01)
     Hl7Controller->>QbpD01Parser: Parse
     QbpD01Parser-->>Hl7Controller: QbpD01ParseResult (MRN, QueryTag, ...)
-    Hl7Controller->>PrescriptionRepo: GetByMrnAsync(MRN)
+    Hl7Controller->>PrescriptionRepo: GetLatestByMrnAsync(MRN)
     alt Prescription found
-        PrescriptionRepo-->>Hl7Controller: Prescription
+        PrescriptionRepo-->>Hl7Controller: Prescription (full entity)
         Hl7Controller->>RspK22Builder: BuildFromPrescription
         RspK22Builder-->>Hl7Controller: RSP^K22 HL7
     else Not found
@@ -530,6 +555,16 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 - `GET /api/reports/alarms-by-severity` – Alarms grouped by severity
 - `GET /api/reports/prescription-compliance` – % sessions within prescription tolerance
 
+### FHIR, CDS, Reports – Data Consumption
+
+| Service | Data source | Pattern |
+|---------|-------------|---------|
+| **FHIR** | HTTP calls to Patient, Treatment, Prescription, Alarm, Device APIs via gateway | Aggregates; no own persistence; no ReadModels |
+| **CDS** | HTTP to Treatment + Prescription APIs | Fetches session + prescription; compares; returns DetectedIssue |
+| **Reports** | HTTP to Treatment, Alarm, Prescription APIs | Aggregates counts; no own persistence |
+
+These services are **stateless aggregators**. They consume data via REST from downstream APIs (which use ReadStores internally). No CQRS ReadModels in FHIR/CDS/Reports.
+
 ---
 
 ## 15. Migrations (EF Core)
@@ -560,6 +595,8 @@ dotnet ef migrations add <MigrationName> --project <InfrastructureProject> --sta
 
 For production, prefer running migrations as a distinct CI/CD step or hosted job before the API starts, to avoid multiple instances applying concurrently. If using startup, ensure only one replica migrates (e.g. leader election or init container).
 
+**Read DbContexts:** `XxxReadDbContext` projects map to the same tables as write DbContexts. They do **not** need migrations. Register both DbContexts with the same connection string: `AddDbContext<XxxDbContext>(...)` and `AddDbContext<XxxReadDbContext>(...)`.
+
 ---
 
 ## 15a. Testing Infrastructure
@@ -569,6 +606,8 @@ For production, prefer running migrations as a distinct CI/CD step or hosted job
 **Bogus:** Dialysis service tests use [Bogus](https://github.com/bchavez/Bogus) for deterministic fake data (`PatientTestData`, `PrescriptionTestData`, `TreatmentTestData`, `AlarmTestData`, `DeviceTestData`). Tests share a seeded Faker via `Randomizer.Seed` for reproducibility.
 
 **Test isolation:** Tests in the same collection share one PostgreSQL instance. Each test that expects empty or specific data clears tables with `ExecuteDeleteAsync()` at the start (e.g. `await db.Alarms.ExecuteDeleteAsync()`).
+
+**CQRS in tests:** Query verification uses `IXxxReadStore` (e.g. `IAlarmReadStore`, `ITreatmentReadStore`, `IDeviceReadStore`). Command flows use write repositories. See `docs/CQRS-READ-WRITE-SPLIT.md` for details.
 
 ---
 
@@ -606,3 +645,4 @@ PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_t
 - **On every architecture change**: Update this document and commit.
 - **On new microservice**: Add to diagrams and `ARCHITECTURE-CONSTRAINTS.md`.
 - **On new vertical slice**: Document in feature WIKI.
+- **CQRS reference**: See `docs/CQRS-READ-WRITE-SPLIT.md` for ReadStore/Repository responsibilities and audit checklist.

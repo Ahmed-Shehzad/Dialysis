@@ -16,9 +16,11 @@ See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTUR
 
 ## Deployment & Operations
 
+- [PRODUCTION-READINESS-CHECKLIST.md](PRODUCTION-READINESS-CHECKLIST.md) – Pre-production verification
+- [.github/workflows/ci.yml](../.github/workflows/ci.yml) – GitHub Actions CI (build, test)
 - [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) – Time synchronization (NTP), database, security, production (Azure/Key Vault)
 - [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md) – Step-by-step deploy, rollback, troubleshooting
-- [HEALTH-CHECK.md](HEALTH-CHECK.md) – Health endpoints and monitoring
+- [HEALTH-CHECK.md](HEALTH-CHECK.md) – Health endpoints, metrics (`/metrics`), and monitoring
 
 ---
 
@@ -47,6 +49,8 @@ See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTUR
 ## Architecture
 
 - [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) – Microservices, DDD, CQRS, Vertical Slice, diagrams
+- [DOMAIN-INVARIANTS.md](DOMAIN-INVARIANTS.md) – Domain rules and invariants
+- [CQRS-READ-WRITE-SPLIT.md](CQRS-READ-WRITE-SPLIT.md) – ReadStore vs Repository, command-only methods, audit checklist
 - [ARCHITECTURE-CONSTRAINTS.md](ARCHITECTURE-CONSTRAINTS.md) – Technology stack and strict constraints
 
 ## Implementation Guides

@@ -23,7 +23,9 @@ Health endpoints and monitoring for the PDMS stack.
     "treatment-api": { "status": "Healthy", "description": null, "duration": 9.0 },
     "alarm-api": { "status": "Healthy", "description": null, "duration": 7.5 },
     "device-api": { "status": "Healthy", "description": null, "duration": 6.8 },
-    "fhir-api": { "status": "Healthy", "description": null, "duration": 11.2 }
+    "fhir-api": { "status": "Healthy", "description": null, "duration": 11.2 },
+    "cds-api": { "status": "Healthy", "description": null, "duration": 4.1 },
+    "reports-api": { "status": "Healthy", "description": null, "duration": 5.3 }
   }
 }
 ```
@@ -48,6 +50,8 @@ Each backend API exposes `GET /health`:
 | Alarm | `http://alarm-api:5053/health` | `http://localhost:5053/health` |
 | Device | `http://device-api:5054/health` | `http://localhost:5054/health` |
 | FHIR | `http://fhir-api:5055/health` | `http://localhost:5055/health` |
+| CDS | `http://cds-api:5056/health` | `http://localhost:5056/health` |
+| Reports | `http://reports-api:5057/health` | `http://localhost:5057/health` |
 
 **Database-backed APIs** (Patient, Prescription, Treatment, Alarm, Device): Health includes Npgsql check; fails if DB unreachable.
 
@@ -61,7 +65,19 @@ The Gateway runs `AddNtpSyncCheck()` to verify the host clock is NTP-synchronize
 
 ---
 
-## 4. Monitoring Integration
+## 4. Prometheus Metrics (Gateway)
+
+**Endpoint**: `GET /metrics`
+
+**Purpose**: OpenTelemetry metrics in Prometheus exposition format for scraping.
+
+**Instruments**: HTTP request duration (`http.server.request.duration`) and request count from ASP.NET Core instrumentation.
+
+**Use**: Point Prometheus at `http://gateway:5000/metrics` (or `http://localhost:5001/metrics` when Gateway runs on 5001) for dashboards and alerting.
+
+---
+
+## 5. Monitoring Integration
 
 - **Kubernetes**: Use `/health` as liveness/readiness probe
 - **Azure App Service**: Health check URL: `https://<app>.azurewebsites.net/health`
@@ -69,7 +85,7 @@ The Gateway runs `AddNtpSyncCheck()` to verify the host clock is NTP-synchronize
 
 ---
 
-## 5. References
+## 6. References
 
 - [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) §5 – Health checks
 - [GATEWAY.md](GATEWAY.md) – Gateway overview

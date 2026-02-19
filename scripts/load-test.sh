@@ -4,7 +4,7 @@
 # Usage: ./scripts/load-test.sh [OPTIONS]
 #   --requests N    Total requests (default: 100)
 #   --concurrent N  Concurrent requests (default: 10)
-#   --endpoint NAME health|fhir-export|qbp-q22|all (default: all)
+#   --endpoint NAME health|fhir-export|qbp-q22|cds|reports|all (default: all)
 
 BASE_URL="${BASE_URL:-http://localhost:5001}"
 TENANT="${X_TENANT_ID:-default}"
@@ -78,13 +78,21 @@ case $ENDPOINT in
   qbp-q22)
     run_test "POST /api/hl7/qbp-q22" "$BASE_URL/api/hl7/qbp-q22" "POST" "$QBP_Q22_DATA"
     ;;
+  cds)
+    run_test "GET /api/cds/prescription-compliance" "$BASE_URL/api/cds/prescription-compliance?sessionId=SESS001"
+    ;;
+  reports)
+    run_test "GET /api/reports/sessions-summary" "$BASE_URL/api/reports/sessions-summary"
+    ;;
   all)
     run_test "GET /health" "$BASE_URL/health"
     run_test "GET /api/fhir/\$export" "$BASE_URL/api/fhir/\$export?_type=Patient,Device&_limit=5"
     run_test "POST /api/hl7/qbp-q22" "$BASE_URL/api/hl7/qbp-q22" "POST" "$QBP_Q22_DATA"
+    run_test "GET /api/cds/prescription-compliance" "$BASE_URL/api/cds/prescription-compliance?sessionId=SESS001"
+    run_test "GET /api/reports/sessions-summary" "$BASE_URL/api/reports/sessions-summary"
     ;;
   *)
-    echo "Unknown endpoint: $ENDPOINT (use: health, fhir-export, qbp-q22, all)"
+    echo "Unknown endpoint: $ENDPOINT (use: health, fhir-export, qbp-q22, cds, reports, all)"
     exit 1
     ;;
 esac

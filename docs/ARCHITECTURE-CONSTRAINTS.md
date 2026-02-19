@@ -30,7 +30,9 @@ These constraints are **strict** and must be followed. Exceptions require explic
 ### CQRS
 
 - Commands for writes; Queries for reads
-- Read models may be denormalized; write models enforce invariants
+- **Read side**: `IXxxReadStore` + `XxxReadDbContext` (implements `IReadOnlyDbContext`); all queries use `AsNoTracking`; `SaveChanges` throws
+- **Write side**: `IXxxRepository` + `XxxDbContext`; repositories expose only methods needed by command handlers (e.g. `GetActiveBySourceAsync`, `GetByDeviceEui64Async`)
+- Read models map to same tables as write entities; same database; no eventual consistency
 - Domain events published via Transponder
 
 ### Vertical Slice Architecture

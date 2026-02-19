@@ -10,14 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\BuildingBlocks.Testcontainers\PostgreSqlCollectionDefinition.cs" Link="PostgreSqlCollectionDefinition.cs" />
-    <ProjectReference Include="..\..\..\BuildingBlocks.Testcontainers\BuildingBlocks.Testcontainers.csproj" />
-    <ProjectReference Include="..\Dialysis.Fhir.Api\Dialysis.Fhir.Api.csproj" />
-    <ProjectReference Include="..\Dialysis.Fhir.Infrastructure\Dialysis.Fhir.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
+    <ProjectReference Include="..\Dialysis.Reports.Api\Dialysis.Reports.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />

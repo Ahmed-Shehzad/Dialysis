@@ -182,6 +182,8 @@ services:
       ReverseProxy__Clusters__fhir-cluster__Destinations__fhir__Address: http://fhir-api:5055
       ReverseProxy__Clusters__cds-cluster__Destinations__cds__Address: http://cds-api:5056
       ReverseProxy__Clusters__reports-cluster__Destinations__reports__Address: http://reports-api:5057
+      ReverseProxy__Clusters__cds-cluster__Destinations__cds__Address: http://cds-api:5056
+      ReverseProxy__Clusters__reports-cluster__Destinations__reports__Address: http://reports-api:5057
     ports:
       - "5001:5000"
     depends_on:
@@ -190,6 +192,9 @@ services:
       - treatment-api
       - alarm-api
       - device-api
+      - fhir-api
+      - cds-api
+      - reports-api
 
   mirth:
     image: nextgenhealthcare/connect:4.5

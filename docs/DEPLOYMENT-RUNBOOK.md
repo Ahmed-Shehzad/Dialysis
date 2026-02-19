@@ -57,7 +57,24 @@ curl http://localhost:5001/health
 ./scripts/smoke-test-fhir.sh --hl7
 ```
 
-### 3.3 Stop
+### 3.3 Load Test
+
+Run a simple load test to verify performance under concurrent requests:
+
+```bash
+# Health endpoint only (100 requests, 10 concurrent)
+./scripts/load-test.sh --endpoint health --requests 100 --concurrent 10
+
+# All endpoints (health, FHIR export, QBP^Q22, CDS, reports)
+./scripts/load-test.sh --endpoint all --requests 50 --concurrent 5
+
+# Custom: BASE_URL and X-Tenant-Id
+BASE_URL=http://localhost:5001 X_TENANT_ID=default ./scripts/load-test.sh --endpoint health
+```
+
+See [scripts/load-test.sh](../scripts/load-test.sh) for options (`--endpoint`: health, fhir-export, qbp-q22, cds, reports, all).
+
+### 3.4 Stop
 
 ```bash
 docker compose down

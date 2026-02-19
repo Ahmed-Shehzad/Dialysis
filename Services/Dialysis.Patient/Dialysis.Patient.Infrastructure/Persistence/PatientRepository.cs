@@ -64,37 +64,6 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<PatientDomain>> GetAllForTenantAsync(int limit, CancellationToken cancellationToken = default)
-    {
-        return await _db.Patients
-            .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId)
-            .OrderBy(p => p.MedicalRecordNumber.Value)
-            .Take(Math.Max(1, Math.Min(limit, 10_000)))
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<PatientDomain>> SearchForFhirAsync(string? identifier, string? familyName, string? givenName, DateOnly? birthdate, int limit, CancellationToken cancellationToken = default)
-    {
-        IQueryable<PatientDomain> query = _db.Patients
-            .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId);
-
-        if (!string.IsNullOrWhiteSpace(identifier))
-            query = query.Where(p => p.MedicalRecordNumber.Value == identifier);
-        if (!string.IsNullOrWhiteSpace(familyName))
-            query = query.Where(p => p.Name.LastName == familyName);
-        if (!string.IsNullOrWhiteSpace(givenName))
-            query = query.Where(p => p.Name.FirstName == givenName);
-        if (birthdate.HasValue)
-            query = query.Where(p => p.DateOfBirth == birthdate.Value);
-
-        return await query
-            .OrderBy(p => p.MedicalRecordNumber.Value)
-            .Take(Math.Max(1, Math.Min(limit, 10_000)))
-            .ToListAsync(cancellationToken);
-    }
-
     public async override Task AddAsync(PatientDomain patient, CancellationToken cancellationToken = default) => _ = await _db.Patients.AddAsync(patient, cancellationToken);
     public async override Task AddAsync(IEnumerable<PatientDomain> entities, CancellationToken cancellationToken = default) => await _db.Patients.AddRangeAsync(entities, cancellationToken);
 

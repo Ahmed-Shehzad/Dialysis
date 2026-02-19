@@ -14,6 +14,4 @@ public interface IPatientRepository : IRepository<DomainPatient>
     Task<DomainPatient?> GetBySsnAsync(string socialSecurityNumber, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DomainPatient>> SearchByNameAsync(Person name, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DomainPatient>> SearchByLastNameAsync(string lastName, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<DomainPatient>> GetAllForTenantAsync(int limit, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<DomainPatient>> SearchForFhirAsync(string? identifier, string? familyName, string? givenName, DateOnly? birthdate, int limit, CancellationToken cancellationToken = default);
 }

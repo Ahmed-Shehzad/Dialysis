@@ -1,3 +1,5 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Patient.Application.Abstractions;
 
 using Intercessor.Abstractions;
@@ -6,22 +8,26 @@ namespace Dialysis.Patient.Application.Features.SearchPatients;
 
 internal sealed class SearchPatientsQueryHandler : IQueryHandler<SearchPatientsQuery, SearchPatientsResponse>
 {
-    private readonly IPatientRepository _repository;
+    private readonly IPatientReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public SearchPatientsQueryHandler(IPatientRepository repository)
+    public SearchPatientsQueryHandler(IPatientReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<SearchPatientsResponse> HandleAsync(SearchPatientsQuery request, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Domain.Patient> patients = await _repository.SearchByNameAsync(request.Name, cancellationToken);
-        var matches = patients.Select(p => new PatientMatch(
-            p.Id.ToString(),
-            p.MedicalRecordNumber,
-            p.Name.FirstName,
-            p.Name.LastName,
-            p.DateOfBirth)).ToList();
+        IReadOnlyList<PatientReadDto> patients = await _readStore.SearchAsync(
+            _tenant.TenantId,
+            null,
+            request.Name.LastName,
+            request.Name.FirstName,
+            null,
+            1000,
+            cancellationToken);
+        var matches = patients.Select(p => new PatientMatch(p.Id, p.MedicalRecordNumber, p.FirstName, p.LastName, p.DateOfBirth)).ToList();
         return new SearchPatientsResponse(matches);
     }
 }
