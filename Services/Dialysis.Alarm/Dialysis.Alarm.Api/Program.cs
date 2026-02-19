@@ -10,6 +10,7 @@ using Dialysis.Alarm.Application.Domain.Services;
 using Dialysis.Alarm.Application.Features.IngestOruR40Message;
 using BuildingBlocks.Abstractions;
 
+using Dialysis.Alarm.Infrastructure;
 using Dialysis.Alarm.Infrastructure.DeviceRegistration;
 using Dialysis.Alarm.Infrastructure.FhirSubscription;
 using Dialysis.Alarm.Infrastructure.Hl7;
@@ -49,7 +50,9 @@ builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
 builder.Services.AddDbContext<AlarmDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
+builder.Services.AddDbContext<AlarmReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
+builder.Services.AddScoped<IAlarmReadStore, AlarmReadStore>();
 builder.Services.AddScoped<IOruR40MessageParser, OruR40Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
 builder.Services.AddSingleton<IOraR41Builder, OraR41Builder>();

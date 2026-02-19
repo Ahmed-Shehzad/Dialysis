@@ -2,8 +2,10 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Features.RecordAlarm;
 
+using Dialysis.Alarm.Infrastructure;
 using Dialysis.Alarm.Infrastructure.Hl7;
 using Dialysis.Alarm.Infrastructure.Persistence;
 
@@ -24,9 +26,9 @@ public sealed class IngestOruR40IntegrationTests
     public IngestOruR40IntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
 
     [Fact]
-    public async Task IngestOruR40_ParsesAndStoresAlarm_RetrievableViaRepositoryAsync()
+    public async Task IngestOruR40_ParsesAndStoresAlarm_RetrievableViaReadStoreAsync()
     {
-        await using AlarmDbContext db = CreateDbContext();
+        await using AlarmDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
@@ -57,17 +59,19 @@ public sealed class IngestOruR40IntegrationTests
             response.AlarmId.ShouldNotBeNullOrEmpty();
         }
 
-        IReadOnlyList<Application.Domain.Alarm> alarms = await repository.GetAlarmsAsync(null, "THERAPY001", null, null);
+        await using AlarmReadDbContext readDb = CreateReadDbContext();
+        var readStore = new AlarmReadStore(readDb);
+        IReadOnlyList<AlarmReadDto> alarms = await readStore.GetAlarmsAsync(tenant.TenantId, null, "THERAPY001", null, null);
         alarms.Count.ShouldBe(1);
         alarms[0].AlarmType.ShouldNotBeNullOrEmpty();
         alarms[0].SourceCode.ShouldBe("150020");
-        alarms[0].EventPhase.Value.ShouldBe("start");
+        alarms[0].EventPhase.ShouldBe("start");
     }
 
     [Fact]
     public async Task IngestOruR40_StartContinueEndLifecycle_UpdatesExistingAlarmAsync()
     {
-        await using AlarmDbContext db = CreateDbContext();
+        await using AlarmDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
@@ -101,17 +105,27 @@ public sealed class IngestOruR40IntegrationTests
         foreach (AlarmInfo alarm in parser.Parse(end).Alarms)
             _ = await handler.HandleAsync(new RecordAlarmCommand(alarm));
 
-        IReadOnlyList<Application.Domain.Alarm> alarms = await repository.GetAlarmsAsync(null, "SESS-LIFE", null, null);
+        await using AlarmReadDbContext readDb = CreateReadDbContext();
+        var readStore = new AlarmReadStore(readDb);
+        IReadOnlyList<AlarmReadDto> alarms = await readStore.GetAlarmsAsync(tenant.TenantId, null, "SESS-LIFE", null, null);
         alarms.Count.ShouldBe(1);
-        alarms[0].EventPhase.Value.ShouldBe("end");
-        alarms[0].AlarmState.Value.ShouldBe("inactive");
+        alarms[0].EventPhase.ShouldBe("end");
+        alarms[0].AlarmState.ShouldBe("inactive");
     }
 
-    private AlarmDbContext CreateDbContext()
+    private AlarmDbContext CreateWriteDbContext()
     {
         DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
             .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new AlarmDbContext(options);
+    }
+
+    private AlarmReadDbContext CreateReadDbContext()
+    {
+        DbContextOptions<AlarmReadDbContext> options = new DbContextOptionsBuilder<AlarmReadDbContext>()
+            .UseNpgsql(_fixture.ConnectionString)
+            .Options;
+        return new AlarmReadDbContext(options);
     }
 }

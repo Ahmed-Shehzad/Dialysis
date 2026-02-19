@@ -1,4 +1,4 @@
-using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 
 using Intercessor.Abstractions;
 

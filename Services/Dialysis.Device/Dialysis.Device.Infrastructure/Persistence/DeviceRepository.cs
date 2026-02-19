@@ -22,26 +22,10 @@ public sealed class DeviceRepository : Repository<DeviceDomain>, IDeviceReposito
         _tenant = tenant;
     }
 
-    public async Task<DeviceDomain?> GetByIdAsync(Ulid id, CancellationToken cancellationToken = default)
-    {
-        return await _db.Devices
-            .AsNoTracking()
-            .FirstOrDefaultAsync(d => d.TenantId == _tenant.TenantId && d.Id == id, cancellationToken);
-    }
-
     public async Task<DeviceDomain?> GetByDeviceEui64Async(string deviceEui64, CancellationToken cancellationToken = default)
     {
         return await _db.Devices
             .FirstOrDefaultAsync(d => d.TenantId == _tenant.TenantId && d.DeviceEui64 == deviceEui64, cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<DeviceDomain>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await _db.Devices
-            .AsNoTracking()
-            .Where(d => d.TenantId == _tenant.TenantId)
-            .OrderBy(d => d.DeviceEui64)
-            .ToListAsync(cancellationToken);
     }
 
     public override async Task AddAsync(DeviceDomain entity, CancellationToken cancellationToken = default) =>

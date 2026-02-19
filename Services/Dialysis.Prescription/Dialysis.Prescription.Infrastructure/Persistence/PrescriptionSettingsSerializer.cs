@@ -3,11 +3,10 @@ using System.Text.Json;
 using Dialysis.Prescription.Application.Domain;
 using Dialysis.Prescription.Application.Domain.ValueObjects;
 
-namespace Dialysis.Prescription.Application.Persistence;
+namespace Dialysis.Prescription.Infrastructure.Persistence;
 
 /// <summary>
 /// Serializes and deserializes prescription settings to/from JSON for persistence.
-/// Keeps serialization logic in Application so EF never inspects nested value types.
 /// </summary>
 internal static class PrescriptionSettingsSerializer
 {

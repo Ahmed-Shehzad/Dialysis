@@ -4,53 +4,45 @@ using Dialysis.Patient.Application.Abstractions;
 
 using Intercessor.Abstractions;
 
-using PatientDomain = Dialysis.Patient.Application.Domain.Patient;
-
 namespace Dialysis.Patient.Application.Features.GetPatients;
 
 internal sealed class GetPatientsQueryHandler : IQueryHandler<GetPatientsQuery, GetPatientsResponse>
 {
-    private readonly IPatientRepository _repository;
+    private readonly IPatientReadStore _readStore;
     private readonly ITenantContext _tenant;
 
-    public GetPatientsQueryHandler(IPatientRepository repository, ITenantContext tenant)
+    public GetPatientsQueryHandler(IPatientReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
         _tenant = tenant;
     }
 
     public async Task<GetPatientsResponse> HandleAsync(GetPatientsQuery request, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<PatientDomain> patients = await ResolvePatientsAsync(request, cancellationToken);
+        IReadOnlyList<PatientReadDto> patients = await ResolvePatientsAsync(request, cancellationToken);
         var summaries = patients.Select(p => new PatientSummary(
-            p.Id.ToString(),
-            p.MedicalRecordNumber.Value,
-            p.Name.FirstName,
-            p.Name.LastName,
+            p.Id,
+            p.MedicalRecordNumber,
+            p.FirstName,
+            p.LastName,
             p.DateOfBirth,
-            p.Gender?.Value)).ToList();
+            p.Gender)).ToList();
         return new GetPatientsResponse(summaries);
     }
 
-    private async Task<IReadOnlyList<PatientDomain>> ResolvePatientsAsync(GetPatientsQuery request, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<PatientReadDto>> ResolvePatientsAsync(GetPatientsQuery request, CancellationToken cancellationToken)
     {
-        if (TryGetById(request.Id, out Ulid id))
+        if (!string.IsNullOrWhiteSpace(request.Id))
         {
-            PatientDomain? single = await _repository.GetAsync(p => p.TenantId == _tenant.TenantId && p.Id == id, cancellationToken);
+            PatientReadDto? single = await _readStore.GetByIdAsync(_tenant.TenantId, request.Id, cancellationToken);
             return single is not null ? [single] : [];
         }
         if (HasSearchFilters(request))
         {
             ParseName(request.Name, out string? family, out string? given);
-            return await _repository.SearchForFhirAsync(request.Identifier, family, given, request.Birthdate, request.Limit, cancellationToken);
+            return await _readStore.SearchAsync(_tenant.TenantId, request.Identifier, family, given, request.Birthdate, request.Limit, cancellationToken);
         }
-        return await _repository.GetAllForTenantAsync(request.Limit, cancellationToken);
-    }
-
-    private static bool TryGetById(string? id, out Ulid parsedId)
-    {
-        parsedId = default;
-        return !string.IsNullOrWhiteSpace(id) && Ulid.TryParse(id, out parsedId);
+        return await _readStore.GetAllForTenantAsync(_tenant.TenantId, request.Limit, cancellationToken);
     }
 
     private static bool HasSearchFilters(GetPatientsQuery request) =>

@@ -8,6 +8,7 @@ using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
 using Dialysis.Treatment.Application.Features.RecordObservation;
 
+using Dialysis.Treatment.Infrastructure;
 using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
 using Dialysis.Treatment.Tests.TestDoubles;
@@ -48,13 +49,14 @@ public sealed class OruR01ToFhirIntegrationTests
         _ = await db.TreatmentSessions.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
+        var readStore = CreateReadStore();
         var ingestHandler = new IngestOruMessageCommandHandler(
             new Sender(repository),
             new OruR01Parser(),
             new NoOpDeviceRegistrationClient(),
             Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
             NullLogger<IngestOruMessageCommandHandler>.Instance);
-        var getHandler = new GetTreatmentSessionQueryHandler(repository);
+        var getHandler = new GetTreatmentSessionQueryHandler(readStore, tenant);
 
         string mrn = TreatmentTestData.Mrn();
         string sessionId = TreatmentTestData.SessionId();
@@ -165,6 +167,14 @@ public sealed class OruR01ToFhirIntegrationTests
             .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new TreatmentDbContext(options);
+    }
+
+    private ITreatmentReadStore CreateReadStore()
+    {
+        DbContextOptions<TreatmentReadDbContext> options = new DbContextOptionsBuilder<TreatmentReadDbContext>()
+            .UseNpgsql(_fixture.ConnectionString)
+            .Options;
+        return new TreatmentReadStore(new TreatmentReadDbContext(options));
     }
 
     private sealed class Sender : ISender

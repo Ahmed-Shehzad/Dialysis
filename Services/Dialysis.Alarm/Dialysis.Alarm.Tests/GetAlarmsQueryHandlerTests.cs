@@ -3,10 +3,12 @@ using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 
 using AlarmDomain = Dialysis.Alarm.Application.Domain.Alarm;
 using Dialysis.Alarm.Application.Features.GetAlarms;
+using Dialysis.Alarm.Infrastructure;
 using Dialysis.Alarm.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +27,7 @@ public sealed class GetAlarmsQueryHandlerTests
     [Fact]
     public async Task HandleAsync_NoFilters_ReturnsAllAlarmsAsync()
     {
-        await using AlarmDbContext db = CreateDbContext();
+        await using AlarmDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Alarms.ExecuteDeleteAsync();
         AlarmDomain alarm = CreateAlarm("Venous Pressure High", "DEV1", "sess-001", DateTimeOffset.UtcNow.AddMinutes(-10));
@@ -33,8 +35,8 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.SaveChangesAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var repository = new AlarmRepository(db, tenant);
-        var handler = new GetAlarmsQueryHandler(repository);
+        var readStore = CreateReadStore();
+        var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery();
         GetAlarmsResponse response = await handler.HandleAsync(query);
@@ -48,7 +50,7 @@ public sealed class GetAlarmsQueryHandlerTests
     [Fact]
     public async Task HandleAsync_FilterBySessionId_ReturnsMatchingAlarmsAsync()
     {
-        await using AlarmDbContext db = CreateDbContext();
+        await using AlarmDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Alarms.ExecuteDeleteAsync();
         _ = db.Alarms.Add(CreateAlarm("Alarm A", "DEV1", "sess-001", DateTimeOffset.UtcNow));
@@ -56,8 +58,8 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.SaveChangesAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var repository = new AlarmRepository(db, tenant);
-        var handler = new GetAlarmsQueryHandler(repository);
+        var readStore = CreateReadStore();
+        var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery(SessionId: "sess-001");
         GetAlarmsResponse response = await handler.HandleAsync(query);
@@ -70,7 +72,7 @@ public sealed class GetAlarmsQueryHandlerTests
     public async Task HandleAsync_FilterByTimeRange_ReturnsAlarmsInRangeAsync()
     {
         DateTimeOffset baseTime = DateTimeOffset.UtcNow;
-        await using AlarmDbContext db = CreateDbContext();
+        await using AlarmDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Alarms.ExecuteDeleteAsync();
         _ = db.Alarms.Add(CreateAlarm("Early", "DEV1", "sess-001", baseTime.AddHours(-3)));
@@ -79,8 +81,8 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.SaveChangesAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var repository = new AlarmRepository(db, tenant);
-        var handler = new GetAlarmsQueryHandler(repository);
+        var readStore = CreateReadStore();
+        var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery(SessionId: "sess-001", FromUtc: baseTime.AddHours(-1), ToUtc: baseTime);
         GetAlarmsResponse response = await handler.HandleAsync(query);
@@ -92,13 +94,13 @@ public sealed class GetAlarmsQueryHandlerTests
     [Fact]
     public async Task HandleAsync_NoAlarms_ReturnsEmptyAsync()
     {
-        await using AlarmDbContext db = CreateDbContext();
+        await using AlarmDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Alarms.ExecuteDeleteAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var repository = new AlarmRepository(db, tenant);
-        var handler = new GetAlarmsQueryHandler(repository);
+        var readStore = CreateReadStore();
+        var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery();
         GetAlarmsResponse response = await handler.HandleAsync(query);
@@ -106,12 +108,21 @@ public sealed class GetAlarmsQueryHandlerTests
         response.Alarms.ShouldBeEmpty();
     }
 
-    private AlarmDbContext CreateDbContext()
+    private AlarmDbContext CreateWriteDbContext()
     {
         DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
             .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new AlarmDbContext(options);
+    }
+
+    private IAlarmReadStore CreateReadStore()
+    {
+        DbContextOptions<AlarmReadDbContext> options = new DbContextOptionsBuilder<AlarmReadDbContext>()
+            .UseNpgsql(_fixture.ConnectionString)
+            .Options;
+        var readDb = new AlarmReadDbContext(options);
+        return new AlarmReadStore(readDb);
     }
 
     private static AlarmDomain CreateAlarm(string alarmType, string deviceId, string sessionId, DateTimeOffset occurredAt)

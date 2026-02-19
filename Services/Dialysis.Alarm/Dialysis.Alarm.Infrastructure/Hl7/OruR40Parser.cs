@@ -3,6 +3,7 @@ using System.Globalization;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Domain.Hl7;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 

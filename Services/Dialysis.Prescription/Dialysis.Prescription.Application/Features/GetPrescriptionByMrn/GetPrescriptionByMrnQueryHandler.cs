@@ -1,38 +1,32 @@
-using BuildingBlocks.ValueObjects;
+using BuildingBlocks.Tenancy;
 
 using Dialysis.Prescription.Application.Abstractions;
-using Dialysis.Prescription.Application.Services;
 
 using Intercessor.Abstractions;
-
-using PrescriptionEntity = Dialysis.Prescription.Application.Domain.Prescription;
 
 namespace Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
 
 internal sealed class GetPrescriptionByMrnQueryHandler : IQueryHandler<GetPrescriptionByMrnQuery, GetPrescriptionByMrnResponse?>
 {
-    private readonly IPrescriptionRepository _repository;
+    private readonly IPrescriptionReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetPrescriptionByMrnQueryHandler(IPrescriptionRepository repository)
+    public GetPrescriptionByMrnQueryHandler(IPrescriptionReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetPrescriptionByMrnResponse?> HandleAsync(GetPrescriptionByMrnQuery request, CancellationToken cancellationToken = default)
     {
-        var mrn = new MedicalRecordNumber(request.Mrn);
-        PrescriptionEntity? prescription = await _repository.GetLatestByMrnAsync(mrn, cancellationToken);
-        if (prescription is null) return null;
-
-        decimal? bloodFlow = PrescriptionSettingResolver.GetBloodFlowRateMlMin(prescription.Settings);
-        decimal? ufTarget = PrescriptionSettingResolver.GetUfTargetVolumeMl(prescription.Settings);
-        decimal? ufRate = PrescriptionSettingResolver.GetUfRateMlH(prescription.Settings);
+        PrescriptionReadDto? dto = await _readStore.GetLatestByMrnAsync(_tenant.TenantId, request.Mrn, cancellationToken);
+        if (dto is null) return null;
 
         return new GetPrescriptionByMrnResponse(
-            prescription.OrderId,
-            prescription.Modality ?? string.Empty,
-            bloodFlow,
-            ufTarget,
-            ufRate);
+            dto.OrderId,
+            dto.Modality ?? string.Empty,
+            dto.BloodFlowRateMlMin,
+            dto.UfTargetVolumeMl,
+            dto.UfRateMlH);
     }
 }

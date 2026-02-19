@@ -1,6 +1,6 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Treatment.Application.Abstractions;
-using Dialysis.Treatment.Application.Domain;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
 
 using Intercessor.Abstractions;
 
@@ -8,37 +8,33 @@ namespace Dialysis.Treatment.Application.Features.GetObservationsInTimeRange;
 
 internal sealed class GetObservationsInTimeRangeQueryHandler : IQueryHandler<GetObservationsInTimeRangeQuery, GetObservationsInTimeRangeResponse>
 {
-    private readonly ITreatmentSessionRepository _repository;
+    private readonly ITreatmentReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetObservationsInTimeRangeQueryHandler(ITreatmentSessionRepository repository)
+    public GetObservationsInTimeRangeQueryHandler(ITreatmentReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetObservationsInTimeRangeResponse> HandleAsync(GetObservationsInTimeRangeQuery request, CancellationToken cancellationToken = default)
     {
-        var sessionId = new SessionId(request.SessionId);
-        IReadOnlyList<Observation> observations = await _repository.GetObservationsInTimeRangeAsync(
-            sessionId,
+        IReadOnlyList<ObservationReadDto> observations = await _readStore.GetObservationsInTimeRangeAsync(
+            _tenant.TenantId,
+            request.SessionId,
             request.StartUtc,
             request.EndUtc,
             cancellationToken);
 
-        var dtos = observations.Select(o =>
-        {
-            string? channelName = null;
-            if (ContainmentPath.TryParse(o.SubId) is { } path && path.ChannelId is { } cid)
-                channelName = ContainmentPath.GetChannelName(cid);
-            return new TimeSeriesObservationDto(
-                o.Id.ToString(),
-                o.Code.Value,
-                o.Value,
-                o.Unit,
-                o.SubId,
-                o.ObservedAtUtc,
-                o.EffectiveTime,
-                channelName);
-        }).ToList();
+        var dtos = observations.Select(o => new TimeSeriesObservationDto(
+            o.Id,
+            o.Code,
+            o.Value,
+            o.Unit,
+            o.SubId,
+            o.ObservedAtUtc,
+            o.EffectiveTime,
+            o.ChannelName)).ToList();
 
         return new GetObservationsInTimeRangeResponse(
             request.SessionId,

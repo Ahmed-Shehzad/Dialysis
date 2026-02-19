@@ -2,7 +2,7 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
-using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 using Dialysis.Alarm.Application.Features.RecordAlarm;
 

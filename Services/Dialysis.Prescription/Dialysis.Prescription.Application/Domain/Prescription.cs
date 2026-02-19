@@ -2,8 +2,6 @@ using BuildingBlocks;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
-using Dialysis.Prescription.Application.Persistence;
-
 namespace Dialysis.Prescription.Application.Domain;
 
 /// <summary>
@@ -23,17 +21,16 @@ public sealed class Prescription : AggregateRoot
     public IReadOnlyCollection<ProfileSetting> Settings => _settings.AsReadOnly();
 
     /// <summary>
-    /// JSON-serialized settings for EF persistence. Backed by <see cref="_settings"/>;
-    /// EF never inspects nested types (ProfileSetting, ProfileDescriptor).
+    /// Used by EF Core for persistence. Value converter in Infrastructure handles JSON serialization.
     /// </summary>
-    internal string? SettingsJson
+    internal List<ProfileSetting> SettingsForPersistence
     {
-        get => _settings.Count == 0 ? null : PrescriptionSettingsSerializer.ToJson(_settings);
+        get => _settings.ToList();
         set
         {
             _settings.Clear();
-            if (!string.IsNullOrEmpty(value))
-                _settings.AddRange(PrescriptionSettingsSerializer.FromJson(value));
+            if (value is not null)
+                _settings.AddRange(value);
         }
     }
 
@@ -53,5 +50,13 @@ public sealed class Prescription : AggregateRoot
         };
     }
 
-    public void AddSetting(ProfileSetting setting) => _settings.Add(setting);
+    public void AddSetting(ProfileSetting setting)
+    {
+        ArgumentNullException.ThrowIfNull(setting);
+        if (string.IsNullOrWhiteSpace(setting.Code))
+            throw new ArgumentException("Setting code is required.", nameof(setting));
+        if (_settings.Exists(s => s.Code == setting.Code && s.SubId == setting.SubId))
+            throw new InvalidOperationException($"Duplicate setting: code '{setting.Code}', subId '{setting.SubId}'.");
+        _settings.Add(setting);
+    }
 }

@@ -1,6 +1,7 @@
 using BuildingBlocks.TimeSync;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Features.RecordAlarm;
 
 using Intercessor.Abstractions;

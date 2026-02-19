@@ -33,9 +33,10 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
             _ = e.Property(x => x.OrderingProvider).HasMaxLength(200);
             _ = e.Property(x => x.CallbackPhone).HasMaxLength(50);
             _ = e.Property(x => x.ReceivedAt);
-            _ = e.Property(x => x.SettingsJson)
+            _ = e.Property(x => x.SettingsForPersistence)
                 .HasColumnName("SettingsJson")
-                .HasColumnType("jsonb");
+                .HasColumnType("jsonb")
+                .HasConversion(ProfileSettingListConverter.Instance);
             _ = e.HasIndex(x => new { x.TenantId, x.OrderId }).IsUnique();
             _ = e.HasIndex(x => new { x.TenantId, x.PatientMrn });
             _ = e.Ignore(x => x.Settings);

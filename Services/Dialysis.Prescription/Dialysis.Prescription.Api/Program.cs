@@ -7,6 +7,7 @@ using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
 using Dialysis.Prescription.Application.Features.ProcessQbpD01Query;
 using Dialysis.Prescription.Application.Options;
+using Dialysis.Prescription.Infrastructure;
 using Dialysis.Prescription.Infrastructure.Hl7;
 using Dialysis.Prescription.Infrastructure.Persistence;
 
@@ -46,7 +47,9 @@ string connectionString = builder.Configuration.GetConnectionString("Prescriptio
                           ?? "Host=localhost;Database=dialysis_prescription;Username=postgres;Password=postgres";
 
 builder.Services.AddDbContext<PrescriptionDbContext>(o => o.UseNpgsql(connectionString));
+builder.Services.AddDbContext<PrescriptionReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+builder.Services.AddScoped<IPrescriptionReadStore, PrescriptionReadStore>();
 builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
 builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();

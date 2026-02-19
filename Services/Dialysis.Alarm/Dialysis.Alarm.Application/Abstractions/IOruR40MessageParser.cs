@@ -1,3 +1,5 @@
+using Dialysis.Alarm.Application.Domain;
+
 namespace Dialysis.Alarm.Application.Abstractions;
 
 /// <summary>

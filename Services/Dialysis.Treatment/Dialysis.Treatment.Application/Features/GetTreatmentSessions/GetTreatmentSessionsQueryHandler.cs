@@ -1,7 +1,6 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Treatment.Application.Abstractions;
-using Dialysis.Treatment.Application.Domain;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
-using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 
 using Intercessor.Abstractions;
 
@@ -9,40 +8,29 @@ namespace Dialysis.Treatment.Application.Features.GetTreatmentSessions;
 
 public sealed class GetTreatmentSessionsQueryHandler : IQueryHandler<GetTreatmentSessionsQuery, GetTreatmentSessionsResponse>
 {
-    private readonly ITreatmentSessionRepository _repository;
+    private readonly ITreatmentReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetTreatmentSessionsQueryHandler(ITreatmentSessionRepository repository)
+    public GetTreatmentSessionsQueryHandler(ITreatmentReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetTreatmentSessionsResponse> HandleAsync(GetTreatmentSessionsQuery request, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<TreatmentSession> sessions = request.Subject is not null || request.DateFrom.HasValue || request.DateTo.HasValue
-            ? await _repository.SearchForFhirAsync(request.Subject, request.DateFrom, request.DateTo, request.Limit, cancellationToken)
-            : await _repository.GetAllForTenantAsync(request.Limit, cancellationToken);
+        IReadOnlyList<TreatmentSessionReadDto> sessions = request.Subject is not null || request.DateFrom.HasValue || request.DateTo.HasValue
+            ? await _readStore.SearchAsync(_tenant.TenantId, request.Subject?.Value, request.DateFrom, request.DateTo, request.Limit, cancellationToken)
+            : await _readStore.GetAllForTenantAsync(_tenant.TenantId, request.Limit, cancellationToken);
+
         var summaries = sessions.Select(s => new TreatmentSessionSummary(
-            s.SessionId.Value,
-            s.PatientMrn?.Value,
-            s.DeviceId?.Value,
-            s.Status.Value,
+            s.SessionId,
+            s.PatientMrn,
+            s.DeviceId,
+            s.Status,
             s.StartedAt,
             s.EndedAt,
-            s.Observations.Select(o =>
-            {
-                string? channelName = null;
-                if (ContainmentPath.TryParse(o.SubId) is { } path && path.ChannelId is { } cid)
-                    channelName = ContainmentPath.GetChannelName(cid);
-                return new ObservationDto(
-                    o.Code.Value,
-                    o.Value,
-                    o.Unit,
-                    o.SubId,
-                    o.ReferenceRange,
-                    o.Provenance,
-                    o.EffectiveTime,
-                    channelName);
-            }).ToList())).ToList();
+            s.Observations.ToList())).ToList();
         return new GetTreatmentSessionsResponse(summaries);
     }
 }

@@ -1,3 +1,5 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Device.Application.Abstractions;
 
 using Intercessor.Abstractions;
@@ -6,27 +8,20 @@ namespace Dialysis.Device.Application.Features.GetDevice;
 
 internal sealed class GetDeviceQueryHandler : IQueryHandler<GetDeviceQuery, GetDeviceResponse?>
 {
-    private readonly IDeviceRepository _repository;
+    private readonly IDeviceReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetDeviceQueryHandler(IDeviceRepository repository)
+    public GetDeviceQueryHandler(IDeviceReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetDeviceResponse?> HandleAsync(GetDeviceQuery request, CancellationToken cancellationToken = default)
     {
-        Domain.Device? device;
-        if (Ulid.TryParse(request.DeviceId, out Ulid id))
-            device = await _repository.GetByIdAsync(id, cancellationToken);
-        else
-            device = await _repository.GetByDeviceEui64Async(request.DeviceId, cancellationToken);
-
-        return device is null ? null : new GetDeviceResponse(
-            device.Id.ToString(),
-            device.DeviceEui64,
-            device.Manufacturer,
-            device.Model,
-            device.Serial,
-            device.Udi);
+        DeviceReadDto? dto = Ulid.TryParse(request.DeviceId, out _)
+            ? await _readStore.GetByIdAsync(_tenant.TenantId, request.DeviceId, cancellationToken)
+            : await _readStore.GetByDeviceEui64Async(_tenant.TenantId, request.DeviceId, cancellationToken);
+        return dto is null ? null : new GetDeviceResponse(dto.Id, dto.DeviceEui64, dto.Manufacturer, dto.Model, dto.Serial, dto.Udi);
     }
 }

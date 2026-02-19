@@ -2,7 +2,6 @@ using BuildingBlocks;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
-using Dialysis.Alarm.Application.Abstractions;
 using Dialysis.Alarm.Application.Domain.Events;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 

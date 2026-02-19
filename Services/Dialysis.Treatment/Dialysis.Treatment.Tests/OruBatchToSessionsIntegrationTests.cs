@@ -8,6 +8,7 @@ using Dialysis.Treatment.Application.Features.IngestOruBatch;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
 using Dialysis.Treatment.Application.Features.RecordObservation;
 
+using Dialysis.Treatment.Infrastructure;
 using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
 using Dialysis.Treatment.Tests.TestDoubles;
@@ -44,9 +45,10 @@ public sealed class OruBatchToSessionsIntegrationTests
         _ = await db.Database.EnsureCreatedAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
+        var readStore = CreateReadStore();
         var sender = new BatchTestSender(repository);
         var batchHandler = new IngestOruBatchCommandHandler(new Hl7BatchParser(), sender);
-        var getHandler = new GetTreatmentSessionQueryHandler(repository);
+        var getHandler = new GetTreatmentSessionQueryHandler(readStore, tenant);
 
         const string oru1 = "MSH|^~\\&|DEV|FAC|PDMS|FAC|20230215120000||ORU^R01^ORU_R01|M001|P|2.5\r"
                             + "PID|||MRN1^^^^MR\r"
@@ -86,6 +88,14 @@ public sealed class OruBatchToSessionsIntegrationTests
             .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new TreatmentDbContext(options);
+    }
+
+    private ITreatmentReadStore CreateReadStore()
+    {
+        DbContextOptions<TreatmentReadDbContext> options = new DbContextOptionsBuilder<TreatmentReadDbContext>()
+            .UseNpgsql(_fixture.ConnectionString)
+            .Options;
+        return new TreatmentReadStore(new TreatmentReadDbContext(options));
     }
 
     private sealed class BatchTestSender : ISender

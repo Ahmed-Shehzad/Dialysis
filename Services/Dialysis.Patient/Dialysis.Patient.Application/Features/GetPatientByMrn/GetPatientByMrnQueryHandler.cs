@@ -1,3 +1,5 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Patient.Application.Abstractions;
 
 using Intercessor.Abstractions;
@@ -6,24 +8,26 @@ namespace Dialysis.Patient.Application.Features.GetPatientByMrn;
 
 internal sealed class GetPatientByMrnQueryHandler : IQueryHandler<GetPatientByMrnQuery, GetPatientByMrnResponse?>
 {
-    private readonly IPatientRepository _repository;
+    private readonly IPatientReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetPatientByMrnQueryHandler(IPatientRepository repository)
+    public GetPatientByMrnQueryHandler(IPatientReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetPatientByMrnResponse?> HandleAsync(GetPatientByMrnQuery request, CancellationToken cancellationToken = default)
     {
-        Domain.Patient? patient = await _repository.GetByMrnAsync(request.Mrn, cancellationToken);
-        return patient is null
+        PatientReadDto? dto = await _readStore.GetByMrnAsync(_tenant.TenantId, request.Mrn.Value, cancellationToken);
+        return dto is null
             ? null
             : new GetPatientByMrnResponse(
-                patient.Id.ToString(),
-                patient.MedicalRecordNumber,
-                patient.Name.FirstName,
-                patient.Name.LastName,
-                patient.DateOfBirth,
-                patient.Gender?.Value);
+                dto.Id,
+                dto.MedicalRecordNumber,
+                dto.FirstName,
+                dto.LastName,
+                dto.DateOfBirth,
+                dto.Gender);
     }
 }

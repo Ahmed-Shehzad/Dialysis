@@ -131,44 +131,54 @@ flowchart LR
 
 ## 3. CQRS Pattern
 
+Each bounded context uses **separate read and write persistence**:
+
+- **Write side**: `XxxDbContext` (implements `IDbContext`), repositories for aggregate roots, command handlers
+- **Read side**: `XxxReadDbContext` (implements `IReadOnlyDbContext`), read models, `IXxxReadStore`, query handlers
+
+Read DbContexts use `SaveChanges` override that throws; all queries use `NoTracking`. Same database; no eventual consistency.
+
 ```mermaid
 flowchart TB
-    subgraph WriteSide [Command Side]
+    subgraph WriteSide [Command / Write Side]
         Command[Command]
         CommandHandler[Command Handler]
-        DomainLogic[Domain Logic]
-        WriteModel[Write Model]
-        EventPublisher[Domain Event Publisher]
+        Repository[Repository]
+        WriteDbContext[Write DbContext]
     end
 
-    subgraph Transponder [Transponder - Azure Service Bus]
-        Publish[Publish Integration Event]
-    end
-
-    subgraph ReadSide [Query Side]
+    subgraph ReadSide [Query / Read Side]
         Query[Query]
         QueryHandler[Query Handler]
-        ReadModel[Read Model]
+        ReadStore[Read Store]
+        ReadDbContext[ReadOnly DbContext]
     end
 
     subgraph DB [PostgreSQL]
-        WriteDB[(Write DB)]
-        ReadDB[(Read DB)]
+        Tables[(Same Tables)]
     end
 
     Command --> CommandHandler
-    CommandHandler --> DomainLogic
-    DomainLogic --> WriteModel
-    DomainLogic --> EventPublisher
-    WriteModel --> WriteDB
-    EventPublisher --> Publish
-
-    Publish -->|Consume| ReadModel
-    ReadModel --> ReadDB
+    CommandHandler --> Repository
+    Repository --> WriteDbContext
+    WriteDbContext --> Tables
 
     Query --> QueryHandler
-    QueryHandler --> ReadDB
+    QueryHandler --> ReadStore
+    ReadStore --> ReadDbContext
+    ReadDbContext --> Tables
 ```
+
+**Services with ReadModels (all implemented)**:
+- **Patient**: `PatientReadDbContext`, `PatientReadModel`, `IPatientReadStore`, `PatientReadStore`
+- **Treatment**: `TreatmentReadDbContext`, `TreatmentSessionReadModel`, `ObservationReadModel`, `ITreatmentReadStore`, `TreatmentReadStore`
+- **Alarm**: `AlarmReadDbContext`, `AlarmReadModel`, `IAlarmReadStore`, `AlarmReadStore`
+- **Prescription**: `PrescriptionReadDbContext`, `PrescriptionReadModel`, `IPrescriptionReadStore`, `PrescriptionReadStore`
+- **Device**: `DeviceReadDbContext`, `DeviceReadModel`, `IDeviceReadStore`, `DeviceReadStore`
+
+Query handlers use the read store; write repositories retain only methods needed by command handlers.
+
+**ReadModel rule**: All query operations in ReadStores must use `AsNoTracking()` on each query (or set `ChangeTracker.QueryTrackingBehavior = NoTracking` on the Read DbContext).
 
 ---
 

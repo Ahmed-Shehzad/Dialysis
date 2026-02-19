@@ -10,6 +10,7 @@ using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.GetTreatmentSessions;
 using BuildingBlocks.Abstractions;
 
+using Dialysis.Treatment.Infrastructure;
 using Dialysis.Treatment.Infrastructure.DeviceRegistration;
 using Dialysis.Treatment.Infrastructure.FhirSubscription;
 using Dialysis.Treatment.Infrastructure.Hl7;
@@ -70,7 +71,10 @@ builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
 builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
+builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectionString));
+
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();
+builder.Services.AddScoped<ITreatmentReadStore, TreatmentReadStore>();
 builder.Services.AddScoped<IOruMessageParser, OruR01Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
 builder.Services.AddSingleton<IHl7BatchParser, Hl7BatchParser>();

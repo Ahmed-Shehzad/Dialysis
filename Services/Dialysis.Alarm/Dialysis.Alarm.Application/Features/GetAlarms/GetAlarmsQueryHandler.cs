@@ -1,3 +1,4 @@
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -8,24 +9,27 @@ namespace Dialysis.Alarm.Application.Features.GetAlarms;
 
 internal sealed class GetAlarmsQueryHandler : IQueryHandler<GetAlarmsQuery, GetAlarmsResponse>
 {
-    private readonly IAlarmRepository _repository;
+    private readonly IAlarmReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetAlarmsQueryHandler(IAlarmRepository repository)
+    public GetAlarmsQueryHandler(IAlarmReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetAlarmsResponse> HandleAsync(GetAlarmsQuery request, CancellationToken cancellationToken = default)
     {
-        if (!string.IsNullOrWhiteSpace(request.Id) && Ulid.TryParse(request.Id, out Ulid id))
+        if (!string.IsNullOrWhiteSpace(request.Id))
         {
-            Domain.Alarm? alarm = await _repository.GetByIdAsync(id, cancellationToken);
-            List<AlarmDto> singleDtos = alarm is not null ? new List<AlarmDto> { ToDto(alarm) } : new List<AlarmDto>();
+            AlarmReadDto? single = await _readStore.GetByIdAsync(_tenant.TenantId, request.Id, cancellationToken);
+            List<AlarmDto> singleDtos = single is not null ? [ToDto(single)] : [];
             return new GetAlarmsResponse(singleDtos);
         }
 
         DeviceId? deviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : new DeviceId(request.DeviceId);
-        IReadOnlyList<Domain.Alarm> alarms = await _repository.GetAlarmsAsync(
+        IReadOnlyList<AlarmReadDto> alarms = await _readStore.GetAlarmsAsync(
+            _tenant.TenantId,
             deviceId,
             request.SessionId,
             request.FromUtc,
@@ -36,19 +40,6 @@ internal sealed class GetAlarmsQueryHandler : IQueryHandler<GetAlarmsQuery, GetA
         return new GetAlarmsResponse(dtos);
     }
 
-    private static AlarmDto ToDto(Domain.Alarm a) =>
-        new(
-            a.Id.ToString(),
-            a.AlarmType,
-            a.SourceCode,
-            a.SourceLimits,
-            a.Priority?.Value,
-            a.InterpretationType,
-            a.Abnormality,
-            a.EventPhase.Value,
-            a.AlarmState.Value,
-            a.ActivityState.Value,
-            a.DeviceId?.Value,
-            a.SessionId,
-            a.OccurredAt);
+    private static AlarmDto ToDto(AlarmReadDto r) =>
+        new(r.Id, r.AlarmType, r.SourceCode, r.SourceLimits, r.Priority, r.InterpretationType, r.Abnormality, r.EventPhase, r.AlarmState, r.ActivityState, r.DeviceId, r.SessionId, r.OccurredAt);
 }

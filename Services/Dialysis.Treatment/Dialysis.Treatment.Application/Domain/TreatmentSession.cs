@@ -52,6 +52,9 @@ public sealed class TreatmentSession : AggregateRoot
 
     public Observation AddObservation(ObservationCreateParams createParams)
     {
+        if (Status == TreatmentSessionStatus.Completed)
+            throw new InvalidOperationException("Cannot add observations to a completed treatment session.");
+
         var observation = Observation.Create(Id, createParams);
 
         _observations.Add(observation);

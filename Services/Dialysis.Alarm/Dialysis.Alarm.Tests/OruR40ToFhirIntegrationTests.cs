@@ -6,6 +6,7 @@ using Dialysis.Alarm.Application.Features.GetAlarms;
 using Dialysis.Alarm.Application.Features.IngestOruR40Message;
 using Dialysis.Alarm.Application.Features.RecordAlarm;
 
+using Dialysis.Alarm.Infrastructure;
 using Dialysis.Alarm.Infrastructure.Hl7;
 using Dialysis.Alarm.Infrastructure.Persistence;
 using Dialysis.Alarm.Tests.TestDoubles;
@@ -45,13 +46,14 @@ public sealed class OruR40ToFhirIntegrationTests
         _ = await db.Database.EnsureCreatedAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
+        var readStore = CreateReadStore();
         var ingestHandler = new IngestOruR40MessageCommandHandler(
             new RecordAlarmSender(repository),
             new OruR40Parser(),
             new NoOpDeviceRegistrationClient(),
             Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
             NullLogger<IngestOruR40MessageCommandHandler>.Instance);
-        var getHandler = new GetAlarmsQueryHandler(repository);
+        var getHandler = new GetAlarmsQueryHandler(readStore, tenant);
 
         string mrn = AlarmTestData.Mrn();
         string sessionId = AlarmTestData.SessionId();
@@ -114,6 +116,14 @@ public sealed class OruR40ToFhirIntegrationTests
             .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new AlarmDbContext(options);
+    }
+
+    private IAlarmReadStore CreateReadStore()
+    {
+        DbContextOptions<AlarmReadDbContext> options = new DbContextOptionsBuilder<AlarmReadDbContext>()
+            .UseNpgsql(_fixture.ConnectionString)
+            .Options;
+        return new AlarmReadStore(new AlarmReadDbContext(options));
     }
 
     private sealed class RecordAlarmSender : ISender

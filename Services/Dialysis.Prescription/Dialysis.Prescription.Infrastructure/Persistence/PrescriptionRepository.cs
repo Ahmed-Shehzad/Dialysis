@@ -34,7 +34,6 @@ public sealed class PrescriptionRepository : Repository<PrescriptionEntity>, IPr
     public async Task<PrescriptionEntity?> GetLatestByMrnAsync(MedicalRecordNumber mrn, CancellationToken cancellationToken = default)
     {
         return await _db.Prescriptions
-            .AsNoTracking()
             .Where(p => p.TenantId == _tenant.TenantId && p.PatientMrn == mrn)
             .OrderByDescending(p => p.ReceivedAt)
             .FirstOrDefaultAsync(cancellationToken);
@@ -60,26 +59,6 @@ public sealed class PrescriptionRepository : Repository<PrescriptionEntity>, IPr
 
     public async override Task<PrescriptionEntity?> GetAsync(Expression<Func<PrescriptionEntity, bool>> expression, CancellationToken cancellationToken = default) =>
         await _db.Prescriptions.FirstOrDefaultAsync(expression, cancellationToken);
-
-    public async Task<IReadOnlyList<PrescriptionEntity>> GetAllForTenantAsync(int limit, CancellationToken cancellationToken = default)
-    {
-        return await _db.Prescriptions
-            .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId)
-            .OrderByDescending(p => p.ReceivedAt)
-            .Take(Math.Max(1, Math.Min(limit, 10_000)))
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<PrescriptionEntity>> GetByPatientMrnAsync(MedicalRecordNumber mrn, int limit, CancellationToken cancellationToken = default)
-    {
-        return await _db.Prescriptions
-            .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId && p.PatientMrn == mrn)
-            .OrderByDescending(p => p.ReceivedAt)
-            .Take(Math.Max(1, Math.Min(limit, 10_000)))
-            .ToListAsync(cancellationToken);
-    }
 
     public override void Update(PrescriptionEntity entity) => _db.Update(entity);
     public override void Update(IEnumerable<PrescriptionEntity> entities) => _db.UpdateRange(entities);

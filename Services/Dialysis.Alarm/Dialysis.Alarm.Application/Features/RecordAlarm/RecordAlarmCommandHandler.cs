@@ -1,6 +1,7 @@
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 
 using Intercessor.Abstractions;

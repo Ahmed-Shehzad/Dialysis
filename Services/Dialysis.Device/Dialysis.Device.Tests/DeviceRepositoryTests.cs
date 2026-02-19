@@ -1,14 +1,17 @@
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 
+using Dialysis.Device.Application.Abstractions;
 using Dialysis.Device.Application.Features.GetDevice;
-using Xunit;
 using Dialysis.Device.Application.Features.RegisterDevice;
+using Dialysis.Device.Infrastructure;
 using Dialysis.Device.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
 
 using Shouldly;
+
+using Xunit;
 
 namespace Dialysis.Device.Tests;
 
@@ -23,13 +26,14 @@ public sealed class DeviceRepositoryTests
     [Fact]
     public async Task RegisterAndGet_Device_ReturnsDeviceAsync()
     {
-        await using DeviceDbContext db = CreateDbContext();
+        await using DeviceDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new DeviceRepository(db, tenant);
+        var readStore = CreateReadStore();
         var registerHandler = new RegisterDeviceCommandHandler(repository, tenant);
-        var getHandler = new GetDeviceQueryHandler(repository);
+        var getHandler = new GetDeviceQueryHandler(readStore, tenant);
 
         string deviceEui64 = DeviceTestData.DeviceEui64();
         string manufacturer = DeviceTestData.Manufacturer();
@@ -63,11 +67,12 @@ public sealed class DeviceRepositoryTests
         string manufacturer2 = DeviceTestData.Manufacturer();
         string model2 = DeviceTestData.Model();
 
-        await using DeviceDbContext db = CreateDbContext();
+        await using DeviceDbContext db = CreateWriteDbContext();
         _ = await db.Database.EnsureCreatedAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new DeviceRepository(db, tenant);
+        var readStore = CreateReadStore();
         var handler = new RegisterDeviceCommandHandler(repository, tenant);
 
         RegisterDeviceResponse first = await handler.HandleAsync(new RegisterDeviceCommand(deviceEui64, manufacturer1, model1));
@@ -77,17 +82,25 @@ public sealed class DeviceRepositoryTests
         second.Created.ShouldBeFalse();
         second.DeviceId.ShouldBe(first.DeviceId);
 
-        GetDeviceResponse? device = await new GetDeviceQueryHandler(repository).HandleAsync(new GetDeviceQuery(deviceEui64));
+        GetDeviceResponse? device = await new GetDeviceQueryHandler(readStore, tenant).HandleAsync(new GetDeviceQuery(deviceEui64));
         _ = device.ShouldNotBeNull();
         device.Manufacturer.ShouldBe(manufacturer2);
         device.Model.ShouldBe(model2);
     }
 
-    private DeviceDbContext CreateDbContext()
+    private DeviceDbContext CreateWriteDbContext()
     {
         DbContextOptions<DeviceDbContext> options = new DbContextOptionsBuilder<DeviceDbContext>()
             .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new DeviceDbContext(options);
+    }
+
+    private IDeviceReadStore CreateReadStore()
+    {
+        DbContextOptions<DeviceReadDbContext> options = new DbContextOptionsBuilder<DeviceReadDbContext>()
+            .UseNpgsql(_fixture.ConnectionString)
+            .Options;
+        return new DeviceReadStore(new DeviceReadDbContext(options));
     }
 }

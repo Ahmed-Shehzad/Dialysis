@@ -2,7 +2,7 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 
-namespace Dialysis.Alarm.Application.Abstractions;
+namespace Dialysis.Alarm.Application.Domain;
 
 public sealed record AlarmInfo(
     Ulid? Id,

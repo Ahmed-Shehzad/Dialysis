@@ -1,4 +1,5 @@
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Infrastructure.Hl7;
 
 using Shouldly;

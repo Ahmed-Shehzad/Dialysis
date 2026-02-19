@@ -6,6 +6,7 @@ using BuildingBlocks.Interceptors;
 using Dialysis.Patient.Application.Abstractions;
 using Dialysis.Patient.Application.Features.GetPatientByMrn;
 using Dialysis.Patient.Application.Features.ProcessQbpQ22Query;
+using Dialysis.Patient.Infrastructure;
 using Dialysis.Patient.Infrastructure.Hl7;
 using Dialysis.Patient.Infrastructure.Persistence;
 
@@ -47,8 +48,10 @@ builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
 builder.Services.AddDbContext<PatientDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
+builder.Services.AddDbContext<PatientReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
+builder.Services.AddScoped<IPatientReadStore, PatientReadStore>();
 builder.Services.AddScoped<IQbpQ22Parser, QbpQ22Parser>();
 builder.Services.AddScoped<IPatientRspK22Builder, PatientRspK22Builder>();
 builder.Services.AddScoped<IRspK22PatientParser, RspK22PatientParser>();

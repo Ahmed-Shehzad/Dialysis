@@ -1,6 +1,6 @@
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Treatment.Application.Abstractions;
-using Dialysis.Treatment.Application.Domain;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
 
 using Intercessor.Abstractions;
 
@@ -8,46 +8,30 @@ namespace Dialysis.Treatment.Application.Features.GetTreatmentSession;
 
 internal sealed class GetTreatmentSessionQueryHandler : IQueryHandler<GetTreatmentSessionQuery, GetTreatmentSessionResponse?>
 {
-    private readonly ITreatmentSessionRepository _repository;
+    private readonly ITreatmentReadStore _readStore;
+    private readonly ITenantContext _tenant;
 
-    public GetTreatmentSessionQueryHandler(ITreatmentSessionRepository repository)
+    public GetTreatmentSessionQueryHandler(ITreatmentReadStore readStore, ITenantContext tenant)
     {
-        _repository = repository;
+        _readStore = readStore;
+        _tenant = tenant;
     }
 
     public async Task<GetTreatmentSessionResponse?> HandleAsync(GetTreatmentSessionQuery request, CancellationToken cancellationToken = default)
     {
-        TreatmentSession? session = await _repository.GetBySessionIdAsync(request.SessionId, cancellationToken);
-        if (session is null)
+        TreatmentSessionReadDto? dto = await _readStore.GetBySessionIdAsync(_tenant.TenantId, request.SessionId.Value, cancellationToken);
+        if (dto is null)
             return null;
 
-        var observations = session.Observations
-            .Select(o =>
-            {
-                string? channelName = null;
-                if (ContainmentPath.TryParse(o.SubId) is { } path && path.ChannelId is { } cid)
-                    channelName = ContainmentPath.GetChannelName(cid);
-                return new ObservationDto(
-                    o.Code.Value,
-                    o.Value,
-                    o.Unit,
-                    o.SubId,
-                    o.ReferenceRange,
-                    o.Provenance,
-                    o.EffectiveTime,
-                    channelName);
-            })
-            .ToList();
-
         return new GetTreatmentSessionResponse(
-            session.SessionId.Value,
-            session.PatientMrn?.Value,
-            session.DeviceId?.Value,
-            session.DeviceEui64,
-            session.TherapyId,
-            session.Status.Value,
-            session.StartedAt,
-            observations,
-            session.EndedAt);
+            dto.SessionId,
+            dto.PatientMrn,
+            dto.DeviceId,
+            dto.DeviceEui64,
+            dto.TherapyId,
+            dto.Status,
+            dto.StartedAt,
+            dto.Observations,
+            dto.EndedAt);
     }
 }

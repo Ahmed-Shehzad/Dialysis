@@ -4,6 +4,7 @@ using BuildingBlocks.Tenancy;
 
 using Dialysis.Device.Application.Abstractions;
 using Dialysis.Device.Application.Features.RegisterDevice;
+using Dialysis.Device.Infrastructure;
 using Dialysis.Device.Infrastructure.Persistence;
 
 using Intercessor;
@@ -39,7 +40,9 @@ string connectionString = builder.Configuration.GetConnectionString("DeviceDb")
                           ?? "Host=localhost;Database=dialysis_device;Username=postgres;Password=postgres";
 
 builder.Services.AddDbContext<DeviceDbContext>(o => o.UseNpgsql(connectionString));
+builder.Services.AddDbContext<DeviceReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
+builder.Services.AddScoped<IDeviceReadStore, DeviceReadStore>();
 builder.Services.AddAuditRecorder();
 builder.Services.AddTenantResolution();
 
