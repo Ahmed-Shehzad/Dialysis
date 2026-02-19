@@ -54,9 +54,9 @@ internal static class ProgramExtensions
         if (!app.Environment.IsDevelopment())
             return;
 
-        using (var scope = app.Services.CreateScope())
+        using (IServiceScope scope = app.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
+            AlarmDbContext db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
             await db.Database.MigrateAsync();
         }
     }

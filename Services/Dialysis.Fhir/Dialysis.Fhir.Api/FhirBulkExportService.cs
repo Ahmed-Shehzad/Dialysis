@@ -36,8 +36,8 @@ public sealed class FhirBulkExportService
 
     public async Task<Bundle> ExportAsync(string[] types, int limitPerType, Microsoft.AspNetCore.Http.HttpRequest? originalRequest, CancellationToken cancellationToken = default)
     {
-        var requestedTypes = NormalizeRequestedTypes(types);
-        var pathsToFetch = ResolvePaths(requestedTypes);
+        HashSet<string> requestedTypes = NormalizeRequestedTypes(types);
+        HashSet<string> pathsToFetch = ResolvePaths(requestedTypes);
         var bundle = new Bundle { Type = Bundle.BundleType.Collection, Entry = [] };
 
         foreach (string path in pathsToFetch)
@@ -61,17 +61,16 @@ public sealed class FhirBulkExportService
     {
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (string type in requestedTypes)
-        {
             if (TypeToPath.TryGetValue(type, out string? path))
                 _ = paths.Add(path);
-        }
+
         return paths;
     }
 
     private async Task<Bundle?> FetchBundleAsync(string path, int limit, Microsoft.AspNetCore.Http.HttpRequest? originalRequest, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, path + "?limit=" + limit);
-        var authHeader = originalRequest?.Headers["Authorization"] ?? default;
+        StringValues authHeader = originalRequest?.Headers["Authorization"] ?? default;
         if (!StringValues.IsNullOrEmpty(authHeader))
             _ = request.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
         if (!string.IsNullOrEmpty(_tenant.TenantId))

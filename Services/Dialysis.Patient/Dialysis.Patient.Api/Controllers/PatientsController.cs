@@ -59,7 +59,7 @@ public sealed class PatientsController : ControllerBase
         [FromQuery] DateOnly? birthdate = null,
         CancellationToken cancellationToken = default)
     {
-        var idValue = identifier?.Contains('|') == true ? identifier.Split('|', 2)[^1] : identifier;
+        string? idValue = identifier?.Contains('|') == true ? identifier.Split('|', 2)[^1] : identifier;
         var query = new GetPatientsQuery(Math.Min(limit, 10_000), id, idValue, name, birthdate);
         GetPatientsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(

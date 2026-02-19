@@ -16,7 +16,7 @@ internal sealed class GetPrescriptionsQueryHandler : IQueryHandler<GetPrescripti
 
     public async Task<GetPrescriptionsResponse> HandleAsync(GetPrescriptionsQuery request, CancellationToken cancellationToken = default)
     {
-        var prescriptions = request.Subject is { } mrn
+        IReadOnlyList<Domain.Prescription> prescriptions = request.Subject is { } mrn
             ? await _repository.GetByPatientMrnAsync(mrn, request.Limit, cancellationToken)
             : await _repository.GetAllForTenantAsync(request.Limit, cancellationToken);
         var summaries = prescriptions.Select(p => new PrescriptionSummary(

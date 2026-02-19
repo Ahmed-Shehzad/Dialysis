@@ -2,6 +2,7 @@ using BuildingBlocks.Authorization;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Api;
+using Dialysis.Fhir.Api.Subscriptions;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
@@ -30,6 +31,13 @@ builder.Services.AddHttpClient<FhirBulkExportService>(client =>
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
 });
 builder.Services.AddScoped<FhirBulkExportService>();
+
+builder.Services.AddSingleton<ISubscriptionStore, InMemorySubscriptionStore>();
+builder.Services.AddHttpClient<SubscriptionDispatcher>(client =>
+{
+    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
+});
+builder.Services.AddScoped<SubscriptionDispatcher>();
 
 WebApplication app = builder.Build();
 

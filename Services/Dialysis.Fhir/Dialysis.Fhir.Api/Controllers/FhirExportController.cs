@@ -24,12 +24,12 @@ public sealed class FhirExportController : ControllerBase
     [HttpGet("$export")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK, "application/fhir+json")]
     public async Task<IActionResult> ExportAsync(
-        [FromQuery] string? _type = "Patient,Device,ServiceRequest,Procedure,Observation,DetectedIssue",
-        [FromQuery] int _limit = 1000,
+        [FromQuery(Name = "_type")] string? type = "Patient,Device,ServiceRequest,Procedure,Observation,DetectedIssue",
+        [FromQuery(Name = "_limit")] int limitParam = 1000,
         CancellationToken cancellationToken = default)
     {
-        string[] types = (_type ?? "Patient").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        int limit = Math.Min(Math.Max(1, _limit), 10_000);
+        string[] types = (type ?? "Patient").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        int limit = Math.Min(Math.Max(1, limitParam), 10_000);
 
         Bundle bundle = await _exportService.ExportAsync(types, limit, Request, cancellationToken);
 

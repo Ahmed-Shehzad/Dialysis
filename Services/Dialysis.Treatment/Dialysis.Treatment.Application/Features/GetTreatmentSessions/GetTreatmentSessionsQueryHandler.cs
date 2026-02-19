@@ -1,4 +1,5 @@
 using Dialysis.Treatment.Application.Abstractions;
+using Dialysis.Treatment.Application.Domain;
 using Dialysis.Treatment.Application.Domain.ValueObjects;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 
@@ -17,7 +18,7 @@ internal sealed class GetTreatmentSessionsQueryHandler : IQueryHandler<GetTreatm
 
     public async Task<GetTreatmentSessionsResponse> HandleAsync(GetTreatmentSessionsQuery request, CancellationToken cancellationToken = default)
     {
-        var sessions = request.Subject is not null || request.DateFrom.HasValue || request.DateTo.HasValue
+        IReadOnlyList<TreatmentSession> sessions = request.Subject is not null || request.DateFrom.HasValue || request.DateTo.HasValue
             ? await _repository.SearchForFhirAsync(request.Subject, request.DateFrom, request.DateTo, request.Limit, cancellationToken)
             : await _repository.GetAllForTenantAsync(request.Limit, cancellationToken);
         var summaries = sessions.Select(s => new TreatmentSessionSummary(

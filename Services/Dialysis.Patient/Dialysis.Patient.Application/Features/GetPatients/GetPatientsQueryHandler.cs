@@ -21,35 +21,7 @@ internal sealed class GetPatientsQueryHandler : IQueryHandler<GetPatientsQuery, 
 
     public async Task<GetPatientsResponse> HandleAsync(GetPatientsQuery request, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<PatientDomain> patients;
-        if (!string.IsNullOrWhiteSpace(request.Id) && Ulid.TryParse(request.Id, out Ulid id))
-        {
-            var single = await _repository.GetAsync(p => p.TenantId == _tenant.TenantId && p.Id == id, cancellationToken);
-            patients = single is not null ? [single] : [];
-        }
-        else if (!string.IsNullOrWhiteSpace(request.Identifier) || !string.IsNullOrWhiteSpace(request.Name) || request.Birthdate.HasValue)
-        {
-            string? family = null;
-            string? given = null;
-            if (!string.IsNullOrWhiteSpace(request.Name))
-            {
-                var parts = request.Name.Split('|', StringSplitOptions.TrimEntries);
-                family = parts.Length > 0 ? parts[0] : null;
-                given = parts.Length > 1 ? parts[1] : null;
-            }
-            patients = await _repository.SearchForFhirAsync(
-                request.Identifier,
-                family,
-                given,
-                request.Birthdate,
-                request.Limit,
-                cancellationToken);
-        }
-        else
-        {
-            patients = await _repository.GetAllForTenantAsync(request.Limit, cancellationToken);
-        }
-
+        IReadOnlyList<PatientDomain> patients = await ResolvePatientsAsync(request, cancellationToken);
         var summaries = patients.Select(p => new PatientSummary(
             p.Id.ToString(),
             p.MedicalRecordNumber.Value,
@@ -58,5 +30,39 @@ internal sealed class GetPatientsQueryHandler : IQueryHandler<GetPatientsQuery, 
             p.DateOfBirth,
             p.Gender?.Value)).ToList();
         return new GetPatientsResponse(summaries);
+    }
+
+    private async Task<IReadOnlyList<PatientDomain>> ResolvePatientsAsync(GetPatientsQuery request, CancellationToken cancellationToken)
+    {
+        if (TryGetById(request.Id, out Ulid id))
+        {
+            PatientDomain? single = await _repository.GetAsync(p => p.TenantId == _tenant.TenantId && p.Id == id, cancellationToken);
+            return single is not null ? [single] : [];
+        }
+        if (HasSearchFilters(request))
+        {
+            ParseName(request.Name, out string? family, out string? given);
+            return await _repository.SearchForFhirAsync(request.Identifier, family, given, request.Birthdate, request.Limit, cancellationToken);
+        }
+        return await _repository.GetAllForTenantAsync(request.Limit, cancellationToken);
+    }
+
+    private static bool TryGetById(string? id, out Ulid parsedId)
+    {
+        parsedId = default;
+        return !string.IsNullOrWhiteSpace(id) && Ulid.TryParse(id, out parsedId);
+    }
+
+    private static bool HasSearchFilters(GetPatientsQuery request) =>
+        !string.IsNullOrWhiteSpace(request.Identifier) || !string.IsNullOrWhiteSpace(request.Name) || request.Birthdate.HasValue;
+
+    private static void ParseName(string? name, out string? family, out string? given)
+    {
+        family = null;
+        given = null;
+        if (string.IsNullOrWhiteSpace(name)) return;
+        string[] parts = name.Split('|', StringSplitOptions.TrimEntries);
+        family = parts.Length > 0 ? parts[0] : null;
+        given = parts.Length > 1 ? parts[1] : null;
     }
 }

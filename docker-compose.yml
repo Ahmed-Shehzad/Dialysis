@@ -2,6 +2,8 @@
 # Usage: docker compose up -d
 # Gateway: http://localhost:5001 | Health: http://localhost:5001/health
 # (Host port 5001 avoids conflict with other services using 5000)
+# APIs: Patient 5051, Prescription 5052, Treatment 5050, Alarm 5053, Device 5054
+#       Fhir 5055, CDS 5056, Reports 5057
 
 services:
   postgres:
@@ -67,6 +69,7 @@ services:
       ASPNETCORE_URLS: http://+:5050
       ConnectionStrings__TreatmentDb: Host=postgres;Database=dialysis_treatment;Username=postgres;Password=postgres
       DeviceApi__BaseUrl: http://device-api:5054
+      FhirSubscription__NotifyUrl: http://gateway:5000
     ports:
       - "5050:5050"
     depends_on:
@@ -85,6 +88,7 @@ services:
       ASPNETCORE_URLS: http://+:5053
       ConnectionStrings__AlarmDb: Host=postgres;Database=dialysis_alarm;Username=postgres;Password=postgres
       DeviceApi__BaseUrl: http://device-api:5054
+      FhirSubscription__NotifyUrl: http://gateway:5000
     ports:
       - "5053:5053"
     depends_on:
@@ -108,6 +112,54 @@ services:
       postgres:
         condition: service_healthy
 
+  fhir-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Fhir/Dialysis.Fhir.Api/Dialysis.Fhir.Api.csproj
+    command: ["Dialysis.Fhir.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5055
+      FhirExport__BaseUrl: http://gateway:5000
+    ports:
+      - "5055:5055"
+    depends_on:
+      - gateway
+
+  cds-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Cds/Dialysis.Cds.Api/Dialysis.Cds.Api.csproj
+    command: ["Dialysis.Cds.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5056
+      Cds__BaseUrl: http://gateway:5000
+    ports:
+      - "5056:5056"
+    depends_on:
+      - gateway
+
+  reports-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Reports/Dialysis.Reports.Api/Dialysis.Reports.Api.csproj
+    command: ["Dialysis.Reports.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5057
+      Reports__BaseUrl: http://gateway:5000
+    ports:
+      - "5057:5057"
+    depends_on:
+      - gateway
+
   gateway:
     build:
       context: .
@@ -122,6 +174,9 @@ services:
       ReverseProxy__Clusters__treatment-cluster__Destinations__treatment__Address: http://treatment-api:5050
       ReverseProxy__Clusters__alarm-cluster__Destinations__alarm__Address: http://alarm-api:5053
       ReverseProxy__Clusters__device-cluster__Destinations__device__Address: http://device-api:5054
+      ReverseProxy__Clusters__fhir-cluster__Destinations__fhir__Address: http://fhir-api:5055
+      ReverseProxy__Clusters__cds-cluster__Destinations__cds__Address: http://cds-api:5056
+      ReverseProxy__Clusters__reports-cluster__Destinations__reports__Address: http://reports-api:5057
     ports:
       - "5001:5000"
     depends_on:

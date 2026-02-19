@@ -19,8 +19,8 @@ internal sealed class GetAlarmsQueryHandler : IQueryHandler<GetAlarmsQuery, GetA
     {
         if (!string.IsNullOrWhiteSpace(request.Id) && Ulid.TryParse(request.Id, out Ulid id))
         {
-            var alarm = await _repository.GetByIdAsync(id, cancellationToken);
-            var singleDtos = alarm is not null ? new List<AlarmDto> { ToDto(alarm) } : new List<AlarmDto>();
+            Domain.Alarm? alarm = await _repository.GetByIdAsync(id, cancellationToken);
+            List<AlarmDto> singleDtos = alarm is not null ? new List<AlarmDto> { ToDto(alarm) } : new List<AlarmDto>();
             return new GetAlarmsResponse(singleDtos);
         }
 

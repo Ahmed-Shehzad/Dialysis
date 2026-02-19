@@ -1,8 +1,8 @@
-using BuildingBlocks.Authorization;
 using BuildingBlocks.Tenancy;
 
-using Dialysis.Cds.Api;
 using Dialysis.Hl7ToFhir;
+
+using Hl7.Fhir.Model;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,15 +39,15 @@ public sealed class PrescriptionComplianceController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         string baseUrl = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Cds:BaseUrl"] ?? "http://localhost:5000";
-        var tenantId = HttpContext.RequestServices.GetRequiredService<ITenantContext>().TenantId;
+        string tenantId = HttpContext.RequestServices.GetRequiredService<ITenantContext>().TenantId;
         using var sessionRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/treatment-sessions/{sessionId}");
         if (Request.Headers.Authorization.Count > 0)
             sessionRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
         if (!string.IsNullOrEmpty(tenantId))
             sessionRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-        var sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken);
+        HttpResponseMessage sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken);
         sessionResponse.EnsureSuccessStatusCode();
-        var session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
+        TreatmentSessionResponse? session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
         if (session is null)
             return NotFound();
 
@@ -56,17 +56,17 @@ public sealed class PrescriptionComplianceController : ControllerBase
             rxRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
         if (!string.IsNullOrEmpty(tenantId))
             rxRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-        var rxResponse = await _http.CreateClient().SendAsync(rxRequest, cancellationToken);
+        HttpResponseMessage rxResponse = await _http.CreateClient().SendAsync(rxRequest, cancellationToken);
         PrescriptionDto? prescription = null;
         if (rxResponse.IsSuccessStatusCode)
         {
-            var prescriptionResponse = await rxResponse.Content.ReadFromJsonAsync<PrescriptionByMrnResponse>(cancellationToken);
+            PrescriptionByMrnResponse? prescriptionResponse = await rxResponse.Content.ReadFromJsonAsync<PrescriptionByMrnResponse>(cancellationToken);
             if (prescriptionResponse is not null)
                 prescription = new PrescriptionDto(prescriptionResponse.BloodFlowRateMlMin, prescriptionResponse.UfRateMlH, prescriptionResponse.UfTargetVolumeMl);
         }
 
         var observations = session.Observations.Select(o => new ObservationDto(o.Code, o.Value, o.Unit)).ToList();
-        var issue = _cds.Evaluate(sessionId, session.PatientMrn, observations, prescription);
+        DetectedIssue? issue = _cds.Evaluate(sessionId, session.PatientMrn, observations, prescription);
 
         if (issue is null)
         {

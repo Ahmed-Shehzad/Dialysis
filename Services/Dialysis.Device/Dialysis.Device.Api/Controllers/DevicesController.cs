@@ -75,7 +75,7 @@ public sealed class DevicesController : ControllerBase
             Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
             Entry = response.Devices.Select(d =>
             {
-                var fhir = DeviceMapper.ToFhirDevice(d.DeviceEui64, d.Manufacturer, d.Model);
+                Hl7.Fhir.Model.Device fhir = DeviceMapper.ToFhirDevice(d.DeviceEui64, d.Manufacturer, d.Model);
                 fhir.Id = d.Id;
                 return new Hl7.Fhir.Model.Bundle.EntryComponent
                 {

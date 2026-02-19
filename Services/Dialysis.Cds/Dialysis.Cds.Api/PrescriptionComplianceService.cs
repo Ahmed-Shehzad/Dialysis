@@ -54,7 +54,7 @@ public sealed class PrescriptionComplianceService
 
     private static decimal? GetNumericValue(IReadOnlyList<ObservationDto> observations, string code)
     {
-        var obs = observations.FirstOrDefault(o => o.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+        ObservationDto? obs = observations.FirstOrDefault(o => o.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
         if (obs?.Value is null)
             return null;
         return decimal.TryParse(obs.Value, out decimal v) ? v : null;

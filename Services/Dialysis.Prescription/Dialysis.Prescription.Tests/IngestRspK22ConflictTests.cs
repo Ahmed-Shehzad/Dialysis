@@ -46,7 +46,7 @@ public sealed class IngestRspK22ConflictTests
     [Fact]
     public async Task Callback_WhenConflict_ThrowsPrescriptionConflictExceptionWithCallbackPhoneAsync()
     {
-        var (db, handler) = await CreateDbAndHandlerAsync();
+        (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync();
         await using (db)
         {
             var command = new IngestRspK22MessageCommand(RspK22Order001, null, PrescriptionConflictPolicy.Callback);
@@ -62,7 +62,7 @@ public sealed class IngestRspK22ConflictTests
     [Fact]
     public async Task Partial_WhenConflict_MergesNewSettingsOnlyAsync()
     {
-        var (db, handler) = await CreateDbAndHandlerAsync();
+        (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync();
         await using (db)
         {
             var command = new IngestRspK22MessageCommand(RspK22Order001WithNewSetting, null, PrescriptionConflictPolicy.Partial);
@@ -88,7 +88,7 @@ public sealed class IngestRspK22ConflictTests
     private static async Task<(PrescriptionDbContext Db, IngestRspK22MessageCommandHandler Handler)> CreateDbAndHandlerAsync()
     {
         string dbName = "IngestConflict_" + Guid.NewGuid();
-        var options = new DbContextOptionsBuilder<PrescriptionDbContext>()
+        DbContextOptions<PrescriptionDbContext> options = new DbContextOptionsBuilder<PrescriptionDbContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
 
@@ -113,7 +113,7 @@ public sealed class IngestRspK22ConflictTests
         }
 
         var db = new PrescriptionDbContext(options);
-        var handler = CreateHandler(db);
+        IngestRspK22MessageCommandHandler handler = CreateHandler(db);
         return (db, handler);
     }
 

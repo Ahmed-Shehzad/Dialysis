@@ -6,7 +6,10 @@ using BuildingBlocks.Interceptors;
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
+using BuildingBlocks.Abstractions;
+
 using Dialysis.Treatment.Infrastructure.DeviceRegistration;
+using Dialysis.Treatment.Infrastructure.FhirSubscription;
 using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
 
@@ -71,6 +74,9 @@ builder.Services.AddSingleton<IAckR01Builder, AckR01Builder>();
 builder.Services.AddSingleton<VitalSignsMonitoringService>();
 builder.Services.AddAuditRecorder();
 builder.Services.AddTenantResolution();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "treatment-db");

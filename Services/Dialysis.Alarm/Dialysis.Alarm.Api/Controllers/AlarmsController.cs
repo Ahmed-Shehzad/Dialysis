@@ -58,8 +58,8 @@ public sealed class AlarmsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var fromUtc = from ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
-        var toUtc = to ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
+        DateTimeOffset? fromUtc = from ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
+        DateTimeOffset? toUtc = to ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
         var query = new GetAlarmsQuery(id, deviceId, sessionId, fromUtc, toUtc);
         GetAlarmsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(

@@ -44,10 +44,10 @@ public sealed class TreatmentSessionsController : ControllerBase
         [FromQuery] DateTimeOffset? dateTo = null,
         CancellationToken cancellationToken = default)
     {
-        var mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
+        string? mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
         MedicalRecordNumber? mrnVal = !string.IsNullOrWhiteSpace(mrn) ? new MedicalRecordNumber(mrn) : null;
-        var from = dateFrom ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
-        var to = dateTo ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
+        DateTimeOffset? from = dateFrom ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
+        DateTimeOffset? to = dateTo ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
         var query = new GetTreatmentSessionsQuery(Math.Min(limit, 1_000), mrnVal, from, to);
         GetTreatmentSessionsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(
@@ -106,11 +106,11 @@ public sealed class TreatmentSessionsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
-        var toUtc = to ?? DateTimeOffset.UtcNow;
+        DateTimeOffset fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        DateTimeOffset toUtc = to ?? DateTimeOffset.UtcNow;
         var query = new GetTreatmentSessionsQuery(10_000, null, fromUtc, toUtc);
         GetTreatmentSessionsResponse response = await _sender.SendAsync(query, cancellationToken);
-        var sessions = response.Sessions;
+        IReadOnlyList<TreatmentSessionSummary> sessions = response.Sessions;
         decimal avgMinutes = 0;
         if (sessions.Count > 0)
         {

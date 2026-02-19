@@ -1,7 +1,5 @@
 using BuildingBlocks.Tenancy;
 
-using Dialysis.Reports.Api;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,9 +26,9 @@ public sealed class ReportsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
-        var toUtc = to ?? DateTimeOffset.UtcNow;
-        var report = await _reports.GetSessionsSummaryAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
+        DateTimeOffset fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        DateTimeOffset toUtc = to ?? DateTimeOffset.UtcNow;
+        SessionsSummaryReport report = await _reports.GetSessionsSummaryAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
         return Ok(report);
     }
 
@@ -41,9 +39,22 @@ public sealed class ReportsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
-        var toUtc = to ?? DateTimeOffset.UtcNow;
-        var report = await _reports.GetAlarmsBySeverityAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
+        DateTimeOffset fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        DateTimeOffset toUtc = to ?? DateTimeOffset.UtcNow;
+        AlarmsBySeverityReport report = await _reports.GetAlarmsBySeverityAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
+        return Ok(report);
+    }
+
+    [HttpGet("prescription-compliance")]
+    [ProducesResponseType(typeof(PrescriptionComplianceReport), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PrescriptionComplianceAsync(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        DateTimeOffset fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        DateTimeOffset toUtc = to ?? DateTimeOffset.UtcNow;
+        PrescriptionComplianceReport report = await _reports.GetPrescriptionComplianceAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
         return Ok(report);
     }
 }

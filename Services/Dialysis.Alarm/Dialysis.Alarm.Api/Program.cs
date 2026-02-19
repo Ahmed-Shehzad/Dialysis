@@ -7,7 +7,10 @@ using Dialysis.Alarm.Api;
 using Dialysis.Alarm.Application.Abstractions;
 using Dialysis.Alarm.Application.Domain.Services;
 using Dialysis.Alarm.Application.Features.IngestOruR40Message;
+using BuildingBlocks.Abstractions;
+
 using Dialysis.Alarm.Infrastructure.DeviceRegistration;
+using Dialysis.Alarm.Infrastructure.FhirSubscription;
 using Dialysis.Alarm.Infrastructure.Hl7;
 using Dialysis.Alarm.Infrastructure.Persistence;
 
@@ -52,6 +55,9 @@ builder.Services.AddSingleton<IOraR41Builder, OraR41Builder>();
 builder.Services.AddSingleton<AlarmEscalationService>();
 builder.Services.AddAuditRecorder();
 builder.Services.AddTenantResolution();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "alarm-db");

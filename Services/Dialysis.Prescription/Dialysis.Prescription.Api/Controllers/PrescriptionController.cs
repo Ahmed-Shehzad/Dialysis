@@ -6,6 +6,8 @@ using Dialysis.Hl7ToFhir;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
 using Dialysis.Prescription.Application.Features.GetPrescriptions;
 
+using Hl7.Fhir.Model;
+
 using Intercessor.Abstractions;
 
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +39,7 @@ public sealed class PrescriptionController : ControllerBase
         [FromQuery] string? patient = null,
         CancellationToken cancellationToken = default)
     {
-        var mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
+        string? mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
         MedicalRecordNumber? mrnVal = !string.IsNullOrWhiteSpace(mrn) ? new MedicalRecordNumber(mrn) : null;
         var query = new GetPrescriptionsQuery(Math.Min(limit, 10_000), mrnVal);
         GetPrescriptionsResponse response = await _sender.SendAsync(query, cancellationToken);
@@ -59,7 +61,7 @@ public sealed class PrescriptionController : ControllerBase
                     p.UfRateMlH,
                     p.UfTargetVolumeMl,
                     p.ReceivedAt);
-                var fhir = PrescriptionMapper.ToFhirServiceRequest(input);
+                ServiceRequest fhir = PrescriptionMapper.ToFhirServiceRequest(input);
                 fhir.Id = p.OrderId;
                 return new Hl7.Fhir.Model.Bundle.EntryComponent
                 {

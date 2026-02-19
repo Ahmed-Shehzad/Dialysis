@@ -1,3 +1,5 @@
+using Dialysis.Fhir.Api.Subscriptions;
+
 using Hl7.Fhir.Model;
 
 using Microsoft.AspNetCore.Authorization;
@@ -7,14 +9,16 @@ namespace Dialysis.Fhir.Api.Controllers;
 
 /// <summary>
 /// FHIR R4 Subscription resource CRUD.
-/// Channel types: rest-hook (callback URL), websocket (SignalR) – dispatcher TBD.
+/// Channel types: rest-hook (callback URL) – dispatcher evaluates and POSTs to endpoints.
 /// </summary>
 [ApiController]
 [Route("api/fhir/Subscription")]
 [Authorize(Policy = "FhirExport")]
 public sealed class FhirSubscriptionsController : ControllerBase
 {
-    private static readonly Dictionary<string, Subscription> Store = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ISubscriptionStore _store;
+
+    public FhirSubscriptionsController(ISubscriptionStore store) => _store = store;
 
     [HttpPost]
     [Produces("application/fhir+json", "application/json")]
@@ -28,7 +32,7 @@ public sealed class FhirSubscriptionsController : ControllerBase
         string id = "sub-" + Ulid.NewUlid();
         subscription.Id = id;
         subscription.Status = Subscription.SubscriptionStatus.Active;
-        lock (Store) { Store[id] = subscription; }
+        _store.Add(id, subscription);
 
         return CreatedAtAction(nameof(Get), new { id }, subscription);
     }
@@ -39,11 +43,9 @@ public sealed class FhirSubscriptionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Get(string id)
     {
-        lock (Store)
-        {
-            if (Store.TryGetValue(id, out Subscription? sub))
-                return Content(Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(sub!), "application/fhir+json");
-        }
+        if (_store.TryGet(id, out Subscription? sub))
+            return Content(Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(sub!), "application/fhir+json");
+
         return NotFound();
     }
 
@@ -52,11 +54,9 @@ public sealed class FhirSubscriptionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Delete(string id)
     {
-        lock (Store)
-        {
-            if (Store.Remove(id))
-                return NoContent();
-        }
+        if (_store.Remove(id))
+            return NoContent();
+
         return NotFound();
     }
 }
