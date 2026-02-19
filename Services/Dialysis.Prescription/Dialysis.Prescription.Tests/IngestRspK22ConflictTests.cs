@@ -60,8 +60,9 @@ public sealed class IngestRspK22ConflictTests
         string phone1 = PrescriptionTestData.CallbackPhone();
         string phone2 = PrescriptionTestData.CallbackPhone();
         string rspK22WithNewSetting = PrescriptionTestData.RspK22ConflictMessage(new RspK22ConflictParams(
-            mrn, orderId, phone2, "20230215130000", "MSG002", 350, 600, 2500,
-            "OBX|4|NM|12348^MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING^MDC||500|ml/min||||||||||RSET"));
+            mrn, orderId, phone2,
+            new RspK22ObxOverrides("20230215130000", "MSG002", 350, 600, 2500,
+                "OBX|4|NM|12348^MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING^MDC||500|ml/min||||||||||RSET")));
 
         (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync(mrn, orderId, phone1);
         await using (db)

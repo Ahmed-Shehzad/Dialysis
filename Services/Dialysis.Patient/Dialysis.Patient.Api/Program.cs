@@ -5,6 +5,7 @@ using BuildingBlocks.Interceptors;
 
 using Dialysis.Patient.Application.Abstractions;
 using Dialysis.Patient.Application.Features.GetPatientByMrn;
+using Dialysis.Patient.Application.Features.ProcessQbpQ22Query;
 using Dialysis.Patient.Infrastructure.Hl7;
 using Dialysis.Patient.Infrastructure.Persistence;
 
@@ -36,6 +37,8 @@ builder.Services.AddIntercessor(cfg =>
 {
     cfg.RegisterFromAssembly(typeof(GetPatientByMrnQuery).Assembly);
 });
+// Explicit registration ensures handler is resolvable when Scrutor/assembly scan misses it (e.g. in Docker)
+builder.Services.AddTransient<Intercessor.Abstractions.IRequestHandler<ProcessQbpQ22QueryCommand, ProcessQbpQ22QueryResponse>, ProcessQbpQ22QueryCommandHandler>();
 
 string connectionString = builder.Configuration.GetConnectionString("PatientDb")
                           ?? "Host=localhost;Database=dialysis_patient;Username=postgres;Password=postgres";

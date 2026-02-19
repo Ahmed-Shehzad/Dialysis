@@ -32,7 +32,11 @@ public static class ObservationMapper
         if (!string.IsNullOrEmpty(input.PatientId))
             obs.Subject = new ResourceReference($"Patient/{input.PatientId}");
         if (!string.IsNullOrEmpty(input.DeviceId))
-            obs.Device = new ResourceReference($"Device/{input.DeviceId}");
+        {
+            var deviceRef = new ResourceReference($"Device/{input.DeviceId}");
+            obs.Device = deviceRef;
+            obs.Focus = [deviceRef];
+        }
 
         return obs;
     }

@@ -77,7 +77,10 @@
     <Project Path="Services/Dialysis.Cds/Dialysis.Cds.Api/Dialysis.Cds.Api.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Fhir/">
+    <Project Path="Services/Dialysis.Fhir/Dialysis.Fhir.Abstractions/Dialysis.Fhir.Abstractions.csproj" />
     <Project Path="Services/Dialysis.Fhir/Dialysis.Fhir.Api/Dialysis.Fhir.Api.csproj" />
+    <Project Path="Services/Dialysis.Fhir/Dialysis.Fhir.Infrastructure/Dialysis.Fhir.Infrastructure.csproj" />
+    <Project Path="Services/Dialysis.Fhir/Dialysis.Fhir.Tests/Dialysis.Fhir.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Reports/">
     <Project Path="Services/Dialysis.Reports/Dialysis.Reports.Api/Dialysis.Reports.Api.csproj" />

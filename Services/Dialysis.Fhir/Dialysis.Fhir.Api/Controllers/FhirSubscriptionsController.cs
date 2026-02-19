@@ -1,4 +1,4 @@
-using Dialysis.Fhir.Api.Subscriptions;
+using Dialysis.Fhir.Abstractions;
 
 using Hl7.Fhir.Model;
 

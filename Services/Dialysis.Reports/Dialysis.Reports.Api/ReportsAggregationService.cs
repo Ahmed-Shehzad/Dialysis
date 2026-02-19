@@ -20,10 +20,11 @@ public sealed class ReportsAggregationService
         string url = baseUrl.TrimEnd('/') + $"/api/treatment-sessions/reports/summary?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}";
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         AddHeaders(req, request, tenantId);
-        HttpResponseMessage response = await _http.SendAsync(req, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        SessionsSummaryReport? report = await response.Content.ReadFromJsonAsync<SessionsSummaryReport>(cancellationToken);
-        return report ?? new SessionsSummaryReport(0, 0, from, to);
+        using (HttpResponseMessage response = await _http.SendAsync(req, cancellationToken))
+        {
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<SessionsSummaryReport>(cancellationToken) ?? new SessionsSummaryReport(0, 0, from, to);
+        }
     }
 
     public async Task<AlarmsBySeverityReport> GetAlarmsBySeverityAsync(DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken cancellationToken = default)
@@ -32,14 +33,16 @@ public sealed class ReportsAggregationService
         string alarmsUrl = baseUrl.TrimEnd('/') + $"/api/alarms?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}";
         using var req = new HttpRequestMessage(HttpMethod.Get, alarmsUrl);
         AddHeaders(req, request, tenantId);
-        HttpResponseMessage response = await _http.SendAsync(req, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        AlarmsListResponse? listResponse = await response.Content.ReadFromJsonAsync<AlarmsListResponse>(cancellationToken);
-        IReadOnlyList<AlarmSummaryDto> alarms = listResponse?.Alarms ?? [];
-        var bySeverity = alarms
-            .GroupBy(a => a.Priority ?? "unknown")
-            .ToDictionary(g => g.Key, g => g.Count());
-        return new AlarmsBySeverityReport(bySeverity, from, to);
+        using (HttpResponseMessage response = await _http.SendAsync(req, cancellationToken))
+        {
+            response.EnsureSuccessStatusCode();
+            AlarmsListResponse? listResponse = await response.Content.ReadFromJsonAsync<AlarmsListResponse>(cancellationToken);
+            IReadOnlyList<AlarmSummaryDto> alarms = listResponse?.Alarms ?? [];
+            var bySeverity = alarms
+                .GroupBy(a => a.Priority ?? "unknown")
+                .ToDictionary(g => g.Key, g => g.Count());
+            return new AlarmsBySeverityReport(bySeverity, from, to);
+        }
     }
 
     /// <summary>
@@ -70,12 +73,13 @@ public sealed class ReportsAggregationService
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         AddHeaders(req, request, tenantId);
         _ = req.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
-        HttpResponseMessage response = await _http.SendAsync(req, ct);
-        if (!response.IsSuccessStatusCode)
-            return [];
-
-        string json = await response.Content.ReadAsStringAsync(ct);
-        return ExtractSessionIdsFromFhirBundle(json);
+        using (HttpResponseMessage response = await _http.SendAsync(req, ct))
+        {
+            if (!response.IsSuccessStatusCode)
+                return [];
+            string json = await response.Content.ReadAsStringAsync(ct);
+            return ExtractSessionIdsFromFhirBundle(json);
+        }
     }
 
     private static IReadOnlyList<string> ExtractSessionIdsFromFhirBundle(string json)
@@ -106,21 +110,22 @@ public sealed class ReportsAggregationService
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         AddHeaders(req, request, tenantId);
         _ = req.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
-        HttpResponseMessage response = await _http.SendAsync(req, ct);
-        if (!response.IsSuccessStatusCode)
-            return false;
-
-        string json = await response.Content.ReadAsStringAsync(ct);
-        try
+        using (HttpResponseMessage response = await _http.SendAsync(req, ct))
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("entry", out var entries))
-                return entries.GetArrayLength() == 0;
-            return true;
-        }
-        catch
-        {
-            return false;
+            if (!response.IsSuccessStatusCode)
+                return false;
+            string json = await response.Content.ReadAsStringAsync(ct);
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("entry", out var entries))
+                    return entries.GetArrayLength() == 0;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 

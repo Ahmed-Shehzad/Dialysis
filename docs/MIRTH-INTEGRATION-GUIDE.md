@@ -294,6 +294,23 @@ The Prescription API supports configurable conflict handling when ingesting RSP^
 - Lab results (e.g. Observation with LOINC codes) are not in initial scope.
 - Future LIS integration would use `Observation` resource ingestion via HL7 ORU or FHIR.
 
+### FHIR API for EHR Integration
+
+EHRs and analytics systems can use FHIR R4 endpoints directly (in addition to HL7 v2):
+
+| Flow | FHIR Endpoint | Scope | Description |
+|------|---------------|-------|-------------|
+| **Bulk export** | `GET /api/fhir/$export?_type=Patient,Observation,...` | FhirExport (Patient:Read, etc.) | NDJSON-style Bundle of requested resource types |
+| **Patient lookup** | `GET /api/patients/mrn/{mrn}/fhir` | PatientRead | Single Patient resource |
+| **Prescription (ServiceRequest)** | `GET /api/prescriptions/{mrn}/fhir` | PrescriptionRead | ServiceRequest with UF/blood-flow extensions |
+| **Treatment (Procedure + Observations)** | `GET /api/treatment-sessions/{sessionId}/fhir` | TreatmentRead | FHIR Bundle (Procedure, Observation, Provenance) |
+| **Alarms (DetectedIssue)** | `GET /api/alarms/fhir` | AlarmRead | Bundle of DetectedIssue resources |
+| **Subscriptions** | `POST /api/fhir/Subscription` | FhirExport | rest-hook channel for Observation, Procedure, DetectedIssue |
+| **CDS** | `GET /api/cds/prescription-compliance?sessionId=X` | CdsRead | DetectedIssue Bundle when treatment deviates from prescription |
+| **Reports** | `GET /api/reports/sessions-summary`, `alarms-by-severity`, `prescription-compliance` | TreatmentRead, AlarmRead | Aggregate dashboards |
+
+All FHIR endpoints require JWT (or DevelopmentBypass in dev) and `X-Tenant-Id`. See [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) §3.1 for FHIR scope policies.
+
 ---
 
 ## 10. References

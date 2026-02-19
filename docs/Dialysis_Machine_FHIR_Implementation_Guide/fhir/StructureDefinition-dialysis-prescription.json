@@ -1,0 +1,60 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "dialysis-prescription",
+  "url": "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription",
+  "version": "1.0.0",
+  "name": "DialysisPrescription",
+  "title": "Dialysis Prescription Profile",
+  "status": "active",
+  "date": "2025-02-19",
+  "publisher": "Dialysis PDMS",
+  "description": "Profile on ServiceRequest for hemodialysis prescription with therapy modality, blood flow, UF rate, and UF target.",
+  "fhirVersion": "4.0.1",
+  "kind": "resource",
+  "abstract": false,
+  "type": "ServiceRequest",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/ServiceRequest",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "ServiceRequest",
+        "path": "ServiceRequest",
+        "short": "Hemodialysis prescription"
+      },
+      {
+        "id": "ServiceRequest.extension",
+        "path": "ServiceRequest.extension",
+        "slicing": {
+          "discriminator": [{ "type": "value", "path": "url" }],
+          "ordered": false,
+          "rules": "open"
+        }
+      },
+      {
+        "id": "ServiceRequest.extension:blood-flow-rate",
+        "path": "ServiceRequest.extension",
+        "sliceName": "blood-flow-rate",
+        "min": 0,
+        "max": "1",
+        "type": [{ "code": "Extension", "profile": ["http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-blood-flow-rate"] }]
+      },
+      {
+        "id": "ServiceRequest.extension:uf-rate",
+        "path": "ServiceRequest.extension",
+        "sliceName": "uf-rate",
+        "min": 0,
+        "max": "1",
+        "type": [{ "code": "Extension", "profile": ["http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-uf-rate"] }]
+      },
+      {
+        "id": "ServiceRequest.extension:uf-target-volume",
+        "path": "ServiceRequest.extension",
+        "sliceName": "uf-target-volume",
+        "min": 0,
+        "max": "1",
+        "type": [{ "code": "Extension", "profile": ["http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-uf-target-volume"] }]
+      }
+    ]
+  }
+}

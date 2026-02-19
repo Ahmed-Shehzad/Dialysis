@@ -1,4 +1,4 @@
-namespace Dialysis.Fhir.Api.Subscriptions;
+namespace Dialysis.Fhir.Abstractions;
 
 /// <summary>
 /// Store for FHIR Subscription resources.

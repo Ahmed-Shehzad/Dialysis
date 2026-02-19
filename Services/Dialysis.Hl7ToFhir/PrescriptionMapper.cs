@@ -12,7 +12,9 @@ public static class PrescriptionMapper
     private const string SnomedSystem = "http://snomed.info/sct";
     private const string HemodialysisSnomed = "1088001";
     private const string UcumSystem = "http://unitsofmeasure.org";
-    private const string PrescriptionProfileUrl = "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription";
+    private const string BloodFlowRateExtensionUrl = "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-blood-flow-rate";
+    private const string UfRateExtensionUrl = "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-uf-rate";
+    private const string UfTargetVolumeExtensionUrl = "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-uf-target-volume";
 
     public static ServiceRequest ToFhirServiceRequest(PrescriptionMappingInput input)
     {
@@ -43,22 +45,13 @@ public static class PrescriptionMapper
             request.Requester = new ResourceReference { Display = input.OrderingProvider };
 
         if (input.BloodFlowRateMlMin.HasValue)
-            request.Extension.Add(BuildQuantityExtension(
-                $"{PrescriptionProfileUrl}#blood-flow-rate",
-                input.BloodFlowRateMlMin.Value,
-                "ml/min"));
+            request.Extension.Add(BuildQuantityExtension(BloodFlowRateExtensionUrl, input.BloodFlowRateMlMin.Value, "ml/min"));
 
         if (input.UfRateMlH.HasValue)
-            request.Extension.Add(BuildQuantityExtension(
-                $"{PrescriptionProfileUrl}#uf-rate",
-                input.UfRateMlH.Value,
-                "mL/h"));
+            request.Extension.Add(BuildQuantityExtension(UfRateExtensionUrl, input.UfRateMlH.Value, "mL/h"));
 
         if (input.UfTargetVolumeMl.HasValue)
-            request.Extension.Add(BuildQuantityExtension(
-                $"{PrescriptionProfileUrl}#uf-target-volume",
-                input.UfTargetVolumeMl.Value,
-                "mL"));
+            request.Extension.Add(BuildQuantityExtension(UfTargetVolumeExtensionUrl, input.UfTargetVolumeMl.Value, "mL"));
 
         return request;
     }

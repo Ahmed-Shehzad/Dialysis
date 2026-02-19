@@ -1,3 +1,5 @@
+using Dialysis.Fhir.Abstractions;
+
 using Hl7.Fhir.Model;
 
 namespace Dialysis.Fhir.Api.Subscriptions;
@@ -67,7 +69,7 @@ public sealed class SubscriptionDispatcher
             _ = request.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
         _ = request.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogWarning("Subscription dispatcher failed to fetch resource from {ResourceUrl}: {StatusCode}",
@@ -113,7 +115,7 @@ public sealed class SubscriptionDispatcher
                 if (!string.IsNullOrEmpty(tenantId))
                     _ = postRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
 
-                HttpResponseMessage postResponse = await _httpClient.SendAsync(postRequest, cancellationToken);
+                using HttpResponseMessage postResponse = await _httpClient.SendAsync(postRequest, cancellationToken);
                 if (!postResponse.IsSuccessStatusCode)
                     _logger.LogWarning("Subscription {SubId} rest-hook to {Endpoint} returned {StatusCode}",
                         sub.Id, endpoint, postResponse.StatusCode);

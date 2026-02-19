@@ -37,8 +37,9 @@ Dialysis machines sending HL7 messages (ORU^R01, ORU^R40, QBP^Q22, QBP^D01) must
 ## 2. Database
 
 - **PostgreSQL** 16+ (or 14+)
-- Per-service databases: `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`
+- Per-service databases: `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`, `dialysis_fhir`
 - Connection strings via configuration; secrets from Key Vault or environment (no hardcoded credentials per C5)
+- **dialysis_fhir**: Used when `ConnectionStrings:FhirDb` is set. Stores FHIR Subscriptions for rest-hook notifications. When omitted, subscriptions use in-memory store (lost on restart).
 
 ---
 
@@ -56,7 +57,14 @@ See [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16. Ensure the host runni
 
 ---
 
-## 5. References
+## 5. Health Checks
+
+- Gateway `/health` aggregates health from downstream services (patient-api, prescription-api, treatment-api, alarm-api, device-api, fhir-api).
+- When `ConnectionStrings:FhirDb` is configured, the FHIR service reports healthy when it can reach the database. If FhirDb is not set, the FHIR service uses an in-memory subscription store and does not depend on a database.
+
+---
+
+## 6. References
 
 - [TIME-SYNCHRONIZATION-PLAN.md](TIME-SYNCHRONIZATION-PLAN.md) – Implementation plan for time sync alignment
 - [HL7-IMPLEMENTATION-GUIDE-ALIGNMENT-REPORT.md](HL7-IMPLEMENTATION-GUIDE-ALIGNMENT-REPORT.md) – Guide compliance

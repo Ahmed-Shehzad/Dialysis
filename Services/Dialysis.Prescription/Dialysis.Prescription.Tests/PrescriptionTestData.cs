@@ -2,17 +2,21 @@ using Bogus;
 
 namespace Dialysis.Prescription.Tests;
 
-/// <summary>Parameters for building RSP^K22 conflict test messages.</summary>
-public sealed record RspK22ConflictParams(
-    string Mrn,
-    string OrderId,
-    string CallbackPhone,
+/// <summary>Overrides for OBX and message metadata in conflict test messages.</summary>
+public sealed record RspK22ObxOverrides(
     string Timestamp = "20230215120000",
     string MsgId = "MSG001",
     int BloodFlow = 300,
     int UfRate = 500,
     int UfTarget = 2000,
     string? DialysateObx = null);
+
+/// <summary>Parameters for building RSP^K22 conflict test messages.</summary>
+public sealed record RspK22ConflictParams(
+    string Mrn,
+    string OrderId,
+    string CallbackPhone,
+    RspK22ObxOverrides? ObxOverrides = null);
 
 /// <summary>
 /// Bogus-generated test data for Prescription tests. Uses seed for deterministic results.
@@ -59,18 +63,19 @@ public static class PrescriptionTestData
     /// <summary>Builds RSP^K22 for conflict tests: same orderId/mrn, configurable phone and OBX values.</summary>
     public static string RspK22ConflictMessage(RspK22ConflictParams p)
     {
+        RspK22ObxOverrides obx = p.ObxOverrides ?? new RspK22ObxOverrides();
         string obxLines = $"""
-                OBX|1|NM|12345^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING^MDC||{p.BloodFlow}|ml/min||||||||||RSET
-                OBX|2|NM|12346^MDC_HDIALY_UF_RATE_SETTING^MDC||{p.UfRate}|mL/h||||||||||RSET
-                OBX|3|NM|12347^MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE^MDC||{p.UfTarget}|mL||||||||||RSET
+                OBX|1|NM|12345^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING^MDC||{obx.BloodFlow}|ml/min||||||||||RSET
+                OBX|2|NM|12346^MDC_HDIALY_UF_RATE_SETTING^MDC||{obx.UfRate}|mL/h||||||||||RSET
+                OBX|3|NM|12347^MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE^MDC||{obx.UfTarget}|mL||||||||||RSET
                 """;
-        if (!string.IsNullOrEmpty(p.DialysateObx))
-            obxLines += $"\n{p.DialysateObx}";
+        if (!string.IsNullOrEmpty(obx.DialysateObx))
+            obxLines += $"\n{obx.DialysateObx}";
         return $"""
-                MSH|^~\&|EMR|FAC|MACH|FAC|{p.Timestamp}||RSP^K22^RSP_K21|{p.MsgId}|P|2.6
-                MSA|AA|{p.MsgId}
+                MSH|^~\&|EMR|FAC|MACH|FAC|{obx.Timestamp}||RSP^K22^RSP_K21|{obx.MsgId}|P|2.6
+                MSA|AA|{obx.MsgId}
                 QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|{p.Mrn}^^^^MR
-                ORC|NW|{p.OrderId}^FAC|||||{p.Timestamp}|||PROVIDER||{p.CallbackPhone}
+                ORC|NW|{p.OrderId}^FAC|||||{obx.Timestamp}|||PROVIDER||{p.CallbackPhone}
                 PID|||{p.Mrn}^^^^MR
                 {obxLines}
                 """;

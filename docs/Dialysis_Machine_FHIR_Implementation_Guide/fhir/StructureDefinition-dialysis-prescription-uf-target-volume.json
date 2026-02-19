@@ -1,0 +1,27 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "dialysis-prescription-uf-target-volume",
+  "url": "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-uf-target-volume",
+  "version": "1.0.0",
+  "name": "DialysisPrescriptionUfTargetVolume",
+  "title": "Dialysis Prescription – UF Target Volume",
+  "status": "active",
+  "date": "2025-02-19",
+  "publisher": "Dialysis PDMS",
+  "description": "Prescribed ultrafiltration target volume in mL.",
+  "fhirVersion": "4.0.1",
+  "kind": "complex-type",
+  "abstract": false,
+  "context": [
+    { "type": "element", "expression": "ServiceRequest" }
+  ],
+  "type": "Extension",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      { "id": "Extension.url", "path": "Extension.url", "fixedUri": "http://dialysis-pdms.local/fhir/StructureDefinition/dialysis-prescription-uf-target-volume" },
+      { "id": "Extension.valueQuantity", "path": "Extension.valueQuantity", "min": 1, "max": "1", "type": [{ "code": "Quantity" }], "short": "UF target volume (mL)" }
+    ]
+  }
+}

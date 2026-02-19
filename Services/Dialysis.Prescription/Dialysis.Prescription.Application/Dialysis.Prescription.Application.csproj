@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="Dialysis.Prescription.Api" />
         <InternalsVisibleTo Include="Dialysis.Prescription.Tests" />
     </ItemGroup>
 

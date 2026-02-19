@@ -11,6 +11,7 @@ The formal Dialysis Machine FHIR IG is in development; this plan is based on FHI
 | Document | Description |
 |----------|-------------|
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Phase-by-phase implementation plan (Phases 1–6) |
+| [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Current implementation status, endpoints, configuration |
 | [ALIGNMENT-REPORT.md](ALIGNMENT-REPORT.md) | Cross-reference of FHIR IG requirements vs PDMS implementation |
 | [PHASE1_DEVICE_AND_OBSERVATION_PLAN.md](PHASE1_DEVICE_AND_OBSERVATION_PLAN.md) | Device and Observation |
 | [PHASE2_SERVICEREQUEST_PLAN.md](PHASE2_SERVICEREQUEST_PLAN.md) | ServiceRequest (Prescription) |
@@ -18,6 +19,17 @@ The formal Dialysis Machine FHIR IG is in development; this plan is based on FHI
 | [PHASE4_DETECTEDISSUE_PLAN.md](PHASE4_DETECTEDISSUE_PLAN.md) | DetectedIssue (Alarms) |
 | [PHASE5_SUPPORTING_RESOURCES_PLAN.md](PHASE5_SUPPORTING_RESOURCES_PLAN.md) | Patient, Provenance, AuditEvent |
 | [PHASE6_FHIR_API_PLAN.md](PHASE6_FHIR_API_PLAN.md) | FHIR API (Bulk, Search, Subscriptions, CDS, Reports) |
+
+## StructureDefinitions (dialysis-prescription)
+
+Formal FHIR profiles and extensions for the dialysis prescription (ServiceRequest):
+
+| Resource | Path |
+|----------|------|
+| Profile | [fhir/StructureDefinition-dialysis-prescription.json](fhir/StructureDefinition-dialysis-prescription.json) |
+| Extension: blood-flow-rate | [fhir/StructureDefinition-dialysis-prescription-blood-flow-rate.json](fhir/StructureDefinition-dialysis-prescription-blood-flow-rate.json) |
+| Extension: uf-rate | [fhir/StructureDefinition-dialysis-prescription-uf-rate.json](fhir/StructureDefinition-dialysis-prescription-uf-rate.json) |
+| Extension: uf-target-volume | [fhir/StructureDefinition-dialysis-prescription-uf-target-volume.json](fhir/StructureDefinition-dialysis-prescription-uf-target-volume.json) |
 
 ## Links to Published IGs
 

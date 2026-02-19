@@ -123,11 +123,15 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5055
+      ConnectionStrings__FhirDb: Host=postgres;Database=dialysis_fhir;Username=postgres;Password=postgres
       FhirExport__BaseUrl: http://gateway:5000
     ports:
       - "5055:5055"
     depends_on:
-      - gateway
+      postgres:
+        condition: service_healthy
+      gateway:
+        condition: service_started
 
   cds-api:
     build:

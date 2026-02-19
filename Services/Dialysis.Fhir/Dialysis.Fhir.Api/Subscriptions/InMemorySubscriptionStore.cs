@@ -1,3 +1,5 @@
+using Dialysis.Fhir.Abstractions;
+
 using Hl7.Fhir.Model;
 
 namespace Dialysis.Fhir.Api.Subscriptions;

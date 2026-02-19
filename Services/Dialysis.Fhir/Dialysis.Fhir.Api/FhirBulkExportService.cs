@@ -76,7 +76,7 @@ public sealed class FhirBulkExportService
         if (!string.IsNullOrEmpty(_tenant.TenantId))
             _ = request.Headers.TryAddWithoutValidation("X-Tenant-Id", _tenant.TenantId);
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
             return null;
         string json = await response.Content.ReadAsStringAsync(cancellationToken);
