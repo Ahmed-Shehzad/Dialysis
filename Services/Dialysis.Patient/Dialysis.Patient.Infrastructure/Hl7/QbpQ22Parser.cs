@@ -92,10 +92,9 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
     {
         if (value.Length < 8) return null;
         if (int.TryParse(value.AsSpan(0, 4), out int y) && int.TryParse(value.AsSpan(4, 2), out int m) && int.TryParse(value.AsSpan(6, 2), out int day))
-        {
             try { return new DateOnly(y, m, day); }
             catch { return null; }
-        }
+
         return null;
     }
 

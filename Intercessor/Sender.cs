@@ -44,7 +44,7 @@ internal class Sender : ISender
         return await handlerFunc();
     }
 
-    private static async Task<TResponse> InvokeHandlerAsync<TResponse>(object handler, IRequest<TResponse> request, CancellationToken cancellationToken)
+    private async static Task<TResponse> InvokeHandlerAsync<TResponse>(object handler, IRequest<TResponse> request, CancellationToken cancellationToken)
     {
         const string methodName = "HandleAsync";
         MethodInfo? method = handler.GetType().GetMethod(methodName, [request.GetType(), typeof(CancellationToken)]);
@@ -57,7 +57,7 @@ internal class Sender : ISender
         return ((dynamic)task).Result;
     }
 
-    private static async Task<TResponse> InvokeBehaviorAsync<TResponse>(object behavior, IRequest<TResponse> request, Func<Task<TResponse>> next, CancellationToken cancellationToken)
+    private async static Task<TResponse> InvokeBehaviorAsync<TResponse>(object behavior, IRequest<TResponse> request, Func<Task<TResponse>> next, CancellationToken cancellationToken)
     {
         const string methodName = "HandleAsync";
         MethodInfo? method = behavior.GetType().GetMethod(methodName, [request.GetType(), typeof(Func<Task<TResponse>>), typeof(CancellationToken)]);

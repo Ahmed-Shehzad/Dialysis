@@ -45,46 +45,43 @@ public sealed class PrescriptionComplianceController : ControllerBase
             sessionRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
         if (!string.IsNullOrEmpty(tenantId))
             sessionRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-        using (HttpResponseMessage sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken))
+
+        using HttpResponseMessage sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken);
+        sessionResponse.EnsureSuccessStatusCode();
+        TreatmentSessionResponse? session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
+        if (session is null)
+            return NotFound();
+
+        using var rxRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/prescriptions/{session.PatientMrn}");
+        if (Request.Headers.Authorization.Count > 0)
+            rxRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
+        if (!string.IsNullOrEmpty(tenantId))
+            rxRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
+
+        using HttpResponseMessage rxResponse = await _http.CreateClient().SendAsync(rxRequest, cancellationToken);
+        PrescriptionDto? prescription = null;
+        if (rxResponse.IsSuccessStatusCode)
         {
-            sessionResponse.EnsureSuccessStatusCode();
-            TreatmentSessionResponse? session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
-            if (session is null)
-                return NotFound();
-
-            using var rxRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/prescriptions/{session.PatientMrn}");
-            if (Request.Headers.Authorization.Count > 0)
-                rxRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
-            if (!string.IsNullOrEmpty(tenantId))
-                rxRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-            using (HttpResponseMessage rxResponse = await _http.CreateClient().SendAsync(rxRequest, cancellationToken))
-            {
-                PrescriptionDto? prescription = null;
-                if (rxResponse.IsSuccessStatusCode)
-                {
-                    PrescriptionByMrnResponse? prescriptionResponse = await rxResponse.Content.ReadFromJsonAsync<PrescriptionByMrnResponse>(cancellationToken);
-                    if (prescriptionResponse is not null)
-                        prescription = new PrescriptionDto(prescriptionResponse.BloodFlowRateMlMin, prescriptionResponse.UfRateMlH, prescriptionResponse.UfTargetVolumeMl);
-                }
-
-                var observations = session.Observations.Select(o => new ObservationDto(o.Code, o.Value, o.Unit)).ToList();
-                DetectedIssue? issue = _cds.Evaluate(sessionId, session.PatientMrn, observations, prescription);
-
-                if (issue is null)
-                {
-                    var emptyBundle = new Hl7.Fhir.Model.Bundle { Type = Hl7.Fhir.Model.Bundle.BundleType.Collection, Entry = [] };
-                    return Content(FhirJsonHelper.ToJson(emptyBundle), "application/fhir+json");
-                }
-
-                var bundle = new Hl7.Fhir.Model.Bundle
-                {
-                    Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
-                    Entry = [new Hl7.Fhir.Model.Bundle.EntryComponent { Resource = issue }]
-                };
-                return Content(FhirJsonHelper.ToJson(bundle), "application/fhir+json");
-            }
+            PrescriptionByMrnResponse? prescriptionResponse = await rxResponse.Content.ReadFromJsonAsync<PrescriptionByMrnResponse>(cancellationToken);
+            if (prescriptionResponse is not null)
+                prescription = new PrescriptionDto(prescriptionResponse.BloodFlowRateMlMin, prescriptionResponse.UfRateMlH, prescriptionResponse.UfTargetVolumeMl);
         }
 
+        var observations = session.Observations.Select(o => new ObservationDto(o.Code, o.Value, o.Unit)).ToList();
+        DetectedIssue? issue = _cds.Evaluate(sessionId, session.PatientMrn, observations, prescription);
+
+        if (issue is null)
+        {
+            var emptyBundle = new Hl7.Fhir.Model.Bundle { Type = Hl7.Fhir.Model.Bundle.BundleType.Collection, Entry = [] };
+            return Content(FhirJsonHelper.ToJson(emptyBundle), "application/fhir+json");
+        }
+
+        var bundle = new Hl7.Fhir.Model.Bundle
+        {
+            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
+            Entry = [new Hl7.Fhir.Model.Bundle.EntryComponent { Resource = issue }]
+        };
+        return Content(FhirJsonHelper.ToJson(bundle), "application/fhir+json");
     }
 }
 

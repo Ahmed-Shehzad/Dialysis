@@ -49,15 +49,13 @@ internal static class ProgramExtensions
         });
     }
 
-    public static async Task ApplyMigrationsIfDevelopmentAsync(this WebApplication app)
+    public async static Task ApplyMigrationsIfDevelopmentAsync(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment())
             return;
 
-        using (IServiceScope scope = app.Services.CreateScope())
-        {
-            AlarmDbContext db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
-            await db.Database.MigrateAsync();
-        }
+        using IServiceScope scope = app.Services.CreateScope();
+        AlarmDbContext db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
+        await db.Database.MigrateAsync();
     }
 }

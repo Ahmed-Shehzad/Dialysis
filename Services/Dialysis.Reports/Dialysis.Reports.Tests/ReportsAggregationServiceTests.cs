@@ -3,6 +3,7 @@ using System.Net;
 using Dialysis.Reports.Api;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 using Shouldly;
 
@@ -17,6 +18,8 @@ namespace Dialysis.Reports.Tests;
 /// </summary>
 public sealed class ReportsAggregationServiceTests
 {
+    private static readonly ILogger<ReportsAggregationService> Logger = new LoggerFactory().CreateLogger<ReportsAggregationService>();
+
     [Fact]
     public async Task GetSessionsSummaryAsync_WithMockedResponse_ReturnsReportAsync()
     {
@@ -31,7 +34,7 @@ public sealed class ReportsAggregationServiceTests
         });
         using var client = new HttpClient(handler);
 
-        var service = new ReportsAggregationService(client, config);
+        var service = new ReportsAggregationService(client, config, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -57,7 +60,7 @@ public sealed class ReportsAggregationServiceTests
         });
         using var client = new HttpClient(handler);
 
-        var service = new ReportsAggregationService(client, config);
+        var service = new ReportsAggregationService(client, config, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -81,7 +84,7 @@ public sealed class ReportsAggregationServiceTests
         });
         using var client = new HttpClient(handler);
 
-        var service = new ReportsAggregationService(client, config);
+        var service = new ReportsAggregationService(client, config, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -104,7 +107,7 @@ public sealed class ReportsAggregationServiceTests
         });
         using var client = new HttpClient(handler);
 
-        var service = new ReportsAggregationService(client, config);
+        var service = new ReportsAggregationService(client, config, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -132,7 +135,7 @@ public sealed class ReportsAggregationServiceTests
         });
         using var client = new HttpClient(handler);
 
-        var service = new ReportsAggregationService(client, config);
+        var service = new ReportsAggregationService(client, config, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -144,6 +147,31 @@ public sealed class ReportsAggregationServiceTests
     }
 
     [Fact]
+    public async Task GetAlarmsBySeverityAsync_WhenBackendReturns500_ReturnsEmptyReportAsync()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
+            .Build();
+        var handler = new MockReportHttpHandler(req =>
+        {
+            if (req.RequestUri?.AbsoluteUri.Contains("/api/alarms") == true)
+                return (HttpStatusCode.InternalServerError, "Internal Server Error");
+            return (HttpStatusCode.NotFound, "");
+        });
+        using var client = new HttpClient(handler);
+
+        var service = new ReportsAggregationService(client, config, Logger);
+
+        var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
+        AlarmsBySeverityReport report = await service.GetAlarmsBySeverityAsync(from, to, "default", null);
+
+        report.BySeverity.ShouldBeEmpty();
+        report.From.ShouldBe(from);
+        report.To.ShouldBe(to);
+    }
+
+    [Fact]
     public async Task GetSessionsSummaryAsync_WhenBackendReturns404_ThrowsAsync()
     {
         var config = new ConfigurationBuilder()
@@ -152,7 +180,7 @@ public sealed class ReportsAggregationServiceTests
         var handler = new MockReportHttpHandler(_ => (HttpStatusCode.NotFound, ""));
         using var client = new HttpClient(handler);
 
-        var service = new ReportsAggregationService(client, config);
+        var service = new ReportsAggregationService(client, config, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);

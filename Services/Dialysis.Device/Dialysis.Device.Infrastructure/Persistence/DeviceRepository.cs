@@ -30,13 +30,13 @@ public sealed class DeviceRepository : Repository<DeviceDomain>, IDeviceReposito
             .FirstOrDefaultAsync(d => d.TenantId == new TenantId(_tenant.TenantId) && d.DeviceEui64 == deviceEui64, cancellationToken);
     }
 
-    public override async Task AddAsync(DeviceDomain entity, CancellationToken cancellationToken = default) =>
+    public async override Task AddAsync(DeviceDomain entity, CancellationToken cancellationToken = default) =>
         await _db.Devices.AddAsync(entity, cancellationToken);
 
-    public override async Task AddAsync(IEnumerable<DeviceDomain> entities, CancellationToken cancellationToken = default) =>
+    public async override Task AddAsync(IEnumerable<DeviceDomain> entities, CancellationToken cancellationToken = default) =>
         await _db.Devices.AddRangeAsync(entities, cancellationToken);
 
-    public override async Task<IReadOnlyList<DeviceDomain>> GetManyAsync(
+    public async override Task<IReadOnlyList<DeviceDomain>> GetManyAsync(
         Expression<Func<DeviceDomain, bool>> expression,
         Expression<Func<DeviceDomain, object>>? orderByExpression = null,
         bool orderByDescending = false,
@@ -48,7 +48,7 @@ public sealed class DeviceRepository : Repository<DeviceDomain>, IDeviceReposito
         return await query.ToListAsync(cancellationToken);
     }
 
-    public override async Task<DeviceDomain?> GetAsync(Expression<Func<DeviceDomain, bool>> expression, CancellationToken cancellationToken = default) =>
+    public async override Task<DeviceDomain?> GetAsync(Expression<Func<DeviceDomain, bool>> expression, CancellationToken cancellationToken = default) =>
         await _db.Devices.FirstOrDefaultAsync(expression, cancellationToken);
 
     public override void Update(DeviceDomain entity) => _db.Update(entity);

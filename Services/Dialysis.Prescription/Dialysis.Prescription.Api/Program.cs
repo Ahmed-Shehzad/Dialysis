@@ -83,7 +83,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(HandleExceptionAsync));
 
-static async Task HandleExceptionAsync(HttpContext context)
+async static Task HandleExceptionAsync(HttpContext context)
 {
     Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
     if (exception is ValidationException validationException)

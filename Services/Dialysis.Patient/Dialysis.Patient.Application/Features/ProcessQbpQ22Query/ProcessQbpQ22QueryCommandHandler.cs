@@ -52,7 +52,7 @@ internal sealed class ProcessQbpQ22QueryCommandHandler : ICommandHandler<Process
         return await ResolveByNameAsync(query, ct);
     }
 
-    private static async Task<IReadOnlyList<Domain.Patient>> ResolveSingleAsync(Task<Domain.Patient?> lookup)
+    private async static Task<IReadOnlyList<Domain.Patient>> ResolveSingleAsync(Task<Domain.Patient?> lookup)
     {
         Domain.Patient? patient = await lookup;
         return patient is not null ? [patient] : [];

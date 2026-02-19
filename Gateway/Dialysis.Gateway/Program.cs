@@ -38,7 +38,6 @@ builder.Services.AddReverseProxy()
 
 string[] corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 if (corsOrigins.Length > 0)
-{
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
@@ -49,7 +48,6 @@ if (corsOrigins.Length > 0)
                 .WithExposedHeaders("X-Tenant-Id");
         });
     });
-}
 
 builder.Services.AddOpenApi();
 

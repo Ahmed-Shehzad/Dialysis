@@ -32,7 +32,7 @@ public sealed class NtpSyncHealthCheck : IHealthCheck
         }
     }
 
-    private static async Task<HealthCheckResult> CheckLinuxAsync(CancellationToken cancellationToken)
+    private async static Task<HealthCheckResult> CheckLinuxAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -53,7 +53,7 @@ public sealed class NtpSyncHealthCheck : IHealthCheck
         }
     }
 
-    private static async Task<HealthCheckResult> CheckWindowsAsync(CancellationToken cancellationToken)
+    private async static Task<HealthCheckResult> CheckWindowsAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -87,7 +87,7 @@ public sealed class NtpSyncHealthCheck : IHealthCheck
         }
     }
 
-    private static async Task<string> RunProcessAsync(string fileName, string arguments, CancellationToken cancellationToken)
+    private async static Task<string> RunProcessAsync(string fileName, string arguments, CancellationToken cancellationToken)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cts.CancelAfter(ProcessTimeoutMs);
