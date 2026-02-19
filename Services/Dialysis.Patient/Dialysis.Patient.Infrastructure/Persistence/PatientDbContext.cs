@@ -1,5 +1,4 @@
 using BuildingBlocks.Abstractions;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Application.Domain.ValueObjects;
@@ -26,7 +25,10 @@ public sealed class PatientDbContext : DbContext, IDbContext
             _ = e.ToTable("Patients");
             _ = e.HasKey(x => x.Id);
             _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
-            _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
+            _ = e.Property(x => x.TenantId)
+                .HasConversion(v => v.Value, v => new TenantId(v))
+                .HasMaxLength(100)
+                .HasDefaultValue(TenantId.Default);
             _ = e.Property(x => x.MedicalRecordNumber)
                 .HasConversion(v => v.Value, v => new MedicalRecordNumber(v))
                 .HasColumnName("MedicalRecordNumber")

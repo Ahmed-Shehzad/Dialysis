@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.TimeSync;
@@ -26,9 +27,15 @@ using Microsoft.EntityFrameworkCore;
 using Transponder;
 using Transponder.Transports.SignalR;
 
+using Serilog;
 using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, _, config) =>
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.With<ActivityEnricher>()
+        .Enrich.FromLogContext());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>

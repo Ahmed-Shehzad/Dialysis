@@ -1,5 +1,5 @@
 using BuildingBlocks;
-using BuildingBlocks.Tenancy;
+using BuildingBlocks.ValueObjects;
 
 using Dialysis.Device.Application.Domain.Events;
 
@@ -10,7 +10,7 @@ namespace Dialysis.Device.Application.Domain;
 /// </summary>
 public sealed class Device : AggregateRoot
 {
-    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
+    public TenantId TenantId { get; private set; }
     public string DeviceEui64 { get; private set; } = string.Empty;
     public string? Manufacturer { get; private set; }
     public string? Model { get; private set; }
@@ -24,7 +24,7 @@ public sealed class Device : AggregateRoot
         ArgumentException.ThrowIfNullOrWhiteSpace(deviceEui64);
         var device = new Device
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
             DeviceEui64 = deviceEui64.Trim(),
             Manufacturer = manufacturer?.Trim(),
             Model = model?.Trim(),

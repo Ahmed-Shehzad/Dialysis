@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 
 using BuildingBlocks;
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.ValueObjects;
 
 using Dialysis.Device.Application.Abstractions;
 
@@ -25,7 +26,7 @@ public sealed class DeviceRepository : Repository<DeviceDomain>, IDeviceReposito
     public async Task<DeviceDomain?> GetByDeviceEui64Async(string deviceEui64, CancellationToken cancellationToken = default)
     {
         return await _db.Devices
-            .FirstOrDefaultAsync(d => d.TenantId == _tenant.TenantId && d.DeviceEui64 == deviceEui64, cancellationToken);
+            .FirstOrDefaultAsync(d => d.TenantId == new TenantId(_tenant.TenantId) && d.DeviceEui64 == deviceEui64, cancellationToken);
     }
 
     public override async Task AddAsync(DeviceDomain entity, CancellationToken cancellationToken = default) =>

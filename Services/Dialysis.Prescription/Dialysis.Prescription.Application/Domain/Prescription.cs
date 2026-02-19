@@ -1,5 +1,4 @@
 using BuildingBlocks;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 namespace Dialysis.Prescription.Application.Domain;
@@ -9,9 +8,11 @@ namespace Dialysis.Prescription.Application.Domain;
 /// </summary>
 public sealed class Prescription : AggregateRoot
 {
-    private readonly List<ProfileSetting> _settings = [];
+#pragma warning disable IDE0044 // Required for EF Core backing field materialization
+    private List<ProfileSetting> _settings = [];
+#pragma warning restore IDE0044
 
-    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
+    public TenantId TenantId { get; private set; }
     public string OrderId { get; private set; } = string.Empty;
     public MedicalRecordNumber PatientMrn { get; private set; }
     public string? Modality { get; private set; }
@@ -20,27 +21,13 @@ public sealed class Prescription : AggregateRoot
     public DateTimeOffset? ReceivedAt { get; private set; }
     public IReadOnlyCollection<ProfileSetting> Settings => _settings.AsReadOnly();
 
-    /// <summary>
-    /// Used by EF Core for persistence. Value converter in Infrastructure handles JSON serialization.
-    /// </summary>
-    internal List<ProfileSetting> SettingsForPersistence
-    {
-        get => _settings;
-        set
-        {
-            _settings.Clear();
-            if (value is not null)
-                _settings.AddRange(value);
-        }
-    }
-
     private Prescription() { }
 
     public static Prescription Create(string orderId, MedicalRecordNumber patientMrn, string? modality = null, string? orderingProvider = null, string? callbackPhone = null, string? tenantId = null)
     {
         return new Prescription
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
             OrderId = orderId,
             PatientMrn = patientMrn,
             Modality = modality,

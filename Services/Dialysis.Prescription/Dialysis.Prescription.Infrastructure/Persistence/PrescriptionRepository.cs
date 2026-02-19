@@ -27,14 +27,14 @@ public sealed class PrescriptionRepository : Repository<PrescriptionEntity>, IPr
     {
         return await _db.Prescriptions
             .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId && p.OrderId == orderId)
+            .Where(p => p.TenantId == new TenantId(_tenant.TenantId) && p.OrderId == orderId)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<PrescriptionEntity?> GetLatestByMrnAsync(MedicalRecordNumber mrn, CancellationToken cancellationToken = default)
     {
         return await _db.Prescriptions
-            .Where(p => p.TenantId == _tenant.TenantId && p.PatientMrn == mrn)
+            .Where(p => p.TenantId == new TenantId(_tenant.TenantId) && p.PatientMrn == mrn)
             .OrderByDescending(p => p.ReceivedAt)
             .FirstOrDefaultAsync(cancellationToken);
     }

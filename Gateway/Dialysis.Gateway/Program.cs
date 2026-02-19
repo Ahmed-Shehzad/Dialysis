@@ -1,12 +1,20 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
+using BuildingBlocks.Logging;
 using BuildingBlocks.TimeSync;
 
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
+using Serilog;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, _, config) =>
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.With<ActivityEnricher>()
+        .Enrich.FromLogContext());
 
 _ = builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("Dialysis.Gateway"))

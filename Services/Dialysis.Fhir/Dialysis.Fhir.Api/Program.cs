@@ -1,9 +1,12 @@
 using System.Text.Json;
 
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Abstractions;
+
+using Serilog;
 using Dialysis.Fhir.Api;
 using Dialysis.Fhir.Api.Subscriptions;
 using Dialysis.Fhir.Infrastructure.Persistence;
@@ -15,6 +18,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, _, config) =>
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.With<ActivityEnricher>()
+        .Enrich.FromLogContext());
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>

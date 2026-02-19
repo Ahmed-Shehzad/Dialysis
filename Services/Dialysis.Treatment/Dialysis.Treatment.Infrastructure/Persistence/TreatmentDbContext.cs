@@ -1,5 +1,4 @@
 using BuildingBlocks.Abstractions;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Domain;
@@ -35,7 +34,10 @@ internal sealed class TreatmentSessionConfiguration : IEntityTypeConfiguration<T
         _ = e.ToTable("TreatmentSessions");
         _ = e.HasKey(x => x.Id);
         _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
-        _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
+        _ = e.Property(x => x.TenantId)
+            .HasConversion(v => v.Value, v => new TenantId(v))
+            .HasMaxLength(100)
+            .HasDefaultValue(TenantId.Default);
         _ = e.Property(x => x.SessionId)
             .HasConversion(v => v.Value, v => new SessionId(v))
             .IsRequired();

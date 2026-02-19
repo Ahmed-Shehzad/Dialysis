@@ -1,5 +1,4 @@
 using BuildingBlocks;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Application.Domain.Events;
@@ -9,7 +8,7 @@ namespace Dialysis.Patient.Application.Domain;
 
 public sealed class Patient : AggregateRoot
 {
-    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
+    public TenantId TenantId { get; private set; }
     public MedicalRecordNumber MedicalRecordNumber { get; private set; }
     public string? PersonNumber { get; private set; }
     public string? SocialSecurityNumber { get; private set; }
@@ -30,7 +29,7 @@ public sealed class Patient : AggregateRoot
     {
         var patient = new Patient
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
             MedicalRecordNumber = medicalRecordNumber,
             PersonNumber = personNumber,
             SocialSecurityNumber = socialSecurityNumber,

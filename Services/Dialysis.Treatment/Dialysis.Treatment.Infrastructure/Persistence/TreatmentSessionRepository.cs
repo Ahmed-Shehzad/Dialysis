@@ -28,14 +28,14 @@ public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, I
         return await _db.TreatmentSessions
             .AsNoTracking()
             .Include(s => s.Observations)
-            .FirstOrDefaultAsync(s => s.TenantId == _tenant.TenantId && s.SessionId == sessionId, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TenantId == new TenantId(_tenant.TenantId) && s.SessionId == sessionId, cancellationToken);
     }
 
     public async Task<TreatmentSession> GetOrCreateAsync(SessionId sessionId, MedicalRecordNumber? patientMrn, DeviceId? deviceId, CancellationToken cancellationToken = default)
     {
         TreatmentSession? existing = await _db.TreatmentSessions
             .Include(s => s.Observations)
-            .FirstOrDefaultAsync(s => s.TenantId == _tenant.TenantId && s.SessionId == sessionId, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TenantId == new TenantId(_tenant.TenantId) && s.SessionId == sessionId, cancellationToken);
 
         if (existing is not null)
         {

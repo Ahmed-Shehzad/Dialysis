@@ -1,11 +1,19 @@
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Cds.Api;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
+using Serilog;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, _, config) =>
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.With<ActivityEnricher>()
+        .Enrich.FromLogContext());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>

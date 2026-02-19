@@ -1,5 +1,4 @@
 using BuildingBlocks;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Domain.Events;
@@ -11,7 +10,7 @@ public sealed class TreatmentSession : AggregateRoot
 {
     private readonly List<Observation> _observations = [];
 
-    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
+    public TenantId TenantId { get; private set; }
     public SessionId SessionId { get; private set; }
     public MedicalRecordNumber? PatientMrn { get; private set; }
     public DeviceId? DeviceId { get; private set; }
@@ -38,7 +37,7 @@ public sealed class TreatmentSession : AggregateRoot
     {
         var session = new TreatmentSession
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
             SessionId = sessionId,
             PatientMrn = patientMrn,
             DeviceId = deviceId,

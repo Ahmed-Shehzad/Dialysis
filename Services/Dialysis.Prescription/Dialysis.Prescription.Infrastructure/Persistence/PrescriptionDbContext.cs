@@ -1,10 +1,10 @@
 using BuildingBlocks.Abstractions;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
 
 using PrescriptionEntity = Dialysis.Prescription.Application.Domain.Prescription;
+using ProfileSetting = Dialysis.Prescription.Application.Domain.ProfileSetting;
 
 namespace Dialysis.Prescription.Infrastructure.Persistence;
 
@@ -23,7 +23,10 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
         {
             _ = e.ToTable("Prescriptions");
             _ = e.HasKey(x => x.Id);
-            _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
+            _ = e.Property(x => x.TenantId)
+                .HasConversion(v => v.Value, v => new TenantId(v))
+                .HasMaxLength(100)
+                .HasDefaultValue(TenantId.Default);
             _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
             _ = e.Property(x => x.OrderId).IsRequired().HasMaxLength(100);
             _ = e.Property(x => x.PatientMrn)
@@ -33,7 +36,7 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
             _ = e.Property(x => x.OrderingProvider).HasMaxLength(200);
             _ = e.Property(x => x.CallbackPhone).HasMaxLength(50);
             _ = e.Property(x => x.ReceivedAt);
-            var settingsProp = e.Property(x => x.SettingsForPersistence)
+            var settingsProp = e.Property<List<ProfileSetting>>("_settings")
                 .HasColumnName("SettingsJson")
                 .HasColumnType("jsonb")
                 .HasConversion(ProfileSettingListConverter.Instance);

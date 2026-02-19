@@ -4,34 +4,34 @@ overview: Refactor Reports (S3776), extract HypotensionController, add venous pr
 todos:
   - id: reports-refactor
     content: Refactor ParseDurationByPatient/ParseObservationsByCode to reduce cognitive complexity
-    status: in_progress
+    status: completed
   - id: hypotension-controller
     content: Extract HypotensionRiskController from PrescriptionComplianceController
-    status: pending
+    status: completed
   - id: venous-pressure-cds
     content: Add CDS rule for venous pressure limits (high > 200 mmHg)
-    status: pending
+    status: completed
   - id: blood-leak-cds
     content: Add CDS rule for blood leak alert
-    status: pending
+    status: completed
   - id: pdq-date-range
     content: Add PDQ date range query format (QPD-3 @PID.7 or similar)
     status: completed
   - id: fhir-search-params
     content: Document/add FHIR search parameters; IG tracking doc
-    status: pending
+    status: completed
   - id: otel-traces
     content: Add OpenTelemetry tracing across APIs
-    status: pending
+    status: completed
   - id: structured-logging
     content: Add structured logging (Serilog or Microsoft.Extensions.Logging)
-    status: pending
+    status: completed
   - id: react-spa
     content: Create React TypeScript SPA with dashboards (reports, FHIR)
-    status: pending
+    status: completed
   - id: grafana-docs
     content: Add Grafana dashboard reference/example for Prometheus metrics
-    status: pending
+    status: completed
 isProject: true
 ---
 

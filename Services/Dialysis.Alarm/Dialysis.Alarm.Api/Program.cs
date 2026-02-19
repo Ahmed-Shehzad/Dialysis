@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.TimeSync;
@@ -22,9 +23,15 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
+using Serilog;
 using Transponder.Transports.SignalR;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, _, config) =>
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.With<ActivityEnricher>()
+        .Enrich.FromLogContext());
 
 builder.Services.AddAlarmJwtAuthentication(builder.Configuration);
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ScopeOrBypassHandler>();

@@ -28,7 +28,7 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
     {
         return await _db.Patients
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.MedicalRecordNumber == mrn, cancellationToken);
+            .FirstOrDefaultAsync(p => p.TenantId == new TenantId(_tenant.TenantId) && p.MedicalRecordNumber == mrn, cancellationToken);
     }
 
     public async Task<PatientDomain?> GetByPersonNumberAsync(string personNumber, CancellationToken cancellationToken = default)
@@ -36,7 +36,7 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
         if (string.IsNullOrWhiteSpace(personNumber)) return null;
         return await _db.Patients
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.PersonNumber == personNumber, cancellationToken);
+            .FirstOrDefaultAsync(p => p.TenantId == new TenantId(_tenant.TenantId) && p.PersonNumber == personNumber, cancellationToken);
     }
 
     public async Task<PatientDomain?> GetBySsnAsync(string socialSecurityNumber, CancellationToken cancellationToken = default)
@@ -44,14 +44,14 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
         if (string.IsNullOrWhiteSpace(socialSecurityNumber)) return null;
         return await _db.Patients
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.SocialSecurityNumber == socialSecurityNumber, cancellationToken);
+            .FirstOrDefaultAsync(p => p.TenantId == new TenantId(_tenant.TenantId) && p.SocialSecurityNumber == socialSecurityNumber, cancellationToken);
     }
 
     public async Task<IReadOnlyList<PatientDomain>> SearchByNameAsync(Person name, CancellationToken cancellationToken = default)
     {
         return await _db.Patients
             .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId && p.Name.FirstName == name.FirstName && p.Name.LastName == name.LastName)
+            .Where(p => p.TenantId == new TenantId(_tenant.TenantId) && p.Name.FirstName == name.FirstName && p.Name.LastName == name.LastName)
             .ToListAsync(cancellationToken);
     }
 
@@ -60,7 +60,7 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
         if (string.IsNullOrWhiteSpace(lastName)) return [];
         return await _db.Patients
             .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId && p.Name.LastName == lastName)
+            .Where(p => p.TenantId == new TenantId(_tenant.TenantId) && p.Name.LastName == lastName)
             .ToListAsync(cancellationToken);
     }
 
@@ -68,7 +68,7 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
     {
         return await _db.Patients
             .AsNoTracking()
-            .Where(p => p.TenantId == _tenant.TenantId && p.DateOfBirth == birthdate)
+            .Where(p => p.TenantId == new TenantId(_tenant.TenantId) && p.DateOfBirth == birthdate)
             .OrderBy(p => p.Name.LastName)
             .ThenBy(p => p.Name.FirstName)
             .Take(100)

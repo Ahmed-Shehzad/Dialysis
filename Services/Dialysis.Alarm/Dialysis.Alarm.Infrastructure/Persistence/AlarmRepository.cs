@@ -30,7 +30,7 @@ public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
             return null;
 
         IQueryable<AlarmDomain> query = _db.Alarms
-            .Where(a => a.TenantId == _tenant.TenantId && a.SourceCode == sourceCode);
+            .Where(a => a.TenantId == new TenantId(_tenant.TenantId) && a.SourceCode == sourceCode);
         if (deviceId is not null)
             query = query.Where(a => a.DeviceId == deviceId);
         if (!string.IsNullOrEmpty(sessionId))

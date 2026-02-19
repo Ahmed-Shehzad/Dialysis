@@ -1,5 +1,4 @@
 using BuildingBlocks;
-using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.Events;
@@ -9,7 +8,7 @@ namespace Dialysis.Alarm.Application.Domain;
 
 public sealed class Alarm : AggregateRoot
 {
-    public string TenantId { get; private set; } = TenantContext.DefaultTenantId;
+    public TenantId TenantId { get; private set; }
     public string? AlarmType { get; private set; }
     public string? SourceCode { get; private set; }
     public string? SourceLimits { get; private set; }
@@ -33,7 +32,7 @@ public sealed class Alarm : AggregateRoot
     {
         var alarm = new Alarm
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantContext.DefaultTenantId : tenantId,
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
             AlarmType = info.AlarmType,
             SourceCode = info.SourceCode,
             SourceLimits = info.SourceLimits,

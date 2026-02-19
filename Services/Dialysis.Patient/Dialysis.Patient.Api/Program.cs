@@ -1,9 +1,11 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 
 using Dialysis.Patient.Application.Abstractions;
+
 using Dialysis.Patient.Application.Features.GetPatientByMrn;
 using Dialysis.Patient.Application.Features.ProcessQbpQ22Query;
 using Dialysis.Patient.Infrastructure;
@@ -16,9 +18,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
+using Serilog;
 using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, _, config) =>
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.With<ActivityEnricher>()
+        .Enrich.FromLogContext());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>

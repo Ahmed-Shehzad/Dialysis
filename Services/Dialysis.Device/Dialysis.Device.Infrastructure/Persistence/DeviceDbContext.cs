@@ -1,5 +1,5 @@
 using BuildingBlocks.Abstractions;
-using BuildingBlocks.Tenancy;
+using BuildingBlocks.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +23,10 @@ public sealed class DeviceDbContext : DbContext, IDbContext
             _ = e.ToTable("Devices");
             _ = e.HasKey(x => x.Id);
             _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
-            _ = e.Property(x => x.TenantId).HasMaxLength(100).HasDefaultValue(TenantContext.DefaultTenantId);
+            _ = e.Property(x => x.TenantId)
+                .HasConversion(v => v.Value, v => new TenantId(v))
+                .HasMaxLength(100)
+                .HasDefaultValue(TenantId.Default);
             _ = e.Property(x => x.DeviceEui64).HasMaxLength(200).IsRequired();
             _ = e.Property(x => x.Manufacturer).HasMaxLength(500);
             _ = e.Property(x => x.Model).HasMaxLength(200);
