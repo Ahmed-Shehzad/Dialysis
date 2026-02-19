@@ -126,7 +126,7 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 - [x] Add `ProcessQbpD01QueryCommand` – parses query, loads prescription by MRN, builds RSP^K22
 - [x] Add `POST /api/hl7/qbp-d01` to `Hl7Controller` – accepts raw HL7, returns RSP^K22
 - [x] Unit tests: `QbpD01Parser`, `RspK22Builder`
-- [ ] Integration test: QBP^D01 → RSP^K22 round-trip
+- [x] Integration test: QBP^D01 → RSP^K22 round-trip
 - [x] Update docs: `SYSTEM-ARCHITECTURE.md` prescription flow
 
 ### Files to Create/Modify
@@ -171,9 +171,9 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 - [x] Resolve EF design-time issue (map `SettingsJson` as string; ignore `Settings` property)
 - [x] Create `Dialysis.Prescription.Infrastructure/Migrations/` with initial migration
 - [x] Replace `EnsureCreatedAsync()` with `MigrateAsync()` in `Program.cs`
-- [ ] Verify migration produces schema equivalent to current EnsureCreated
-- [ ] Add migration workflow to docs (how to add new migrations)
-- [ ] Consider: run migrations in CI or at deploy time vs. app startup
+- [x] Verify migration produces schema equivalent to current EnsureCreated
+- [x] Add migration workflow to docs (how to add new migrations)
+- [x] Consider: run migrations in CI or at deploy time vs. app startup
 
 ### Caveats
 
@@ -200,24 +200,24 @@ Cross-reference of the Dialysis Machine HL7 Implementation Guide (Rev 4.0) with 
 | Guide Requirement | HL7 Transaction | Status | Gap |
 |---|---|---|---|
 | Patient Demographics (PDQ) | QBP^Q22 / RSP^K22 | Done | — |
-| Prescription Transfer | QBP^D01 / RSP^K22 | Done | Minor: OBX sub-ID, Rx Use column |
+| Prescription Transfer | QBP^D01 / RSP^K22 | Done | — |
 | Treatment Reporting (PCD-01) | ORU^R01 / ACK^R01 | Done | — |
 | Alarm Reporting (PCD-04) | ORU^R40 / ORA^R41 | Done | — |
 | HL7-to-FHIR Mapping | N/A | Done | — |
 | C5 Auth / Audit / Tenant | N/A | Done | — |
-| Tests | N/A | Done | Additional coverage possible |
-| HL7 Batch Protocol | FHS/BHS/BTS/FTS | Not started | Lower priority |
+| Tests | N/A | Done | — |
+| HL7 Batch Protocol | FHS/BHS/BTS/FTS | Done | IngestOruBatch, Hl7BatchParser, OruBatchToSessionsIntegrationTests |
 
-### Remaining Gaps (Lower Priority)
+### Implemented (P5 items addressed)
 
-| Gap | Category | Priority |
-|---|---|---|
-| OBX sub-ID dotted notation for IEEE 11073 containment | Prescription | P5 |
-| Rx Use column (M/C/O from Table 2) | Prescription | P5 |
-| Prescription conflict handling (discard/callback/partial) | Prescription | P5 |
-| HL7 Batch Protocol (FHS/BHS/BTS/FTS) | Treatment | P5 |
-| Integration test: QBP^D01 → RSP^K22 round-trip | Prescription | P3 |
-| Document JWT claims and Mirth token workflow | Auth | P3 |
+| Item | Implementation |
+|---|---|
+| OBX sub-ID (IEEE 11073 containment) | MdcToObxSubIdCatalog, RspK22Builder, RspK22Parser, RspK22BuilderObxSubIdTests |
+| Rx Use column (M/C/O Table 2) | RxUse enum, PrescriptionRxUseCatalog, ProfileSetting.Use |
+| Prescription conflict handling | Reject, Replace, Ignore, Callback, Partial – IngestRspK22ConflictTests |
+| HL7 Batch Protocol | Hl7BatchParser, IngestOruBatch, POST /api/hl7/oru/batch |
+| QBP^D01 → RSP^K22 integration test | ProcessQbpD01IntegrationTests, RspK22IngestThenQbpD01Query_ReturnsMatchingRspK22Async |
+| JWT claims and Mirth token workflow | JWT-AND-MIRTH-INTEGRATION.md |
 
 ---
 

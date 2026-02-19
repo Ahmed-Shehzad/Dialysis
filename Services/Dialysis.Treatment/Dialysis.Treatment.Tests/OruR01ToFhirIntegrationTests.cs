@@ -1,4 +1,5 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Testcontainers;
 
 using Dialysis.Hl7ToFhir;
 using Dialysis.Treatment.Application.Abstractions;
@@ -25,33 +26,38 @@ namespace Dialysis.Treatment.Tests;
 
 /// <summary>
 /// End-to-end integration tests: parse ORU^R01 → IngestOruMessage → RecordObservation → GetTreatmentSession → FHIR Bundle.
+/// Uses Testcontainers PostgreSQL for real database behavior.
 /// </summary>
+[Collection(PostgreSqlCollection.Name)]
 public sealed class OruR01ToFhirIntegrationTests
 {
+    private readonly PostgreSqlFixture _fixture;
+
+    public OruR01ToFhirIntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task OruR01_IngestAndRecord_ProducesFhirBundleWithProcedureAndObservationsAsync()
     {
         await using TreatmentDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Observations.ExecuteDeleteAsync();
+        _ = await db.TreatmentSessions.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
         var ingestHandler = new IngestOruMessageCommandHandler(new Sender(repository), new OruR01Parser(), new NoOpDeviceRegistrationClient());
         var getHandler = new GetTreatmentSessionQueryHandler(repository);
 
-        const string oruR01 = """
-            MSH|^~\&|MACH^EUI64^EUI-64|FAC|PDMS|FAC|20230215120000||ORU^R01^ORU_R01|MSG001|P|2.6
-            PID|||MRN123^^^^MR
-            OBR|1||THERAPY001^MACH^EUI64|||20230215120000||||||start
-            OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM|||||F|||20230215120000|||AMEAS
-            OBX|2|NM|158776^MDC_HDIALY_BLD_PUMP_PRESS_VEN^MDC|1.1.3.2|120|mmHg^mm[Hg]^UCUM|80-200||||F|||20230215120100|||AMEAS
-            """;
+        string mrn = TreatmentTestData.Mrn();
+        string sessionId = TreatmentTestData.SessionId();
+        string oruR01 = TreatmentTestData.OruR01(mrn, sessionId);
 
 #pragma warning disable IDE0058
         IngestOruMessageResponse ingestResponse = await ingestHandler.HandleAsync(new IngestOruMessageCommand(oruR01));
         ingestResponse.ObservationCount.ShouldBe(2);
-        ingestResponse.SessionId.ShouldBe("THERAPY001");
+        ingestResponse.SessionId.ShouldBe(sessionId);
 
-        GetTreatmentSessionResponse? sessionResponse = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new SessionId("THERAPY001")));
-        sessionResponse.ShouldNotBeNull();
+        GetTreatmentSessionResponse? sessionResponse = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new SessionId(sessionId)));
+        _ = sessionResponse.ShouldNotBeNull();
         sessionResponse.Observations.Count.ShouldBe(2);
 #pragma warning restore IDE0058
 
@@ -114,44 +120,40 @@ public sealed class OruR01ToFhirIntegrationTests
         bundle.Entry.Count.ShouldBe(5); // 1 Procedure + 2 Observations + 2 Provenance
 
         Resource? res0 = bundle.Entry[0].Resource;
-        res0.ShouldNotBeNull();
-        res0.ShouldBeOfType<Procedure>();
+        _ = res0.ShouldNotBeNull();
+        _ = res0.ShouldBeOfType<Procedure>();
         ((Procedure)res0!).Code!.Text.ShouldBe("Hemodialysis");
 
-        Resource? res1 = bundle.Entry[1].Resource;
-        res1.ShouldNotBeNull();
-        res1.ShouldBeOfType<Observation>();
-        var obs1 = (Observation)res1!;
-        obs1.Code!.Coding.ShouldContain(c => c.System == "urn:iso:std:iso:11073:10101");
-        obs1.Value.ShouldBeOfType<Quantity>();
-        ((Quantity)(obs1.Value ?? throw new InvalidOperationException("obs1.Value is null"))).Value.ShouldBe(300);
+        Observation? obs152348 = bundle.Entry
+            .Select(e => e.Resource)
+            .OfType<Observation>()
+            .FirstOrDefault(o => o.Code != null && o.Code.Coding != null && o.Code.Coding.Any(c => c.Code == "152348"));
+        _ = obs152348.ShouldNotBeNull();
+        _ = obs152348!.Value.ShouldBeOfType<Quantity>();
+        ((Quantity)(obs152348.Value ?? throw new InvalidOperationException("obs152348.Value is null"))).Value.ShouldBe(300);
 
-        Resource? prov1 = bundle.Entry[2].Resource;
-        prov1.ShouldNotBeNull();
-        prov1.ShouldBeOfType<Provenance>();
-        var provenance1 = (Provenance)prov1;
-        provenance1.Target.ShouldContain(t => t.Reference == "urn:uuid:obs-152348-1.1.3.1");
-        provenance1.Activity!.Text.ShouldBe("Automatic measurement");
+        Observation? obs158776 = bundle.Entry
+            .Select(e => e.Resource)
+            .OfType<Observation>()
+            .FirstOrDefault(o => o.Code != null && o.Code.Coding != null && o.Code.Coding.Any(c => c.Code == "158776"));
+        _ = obs158776.ShouldNotBeNull();
+        _ = obs158776!.Value.ShouldBeOfType<Quantity>();
+        ((Quantity)(obs158776.Value ?? throw new InvalidOperationException("obs158776.Value is null"))).Value.ShouldBe(120);
+        obs158776.ReferenceRange.ShouldContain(r => r.Text == "80-200");
 
-        Resource? res2 = bundle.Entry[3].Resource;
-        res2.ShouldNotBeNull();
-        res2.ShouldBeOfType<Observation>();
-        var obs2 = (Observation)res2;
-        ((Quantity)(obs2.Value ?? throw new InvalidOperationException("obs2.Value is null"))).Value.ShouldBe(120);
-        obs2.ReferenceRange.ShouldContain(r => r.Text == "80-200");
-
-        Resource? prov2 = bundle.Entry[4].Resource;
-        prov2.ShouldNotBeNull();
-        prov2.ShouldBeOfType<Provenance>();
-        var provenance2 = (Provenance)prov2;
-        provenance2.Target.ShouldContain(t => t.Reference == "urn:uuid:obs-158776-1.1.3.2");
+        var provenanceEntries = bundle.Entry.Select(e => e.Resource).OfType<Provenance>().ToList();
+        provenanceEntries.Count.ShouldBe(2);
+        provenanceEntries.ShouldContain(p => p.Target != null && p.Target.Any(t => t.Reference == "urn:uuid:obs-152348-1.1.3.1"));
+        provenanceEntries.ShouldContain(p => p.Target != null && p.Target.Any(t => t.Reference == "urn:uuid:obs-158776-1.1.3.2"));
+        provenanceEntries.First(p => p.Target != null && p.Target.Any(t => t.Reference == "urn:uuid:obs-152348-1.1.3.1"))
+            .Activity!.Text.ShouldBe("Automatic measurement");
 #pragma warning restore IDE0058
     }
 
-    private static TreatmentDbContext CreateDbContext()
+    private TreatmentDbContext CreateDbContext()
     {
         DbContextOptions<TreatmentDbContext> options = new DbContextOptionsBuilder<TreatmentDbContext>()
-            .UseInMemoryDatabase("OruR01ToFhir_" + Guid.NewGuid().ToString("N"))
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new TreatmentDbContext(options);
     }

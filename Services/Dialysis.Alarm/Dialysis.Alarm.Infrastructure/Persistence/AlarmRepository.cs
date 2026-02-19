@@ -5,6 +5,7 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -62,7 +63,7 @@ public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
             query = query.Where(a => a.SessionId == sessionId);
 
         return await query
-            .Where(a => a.AlarmState.Value == "active" || a.AlarmState.Value == "latched")
+            .Where(a => a.AlarmState == AlarmState.Active || a.AlarmState == AlarmState.Latched)
             .OrderByDescending(a => a.OccurredAt)
             .FirstOrDefaultAsync(cancellationToken);
     }

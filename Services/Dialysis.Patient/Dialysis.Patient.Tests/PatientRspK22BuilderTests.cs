@@ -17,7 +17,7 @@ public sealed class PatientRspK22BuilderTests
     [Fact]
     public void BuildFromPatients_ContainsMshSegment()
     {
-        DomainPatient patient = DomainPatient.Register(
+        var patient = DomainPatient.Register(
             new MedicalRecordNumber("MRN001"),
             new Person("John", "Smith"),
             new DateOnly(1980, 5, 15),
@@ -34,7 +34,7 @@ public sealed class PatientRspK22BuilderTests
     [Fact]
     public void BuildFromPatients_ContainsPidWithDemographics()
     {
-        DomainPatient patient = DomainPatient.Register(
+        var patient = DomainPatient.Register(
             new MedicalRecordNumber("MRN001"),
             new Person("John", "Smith"),
             new DateOnly(1980, 5, 15),
@@ -54,7 +54,7 @@ public sealed class PatientRspK22BuilderTests
     [Fact]
     public void BuildFromPatients_QakShowsOkStatus()
     {
-        DomainPatient patient = DomainPatient.Register(
+        var patient = DomainPatient.Register(
             new MedicalRecordNumber("MRN001"),
             new Person("John", "Smith"),
             null,

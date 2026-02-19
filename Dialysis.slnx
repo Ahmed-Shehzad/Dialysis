@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Core/">
     <Project Path="BuildingBlocks/BuildingBlocks.csproj" />
+    <Project Path="BuildingBlocks.Testcontainers/BuildingBlocks.Testcontainers.csproj" />
   </Folder>
   <Folder Name="/Libraries/" />
   <Folder Name="/Libraries/FluentValidation/">

@@ -9,15 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\..\BuildingBlocks.Testcontainers\PostgreSqlCollectionDefinition.cs" Link="PostgreSqlCollectionDefinition.cs" />
+    <ProjectReference Include="..\..\..\BuildingBlocks.Testcontainers\BuildingBlocks.Testcontainers.csproj" />
     <ProjectReference Include="..\Dialysis.Prescription.Application\Dialysis.Prescription.Application.csproj" />
     <ProjectReference Include="..\Dialysis.Prescription.Infrastructure\Dialysis.Prescription.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="Bogus" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />

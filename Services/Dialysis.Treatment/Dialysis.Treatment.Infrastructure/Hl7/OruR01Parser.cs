@@ -161,7 +161,7 @@ public sealed partial class OruR01Parser : IOruMessageParser
         string? provenance = SafeField(fields, 17);
         string? equipmentId = SafeField(fields, 18);
 
-        ContainmentPath? path = ContainmentPath.TryParse(subId);
+        var path = ContainmentPath.TryParse(subId);
         ContainmentLevel? level = path?.Level ?? (MdcCodeCatalog.TryGet(code, out MdcCodeDescriptor d) ? d.Level : null);
 
         ObservationStatus? status = !string.IsNullOrEmpty(resultStatus)

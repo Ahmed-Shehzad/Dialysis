@@ -1,4 +1,5 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Testcontainers;
 
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain.ValueObjects;
@@ -23,13 +24,20 @@ namespace Dialysis.Treatment.Tests;
 
 /// <summary>
 /// End-to-end: FHS/BHS/ORU.../ORU.../BTS/FTS → IngestOruBatch → multiple sessions.
+/// Uses Testcontainers PostgreSQL for real database behavior.
 /// </summary>
+[Collection(PostgreSqlCollection.Name)]
 public sealed class OruBatchToSessionsIntegrationTests
 {
+    private readonly PostgreSqlFixture _fixture;
+
+    public OruBatchToSessionsIntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task OruBatch_TwoOruMessages_ProducesTwoSessionsAsync()
     {
         await using TreatmentDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
         var sender = new BatchTestSender(repository);
@@ -59,8 +67,8 @@ public sealed class OruBatchToSessionsIntegrationTests
         GetTreatmentSessionResponse? s2 = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new SessionId("SESS002")));
 
 #pragma warning disable IDE0058
-        s1.ShouldNotBeNull();
-        s2.ShouldNotBeNull();
+        _ = s1.ShouldNotBeNull();
+        _ = s2.ShouldNotBeNull();
         s1.PatientMrn.ShouldBe("MRN1");
         s2.PatientMrn.ShouldBe("MRN2");
         s1.Observations.Count.ShouldBe(1);
@@ -68,10 +76,10 @@ public sealed class OruBatchToSessionsIntegrationTests
 #pragma warning restore IDE0058
     }
 
-    private static TreatmentDbContext CreateDbContext()
+    private TreatmentDbContext CreateDbContext()
     {
         DbContextOptions<TreatmentDbContext> options = new DbContextOptionsBuilder<TreatmentDbContext>()
-            .UseInMemoryDatabase("OruBatch_" + Guid.NewGuid().ToString("N"))
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new TreatmentDbContext(options);
     }

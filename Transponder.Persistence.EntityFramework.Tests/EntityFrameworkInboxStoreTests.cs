@@ -1,13 +1,21 @@
+using BuildingBlocks.Testcontainers;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Transponder.Persistence.EntityFramework.Tests;
 
+[Collection(PostgreSqlCollection.Name)]
 public sealed class EntityFrameworkInboxStoreTests
 {
+    private readonly PostgreSqlFixture _fixture;
+
+    public EntityFrameworkInboxStoreTests(PostgreSqlFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task TryAddAsync_Returns_False_For_Duplicate_StateAsync()
     {
-        await using EntityFrameworkTestDbContext context = CreateContext(nameof(TryAddAsync_Returns_False_For_Duplicate_StateAsync));
+        await using EntityFrameworkTestDbContext context = CreateContext();
+        _ = await context.Database.EnsureCreatedAsync();
         var store = new EntityFrameworkInboxStore(context);
         var state = new InboxState(Ulid.NewUlid(), "consumer-A");
 
@@ -19,10 +27,10 @@ public sealed class EntityFrameworkInboxStoreTests
         Assert.False(secondAdd);
     }
 
-    private static EntityFrameworkTestDbContext CreateContext(string databaseName)
+    private EntityFrameworkTestDbContext CreateContext()
     {
         DbContextOptions<EntityFrameworkTestDbContext> options = new DbContextOptionsBuilder<EntityFrameworkTestDbContext>()
-            .UseInMemoryDatabase(databaseName)
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
 
         return new EntityFrameworkTestDbContext(options);

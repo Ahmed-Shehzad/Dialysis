@@ -1,4 +1,5 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Testcontainers;
 
 using Dialysis.Alarm.Application.Abstractions;
 using Dialysis.Alarm.Application.Features.RecordAlarm;
@@ -14,13 +15,20 @@ using Shouldly;
 
 namespace Dialysis.Alarm.Tests;
 
-/// <summary>End-to-end integration tests: parse ORU^R40 → RecordAlarm → persist → verify via GetAlarms.</summary>
+/// <summary>End-to-end integration tests: parse ORU^R40 → RecordAlarm → persist → verify via GetAlarms. Uses Testcontainers PostgreSQL.</summary>
+[Collection(PostgreSqlCollection.Name)]
 public sealed class IngestOruR40IntegrationTests
 {
+    private readonly PostgreSqlFixture _fixture;
+
+    public IngestOruR40IntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task IngestOruR40_ParsesAndStoresAlarm_RetrievableViaRepositoryAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -60,6 +68,8 @@ public sealed class IngestOruR40IntegrationTests
     public async Task IngestOruR40_StartContinueEndLifecycle_UpdatesExistingAlarmAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -97,10 +107,10 @@ public sealed class IngestOruR40IntegrationTests
         alarms[0].AlarmState.Value.ShouldBe("inactive");
     }
 
-    private static AlarmDbContext CreateDbContext()
+    private AlarmDbContext CreateDbContext()
     {
         DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
-            .UseInMemoryDatabase("IngestOruR40_" + Guid.NewGuid().ToString("N"))
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new AlarmDbContext(options);
     }

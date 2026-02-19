@@ -1,4 +1,5 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Domain;
@@ -17,65 +18,61 @@ namespace Dialysis.Prescription.Tests;
 
 /// <summary>
 /// Integration tests for prescription conflict handling: Callback (409 with callbackPhone), Partial merge.
+/// Uses Testcontainers PostgreSQL for real database behavior.
 /// </summary>
+[Collection(PostgreSqlCollection.Name)]
 public sealed class IngestRspK22ConflictTests
 {
-    private const string RspK22Order001 = """
-                                           MSH|^~\&|EMR|FAC|MACH|FAC|20230215120000||RSP^K22^RSP_K21|MSG001|P|2.6
-                                           MSA|AA|MSG001
-                                           QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|MRN123^^^^MR
-                                           ORC|NW|ORD001^FAC|||||20230215120000|||PROVIDER||555-1111
-                                           PID|||MRN123^^^^MR
-                                           OBX|1|NM|12345^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING^MDC||300|ml/min||||||||||RSET
-                                           OBX|2|NM|12346^MDC_HDIALY_UF_RATE_SETTING^MDC||500|mL/h||||||||||RSET
-                                           OBX|3|NM|12347^MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE^MDC||2000|mL||||||||||RSET
-                                           """;
+    private readonly PostgreSqlFixture _fixture;
 
-    private const string RspK22Order001WithNewSetting = """
-                                                        MSH|^~\&|EMR|FAC|MACH|FAC|20230215130000||RSP^K22^RSP_K21|MSG002|P|2.6
-                                                        MSA|AA|MSG002
-                                                        QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q002|@PID.3|MRN123^^^^MR
-                                                        ORC|NW|ORD001^FAC|||||20230215130000|||PROVIDER||555-2222
-                                                        PID|||MRN123^^^^MR
-                                                        OBX|1|NM|12345^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING^MDC||350|ml/min||||||||||RSET
-                                                        OBX|2|NM|12346^MDC_HDIALY_UF_RATE_SETTING^MDC||600|mL/h||||||||||RSET
-                                                        OBX|3|NM|12347^MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE^MDC||2500|mL||||||||||RSET
-                                                        OBX|4|NM|12348^MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING^MDC||500|ml/min||||||||||RSET
-                                                        """;
+    public IngestRspK22ConflictTests(PostgreSqlFixture fixture) => _fixture = fixture;
 
     [Fact]
     public async Task Callback_WhenConflict_ThrowsPrescriptionConflictExceptionWithCallbackPhoneAsync()
     {
-        (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync();
+        string mrn = PrescriptionTestData.Mrn();
+        string orderId = PrescriptionTestData.OrderId();
+        string phone1 = PrescriptionTestData.CallbackPhone();
+        string rspK22First = PrescriptionTestData.RspK22ConflictMessage(new RspK22ConflictParams(mrn, orderId, phone1));
+
+        (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync(mrn, orderId, phone1);
         await using (db)
         {
-            var command = new IngestRspK22MessageCommand(RspK22Order001, null, PrescriptionConflictPolicy.Callback);
+            var command = new IngestRspK22MessageCommand(rspK22First, null, PrescriptionConflictPolicy.Callback);
 
             PrescriptionConflictException ex = await Should.ThrowAsync<PrescriptionConflictException>(
                 () => handler.HandleAsync(command));
 
-            ex.OrderId.ShouldBe("ORD001");
-            ex.CallbackPhone.ShouldBe("555-1111");
+            ex.OrderId.ShouldBe(orderId);
+            ex.CallbackPhone.ShouldBe(phone1);
         }
     }
 
     [Fact]
     public async Task Partial_WhenConflict_MergesNewSettingsOnlyAsync()
     {
-        (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync();
+        string mrn = PrescriptionTestData.Mrn();
+        string orderId = PrescriptionTestData.OrderId();
+        string phone1 = PrescriptionTestData.CallbackPhone();
+        string phone2 = PrescriptionTestData.CallbackPhone();
+        string rspK22WithNewSetting = PrescriptionTestData.RspK22ConflictMessage(new RspK22ConflictParams(
+            mrn, orderId, phone2, "20230215130000", "MSG002", 350, 600, 2500,
+            "OBX|4|NM|12348^MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING^MDC||500|ml/min||||||||||RSET"));
+
+        (PrescriptionDbContext db, IngestRspK22MessageCommandHandler handler) = await CreateDbAndHandlerAsync(mrn, orderId, phone1);
         await using (db)
         {
-            var command = new IngestRspK22MessageCommand(RspK22Order001WithNewSetting, null, PrescriptionConflictPolicy.Partial);
+            var command = new IngestRspK22MessageCommand(rspK22WithNewSetting, null, PrescriptionConflictPolicy.Partial);
 
             IngestRspK22MessageResponse response = await handler.HandleAsync(command);
 
-            response.OrderId.ShouldBe("ORD001");
+            response.OrderId.ShouldBe(orderId);
             response.SettingsCount.ShouldBe(1);
             response.Success.ShouldBeTrue();
 
             PrescriptionEntity? merged = await db.Prescriptions
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.OrderId == "ORD001");
+                .FirstOrDefaultAsync(p => p.OrderId == orderId);
 
             merged = merged.ShouldNotBeNull();
             merged.Settings.Count.ShouldBe(4);
@@ -85,23 +82,23 @@ public sealed class IngestRspK22ConflictTests
         }
     }
 
-    private static async Task<(PrescriptionDbContext Db, IngestRspK22MessageCommandHandler Handler)> CreateDbAndHandlerAsync()
+    private async Task<(PrescriptionDbContext Db, IngestRspK22MessageCommandHandler Handler)> CreateDbAndHandlerAsync(string mrn, string orderId, string callbackPhone)
     {
-        string dbName = "IngestConflict_" + Guid.NewGuid();
         DbContextOptions<PrescriptionDbContext> options = new DbContextOptionsBuilder<PrescriptionDbContext>()
-            .UseInMemoryDatabase(databaseName: dbName)
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
 
         await using (var setupDb = new PrescriptionDbContext(options))
         {
             _ = await setupDb.Database.EnsureCreatedAsync();
+            _ = await setupDb.Prescriptions.ExecuteDeleteAsync();
 
             var prescription = PrescriptionEntity.Create(
-                "ORD001",
-                new MedicalRecordNumber("MRN123"),
+                orderId,
+                new MedicalRecordNumber(mrn),
                 "HD",
                 "PROVIDER",
-                "555-1111",
+                callbackPhone,
                 TenantContext.DefaultTenantId);
 
             prescription.AddSetting(ProfileSetting.Constant("MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING", 300, null, "RSET"));

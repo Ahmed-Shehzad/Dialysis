@@ -8,11 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../BuildingBlocks.Testcontainers/PostgreSqlCollectionDefinition.cs" Link="PostgreSqlCollectionDefinition.cs" />
+    <ProjectReference Include="../BuildingBlocks.Testcontainers/BuildingBlocks.Testcontainers.csproj" />
     <ProjectReference Include="../Transponder.Persistence.EntityFramework/Transponder.Persistence.EntityFramework.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />

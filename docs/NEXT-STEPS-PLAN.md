@@ -72,7 +72,8 @@
 
 ### 4.2 Implementation Notes
 
-- Follow `OruR01ToFhirIntegrationTests` pattern: in-memory DB, minimal mocks, full pipeline
+- Integration tests use **Testcontainers PostgreSQL** (`BuildingBlocks.Testcontainers`) for real database behavior; Docker required locally and in CI
+- Follow `OruR01ToFhirIntegrationTests` pattern: Testcontainers DB, minimal mocks, full pipeline
 - Use `#pragma warning disable IDE0058` for Shouldly assertions if needed
 - Added `InternalsVisibleTo("Dialysis.Patient.Tests")` to Patient.Application for handler access
 
@@ -220,6 +221,19 @@ flowchart LR
 | 4 | Mirth integration guide updated with channel routing |
 | 5 | Gateway routing all PDMS APIs (if adopted) |
 | 6 | `docker-compose up` runs full stack successfully |
+
+---
+
+## 11. Future Enhancements (Optional)
+
+All planned steps (1–6) and HL7 Implementation Guide Phases 1–5 are complete. Optional follow-ups:
+
+| Focus | Effort | Notes |
+|-------|--------|-------|
+| Additional test coverage | Small | Edge cases, error paths |
+| Performance/load testing | Medium | Benchmark API under load |
+| Mirth container in docker-compose | Small | End-to-end HL7 with real Mirth |
+| Production deployment docs | Medium | Azure App Service, AKS, Key Vault |
 
 ---
 

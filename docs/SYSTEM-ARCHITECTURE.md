@@ -524,14 +524,41 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 
 ## 15. Migrations (EF Core)
 
-Prescription service uses EF Core migrations. Apply on startup in Development via `MigrateAsync()`. To add a new migration:
+All Dialysis services (Patient, Prescription, Treatment, Alarm, Device) use EF Core migrations. Apply on startup in Development via `MigrateAsync()`.
+
+**Add a new migration:** From the solution root, run:
 
 ```bash
-dotnet ef migrations add <Name> \
-  --project Services/Dialysis.Prescription/Dialysis.Prescription.Infrastructure/Dialysis.Prescription.Infrastructure.csproj \
-  --startup-project Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj \
-  --output-dir Persistence/Migrations
+dotnet ef migrations add <MigrationName> --project <InfrastructureProject> --startup-project <ApiProject> --output-dir Persistence/Migrations
 ```
+
+| Service      | Infrastructure Project | Api Project |
+|--------------|------------------------|-------------|
+| Patient      | `Services/Dialysis.Patient/Dialysis.Patient.Infrastructure/Dialysis.Patient.Infrastructure.csproj` | `Services/Dialysis.Patient/Dialysis.Patient.Api/Dialysis.Patient.Api.csproj` |
+| Prescription | `Services/Dialysis.Prescription/Dialysis.Prescription.Infrastructure/Dialysis.Prescription.Infrastructure.csproj` | `Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj` |
+| Treatment    | `Services/Dialysis.Treatment/Dialysis.Treatment.Infrastructure/Dialysis.Treatment.Infrastructure.csproj` | `Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj` |
+| Alarm        | `Services/Dialysis.Alarm/Dialysis.Alarm.Infrastructure/Dialysis.Alarm.Infrastructure.csproj` | `Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj` |
+| Device       | `Services/Dialysis.Device/Dialysis.Device.Infrastructure/Dialysis.Device.Infrastructure.csproj` | `Services/Dialysis.Device/Dialysis.Device.Api/Dialysis.Device.Api.csproj` |
+
+**When to run migrations:**
+
+| Environment | Strategy | Notes |
+|-------------|----------|-------|
+| **Development** | `MigrateAsync()` on app startup (when `IsDevelopment`) | Automatic; DB created/updated when API starts |
+| **Production** | Choose one: (a) Startup, (b) CI/CD job, (c) Separate migration runner | Startup: simplest; CI/CD: run before deploy; Runner: explicit, no app dependency |
+| **Docker Compose** | Startup (ASPNETCORE_ENVIRONMENT=Development) | Per-service DBs; migrations apply when each API starts |
+
+For production, prefer running migrations as a distinct CI/CD step or hosted job before the API starts, to avoid multiple instances applying concurrently. If using startup, ensure only one replica migrates (e.g. leader election or init container).
+
+---
+
+## 15a. Testing Infrastructure
+
+**Testcontainers PostgreSQL:** Integration tests use `BuildingBlocks.Testcontainers` (PostgreSqlFixture, PostgreSqlCollectionDefinition) for real database behavior. Docker required locally and in CI. The fixture implements `IAsyncLifetime` and disposes the container when the collection finishes.
+
+**Bogus:** Dialysis service tests use [Bogus](https://github.com/bchavez/Bogus) for deterministic fake data (`PatientTestData`, `PrescriptionTestData`, `TreatmentTestData`, `AlarmTestData`, `DeviceTestData`). Tests share a seeded Faker via `Randomizer.Seed` for reproducibility.
+
+**Test isolation:** Tests in the same collection share one PostgreSQL instance. Each test that expects empty or specific data clears tables with `ExecuteDeleteAsync()` at the start (e.g. `await db.Alarms.ExecuteDeleteAsync()`).
 
 ---
 

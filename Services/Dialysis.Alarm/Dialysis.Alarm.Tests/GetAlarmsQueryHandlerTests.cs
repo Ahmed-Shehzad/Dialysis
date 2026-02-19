@@ -1,4 +1,5 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -14,12 +15,19 @@ using Shouldly;
 
 namespace Dialysis.Alarm.Tests;
 
+[Collection(PostgreSqlCollection.Name)]
 public sealed class GetAlarmsQueryHandlerTests
 {
+    private readonly PostgreSqlFixture _fixture;
+
+    public GetAlarmsQueryHandlerTests(PostgreSqlFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task HandleAsync_NoFilters_ReturnsAllAlarmsAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         AlarmDomain alarm = CreateAlarm("Venous Pressure High", "DEV1", "sess-001", DateTimeOffset.UtcNow.AddMinutes(-10));
         _ = db.Alarms.Add(alarm);
         _ = await db.SaveChangesAsync();
@@ -41,6 +49,8 @@ public sealed class GetAlarmsQueryHandlerTests
     public async Task HandleAsync_FilterBySessionId_ReturnsMatchingAlarmsAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         _ = db.Alarms.Add(CreateAlarm("Alarm A", "DEV1", "sess-001", DateTimeOffset.UtcNow));
         _ = db.Alarms.Add(CreateAlarm("Alarm B", "DEV1", "sess-002", DateTimeOffset.UtcNow));
         _ = await db.SaveChangesAsync();
@@ -61,6 +71,8 @@ public sealed class GetAlarmsQueryHandlerTests
     {
         DateTimeOffset baseTime = DateTimeOffset.UtcNow;
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         _ = db.Alarms.Add(CreateAlarm("Early", "DEV1", "sess-001", baseTime.AddHours(-3)));
         _ = db.Alarms.Add(CreateAlarm("InRange", "DEV1", "sess-001", baseTime.AddMinutes(-30)));
         _ = db.Alarms.Add(CreateAlarm("Late", "DEV1", "sess-001", baseTime.AddHours(1)));
@@ -81,6 +93,8 @@ public sealed class GetAlarmsQueryHandlerTests
     public async Task HandleAsync_NoAlarms_ReturnsEmptyAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
@@ -92,10 +106,10 @@ public sealed class GetAlarmsQueryHandlerTests
         response.Alarms.ShouldBeEmpty();
     }
 
-    private static AlarmDbContext CreateDbContext()
+    private AlarmDbContext CreateDbContext()
     {
         DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
-            .UseInMemoryDatabase("GetAlarms_" + Guid.NewGuid())
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new AlarmDbContext(options);
     }

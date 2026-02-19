@@ -1,4 +1,5 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -13,12 +14,19 @@ using Shouldly;
 
 namespace Dialysis.Alarm.Tests;
 
+[Collection(PostgreSqlCollection.Name)]
 public sealed class RecordAlarmCommandHandlerTests
 {
+    private readonly PostgreSqlFixture _fixture;
+
+    public RecordAlarmCommandHandlerTests(PostgreSqlFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task HandleAsync_Start_AlwaysCreatesNewAlarmAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -28,7 +36,7 @@ public sealed class RecordAlarmCommandHandlerTests
         RecordAlarmResponse response = await handler.HandleAsync(command);
 
         response.AlarmId.ShouldNotBeNullOrEmpty();
-        Application.Domain.Alarm saved = (await db.Alarms.FirstOrDefaultAsync(a => a.Id.ToString() == response.AlarmId)).ShouldNotBeNull();
+        Application.Domain.Alarm saved = (await db.Alarms.FirstOrDefaultAsync(a => a.Id == Ulid.Parse(response.AlarmId))).ShouldNotBeNull();
         saved.SourceCode.ShouldBe("MDC_PUMP_VEN");
         saved.EventPhase.Value.ShouldBe("start");
         saved.AlarmState.Value.ShouldBe("active");
@@ -38,6 +46,8 @@ public sealed class RecordAlarmCommandHandlerTests
     public async Task HandleAsync_Continue_UpdatesExistingActiveAlarmAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -68,6 +78,8 @@ public sealed class RecordAlarmCommandHandlerTests
     public async Task HandleAsync_End_UpdatesExistingAlarmToInactiveAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -93,6 +105,8 @@ public sealed class RecordAlarmCommandHandlerTests
     public async Task HandleAsync_End_NoExistingAlarm_ReturnsEmptyIdAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -109,6 +123,8 @@ public sealed class RecordAlarmCommandHandlerTests
     public async Task HandleAsync_Continue_NoExistingAlarm_CreatesOrphanAlarmAsync()
     {
         await using AlarmDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+        _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
         var handler = new RecordAlarmCommandHandler(repository, tenant);
@@ -131,10 +147,10 @@ public sealed class RecordAlarmCommandHandlerTests
         return AlarmInfo.Create(@params);
     }
 
-    private static AlarmDbContext CreateDbContext()
+    private AlarmDbContext CreateDbContext()
     {
         DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
-            .UseInMemoryDatabase("RecordAlarm_" + Guid.NewGuid())
+            .UseNpgsql(_fixture.ConnectionString)
             .Options;
         return new AlarmDbContext(options);
     }
