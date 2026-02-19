@@ -34,7 +34,13 @@ public sealed class FhirBulkExportService
         _tenant = tenant;
     }
 
-    public async Task<Bundle> ExportAsync(string[] types, int limitPerType, Microsoft.AspNetCore.Http.HttpRequest? originalRequest, CancellationToken cancellationToken = default)
+    public async Task<Bundle> ExportAsync(
+        string[] types,
+        int limitPerType,
+        string? patientId,
+        DateTimeOffset? since,
+        Microsoft.AspNetCore.Http.HttpRequest? originalRequest,
+        CancellationToken cancellationToken = default)
     {
         HashSet<string> requestedTypes = NormalizeRequestedTypes(types);
         HashSet<string> pathsToFetch = ResolvePaths(requestedTypes);
@@ -42,7 +48,7 @@ public sealed class FhirBulkExportService
 
         foreach (string path in pathsToFetch)
         {
-            Bundle? sourceBundle = await FetchBundleAsync(path, limitPerType, originalRequest, cancellationToken);
+            Bundle? sourceBundle = await FetchBundleAsync(path, limitPerType, patientId, since, originalRequest, cancellationToken);
             MergeEntries(bundle, sourceBundle, requestedTypes);
         }
 
@@ -67,9 +73,16 @@ public sealed class FhirBulkExportService
         return paths;
     }
 
-    private async Task<Bundle?> FetchBundleAsync(string path, int limit, Microsoft.AspNetCore.Http.HttpRequest? originalRequest, CancellationToken cancellationToken)
+    private async Task<Bundle?> FetchBundleAsync(
+        string path,
+        int limit,
+        string? patientId,
+        DateTimeOffset? since,
+        Microsoft.AspNetCore.Http.HttpRequest? originalRequest,
+        CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, path + "?limit=" + limit);
+        string queryString = BuildQueryString(path, limit, patientId, since);
+        using var request = new HttpRequestMessage(HttpMethod.Get, path + queryString);
         StringValues authHeader = originalRequest?.Headers["Authorization"] ?? default;
         if (!StringValues.IsNullOrEmpty(authHeader))
             _ = request.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
@@ -81,6 +94,38 @@ public sealed class FhirBulkExportService
             return null;
         string json = await response.Content.ReadAsStringAsync(cancellationToken);
         return FhirJsonHelper.FromJson<Bundle>(json);
+    }
+
+    private static string BuildQueryString(string path, int limit, string? patientId, DateTimeOffset? since)
+    {
+        var query = path.Contains("audit-events", StringComparison.OrdinalIgnoreCase)
+            ? new List<string> { "count=" + Math.Min(limit, 500) }
+            : new List<string> { "limit=" + limit };
+
+        if (path.Contains("patients", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(patientId))
+            query.Add("identifier=" + Uri.EscapeDataString(patientId));
+
+        if (path.Contains("treatment-sessions", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrEmpty(patientId))
+            {
+                query.Add("subject=" + Uri.EscapeDataString(patientId));
+                query.Add("patient=" + Uri.EscapeDataString(patientId));
+            }
+            if (since.HasValue)
+                query.Add("dateFrom=" + Uri.EscapeDataString(since.Value.ToString("o")));
+        }
+
+        if (path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(patientId))
+        {
+            query.Add("subject=" + Uri.EscapeDataString(patientId));
+            query.Add("patient=" + Uri.EscapeDataString(patientId));
+        }
+
+        if (path.Contains("alarms", StringComparison.OrdinalIgnoreCase) && since.HasValue)
+            query.Add("from=" + Uri.EscapeDataString(since.Value.ToString("o")));
+
+        return "?" + string.Join("&", query);
     }
 
     private static void MergeEntries(Bundle target, Bundle? source, HashSet<string> requestedTypes)

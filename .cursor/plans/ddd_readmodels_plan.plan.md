@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: ddd-device-aggregate
     content: Promote Device to AggregateRoot with DeviceRegisteredEvent (optional, document decision)
-    status: pending
+    status: completed
   - id: read-buildingblocks
     content: Create IReadOnlyDbContext in BuildingBlocks (no SaveChanges, read-only contract)
     status: completed
@@ -25,34 +25,34 @@ todos:
     status: completed
   - id: read-treatment
     content: Add TreatmentSessionReadModel, ObservationReadModel, TreatmentReadDbContext
-    status: pending
+    status: completed
   - id: read-alarm
     content: Add AlarmReadModel, AlarmReadDbContext
-    status: pending
+    status: completed
   - id: read-prescription
     content: Add PrescriptionReadModel, PrescriptionReadDbContext
-    status: pending
+    status: completed
   - id: read-device
     content: Add DeviceReadModel, DeviceReadDbContext
-    status: pending
+    status: completed
   - id: refactor-queries-patient
     content: Refactor Patient query handlers to use read DbContext; remove query methods from IPatientRepository
     status: completed
   - id: refactor-queries-treatment
     content: Refactor Treatment query handlers to use read DbContext; remove GetObservationsInTimeRange from write repo
-    status: pending
+    status: completed
   - id: refactor-queries-others
     content: Refactor Alarm, Prescription, Device query handlers to use read DbContexts
-    status: pending
+    status: completed
   - id: slim-repositories
     content: Remove GetManyAsync/GetAsync(Expression) from IRepository; add explicit methods per aggregate
-    status: pending
+    status: completed
   - id: update-docs
     content: Update SYSTEM-ARCHITECTURE.md and ARCHITECTURE-CONSTRAINTS.md with ReadModel/CQRS section
-    status: pending
+    status: completed
   - id: verify-build-tests
     content: Build solution and run tests
-    status: pending
+    status: completed
 isProject: true
 ---
 

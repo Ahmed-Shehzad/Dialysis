@@ -173,6 +173,17 @@
 
 ---
 
+## 12. Remaining Gaps / Future Work
+
+| Item | Status | Notes |
+|------|--------|-------|
+| MLLP listener | Out of scope | Mirth Connect receives MLLP; PDMS uses HTTP. See mirth-integration.mdc. |
+| Additional PDQ query formats | Optional | QbpQ22Parser supports main formats; edge cases (e.g. date range) could be extended. |
+| HL7 v2.9 | Not planned | Guide references v2.6; PDMS targets v2.6. |
+| Peritoneal dialysis | Excluded | Per Guide scope. |
+
+---
+
 ## 13. HL7-to-FHIR Mapping (Not in PDF; From Implementation Plan)
 
 | Mapping | Implementation | Status |

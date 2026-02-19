@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Interceptors;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Device.Application.Abstractions;
@@ -39,7 +40,10 @@ builder.Services.AddIntercessor(cfg =>
 string connectionString = builder.Configuration.GetConnectionString("DeviceDb")
                           ?? "Host=localhost;Database=dialysis_device;Username=postgres;Password=postgres";
 
-builder.Services.AddDbContext<DeviceDbContext>(o => o.UseNpgsql(connectionString));
+builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
+builder.Services.AddDbContext<DeviceDbContext>((sp, o) =>
+    o.UseNpgsql(connectionString)
+     .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 builder.Services.AddDbContext<DeviceReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<IDeviceReadStore, DeviceReadStore>();

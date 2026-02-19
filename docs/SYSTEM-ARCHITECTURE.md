@@ -547,13 +547,20 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 
 **CDS Service (Dialysis.Cds.Api, port 5056):** Clinical decision support.
 
-- `GET /api/cds/prescription-compliance?sessionId=X` – Compares treatment session vs prescription (blood flow, UF rate, UF target ±10%); returns FHIR DetectedIssue if deviation
+| Endpoint | Rule | Returns |
+|----------|------|---------|
+| `GET /api/cds/prescription-compliance?sessionId=X` | Blood flow, UF rate, UF target ±10% | DetectedIssue if deviation |
+| `GET /api/cds/hypotension-risk?sessionId=X` | Systolic &lt; 90 or diastolic &lt; 60 mmHg | DetectedIssue if below threshold |
 
 **Reports Service (Dialysis.Reports.Api, port 5057):** Aggregate reports.
 
-- `GET /api/reports/sessions-summary` – Session count, avg duration
-- `GET /api/reports/alarms-by-severity` – Alarms grouped by severity
-- `GET /api/reports/prescription-compliance` – % sessions within prescription tolerance
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/reports/sessions-summary` | Session count, avg duration |
+| `GET /api/reports/alarms-by-severity` | Alarms grouped by severity |
+| `GET /api/reports/prescription-compliance` | % sessions within prescription tolerance |
+| `GET /api/reports/treatment-duration-by-patient` | Duration totals and averages per patient (MRN) |
+| `GET /api/reports/observations-summary` | Observation count by MDC code; optional `code` filter |
 
 ### FHIR, CDS, Reports – Data Consumption
 
@@ -637,6 +644,18 @@ docker compose down               # Stop all
 ```
 
 PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`. Each API runs EF migrations on startup (ASPNETCORE_ENVIRONMENT=Development). FHIR, CDS, and Reports APIs are stateless; they aggregate data from other services via the gateway.
+
+---
+
+## 17. UI Integration
+
+To build a SPA or client application consuming PDMS APIs, see [UI-INTEGRATION-GUIDE.md](UI-INTEGRATION-GUIDE.md). Summary:
+
+- **Entry**: Gateway; JWT required; `X-Tenant-Id` for multi-tenancy
+- **FHIR Bulk Export**: `GET /api/fhir/$export` for analytics
+- **Reports**: Pre-aggregated endpoints for dashboards
+- **Real-time**: Transponder SignalR at `/transponder/transport`
+- **CORS**: Configure `Cors:AllowedOrigins` for SPA origin
 
 ---
 

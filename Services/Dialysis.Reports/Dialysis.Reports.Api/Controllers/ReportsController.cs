@@ -57,4 +57,31 @@ public sealed class ReportsController : ControllerBase
         PrescriptionComplianceReport report = await _reports.GetPrescriptionComplianceAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
         return Ok(report);
     }
+
+    [HttpGet("treatment-duration-by-patient")]
+    [ProducesResponseType(typeof(TreatmentDurationByPatientReport), StatusCodes.Status200OK)]
+    public async Task<IActionResult> TreatmentDurationByPatientAsync(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        DateTimeOffset fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        DateTimeOffset toUtc = to ?? DateTimeOffset.UtcNow;
+        TreatmentDurationByPatientReport report = await _reports.GetTreatmentDurationByPatientAsync(fromUtc, toUtc, _tenant.TenantId, Request, cancellationToken);
+        return Ok(report);
+    }
+
+    [HttpGet("observations-summary")]
+    [ProducesResponseType(typeof(ObservationsSummaryReport), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ObservationsSummaryAsync(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] string? code = null,
+        CancellationToken cancellationToken = default)
+    {
+        DateTimeOffset fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        DateTimeOffset toUtc = to ?? DateTimeOffset.UtcNow;
+        ObservationsSummaryReport report = await _reports.GetObservationsSummaryAsync(fromUtc, toUtc, code, _tenant.TenantId, Request, cancellationToken);
+        return Ok(report);
+    }
 }

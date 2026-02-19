@@ -5,9 +5,11 @@
 #   --requests N    Total requests (default: 100)
 #   --concurrent N  Concurrent requests (default: 10)
 #   --endpoint NAME health|fhir-export|qbp-q22|cds|reports|all (default: all)
+# For Production (JWT required): AUTH_HEADER="Bearer <token>" ./scripts/load-test.sh
 
 BASE_URL="${BASE_URL:-http://localhost:5001}"
 TENANT="${X_TENANT_ID:-default}"
+AUTH_HEADER="${AUTH_HEADER:-}"
 REQUESTS=100
 CONCURRENT=10
 ENDPOINT=all
@@ -37,11 +39,14 @@ run_test() {
   local start_sec
   start_sec=$(date +%s.%N)
 
+  AUTH_OPTS=()
+  [[ -n "$AUTH_HEADER" ]] && AUTH_OPTS=(-H "Authorization: $AUTH_HEADER")
+
   for ((i=1; i<=REQUESTS; i++)); do
     if [[ "$method" == "POST" && -n "$data" ]]; then
-      curl -s -o /dev/null -w "%{http_code}\n" -X POST -H "Content-Type: application/json" -H "X-Tenant-Id: $TENANT" -d "$data" "$url" >> "$log" &
+      curl -s -o /dev/null -w "%{http_code}\n" -X POST "${AUTH_OPTS[@]}" -H "Content-Type: application/json" -H "X-Tenant-Id: $TENANT" -d "$data" "$url" >> "$log" &
     else
-      curl -s -o /dev/null -w "%{http_code}\n" -H "X-Tenant-Id: $TENANT" "$url" >> "$log" &
+      curl -s -o /dev/null -w "%{http_code}\n" "${AUTH_OPTS[@]}" -H "X-Tenant-Id: $TENANT" "$url" >> "$log" &
     fi
     if (( i % CONCURRENT == 0 )); then wait; fi
   done

@@ -4,28 +4,28 @@ overview: Implement the Device bounded context to catalog dialysis machines (EUI
 todos:
   - id: device-plan-doc
     content: Create PHASE_DEVICE_PLAN.md planning doc
-    status: in_progress
+    status: completed
   - id: device-domain
     content: Create Device aggregate and value objects
-    status: pending
+    status: completed
   - id: device-repository
     content: Create IDeviceRepository and EF persistence
-    status: pending
+    status: completed
   - id: device-queries
     content: Create GetDevice and GetDevices query handlers
-    status: pending
+    status: completed
   - id: device-register
     content: Create RegisterDevice command (upsert from MSH-3)
-    status: pending
+    status: completed
   - id: device-api
     content: Create DevicesController with REST and FHIR endpoints
-    status: pending
+    status: completed
   - id: device-solution
     content: Add Dialysis.Device to solution and wire dependencies
-    status: pending
+    status: completed
   - id: device-arch
     content: Update SYSTEM-ARCHITECTURE and NEXT-STEPS-PLAN
-    status: pending
+    status: completed
 isProject: true
 ---
 

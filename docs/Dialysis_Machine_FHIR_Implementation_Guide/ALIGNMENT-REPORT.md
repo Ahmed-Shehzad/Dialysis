@@ -2,7 +2,10 @@
 
 **Source**: FHIR R4, QI-Core, HL7-to-FHIR mapping  
 **Date**: 2025-02-19  
-**Scope**: Cross-reference of FHIR resource requirements with the Dialysis PDMS implementation. A formal Dialysis Machine FHIR IG is in development; this report uses FHIR R4 base resources and QI-Core patterns as reference.
+**Last updated**: 2025-02-19  
+**Scope**: Cross-reference of FHIR resource requirements with the Dialysis PDMS implementation.
+
+**Note:** A formal Dialysis Machine FHIR IG is in development by the Dialysis Interoperability Consortium. This report uses FHIR R4 base resources and QI-Core patterns as reference. When the formal IG is published, this alignment report will be updated to reference the canonical IG version and any profile changes.
 
 ---
 
@@ -36,7 +39,7 @@
 | Requirement | Implementation | Status |
 |-------------|----------------|--------|
 | status = final | ObservationMapper | Aligned |
-| code (MDC + LOINC) | MdcToFhirCodeCatalog, ObservationMapper | Aligned |
+| code (required 1..1) | MdcToFhirCodeCatalog, ObservationMapper; `MDC_UNKNOWN` when code missing | Aligned |
 | category = device | ObservationMapper | Aligned |
 | effective | effectiveDateTime from OBX-14 | Aligned |
 | valueQuantity | Quantity with UCUM | Aligned |
@@ -65,7 +68,7 @@
 |-------------|----------------|--------|
 | status (in-progress, completed) | ProcedureMapper from TreatmentSession.Status | Aligned |
 | code (hemodialysis) | SNOMED CT 1088001 | Aligned |
-| subject | Patient reference | Aligned |
+| subject (required 1..1) | Patient reference; `Patient/unknown` when MRN missing | Aligned |
 | performed | performedPeriod (StartedAt, EndedAt) | Aligned |
 | device | Device reference (EUI-64) | Aligned |
 | GET /api/treatment-sessions/{id}/fhir | Bundle with Procedure + Observations | Aligned |
@@ -116,7 +119,7 @@
 
 | Capability | Implementation | Status |
 |------------|----------------|--------|
-| Bulk Export ($export) | GET /api/fhir/$export | Aligned |
+| Bulk Export ($export) | GET /api/fhir/$export; params: _type, _limit, _patient, _since | Aligned |
 | Search parameters | _id, patient, subject, date | Aligned |
 | Subscriptions (rest-hook) | POST/GET/DELETE /api/fhir/Subscription | Aligned |
 | Subscription dispatcher | FhirSubscriptionNotifyHandler | Aligned |

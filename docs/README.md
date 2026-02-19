@@ -17,7 +17,8 @@ See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTUR
 ## Deployment & Operations
 
 - [PRODUCTION-READINESS-CHECKLIST.md](PRODUCTION-READINESS-CHECKLIST.md) – Pre-production verification
-- [.github/workflows/ci.yml](../.github/workflows/ci.yml) – GitHub Actions CI (build, test)
+- [.github/workflows/ci.yml](../.github/workflows/ci.yml) – CI (build, test, Release)
+- [.github/workflows/load-test.yml](../.github/workflows/load-test.yml) – Load test (manual + weekly)
 - [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) – Time synchronization (NTP), database, security, production (Azure/Key Vault)
 - [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md) – Step-by-step deploy, rollback, troubleshooting
 - [HEALTH-CHECK.md](HEALTH-CHECK.md) – Health endpoints, metrics (`/metrics`), and monitoring

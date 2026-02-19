@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dialysis.Cds.Api.Controllers;
 
 /// <summary>
-/// Clinical decision support: prescription vs treatment compliance.
-/// Returns FHIR DetectedIssue when treatment deviates from prescription.
+/// Clinical decision support: prescription vs treatment compliance, hypotension risk.
+/// Returns FHIR DetectedIssue when treatment deviates from prescription or BP below threshold.
 /// </summary>
 [ApiController]
 [Route("api/cds")]
@@ -19,11 +19,13 @@ namespace Dialysis.Cds.Api.Controllers;
 public sealed class PrescriptionComplianceController : ControllerBase
 {
     private readonly PrescriptionComplianceService _cds;
+    private readonly HypotensionRiskService _hypotension;
     private readonly IHttpClientFactory _http;
 
-    public PrescriptionComplianceController(PrescriptionComplianceService cds, IHttpClientFactory http)
+    public PrescriptionComplianceController(PrescriptionComplianceService cds, HypotensionRiskService hypotension, IHttpClientFactory http)
     {
         _cds = cds;
+        _hypotension = hypotension;
         _http = http;
     }
 
@@ -85,6 +87,48 @@ public sealed class PrescriptionComplianceController : ControllerBase
             }
         }
 
+    }
+
+    /// <summary>
+    /// Evaluates session for hypotension risk (systolic &lt; 90 or diastolic &lt; 60 mmHg).
+    /// Returns DetectedIssue Bundle if any BP reading below threshold.
+    /// </summary>
+    [HttpGet("hypotension-risk")]
+    [Produces("application/fhir+json", "application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HypotensionRiskAsync(
+        [FromQuery] string sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        string baseUrl = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Cds:BaseUrl"] ?? "http://localhost:5000";
+        string tenantId = HttpContext.RequestServices.GetRequiredService<ITenantContext>().TenantId;
+        using var sessionRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/treatment-sessions/{sessionId}");
+        if (Request.Headers.Authorization.Count > 0)
+            sessionRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
+        if (!string.IsNullOrEmpty(tenantId))
+            sessionRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
+        using HttpResponseMessage sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken);
+        sessionResponse.EnsureSuccessStatusCode();
+        TreatmentSessionResponse? session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
+        if (session is null)
+            return NotFound();
+
+        var observations = session.Observations.Select(o => new ObservationDto(o.Code, o.Value, o.Unit)).ToList();
+        DetectedIssue? issue = _hypotension.Evaluate(sessionId, session.PatientMrn, observations);
+
+        if (issue is null)
+        {
+            var emptyBundle = new Hl7.Fhir.Model.Bundle { Type = Hl7.Fhir.Model.Bundle.BundleType.Collection, Entry = [] };
+            return Content(FhirJsonHelper.ToJson(emptyBundle), "application/fhir+json");
+        }
+
+        var bundle = new Hl7.Fhir.Model.Bundle
+        {
+            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
+            Entry = [new Hl7.Fhir.Model.Bundle.EntryComponent { Resource = issue }]
+        };
+        return Content(FhirJsonHelper.ToJson(bundle), "application/fhir+json");
     }
 }
 

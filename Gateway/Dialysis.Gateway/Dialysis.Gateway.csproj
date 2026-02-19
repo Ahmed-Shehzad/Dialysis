@@ -4,8 +4,9 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Dialysis.Gateway</RootNamespace>
-    </PropertyGroup>
+    <RootNamespace>Dialysis.Gateway</RootNamespace>
+    <NoWarn>$(NoWarn);IDE0058</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.csproj" />

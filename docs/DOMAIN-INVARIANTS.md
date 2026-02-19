@@ -51,6 +51,12 @@ Invariants enforced by aggregates and value objects. See [DOMAIN-EVENTS-AND-SERV
 | Device EUI-64 required | `RegisterDeviceCommandValidator` | Non-empty |
 | Upsert by EUI-64 | `RegisterDeviceCommandHandler` | Same EUI-64 updates existing; creates new otherwise |
 
+**DDD Decision: Device as AggregateRoot.** Device is promoted from `BaseEntity` to `AggregateRoot` and raises:
+- `DeviceRegisteredEvent` on first registration (creates new device)
+- `DeviceDetailsUpdatedEvent` on `UpdateDetails()` (updates existing device)
+
+Handlers log and audit via `IAuditRecorder` for C5 compliance. Rationale: alignment with Patient/Alarm aggregates; domain events enable consistent audit and future read-model projections.
+
 ---
 
 ## Value Objects (Primitive Obsession Prevention)

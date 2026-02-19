@@ -25,7 +25,7 @@ public sealed class Prescription : AggregateRoot
     /// </summary>
     internal List<ProfileSetting> SettingsForPersistence
     {
-        get => _settings.ToList();
+        get => _settings;
         set
         {
             _settings.Clear();

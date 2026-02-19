@@ -74,6 +74,8 @@ flowchart TB
 | DetectedIssue | Yes |
 | AuditEvent | Yes |
 
+**Query parameters:** `_type`, `_limit` (default 1000), `_patient` (Patient/id or MRN – restricts to patient compartment), `_since` (ISO 8601 – passed to Treatment/Alarm backends as dateFrom/from).
+
 ---
 
 ## Search Parameters

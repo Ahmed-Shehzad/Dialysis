@@ -1,0 +1,33 @@
+# Dialysis PDMS – Production override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+# All APIs run with ASPNETCORE_ENVIRONMENT=Production (JWT required; no DevelopmentBypass).
+# Smoke/load tests require AUTH_HEADER="Bearer <token>" for business endpoints.
+
+services:
+  patient-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  prescription-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  treatment-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  alarm-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  device-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  fhir-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  cds-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  reports-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  gateway:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production

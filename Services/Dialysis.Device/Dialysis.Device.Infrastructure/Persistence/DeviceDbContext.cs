@@ -30,6 +30,8 @@ public sealed class DeviceDbContext : DbContext, IDbContext
             _ = e.Property(x => x.Serial).HasMaxLength(200);
             _ = e.Property(x => x.Udi).HasMaxLength(500);
             _ = e.HasIndex(x => new { x.TenantId, x.DeviceEui64 }).IsUnique();
+            _ = e.Ignore(x => x.DomainEvents);
+            _ = e.Ignore(x => x.IntegrationEvents);
         });
     }
 }

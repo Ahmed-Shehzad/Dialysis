@@ -32,6 +32,16 @@ Dialysis machines sending HL7 messages (ORU^R01, ORU^R40, QBP^Q22, QBP^D01) must
 - PDMS health endpoint includes server UTC time for verification (see [GATEWAY.md](GATEWAY.md)).
 - If incoming HL7 message timestamps (MSH-7) drift significantly from server time, PDMS logs a warning (configurable via `TimeSync:MaxAllowedDriftSeconds`).
 
+**NTP verification commands:**
+
+| Environment | Command | Expected |
+|-------------|---------|----------|
+| Linux (systemd-timesyncd) | `timedatectl status` | `System clock synchronized: yes` |
+| Linux (chronyd) | `chronyc tracking` | `Leap status: Normal` |
+| Linux (ntpd) | `ntpq -p` | Peers listed with reach > 0 |
+| Docker host | Same as host OS | Containers inherit host clock |
+| Azure App Service | N/A | Azure manages NTP; verify via health UTC |
+
 ---
 
 ## 2. Database
@@ -93,6 +103,15 @@ See [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16. Ensure the host runni
 
 - For C5 and regulatory requirements, ensure PostgreSQL and App Services are deployed in the target region (e.g. EU for GDPR).
 - Document data flows and jurisdictions in operational runbooks.
+
+**Verification checklist:**
+
+| Check | Action |
+|-------|--------|
+| Database region | Confirm Azure PostgreSQL and App Services use same region (e.g. West Europe, North Europe). |
+| Data flows | Document: Mirth → PDMS Gateway → APIs; PDMS → FHIR export; PDMS → CDS/Reports. |
+| GDPR | If processing EU patient data, deploy in EU region; document data processing in DPA. |
+| Cross-region | Avoid cross-region calls between DB and APIs; keep latency predictable. |
 
 ---
 

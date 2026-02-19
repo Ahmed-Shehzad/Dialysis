@@ -33,9 +33,12 @@ Each API runs EF Core migrations on startup when `ASPNETCORE_ENVIRONMENT=Develop
 
 ```bash
 # Example: run migrations from each API project
-dotnet ef database update --project Services/Dialysis.Patient/Dialysis.Patient.Api
-dotnet ef database update --project Services/Dialysis.Prescription/Dialysis.Prescription.Api
-# ... repeat for Treatment, Alarm, Device, Fhir
+dotnet ef database update --project Services/Dialysis.Patient/Dialysis.Patient.Infrastructure --startup-project Services/Dialysis.Patient/Dialysis.Patient.Api
+dotnet ef database update --project Services/Dialysis.Prescription/Dialysis.Prescription.Infrastructure --startup-project Services/Dialysis.Prescription/Dialysis.Prescription.Api --context PrescriptionDbContext
+dotnet ef database update --project Services/Dialysis.Treatment/Dialysis.Treatment.Infrastructure --startup-project Services/Dialysis.Treatment/Dialysis.Treatment.Api
+dotnet ef database update --project Services/Dialysis.Alarm/Dialysis.Alarm.Infrastructure --startup-project Services/Dialysis.Alarm/Dialysis.Alarm.Api
+dotnet ef database update --project Services/Dialysis.Device/Dialysis.Device.Infrastructure --startup-project Services/Dialysis.Device/Dialysis.Device.Api
+dotnet ef database update --project Services/Dialysis.Fhir/Dialysis.Fhir.Infrastructure --startup-project Services/Dialysis.Fhir/Dialysis.Fhir.Api
 ```
 
 ---
@@ -57,7 +60,26 @@ curl http://localhost:5001/health
 ./scripts/smoke-test-fhir.sh --hl7
 ```
 
-### 3.3 Load Test
+### 3.3 Production Smoke Test (optional)
+
+To verify with `ASPNETCORE_ENVIRONMENT=Production` (JWT required, no DevelopmentBypass):
+
+```bash
+# Start with Production override
+docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+
+# Obtain JWT from Azure AD or identity provider (see JWT-AND-MIRTH-INTEGRATION.md)
+
+# Run smoke test with Bearer token
+AUTH_HEADER="Bearer <your-access-token>" ./scripts/smoke-test-fhir.sh --hl7
+
+# Run load test
+AUTH_HEADER="Bearer <your-access-token>" ./scripts/load-test.sh --endpoint all --requests 50
+```
+
+`/health` remains unauthenticated; FHIR, HL7, Reports, and CDS endpoints require a valid JWT in Production.
+
+### 3.4 Load Test
 
 Run a simple load test to verify performance under concurrent requests:
 
@@ -72,9 +94,9 @@ Run a simple load test to verify performance under concurrent requests:
 BASE_URL=http://localhost:5001 X_TENANT_ID=default ./scripts/load-test.sh --endpoint health
 ```
 
-See [scripts/load-test.sh](../scripts/load-test.sh) for options (`--endpoint`: health, fhir-export, qbp-q22, cds, reports, all).
+See [scripts/load-test.sh](../scripts/load-test.sh) (curl-based) and [scripts/load-test.k6.js](../scripts/load-test.k6.js) (k6). Use `./scripts/run-k6.sh` to run k6 if installed, else curl.
 
-### 3.4 Stop
+### 3.5 Stop
 
 ```bash
 docker compose down
@@ -111,7 +133,11 @@ EF migrations are forward-only. To rollback schema:
 | Gateway | App Service | Single entry point |
 | Secrets | Key Vault | Reference via `@Microsoft.KeyVault(...)` |
 
-### 5.2 Connection Strings
+### 5.2 Production Configuration
+
+See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) for required environment variables, Key Vault setup, and verification steps.
+
+### 5.3 Connection Strings
 
 Store in Key Vault or App Service configuration. Format:
 
@@ -119,7 +145,7 @@ Store in Key Vault or App Service configuration. Format:
 Host=<host>;Database=dialysis_<service>;Username=<user>;Password=<secret>;Ssl Mode=Require
 ```
 
-### 5.3 Gateway Backend URLs
+### 5.4 Gateway Backend URLs
 
 Set environment variables or `appsettings.json` overrides:
 
@@ -129,7 +155,7 @@ ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Addres
 # ... etc
 ```
 
-### 5.4 JWT Configuration
+### 5.5 JWT Configuration
 
 - Set `Authentication:JwtBearer:Authority` (e.g. Azure AD tenant)
 - Set `Authentication:JwtBearer:Audience`
@@ -150,6 +176,13 @@ ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Addres
 | FHIR | `GET http://fhir-api:5055/health` | 200 |
 
 See [HEALTH-CHECK.md](HEALTH-CHECK.md) for details.
+
+### 6.1 NTP and Data Residency Verification
+
+Before production deploy:
+
+1. **NTP**: Run `timedatectl status` (Linux) and confirm `System clock synchronized: yes`. See [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) §1.4.
+2. **Data residency**: Confirm Azure PostgreSQL and App Services are in the target region. Document data flows per [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) §6.4.
 
 ---
 

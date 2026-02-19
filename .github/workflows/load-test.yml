@@ -1,0 +1,40 @@
+name: Load Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run weekly on Monday at 02:00 UTC
+    - cron: "0 2 * * 1"
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for Gateway
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:5001/health > /dev/null 2>&1; then
+              echo "Gateway ready"
+              break
+            fi
+            echo "Waiting for Gateway... ($i/60)"
+            sleep 5
+          done
+          curl -sf http://localhost:5001/health || exit 1
+
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 load test
+        run: |
+          BASE_URL=http://localhost:5001 K6_VUS=5 K6_DURATION=20s k6 run scripts/load-test.k6.js
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down

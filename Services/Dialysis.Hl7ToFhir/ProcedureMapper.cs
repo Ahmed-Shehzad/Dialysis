@@ -41,8 +41,7 @@ public static class ProcedureMapper
             Performed = BuildPerformedPeriod(startedAt, endedAt)
         };
 
-        if (!string.IsNullOrEmpty(patientId))
-            proc.Subject = new ResourceReference($"Patient/{patientId}");
+        proc.Subject = new ResourceReference(string.IsNullOrEmpty(patientId) ? "Patient/unknown" : $"Patient/{patientId}");
 
         proc.Identifier.Add(new Identifier("urn:dialysis:session", sessionId));
 

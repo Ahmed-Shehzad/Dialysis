@@ -129,6 +129,121 @@ public sealed class ReportsAggregationService
         }
     }
 
+    public async Task<TreatmentDurationByPatientReport> GetTreatmentDurationByPatientAsync(DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken cancellationToken = default)
+    {
+        string baseUrl = _config["Reports:BaseUrl"] ?? "http://localhost:5000";
+        string url = baseUrl.TrimEnd('/') + $"/api/treatment-sessions/fhir?dateFrom={Uri.EscapeDataString(from.ToString("O"))}&dateTo={Uri.EscapeDataString(to.ToString("O"))}&limit=1000";
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        AddHeaders(req, request, tenantId);
+        _ = req.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
+        using (HttpResponseMessage response = await _http.SendAsync(req, cancellationToken))
+        {
+            if (!response.IsSuccessStatusCode)
+                return new TreatmentDurationByPatientReport([], from, to);
+            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var byPatient = ParseDurationByPatientFromFhirBundle(json);
+            return new TreatmentDurationByPatientReport(byPatient, from, to);
+        }
+    }
+
+    private static IReadOnlyList<PatientDurationSummary> ParseDurationByPatientFromFhirBundle(string json)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var durations = new Dictionary<string, List<double>>();
+            if (!doc.RootElement.TryGetProperty("entry", out var entries))
+                return [];
+            foreach (var e in entries.EnumerateArray())
+            {
+                if (!e.TryGetProperty("resource", out var res))
+                    continue;
+                if (!res.TryGetProperty("resourceType", out var rt) || rt.GetString() != "Procedure")
+                    continue;
+                string? patientRef = null;
+                if (res.TryGetProperty("subject", out var sub) && sub.TryGetProperty("reference", out var refEl))
+                    patientRef = refEl.GetString();
+                if (string.IsNullOrEmpty(patientRef) || !patientRef.StartsWith("Patient/", StringComparison.Ordinal))
+                    continue;
+                string mrn = patientRef["Patient/".Length..];
+                if (mrn == "unknown") continue;
+                double minutes = 0;
+                if (res.TryGetProperty("performedPeriod", out var perf))
+                {
+                    if (perf.TryGetProperty("start", out var startEl) && perf.TryGetProperty("end", out var endEl))
+                    {
+                        if (DateTimeOffset.TryParse(startEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var start) && DateTimeOffset.TryParse(endEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var end))
+                            minutes = (end - start).TotalMinutes;
+                    }
+                }
+                if (!durations.TryGetValue(mrn, out var list))
+                {
+                    list = [];
+                    durations[mrn] = list;
+                }
+                list.Add(minutes);
+            }
+            return durations.Select(kv => new PatientDurationSummary(kv.Key, kv.Value.Count, (decimal)kv.Value.Sum(), (decimal)(kv.Value.Count > 0 ? kv.Value.Average() : 0))).ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<ObservationsSummaryReport> GetObservationsSummaryAsync(DateTimeOffset from, DateTimeOffset to, string? codeFilter, string? tenantId, HttpRequest? request, CancellationToken cancellationToken = default)
+    {
+        string baseUrl = _config["Reports:BaseUrl"] ?? "http://localhost:5000";
+        string url = baseUrl.TrimEnd('/') + $"/api/treatment-sessions/fhir?dateFrom={Uri.EscapeDataString(from.ToString("O"))}&dateTo={Uri.EscapeDataString(to.ToString("O"))}&limit=1000";
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        AddHeaders(req, request, tenantId);
+        _ = req.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
+        using (HttpResponseMessage response = await _http.SendAsync(req, cancellationToken))
+        {
+            if (!response.IsSuccessStatusCode)
+                return new ObservationsSummaryReport([], from, to);
+            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var byCode = ParseObservationsByCodeFromFhirBundle(json, codeFilter);
+            return new ObservationsSummaryReport(byCode, from, to);
+        }
+    }
+
+    private static IReadOnlyList<ObservationCountByCode> ParseObservationsByCodeFromFhirBundle(string json, string? codeFilter)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var counts = new Dictionary<string, int>();
+            if (!doc.RootElement.TryGetProperty("entry", out var entries))
+                return [];
+            foreach (var e in entries.EnumerateArray())
+            {
+                if (!e.TryGetProperty("resource", out var res))
+                    continue;
+                if (!res.TryGetProperty("resourceType", out var rt) || rt.GetString() != "Observation")
+                    continue;
+                string? obsCode = null;
+                if (res.TryGetProperty("code", out var codeEl) && codeEl.TryGetProperty("coding", out var codings))
+                    foreach (var c in codings.EnumerateArray())
+                        if (c.TryGetProperty("code", out var codeProp))
+                        {
+                            obsCode = codeProp.GetString();
+                            break;
+                        }
+                if (string.IsNullOrEmpty(obsCode)) obsCode = "unknown";
+                if (!string.IsNullOrEmpty(codeFilter) && !obsCode.Contains(codeFilter, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                counts.TryGetValue(obsCode, out int count);
+                counts[obsCode] = count + 1;
+            }
+            return counts.OrderByDescending(kv => kv.Value).Select(kv => new ObservationCountByCode(kv.Key, kv.Value)).ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
     private static void AddHeaders(HttpRequestMessage message, HttpRequest? request, string? tenantId)
     {
         if (request?.Headers.Authorization.Count > 0)
@@ -141,6 +256,10 @@ public sealed class ReportsAggregationService
 public sealed record SessionsSummaryReport(int SessionCount, decimal AvgDurationMinutes, DateTimeOffset From, DateTimeOffset To);
 public sealed record AlarmsBySeverityReport(IReadOnlyDictionary<string, int> BySeverity, DateTimeOffset From, DateTimeOffset To);
 public sealed record PrescriptionComplianceReport(int CompliantCount, int TotalEvaluated, decimal CompliancePercent, DateTimeOffset From, DateTimeOffset To);
+public sealed record TreatmentDurationByPatientReport(IReadOnlyList<PatientDurationSummary> ByPatient, DateTimeOffset From, DateTimeOffset To);
+public sealed record PatientDurationSummary(string PatientMrn, int SessionCount, decimal TotalMinutes, decimal AvgMinutesPerSession);
+public sealed record ObservationsSummaryReport(IReadOnlyList<ObservationCountByCode> ByCode, DateTimeOffset From, DateTimeOffset To);
+public sealed record ObservationCountByCode(string Code, int Count);
 
 internal sealed record AlarmsListResponse(IReadOnlyList<AlarmSummaryDto> Alarms);
 internal sealed record AlarmSummaryDto(string? Priority);

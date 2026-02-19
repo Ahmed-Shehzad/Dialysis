@@ -20,6 +20,21 @@ builder.WebHost.UseUrls(
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
+string[] corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+if (corsOrigins.Length > 0)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            _ = policy.WithOrigins(corsOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .WithExposedHeaders("X-Tenant-Id");
+        });
+    });
+}
+
 builder.Services.AddOpenApi();
 
 string GetBackendAddress(string cluster, string destination, string @default) =>
@@ -46,6 +61,9 @@ builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri(reportsUrl.TrimEnd('/') + "/health"), "reports-api");
 
 WebApplication app = builder.Build();
+
+if (corsOrigins.Length > 0)
+    app.UseCors();
 
 app.MapReverseProxy();
 

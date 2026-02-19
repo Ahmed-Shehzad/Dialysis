@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 using Grpc.Core;
 
 using Microsoft.Extensions.Logging;
@@ -52,14 +50,14 @@ public sealed class GrpcTransportService : Transport.TransportBase
                     knownEndpoints);
             }
 #if DEBUG
-            Trace.TraceWarning(
+            System.Diagnostics.Trace.TraceWarning(
                 $"[Transponder] GrpcTransportService no endpoint for destination {destination}.");
 #endif
             throw new RpcException(new Status(StatusCode.NotFound, MissingEndpointMessage));
         }
 
 #if DEBUG
-        Trace.TraceInformation(
+        System.Diagnostics.Trace.TraceInformation(
             $"[Transponder] GrpcTransportService dispatching to {destination}.");
 #endif
         ITransportMessage message = GrpcTransportMessageMapper.FromProto(request.Message);
@@ -73,7 +71,7 @@ public sealed class GrpcTransportService : Transport.TransportBase
         IReadOnlyCollection<(GrpcTransportHost Host, GrpcReceiveEndpoint Endpoint)> endpoints = [.. _hosts.SelectMany(host => host.GetEndpoints().Select(endpoint => (host, endpoint)))];
 
 #if DEBUG
-        Trace.TraceInformation(
+        System.Diagnostics.Trace.TraceInformation(
             $"[Transponder] GrpcTransportService publishing to {endpoints.Count} endpoints.");
 #endif
         foreach ((GrpcTransportHost host, GrpcReceiveEndpoint endpoint) in endpoints)

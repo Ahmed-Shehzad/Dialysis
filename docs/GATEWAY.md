@@ -50,6 +50,10 @@ The **Dialysis.Gateway** provides a unified entry point for all PDMS APIs using 
 
 Backend addresses are defined in `appsettings.json` under `ReverseProxy:Clusters`. Override in `appsettings.Development.json` or environment variables for deployment.
 
+### CORS
+
+Set `Cors:AllowedOrigins` (array of origin URLs) to enable CORS for browser clients. Empty or omitted = CORS disabled. Development includes `http://localhost:3000` and `http://localhost:5173` for typical SPA ports. Production: restrict to your SPA origin(s), e.g. `["https://your-app.example.com"]`.
+
 ---
 
 ## 5. Running Locally

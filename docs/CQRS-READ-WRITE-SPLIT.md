@@ -13,6 +13,8 @@ This document describes the CQRS implementation across Dialysis PDMS services. S
 
 Same database; Read and Write DbContexts map to the same tables.
 
+**Projections:** Domain events (e.g. `DeviceRegisteredEvent`, `PatientRegisteredEvent`) can drive async projections to caches or analytics stores. See [DOMAIN-EVENTS-AND-SERVICES.md](DOMAIN-EVENTS-AND-SERVICES.md) § Read-Model Projections.
+
 ---
 
 ## 2. Read Side
@@ -74,7 +76,7 @@ Integration tests that verify query results use **ReadStores**, not write reposi
 - `GetAlarmsQueryHandlerTests`, `IngestOruR40IntegrationTests`, `OruR40ToFhirIntegrationTests` → `IAlarmReadStore`
 - `GetTreatmentSessionQueryHandler`, `OruBatchToSessionsIntegrationTests`, `OruR01ToFhirIntegrationTests` → `ITreatmentReadStore`
 - `DeviceRepositoryTests` → `IDeviceReadStore`
-- `FhirBulkExportServiceIntegrationTests` → FHIR $export aggregation (mocked HttpClient)
+- `FhirBulkExportServiceIntegrationTests` → FHIR $export aggregation (mocked HttpClient; Procedure+Observation merge, empty-type default)
 - `PrescriptionComplianceServiceTests` → CDS prescription vs treatment compliance (unit)
 - `ReportsAggregationServiceTests` → Reports aggregation (sessions summary, alarms by severity, prescription compliance; mocked HttpClient)
 

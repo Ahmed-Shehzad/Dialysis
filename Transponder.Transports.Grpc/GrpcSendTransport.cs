@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 using Grpc.Net.Client;
 
 using Transponder.Transports.Abstractions;
@@ -29,12 +27,12 @@ internal sealed class GrpcSendTransport : ISendTransport
         };
 
 #if DEBUG
-        Trace.TraceInformation(
+        System.Diagnostics.Trace.TraceInformation(
             $"[Transponder] GrpcSendTransport sending to {_destination} messageType={message.MessageType ?? "unknown"}.");
 #endif
         _ = await _client.SendAsync(request, cancellationToken: cancellationToken).ConfigureAwait(false);
 #if DEBUG
-        Trace.TraceInformation(
+        System.Diagnostics.Trace.TraceInformation(
             $"[Transponder] GrpcSendTransport sent to {_destination} messageType={message.MessageType ?? "unknown"}.");
 #endif
     }

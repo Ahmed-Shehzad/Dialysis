@@ -135,6 +135,52 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 
 ---
 
+## Device Bounded Context
+
+### Aggregates
+
+| Type | Base Class | Location |
+|------|-----------|----------|
+| `Device` | `AggregateRoot` | `Services/Dialysis.Device/Dialysis.Device.Application/Domain/Device.cs` |
+
+### Domain Events
+
+| Event | Raised When | Properties |
+|-------|------------|------------|
+| `DeviceRegisteredEvent` | A new device is registered via `Device.Register()` | `DeviceId`, `DeviceEui64`, `Manufacturer`, `Model` |
+| `DeviceDetailsUpdatedEvent` | Device details are updated via `Device.UpdateDetails()` | `DeviceId`, `DeviceEui64`, `Manufacturer`, `Model`, `Serial`, `Udi` |
+
+---
+
+## Read-Model Projections from Domain Events
+
+### Current Pattern: Same-DB CQRS
+
+Read models (PatientReadModel, DeviceReadModel, etc.) map to the same database tables as the write-side aggregates. Query handlers use `IReadOnlyDbContext` / read stores to query without tracking. **No async projection** — the read model is implicitly up to date because the command handler and read model share the same database transaction.
+
+### Projection Pattern (Future / Optional)
+
+Domain events can drive **async projections** when:
+
+- A denormalized cache (e.g. Redis) needs to be updated
+- An analytics store or data warehouse receives event streams
+- A separate read database is eventually consistent
+
+**Implementation:** Add a domain event handler that writes to the projection store. Example:
+
+```csharp
+internal sealed class DeviceRegisteredProjectionHandler : IDomainEventHandler<DeviceRegisteredEvent>
+{
+    private readonly IDeviceCache _cache;  // e.g. Redis, in-memory
+    public async Task HandleAsync(DeviceRegisteredEvent e, CancellationToken ct) =>
+        await _cache.UpsertDeviceAsync(e.DeviceId, e.DeviceEui64, ct);
+}
+```
+
+**Events suitable for projections:** `PatientRegisteredEvent`, `DeviceRegisteredEvent`, `TreatmentSessionStartedEvent`, `AlarmRaisedEvent`. Current handlers focus on audit and FHIR subscription notification; projection handlers would extend this for caches or analytics.
+
+---
+
 ## Shared Building Blocks
 
 ### Base Classes

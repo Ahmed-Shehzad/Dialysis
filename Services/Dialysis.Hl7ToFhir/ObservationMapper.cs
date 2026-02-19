@@ -43,10 +43,11 @@ public static class ObservationMapper
 
     private static Observation CreateBaseObservation(ObservationMappingInput input, MdcFhirDescriptor? catalogEntry)
     {
-        string displayText = catalogEntry?.DisplayName ?? input.ObservationCode;
+        string codeValue = string.IsNullOrWhiteSpace(input.ObservationCode) ? "MDC_UNKNOWN" : input.ObservationCode;
+        string displayText = catalogEntry?.DisplayName ?? codeValue;
         var code = new CodeableConcept
         {
-            Coding = [new Coding(MdcSystem, input.ObservationCode, displayText)],
+            Coding = [new Coding(MdcSystem, codeValue, displayText)],
             Text = displayText
         };
         if (catalogEntry?.LoincCode is not null)

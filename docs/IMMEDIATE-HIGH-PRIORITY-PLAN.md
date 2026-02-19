@@ -177,7 +177,7 @@ Serialize stored `Prescription` aggregate to HL7 RSP^K22:
 
 ### Caveats
 
-- **Current blocker**: EF Core design-time fails with "No suitable constructor was found for ProfileDescriptor" when building the model for migrations. The `SettingsForPersistence` converter uses `List<ProfileSetting>`, and EF analyzes the element type including `ProfileDescriptor`. Workaround: keep `EnsureCreatedAsync()` until the model is refactored (e.g. map a string column only, or add parameterless constructor to value objects).
+- **Resolved**: EF design-time works. `ProfileSettingListConverter` serializes `List<ProfileSetting>` to JSON; EF never instantiates `ProfileDescriptor`. Value comparer added for `SettingsForPersistence` to silence EF 10 warning.
 - If schema differs from current DB, may need a data migration or one-time script
 - In dev, `MigrateAsync` will create/update; ensure connection string points to correct DB
 

@@ -13,7 +13,7 @@ Use this checklist before deploying the Dialysis PDMS to production. Aligns with
 | `Authentication:JwtBearer:DevelopmentBypass` | Must be **false** | Or omit in production config |
 | `FhirSubscription:NotifyApiKey` | Optional | For subscription rest-hook callbacks |
 
-**Verify:** `ConnectionStrings:PatientDb`, `ConnectionStrings:TreatmentDb`, etc. are set (e.g. via Key Vault reference `@Microsoft.KeyVault(SecretUri=...)` in App Service).
+**Verify:** `ConnectionStrings:PatientDb`, `ConnectionStrings:TreatmentDb`, etc. are set (e.g. via Key Vault reference `@Microsoft.KeyVault(SecretUri=...)` in App Service). See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md).
 
 ---
 
@@ -53,25 +53,39 @@ Use this checklist before deploying the Dialysis PDMS to production. Aligns with
 
 ## 5. Network & Security
 
-| Item | Status |
-|------|--------|
-| HTTPS for all external traffic | Required |
-| CORS configured appropriately | Verify for SPA/frontend |
-| Key Vault for secrets | Required per C5 |
+| Item | Status | Notes |
+|------|--------|-------|
+| HTTPS for all external traffic | Required | Use reverse proxy or Kestrel cert |
+| CORS configured appropriately | Done | Gateway: `Cors:AllowedOrigins` in config; restrict to SPA origins in production |
+| Key Vault for secrets | Required per C5 | |
+
+**CORS:** Set `Cors:AllowedOrigins` in production (e.g. `["https://your-app.example.com"]`). Empty = CORS disabled. See Gateway `appsettings.json`.
 
 ---
 
-## 6. Operational
+## 6. Observability
+
+| Item | Status |
+|------|--------|
+| Prometheus metrics (`GET /metrics`) on Gateway | Done |
+| OpenTelemetry ASP.NET Core instrumentation | Done |
+| CI (build, test) | Done – `.github/workflows/ci.yml` (Release) |
+| Load test workflow | Done – `.github/workflows/load-test.yml` (manual + weekly) |
+
+---
+
+## 7. Operational
 
 | Item | Notes |
 |------|-------|
 | NTP on all hosts | See [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) §1 |
 | Logging level | `Information` or `Warning` for production |
 | Data residency | Deploy DB and APIs in target region (e.g. EU for GDPR) |
+| Load test | Run `./scripts/load-test.sh` before deploy |
 
 ---
 
-## 7. C5 Audit Verification (Codebase)
+## 8. C5 Audit Verification (Codebase)
 
 | Check | Verified | Location |
 |-------|----------|----------|
@@ -84,23 +98,42 @@ Use this checklist before deploying the Dialysis PDMS to production. Aligns with
 | X-Tenant-Id propagation | Yes | ITenantContext; headers forwarded in FHIR/Reports/CDS calls |
 | Gateway health aggregation | Yes | 8 backends: patient, prescription, treatment, alarm, device, fhir, cds, reports |
 
-**Gaps for production:** `appsettings.json` contains localhost and dev credentials (postgres/postgres). Override via environment, Key Vault, or production-specific config. Never deploy with `DevelopmentBypass: true` in production config.
+**Production config:** `appsettings.Production.json` exists for Gateway and all APIs; it sets `DevelopmentBypass: false` and production logging. Connection strings and CORS must still be overridden via environment or Key Vault. See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md).
 
 ---
 
-## 8. Pre-Deploy Verification
+## 9. Pre-Deploy Verification
 
-1. Run `docker compose up -d` locally; verify `GET /health` returns Healthy for all entries.
-2. Verify `GET /metrics` returns Prometheus format (Gateway).
-3. Run load test: `./scripts/load-test.sh --endpoint health --requests 100`.
-3. Verify no hardcoded credentials in config committed to source (appsettings.json has dev defaults only).
-4. Run full test suite: `dotnet test --filter "FullyQualifiedName~Dialysis"`.
+| Step | Command / Action |
+|------|------------------|
+| 1 | Run `docker compose up -d`; verify `GET /health` returns Healthy for all entries |
+| 2 | Verify `GET /metrics` returns Prometheus format (Gateway) |
+| 3 | Run load test: `./scripts/load-test.sh --endpoint health --requests 100` |
+| 4 | Verify no hardcoded credentials; `appsettings.json` has dev defaults only |
+| 5 | Run full test suite: `dotnet test --filter "FullyQualifiedName~Dialysis"` |
+| 6 | (Optional) Production smoke: `docker compose -f docker-compose.yml -f docker-compose.production.yml up -d`; run `AUTH_HEADER="Bearer <token>" ./scripts/smoke-test-fhir.sh` |
+
+---
+
+## 10. Plan Completion Status
+
+| Plan | Status |
+|------|--------|
+| DDD ReadModels (ddd_readmodels_plan) | Completed – ReadModels, Device AggregateRoot |
+| Device Service (device_service_plan) | Completed |
+| Priorities (priorities_plan) | Completed |
+| Next Steps (next_steps_plan) | Completed – Indexes, FHIR/CDS/Reports tests |
+| Observability & CI (observability_ci_plan) | Completed – Metrics, CI workflow |
+| FHIR IG alignment | Completed – Procedure.subject, Observation.code fallbacks; bulk export _patient, _since |
+| Production smoke test | Completed – AUTH_HEADER, docker-compose.production.yml |
 
 ---
 
 ## References
 
+- [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) – Required env vars, Key Vault, CORS
 - [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md)
 - [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md)
 - [HEALTH-CHECK.md](HEALTH-CHECK.md)
 - [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md)
+- [CQRS-READ-WRITE-SPLIT.md](CQRS-READ-WRITE-SPLIT.md)
