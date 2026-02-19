@@ -84,6 +84,11 @@ This document summarizes the Dialysis Machine HL7 Implementation Guide (Rev 4.0,
 
 **Status**: A dedicated FHIR Implementation Guide for dialysis machines is in development by the Dialysis Interoperability Consortium (since April 2023). The PDMS uses Firely SDK and targets FHIR as the internal/interop model per project goals.
 
+**Planning documents** (in [docs/Dialysis_Machine_FHIR_Implementation_Guide/](Dialysis_Machine_FHIR_Implementation_Guide/)):
+
+- [IMPLEMENTATION_PLAN.md](Dialysis_Machine_FHIR_Implementation_Guide/IMPLEMENTATION_PLAN.md) – Phase-by-phase FHIR implementation plan
+- [ALIGNMENT-REPORT.md](Dialysis_Machine_FHIR_Implementation_Guide/ALIGNMENT-REPORT.md) – FHIR IG requirements vs PDMS implementation
+
 ### 12. FHIR R4 Resource Mapping (HL7 v2 → FHIR)
 
 

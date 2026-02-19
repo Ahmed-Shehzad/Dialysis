@@ -4,6 +4,21 @@
 
 This folder hosts the formal FHIR Implementation Guide (IG) for dialysis machines when published by the [Dialysis Interoperability Consortium](https://www.dialysisinterop.org/) or HL7. The PDMS uses FHIR R4 as its primary interoperability model per project goals.
 
+## Planning and Alignment
+
+The formal Dialysis Machine FHIR IG is in development; this plan is based on FHIR R4, QI-Core, and the HL7-to-FHIR mapping in [Dialysis.Hl7ToFhir](../../Services/Dialysis.Hl7ToFhir/).
+
+| Document | Description |
+|----------|-------------|
+| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Phase-by-phase implementation plan (Phases 1–6) |
+| [ALIGNMENT-REPORT.md](ALIGNMENT-REPORT.md) | Cross-reference of FHIR IG requirements vs PDMS implementation |
+| [PHASE1_DEVICE_AND_OBSERVATION_PLAN.md](PHASE1_DEVICE_AND_OBSERVATION_PLAN.md) | Device and Observation |
+| [PHASE2_SERVICEREQUEST_PLAN.md](PHASE2_SERVICEREQUEST_PLAN.md) | ServiceRequest (Prescription) |
+| [PHASE3_PROCEDURE_PLAN.md](PHASE3_PROCEDURE_PLAN.md) | Procedure (Treatment session) |
+| [PHASE4_DETECTEDISSUE_PLAN.md](PHASE4_DETECTEDISSUE_PLAN.md) | DetectedIssue (Alarms) |
+| [PHASE5_SUPPORTING_RESOURCES_PLAN.md](PHASE5_SUPPORTING_RESOURCES_PLAN.md) | Patient, Provenance, AuditEvent |
+| [PHASE6_FHIR_API_PLAN.md](PHASE6_FHIR_API_PLAN.md) | FHIR API (Bulk, Search, Subscriptions, CDS, Reports) |
+
 ## Links to Published IGs
 
 - **Dialysis Interop Consortium**: [dialysisinterop.org](https://www.dialysisinterop.org/) – FHIR IG in development (since April 2023)

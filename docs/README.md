@@ -52,6 +52,8 @@ See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTUR
 - [Dialysis_Implementation_Plan.md](Dialysis_Implementation_Plan.md) – HL7 v2 and FHIR implementation plan (Parts A, B, C)
 - [Dialysis_Machine_HL7_Implementation_Guide/](Dialysis_Machine_HL7_Implementation_Guide/) – IHE-based HL7 v2.6 Implementation Guide ([PDF](Dialysis_Machine_HL7_Implementation_Guide/Dialysis_Machine_HL7_Implementation_Guide_rev4.pdf) Rev 4.0, March 2023)
 - [Dialysis_Machine_FHIR_Implementation_Guide/](Dialysis_Machine_FHIR_Implementation_Guide/) – FHIR R4 resources, mapping, and Firely SDK notes
+  - [IMPLEMENTATION_PLAN.md](Dialysis_Machine_FHIR_Implementation_Guide/IMPLEMENTATION_PLAN.md) – Phase-by-phase plan
+  - [ALIGNMENT-REPORT.md](Dialysis_Machine_FHIR_Implementation_Guide/ALIGNMENT-REPORT.md) – FHIR IG vs PDMS alignment
 - **Dialysis.Hl7ToFhir** (Phase 5) – HL7-to-FHIR mapping layer; ObservationMapper, AlarmMapper, DeviceMapper, ProcedureMapper
 
 ## Maintenance
