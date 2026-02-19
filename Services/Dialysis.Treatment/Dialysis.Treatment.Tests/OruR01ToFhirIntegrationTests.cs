@@ -16,9 +16,13 @@ using Hl7.Fhir.Model;
 
 using Intercessor.Abstractions;
 
-using Task = System.Threading.Tasks.Task;
-
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+
+using BuildingBlocks.TimeSync;
+
+using Task = System.Threading.Tasks.Task;
 
 using Shouldly;
 
@@ -44,7 +48,12 @@ public sealed class OruR01ToFhirIntegrationTests
         _ = await db.TreatmentSessions.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
-        var ingestHandler = new IngestOruMessageCommandHandler(new Sender(repository), new OruR01Parser(), new NoOpDeviceRegistrationClient());
+        var ingestHandler = new IngestOruMessageCommandHandler(
+            new Sender(repository),
+            new OruR01Parser(),
+            new NoOpDeviceRegistrationClient(),
+            Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
+            NullLogger<IngestOruMessageCommandHandler>.Instance);
         var getHandler = new GetTreatmentSessionQueryHandler(repository);
 
         string mrn = TreatmentTestData.Mrn();

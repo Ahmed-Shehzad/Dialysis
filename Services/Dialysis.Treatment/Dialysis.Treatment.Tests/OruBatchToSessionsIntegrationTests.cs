@@ -15,6 +15,10 @@ using Dialysis.Treatment.Tests.TestDoubles;
 using Intercessor.Abstractions;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+
+using BuildingBlocks.TimeSync;
 
 using Shouldly;
 
@@ -44,16 +48,16 @@ public sealed class OruBatchToSessionsIntegrationTests
         var batchHandler = new IngestOruBatchCommandHandler(new Hl7BatchParser(), sender);
         var getHandler = new GetTreatmentSessionQueryHandler(repository);
 
-        string oru1 = "MSH|^~\\&|DEV|FAC|PDMS|FAC|20230215120000||ORU^R01^ORU_R01|M001|P|2.5\r"
-                      + "PID|||MRN1^^^^MR\r"
-                      + "OBR|1||SESS001^DEV^EUI64|||20230215120000||||||start\r"
-                      + "OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM\r";
-        string oru2 = "MSH|^~\\&|DEV|FAC|PDMS|FAC|20230215120100||ORU^R01^ORU_R01|M002|P|2.5\r"
-                      + "PID|||MRN2^^^^MR\r"
-                      + "OBR|1||SESS002^DEV^EUI64|||20230215120100||||||start\r"
-                      + "OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|350|ml/min^ml/min^UCUM\r";
+        const string oru1 = "MSH|^~\\&|DEV|FAC|PDMS|FAC|20230215120000||ORU^R01^ORU_R01|M001|P|2.5\r"
+                            + "PID|||MRN1^^^^MR\r"
+                            + "OBR|1||SESS001^DEV^EUI64|||20230215120000||||||start\r"
+                            + "OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|300|ml/min^ml/min^UCUM\r";
+        const string oru2 = "MSH|^~\\&|DEV|FAC|PDMS|FAC|20230215120100||ORU^R01^ORU_R01|M002|P|2.5\r"
+                            + "PID|||MRN2^^^^MR\r"
+                            + "OBR|1||SESS002^DEV^EUI64|||20230215120100||||||start\r"
+                            + "OBX|1|NM|152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE^MDC|1.1.3.1|350|ml/min^ml/min^UCUM\r";
 
-        string batch = $"FHS|^~\\&||||||\rBHS|^~\\&||||||\r{oru1}\r{oru2}\rBTS|2\rFTS|1\r";
+        const string batch = $"FHS|^~\\&||||||\rBHS|^~\\&||||||\r{oru1}\r{oru2}\rBTS|2\rFTS|1\r";
 
         IngestOruBatchResponse response = await batchHandler.HandleAsync(new IngestOruBatchCommand(batch));
 
@@ -94,7 +98,12 @@ public sealed class OruBatchToSessionsIntegrationTests
         {
             if (request is IngestOruMessageCommand ingestCmd)
             {
-                var ingestHandler = new IngestOruMessageCommandHandler(this, new OruR01Parser(), new NoOpDeviceRegistrationClient());
+                var ingestHandler = new IngestOruMessageCommandHandler(
+                    this,
+                    new OruR01Parser(),
+                    new NoOpDeviceRegistrationClient(),
+                    Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
+                    NullLogger<IngestOruMessageCommandHandler>.Instance);
                 IngestOruMessageResponse result = await ingestHandler.HandleAsync(ingestCmd, cancellationToken);
                 return (TResponse)(object)result;
             }

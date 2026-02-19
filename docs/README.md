@@ -14,6 +14,10 @@ docker compose up -d
 
 See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16 for details.
 
+## Deployment Requirements
+
+- [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) – Time synchronization (NTP), database, security
+
 ---
 
 ## Services

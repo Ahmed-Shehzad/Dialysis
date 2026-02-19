@@ -11,7 +11,7 @@ The **Dialysis.Gateway** provides a unified entry point for all PDMS APIs using 
 | Project | `Gateway/Dialysis.Gateway` |
 | Framework | ASP.NET Core 10, YARP.ReverseProxy |
 | Port | 5000 (default); 5001 when using `docker compose` |
-| Health | `GET /health` – aggregates status of all backends |
+| Health | `GET /health` – aggregates status of all backends; includes `serverTimeUtc` (ISO 8601) for time sync verification |
 
 ---
 

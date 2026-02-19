@@ -2,6 +2,7 @@ using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
+using BuildingBlocks.TimeSync;
 
 using Dialysis.Alarm.Api;
 using Dialysis.Alarm.Application.Abstractions;
@@ -57,6 +58,7 @@ builder.Services.AddAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
+builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 builder.Services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
 
 builder.Services.AddHealthChecks()

@@ -2,6 +2,7 @@ using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
+using BuildingBlocks.TimeSync;
 
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain.Services;
@@ -81,6 +82,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
 
+builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "treatment-db");
 

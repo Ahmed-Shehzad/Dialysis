@@ -42,6 +42,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         var result = new
         {
             status = report.Status.ToString(),
+            serverTimeUtc = DateTime.UtcNow.ToString("O"),
             entries = report.Entries.ToDictionary(e => e.Key, e => new
             {
                 status = e.Value.Status.ToString(),

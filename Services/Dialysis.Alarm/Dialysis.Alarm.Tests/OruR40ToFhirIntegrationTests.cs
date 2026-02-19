@@ -17,6 +17,10 @@ using Hl7.Fhir.Model;
 using Intercessor.Abstractions;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+
+using BuildingBlocks.TimeSync;
 
 using Shouldly;
 
@@ -41,7 +45,12 @@ public sealed class OruR40ToFhirIntegrationTests
         _ = await db.Database.EnsureCreatedAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var ingestHandler = new IngestOruR40MessageCommandHandler(new RecordAlarmSender(repository), new OruR40Parser(), new NoOpDeviceRegistrationClient());
+        var ingestHandler = new IngestOruR40MessageCommandHandler(
+            new RecordAlarmSender(repository),
+            new OruR40Parser(),
+            new NoOpDeviceRegistrationClient(),
+            Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
+            NullLogger<IngestOruR40MessageCommandHandler>.Instance);
         var getHandler = new GetAlarmsQueryHandler(repository);
 
         string mrn = AlarmTestData.Mrn();
