@@ -1,21 +1,13 @@
 import {
-    createContext,
     useCallback,
-    useContext,
     useLayoutEffect,
     useState,
     type ReactNode,
 } from "react";
+import { AuthContext } from "./context";
+import { setAuthToken } from "./auth-token";
 
 const AUTH_STORAGE_KEY = "dialysis-dashboard-jwt";
-
-type AuthContextValue = {
-    token: string | null;
-    setToken: (token: string | null) => void;
-    isAuthenticated: boolean;
-};
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setTokenState] = useState<string | null>(() => {
@@ -43,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthToken(token);
     }, [token]);
 
-    const value: AuthContextValue = {
+    const value = {
         token,
         setToken,
         isAuthenticated: Boolean(token?.trim()),
@@ -52,20 +44,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (
         <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
     );
-}
-
-export function useAuth(): AuthContextValue {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-    return ctx;
-}
-
-let currentToken: string | null = null;
-
-export function setAuthToken(token: string | null) {
-    currentToken = token;
-}
-
-export function getAuthToken(): string | null {
-    return currentToken;
 }

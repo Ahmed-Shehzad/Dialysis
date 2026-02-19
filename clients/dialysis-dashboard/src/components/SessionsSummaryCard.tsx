@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSessionsSummary } from "../api";
+import { getErrorMessage } from "../utils/errorMessage";
 import { CardSkeleton } from "./CardSkeleton";
 
 interface Props {
@@ -18,8 +19,7 @@ export function SessionsSummaryCard({ from, to }: Readonly<Props>) {
     const cardError =
         "p-5 border border-red-300 rounded-lg bg-red-50 shadow-sm";
 
-    const errorMessage =
-        error instanceof Error ? error.message : error ? String(error) : null;
+    const errorMessage = getErrorMessage(error);
     if (errorMessage)
         return (
             <div className={cardError}>

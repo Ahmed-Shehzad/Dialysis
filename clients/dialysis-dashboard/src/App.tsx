@@ -3,7 +3,7 @@ import { AlarmsBySeverityCard } from "./components/AlarmsBySeverityCard";
 import { PrescriptionComplianceCard } from "./components/PrescriptionComplianceCard";
 import { SessionsSummaryCard } from "./components/SessionsSummaryCard";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { useAuth } from "./auth/AuthContext";
+import { useAuth } from "./auth/useAuth";
 
 function formatDateForInput(d: Date): string {
     return d.toISOString().slice(0, 10);
@@ -18,13 +18,13 @@ function App() {
     const [to, setTo] = useState(formatDateForInput(now));
     const [tokenInput, setTokenInput] = useState("");
 
-    const fromIso = from ? new Date(from + "T00:00:00").toISOString() : undefined;
-    const toIso = to ? new Date(to + "T23:59:59").toISOString() : undefined;
+    const fromIso = (from && new Date(from + "T00:00:00").toISOString()) || undefined;
+    const toIso = (to && new Date(to + "T23:59:59").toISOString()) || undefined;
 
-    const handleTokenSubmit = (e: React.FormEvent) => {
+    const handleTokenSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         const trimmed = tokenInput.trim();
-        setToken(trimmed ? trimmed : null);
+        setToken(trimmed || null);
     };
 
     return (

@@ -22,7 +22,8 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
         string? queryTag = ParseQueryTag(segments);
         string? queryName = ParseQueryName(segments);
 
-        ParseQpdDemographics(segments, out string? mrn, out string? personNumber, out string? socialSecurityNumber, out string? universalId, out string? firstName, out string? lastName, out DateOnly? birthdate);
+        var demographics = ParseQpdDemographics(segments);
+        var (mrn, personNumber, socialSecurityNumber, universalId, firstName, lastName, birthdate) = demographics;
 
         if (string.IsNullOrWhiteSpace(mrn) && string.IsNullOrWhiteSpace(personNumber) && string.IsNullOrWhiteSpace(socialSecurityNumber) && string.IsNullOrWhiteSpace(universalId) && string.IsNullOrWhiteSpace(lastName) && !birthdate.HasValue)
             throw new ArgumentException("QBP^Q22 must contain patient MRN (@PID.3), name (@PID.5), or birthdate (@PID.7) in QPD-3.", nameof(hl7Message));
@@ -50,22 +51,22 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
         return qpd is null ? null : ExtractField(qpd, 1);
     }
 
-    private static void ParseQpdDemographics(string[] segments, out string? mrn, out string? personNumber, out string? socialSecurityNumber, out string? universalId, out string? firstName, out string? lastName, out DateOnly? birthdate)
+    private static QpdDemographics ParseQpdDemographics(string[] segments)
     {
         var d = new QpdDemographics();
 
         string? qpd = FindFirstSegment(segments, "QPD");
-        if (qpd is null) { d.Deconstruct(out mrn, out personNumber, out socialSecurityNumber, out universalId, out firstName, out lastName, out birthdate); return; }
+        if (qpd is null) return d;
 
         string? qpd3 = ExtractField(qpd, 3);
-        if (string.IsNullOrEmpty(qpd3)) { d.Deconstruct(out mrn, out personNumber, out socialSecurityNumber, out universalId, out firstName, out lastName, out birthdate); return; }
+        if (string.IsNullOrEmpty(qpd3)) return d;
 
         string[] queryParams = qpd3.Split(RepeatSeparator);
         foreach (string param in queryParams)
             ApplyQueryParam(param, ref d);
 
         TryApplyFallbackMrn(qpd3, queryParams, ref d);
-        d.Deconstruct(out mrn, out personNumber, out socialSecurityNumber, out universalId, out firstName, out lastName, out birthdate);
+        return d;
     }
 
     private static void ApplyQueryParam(string param, ref QpdDemographics d)
@@ -90,7 +91,7 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
     private static DateOnly? ParseBirthdate(string value)
     {
         if (value.Length < 8) return null;
-        if (int.TryParse(value[..4], out int y) && int.TryParse(value.Substring(4, 2), out int m) && int.TryParse(value.Substring(6, 2), out int day))
+        if (int.TryParse(value.AsSpan(0, 4), out int y) && int.TryParse(value.AsSpan(4, 2), out int m) && int.TryParse(value.AsSpan(6, 2), out int day))
         {
             try { return new DateOnly(y, m, day); }
             catch { return null; }

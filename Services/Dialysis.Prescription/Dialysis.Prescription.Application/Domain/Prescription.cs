@@ -11,7 +11,7 @@ namespace Dialysis.Prescription.Application.Domain;
 public sealed class Prescription : AggregateRoot
 {
 #pragma warning disable IDE0044 // Required for EF Core backing field materialization
-    private List<ProfileSetting> _settings = [];
+    private readonly List<ProfileSetting> _settings = [];
 #pragma warning restore IDE0044
 
     public TenantId TenantId { get; private set; }

@@ -1,4 +1,4 @@
-import { getAuthToken } from './auth/AuthContext'
+import { getAuthToken } from './auth/auth-token'
 
 const API_BASE = '/api'
 
