@@ -64,8 +64,42 @@ See [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16. Ensure the host runni
 
 ---
 
-## 6. References
+## 6. Production Deployment (Azure)
 
+### 6.1 Azure Services
+
+| Component | Azure Service | Notes |
+|-----------|---------------|-------|
+| Database | Azure Database for PostgreSQL (Flexible Server) | Create per-service databases; enable SSL |
+| APIs | Azure App Service (Linux, .NET) | One app per API or container apps |
+| Gateway | Azure App Service | Single entry; YARP reverse proxy |
+| Secrets | Azure Key Vault | Store connection strings, JWT authority |
+| Identity | Azure AD | OAuth2 / OpenID Connect for JWT |
+
+### 6.2 Secrets Management (C5)
+
+- **Never** hardcode credentials in code or config files.
+- Store connection strings in Key Vault; reference via `@Microsoft.KeyVault(SecretUri=...)` in App Service configuration.
+- JWT authority and audience: externalize to configuration; use Key Vault for client secrets if applicable.
+
+### 6.3 Kubernetes (AKS)
+
+- Use Kubernetes Secrets or External Secrets Operator for Key Vault integration.
+- Deploy each API as a Deployment; Gateway as ingress or separate service.
+- Health checks: use `/health` for liveness and readiness probes.
+- Consider Horizontal Pod Autoscaling for high-traffic APIs.
+
+### 6.4 Data Residency
+
+- For C5 and regulatory requirements, ensure PostgreSQL and App Services are deployed in the target region (e.g. EU for GDPR).
+- Document data flows and jurisdictions in operational runbooks.
+
+---
+
+## 7. References
+
+- [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md) – Step-by-step deploy, rollback, troubleshooting
+- [HEALTH-CHECK.md](HEALTH-CHECK.md) – Health endpoints and monitoring
 - [TIME-SYNCHRONIZATION-PLAN.md](TIME-SYNCHRONIZATION-PLAN.md) – Implementation plan for time sync alignment
 - [HL7-IMPLEMENTATION-GUIDE-ALIGNMENT-REPORT.md](HL7-IMPLEMENTATION-GUIDE-ALIGNMENT-REPORT.md) – Guide compliance
 - Dialysis Machine HL7 Implementation Guide Rev 4.0, §2 Time Synchronization

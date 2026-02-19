@@ -221,7 +221,60 @@ When configuring HTTP Sender destinations in Mirth channels, use `http://gateway
 
 ---
 
-## 5. OAuth2 Token Setup
+## 5. End-to-End Verification (E2E Runbook)
+
+Use this procedure to verify the full HL7 flow with Mirth and PDMS in Docker.
+
+### 5.1 Start the Stack
+
+```bash
+docker compose --profile mirth up -d
+```
+
+Wait for services to be healthy:
+
+```bash
+curl http://localhost:5001/health
+```
+
+### 5.2 Configure Mirth Channels
+
+1. Open Mirth Admin: http://localhost:9080
+2. Import or create channels per [docs/mirth/channels/README.md](mirth/channels/README.md)
+3. Set channel variable `pdmsBaseUrl` to `http://gateway:5000` (Docker internal)
+4. Deploy channels; ensure MLLP listener is on port 6661
+
+### 5.3 Verify Without Mirth (Smoke Test)
+
+Bypass Mirth and hit PDMS directly to confirm APIs work:
+
+```bash
+./scripts/smoke-test-fhir.sh --hl7
+```
+
+Expected: `POST /api/hl7/qbp-q22 OK (200)`, `POST /api/hl7/qbp-d01 OK (200)`.
+
+### 5.4 E2E with MLLP (Optional)
+
+To test Mirth → PDMS flow end-to-end:
+
+1. **Send QBP^Q22** via MLLP to port 6661 (e.g. using `hl7client` or a test tool)
+2. Mirth parses MSH-9, routes to `POST http://gateway:5000/api/hl7/qbp-q22`
+3. PDMS returns RSP^K22; Mirth forwards back over MLLP
+
+Alternatively, use Mirth's **Message Templates** or **Test Message** to inject a QBP^Q22 and verify the destination response.
+
+### 5.5 Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| Mirth cannot reach PDMS | Verify `pdmsBaseUrl` is `http://gateway:5000` (not localhost) when Mirth runs in Docker |
+| 401/403 from PDMS | In Development, APIs use `DevelopmentBypass`; ensure `ASPNETCORE_ENVIRONMENT=Development` |
+| Wrong route | Verify MSH-9 parsing in transformer; QBP^Q22 → qbp-q22, QBP^D01 → qbp-d01 |
+
+---
+
+## 6. OAuth2 Token Setup
 
 See [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) for:
 
@@ -231,7 +284,7 @@ See [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) for:
 
 ---
 
-## 6. Response Handling
+## 7. Response Handling
 
 | Endpoint | Response Format | Notes |
 |----------|-----------------|-------|
@@ -243,7 +296,7 @@ See [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) for:
 
 ---
 
-## 7. Channel Samples
+## 8. Channel Samples
 
 Reusable scripts and configuration are available in `docs/mirth/channels/`:
 
@@ -257,7 +310,7 @@ See [docs/mirth/channels/README.md](mirth/channels/README.md) for import and con
 
 ---
 
-## 8. Prescription API Configuration
+## 9. Prescription API Configuration
 
 The Prescription API supports configurable conflict handling when ingesting RSP^K22:
 
@@ -273,7 +326,7 @@ The Prescription API supports configurable conflict handling when ingesting RSP^
 
 ---
 
-## 9. EHR Integration Patterns
+## 10. EHR Integration Patterns
 
 ### Supported EHR Flows
 
@@ -313,7 +366,7 @@ All FHIR endpoints require JWT (or DevelopmentBypass in dev) and `X-Tenant-Id`. 
 
 ---
 
-## 10. References
+## 11. References
 
 - [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) – JWT claims, scopes, token acquisition
 - [NEXT-STEPS-PLAN.md](NEXT-STEPS-PLAN.md) – Step 4 deliverables

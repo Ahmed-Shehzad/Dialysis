@@ -232,8 +232,9 @@ All planned steps (1–6) and HL7 Implementation Guide Phases 1–5 are complete
 |-------|--------|-------|
 | Additional test coverage | Small | Edge cases, error paths |
 | Performance/load testing | Medium | Benchmark API under load |
-| Mirth container in docker-compose | Small | End-to-end HL7 with real Mirth |
-| Production deployment docs | Medium | Azure App Service, AKS, Key Vault |
+| Mirth container in docker-compose | Done | `docker compose --profile mirth up -d` |
+| Production deployment docs | Done | [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md), [HEALTH-CHECK.md](HEALTH-CHECK.md), [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) §6 |
+| Mirth E2E verification | Done | [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md) §5 |
 
 ---
 

@@ -14,9 +14,11 @@ docker compose up -d
 
 See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16 for details.
 
-## Deployment Requirements
+## Deployment & Operations
 
-- [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) – Time synchronization (NTP), database, security
+- [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) – Time synchronization (NTP), database, security, production (Azure/Key Vault)
+- [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md) – Step-by-step deploy, rollback, troubleshooting
+- [HEALTH-CHECK.md](HEALTH-CHECK.md) – Health endpoints and monitoring
 
 ---
 

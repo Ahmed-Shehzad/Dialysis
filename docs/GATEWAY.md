@@ -93,5 +93,6 @@ Backend addresses are defined in `appsettings.json` under `ReverseProxy:Clusters
 
 ## 6. References
 
+- [HEALTH-CHECK.md](HEALTH-CHECK.md) – Health endpoint details and monitoring
 - [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) – JWT and scopes
 - [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md) – Mirth channel setup with gateway URL
