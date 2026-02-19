@@ -1,6 +1,8 @@
 using BuildingBlocks.Abstractions;
 using BuildingBlocks.ValueObjects;
 
+using Dialysis.Prescription.Application.Domain.ValueObjects;
+
 using Microsoft.EntityFrameworkCore;
 
 using PrescriptionEntity = Dialysis.Prescription.Application.Domain.Prescription;
@@ -28,7 +30,10 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
                 .HasMaxLength(100)
                 .HasDefaultValue(TenantId.Default);
             _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
-            _ = e.Property(x => x.OrderId).IsRequired().HasMaxLength(100);
+            _ = e.Property(x => x.OrderId)
+                .HasConversion(v => v.Value, v => new OrderId(v))
+                .IsRequired()
+                .HasMaxLength(100);
             _ = e.Property(x => x.PatientMrn)
                 .HasConversion(v => v.Value, v => new MedicalRecordNumber(v))
                 .IsRequired();

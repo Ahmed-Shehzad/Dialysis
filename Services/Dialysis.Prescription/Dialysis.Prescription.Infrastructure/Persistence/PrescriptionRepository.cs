@@ -5,6 +5,7 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Abstractions;
+using Dialysis.Prescription.Application.Domain.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ public sealed class PrescriptionRepository : Repository<PrescriptionEntity>, IPr
         _tenant = tenant;
     }
 
-    public async Task<PrescriptionEntity?> GetByOrderIdAsync(string orderId, CancellationToken cancellationToken = default)
+    public async Task<PrescriptionEntity?> GetByOrderIdAsync(OrderId orderId, CancellationToken cancellationToken = default)
     {
         return await _db.Prescriptions
             .AsNoTracking()

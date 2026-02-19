@@ -6,7 +6,6 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
 

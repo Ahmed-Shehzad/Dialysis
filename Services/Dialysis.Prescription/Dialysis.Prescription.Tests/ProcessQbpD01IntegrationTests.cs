@@ -43,7 +43,7 @@ public sealed class ProcessQbpD01IntegrationTests
         _ = await db.Prescriptions.ExecuteDeleteAsync();
 
         var prescription = Dialysis.Prescription.Application.Domain.Prescription.Create(
-            orderId,
+            new Dialysis.Prescription.Application.Domain.ValueObjects.OrderId(orderId),
             new MedicalRecordNumber(mrn),
             "HD",
             provider,

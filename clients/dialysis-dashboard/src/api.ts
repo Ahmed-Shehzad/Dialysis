@@ -1,9 +1,16 @@
+import { getAuthToken } from './auth/AuthContext'
+
 const API_BASE = '/api'
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(API_BASE + path, {
-    headers: { Accept: 'application/json', 'X-Tenant-Id': 'default' },
-  })
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-Tenant-Id': 'default',
+  }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(API_BASE + path, { headers })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   return res.json()
 }

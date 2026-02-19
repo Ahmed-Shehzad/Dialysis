@@ -620,6 +620,18 @@ For production, prefer running migrations as a distinct CI/CD step or hosted job
 
 ---
 
+## 15b. Structured Logging (Serilog)
+
+All APIs and the Gateway use **Serilog** for structured logging. Logs include:
+
+- **TraceId** and **SpanId** (via `ActivityEnricher`) for correlation across services
+- **CompactJsonFormatter** in production for log aggregation (e.g. Azure Log Analytics, Seq)
+- Standard console output in Development
+
+Configuration: `appsettings.json` or environment overrides. See `BuildingBlocks.Logging.ActivityEnricher` for trace correlation.
+
+---
+
 ## 16. Docker Compose (Full Stack Run)
 
 The solution runs via `docker compose` for local development and integration testing.

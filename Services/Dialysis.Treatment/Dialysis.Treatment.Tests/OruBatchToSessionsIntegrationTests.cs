@@ -2,7 +2,6 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 
 using Dialysis.Treatment.Application.Abstractions;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.IngestOruBatch;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
@@ -69,8 +68,8 @@ public sealed class OruBatchToSessionsIntegrationTests
         response.SessionIds.ShouldContain("SESS002");
 #pragma warning restore IDE0058
 
-        GetTreatmentSessionResponse? s1 = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new SessionId("SESS001")));
-        GetTreatmentSessionResponse? s2 = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new SessionId("SESS002")));
+        GetTreatmentSessionResponse? s1 = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new BuildingBlocks.ValueObjects.SessionId("SESS001")));
+        GetTreatmentSessionResponse? s2 = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new BuildingBlocks.ValueObjects.SessionId("SESS002")));
 
 #pragma warning disable IDE0058
         _ = s1.ShouldNotBeNull();

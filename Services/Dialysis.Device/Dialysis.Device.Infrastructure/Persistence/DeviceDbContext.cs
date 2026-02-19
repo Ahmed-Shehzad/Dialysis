@@ -1,6 +1,8 @@
 using BuildingBlocks.Abstractions;
 using BuildingBlocks.ValueObjects;
 
+using Dialysis.Device.Application.Domain.ValueObjects;
+
 using Microsoft.EntityFrameworkCore;
 
 using DeviceDomain = Dialysis.Device.Application.Domain.Device;
@@ -27,7 +29,10 @@ public sealed class DeviceDbContext : DbContext, IDbContext
                 .HasConversion(v => v.Value, v => new TenantId(v))
                 .HasMaxLength(100)
                 .HasDefaultValue(TenantId.Default);
-            _ = e.Property(x => x.DeviceEui64).HasMaxLength(200).IsRequired();
+            _ = e.Property(x => x.DeviceEui64)
+                .HasConversion(v => v.Value, v => new DeviceEui64(v))
+                .HasMaxLength(200)
+                .IsRequired();
             _ = e.Property(x => x.Manufacturer).HasMaxLength(500);
             _ = e.Property(x => x.Model).HasMaxLength(200);
             _ = e.Property(x => x.Serial).HasMaxLength(200);

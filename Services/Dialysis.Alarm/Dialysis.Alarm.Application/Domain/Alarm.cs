@@ -4,6 +4,8 @@ using BuildingBlocks.ValueObjects;
 using Dialysis.Alarm.Application.Domain.Events;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 
+using SessionId = BuildingBlocks.ValueObjects.SessionId;
+
 namespace Dialysis.Alarm.Application.Domain;
 
 public sealed class Alarm : AggregateRoot
@@ -21,7 +23,7 @@ public sealed class Alarm : AggregateRoot
     public AlarmState AlarmState { get; private set; }
     public ActivityState ActivityState { get; private set; }
     public DeviceId? DeviceId { get; private set; }
-    public string? SessionId { get; private set; }
+    public SessionId? SessionId { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
     /// <summary>Absolute drift in seconds between MSH-7 and server UTC (IHE CT audit).</summary>
     public double? MessageTimeDriftSeconds { get; private set; }

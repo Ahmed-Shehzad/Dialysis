@@ -3,7 +3,6 @@ using BuildingBlocks.Testcontainers;
 
 using Dialysis.Hl7ToFhir;
 using Dialysis.Treatment.Application.Abstractions;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
 using Dialysis.Treatment.Application.Features.RecordObservation;
@@ -67,7 +66,7 @@ public sealed class OruR01ToFhirIntegrationTests
         ingestResponse.ObservationCount.ShouldBe(2);
         ingestResponse.SessionId.ShouldBe(sessionId);
 
-        GetTreatmentSessionResponse? sessionResponse = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new SessionId(sessionId)));
+        GetTreatmentSessionResponse? sessionResponse = await getHandler.HandleAsync(new GetTreatmentSessionQuery(new BuildingBlocks.ValueObjects.SessionId(sessionId)));
         _ = sessionResponse.ShouldNotBeNull();
         sessionResponse.Observations.Count.ShouldBe(2);
 #pragma warning restore IDE0058

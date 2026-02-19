@@ -27,7 +27,7 @@ internal sealed class AlarmRaisedIntegrationEventHandler : IDomainEventHandler<A
             notification.EventPhase,
             notification.AlarmState,
             notification.DeviceId?.Value,
-            notification.SessionId,
+            notification.SessionId?.Value,
             notification.OccurredAt,
             _tenant.TenantId);
 

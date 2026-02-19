@@ -131,7 +131,7 @@ public sealed class GetAlarmsQueryHandlerTests
         var info = AlarmInfo.Create(new AlarmCreateParams(
             alarmType, "MDC_XYZ", "180-400",
             state, AlarmPriority.High, "ST", "H", alarmType,
-            new DeviceId(deviceId), sessionId, occurredAt));
+            new DeviceId(deviceId), string.IsNullOrWhiteSpace(sessionId) ? null : new BuildingBlocks.ValueObjects.SessionId(sessionId), occurredAt));
         return AlarmDomain.Raise(info, TenantContext.DefaultTenantId);
     }
 }

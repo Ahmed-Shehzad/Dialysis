@@ -98,17 +98,24 @@ e.Property(x => x.DeviceId)
 ### Shared (BuildingBlocks/ValueObjects/)
 - `DeviceId` — dialysis device identifier
 - `MedicalRecordNumber` — patient MRN (HL7 PID-3)
+- `SessionId` — treatment session ID (HL7 OBR-3); shared by Treatment and Alarm
+- `TenantId` — multi-tenant identifier
 
 ### Patient Context
 - `PersonName` — first + last name composite (HL7 PID-5)
 - `Gender` — HL7 Table 0001 (M/F/O/U)
 
 ### Treatment Context
-- `SessionId` — treatment session ID (HL7 OBR-3)
 - `ObservationCode` — MDC code from IEEE 11073 (HL7 OBX-3)
 - `TreatmentSessionStatus` — Active / Completed
 - `BreachType` — clinical breach classification
 - `ThresholdDirection` — above / below
+
+### Prescription Context
+- `OrderId` — prescription order identifier (HL7 RSP^K22 ORC-2)
+
+### Device Context
+- `DeviceEui64` — device EUI-64 (HL7 MSH-3, e.g. MACH^EUI64^EUI-64)
 
 ### Alarm Context
 - `AlarmState` — Active / Latched / Acknowledged / Cleared

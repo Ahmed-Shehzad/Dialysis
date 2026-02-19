@@ -3,7 +3,6 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Hl7ToFhir;
-using Dialysis.Treatment.Application.Domain.ValueObjects;
 using Dialysis.Treatment.Application.Features.GetObservationsInTimeRange;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.GetTreatmentSessions;

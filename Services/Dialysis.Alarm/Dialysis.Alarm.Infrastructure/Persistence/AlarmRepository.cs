@@ -24,7 +24,7 @@ public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
         _tenant = tenant;
     }
 
-    public async Task<AlarmDomain?> GetActiveBySourceAsync(DeviceId? deviceId, string? sessionId, string? sourceCode, CancellationToken cancellationToken = default)
+    public async Task<AlarmDomain?> GetActiveBySourceAsync(DeviceId? deviceId, SessionId? sessionId, string? sourceCode, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(sourceCode))
             return null;
@@ -33,7 +33,7 @@ public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
             .Where(a => a.TenantId == new TenantId(_tenant.TenantId) && a.SourceCode == sourceCode);
         if (deviceId is not null)
             query = query.Where(a => a.DeviceId == deviceId);
-        if (!string.IsNullOrEmpty(sessionId))
+        if (sessionId is not null)
             query = query.Where(a => a.SessionId == sessionId);
 
         return await query

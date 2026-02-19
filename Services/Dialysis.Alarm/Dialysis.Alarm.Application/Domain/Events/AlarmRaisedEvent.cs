@@ -3,6 +3,8 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 
+using SessionId = BuildingBlocks.ValueObjects.SessionId;
+
 namespace Dialysis.Alarm.Application.Domain.Events;
 
 public sealed record AlarmRaisedEvent(
@@ -11,5 +13,5 @@ public sealed record AlarmRaisedEvent(
     EventPhase EventPhase,
     AlarmState AlarmState,
     DeviceId? DeviceId,
-    string? SessionId,
+    SessionId? SessionId,
     DateTimeOffset OccurredAt) : DomainEvent;

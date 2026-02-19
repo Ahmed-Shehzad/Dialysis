@@ -48,6 +48,10 @@ public sealed class AlarmDbContext : DbContext, IDbContext
                 .HasConversion(
                     v => v.HasValue ? v.Value.Value : null,
                     v => v != null ? new DeviceId(v) : (DeviceId?)null);
+            _ = e.Property(x => x.SessionId)
+                .HasConversion(
+                    v => v.HasValue ? v.Value.Value : null,
+                    v => !string.IsNullOrWhiteSpace(v) ? new BuildingBlocks.ValueObjects.SessionId(v) : (BuildingBlocks.ValueObjects.SessionId?)null);
             _ = e.HasIndex(x => new { x.TenantId, x.DeviceId });
             _ = e.HasIndex(x => new { x.TenantId, x.SessionId });
             _ = e.HasIndex(x => x.OccurredAt);

@@ -79,7 +79,15 @@ AUTH_HEADER="Bearer <your-access-token>" ./scripts/load-test.sh --endpoint all -
 
 `/health` remains unauthenticated; FHIR, HL7, Reports, and CDS endpoints require a valid JWT in Production.
 
-### 3.4 Load Test
+### 3.4 Dashboard (Optional)
+
+The React dashboard (`clients/dialysis-dashboard`) connects to the gateway. With `DevelopmentBypass` enabled, no JWT is required. For production, set a JWT token via the in-app token input or configure proper OAuth/OIDC.
+
+```bash
+cd clients/dialysis-dashboard && npm run dev   # dev server on port 5173, proxies /api to gateway
+```
+
+### 3.5 Load Test
 
 Run a simple load test to verify performance under concurrent requests:
 
@@ -96,7 +104,7 @@ BASE_URL=http://localhost:5001 X_TENANT_ID=default ./scripts/load-test.sh --endp
 
 See [scripts/load-test.sh](../scripts/load-test.sh) (curl-based) and [scripts/load-test.k6.js](../scripts/load-test.k6.js) (k6). Use `./scripts/run-k6.sh` to run k6 if installed, else curl.
 
-### 3.5 Stop
+### 3.6 Stop
 
 ```bash
 docker compose down

@@ -3,6 +3,7 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Domain;
+using Dialysis.Prescription.Application.Domain.ValueObjects;
 using Dialysis.Prescription.Infrastructure.Hl7;
 
 using Shouldly;
@@ -20,7 +21,7 @@ public sealed class RspK22BuilderObxSubIdTests
     public void BuildFromPrescription_SettingWithoutSubId_UsesCatalogSubId()
     {
         var prescription = PrescriptionEntity.Create(
-            "ORD001",
+            new OrderId("ORD001"),
             new MedicalRecordNumber("MRN123"),
             "HD",
             "DR_SMITH",
@@ -45,7 +46,7 @@ public sealed class RspK22BuilderObxSubIdTests
     public void BuildFromPrescription_SettingWithExplicitSubId_UsesExplicitSubId()
     {
         var prescription = PrescriptionEntity.Create(
-            "ORD002",
+            new OrderId("ORD002"),
             new MedicalRecordNumber("MRN456"),
             "HD",
             null,
@@ -65,7 +66,7 @@ public sealed class RspK22BuilderObxSubIdTests
     public void BuildFromPrescription_UnknownCode_UsesDefaultSubId()
     {
         var prescription = PrescriptionEntity.Create(
-            "ORD003",
+            new OrderId("ORD003"),
             new MedicalRecordNumber("MRN789"),
             "HD",
             null,

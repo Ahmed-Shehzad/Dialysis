@@ -5,6 +5,7 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Device.Application.Abstractions;
+using Dialysis.Device.Application.Domain.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ public sealed class DeviceRepository : Repository<DeviceDomain>, IDeviceReposito
         _tenant = tenant;
     }
 
-    public async Task<DeviceDomain?> GetByDeviceEui64Async(string deviceEui64, CancellationToken cancellationToken = default)
+    public async Task<DeviceDomain?> GetByDeviceEui64Async(DeviceEui64 deviceEui64, CancellationToken cancellationToken = default)
     {
         return await _db.Devices
             .FirstOrDefaultAsync(d => d.TenantId == new TenantId(_tenant.TenantId) && d.DeviceEui64 == deviceEui64, cancellationToken);

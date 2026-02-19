@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPrescriptionCompliance } from "../api";
+import { CardSkeleton } from "./CardSkeleton";
 
 interface Props {
     from?: string;
@@ -7,7 +8,7 @@ interface Props {
 }
 
 export function PrescriptionComplianceCard({ from, to }: Readonly<Props>) {
-    const { data, error, isLoading } = useQuery({
+    const { data, error, isLoading, refetch, isRefetching } = useQuery({
         queryKey: ["prescription-compliance", from, to],
         queryFn: () => getPrescriptionCompliance(from, to),
         enabled: Boolean(from ?? to),
@@ -20,8 +21,20 @@ export function PrescriptionComplianceCard({ from, to }: Readonly<Props>) {
     const errorMessage =
         error instanceof Error ? error.message : error ? String(error) : null;
     if (errorMessage)
-        return <div className={cardError}>Error: {errorMessage}</div>;
-    if (isLoading || !data) return <div className={cardBase}>Loading...</div>;
+        return (
+            <div className={cardError}>
+                Error: {errorMessage}
+                <button
+                    type="button"
+                    onClick={() => refetch()}
+                    disabled={isRefetching}
+                    className="ml-2 px-2 py-1 rounded text-sm bg-red-200 hover:bg-red-300 disabled:opacity-50"
+                >
+                    {isRefetching ? "Retrying…" : "Retry"}
+                </button>
+            </div>
+        );
+    if (isLoading || !data) return <CardSkeleton />;
 
     return (
         <div className={cardBase}>

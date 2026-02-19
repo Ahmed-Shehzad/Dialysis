@@ -3,6 +3,7 @@ using BuildingBlocks.TimeSync;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Domain;
+using Dialysis.Prescription.Application.Domain.ValueObjects;
 using Dialysis.Prescription.Application.Exceptions;
 
 using Intercessor.Abstractions;
@@ -44,21 +45,22 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
         if (!validation.IsValid)
             throw new RspK22ValidationException(validation.ErrorCode!, validation.Message ?? "RSP^K22 validation failed.", validation.Message);
 
-        PrescriptionAggregate? existing = await _repository.GetByOrderIdAsync(result.OrderId, cancellationToken);
+        var orderId = new OrderId(result.OrderId);
+        PrescriptionAggregate? existing = await _repository.GetByOrderIdAsync(orderId, cancellationToken);
         if (existing is not null)
             switch (request.ConflictPolicy)
             {
                 case PrescriptionConflictPolicy.Reject:
-                    throw new PrescriptionConflictException(result.OrderId);
+                    throw new PrescriptionConflictException(orderId.Value);
                 case PrescriptionConflictPolicy.Callback:
-                    throw new PrescriptionConflictException(result.OrderId, existing.CallbackPhone);
+                    throw new PrescriptionConflictException(orderId.Value, existing.CallbackPhone);
                 case PrescriptionConflictPolicy.Replace:
                     _repository.Delete(existing);
                     break;
                 case PrescriptionConflictPolicy.Ignore:
                     return new IngestRspK22MessageResponse(result.OrderId, result.PatientMrn.Value, result.Settings.Count, true);
                 case PrescriptionConflictPolicy.Partial:
-                    var merged = PrescriptionAggregate.Create(result.OrderId, result.PatientMrn, result.Modality ?? existing.Modality, result.OrderingProvider ?? existing.OrderingProvider, result.CallbackPhone ?? existing.CallbackPhone, _tenant.TenantId);
+                    var merged = PrescriptionAggregate.Create(orderId, result.PatientMrn, result.Modality ?? existing.Modality, result.OrderingProvider ?? existing.OrderingProvider, result.CallbackPhone ?? existing.CallbackPhone, _tenant.TenantId);
                     foreach (ProfileSetting s in existing.Settings)
                         merged.AddSetting(s);
 
@@ -79,7 +81,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
             }
 
         var prescription = PrescriptionAggregate.Create(
-            result.OrderId,
+            orderId,
             result.PatientMrn,
             result.Modality,
             result.OrderingProvider,

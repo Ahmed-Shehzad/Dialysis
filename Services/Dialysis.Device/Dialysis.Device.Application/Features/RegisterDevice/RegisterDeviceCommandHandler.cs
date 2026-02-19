@@ -1,6 +1,7 @@
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Device.Application.Abstractions;
+using Dialysis.Device.Application.Domain.ValueObjects;
 
 using Intercessor.Abstractions;
 
@@ -21,7 +22,8 @@ internal sealed class RegisterDeviceCommandHandler : ICommandHandler<RegisterDev
 
     public async Task<RegisterDeviceResponse> HandleAsync(RegisterDeviceCommand request, CancellationToken cancellationToken = default)
     {
-        DeviceDomain? existing = await _repository.GetByDeviceEui64Async(request.DeviceEui64, cancellationToken);
+        var deviceEui64 = new DeviceEui64(request.DeviceEui64);
+        DeviceDomain? existing = await _repository.GetByDeviceEui64Async(deviceEui64, cancellationToken);
         if (existing is not null)
         {
             existing.UpdateDetails(request.Manufacturer, request.Model, request.Serial, request.Udi);
@@ -31,7 +33,7 @@ internal sealed class RegisterDeviceCommandHandler : ICommandHandler<RegisterDev
         }
 
         var device = DeviceDomain.Register(
-            request.DeviceEui64,
+            deviceEui64,
             request.Manufacturer,
             request.Model,
             request.Serial,

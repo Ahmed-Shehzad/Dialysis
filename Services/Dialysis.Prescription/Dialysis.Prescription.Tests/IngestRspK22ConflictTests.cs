@@ -3,6 +3,7 @@ using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Prescription.Application.Domain;
+using Dialysis.Prescription.Application.Domain.ValueObjects;
 using Dialysis.Prescription.Application.Exceptions;
 using Dialysis.Prescription.Application.Features.IngestRspK22Message;
 using Dialysis.Prescription.Infrastructure.Hl7;
@@ -99,7 +100,7 @@ public sealed class IngestRspK22ConflictTests
             _ = await setupDb.Prescriptions.ExecuteDeleteAsync();
 
             var prescription = PrescriptionEntity.Create(
-                orderId,
+                new OrderId(orderId),
                 new MedicalRecordNumber(mrn),
                 "HD",
                 "PROVIDER",

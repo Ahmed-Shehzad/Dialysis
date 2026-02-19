@@ -2,6 +2,8 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
 
+using SessionId = BuildingBlocks.ValueObjects.SessionId;
+
 namespace Dialysis.Alarm.Application.Domain;
 
 public sealed record AlarmInfo(
@@ -17,7 +19,7 @@ public sealed record AlarmInfo(
     string? Abnormality,
     string? DisplayName,
     DeviceId? DeviceId,
-    string? SessionId,
+    SessionId? SessionId,
     DateTimeOffset OccurredAt,
     double? MessageTimeDriftSeconds = null)
 {

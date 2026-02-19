@@ -1,4 +1,4 @@
-namespace Dialysis.Treatment.Application.Domain.ValueObjects;
+namespace BuildingBlocks.ValueObjects;
 
 /// <summary>
 /// Strongly-typed treatment session identifier — typically derived from HL7 OBR-3 (Filler Order Number).
