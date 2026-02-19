@@ -41,6 +41,9 @@
     <Project Path="Transponder.Transports/Transponder.Transports.csproj" />
     <Project Path="Transponder/Transponder.csproj" />
   </Folder>
+  <Folder Name="/Gateway/">
+    <Project Path="Gateway/Dialysis.Gateway/Dialysis.Gateway.csproj" />
+  </Folder>
   <Folder Name="/Services/" />
   <Folder Name="/Services/Dialysis.Alarm/">
     <Project Path="Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj" />
@@ -62,6 +65,12 @@
     <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Application/Dialysis.Prescription.Application.csproj" />
     <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Infrastructure/Dialysis.Prescription.Infrastructure.csproj" />
     <Project Path="Services/Dialysis.Prescription/Dialysis.Prescription.Tests/Dialysis.Prescription.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Services/Dialysis.Device/">
+    <Project Path="Services/Dialysis.Device/Dialysis.Device.Api/Dialysis.Device.Api.csproj" />
+    <Project Path="Services/Dialysis.Device/Dialysis.Device.Application/Dialysis.Device.Application.csproj" />
+    <Project Path="Services/Dialysis.Device/Dialysis.Device.Infrastructure/Dialysis.Device.Infrastructure.csproj" />
+    <Project Path="Services/Dialysis.Device/Dialysis.Device.Tests/Dialysis.Device.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Treatment/">
     <Project Path="Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj" />

@@ -29,14 +29,14 @@ flowchart TB
 
     subgraph PDMS [Dialysis PDMS]
         subgraph API [API Gateway]
-            ApiHost[API Host]
+            ApiHost[Dialysis.Gateway - YARP]
         end
 
         subgraph Services [Microservices]
             PatientSvc[Patient Service - implemented]
             TreatmentSvc[Treatment Service - implemented]
             PrescriptionSvc[Prescription Service - implemented]
-            DeviceSvc[Device Service]
+            DeviceSvc[Device Service - implemented]
             AlarmSvc[Alarm Service - implemented]
         end
     end

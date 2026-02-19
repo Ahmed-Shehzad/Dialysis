@@ -31,7 +31,7 @@ This document provides a focused plan for the three immediate/high-priority work
 - [x] Add `[Authorize]` to all controllers except health/OpenAPI endpoints
 - [x] Define scope policies (Read/Write/Admin) via `ScopeOrBypassRequirement` and apply per action
 - [x] Add `Authentication:JwtBearer:DevelopmentBypass` for local testing when `IsDevelopment`
-- [ ] Document JWT claims and how Mirth/integration clients obtain tokens
+- [x] Document JWT claims and how Mirth/integration clients obtain tokens (see [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md))
 - [x] Add `X-Tenant-Id` handling for multi-tenancy (C5)
 - [x] Add `IAuditRecorder` (C5 audit) to all controllers
 - [x] Add `TenantResolutionMiddleware` and tenant-scoped Prescription persistence

@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
     <ProjectReference Include="..\Dialysis.Alarm.Application\Dialysis.Alarm.Application.csproj" />
     <ProjectReference Include="..\Dialysis.Alarm.Infrastructure\Dialysis.Alarm.Infrastructure.csproj" />
   </ItemGroup>

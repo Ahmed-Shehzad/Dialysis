@@ -12,15 +12,37 @@ The PDMS validates JWTs issued by an OAuth 2.0 / OpenID Connect authority (e.g.,
 |-------|-------------|---------|
 | `sub` | Subject – unique identifier of the client/principal | Audit, logging |
 | `aud` | Audience – must match the API identifier (e.g., `api://dialysis-pdms`) | JwtBearer middleware validates that the token was issued for this API |
-| `scope` or `scp` | Space-separated list of scopes | `ScopeOrBypassHandler` – authorization policies check that the caller has at least one of the required scopes (e.g., `Prescription:Read`) |
+| `scope` or `scp` | Space-separated list of scopes (see §1.1 for required format) | `ScopeOrBypassHandler` – authorization policies check that the caller has at least one of the required scopes (e.g., `Prescription:Read`) |
 | `iss` | Issuer – validated against the configured Authority | JwtBearer middleware |
 | `exp` | Expiration – token validity | JwtBearer middleware |
+
+### 1.1 Example Decoded JWT Payload
+
+```json
+{
+  "aud": "api://dialysis-pdms",
+  "iss": "https://login.microsoftonline.com/{tenant-id}/v2.0",
+  "sub": "abc123-def456-ghi789",
+  "scope": "Prescription:Read Treatment:Write",
+  "exp": 1709827200,
+  "iat": 1709823600
+}
+```
+
+**Scope format**: The PDMS expects scopes in `Service:Action` format (colon-separated), e.g. `Prescription:Read`, `Treatment:Write`. When configuring your OAuth server (e.g., Azure AD Expose an API), ensure the scope values emitted in the token match this format. Azure AD’s default `api://dialysis-pdms/Prescription.Read` will not match; use custom claims or scope names that produce `Prescription:Read` in the `scope` or `scp` claim.
+
+### 1.2 Required Headers (Multi-Tenancy)
+
+| Header | Description | Required |
+|-------|-------------|----------|
+| `Authorization` | `Bearer {access_token}` | Yes (unless DevelopmentBypass is enabled) |
+| `X-Tenant-Id` | Tenant identifier for multi-site isolation (e.g., `default`, site UUID) | Yes for C5 multi-tenancy |
 
 ---
 
 ## 2. Configuration
 
-Each API (Patient, Prescription, Treatment, Alarm) reads JWT settings from configuration:
+Each API (Patient, Prescription, Treatment, Alarm, Device) reads JWT settings from configuration:
 
 ```json
 {
@@ -58,6 +80,8 @@ Endpoints are protected by scope-based policies. A caller must have at least one
 | Treatment | `TreatmentWrite` | `Treatment:Write`, `Treatment:Admin` |
 | Alarm | `AlarmRead` | `Alarm:Read`, `Alarm:Admin` |
 | Alarm | `AlarmWrite` | `Alarm:Write`, `Alarm:Admin` |
+| Device | `DeviceRead` | `Device:Read`, `Device:Admin` |
+| Device | `DeviceWrite` | `Device:Write`, `Device:Admin` |
 
 ### 3.1 API Endpoints and Required Scopes
 
@@ -79,6 +103,10 @@ Endpoints are protected by scope-based policies. A caller must have at least one
 | Treatment | GET | `/api/treatment-sessions/{sessionId}/fhir` | TreatmentRead | `Treatment:Read` or `Treatment:Admin` |
 | Treatment | WebSocket | `/transponder/transport` (Transponder SignalR hub) | TreatmentRead | `Treatment:Read` or `Treatment:Admin` (token via `access_token` query param) |
 | Alarm | POST | `/api/hl7/alarm` | AlarmWrite | `Alarm:Write` or `Alarm:Admin` |
+| Device | GET | `/api/devices` | DeviceRead | `Device:Read` or `Device:Admin` |
+| Device | GET | `/api/devices/{id}` | DeviceRead | `Device:Read` or `Device:Admin` |
+| Device | GET | `/api/devices/{id}/fhir` | DeviceRead | `Device:Read` or `Device:Admin` |
+| Device | POST | `/api/devices` | DeviceWrite | `Device:Write` or `Device:Admin` |
 
 ---
 
@@ -93,7 +121,20 @@ Mirth Connect acts as a **server-side integration engine** and typically uses th
 3. In the API App Registration (the PDMS API), expose an **Application ID URI** (e.g., `api://dialysis-pdms`) and define **Application Roles** or **Scopes** (e.g., `Prescription.Read`, `Prescription.Write`).
 4. Grant the Mirth application the required scopes/roles on the API app.
 
-### 4.2 Mirth Configuration
+### 4.2 Token Acquisition (cURL Example)
+
+```bash
+curl -X POST "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=YOUR_MIRTH_APP_CLIENT_ID" \
+  -d "client_secret=YOUR_CLIENT_SECRET" \
+  -d "scope=Prescription:Read"
+```
+
+Request the exact scope required (e.g., `Prescription:Read` for QBP^D01). For multiple scopes: `scope=Prescription:Read Treatment:Write`.
+
+### 4.3 Mirth Configuration
 
 Mirth can obtain tokens via:
 
@@ -103,16 +144,16 @@ Mirth can obtain tokens via:
 - Grant type: `client_credentials`
 - Client ID: Mirth application’s Application (client) ID
 - Client Secret: from Azure AD app registration
-- Scope: `api://dialysis-pdms/Prescription.Read` (or the appropriate scope for the target endpoint)
+- Scope: `Prescription:Read` (or `Treatment:Write`, `Patient:Read`, etc. – see §3.1)
 
-**Option B: JavaScript / custom channel step**
+**Option B: JavaScript / custom channel step (scope format: `Service:Action`)**
 
 ```javascript
 // Example: POST to token endpoint
 var tokenUrl = "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token";
 var clientId = "YOUR_MIRTH_APP_CLIENT_ID";
 var clientSecret = "YOUR_MIRTH_APP_CLIENT_SECRET";
-var scope = "api://dialysis-pdms/Prescription.Read";  // or Prescription.Write, etc.
+var scope = "Prescription:Read";  // or Treatment:Write, Patient:Read, etc.
 
 var body = "grant_type=client_credentials&client_id=" + encodeURIComponent(clientId) +
            "&client_secret=" + encodeURIComponent(clientSecret) +
@@ -122,7 +163,7 @@ var body = "grant_type=client_credentials&client_id=" + encodeURIComponent(clien
 // Store the access_token for use in the Authorization header
 ```
 
-### 4.3 Step-by-Step Mirth Token Workflow
+### 4.5 Step-by-Step Mirth Token Workflow (see §4.2 for cURL)
 
 1. **Create Mirth Channel** – Source: LL Listener (receives HL7 from dialysis machine); Destination: HTTP Sender (calls PDMS API).
 2. **Before HTTP Sender** – Add a preprocessor script or use OAuth 2.0 connector to obtain a token.
@@ -130,12 +171,12 @@ var body = "grant_type=client_credentials&client_id=" + encodeURIComponent(clien
    - `grant_type=client_credentials`
    - `client_id={Mirth app registration client ID}`
    - `client_secret={secret from Azure AD}`
-   - `scope=api://dialysis-pdms/Prescription.Read` (for QBP^D01) or `api://dialysis-pdms/Prescription.Write` (for RSP^K22 ingest)
+   - `scope=Prescription:Read` (for QBP^D01) or `Prescription:Write` (for RSP^K22 ingest)
 4. **Parse Response** – Extract `access_token` from JSON response.
 5. **Set Authorization Header** – In HTTP Sender, set `Authorization: Bearer {access_token}`.
 6. **Set X-Tenant-Id** – Add header `X-Tenant-Id: default` (or tenant identifier) for multi-tenancy.
 
-### 4.4 Scope Alignment
+### 4.6 Scope Alignment
 
 Ensure the scope requested in the token matches what the PDMS expects:
 
@@ -148,28 +189,26 @@ Ensure the scope requested in the token matches what the PDMS expects:
 
 ### 5.1 With Authorization Header
 
+HL7 endpoints expect a JSON body with the raw message in `rawHl7Message` (or `rawHl7Batch` for batch):
+
 ```http
 POST /api/hl7/qbp-d01 HTTP/1.1
 Host: localhost:5001
-Content-Type: application/x-hl7-v2+er7
+Content-Type: application/json
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIs...
 X-Tenant-Id: default
 
-MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||QBP^D01^QBP_D01|MSG001|P|2.6
-QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|MRN123^^^^MR
-RCP|I||RD
+{"rawHl7Message":"MSH|^~\\&|MACH|FAC|EMR|FAC|20230215120000||QBP^D01^QBP_D01|MSG001|P|2.6\rQPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|MRN123^^^^MR\rRCP|I||RD"}
 ```
 
 ### 5.2 cURL Example
 
 ```bash
 curl -X POST "https://pdms.example.com/api/hl7/qbp-d01" \
-  -H "Content-Type: application/x-hl7-v2+er7" \
+  -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "X-Tenant-Id: default" \
-  -d "MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||QBP^D01^QBP_D01|MSG001|P|2.6
-QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|MRN123^^^^MR
-RCP|I||RD"
+  -d '{"rawHl7Message":"MSH|^~\\&|MACH|FAC|EMR|FAC|20230215120000||QBP^D01^QBP_D01|MSG001|P|2.6\rQPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|MRN123^^^^MR\rRCP|I||RD"}'
 ```
 
 ### 5.3 Development Bypass (Local Testing)
@@ -196,8 +235,15 @@ When `Authentication:JwtBearer:DevelopmentBypass` is `true` and the environment 
 
 ---
 
-## 8. Related Documents
+## 8. Mirth Channel Routing
 
+For Mirth Connect channel configuration (MLLP listener → HTTP sender, routing by message type, JSON body format), see [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md).
+
+---
+
+## 9. Related Documents
+
+- [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md) – Mirth channel setup, routing table, HTTP format
 - [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) – Overview of authentication and scope policies
 - [ARCHITECTURE-CONSTRAINTS.md](ARCHITECTURE-CONSTRAINTS.md) – C5 and access control principles
 - [IMMEDIATE-HIGH-PRIORITY-PLAN.md](IMMEDIATE-HIGH-PRIORITY-PLAN.md) – JWT implementation history

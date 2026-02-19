@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
+        <ProjectReference Include="..\Dialysis.Device.Application\Dialysis.Device.Application.csproj" />
+        <ProjectReference Include="..\Dialysis.Device.Infrastructure\Dialysis.Device.Infrastructure.csproj" />
+        <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
+        <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
+        <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+</Project>

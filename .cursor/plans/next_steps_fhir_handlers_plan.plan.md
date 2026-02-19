@@ -31,6 +31,7 @@ isProject: false
 ## Context
 
 The HL7 Implementation Guide alignment and diagrams plan is complete. Remaining work focuses on:
+
 1. Exposing FHIR resources via API (mappers exist but are not wired)
 2. Implementing domain event handlers (infrastructure exists; no handlers)
 3. Integration tests and operational documentation
@@ -41,39 +42,47 @@ The HL7 Implementation Guide alignment and diagrams plan is complete. Remaining 
 
 ### 1.1 Patient API – FHIR Patient Endpoint
 
-| Item | Detail |
-|------|--------|
+
+| Item     | Detail                                                              |
+| -------- | ------------------------------------------------------------------- |
 | Endpoint | `GET /api/patients/mrn/{mrn}/fhir` or `GET /api/patients/{id}/fhir` |
-| Mapper | `PatientMapper.ToFhirPatient(PatientMappingInput)` |
-| Input | Map from `GetPatientByMrnResponse` or domain `Patient` |
-| Response | FHIR R4 `Patient` (JSON) |
-| Auth | `PatientRead` policy |
+| Mapper   | `PatientMapper.ToFhirPatient(PatientMappingInput)`                  |
+| Input    | Map from `GetPatientByMrnResponse` or domain `Patient`              |
+| Response | FHIR R4 `Patient` (JSON)                                            |
+| Auth     | `PatientRead` policy                                                |
+
 
 **Files:**
+
 - `Dialysis.Patient.Api/Controllers/PatientsController.cs` – Add action
 - Optionally add `Dialysis.Hl7ToFhir` project reference to Patient.Api
 
 ### 1.2 Prescription API – FHIR ServiceRequest Endpoint
 
-| Item | Detail |
-|------|--------|
-| Endpoint | `GET /api/prescriptions/order/{orderId}/fhir` or by MRN |
-| Mapper | `PrescriptionMapper.ToFhirServiceRequest(PrescriptionMappingInput)` |
-| Input | Map from `Prescription` (need BloodFlowRate, UfRate, UfTarget from PrescriptionSettingResolver) |
-| Response | FHIR R4 `ServiceRequest` (JSON) |
-| Auth | `PrescriptionRead` policy |
+
+| Item     | Detail                                                                                          |
+| -------- | ----------------------------------------------------------------------------------------------- |
+| Endpoint | `GET /api/prescriptions/order/{orderId}/fhir` or by MRN                                         |
+| Mapper   | `PrescriptionMapper.ToFhirServiceRequest(PrescriptionMappingInput)`                             |
+| Input    | Map from `Prescription` (need BloodFlowRate, UfRate, UfTarget from PrescriptionSettingResolver) |
+| Response | FHIR R4 `ServiceRequest` (JSON)                                                                 |
+| Auth     | `PrescriptionRead` policy                                                                       |
+
 
 **Files:**
+
 - `Dialysis.Prescription.Api/Controllers/PrescriptionController.cs` – Add action
 - Use existing `PrescriptionSettingResolver` for resolved values
 
 ### 1.3 Treatment API – FHIR Observation/Procedure (Optional)
 
-| Item | Detail |
-|------|--------|
+
+| Item     | Detail                                                                    |
+| -------- | ------------------------------------------------------------------------- |
 | Endpoint | `GET /api/treatment-sessions/{id}/fhir` – return Procedure + Observations |
-| Mappers | `ProcedureMapper`, `ObservationMapper` |
-| Scope | Lower priority; can defer if Phase 1.1 and 1.2 suffice |
+| Mappers  | `ProcedureMapper`, `ObservationMapper`                                    |
+| Scope    | Lower priority; can defer if Phase 1.1 and 1.2 suffice                    |
+
 
 ---
 
@@ -81,15 +90,17 @@ The HL7 Implementation Guide alignment and diagrams plan is complete. Remaining 
 
 ### 2.1 Handlers to Add
 
-| Event | Handler | Action |
-|-------|---------|--------|
-| `PatientRegisteredEvent` | `PatientRegisteredEventHandler` | Log via ILogger; optionally call IAuditRecorder |
-| `PatientDemographicsUpdatedEvent` | `PatientDemographicsUpdatedEventHandler` | Log; audit |
-| `AlarmRaisedEvent` | `AlarmRaisedEventHandler` | Log; audit (C5) |
-| `TreatmentSessionStartedEvent` | `TreatmentSessionStartedEventHandler` | Log |
-| `ObservationRecordedEvent` | Optional – high volume; consider sampling or skip |
-| `TreatmentSessionCompletedEvent` | `TreatmentSessionCompletedEventHandler` | Log |
-| `AlarmAcknowledgedEvent` / `AlarmClearedEvent` | Handlers | Log; audit |
+
+| Event                                          | Handler                                           | Action                                          |
+| ---------------------------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| `PatientRegisteredEvent`                       | `PatientRegisteredEventHandler`                   | Log via ILogger; optionally call IAuditRecorder |
+| `PatientDemographicsUpdatedEvent`              | `PatientDemographicsUpdatedEventHandler`          | Log; audit                                      |
+| `AlarmRaisedEvent`                             | `AlarmRaisedEventHandler`                         | Log; audit (C5)                                 |
+| `TreatmentSessionStartedEvent`                 | `TreatmentSessionStartedEventHandler`             | Log                                             |
+| `ObservationRecordedEvent`                     | Optional – high volume; consider sampling or skip |                                                 |
+| `TreatmentSessionCompletedEvent`               | `TreatmentSessionCompletedEventHandler`           | Log                                             |
+| `AlarmAcknowledgedEvent` / `AlarmClearedEvent` | Handlers                                          | Log; audit                                      |
+
 
 ### 2.2 Implementation Pattern
 
@@ -112,14 +123,17 @@ Application/
 
 ### 3.1 Prescription QBP^D01 → RSP^K22 Round-Trip
 
-| Item | Detail |
-|------|--------|
-| Project | `Dialysis.Prescription.Tests` or new `Dialysis.Prescription.IntegrationTests` |
-| Flow | 1. Seed or ensure patient/prescription in DB 2. POST QBP^D01 to API 3. Assert RSP^K22 contains expected PID/ORC/OBX |
-| Auth | Use dev bypass or test JWT |
-| DB | Use in-memory EF provider or Testcontainers PostgreSQL |
+
+| Item    | Detail                                                                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------- |
+| Project | `Dialysis.Prescription.Tests` or new `Dialysis.Prescription.IntegrationTests`                                       |
+| Flow    | 1. Seed or ensure patient/prescription in DB 2. POST QBP^D01 to API 3. Assert RSP^K22 contains expected PID/ORC/OBX |
+| Auth    | Use dev bypass or test JWT                                                                                          |
+| DB      | Use in-memory EF provider or Testcontainers PostgreSQL                                                              |
+
 
 **Files:**
+
 - New test class `PrescriptionHl7IntegrationTests.cs`
 - May need `WebApplicationFactory` for in-process API testing
 
@@ -129,10 +143,12 @@ Application/
 
 ### 4.1 JWT Claims and Mirth Token Workflow
 
-| Item | Detail |
-|------|--------|
-| Doc | `docs/JWT-AND-MIRTH-INTEGRATION.md` or add to `docs/SYSTEM-ARCHITECTURE.md` |
+
+| Item    | Detail                                                                                                                              |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Doc     | `docs/JWT-AND-MIRTH-INTEGRATION.md` or add to `docs/SYSTEM-ARCHITECTURE.md`                                                         |
 | Content | Claims expected (sub, scope, aud); how Mirth obtains token (client credentials, config); example requests with Authorization header |
+
 
 ---
 
@@ -160,3 +176,4 @@ Application/
 - FHIR endpoints add dependency from API projects to Dialysis.Hl7ToFhir
 - Domain handlers run in same transaction (SavingChangesAsync); keep them fast
 - Integration test may need Docker/Testcontainers if real PostgreSQL required
+

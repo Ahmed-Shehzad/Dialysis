@@ -31,7 +31,7 @@
 
 ---
 
-## 3. Step 1: JWT and Mirth Documentation (P0)
+## 3. Step 1: JWT and Mirth Documentation (P0) – **Done**
 
 **Goal**: Complete C5 compliance documentation so Mirth and integration clients can obtain and use JWTs.
 
@@ -43,42 +43,42 @@
 
 ### 3.2 Deliverables
 
-| Item | Description |
-|------|-------------|
-| JWT claims reference | aud, iss, sub, scopes, tenant claim |
-| Token acquisition flows | Client credentials, example curl/Postman |
-| Scope-to-endpoint mapping | PrescriptionRead, TreatmentRead, Hl7Ingest, etc. |
-| Development bypass notes | `Authentication:JwtBearer:DevelopmentBypass` for local testing |
+| Item | Status | Location |
+|------|--------|----------|
+| JWT claims reference | Done | §1, §1.1 (example payload), §1.2 (X-Tenant-Id) |
+| Token acquisition flows | Done | §4.2 (cURL), §4.3–4.5 (Mirth) |
+| Scope-to-endpoint mapping | Done | §3.1 |
+| Development bypass notes | Done | §5.3 |
 
 ### 3.3 References
 
-- `docs/IMMEDIATE-HIGH-PRIORITY-PLAN.md` – JWT checklist
-- `docs/JWT-AND-MIRTH-INTEGRATION.md` – existing Mirth/JWT doc
+- `docs/IMMEDIATE-HIGH-PRIORITY-PLAN.md` – JWT checklist (item marked complete)
+- `docs/JWT-AND-MIRTH-INTEGRATION.md` – main document
 
 ---
 
-## 4. Step 2: Additional E2E Integration Tests (P1)
+## 4. Step 2: Additional E2E Integration Tests (P1) – **Done**
 
 **Goal**: Cover critical flows with end-to-end tests similar to `OruR01ToFhirIntegrationTests`.
 
 ### 4.1 Test Candidates
 
-| Test | Flow | Service |
-|------|------|---------|
-| Patient PDQ E2E | QBP^Q22 → RSP^K22 parser → search → RSP^K22 response | Dialysis.Patient |
-| Prescription E2E | QBP^D01 → RSP^K22 ingest → persistence → RspK22Builder | Dialysis.Prescription |
-| Alarm E2E | ORU^R40 → IngestOruR40 → RecordAlarm → FHIR DetectedIssue | Dialysis.Alarm |
-| Batch Protocol E2E | FHS/BHS/MSH.../BTS/FTS → IngestOruBatch → multiple sessions | Dialysis.Treatment |
+| Test | Flow | Service | Status |
+|------|------|---------|--------|
+| Patient PDQ E2E | Register patient → QBP^Q22 → RSP^K22 with PID | Dialysis.Patient | **Implemented** – `QbpQ22ToRspK22IntegrationTests` |
+| Prescription E2E | QBP^D01 → RSP^K22 (existing `ProcessQbpD01IntegrationTests`) | Dialysis.Prescription | Existing |
+| Alarm E2E | ORU^R40 → IngestOruR40 → RecordAlarm → FHIR DetectedIssue | Dialysis.Alarm | **Implemented** – `OruR40ToFhirIntegrationTests` |
+| Batch Protocol E2E | FHS/BHS/ORU/ORU/BTS/FTS → IngestOruBatch → multiple sessions | Dialysis.Treatment | **Implemented** – `OruBatchToSessionsIntegrationTests` |
 
 ### 4.2 Implementation Notes
 
 - Follow `OruR01ToFhirIntegrationTests` pattern: in-memory DB, minimal mocks, full pipeline
 - Use `#pragma warning disable IDE0058` for Shouldly assertions if needed
-- Target: 2–4 new test classes across Patient, Prescription, Alarm, Treatment
+- Added `InternalsVisibleTo("Dialysis.Patient.Tests")` to Patient.Application for handler access
 
 ---
 
-## 5. Step 3: Device Service (P2)
+## 5. Step 3: Device Service (P2) – **Done**
 
 **Goal**: Implement the Device bounded context shown in `SYSTEM-ARCHITECTURE.md` and support FHIR Device resources.
 
@@ -91,13 +91,13 @@
 
 ### 5.2 Work Items
 
-| Item | Description |
-|------|-------------|
-| Device aggregate | DeviceId, DeviceEui64, Manufacturer, Model, Serial, UDI |
-| Device repository | `IDeviceRepository`, EF Core + migrations |
-| API | `GET /api/devices`, `GET /api/devices/{id}`, `GET /api/devices/{id}/fhir` |
-| HL7 integration | Populate device from MSH-3 (Machine^EUI64^EUI-64) on first observation/alarm |
-| Update architecture | Remove placeholder; mark Device Service as implemented |
+| Item | Description | Status |
+|------|-------------|--------|
+| Device aggregate | DeviceId, DeviceEui64, Manufacturer, Model, Serial, UDI | Done |
+| Device repository | `IDeviceRepository`, EF Core + migrations | Done |
+| API | `GET /api/devices`, `GET /api/devices/{id}`, `GET /api/devices/{id}/fhir`, `POST /api/devices` | Done |
+| HL7 integration | Populate device from MSH-3 (Machine^EUI64^EUI-64) on first observation/alarm | Pending |
+| Update architecture | Remove placeholder; mark Device Service as implemented | Done |
 
 ### 5.3 References
 
@@ -107,7 +107,7 @@
 
 ---
 
-## 6. Step 4: Mirth Channel Configurations (P2)
+## 6. Step 4: Mirth Channel Configurations (P2) – **Done**
 
 **Goal**: Provide sample Mirth channels or documentation so HL7 messages can be routed to PDMS APIs.
 
@@ -123,15 +123,15 @@
 
 ### 6.2 Deliverables
 
-| Item | Description |
-|------|-------------|
-| Mirth channel XML export | Optional; sample channels for import |
-| Mirth integration guide | HTTP connector config, JWT in header, base URLs |
-| `docs/JWT-AND-MIRTH-INTEGRATION.md` update | Add channel routing table |
+| Item | Description | Status |
+|------|-------------|--------|
+| Mirth channel XML export | Optional; sample channels for import | Deferred |
+| Mirth integration guide | HTTP connector config, JWT in header, base URLs | **Done** – [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md) |
+| `docs/JWT-AND-MIRTH-INTEGRATION.md` update | Add channel routing table, JSON body format | **Done** – §8, §5.1 |
 
 ---
 
-## 7. Step 5: API Gateway (P3)
+## 7. Step 5: API Gateway (P3) – **Done**
 
 **Goal**: Optional unified entry point for routing, auth, and rate limiting.
 
@@ -147,12 +147,12 @@
 
 ### 7.2 Deliverables
 
-| Item | Description |
-|------|-------------|
-| Gateway project | `Dialysis.Gateway` or similar |
-| Route configuration | appsettings/routes |
-| JWT forward | Pass `Authorization` to backends |
-| Health aggregation | `/health` → all services |
+| Item | Description | Status |
+|------|-------------|--------|
+| Gateway project | `Gateway/Dialysis.Gateway` (YARP) | **Done** |
+| Route configuration | `appsettings.json` ReverseProxy section | **Done** |
+| JWT forward | YARP forwards `Authorization` and `X-Tenant-Id` by default | **Done** |
+| Health aggregation | `/health` checks all 5 backends | **Done** |
 
 ---
 

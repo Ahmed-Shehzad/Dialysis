@@ -239,6 +239,7 @@ dotnet_diagnostic.IDE0055.severity = none
 dotnet_diagnostic.IDE0058.severity = none
 
 [**/*Tests*/**/*.cs]
+dotnet_diagnostic.IDE0058.severity = none
 dotnet_diagnostic.S1135.severity = suggestion
 dotnet_diagnostic.S125.severity = none
 dotnet_diagnostic.S107.severity = suggestion
