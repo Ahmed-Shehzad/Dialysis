@@ -40,13 +40,17 @@ var mrns = mrnPool.Take(count).ToList();
 foreach (string mrn in mrns)
     sessionPool.Add($"THERAPY{faker.Random.AlphaNumeric(6).ToUpperInvariant()}");
 
+static string SanitizeHl7(string s) => (s ?? "").Replace("|", " ").Replace("^", " ").Replace("\\", " ").Replace("~", " ");
+
 string RspK22(string mrn, string orderId, string msgId)
 {
     string ts = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+    string provider = SanitizeHl7(faker.Name.FullName());
+    string phone = SanitizeHl7(faker.Phone.PhoneNumber("###-####"));
     return $"MSH|^~\\&|EMR|FAC|MACH|FAC|{ts}||RSP^K22^RSP_K21|{msgId}|P|2.6\r\n" +
            $"MSA|AA|{msgId}\r\n" +
            $"QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q001|@PID.3|{mrn}^^^^MR\r\n" +
-           $"ORC|NW|{orderId}^FAC|||||{ts}|||PROVIDER^{faker.Name.FullName()}||{faker.Phone.PhoneNumber("###-####")}\r\n" +
+           $"ORC|NW|{orderId}^FAC|||||{ts}|||PROVIDER^{provider}||{phone}\r\n" +
            $"PID|||{mrn}^^^^MR\r\n" +
            $"OBX|1|NM|12345^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING^MDC||{faker.Random.Int(250, 400)}|ml/min||||||||||RSET\r\n" +
            $"OBX|2|NM|12346^MDC_HDIALY_UF_RATE_SETTING^MDC||{faker.Random.Int(400, 600)}|mL/h||||||||||RSET\r\n" +
@@ -103,7 +107,7 @@ for (int b = 0; b < batchCount; b++)
         {
             string msgId = $"MSG{faker.Random.Int(1000, 99999)}";
             var rspReq = new { RawHl7Message = RspK22(mrn, $"ORD{faker.Random.AlphaNumeric(6).ToUpperInvariant()}", msgId), ValidationContext = (object?)null };
-            var r = await client.PostAsJsonAsync("/api/hl7/rsp-k22", rspReq, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var r = await client.PostAsJsonAsync("/api/prescriptions/hl7/rsp-k22", rspReq, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             if (r.IsSuccessStatusCode) prescriptions++;
             else if (!loggedRsp) { loggedRsp = true; string body = await r.Content.ReadAsStringAsync(); Console.Error.WriteLine($"  RSP^K22: {(int)r.StatusCode} {(body.Length > 200 ? body[..200] + "..." : body)}"); }
         }

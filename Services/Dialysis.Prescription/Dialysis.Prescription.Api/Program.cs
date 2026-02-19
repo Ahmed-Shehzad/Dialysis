@@ -6,7 +6,6 @@ using BuildingBlocks.TimeSync;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
-using Dialysis.Prescription.Application.Features.ProcessQbpD01Query;
 using Dialysis.Prescription.Application.Options;
 using Dialysis.Prescription.Infrastructure;
 using Dialysis.Prescription.Infrastructure.Hl7;
@@ -46,10 +45,9 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddIntercessor(cfg =>
 {
+    cfg.RegisterFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
     cfg.RegisterFromAssembly(typeof(GetPrescriptionByMrnQuery).Assembly);
 });
-// Explicit registration ensures handler is resolvable when Scrutor/assembly scan misses it (e.g. in Docker)
-builder.Services.AddTransient<Intercessor.Abstractions.IRequestHandler<ProcessQbpD01QueryCommand, ProcessQbpD01QueryResponse>, ProcessQbpD01QueryCommandHandler>();
 
 string connectionString = builder.Configuration.GetConnectionString("PrescriptionDb")
                           ?? "Host=localhost;Database=dialysis_prescription;Username=postgres;Password=postgres";

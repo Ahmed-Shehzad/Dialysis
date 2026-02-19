@@ -67,6 +67,7 @@ builder.Services.AddTransponder(new Uri("transponder://treatment"), opts =>
 
 builder.Services.AddIntercessor(cfg =>
 {
+    cfg.RegisterFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
     cfg.RegisterFromAssembly(typeof(GetTreatmentSessionQuery).Assembly);
 });
 builder.Services.AddScoped<IRequestHandler<GetTreatmentSessionsQuery, GetTreatmentSessionsResponse>, GetTreatmentSessionsQueryHandler>();

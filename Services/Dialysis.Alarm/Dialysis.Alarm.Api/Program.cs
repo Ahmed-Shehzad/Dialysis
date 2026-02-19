@@ -47,6 +47,7 @@ builder.Services.AddTransponder(new Uri("transponder://alarm"), opts =>
 
 builder.Services.AddIntercessor(cfg =>
 {
+    cfg.RegisterFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
     cfg.RegisterFromAssembly(typeof(IngestOruR40MessageCommand).Assembly);
 });
 
