@@ -21,6 +21,8 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PrescriptionComplianceService>();
 builder.Services.AddSingleton<HypotensionRiskService>();
+builder.Services.AddSingleton<VenousPressureRiskService>();
+builder.Services.AddSingleton<BloodLeakRiskService>();
 builder.Services.AddTenantResolution();
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());

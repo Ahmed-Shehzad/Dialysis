@@ -87,7 +87,21 @@ Then call `JoinGroup("session:THERAPY001")` to subscribe to a treatment session.
 
 ---
 
-## 5. Suggested Tech Stacks
+## 5. Reference Implementation: React Dashboard
+
+A minimal React + TypeScript dashboard is in `clients/dialysis-dashboard/`:
+
+```bash
+cd clients/dialysis-dashboard
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. It fetches sessions-summary, alarms-by-severity, and prescription-compliance. Ensure PDMS is running (`docker compose up -d`).
+
+---
+
+## 6. Suggested Tech Stacks
 
 | Stack | Notes |
 |-------|-------|
@@ -98,7 +112,7 @@ Then call `JoinGroup("session:THERAPY001")` to subscribe to a treatment session.
 
 ---
 
-## 6. CORS Configuration
+## 7. CORS Configuration
 
 Set `Cors:AllowedOrigins` in Gateway `appsettings.json` or environment:
 
@@ -112,7 +126,7 @@ For development, add your SPA dev server origin (e.g. `http://localhost:5173` fo
 
 ---
 
-## 7. Example: Fetch Sessions Summary
+## 8. Example: Fetch Sessions Summary
 
 ```javascript
 const response = await fetch(
@@ -131,7 +145,7 @@ const report = await response.json();
 
 ---
 
-## 8. References
+## 9. References
 
 - [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) – Full architecture, endpoints, data flow
 - [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) – Auth and Mirth token workflow

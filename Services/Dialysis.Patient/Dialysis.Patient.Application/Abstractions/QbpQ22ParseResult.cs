@@ -12,6 +12,7 @@ namespace Dialysis.Patient.Application.Abstractions;
 /// <param name="PersonNumber">Patient Person Number when query uses @PID.3 (type PN).</param>
 /// <param name="SocialSecurityNumber">Patient SSN when query uses @PID.3 (type SS).</param>
 /// <param name="UniversalId">Universal ID when query uses @PID.3 (type U, e.g. machine model/serial).</param>
+/// <param name="Birthdate">Patient birthdate when query uses @PID.7 (YYYYMMDD).</param>
 public sealed record QbpQ22ParseResult(
     string? Mrn,
     string? FirstName,
@@ -21,4 +22,5 @@ public sealed record QbpQ22ParseResult(
     string? QueryName = null,
     string? PersonNumber = null,
     string? SocialSecurityNumber = null,
-    string? UniversalId = null);
+    string? UniversalId = null,
+    DateOnly? Birthdate = null);

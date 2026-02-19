@@ -82,27 +82,8 @@ public sealed class ReportsAggregationService
         }
     }
 
-    private static IReadOnlyList<string> ExtractSessionIdsFromFhirBundle(string json)
-    {
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            var ids = new List<string>();
-            if (doc.RootElement.TryGetProperty("entry", out var entries))
-                foreach (var e in entries.EnumerateArray())
-                    if (e.TryGetProperty("resource", out var res) && res.TryGetProperty("resourceType", out var rt) && rt.GetString() == "Procedure" && res.TryGetProperty("id", out var idProp))
-                    {
-                        string id = idProp.GetString() ?? "";
-                        if (id.StartsWith("proc-", StringComparison.Ordinal))
-                            ids.Add(id["proc-".Length..]);
-                    }
-            return ids;
-        }
-        catch
-        {
-            return [];
-        }
-    }
+    private static IReadOnlyList<string> ExtractSessionIdsFromFhirBundle(string json) =>
+        FhirBundleParser.ExtractProcedureSessionIds(json);
 
     private async Task<bool> IsSessionCompliantAsync(string baseUrl, string sessionId, string? tenantId, HttpRequest? request, CancellationToken ct)
     {
@@ -141,53 +122,8 @@ public sealed class ReportsAggregationService
             if (!response.IsSuccessStatusCode)
                 return new TreatmentDurationByPatientReport([], from, to);
             string json = await response.Content.ReadAsStringAsync(cancellationToken);
-            var byPatient = ParseDurationByPatientFromFhirBundle(json);
+            var byPatient = FhirBundleParser.ParseDurationByPatient(json);
             return new TreatmentDurationByPatientReport(byPatient, from, to);
-        }
-    }
-
-    private static IReadOnlyList<PatientDurationSummary> ParseDurationByPatientFromFhirBundle(string json)
-    {
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            var durations = new Dictionary<string, List<double>>();
-            if (!doc.RootElement.TryGetProperty("entry", out var entries))
-                return [];
-            foreach (var e in entries.EnumerateArray())
-            {
-                if (!e.TryGetProperty("resource", out var res))
-                    continue;
-                if (!res.TryGetProperty("resourceType", out var rt) || rt.GetString() != "Procedure")
-                    continue;
-                string? patientRef = null;
-                if (res.TryGetProperty("subject", out var sub) && sub.TryGetProperty("reference", out var refEl))
-                    patientRef = refEl.GetString();
-                if (string.IsNullOrEmpty(patientRef) || !patientRef.StartsWith("Patient/", StringComparison.Ordinal))
-                    continue;
-                string mrn = patientRef["Patient/".Length..];
-                if (mrn == "unknown") continue;
-                double minutes = 0;
-                if (res.TryGetProperty("performedPeriod", out var perf))
-                {
-                    if (perf.TryGetProperty("start", out var startEl) && perf.TryGetProperty("end", out var endEl))
-                    {
-                        if (DateTimeOffset.TryParse(startEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var start) && DateTimeOffset.TryParse(endEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var end))
-                            minutes = (end - start).TotalMinutes;
-                    }
-                }
-                if (!durations.TryGetValue(mrn, out var list))
-                {
-                    list = [];
-                    durations[mrn] = list;
-                }
-                list.Add(minutes);
-            }
-            return durations.Select(kv => new PatientDurationSummary(kv.Key, kv.Value.Count, (decimal)kv.Value.Sum(), (decimal)(kv.Value.Count > 0 ? kv.Value.Average() : 0))).ToList();
-        }
-        catch
-        {
-            return [];
         }
     }
 
@@ -203,44 +139,8 @@ public sealed class ReportsAggregationService
             if (!response.IsSuccessStatusCode)
                 return new ObservationsSummaryReport([], from, to);
             string json = await response.Content.ReadAsStringAsync(cancellationToken);
-            var byCode = ParseObservationsByCodeFromFhirBundle(json, codeFilter);
+            var byCode = FhirBundleParser.ParseObservationsByCode(json, codeFilter);
             return new ObservationsSummaryReport(byCode, from, to);
-        }
-    }
-
-    private static IReadOnlyList<ObservationCountByCode> ParseObservationsByCodeFromFhirBundle(string json, string? codeFilter)
-    {
-        try
-        {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            var counts = new Dictionary<string, int>();
-            if (!doc.RootElement.TryGetProperty("entry", out var entries))
-                return [];
-            foreach (var e in entries.EnumerateArray())
-            {
-                if (!e.TryGetProperty("resource", out var res))
-                    continue;
-                if (!res.TryGetProperty("resourceType", out var rt) || rt.GetString() != "Observation")
-                    continue;
-                string? obsCode = null;
-                if (res.TryGetProperty("code", out var codeEl) && codeEl.TryGetProperty("coding", out var codings))
-                    foreach (var c in codings.EnumerateArray())
-                        if (c.TryGetProperty("code", out var codeProp))
-                        {
-                            obsCode = codeProp.GetString();
-                            break;
-                        }
-                if (string.IsNullOrEmpty(obsCode)) obsCode = "unknown";
-                if (!string.IsNullOrEmpty(codeFilter) && !obsCode.Contains(codeFilter, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                counts.TryGetValue(obsCode, out int count);
-                counts[obsCode] = count + 1;
-            }
-            return counts.OrderByDescending(kv => kv.Value).Select(kv => new ObservationCountByCode(kv.Key, kv.Value)).ToList();
-        }
-        catch
-        {
-            return [];
         }
     }
 

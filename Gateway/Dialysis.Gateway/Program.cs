@@ -3,10 +3,18 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using BuildingBlocks.TimeSync;
 
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 _ = builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("Dialysis.Gateway"))
+    .WithTracing(t =>
+    {
+        _ = t.AddAspNetCoreInstrumentation();
+        _ = t.AddHttpClientInstrumentation();
+    })
     .WithMetrics(m =>
     {
         _ = m.AddAspNetCoreInstrumentation();

@@ -64,6 +64,17 @@ public sealed class PatientRepository : Repository<PatientDomain>, IPatientRepos
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<PatientDomain>> SearchByBirthdateAsync(DateOnly birthdate, CancellationToken cancellationToken = default)
+    {
+        return await _db.Patients
+            .AsNoTracking()
+            .Where(p => p.TenantId == _tenant.TenantId && p.DateOfBirth == birthdate)
+            .OrderBy(p => p.Name.LastName)
+            .ThenBy(p => p.Name.FirstName)
+            .Take(100)
+            .ToListAsync(cancellationToken);
+    }
+
     public async override Task AddAsync(PatientDomain patient, CancellationToken cancellationToken = default) => _ = await _db.Patients.AddAsync(patient, cancellationToken);
     public async override Task AddAsync(IEnumerable<PatientDomain> entities, CancellationToken cancellationToken = default) => await _db.Patients.AddRangeAsync(entities, cancellationToken);
 

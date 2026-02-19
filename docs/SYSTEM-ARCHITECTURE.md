@@ -551,6 +551,8 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 |----------|------|---------|
 | `GET /api/cds/prescription-compliance?sessionId=X` | Blood flow, UF rate, UF target ±10% | DetectedIssue if deviation |
 | `GET /api/cds/hypotension-risk?sessionId=X` | Systolic &lt; 90 or diastolic &lt; 60 mmHg | DetectedIssue if below threshold |
+| `GET /api/cds/venous-pressure-risk?sessionId=X` | Venous pressure &gt; 200 mmHg | DetectedIssue if above threshold |
+| `GET /api/cds/blood-leak-risk?sessionId=X` | Blood leak observation positive | DetectedIssue if detected |
 
 **Reports Service (Dialysis.Reports.Api, port 5057):** Aggregate reports.
 

@@ -46,6 +46,9 @@ internal sealed class ProcessQbpQ22QueryCommandHandler : ICommandHandler<Process
         if (!string.IsNullOrWhiteSpace(query.UniversalId))
             return await ResolveSingleAsync(_repository.GetByMrnAsync(new MedicalRecordNumber(query.UniversalId), ct));
 
+        if (query.Birthdate.HasValue)
+            return await _repository.SearchByBirthdateAsync(query.Birthdate.Value, ct);
+
         return await ResolveByNameAsync(query, ct);
     }
 

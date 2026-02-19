@@ -104,4 +104,18 @@ public sealed class QbpQ22ParserTests
         QbpQ22ParseResult result = new QbpQ22Parser().Parse(MrnQuery);
         result.QueryName.ShouldBe("IHE PDQ Query");
     }
+
+    [Fact]
+    public void Parse_BirthdateQuery_ExtractsBirthdate()
+    {
+        const string birthdateQuery = """
+                                     MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||QBP^Q22^QBP_Q21|MSG007|P|2.6
+                                     QPD|IHE PDQ Query|Q007|@PID.7^19900515
+                                     RCP|I||RD
+                                     """;
+
+        QbpQ22ParseResult result = new QbpQ22Parser().Parse(birthdateQuery);
+        result.Birthdate.ShouldBe(new DateOnly(1990, 5, 15));
+        result.Mrn.ShouldBeNull();
+    }
 }
