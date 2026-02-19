@@ -87,6 +87,31 @@ public sealed class QbpQ22ToRspK22IntegrationTests
 #pragma warning restore IDE0058
     }
 
+    [Fact]
+    public async Task QbpQ22_MissingCriteria_ParserThrowsArgumentExceptionAsync()
+    {
+        const string noCriteria = """
+            MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||QBP^Q22^QBP_Q21|MSG001|P|2.6
+            QPD|IHE PDQ Query|Q001|
+            RCP|I||RD
+            """;
+
+        await using PatientDbContext db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+
+        var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
+        var repository = new PatientRepository(db, tenant);
+        var handler = new ProcessQbpQ22QueryCommandHandler(
+            new QbpQ22Parser(),
+            new PatientRspK22Builder(),
+            repository);
+
+        ArgumentException ex = await Should.ThrowAsync<ArgumentException>(
+            () => handler.HandleAsync(new ProcessQbpQ22QueryCommand(noCriteria)));
+
+        ex.Message.ShouldContain("MRN");
+    }
+
     private PatientDbContext CreateDbContext()
     {
         DbContextOptions<PatientDbContext> options = new DbContextOptionsBuilder<PatientDbContext>()

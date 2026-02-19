@@ -158,6 +158,30 @@ public sealed class ProcessQbpD01IntegrationTests
         queryResponse.RspK22Message.ShouldContain("2000");
     }
 
+    [Fact]
+    public async Task QbpD01_NoMrn_ParserThrowsArgumentExceptionAsync()
+    {
+        const string noMrn = """
+            MSH|^~\&|MACH|FAC|EMR|FAC|20230215120000||QBP^D01^QBP_D01|MSG002|P|2.6
+            QPD|MDC_HDIALY_RX_QUERY^Hemodialysis Prescription Query^MDC|Q002|@PID.3|^^^^MR
+            RCP|I||RD
+            """;
+
+        await using var db = CreateDbContext();
+        _ = await db.Database.EnsureCreatedAsync();
+
+        var repository = new PrescriptionRepository(db, new TenantContext { TenantId = TenantContext.DefaultTenantId });
+        var handler = new ProcessQbpD01QueryCommandHandler(
+            new QbpD01Parser(),
+            new RspK22Builder(),
+            repository);
+
+        ArgumentException ex = await Should.ThrowAsync<ArgumentException>(
+            () => handler.HandleAsync(new ProcessQbpD01QueryCommand(noMrn)));
+
+        ex.Message.ShouldContain("MRN");
+    }
+
     private PrescriptionDbContext CreateDbContext()
     {
         DbContextOptions<PrescriptionDbContext> options = new DbContextOptionsBuilder<PrescriptionDbContext>()
