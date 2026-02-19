@@ -20,37 +20,39 @@ public sealed class Hl7BatchParser : Application.Abstractions.IHl7BatchParser
 
         foreach (string seg in segments)
         {
-            if (seg.StartsWith("FHS", StringComparison.Ordinal) ||
-                seg.StartsWith("BHS", StringComparison.Ordinal))
+            if (IsBatchHeader(seg))
                 continue;
 
-            if (seg.StartsWith("BTS", StringComparison.Ordinal) ||
-                seg.StartsWith("FTS", StringComparison.Ordinal))
+            if (IsBatchTrailer(seg))
             {
-                if (current is { Count: > 0 })
-                {
-                    messages.Add(string.Join('\r', current));
-                    current = null;
-                }
+                FlushMessage(current, messages);
+                current = null;
                 continue;
             }
 
             if (seg.StartsWith("MSH", StringComparison.Ordinal))
             {
-                if (current is { Count: > 0 })
-                    messages.Add(string.Join('\r', current));
-
+                FlushMessage(current, messages);
                 current = [seg];
                 continue;
             }
 
-            if (current is not null)
-                current.Add(seg);
+            current?.Add(seg);
         }
 
+        FlushMessage(current, messages);
+        return messages;
+    }
+
+    private static bool IsBatchHeader(string seg) =>
+        seg.StartsWith("FHS", StringComparison.Ordinal) || seg.StartsWith("BHS", StringComparison.Ordinal);
+
+    private static bool IsBatchTrailer(string seg) =>
+        seg.StartsWith("BTS", StringComparison.Ordinal) || seg.StartsWith("FTS", StringComparison.Ordinal);
+
+    private static void FlushMessage(List<string>? current, List<string> messages)
+    {
         if (current is { Count: > 0 })
             messages.Add(string.Join('\r', current));
-
-        return messages;
     }
 }

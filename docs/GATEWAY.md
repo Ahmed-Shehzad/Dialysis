@@ -10,7 +10,7 @@ The **Dialysis.Gateway** provides a unified entry point for all PDMS APIs using 
 |------|-------|
 | Project | `Gateway/Dialysis.Gateway` |
 | Framework | ASP.NET Core 10, YARP.ReverseProxy |
-| Port | 5000 (default) |
+| Port | 5000 (default); 5001 when using `docker compose` |
 | Health | `GET /health` – aggregates status of all backends |
 
 ---
@@ -54,22 +54,38 @@ Backend addresses are defined in `appsettings.json` under `ReverseProxy:Clusters
 
 ## 5. Running Locally
 
-1. Start each backend API on its configured port (Patient 5051, Prescription 5052, Treatment 5050, Alarm 5053, Device 5054).
-2. Run the Gateway:
+### Option A: docker-compose (full stack)
+
+1. From the solution root:
+
+   ```bash
+   docker compose up -d
+   ```
+
+2. Gateway: `http://localhost:5001` (host port 5001 avoids conflict with other apps on 5000).
+3. Health and routing:
+
+   ```bash
+   curl http://localhost:5001/health
+   curl -X POST http://localhost:5001/api/hl7/qbp-q22 \
+     -H "Content-Type: application/json" \
+     -H "X-Tenant-Id: default" \
+     -d '{"rawHl7Message":"MSH|^~\\&|..."}'
+   ```
+
+4. Stop: `docker compose down`
+
+### Option B: Manual (each API + gateway)
+
+1. Start PostgreSQL and create databases (`dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`).
+2. Start each backend API on its configured port (Patient 5051, Prescription 5052, Treatment 5050, Alarm 5053, Device 5054).
+3. Run the Gateway:
 
    ```bash
    dotnet run --project Gateway/Dialysis.Gateway
    ```
 
-3. Send requests to `http://localhost:5000`:
-
-   ```bash
-   curl http://localhost:5000/health
-   curl -X POST http://localhost:5000/api/hl7/qbp-q22 \
-     -H "Content-Type: application/json" \
-     -H "X-Tenant-Id: default" \
-     -d '{"rawHl7Message":"MSH|^~\\&|..."}'
-   ```
+4. Send requests to `http://localhost:5000`.
 
 ---
 

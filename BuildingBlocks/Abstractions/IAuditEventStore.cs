@@ -15,5 +15,6 @@ public interface IAuditEventStore
     /// Retrieves the most recent audit records.
     /// </summary>
     /// <param name="count">Maximum number of records to return.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     Task<IReadOnlyList<AuditRecordRequest>> GetRecentAsync(int count = 100, CancellationToken cancellationToken = default);
 }

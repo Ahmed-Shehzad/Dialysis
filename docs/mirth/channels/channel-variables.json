@@ -1,0 +1,5 @@
+{
+  "pdmsBaseUrl": "http://localhost:5001",
+  "rspK22Target": "prescription",
+  "tenantId": "default"
+}

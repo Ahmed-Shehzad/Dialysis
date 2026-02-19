@@ -96,7 +96,7 @@
 | Device aggregate | DeviceId, DeviceEui64, Manufacturer, Model, Serial, UDI | Done |
 | Device repository | `IDeviceRepository`, EF Core + migrations | Done |
 | API | `GET /api/devices`, `GET /api/devices/{id}`, `GET /api/devices/{id}/fhir`, `POST /api/devices` | Done |
-| HL7 integration | Populate device from MSH-3 (Machine^EUI64^EUI-64) on first observation/alarm | Pending |
+| HL7 integration | Populate device from MSH-3 (Machine^EUI64^EUI-64) on first observation/alarm | **Done** – Treatment and Alarm auto-register via IDeviceRegistrationClient |
 | Update architecture | Remove placeholder; mark Device Service as implemented | Done |
 
 ### 5.3 References
@@ -125,7 +125,7 @@
 
 | Item | Description | Status |
 |------|-------------|--------|
-| Mirth channel XML export | Optional; sample channels for import | Deferred |
+| Mirth channel samples | Transformer script, channel variables, README in `docs/mirth/channels/` | **Done** – [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md) §7 |
 | Mirth integration guide | HTTP connector config, JWT in header, base URLs | **Done** – [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md) |
 | `docs/JWT-AND-MIRTH-INTEGRATION.md` update | Add channel routing table, JSON body format | **Done** – §8, §5.1 |
 
@@ -156,7 +156,7 @@
 
 ---
 
-## 8. Step 6: Full Solution Run (docker-compose) (P3)
+## 8. Step 6: Full Solution Run (docker-compose) (P3) – **Done**
 
 **Goal**: Run the full PDMS stack locally for demos and integration testing.
 
@@ -174,11 +174,13 @@
 
 ### 8.2 Deliverables
 
-| Item | Description |
-|------|-------------|
-| `docker-compose.yml` | Services, networks, volumes |
-| Environment config | Connection strings, JWT settings |
-| `README.md` section | How to run `docker-compose up` |
+| Item | Description | Status |
+|------|-------------|--------|
+| `docker-compose.yml` | Services, networks, volumes | **Done** |
+| `Dockerfile` (parameterized) | Build APIs + Gateway | **Done** |
+| PostgreSQL init script | Create per-service databases | **Done** |
+| Environment config | Connection strings, backend URLs | **Done** |
+| `docs/GATEWAY.md` + `docs/SYSTEM-ARCHITECTURE.md` | docker-compose section | **Done** |
 
 ---
 

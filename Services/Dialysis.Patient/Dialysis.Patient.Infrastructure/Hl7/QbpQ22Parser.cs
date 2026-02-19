@@ -52,46 +52,81 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
 
     private static void ParseQpdDemographics(string[] segments, out string? mrn, out string? personNumber, out string? socialSecurityNumber, out string? universalId, out string? firstName, out string? lastName)
     {
-        mrn = null;
-        personNumber = null;
-        socialSecurityNumber = null;
-        universalId = null;
-        firstName = null;
-        lastName = null;
+        var d = new QpdDemographics();
 
         string? qpd = FindFirstSegment(segments, "QPD");
-        if (qpd is null) return;
+        if (qpd is null) { d.Deconstruct(out mrn, out personNumber, out socialSecurityNumber, out universalId, out firstName, out lastName); return; }
 
         string? qpd3 = ExtractField(qpd, 3);
-        if (string.IsNullOrEmpty(qpd3)) return;
+        if (string.IsNullOrEmpty(qpd3)) { d.Deconstruct(out mrn, out personNumber, out socialSecurityNumber, out universalId, out firstName, out lastName); return; }
 
         string[] queryParams = qpd3.Split(RepeatSeparator);
         foreach (string param in queryParams)
+            ApplyQueryParam(param, ref d);
+
+        TryApplyFallbackMrn(qpd3, queryParams, ref d);
+        d.Deconstruct(out mrn, out personNumber, out socialSecurityNumber, out universalId, out firstName, out lastName);
+    }
+
+    private static void ApplyQueryParam(string param, ref QpdDemographics d)
+    {
+        string[] parts = param.Split(ComponentSeparator);
+        if (parts.Length < 2) return;
+
+        string fieldRef = parts[0].Trim();
+        string value = parts[1].Trim();
+        string? identifierType = parts.Length >= 6 ? NullIfEmpty(parts[5]) : null;
+
+        if (IsPid3Field(fieldRef))
+            ApplyPid3Identifier(identifierType, value, ref d);
+        else if (fieldRef.Equals("@PID.5.1", StringComparison.OrdinalIgnoreCase))
+            d.LastName = value;
+        else if (fieldRef.Equals("@PID.5.2", StringComparison.OrdinalIgnoreCase))
+            d.FirstName = value;
+    }
+
+    private static bool IsPid3Field(string fieldRef) =>
+        fieldRef.Equals("@PID.3.1", StringComparison.OrdinalIgnoreCase) || fieldRef.Equals("@PID.3", StringComparison.OrdinalIgnoreCase);
+
+    private static void ApplyPid3Identifier(string? identifierType, string value, ref QpdDemographics d)
+    {
+        switch (identifierType?.ToUpperInvariant())
         {
-            string[] parts = param.Split(ComponentSeparator);
-            if (parts.Length < 2) continue;
-
-            string fieldRef = parts[0].Trim();
-            string value = parts[1].Trim();
-            string? identifierType = parts.Length >= 6 ? NullIfEmpty(parts[5]) : null;
-
-            if (fieldRef.Equals("@PID.3.1", StringComparison.OrdinalIgnoreCase) || fieldRef.Equals("@PID.3", StringComparison.OrdinalIgnoreCase))
-                switch (identifierType?.ToUpperInvariant())
-                {
-                    case "PN": personNumber = value; break;
-                    case "SS": socialSecurityNumber = value; break;
-                    case "U": universalId = value; break;
-                    default: mrn = value; break;
-                }
-            else if (fieldRef.Equals("@PID.5.1", StringComparison.OrdinalIgnoreCase)) lastName = value;
-            else if (fieldRef.Equals("@PID.5.2", StringComparison.OrdinalIgnoreCase)) firstName = value;
+            case "PN": d.PersonNumber = value; break;
+            case "SS": d.SocialSecurityNumber = value; break;
+            case "U": d.UniversalId = value; break;
+            default: d.Mrn = value; break;
         }
+    }
 
-        if (mrn is null && personNumber is null && socialSecurityNumber is null && universalId is null && firstName is null && lastName is null && queryParams.Length > 0)
+    private static void TryApplyFallbackMrn(string qpd3, string[] queryParams, ref QpdDemographics d)
+    {
+        if (d.HasAnyValue || queryParams.Length == 0) return;
+
+        string[] fallback = qpd3.Split(ComponentSeparator);
+        if (fallback.Length >= 2 && !string.IsNullOrWhiteSpace(fallback[1]))
+            d.Mrn = fallback[1].Trim();
+    }
+
+    private sealed class QpdDemographics
+    {
+        internal string? Mrn;
+        internal string? PersonNumber;
+        internal string? SocialSecurityNumber;
+        internal string? UniversalId;
+        internal string? FirstName;
+        internal string? LastName;
+
+        internal bool HasAnyValue => Mrn is not null || PersonNumber is not null || SocialSecurityNumber is not null || UniversalId is not null || FirstName is not null || LastName is not null;
+
+        internal void Deconstruct(out string? mrn, out string? personNumber, out string? socialSecurityNumber, out string? universalId, out string? firstName, out string? lastName)
         {
-            string[] fallback = qpd3.Split(ComponentSeparator);
-            if (fallback.Length >= 2 && !string.IsNullOrWhiteSpace(fallback[1]))
-                mrn = fallback[1].Trim();
+            mrn = Mrn;
+            personNumber = PersonNumber;
+            socialSecurityNumber = SocialSecurityNumber;
+            universalId = UniversalId;
+            firstName = FirstName;
+            lastName = LastName;
         }
     }
 

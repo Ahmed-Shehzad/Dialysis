@@ -12,3 +12,4 @@
 **/packages
 .git
 .gitignore
+global.json

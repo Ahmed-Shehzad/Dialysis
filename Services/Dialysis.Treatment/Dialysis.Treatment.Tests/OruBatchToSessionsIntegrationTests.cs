@@ -9,6 +9,7 @@ using Dialysis.Treatment.Application.Features.RecordObservation;
 
 using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
+using Dialysis.Treatment.Tests.TestDoubles;
 
 using Intercessor.Abstractions;
 
@@ -69,7 +70,7 @@ public sealed class OruBatchToSessionsIntegrationTests
 
     private static TreatmentDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<TreatmentDbContext>()
+        DbContextOptions<TreatmentDbContext> options = new DbContextOptionsBuilder<TreatmentDbContext>()
             .UseInMemoryDatabase("OruBatch_" + Guid.NewGuid().ToString("N"))
             .Options;
         return new TreatmentDbContext(options);
@@ -85,15 +86,15 @@ public sealed class OruBatchToSessionsIntegrationTests
         {
             if (request is IngestOruMessageCommand ingestCmd)
             {
-                var ingestHandler = new IngestOruMessageCommandHandler(this, new OruR01Parser());
-                var result = await ingestHandler.HandleAsync(ingestCmd, cancellationToken);
+                var ingestHandler = new IngestOruMessageCommandHandler(this, new OruR01Parser(), new NoOpDeviceRegistrationClient());
+                IngestOruMessageResponse result = await ingestHandler.HandleAsync(ingestCmd, cancellationToken);
                 return (TResponse)(object)result;
             }
 
             if (request is RecordObservationCommand recordCmd)
             {
                 var recordHandler = new RecordObservationCommandHandler(_repository);
-                var result = await recordHandler.HandleAsync(recordCmd, cancellationToken);
+                RecordObservationResponse result = await recordHandler.HandleAsync(recordCmd, cancellationToken);
                 return (TResponse)(object)result;
             }
 

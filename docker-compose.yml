@@ -1,0 +1,135 @@
+# Dialysis PDMS – full solution run
+# Usage: docker compose up -d
+# Gateway: http://localhost:5001 | Health: http://localhost:5001/health
+# (Host port 5001 avoids conflict with other services using 5000)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  patient-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Patient/Dialysis.Patient.Api/Dialysis.Patient.Api.csproj
+    command: ["Dialysis.Patient.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5051
+      ConnectionStrings__PatientDb: Host=postgres;Database=dialysis_patient;Username=postgres;Password=postgres
+    ports:
+      - "5051:5051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prescription-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj
+    command: ["Dialysis.Prescription.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5052
+      ConnectionStrings__PrescriptionDb: Host=postgres;Database=dialysis_prescription;Username=postgres;Password=postgres
+    ports:
+      - "5052:5052"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  treatment-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj
+    command: ["Dialysis.Treatment.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5050
+      ConnectionStrings__TreatmentDb: Host=postgres;Database=dialysis_treatment;Username=postgres;Password=postgres
+      DeviceApi__BaseUrl: http://device-api:5054
+    ports:
+      - "5050:5050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  alarm-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj
+    command: ["Dialysis.Alarm.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5053
+      ConnectionStrings__AlarmDb: Host=postgres;Database=dialysis_alarm;Username=postgres;Password=postgres
+      DeviceApi__BaseUrl: http://device-api:5054
+    ports:
+      - "5053:5053"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  device-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Services/Dialysis.Device/Dialysis.Device.Api/Dialysis.Device.Api.csproj
+    command: ["Dialysis.Device.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5054
+      ConnectionStrings__DeviceDb: Host=postgres;Database=dialysis_device;Username=postgres;Password=postgres
+    ports:
+      - "5054:5054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Gateway/Dialysis.Gateway/Dialysis.Gateway.csproj
+    command: ["Dialysis.Gateway.dll"]
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:5000
+      ReverseProxy__Clusters__patient-cluster__Destinations__patient__Address: http://patient-api:5051
+      ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Address: http://prescription-api:5052
+      ReverseProxy__Clusters__treatment-cluster__Destinations__treatment__Address: http://treatment-api:5050
+      ReverseProxy__Clusters__alarm-cluster__Destinations__alarm__Address: http://alarm-api:5053
+      ReverseProxy__Clusters__device-cluster__Destinations__device__Address: http://device-api:5054
+    ports:
+      - "5001:5000"
+    depends_on:
+      - patient-api
+      - prescription-api
+      - treatment-api
+      - alarm-api
+      - device-api
+
+volumes:
+  postgres_data:

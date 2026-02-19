@@ -64,7 +64,7 @@ public static class ChannelPresenceByMode
     /// </summary>
     public static bool IsChannelPresent(int channelId, TreatmentModality modality)
     {
-        var channels = PresenceMap.GetValueOrDefault(modality.Value, [Machine]);
+        FrozenSet<int> channels = PresenceMap.GetValueOrDefault(modality.Value, [Machine]);
         return channels.Contains(channelId);
     }
 
@@ -73,7 +73,7 @@ public static class ChannelPresenceByMode
     /// </summary>
     public static bool IsChannelPresent(int channelId, ModeOfOperation mode)
     {
-        var channels = PresenceMap.GetValueOrDefault(mode.Value, [Machine]);
+        FrozenSet<int> channels = PresenceMap.GetValueOrDefault(mode.Value, [Machine]);
         return channels.Contains(channelId);
     }
 }

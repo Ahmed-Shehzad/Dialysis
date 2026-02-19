@@ -105,6 +105,7 @@ public sealed class TreatmentSessionsController : ControllerBase
 
         foreach (ObservationDto obs in response.Observations)
         {
+            string obsFullUrl = $"urn:uuid:obs-{obs.Code}-{obs.SubId ?? "0"}";
             var input = new ObservationMappingInput(
                 obs.Code,
                 obs.Value,
@@ -119,9 +120,20 @@ public sealed class TreatmentSessionsController : ControllerBase
             Observation fhirObs = ObservationMapper.ToFhirObservation(input);
             bundle.Entry.Add(new Bundle.EntryComponent
             {
-                FullUrl = $"urn:uuid:obs-{obs.Code}-{obs.SubId ?? "0"}",
+                FullUrl = obsFullUrl,
                 Resource = fhirObs
             });
+
+            if (!string.IsNullOrEmpty(obs.Provenance))
+            {
+                DateTimeOffset occurredAt = obs.EffectiveTime ?? response.StartedAt ?? DateTimeOffset.UtcNow;
+                Provenance prov = ProvenanceMapper.ToFhirProvenance(obsFullUrl, obs.Provenance, occurredAt, response.DeviceId);
+                bundle.Entry.Add(new Bundle.EntryComponent
+                {
+                    FullUrl = $"urn:uuid:prov-{obs.Code}-{obs.SubId ?? "0"}",
+                    Resource = prov
+                });
+            }
         }
 
         string json = FhirJsonHelper.ToJson(bundle);

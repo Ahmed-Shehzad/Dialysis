@@ -30,70 +30,76 @@ internal sealed class IngestRspK22CommandHandler : ICommandHandler<IngestRspK22C
     {
         RspK22PatientParseResult result = _parser.Parse(request.RawHl7Message);
 
-        bool skipIngest = string.Equals(result.QakStatus, StatusNf, StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(result.QakStatus, StatusAe, StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(result.QakStatus, StatusAr, StringComparison.OrdinalIgnoreCase);
-
-        if (skipIngest)
+        if (ShouldSkipIngest(result.QakStatus))
             return new IngestRspK22Response(0, result.QakStatus, Skipped: true);
 
-        int ingestedCount = 0;
-
-        foreach (PidPatientData data in result.Patients)
-        {
-            if (string.IsNullOrWhiteSpace(data.Identifier))
-                continue;
-
-            DomainPatient? existing = await FindExistingPatientAsync(data, cancellationToken);
-            Person name = new(data.FirstName ?? "Unknown", data.LastName ?? "Unknown");
-            DateOnly? dob = ParseDateOfBirth(data.DateOfBirth);
-            Gender? gender = ParseGender(data.Gender);
-
-            if (existing is not null)
-            {
-                string? pn = data.IdentifierType?.Equals("PN", StringComparison.OrdinalIgnoreCase) == true ? data.Identifier : null;
-                string? ss = data.IdentifierType?.Equals("SS", StringComparison.OrdinalIgnoreCase) == true ? data.Identifier : null;
-                existing.UpdateDemographics(pn, ss, name, dob, gender);
-                _repository.Update(existing);
-                ingestedCount++;
-            }
-            else
-            {
-                string? type = data.IdentifierType?.Trim().ToUpperInvariant();
-                string mrnValue;
-                string? personNumber = null;
-                string? ssn = null;
-
-                if (type is "MR" or "U" or null)
-                    mrnValue = data.Identifier!;
-                else if (type == "PN")
-                {
-                    mrnValue = Ulid.NewUlid().ToString();
-                    personNumber = data.Identifier;
-                }
-                else if (type == "SS")
-                {
-                    mrnValue = Ulid.NewUlid().ToString();
-                    ssn = data.Identifier;
-                }
-                else
-                    mrnValue = data.Identifier!;
-
-                var patient = DomainPatient.Register(
-                    new MedicalRecordNumber(mrnValue),
-                    name,
-                    dob,
-                    gender,
-                    personNumber: personNumber,
-                    socialSecurityNumber: ssn);
-                await _repository.AddAsync(patient, cancellationToken);
-                ingestedCount++;
-            }
-        }
-
+        int ingestedCount = await IngestPatientsAsync(result.Patients, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
 
         return new IngestRspK22Response(ingestedCount, result.QakStatus, Skipped: false);
+    }
+
+    private static bool ShouldSkipIngest(string? qakStatus) =>
+        string.Equals(qakStatus, StatusNf, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(qakStatus, StatusAe, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(qakStatus, StatusAr, StringComparison.OrdinalIgnoreCase);
+
+    private async Task<int> IngestPatientsAsync(IReadOnlyList<PidPatientData> patients, CancellationToken ct)
+    {
+        int count = 0;
+        foreach (PidPatientData data in patients)
+        {
+            if (string.IsNullOrWhiteSpace(data.Identifier))
+                continue;
+            await ProcessPatientAsync(data, ct);
+            count++;
+        }
+        return count;
+    }
+
+    private async Task ProcessPatientAsync(PidPatientData data, CancellationToken ct)
+    {
+        DomainPatient? existing = await FindExistingPatientAsync(data, ct);
+        Person name = new(data.FirstName ?? "Unknown", data.LastName ?? "Unknown");
+        DateOnly? dob = ParseDateOfBirth(data.DateOfBirth);
+        Gender? gender = ParseGender(data.Gender);
+
+        if (existing is not null)
+        {
+            (string? pn, string? ss) = GetIdentifiersForUpdate(data);
+            existing.UpdateDemographics(pn, ss, name, dob, gender);
+            _repository.Update(existing);
+            return;
+        }
+
+        (string mrnValue, string? personNumber, string? ssn) = ResolveMrnAndIdentifiers(data);
+        var patient = DomainPatient.Register(
+            new MedicalRecordNumber(mrnValue),
+            name,
+            dob,
+            gender,
+            personNumber: personNumber,
+            socialSecurityNumber: ssn);
+        await _repository.AddAsync(patient, ct);
+    }
+
+    private static (string? pn, string? ss) GetIdentifiersForUpdate(PidPatientData data)
+    {
+        bool isPn = string.Equals(data.IdentifierType, "PN", StringComparison.OrdinalIgnoreCase);
+        bool isSs = string.Equals(data.IdentifierType, "SS", StringComparison.OrdinalIgnoreCase);
+        return (isPn ? data.Identifier : null, isSs ? data.Identifier : null);
+    }
+
+    private static (string mrnValue, string? personNumber, string? ssn) ResolveMrnAndIdentifiers(PidPatientData data)
+    {
+        string? type = data.IdentifierType?.Trim().ToUpperInvariant();
+        return type switch
+        {
+            "PN" => (Ulid.NewUlid().ToString(), data.Identifier, null),
+            "SS" => (Ulid.NewUlid().ToString(), null, data.Identifier),
+            "MR" or "U" or null => (data.Identifier!, null, null),
+            _ => (data.Identifier!, null, null)
+        };
     }
 
     private async Task<DomainPatient?> FindExistingPatientAsync(PidPatientData data, CancellationToken ct)

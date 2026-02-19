@@ -17,7 +17,7 @@ public sealed class DeviceRepositoryTests
     [Fact]
     public async Task RegisterAndGet_Device_ReturnsDeviceAsync()
     {
-        await using var db = CreateDbContext();
+        await using DeviceDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
@@ -46,7 +46,7 @@ public sealed class DeviceRepositoryTests
     [Fact]
     public async Task RegisterTwice_SameEui64_UpdatesExistingAsync()
     {
-        await using var db = CreateDbContext();
+        await using DeviceDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
@@ -68,7 +68,7 @@ public sealed class DeviceRepositoryTests
 
     private static DeviceDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<DeviceDbContext>()
+        DbContextOptions<DeviceDbContext> options = new DbContextOptionsBuilder<DeviceDbContext>()
             .UseInMemoryDatabase("DeviceTests_" + Guid.NewGuid().ToString("N"))
             .Options;
         return new DeviceDbContext(options);

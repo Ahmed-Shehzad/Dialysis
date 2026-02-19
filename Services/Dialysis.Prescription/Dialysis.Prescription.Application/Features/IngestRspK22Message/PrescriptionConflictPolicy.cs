@@ -12,5 +12,11 @@ public enum PrescriptionConflictPolicy
     Replace,
 
     /// <summary>Ignore duplicate; return success without persisting.</summary>
-    Ignore
+    Ignore,
+
+    /// <summary>Return 409 with callback info so client can contact ordering provider.</summary>
+    Callback,
+
+    /// <summary>Merge: add only settings whose code is not already present.</summary>
+    Partial
 }

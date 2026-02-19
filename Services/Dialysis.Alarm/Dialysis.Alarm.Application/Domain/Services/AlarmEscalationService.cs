@@ -9,7 +9,7 @@ namespace Dialysis.Alarm.Application.Domain.Services;
 public sealed class AlarmEscalationService
 {
     private static readonly TimeSpan EscalationWindow = TimeSpan.FromMinutes(5);
-    private static readonly int EscalationThreshold = 3;
+    private const int EscalationThreshold = 3;
 
     private readonly ILogger<AlarmEscalationService> _logger;
 

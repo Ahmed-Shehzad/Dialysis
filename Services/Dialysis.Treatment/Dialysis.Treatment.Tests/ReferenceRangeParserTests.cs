@@ -13,7 +13,7 @@ public sealed class ReferenceRangeParserTests
     [InlineData("0.5-1.5", 0.5, 1.5)]
     public void TryParse_BoundedRange_ReturnsParsedResult(string raw, double expectedLower, double expectedUpper)
     {
-        var result = ReferenceRangeParser.TryParse(raw).ShouldNotBeNull();
+        ReferenceRangeInfo result = ReferenceRangeParser.TryParse(raw).ShouldNotBeNull();
         result.Lower.ShouldBe(expectedLower);
         result.Upper.ShouldBe(expectedUpper);
         result.Kind.ShouldBe(ReferenceRangeKind.Bounded);
@@ -25,7 +25,7 @@ public sealed class ReferenceRangeParserTests
     [InlineData("> 0.5", 0.5)]
     public void TryParse_GreaterThanLower_ReturnsParsedResult(string raw, double expectedLower)
     {
-        var result = ReferenceRangeParser.TryParse(raw).ShouldNotBeNull();
+        ReferenceRangeInfo result = ReferenceRangeParser.TryParse(raw).ShouldNotBeNull();
         result.Lower.ShouldBe(expectedLower);
         result.Upper.ShouldBeNull();
         result.Kind.ShouldBe(ReferenceRangeKind.GreaterThanLower);
@@ -37,7 +37,7 @@ public sealed class ReferenceRangeParserTests
     [InlineData("< 1.5", 1.5)]
     public void TryParse_LessThanUpper_ReturnsParsedResult(string raw, double expectedUpper)
     {
-        var result = ReferenceRangeParser.TryParse(raw).ShouldNotBeNull();
+        ReferenceRangeInfo result = ReferenceRangeParser.TryParse(raw).ShouldNotBeNull();
         result.Lower.ShouldBeNull();
         result.Upper.ShouldBe(expectedUpper);
         result.Kind.ShouldBe(ReferenceRangeKind.LessThanUpper);

@@ -1,5 +1,21 @@
 # Dialysis PDMS Documentation
 
+## Running the Full Stack (docker-compose)
+
+To run all services locally:
+
+```bash
+docker compose up -d
+```
+
+- **Gateway**: http://localhost:5001 (unified API)
+- **Health**: http://localhost:5001/health
+- **Stop**: `docker compose down`
+
+See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16 for details.
+
+---
+
 ## Services
 
 - **Dialysis.Patient** (Phase 1 – PDQ) – Patient demographics; GetPatientByMrn, SearchPatients, RegisterPatient
@@ -17,6 +33,10 @@
   - Run: `dotnet run --project Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj`
   - Endpoint: `POST /hl7/alarm` (ORU^R40 ingestion)
   - DB: PostgreSQL `dialysis_alarm`
+- **Dialysis.Device** – Device catalog; FHIR Device resources; auto-registered from ORU^R01/ORU^R40
+  - Run: `dotnet run --project Services/Dialysis.Device/Dialysis.Device.Api/Dialysis.Device.Api.csproj`
+  - Endpoints: `GET /api/devices`, `GET /api/devices/{id}/fhir`, `POST /api/devices`
+  - DB: PostgreSQL `dialysis_device`
 
 ## Architecture
 

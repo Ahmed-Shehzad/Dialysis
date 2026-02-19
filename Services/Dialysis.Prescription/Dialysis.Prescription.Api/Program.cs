@@ -89,7 +89,10 @@ app.UseExceptionHandler(exceptionHandlerApp =>
         {
             context.Response.StatusCode = StatusCodes.Status409Conflict;
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsJsonAsync(new { orderId = conflictEx.OrderId, message = conflictEx.Message });
+            var body = new Dictionary<string, object?> { ["orderId"] = conflictEx.OrderId, ["message"] = conflictEx.Message };
+            if (!string.IsNullOrEmpty(conflictEx.CallbackPhone))
+                body["callbackPhone"] = conflictEx.CallbackPhone;
+            await context.Response.WriteAsJsonAsync(body);
             return;
         }
         if (exception is ArgumentException argEx)

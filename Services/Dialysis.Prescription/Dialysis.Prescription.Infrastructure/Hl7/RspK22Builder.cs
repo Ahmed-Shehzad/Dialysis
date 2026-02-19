@@ -2,6 +2,7 @@ using System.Globalization;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Domain;
+using Dialysis.Prescription.Application.Domain.Hl7;
 using Dialysis.Prescription.Application.Domain.ValueObjects;
 
 using PrescriptionEntity = Dialysis.Prescription.Application.Domain.Prescription;
@@ -106,7 +107,7 @@ public sealed class RspK22Builder : IRspK22Builder
     private IEnumerable<string> BuildObxForSetting(ProfileSetting setting, ref int obxSetId)
     {
         string provenance = setting.Provenance ?? "RSET";
-        string subIdBase = setting.SubId ?? "1.1.9.1";
+        string subIdBase = setting.SubId ?? MdcToObxSubIdCatalog.GetOrDefault(setting.Code);
 
         if (setting.Profile is not null) return BuildProfileFacetObxs(setting.Profile, subIdBase, provenance, ref obxSetId);
 
@@ -115,7 +116,7 @@ public sealed class RspK22Builder : IRspK22Builder
             string units = CodeToUnits.GetValueOrDefault(setting.Code, "");
             int refId = GetRefIdForCode(setting.Code);
             string obx3 = $"{refId}{ComponentSeparator}{setting.Code}{ComponentSeparator}MDC";
-            return [BuildObxSegment(obx3, setting.SubId, setting.ConstantValue.Value.ToString(CultureInfo.InvariantCulture), units, provenance, ref obxSetId)];
+            return [BuildObxSegment(obx3, subIdBase, setting.ConstantValue.Value.ToString(CultureInfo.InvariantCulture), units, provenance, ref obxSetId)];
         }
 
         return [];

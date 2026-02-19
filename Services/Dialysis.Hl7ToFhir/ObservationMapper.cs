@@ -22,72 +22,75 @@ public static class ObservationMapper
         ArgumentNullException.ThrowIfNull(input);
 
         MdcFhirDescriptor? catalogEntry = MdcToFhirCodeCatalog.Get(input.ObservationCode);
-        string displayText = catalogEntry?.DisplayName ?? input.ObservationCode;
+        Observation obs = CreateBaseObservation(input, catalogEntry);
 
-        var code = new CodeableConcept
-        {
-            Coding =
-            [
-                new Coding(MdcSystem, input.ObservationCode, displayText)
-            ],
-            Text = displayText
-        };
-
-        if (catalogEntry?.LoincCode is not null)
-            code.Coding.Add(new Coding(LoincSystem, catalogEntry.LoincCode, displayText));
-
-        var obs = new Observation
-        {
-            Status = ObservationStatus.Final,
-            Code = code,
-            Category =
-            [
-                new CodeableConcept("http://terminology.hl7.org/CodeSystem/observation-category", "device", "Device")
-            ],
-            Effective = input.EffectiveTime.HasValue
-                ? new FhirDateTime(input.EffectiveTime.Value)
-                : new FhirDateTime(DateTimeOffset.UtcNow)
-        };
-
-        if (!string.IsNullOrEmpty(input.Value))
-        {
-            if (decimal.TryParse(input.Value, out decimal numVal))
-            {
-                string ucumCode = UcumMapper.ToUcumCode(input.Unit);
-                obs.Value = new Quantity
-                {
-                    Value = numVal,
-                    Unit = input.Unit ?? string.Empty,
-                    System = UcumSystem,
-                    Code = ucumCode
-                };
-
-                if (!string.IsNullOrEmpty(input.ReferenceRange))
-                    obs.ReferenceRange = [new Observation.ReferenceRangeComponent { Text = input.ReferenceRange }];
-            }
-            else obs.Value = new FhirString(input.Value);
-        }
-
-        if (!string.IsNullOrEmpty(input.SubId) || !string.IsNullOrEmpty(input.ChannelName))
-        {
-            string text = string.IsNullOrEmpty(input.ChannelName)
-                ? input.SubId ?? string.Empty
-                : string.IsNullOrEmpty(input.SubId)
-                    ? input.ChannelName
-                    : $"{input.SubId} ({input.ChannelName})";
-            if (!string.IsNullOrEmpty(text))
-                obs.BodySite = new CodeableConcept { Text = text };
-        }
+        SetObservationValue(obs, input);
+        SetBodySiteIfPresent(obs, input);
 
         if (!string.IsNullOrEmpty(input.Provenance))
             obs.Note = [new Annotation { Text = $"Provenance: {input.Provenance}" }];
-
         if (!string.IsNullOrEmpty(input.PatientId))
             obs.Subject = new ResourceReference($"Patient/{input.PatientId}");
-
         if (!string.IsNullOrEmpty(input.DeviceId))
             obs.Device = new ResourceReference($"Device/{input.DeviceId}");
 
         return obs;
+    }
+
+    private static Observation CreateBaseObservation(ObservationMappingInput input, MdcFhirDescriptor? catalogEntry)
+    {
+        string displayText = catalogEntry?.DisplayName ?? input.ObservationCode;
+        var code = new CodeableConcept
+        {
+            Coding = [new Coding(MdcSystem, input.ObservationCode, displayText)],
+            Text = displayText
+        };
+        if (catalogEntry?.LoincCode is not null)
+            code.Coding.Add(new Coding(LoincSystem, catalogEntry.LoincCode, displayText));
+
+        return new Observation
+        {
+            Status = ObservationStatus.Final,
+            Code = code,
+            Category = [new CodeableConcept("http://terminology.hl7.org/CodeSystem/observation-category", "device", "Device")],
+            Effective = input.EffectiveTime.HasValue ? new FhirDateTime(input.EffectiveTime.Value) : new FhirDateTime(DateTimeOffset.UtcNow)
+        };
+    }
+
+    private static void SetObservationValue(Observation obs, ObservationMappingInput input)
+    {
+        if (string.IsNullOrEmpty(input.Value))
+            return;
+
+        if (decimal.TryParse(input.Value, out decimal numVal))
+        {
+            string ucumCode = UcumMapper.ToUcumCode(input.Unit);
+            obs.Value = new Quantity
+            {
+                Value = numVal,
+                Unit = input.Unit ?? string.Empty,
+                System = UcumSystem,
+                Code = ucumCode
+            };
+            if (!string.IsNullOrEmpty(input.ReferenceRange))
+                obs.ReferenceRange = [new Observation.ReferenceRangeComponent { Text = input.ReferenceRange }];
+        }
+        else obs.Value = new FhirString(input.Value);
+    }
+
+    private static void SetBodySiteIfPresent(Observation obs, ObservationMappingInput input)
+    {
+        string? text = GetBodySiteText(input.SubId, input.ChannelName);
+        if (!string.IsNullOrEmpty(text))
+            obs.BodySite = new CodeableConcept { Text = text };
+    }
+
+    private static string? GetBodySiteText(string? subId, string? channelName)
+    {
+        if (string.IsNullOrEmpty(channelName))
+            return subId;
+        if (string.IsNullOrEmpty(subId))
+            return channelName;
+        return $"{subId} ({channelName})";
     }
 }

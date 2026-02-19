@@ -27,7 +27,7 @@ sequenceDiagram
     EMR->>PDMS: POST /api/hl7/rsp-k22 (RSP^K22)
     PDMS->>PDMS: Parse ORC, OBX hierarchy
     PDMS->>PDMS: Validate MSA-2, QAK-1, QAK-3
-    PDMS->>PDMS: ConflictPolicy: Reject/Replace/Ignore
+    PDMS->>PDMS: ConflictPolicy: Reject/Callback/Replace/Ignore/Partial
     PDMS->>PDMS: Prescription.Create + AddSetting
     PDMS-->>EMR: IngestRspK22MessageResponse
 ```
@@ -89,9 +89,10 @@ flowchart TB
 | 5 profile types (formulas) | ✅ | ProfileCalculator (CONSTANT, LINEAR, EXPONENTIAL, STEP, VENDOR) |
 | Parse OBX → Prescription | ✅ | RspK22Parser, IngestRspK22MessageCommandHandler |
 | Track RSET/MSET/ASET | ✅ | OBX-17 in ProfileSetting.Provenance |
-| Conflict options | ✅ | PrescriptionConflictPolicy (Reject, Replace, Ignore) |
+| Conflict options | ✅ | PrescriptionConflictPolicy (Reject, Callback, Replace, Ignore, Partial) – config via `PrescriptionIngestion:ConflictPolicy` |
 | Validate MSA-2, QAK-1, QAK-3 | ✅ | RspK22Validator |
 | Map Rx Use (Table 2) | ✅ | PrescriptionRxUseCatalog |
+| OBX sub-ID (IEEE 11073) | ✅ | MdcToObxSubIdCatalog, RspK22Builder fallback |
 
 ---
 
@@ -124,4 +125,4 @@ flowchart TB
 
 1. **QAK segment order**: Fixed. RspK22Builder now outputs QAK-1=QueryTag, QAK-2=Status, QAK-3=QueryName per HL7.
 2. **Extend PrescriptionRxUseCatalog**: Added pump parameters (Dialysate, RF, Anticoagulant, Sodium) from §3.2.6.
-3. **Partial Accept**: Not implemented; current policies Reject/Replace/Ignore cover typical use. ORC-14 Callback Phone is stored for provider contact.
+3. **Partial Accept**: **Done** – Partial policy merges new settings (by MDC code) into existing prescription. Callback policy returns 409 with `callbackPhone` for prescriber contact.

@@ -6,6 +6,7 @@ using BuildingBlocks.Interceptors;
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
+using Dialysis.Treatment.Infrastructure.DeviceRegistration;
 using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
 
@@ -64,6 +65,7 @@ builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();
 builder.Services.AddScoped<IOruMessageParser, OruR01Parser>();
+builder.Services.AddDeviceRegistrationClient(builder.Configuration);
 builder.Services.AddSingleton<IHl7BatchParser, Hl7BatchParser>();
 builder.Services.AddSingleton<IAckR01Builder, AckR01Builder>();
 builder.Services.AddSingleton<VitalSignsMonitoringService>();

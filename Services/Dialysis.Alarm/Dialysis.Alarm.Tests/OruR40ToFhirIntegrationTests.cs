@@ -7,6 +7,7 @@ using Dialysis.Alarm.Application.Features.RecordAlarm;
 
 using Dialysis.Alarm.Infrastructure.Hl7;
 using Dialysis.Alarm.Infrastructure.Persistence;
+using Dialysis.Alarm.Tests.TestDoubles;
 
 using Dialysis.Hl7ToFhir;
 
@@ -33,7 +34,7 @@ public sealed class OruR40ToFhirIntegrationTests
         await using AlarmDbContext db = CreateDbContext();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var ingestHandler = new IngestOruR40MessageCommandHandler(new RecordAlarmSender(repository), new OruR40Parser());
+        var ingestHandler = new IngestOruR40MessageCommandHandler(new RecordAlarmSender(repository), new OruR40Parser(), new NoOpDeviceRegistrationClient());
         var getHandler = new GetAlarmsQueryHandler(repository);
 
         const string oruR40 = """
@@ -100,7 +101,7 @@ public sealed class OruR40ToFhirIntegrationTests
 
     private static AlarmDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<AlarmDbContext>()
+        DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
             .UseInMemoryDatabase("OruR40ToFhir_" + Guid.NewGuid().ToString("N"))
             .Options;
         return new AlarmDbContext(options);
@@ -117,7 +118,7 @@ public sealed class OruR40ToFhirIntegrationTests
             if (request is RecordAlarmCommand cmd)
             {
                 var handler = new RecordAlarmCommandHandler(_repository, new TenantContext { TenantId = TenantContext.DefaultTenantId });
-                var result = await handler.HandleAsync(cmd, cancellationToken);
+                RecordAlarmResponse result = await handler.HandleAsync(cmd, cancellationToken);
                 return (TResponse)(object)result;
             }
             throw new NotSupportedException($"Request type {request?.GetType().Name} not supported");

@@ -9,6 +9,7 @@ using Dialysis.Treatment.Application.Features.RecordObservation;
 
 using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
+using Dialysis.Treatment.Tests.TestDoubles;
 
 using Hl7.Fhir.Model;
 
@@ -33,7 +34,7 @@ public sealed class OruR01ToFhirIntegrationTests
         await using TreatmentDbContext db = CreateDbContext();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
-        var ingestHandler = new IngestOruMessageCommandHandler(new Sender(repository), new OruR01Parser());
+        var ingestHandler = new IngestOruMessageCommandHandler(new Sender(repository), new OruR01Parser(), new NoOpDeviceRegistrationClient());
         var getHandler = new GetTreatmentSessionQueryHandler(repository);
 
         const string oruR01 = """
@@ -76,8 +77,9 @@ public sealed class OruR01ToFhirIntegrationTests
             ]
         };
 
-        foreach (var obs in sessionResponse.Observations)
+        foreach (ObservationDto obs in sessionResponse.Observations)
         {
+            string obsFullUrl = $"urn:uuid:obs-{obs.Code}-{obs.SubId ?? "0"}";
             var input = new ObservationMappingInput(
                 obs.Code,
                 obs.Value,
@@ -92,32 +94,63 @@ public sealed class OruR01ToFhirIntegrationTests
             Observation fhirObs = ObservationMapper.ToFhirObservation(input);
             bundle.Entry.Add(new Bundle.EntryComponent
             {
-                FullUrl = $"urn:uuid:obs-{obs.Code}-{obs.SubId ?? "0"}",
+                FullUrl = obsFullUrl,
                 Resource = fhirObs
             });
+
+            if (!string.IsNullOrEmpty(obs.Provenance))
+            {
+                DateTimeOffset occurredAt = obs.EffectiveTime ?? sessionResponse.StartedAt ?? DateTimeOffset.UtcNow;
+                Provenance prov = ProvenanceMapper.ToFhirProvenance(obsFullUrl, obs.Provenance, occurredAt, sessionResponse.DeviceId);
+                bundle.Entry.Add(new Bundle.EntryComponent
+                {
+                    FullUrl = $"urn:uuid:prov-{obs.Code}-{obs.SubId ?? "0"}",
+                    Resource = prov
+                });
+            }
         }
 
 #pragma warning disable IDE0058
-        bundle.Entry.Count.ShouldBe(3);
-        bundle.Entry[0].Resource.ShouldBeOfType<Procedure>();
-        ((Procedure)bundle.Entry[0].Resource).Code.Text.ShouldBe("Hemodialysis");
+        bundle.Entry.Count.ShouldBe(5); // 1 Procedure + 2 Observations + 2 Provenance
 
-        bundle.Entry[1].Resource.ShouldBeOfType<Observation>();
-        var obs1 = (Observation)bundle.Entry[1].Resource;
-        obs1.Code.Coding.ShouldContain(c => c.System == "urn:iso:std:iso:11073:10101");
+        Resource? res0 = bundle.Entry[0].Resource;
+        res0.ShouldNotBeNull();
+        res0.ShouldBeOfType<Procedure>();
+        ((Procedure)res0!).Code!.Text.ShouldBe("Hemodialysis");
+
+        Resource? res1 = bundle.Entry[1].Resource;
+        res1.ShouldNotBeNull();
+        res1.ShouldBeOfType<Observation>();
+        var obs1 = (Observation)res1!;
+        obs1.Code!.Coding.ShouldContain(c => c.System == "urn:iso:std:iso:11073:10101");
         obs1.Value.ShouldBeOfType<Quantity>();
         ((Quantity)(obs1.Value ?? throw new InvalidOperationException("obs1.Value is null"))).Value.ShouldBe(300);
 
-        bundle.Entry[2].Resource.ShouldBeOfType<Observation>();
-        var obs2 = (Observation)bundle.Entry[2].Resource!;
+        Resource? prov1 = bundle.Entry[2].Resource;
+        prov1.ShouldNotBeNull();
+        prov1.ShouldBeOfType<Provenance>();
+        var provenance1 = (Provenance)prov1;
+        provenance1.Target.ShouldContain(t => t.Reference == "urn:uuid:obs-152348-1.1.3.1");
+        provenance1.Activity!.Text.ShouldBe("Automatic measurement");
+
+        Resource? res2 = bundle.Entry[3].Resource;
+        res2.ShouldNotBeNull();
+        res2.ShouldBeOfType<Observation>();
+        var obs2 = (Observation)res2;
         ((Quantity)(obs2.Value ?? throw new InvalidOperationException("obs2.Value is null"))).Value.ShouldBe(120);
         obs2.ReferenceRange.ShouldContain(r => r.Text == "80-200");
+
+        Resource? prov2 = bundle.Entry[4].Resource;
+        prov2.ShouldNotBeNull();
+        prov2.ShouldBeOfType<Provenance>();
+        var provenance2 = (Provenance)prov2;
+        provenance2.Target.ShouldContain(t => t.Reference == "urn:uuid:obs-158776-1.1.3.2");
 #pragma warning restore IDE0058
     }
 
     private static TreatmentDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<TreatmentDbContext>()
+        DbContextOptions<TreatmentDbContext> options = new DbContextOptionsBuilder<TreatmentDbContext>()
             .UseInMemoryDatabase("OruR01ToFhir_" + Guid.NewGuid().ToString("N"))
             .Options;
         return new TreatmentDbContext(options);
@@ -134,7 +167,7 @@ public sealed class OruR01ToFhirIntegrationTests
             if (request is RecordObservationCommand cmd)
             {
                 var handler = new RecordObservationCommandHandler(_repository);
-                var result = await handler.HandleAsync(cmd, cancellationToken);
+                RecordObservationResponse result = await handler.HandleAsync(cmd, cancellationToken);
                 return (TResponse)(object)result;
             }
             throw new NotSupportedException($"Request type {request?.GetType().Name} not supported");

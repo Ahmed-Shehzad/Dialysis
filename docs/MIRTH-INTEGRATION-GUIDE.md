@@ -224,7 +224,37 @@ See [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) for:
 
 ---
 
-## 7. References
+## 7. Channel Samples
+
+Reusable scripts and configuration are available in `docs/mirth/channels/`:
+
+| File | Description |
+|------|-------------|
+| `transformer-routing.js` | JavaScript transformer: parses MSH-9, builds JSON body, sets target URL |
+| `channel-variables.json` | Suggested channel variables (PDMS base URLs, tenant) |
+| `README.md` | Import steps and channel setup |
+
+See [docs/mirth/channels/README.md](mirth/channels/README.md) for import and configuration details.
+
+---
+
+## 8. Prescription API Configuration
+
+The Prescription API supports configurable conflict handling when ingesting RSP^K22:
+
+| Config Key | Values | Default |
+|------------|--------|---------|
+| `PrescriptionIngestion:ConflictPolicy` | `Reject`, `Callback`, `Replace`, `Ignore`, `Partial` | `Reject` |
+
+- **Reject**: Return 409 Conflict when OrderId exists.
+- **Callback**: Return 409 with `callbackPhone` in body so caller can contact prescriber.
+- **Replace**: Delete existing prescription and save new one.
+- **Ignore**: Silently skip; return success.
+- **Partial**: Merge: keep existing settings, add only settings whose MDC code is not already present.
+
+---
+
+## 9. References
 
 - [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) – JWT claims, scopes, token acquisition
 - [NEXT-STEPS-PLAN.md](NEXT-STEPS-PLAN.md) – Step 4 deliverables

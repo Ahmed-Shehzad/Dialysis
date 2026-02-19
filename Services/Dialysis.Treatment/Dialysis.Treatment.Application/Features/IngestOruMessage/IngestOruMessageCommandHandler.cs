@@ -9,16 +9,21 @@ internal sealed class IngestOruMessageCommandHandler : ICommandHandler<IngestOru
 {
     private readonly ISender _sender;
     private readonly IOruMessageParser _parser;
+    private readonly IDeviceRegistrationClient _deviceRegistration;
 
-    public IngestOruMessageCommandHandler(ISender sender, IOruMessageParser parser)
+    public IngestOruMessageCommandHandler(ISender sender, IOruMessageParser parser, IDeviceRegistrationClient deviceRegistration)
     {
         _sender = sender;
         _parser = parser;
+        _deviceRegistration = deviceRegistration;
     }
 
     public async Task<IngestOruMessageResponse> HandleAsync(IngestOruMessageCommand request, CancellationToken cancellationToken = default)
     {
         OruParseResult parseResult = _parser.Parse(request.RawHl7Message);
+
+        if (!string.IsNullOrWhiteSpace(parseResult.DeviceEui64))
+            await _deviceRegistration.EnsureRegisteredAsync(parseResult.DeviceEui64, cancellationToken);
 
         if (parseResult.Observations.Count == 0)
             return new IngestOruMessageResponse(parseResult.SessionId, 0, true);

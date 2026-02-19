@@ -15,6 +15,7 @@ public static class AuditExtensions
     /// Registers <see cref="IAuditRecorder"/> with <see cref="FhirAuditRecorder"/>, which stores events for FHIR AuditEvent retrieval.
     /// Also registers <see cref="IAuditEventStore"/> with in-memory implementation.
     /// </summary>
+    /// <param name="services">The service collection.</param>
     /// <param name="storeCapacity">Maximum number of events to retain in memory (default 1000).</param>
     public static IServiceCollection AddFhirAuditRecorder(this IServiceCollection services, int storeCapacity = 1000)
     {

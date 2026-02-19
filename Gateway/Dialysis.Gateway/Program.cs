@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// Bind to 0.0.0.0 so Docker port mapping works; localhost-only causes "connection reset by peer"
+builder.WebHost.UseUrls(
+    builder.Configuration["ASPNETCORE_URLS"] ?? builder.Configuration["Urls"] ?? "http://0.0.0.0:5000");
+
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 

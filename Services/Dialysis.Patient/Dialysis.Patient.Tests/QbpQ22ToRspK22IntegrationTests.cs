@@ -27,7 +27,7 @@ public sealed class QbpQ22ToRspK22IntegrationTests
     [Fact]
     public async Task QbpQ22_RegisteredPatient_ReturnsRspK22WithPidAsync()
     {
-        await using var db = CreateDbContext();
+        await using PatientDbContext db = CreateDbContext();
 #pragma warning disable IDE0058
         _ = await db.Database.EnsureCreatedAsync();
 
@@ -63,7 +63,7 @@ public sealed class QbpQ22ToRspK22IntegrationTests
     [Fact]
     public async Task QbpQ22_NoMatchingPatient_ReturnsRspK22WithNfAsync()
     {
-        await using var db = CreateDbContext();
+        await using PatientDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
@@ -83,7 +83,7 @@ public sealed class QbpQ22ToRspK22IntegrationTests
 
     private static PatientDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<PatientDbContext>()
+        DbContextOptions<PatientDbContext> options = new DbContextOptionsBuilder<PatientDbContext>()
             .UseInMemoryDatabase("QbpQ22_" + Guid.NewGuid().ToString("N"))
             .Options;
         return new PatientDbContext(options);

@@ -72,6 +72,9 @@ flowchart TB
     PrescriptionSvc --> Postgres
     DeviceSvc --> Postgres
     AlarmSvc --> Postgres
+
+    TreatmentSvc -.->|device registration| DeviceSvc
+    AlarmSvc -.->|device registration| DeviceSvc
 ```
 
 ---
@@ -411,7 +414,7 @@ flowchart LR
 
 ## 12. Treatment FHIR Endpoint
 
-`GET /api/treatment-sessions/{sessionId}/fhir` returns a FHIR R4 Bundle containing a `Procedure` (hemodialysis session) and related `Observation` resources (device observations). Uses `ProcedureMapper` and `ObservationMapper` from Dialysis.Hl7ToFhir.
+`GET /api/treatment-sessions/{sessionId}/fhir` returns a FHIR R4 Bundle containing a `Procedure` (hemodialysis session), `Observation` resources (device observations), and `Provenance` resources (one per observation with OBX-17). Uses `ProcedureMapper`, `ObservationMapper`, and `ProvenanceMapper` from Dialysis.Hl7ToFhir.
 
 ```mermaid
 sequenceDiagram
@@ -476,7 +479,7 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 | ServiceRequest | PrescriptionMapper | GET /api/prescriptions/order/{id}/fhir |
 | Patient | PatientMapper | GET /api/patients/mrn/{mrn}/fhir |
 | Device | DeviceMapper | (used by mappers, not exposed as standalone) |
-| Provenance | ProvenanceMapper | (used when building Provenance for Observations) |
+| Provenance | ProvenanceMapper | Included in treatment-session FHIR Bundle (OBX-17 → Provenance per Observation) |
 | AuditEvent | AuditEventMapper | GET /api/audit-events |
 
 **Code systems:** MDC (urn:iso:std:iso:11073:10101), UCUM (http://unitsofmeasure.org), LOINC, SNOMED CT.
@@ -493,6 +496,32 @@ dotnet ef migrations add <Name> \
   --startup-project Services/Dialysis.Prescription/Dialysis.Prescription.Api/Dialysis.Prescription.Api.csproj \
   --output-dir Persistence/Migrations
 ```
+
+---
+
+## 16. Docker Compose (Full Stack Run)
+
+The solution runs via `docker compose` for local development and integration testing.
+
+| Service       | Host Port | Purpose                         |
+|---------------|-----------|---------------------------------|
+| postgres      | 5432      | Shared PostgreSQL; per-service DBs |
+| patient-api   | 5051      | Patient demographics           |
+| prescription-api | 5052    | Prescriptions, audit            |
+| treatment-api | 5050      | Treatment sessions, ORU ingest |
+| alarm-api     | 5053      | Alarms                          |
+| device-api    | 5054      | Devices                         |
+| gateway       | 5001      | YARP reverse proxy (unified API) |
+
+**Commands:**
+
+```bash
+docker compose up -d              # Start all services
+curl http://localhost:5001/health  # Aggregate health
+docker compose down               # Stop all
+```
+
+PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`. Each API runs EF migrations on startup (ASPNETCORE_ENVIRONMENT=Development).
 
 ---
 
