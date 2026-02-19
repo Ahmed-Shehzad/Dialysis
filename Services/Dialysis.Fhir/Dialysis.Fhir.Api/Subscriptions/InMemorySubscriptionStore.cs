@@ -35,12 +35,10 @@ public sealed class InMemorySubscriptionStore : ISubscriptionStore
     public IReadOnlyList<Subscription> GetActiveRestHookSubscriptions()
     {
         lock (_store)
-        {
             return _store.Values
                 .Where(s => s.Status == Subscription.SubscriptionStatus.Active
                             && IsRestHook(s)
                             && !string.IsNullOrEmpty(s.Channel?.Endpoint))
                 .ToList();
-        }
     }
 }

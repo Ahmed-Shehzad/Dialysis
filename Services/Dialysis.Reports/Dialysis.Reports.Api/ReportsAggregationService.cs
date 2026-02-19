@@ -55,10 +55,8 @@ public sealed class ReportsAggregationService
         int toCheck = Math.Min(sessionIds.Count, maxSessions);
 
         for (int i = 0; i < toCheck; i++)
-        {
             if (await IsSessionCompliantAsync(baseUrl, sessionIds[i], tenantId, request, cancellationToken))
                 compliant++;
-        }
 
         decimal percent = toCheck > 0 ? Math.Round(100m * compliant / toCheck, 1) : 0;
         return new PrescriptionComplianceReport(compliant, toCheck, percent, from, to);

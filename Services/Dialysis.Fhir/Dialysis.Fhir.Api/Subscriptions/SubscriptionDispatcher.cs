@@ -35,52 +35,71 @@ public sealed class SubscriptionDispatcher
         if (string.IsNullOrEmpty(resourceUrl))
             return;
 
-        IReadOnlyList<Subscription> subscriptions = _store.GetActiveRestHookSubscriptions();
-        List<Subscription> matching = [];
         string criteriaResourceType = resourceType.Trim();
-
-        foreach (Subscription sub in subscriptions)
-        {
-            if (MatchesCriteria(sub.Criteria, criteriaResourceType))
-                matching.Add(sub);
-        }
-
+        IReadOnlyList<Subscription> matching = GetMatchingSubscriptions(criteriaResourceType);
         if (matching.Count == 0)
             return;
 
+        Bundle? sourceBundle = await FetchResourceBundleAsync(resourceUrl, tenantId, authorizationHeader, cancellationToken);
+        if (sourceBundle?.Entry is null)
+            return;
+
+        string payload = BuildNotificationPayload(sourceBundle, resourceType);
+        await PostToSubscribersAsync(matching, payload, tenantId, cancellationToken);
+    }
+
+    private IReadOnlyList<Subscription> GetMatchingSubscriptions(string resourceType)
+    {
+        IReadOnlyList<Subscription> subscriptions = _store.GetActiveRestHookSubscriptions();
+        return subscriptions.Where(s => MatchesCriteria(s.Criteria, resourceType)).ToList();
+    }
+
+    private async System.Threading.Tasks.Task<Bundle?> FetchResourceBundleAsync(
+        string resourceUrl,
+        string? tenantId,
+        string? authorizationHeader,
+        CancellationToken cancellationToken)
+    {
         using var request = new HttpRequestMessage(HttpMethod.Get, resourceUrl);
         if (!string.IsNullOrEmpty(authorizationHeader))
             _ = request.Headers.TryAddWithoutValidation("Authorization", authorizationHeader);
         if (!string.IsNullOrEmpty(tenantId))
             _ = request.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-        request.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
+        _ = request.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");
 
-        HttpResponseMessage? fetchResponse = await _httpClient.SendAsync(request, cancellationToken);
-        if (!fetchResponse.IsSuccessStatusCode)
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
         {
             _logger.LogWarning("Subscription dispatcher failed to fetch resource from {ResourceUrl}: {StatusCode}",
-                resourceUrl, fetchResponse.StatusCode);
-            return;
+                resourceUrl, response.StatusCode);
+            return null;
         }
 
-        string bundleJson = await fetchResponse.Content.ReadAsStringAsync(cancellationToken);
-        Bundle? sourceBundle = Dialysis.Hl7ToFhir.FhirJsonHelper.FromJson<Bundle>(bundleJson);
-        if (sourceBundle?.Entry is null)
-            return;
+        string bundleJson = await response.Content.ReadAsStringAsync(cancellationToken);
+        return Dialysis.Hl7ToFhir.FhirJsonHelper.FromJson<Bundle>(bundleJson);
+    }
+
+    private static string BuildNotificationPayload(Bundle sourceBundle, string resourceType)
+    {
+        var filtered = sourceBundle.Entry
+            .Where(e => e.Resource is not null && string.Equals(e.Resource.TypeName, resourceType, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
         var notificationBundle = new Bundle
         {
             Type = Bundle.BundleType.Collection,
-            Entry = sourceBundle.Entry
-                .Where(e => e.Resource is not null && string.Equals(e.Resource.TypeName, resourceType, StringComparison.OrdinalIgnoreCase))
-                .ToList()
+            Entry = filtered.Count > 0 ? filtered : sourceBundle.Entry
         };
 
-        if (notificationBundle.Entry.Count == 0)
-            notificationBundle.Entry.AddRange(sourceBundle.Entry);
+        return Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(notificationBundle);
+    }
 
-        string payload = Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(notificationBundle);
-
+    private async System.Threading.Tasks.Task PostToSubscribersAsync(
+        IReadOnlyList<Subscription> matching,
+        string payload,
+        string? tenantId,
+        CancellationToken cancellationToken)
+    {
         foreach (Subscription sub in matching)
         {
             string? endpoint = sub.Channel?.Endpoint;

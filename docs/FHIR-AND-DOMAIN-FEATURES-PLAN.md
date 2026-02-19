@@ -16,7 +16,7 @@
 | DetectedIssue (Alarms) | `GET /api/alarms/fhir` | Alarm |
 | AuditEvent | `GET /api/audit-events` | Prescription (shared) |
 
-**Implemented**: Bulk export (`/api/fhir/$export`), search params (Patient, Prescription, Treatment, Alarm, Device), Subscription CRUD (`/api/fhir/Subscription`), CDS (`/api/cds/prescription-compliance`), Reports (`/api/reports/sessions-summary`, `/api/reports/alarms-by-severity`).
+**Implemented**: Bulk export (`/api/fhir/$export`), search params (Patient, Prescription, Treatment, Alarm, Device), Subscription CRUD (`/api/fhir/Subscription`), Subscription dispatcher (rest-hook), CDS (`/api/cds/prescription-compliance`), Reports (`/api/reports/sessions-summary`, `/api/reports/alarms-by-severity`, `/api/reports/prescription-compliance`).
 
 ---
 
@@ -116,30 +116,38 @@ sequenceDiagram
 
 **Scope**: Extend existing FHIR endpoints with query params; map to repository filters.
 
-### Phase 3: FHIR Subscriptions
+### Phase 3: FHIR Subscriptions – Implemented
 
 **Goal**: Real-time updates per FHIR Subscription (R4 Backport or R5).
+
+**Implemented flow (rest-hook):**
 
 ```mermaid
 sequenceDiagram
     participant Client
     participant SubAPI
+    participant Treatment as Treatment/Alarm
     participant Dispatcher
-    participant SignalR
+    participant Subscriber
 
-    Client->>SubAPI: POST /Subscription (channel-type: websocket)
+    Client->>SubAPI: POST /Subscription (channel-type: rest-hook)
     SubAPI-->>Client: 201 Created
-    Note over Dispatcher: Domain events published
-    Dispatcher->>Dispatcher: Match subscription criteria
-    Dispatcher->>SignalR: Push to channel
-    SignalR->>Client: Notification Bundle
+    Treatment->>SubAPI: POST /subscription-notify (Procedure/Observation/DetectedIssue)
+    SubAPI->>Dispatcher: DispatchAsync
+    Dispatcher->>Dispatcher: Match criteria (e.g. Observation)
+    Dispatcher->>SubAPI: GET resource via Gateway
+    Dispatcher->>Subscriber: POST Bundle to channel.endpoint
 ```
 
-**Scope**:
-- Subscription resource CRUD
-- Channel: rest-hook (callback URL) or websocket (SignalR)
-- Criteria: resource type, patient, date filters
-- On Observation/Alarm/Procedure record → evaluate subscriptions → notify
+**Scope (done)**:
+- Subscription resource CRUD (`POST|GET|DELETE /api/fhir/Subscription`)
+- Channel: rest-hook (callback URL)
+- Internal notify: `POST /api/fhir/subscription-notify` (ResourceType, ResourceUrl); protected by `FhirSubscription:NotifyApiKey`
+- Treatment: `FhirSubscriptionNotifyHandler` on `TreatmentSessionStartedEvent` (Procedure), `ObservationRecordedEvent` (Observation)
+- Alarm: `FhirSubscriptionNotifyHandler` on `AlarmRaisedEvent` (DetectedIssue)
+- Criteria: resource type match (e.g. `Observation`, `Procedure`)
+
+**Future**: websocket (SignalR) channel, subscription persistence (PostgreSQL)
 
 ### Phase 4: Clinical Decision Support (CDS)
 
@@ -163,7 +171,7 @@ flowchart LR
 - `GET /api/cds/prescription-compliance?sessionId=X` – returns DetectedIssue if deviation
 - Or CDS Hooks: `POST /cds-services/prescription-compliance` (prefetch prescription + session)
 
-### Phase 5: Reporting and Analytics
+### Phase 5: Reporting and Analytics – Implemented
 
 **Goal**: Aggregate endpoints for dashboards.
 
@@ -171,9 +179,9 @@ flowchart LR
 |----------|---------|
 | `GET /api/reports/sessions-summary` | Count, avg duration by date range |
 | `GET /api/reports/alarms-by-severity` | Grouped by severity, date |
-| `GET /api/reports/prescription-compliance` | % sessions within tolerance |
+| `GET /api/reports/prescription-compliance` | CompliantCount, TotalEvaluated, CompliancePercent |
 
-**Scope**: New reporting module or controllers in Treatment/Alarm/Prescription APIs.
+**Scope (done)**: Reports service (`Dialysis.Reports.Api`) aggregates from Treatment and CDS via Gateway.
 
 ### Phase 6: EHR/LIS Integration
 

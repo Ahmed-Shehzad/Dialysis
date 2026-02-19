@@ -38,6 +38,9 @@ flowchart TB
             PrescriptionSvc[Prescription Service - implemented]
             DeviceSvc[Device Service - implemented]
             AlarmSvc[Alarm Service - implemented]
+            FhirSvc[FHIR Service - implemented]
+            CdsSvc[CDS Service - implemented]
+            ReportsSvc[Reports Service - implemented]
         end
     end
 
@@ -56,6 +59,9 @@ flowchart TB
     API --> PrescriptionSvc
     API --> DeviceSvc
     API --> AlarmSvc
+    API --> FhirSvc
+    API --> CdsSvc
+    API --> ReportsSvc
 
     PatientSvc --> AzureSB
     TreatmentSvc --> AzureSB
@@ -75,6 +81,14 @@ flowchart TB
 
     TreatmentSvc -.->|device registration| DeviceSvc
     AlarmSvc -.->|device registration| DeviceSvc
+    TreatmentSvc -.->|subscription notify| FhirSvc
+    AlarmSvc -.->|subscription notify| FhirSvc
+    FhirSvc -.->|aggregate| PatientSvc
+    FhirSvc -.->|aggregate| TreatmentSvc
+    ReportsSvc -.->|aggregate| TreatmentSvc
+    ReportsSvc -.->|aggregate| AlarmSvc
+    CdsSvc -.->|Treatment + Prescription| TreatmentSvc
+    CdsSvc -.->|Treatment + Prescription| PrescriptionSvc
 ```
 
 ---
@@ -486,6 +500,28 @@ The Alarm API uses **Transponder SignalR transport** for real-time alarm broadca
 
 ---
 
+## 14c. FHIR, CDS, and Reports Services
+
+**FHIR Service (Dialysis.Fhir.Api, port 5055):** Aggregates FHIR resources from downstream APIs.
+
+- `GET /api/fhir/$export` – Bulk export (Patient, Device, ServiceRequest, Procedure, Observation, DetectedIssue, AuditEvent)
+- `POST|GET|DELETE /api/fhir/Subscription` – FHIR Subscription CRUD (rest-hook channel)
+- `POST /api/fhir/subscription-notify` – Internal endpoint for Treatment/Alarm to trigger subscription dispatch
+
+**Subscription dispatcher:** When Treatment records a Procedure/Observation or Alarm records a DetectedIssue, domain event handlers call the FHIR API’s notify endpoint. The dispatcher evaluates active rest-hook subscriptions, fetches the resource from the gateway, and POSTs a FHIR Bundle to each subscriber’s endpoint. Config: `FhirSubscription:NotifyUrl`, `FhirSubscription:NotifyApiKey` (optional).
+
+**CDS Service (Dialysis.Cds.Api, port 5056):** Clinical decision support.
+
+- `GET /api/cds/prescription-compliance?sessionId=X` – Compares treatment session vs prescription (blood flow, UF rate, UF target ±10%); returns FHIR DetectedIssue if deviation
+
+**Reports Service (Dialysis.Reports.Api, port 5057):** Aggregate reports.
+
+- `GET /api/reports/sessions-summary` – Session count, avg duration
+- `GET /api/reports/alarms-by-severity` – Alarms grouped by severity
+- `GET /api/reports/prescription-compliance` – % sessions within prescription tolerance
+
+---
+
 ## 15. Migrations (EF Core)
 
 Prescription service uses EF Core migrations. Apply on startup in Development via `MigrateAsync()`. To add a new migration:
@@ -503,15 +539,18 @@ dotnet ef migrations add <Name> \
 
 The solution runs via `docker compose` for local development and integration testing.
 
-| Service       | Host Port | Purpose                         |
-|---------------|-----------|---------------------------------|
-| postgres      | 5432      | Shared PostgreSQL; per-service DBs |
-| patient-api   | 5051      | Patient demographics           |
-| prescription-api | 5052    | Prescriptions, audit            |
-| treatment-api | 5050      | Treatment sessions, ORU ingest |
-| alarm-api     | 5053      | Alarms                          |
-| device-api    | 5054      | Devices                         |
-| gateway       | 5001      | YARP reverse proxy (unified API) |
+| Service         | Host Port | Purpose                              |
+|-----------------|-----------|--------------------------------------|
+| postgres        | 5432      | Shared PostgreSQL; per-service DBs   |
+| patient-api     | 5051      | Patient demographics                 |
+| prescription-api| 5052      | Prescriptions, audit                 |
+| treatment-api   | 5050      | Treatment sessions, ORU ingest       |
+| alarm-api       | 5053      | Alarms                               |
+| device-api      | 5054      | Devices                              |
+| fhir-api        | 5055      | FHIR bulk export, Subscriptions      |
+| cds-api         | 5056      | Clinical decision support            |
+| reports-api     | 5057      | Sessions, alarms, compliance reports |
+| gateway         | 5001      | YARP reverse proxy (unified API)     |
 
 **Commands:**
 
@@ -521,7 +560,7 @@ curl http://localhost:5001/health  # Aggregate health
 docker compose down               # Stop all
 ```
 
-PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`. Each API runs EF migrations on startup (ASPNETCORE_ENVIRONMENT=Development).
+PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`. Each API runs EF migrations on startup (ASPNETCORE_ENVIRONMENT=Development). FHIR, CDS, and Reports APIs are stateless; they aggregate data from other services via the gateway.
 
 ---
 

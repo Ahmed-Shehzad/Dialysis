@@ -169,7 +169,11 @@
 | Prescription API | Dialysis.Prescription.Api |
 | Treatment API | Dialysis.Treatment.Api |
 | Alarm API | Dialysis.Alarm.Api |
-| Device API | Dialysis.Device.Api (after Step 3) |
+| Device API | Dialysis.Device.Api |
+| FHIR API | Dialysis.Fhir.Api |
+| CDS API | Dialysis.Cds.Api |
+| Reports API | Dialysis.Reports.Api |
+| Gateway | Dialysis.Gateway |
 | Mirth (optional) | Mirth Connect image |
 
 ### 8.2 Deliverables
