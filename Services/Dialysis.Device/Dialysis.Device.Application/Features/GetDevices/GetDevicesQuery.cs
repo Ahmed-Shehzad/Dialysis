@@ -2,4 +2,7 @@ using Intercessor.Abstractions;
 
 namespace Dialysis.Device.Application.Features.GetDevices;
 
-public sealed record GetDevicesQuery : IQuery<GetDevicesResponse>;
+/// <summary>
+/// FHIR search params: _id, identifier (device Id or EUI-64).
+/// </summary>
+public sealed record GetDevicesQuery(string? Id = null, string? Identifier = null) : IQuery<GetDevicesResponse>;

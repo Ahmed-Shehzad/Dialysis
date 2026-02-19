@@ -14,6 +14,8 @@ public static class FhirJsonHelper
 
     public static string ToJson(Resource resource) => JsonSerializer.Serialize(resource, resource.GetType(), Options);
 
+    public static T? FromJson<T>(string json) where T : Resource => JsonSerializer.Deserialize<T>(json, Options);
+
     private static JsonSerializerOptions CreateOptions()
     {
 #pragma warning disable CS0618 // ForFhir(Assembly) obsolete - use ModelInspector when available

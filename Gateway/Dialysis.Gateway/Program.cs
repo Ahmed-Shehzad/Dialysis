@@ -19,13 +19,15 @@ string prescriptionUrl = GetBackendAddress("prescription-cluster", "prescription
 string treatmentUrl = GetBackendAddress("treatment-cluster", "treatment", "http://localhost:5050");
 string alarmUrl = GetBackendAddress("alarm-cluster", "alarm", "http://localhost:5053");
 string deviceUrl = GetBackendAddress("device-cluster", "device", "http://localhost:5054");
+string fhirUrl = GetBackendAddress("fhir-cluster", "fhir", "http://localhost:5055");
 
 builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri(patientUrl.TrimEnd('/') + "/health"), "patient-api")
     .AddUrlGroup(new Uri(prescriptionUrl.TrimEnd('/') + "/health"), "prescription-api")
     .AddUrlGroup(new Uri(treatmentUrl.TrimEnd('/') + "/health"), "treatment-api")
     .AddUrlGroup(new Uri(alarmUrl.TrimEnd('/') + "/health"), "alarm-api")
-    .AddUrlGroup(new Uri(deviceUrl.TrimEnd('/') + "/health"), "device-api");
+    .AddUrlGroup(new Uri(deviceUrl.TrimEnd('/') + "/health"), "device-api")
+    .AddUrlGroup(new Uri(fhirUrl.TrimEnd('/') + "/health"), "fhir-api");
 
 WebApplication app = builder.Build();
 

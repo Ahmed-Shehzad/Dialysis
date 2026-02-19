@@ -1,10 +1,12 @@
 using BuildingBlocks.Abstractions;
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.ValueObjects;
 
 using Dialysis.Hl7ToFhir;
 using Dialysis.Treatment.Application.Domain.ValueObjects;
 using Dialysis.Treatment.Application.Features.GetObservationsInTimeRange;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
+using Dialysis.Treatment.Application.Features.GetTreatmentSessions;
 
 using Hl7.Fhir.Model;
 
@@ -28,6 +30,97 @@ public sealed class TreatmentSessionsController : ControllerBase
         _sender = sender;
         _audit = audit;
         _tenant = tenant;
+    }
+
+    [HttpGet("fhir")]
+    [Authorize(Policy = "TreatmentRead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTreatmentSessionsFhirAsync(
+        [FromQuery] int limit = 500,
+        [FromQuery] string? subject = null,
+        [FromQuery] string? patient = null,
+        [FromQuery] DateTimeOffset? date = null,
+        [FromQuery] DateTimeOffset? dateFrom = null,
+        [FromQuery] DateTimeOffset? dateTo = null,
+        CancellationToken cancellationToken = default)
+    {
+        var mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
+        MedicalRecordNumber? mrnVal = !string.IsNullOrWhiteSpace(mrn) ? new MedicalRecordNumber(mrn) : null;
+        var from = dateFrom ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
+        var to = dateTo ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
+        var query = new GetTreatmentSessionsQuery(Math.Min(limit, 1_000), mrnVal, from, to);
+        GetTreatmentSessionsResponse response = await _sender.SendAsync(query, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "TreatmentSession", null, User.Identity?.Name,
+            AuditOutcome.Success, $"FHIR treatment sessions ({response.Sessions.Count})", _tenant.TenantId), cancellationToken);
+
+        var bundle = new Bundle
+        {
+            Type = Bundle.BundleType.Collection,
+            Entry = []
+        };
+
+        foreach (TreatmentSessionSummary session in response.Sessions)
+        {
+            Procedure procedure = ProcedureMapper.ToFhirProcedure(
+                session.SessionId, session.PatientMrn, session.DeviceId, session.Status,
+                session.StartedAt, session.EndedAt);
+            procedure.Id = $"proc-{session.SessionId}";
+            bundle.Entry.Add(new Bundle.EntryComponent
+            {
+                FullUrl = $"urn:uuid:procedure-{session.SessionId}",
+                Resource = procedure
+            });
+
+            foreach (ObservationDto obs in session.Observations)
+            {
+                string obsFullUrl = $"urn:uuid:obs-{obs.Code}-{obs.SubId ?? "0"}";
+                var input = new ObservationMappingInput(
+                    obs.Code, obs.Value, obs.Unit, obs.SubId, obs.ReferenceRange,
+                    obs.Provenance, obs.EffectiveTime, session.DeviceId, session.PatientMrn, obs.ChannelName);
+                Observation fhirObs = ObservationMapper.ToFhirObservation(input);
+                bundle.Entry.Add(new Bundle.EntryComponent { FullUrl = obsFullUrl, Resource = fhirObs });
+
+                if (!string.IsNullOrEmpty(obs.Provenance))
+                {
+                    DateTimeOffset occurredAt = obs.EffectiveTime ?? session.StartedAt ?? DateTimeOffset.UtcNow;
+                    Provenance prov = ProvenanceMapper.ToFhirProvenance(obsFullUrl, obs.Provenance, occurredAt, session.DeviceId);
+                    bundle.Entry.Add(new Bundle.EntryComponent
+                    {
+                        FullUrl = $"urn:uuid:prov-{obs.Code}-{obs.SubId ?? "0"}",
+                        Resource = prov
+                    });
+                }
+            }
+        }
+
+        string json = FhirJsonHelper.ToJson(bundle);
+        return Content(json, "application/fhir+json");
+    }
+
+    [HttpGet("reports/summary")]
+    [Authorize(Policy = "TreatmentRead")]
+    [ProducesResponseType(typeof(SessionsSummaryReport), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSessionsSummaryAsync(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var fromUtc = from ?? DateTimeOffset.UtcNow.AddDays(-7);
+        var toUtc = to ?? DateTimeOffset.UtcNow;
+        var query = new GetTreatmentSessionsQuery(10_000, null, fromUtc, toUtc);
+        GetTreatmentSessionsResponse response = await _sender.SendAsync(query, cancellationToken);
+        var sessions = response.Sessions;
+        decimal avgMinutes = 0;
+        if (sessions.Count > 0)
+        {
+            var durations = sessions
+                .Where(s => s.StartedAt.HasValue && s.EndedAt.HasValue)
+                .Select(s => (s.EndedAt!.Value - s.StartedAt!.Value).TotalMinutes)
+                .ToList();
+            avgMinutes = durations.Count > 0 ? (decimal)durations.Average() : 0;
+        }
+        return Ok(new SessionsSummaryReport(sessions.Count, avgMinutes, fromUtc, toUtc));
     }
 
     [HttpGet("{sessionId}/observations")]
@@ -140,3 +233,5 @@ public sealed class TreatmentSessionsController : ControllerBase
         return Content(json, "application/fhir+json");
     }
 }
+
+internal sealed record SessionsSummaryReport(int SessionCount, decimal AvgDurationMinutes, DateTimeOffset From, DateTimeOffset To);

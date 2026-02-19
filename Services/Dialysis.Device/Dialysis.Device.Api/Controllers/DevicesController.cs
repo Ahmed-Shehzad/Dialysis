@@ -57,6 +57,37 @@ public sealed class DevicesController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("fhir")]
+    [Authorize(Policy = "DeviceRead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDevicesFhirAsync(
+        [FromQuery(Name = "_id")] string? id = null,
+        [FromQuery] string? identifier = null,
+        CancellationToken cancellationToken = default)
+    {
+        GetDevicesResponse response = await _sender.SendAsync(new GetDevicesQuery(id, identifier), cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "Device", null, User.Identity?.Name,
+            AuditOutcome.Success, $"FHIR devices ({response.Devices.Count})", _tenant.TenantId), cancellationToken);
+
+        var bundle = new Hl7.Fhir.Model.Bundle
+        {
+            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
+            Entry = response.Devices.Select(d =>
+            {
+                var fhir = DeviceMapper.ToFhirDevice(d.DeviceEui64, d.Manufacturer, d.Model);
+                fhir.Id = d.Id;
+                return new Hl7.Fhir.Model.Bundle.EntryComponent
+                {
+                    FullUrl = $"urn:uuid:device-{d.Id}",
+                    Resource = fhir
+                };
+            }).ToList()
+        };
+        string json = FhirJsonHelper.ToJson(bundle);
+        return Content(json, "application/fhir+json");
+    }
+
     [HttpGet("{deviceId}/fhir")]
     [Authorize(Policy = "DeviceRead")]
     [ProducesResponseType(StatusCodes.Status200OK)]

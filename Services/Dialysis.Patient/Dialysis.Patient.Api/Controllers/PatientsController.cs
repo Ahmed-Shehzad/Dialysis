@@ -6,6 +6,7 @@ using Dialysis.Hl7ToFhir;
 using Dialysis.Patient.Api.Contracts;
 using Dialysis.Patient.Application.Domain.ValueObjects;
 using Dialysis.Patient.Application.Features.GetPatientByMrn;
+using Dialysis.Patient.Application.Features.GetPatients;
 using Dialysis.Patient.Application.Features.RegisterPatient;
 using Dialysis.Patient.Application.Features.SearchPatients;
 
@@ -45,6 +46,49 @@ public sealed class PatientsController : ControllerBase
                 AuditOutcome.Success, "Patient retrieval by MRN", _tenant.TenantId), cancellationToken);
 
         return response is null ? NotFound() : Ok(response);
+    }
+
+    [HttpGet("fhir")]
+    [Authorize(Policy = "PatientRead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPatientsFhirAsync(
+        [FromQuery] int limit = 1000,
+        [FromQuery(Name = "_id")] string? id = null,
+        [FromQuery] string? identifier = null,
+        [FromQuery] string? name = null,
+        [FromQuery] DateOnly? birthdate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var idValue = identifier?.Contains('|') == true ? identifier.Split('|', 2)[^1] : identifier;
+        var query = new GetPatientsQuery(Math.Min(limit, 10_000), id, idValue, name, birthdate);
+        GetPatientsResponse response = await _sender.SendAsync(query, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "Patient", null, User.Identity?.Name,
+            AuditOutcome.Success, $"FHIR patients ({response.Patients.Count})", _tenant.TenantId), cancellationToken);
+
+        var bundle = new Hl7.Fhir.Model.Bundle
+        {
+            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
+            Entry = response.Patients.Select(p =>
+            {
+                var input = new PatientMappingInput(
+                    p.MedicalRecordNumber,
+                    p.FirstName,
+                    p.LastName,
+                    p.DateOfBirth,
+                    p.Gender,
+                    null);
+                Hl7.Fhir.Model.Patient fhirPatient = PatientMapper.ToFhirPatient(input);
+                fhirPatient.Id = p.Id;
+                return new Hl7.Fhir.Model.Bundle.EntryComponent
+                {
+                    FullUrl = $"urn:uuid:patient-{p.Id}",
+                    Resource = fhirPatient
+                };
+            }).ToList()
+        };
+        string json = FhirJsonHelper.ToJson(bundle);
+        return Content(json, "application/fhir+json");
     }
 
     [HttpGet("mrn/{mrn}/fhir")]

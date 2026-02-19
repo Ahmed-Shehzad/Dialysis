@@ -15,4 +15,6 @@ public interface ITreatmentSessionRepository : IRepository<TreatmentSession>
         DateTimeOffset startUtc,
         DateTimeOffset endUtc,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TreatmentSession>> GetAllForTenantAsync(int limit, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TreatmentSession>> SearchForFhirAsync(MedicalRecordNumber? patientMrn, DateTimeOffset? dateFrom, DateTimeOffset? dateTo, int limit, CancellationToken cancellationToken = default);
 }

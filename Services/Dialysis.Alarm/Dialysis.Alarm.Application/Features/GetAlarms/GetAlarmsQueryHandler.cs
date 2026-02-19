@@ -17,6 +17,13 @@ internal sealed class GetAlarmsQueryHandler : IQueryHandler<GetAlarmsQuery, GetA
 
     public async Task<GetAlarmsResponse> HandleAsync(GetAlarmsQuery request, CancellationToken cancellationToken = default)
     {
+        if (!string.IsNullOrWhiteSpace(request.Id) && Ulid.TryParse(request.Id, out Ulid id))
+        {
+            var alarm = await _repository.GetByIdAsync(id, cancellationToken);
+            var singleDtos = alarm is not null ? new List<AlarmDto> { ToDto(alarm) } : new List<AlarmDto>();
+            return new GetAlarmsResponse(singleDtos);
+        }
+
         DeviceId? deviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : new DeviceId(request.DeviceId);
         IReadOnlyList<Domain.Alarm> alarms = await _repository.GetAlarmsAsync(
             deviceId,
@@ -25,23 +32,23 @@ internal sealed class GetAlarmsQueryHandler : IQueryHandler<GetAlarmsQuery, GetA
             request.ToUtc,
             cancellationToken);
 
-        var dtos = alarms
-            .Select(a => new AlarmDto(
-                a.Id.ToString(),
-                a.AlarmType,
-                a.SourceCode,
-                a.SourceLimits,
-                a.Priority?.Value,
-                a.InterpretationType,
-                a.Abnormality,
-                a.EventPhase.Value,
-                a.AlarmState.Value,
-                a.ActivityState.Value,
-                a.DeviceId?.Value,
-                a.SessionId,
-                a.OccurredAt))
-            .ToList();
-
+        var dtos = alarms.Select(ToDto).ToList();
         return new GetAlarmsResponse(dtos);
     }
+
+    private static AlarmDto ToDto(Domain.Alarm a) =>
+        new(
+            a.Id.ToString(),
+            a.AlarmType,
+            a.SourceCode,
+            a.SourceLimits,
+            a.Priority?.Value,
+            a.InterpretationType,
+            a.Abnormality,
+            a.EventPhase.Value,
+            a.AlarmState.Value,
+            a.ActivityState.Value,
+            a.DeviceId?.Value,
+            a.SessionId,
+            a.OccurredAt);
 }

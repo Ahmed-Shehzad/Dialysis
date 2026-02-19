@@ -254,8 +254,32 @@ The Prescription API supports configurable conflict handling when ingesting RSP^
 
 ---
 
-## 9. References
+## 9. EHR Integration Patterns
+
+### Supported EHR Flows
+
+| Flow | HL7 Messages | PDMS Endpoint | Description |
+|------|---------------|---------------|-------------|
+| **Patient Sync (PDQ)** | QBP^Q22, RSP^K22 | `/api/hl7/qbp-q22`, `/api/hl7/rsp-k22` | Query patients by MRN; ingest demographics from EHR |
+| **Prescription Ingest** | QBP^D01 (query), RSP^K22 (ingest) | `/api/hl7/qbp-d01`, `/api/hl7/rsp-k22` | Query prescriptions; ingest dialysis prescriptions from EHR |
+| **Document References** | *(future)* | – | CDA/CCD document references; not yet implemented |
+
+### Data Residency and Jurisdiction
+
+- PDMS stores patient, prescription, treatment, and alarm data in tenant-scoped PostgreSQL databases.
+- All inbound HL7 must include `X-Tenant-Id` for multi-tenancy.
+- See [C5 compliance](.cursor/rules/c5-compliance.mdc) for encryption, audit, and access control.
+
+### LIS Integration (Future)
+
+- Lab results (e.g. Observation with LOINC codes) are not in initial scope.
+- Future LIS integration would use `Observation` resource ingestion via HL7 ORU or FHIR.
+
+---
+
+## 10. References
 
 - [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) – JWT claims, scopes, token acquisition
 - [NEXT-STEPS-PLAN.md](NEXT-STEPS-PLAN.md) – Step 4 deliverables
 - [PROCESS-DIAGRAMS.md](PROCESS-DIAGRAMS.md) – HL7 flow diagrams
+- [FHIR-AND-DOMAIN-FEATURES-PLAN.md](FHIR-AND-DOMAIN-FEATURES-PLAN.md) – FHIR interoperability roadmap

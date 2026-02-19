@@ -38,7 +38,7 @@ public sealed class AlarmsController : ControllerBase
         [FromQuery] DateTimeOffset? to,
         CancellationToken cancellationToken)
     {
-        var query = new GetAlarmsQuery(deviceId, sessionId, from, to);
+        var query = new GetAlarmsQuery(DeviceId: deviceId, SessionId: sessionId, FromUtc: from, ToUtc: to);
         GetAlarmsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(
             AuditAction.Read, "Alarm", null, User.Identity?.Name,
@@ -50,13 +50,17 @@ public sealed class AlarmsController : ControllerBase
     [Authorize(Policy = "AlarmRead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAlarmsFhirAsync(
-        [FromQuery] string? deviceId,
-        [FromQuery] string? sessionId,
-        [FromQuery] DateTimeOffset? from,
-        [FromQuery] DateTimeOffset? to,
-        CancellationToken cancellationToken)
+        [FromQuery(Name = "_id")] string? id = null,
+        [FromQuery] string? deviceId = null,
+        [FromQuery] string? sessionId = null,
+        [FromQuery] DateTimeOffset? date = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
     {
-        var query = new GetAlarmsQuery(deviceId, sessionId, from, to);
+        var fromUtc = from ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
+        var toUtc = to ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
+        var query = new GetAlarmsQuery(id, deviceId, sessionId, fromUtc, toUtc);
         GetAlarmsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(
             AuditAction.Read, "Alarm", null, User.Identity?.Name,

@@ -28,7 +28,7 @@ public sealed class GetAlarmsQueryHandlerTests
         var repository = new AlarmRepository(db, tenant);
         var handler = new GetAlarmsQueryHandler(repository);
 
-        var query = new GetAlarmsQuery(null, null, null, null);
+        var query = new GetAlarmsQuery();
         GetAlarmsResponse response = await handler.HandleAsync(query);
 
         response.Alarms.Count.ShouldBe(1);
@@ -49,7 +49,7 @@ public sealed class GetAlarmsQueryHandlerTests
         var repository = new AlarmRepository(db, tenant);
         var handler = new GetAlarmsQueryHandler(repository);
 
-        var query = new GetAlarmsQuery(null, "sess-001", null, null);
+        var query = new GetAlarmsQuery(SessionId: "sess-001");
         GetAlarmsResponse response = await handler.HandleAsync(query);
 
         response.Alarms.Count.ShouldBe(1);
@@ -70,7 +70,7 @@ public sealed class GetAlarmsQueryHandlerTests
         var repository = new AlarmRepository(db, tenant);
         var handler = new GetAlarmsQueryHandler(repository);
 
-        var query = new GetAlarmsQuery(null, "sess-001", baseTime.AddHours(-1), baseTime);
+        var query = new GetAlarmsQuery(SessionId: "sess-001", FromUtc: baseTime.AddHours(-1), ToUtc: baseTime);
         GetAlarmsResponse response = await handler.HandleAsync(query);
 
         response.Alarms.Count.ShouldBe(1);
@@ -86,7 +86,7 @@ public sealed class GetAlarmsQueryHandlerTests
         var repository = new AlarmRepository(db, tenant);
         var handler = new GetAlarmsQueryHandler(repository);
 
-        var query = new GetAlarmsQuery(null, null, null, null);
+        var query = new GetAlarmsQuery();
         GetAlarmsResponse response = await handler.HandleAsync(query);
 
         response.Alarms.ShouldBeEmpty();

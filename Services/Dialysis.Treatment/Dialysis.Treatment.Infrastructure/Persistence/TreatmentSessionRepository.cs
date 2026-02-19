@@ -71,6 +71,37 @@ public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, I
     public async override Task<TreatmentSession?> GetAsync(Expression<Func<TreatmentSession, bool>> expression, CancellationToken cancellationToken = default) =>
         await _db.TreatmentSessions.FirstOrDefaultAsync(expression, cancellationToken);
 
+    public async Task<IReadOnlyList<TreatmentSession>> GetAllForTenantAsync(int limit, CancellationToken cancellationToken = default)
+    {
+        return await _db.TreatmentSessions
+            .AsNoTracking()
+            .Include(s => s.Observations)
+            .Where(s => s.TenantId == _tenant.TenantId)
+            .OrderByDescending(s => s.StartedAt)
+            .Take(Math.Max(1, Math.Min(limit, 1_000)))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TreatmentSession>> SearchForFhirAsync(MedicalRecordNumber? patientMrn, DateTimeOffset? dateFrom, DateTimeOffset? dateTo, int limit, CancellationToken cancellationToken = default)
+    {
+        IQueryable<TreatmentSession> query = _db.TreatmentSessions
+            .AsNoTracking()
+            .Include(s => s.Observations)
+            .Where(s => s.TenantId == _tenant.TenantId);
+
+        if (patientMrn is not null)
+            query = query.Where(s => s.PatientMrn == patientMrn);
+        if (dateFrom.HasValue)
+            query = query.Where(s => s.StartedAt >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(s => s.StartedAt <= dateTo.Value);
+
+        return await query
+            .OrderByDescending(s => s.StartedAt)
+            .Take(Math.Max(1, Math.Min(limit, 1_000)))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Observation>> GetObservationsInTimeRangeAsync(
         SessionId sessionId,
         DateTimeOffset startUtc,

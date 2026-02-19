@@ -1,8 +1,10 @@
 using BuildingBlocks.Abstractions;
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.ValueObjects;
 
 using Dialysis.Hl7ToFhir;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
+using Dialysis.Prescription.Application.Features.GetPrescriptions;
 
 using Intercessor.Abstractions;
 
@@ -25,6 +27,49 @@ public sealed class PrescriptionController : ControllerBase
         _sender = sender;
         _audit = audit;
         _tenant = tenant;
+    }
+
+    [HttpGet("fhir")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPrescriptionsFhirAsync(
+        [FromQuery] int limit = 1000,
+        [FromQuery] string? subject = null,
+        [FromQuery] string? patient = null,
+        CancellationToken cancellationToken = default)
+    {
+        var mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
+        MedicalRecordNumber? mrnVal = !string.IsNullOrWhiteSpace(mrn) ? new MedicalRecordNumber(mrn) : null;
+        var query = new GetPrescriptionsQuery(Math.Min(limit, 10_000), mrnVal);
+        GetPrescriptionsResponse response = await _sender.SendAsync(query, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Read, "Prescription", null, User.Identity?.Name,
+            AuditOutcome.Success, $"FHIR prescriptions ({response.Prescriptions.Count})", _tenant.TenantId), cancellationToken);
+
+        var bundle = new Hl7.Fhir.Model.Bundle
+        {
+            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
+            Entry = response.Prescriptions.Select(p =>
+            {
+                var input = new PrescriptionMappingInput(
+                    p.OrderId,
+                    p.PatientMrn,
+                    p.Modality,
+                    p.OrderingProvider,
+                    p.BloodFlowRateMlMin,
+                    p.UfRateMlH,
+                    p.UfTargetVolumeMl,
+                    p.ReceivedAt);
+                var fhir = PrescriptionMapper.ToFhirServiceRequest(input);
+                fhir.Id = p.OrderId;
+                return new Hl7.Fhir.Model.Bundle.EntryComponent
+                {
+                    FullUrl = $"urn:uuid:prescription-{p.OrderId}",
+                    Resource = fhir
+                };
+            }).ToList()
+        };
+        string json = FhirJsonHelper.ToJson(bundle);
+        return Content(json, "application/fhir+json");
     }
 
     [HttpGet("{mrn}")]
