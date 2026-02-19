@@ -21,9 +21,9 @@
 
 | Guide Requirement | Implementation | Status |
 |------------------|----------------|--------|
-| IHE Consistent Time (CT) Protocol; NTP per RFC 1305 | Deployment docs (DEPLOYMENT-REQUIREMENTS.md); serverTimeUtc in health; optional drift validation | Partially aligned |
+| IHE Consistent Time (CT) Protocol; NTP per RFC 1305 | DEPLOYMENT-REQUIREMENTS.md; serverTimeUtc + ntp-sync in /health; MSH-7 drift validation + persistence | Aligned |
 
-**Notes**: PDMS servers and dialysis machines must use NTP per the Guide. PDMS: deployment requirements documented; health returns server UTC for verification; HL7 ingest can log timestamp drift. Machine NTP remains facility/device responsibility.
+**Notes**: PDMS servers and dialysis machines must use NTP per the Guide. PDMS: deployment requirements documented; health returns server UTC and NTP sync status; HL7 ingest validates MSH-7 drift and persists drift metadata for audit. Machine NTP remains facility/device responsibility.
 
 ---
 
@@ -159,7 +159,7 @@
 | Section | Aligned | Not Aligned |
 |---------|---------|-------------|
 | 1. Introduction & Scope | 4 | 0 |
-| 2. Time Synchronization | 0 | 1 |
+| 2. Time Synchronization | 1 | 0 |
 | 3. Message Transport | 3 | 0 |
 | 4. Patient Identification | 14 | 0 |
 | 5. Prescription Transfer | 18 | 0 |
@@ -169,17 +169,7 @@
 | 9. Dialysis Data Elements | 4 | 0 |
 | 10. Batch Protocol | 6 | 0 |
 
-**Total**: 82 items aligned, 1 not aligned.
-
----
-
-## 12. Not Aligned – Details
-
-### Time Synchronization (§2)
-
-The Guide states that dialysis machines must use IHE Consistent Time (CT) Protocol and NTP (RFC 1305) for time synchronization. The PDMS is the EMR/DOC side; time synchronization is a machine responsibility. The PDMS does not implement NTP or time sync protocols.
-
-**Recommendation**: Document in deployment/operational docs that dialysis machines must be NTP-synchronized per the Guide. No PDMS code changes required.
+**Total**: 83 items aligned, 0 not aligned.
 
 ---
 

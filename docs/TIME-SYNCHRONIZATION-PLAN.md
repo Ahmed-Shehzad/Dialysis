@@ -76,7 +76,7 @@ The Guide states: *"dialysis machines compliant with this standard will use the 
 |------|-------------|
 | 3.1 | When ingesting HL7 (ORU^R01, ORU^R40, RSP^K22), parse MSH-7 (message time) |
 | 3.2 | Compare MSH-7 to server UTC; if drift &gt; configurable threshold (e.g. 60 seconds), log warning |
-| 3.3 | Persist drift metadata (e.g. `MessageTimeDriftSeconds`) on observation/alarm for audit |
+| 3.3 | Persist drift metadata (e.g. `MessageTimeDriftSeconds`) on observation/alarm for audit (✅ implemented) |
 | 3.4 | Configuration: `TimeSync:MaxAllowedDriftSeconds` (default 300); set to 0 to disable |
 
 **Scope**:
@@ -86,7 +86,7 @@ The Guide states: *"dialysis machines compliant with this standard will use the 
 
 **Note**: Drift detection does not block ingestion; it enables operational visibility and audit.
 
-**Phase 3 Status**: ✅ Implemented. Treatment and Alarm ingest handlers log drift when MSH-7 exceeds `MaxAllowedDriftSeconds`. Prescription (RSP^K22) deferred.
+**Phase 3 Status**: ✅ Implemented. Treatment, Alarm, and Prescription ingest handlers log drift when MSH-7 exceeds `MaxAllowedDriftSeconds`. Drift is persisted on observations and alarms for audit.
 
 ---
 
@@ -103,6 +103,8 @@ The Guide states: *"dialysis machines compliant with this standard will use the 
 | 4.4 | If not sync’d, report Degraded; do not fail health (to avoid false negatives in containers) |
 
 **Note**: Containers often inherit host time; host NTP status may not be available inside container. This phase is lower priority and may be deferred.
+
+**Phase 4 Status**: ✅ Implemented. Gateway `/health` includes `ntp-sync` check. Linux: `timedatectl show --property=NTPSynchronized`; Windows: `w32tm /query /status`. Returns Degraded (not Unhealthy) when unsynced or platform unsupported (e.g. macOS).
 
 ---
 

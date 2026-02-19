@@ -14,4 +14,5 @@ public sealed record RecordObservationCommand(
     EventPhase? Phase,
     IReadOnlyList<ObservationInfo> Observations,
     string? DeviceEui64 = null,
-    string? TherapyId = null) : ICommand<RecordObservationResponse>;
+    string? TherapyId = null,
+    double? MessageTimeDriftSeconds = null) : ICommand<RecordObservationResponse>;

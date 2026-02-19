@@ -32,7 +32,8 @@ internal sealed class RecordObservationCommandHandler : ICommandHandler<RecordOb
             var createParams = new ObservationCreateParams(
                 obs.Code, obs.Value, obs.Unit, obs.SubId,
                 obs.ReferenceRange, obs.ResultStatus, obs.EffectiveTime,
-                obs.Provenance, obs.EquipmentInstanceId, obs.Level);
+                obs.Provenance, obs.EquipmentInstanceId, obs.Level,
+                request.MessageTimeDriftSeconds);
             _ = session.AddObservation(createParams);
         }
 

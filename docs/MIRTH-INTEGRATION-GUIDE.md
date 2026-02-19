@@ -202,6 +202,25 @@ channelMap.put('requiredScope', scope);
 
 ---
 
+### 4.5 Mirth in Docker Compose (Optional)
+
+The PDMS `docker-compose.yml` includes an optional Mirth Connect service:
+
+```bash
+docker compose --profile mirth up -d
+```
+
+| Item | Value |
+|------|-------|
+| Mirth Admin UI | http://localhost:9080 |
+| MLLP Listener | Port 6661 |
+| Default credentials | admin / admin (change on first login) |
+| PDMS Gateway (internal) | http://gateway:5000 |
+
+When configuring HTTP Sender destinations in Mirth channels, use `http://gateway:5000` as the base URL so Mirth reaches the PDMS Gateway on the Docker network. Paths: `/api/hl7/qbp-q22`, `/api/hl7/oru`, etc.
+
+---
+
 ## 5. OAuth2 Token Setup
 
 See [JWT-AND-MIRTH-INTEGRATION.md](JWT-AND-MIRTH-INTEGRATION.md) for:

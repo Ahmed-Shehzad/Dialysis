@@ -4,6 +4,7 @@
 # (Host port 5001 avoids conflict with other services using 5000)
 # APIs: Patient 5051, Prescription 5052, Treatment 5050, Alarm 5053, Device 5054
 #       Fhir 5055, CDS 5056, Reports 5057
+# Mirth (optional): docker compose --profile mirth up -d  → Admin http://localhost:9080, MLLP 6661
 
 services:
   postgres:
@@ -185,6 +186,20 @@ services:
       - treatment-api
       - alarm-api
       - device-api
+
+  mirth:
+    image: nextgenhealthcare/connect:4.5
+    profiles:
+      - mirth
+    ports:
+      - "9080:8080"   # Admin UI (avoid conflict with other apps on 8080)
+      - "6661:6661"   # MLLP listener
+    environment:
+      # PDMS Gateway URL for HTTP destinations (Mirth channels post to gateway)
+      PDMS_GATEWAY_URL: http://gateway:5000
+    depends_on:
+      gateway:
+        condition: service_started
 
 volumes:
   postgres_data:

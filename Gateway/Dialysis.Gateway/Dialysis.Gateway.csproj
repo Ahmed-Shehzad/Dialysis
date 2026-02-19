@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <PackageReference Include="AspNetCore.HealthChecks.Uris" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
         <PackageReference Include="Yarp.ReverseProxy" />

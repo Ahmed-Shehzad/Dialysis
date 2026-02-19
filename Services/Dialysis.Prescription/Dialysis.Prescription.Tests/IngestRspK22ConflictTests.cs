@@ -9,6 +9,10 @@ using Dialysis.Prescription.Infrastructure.Hl7;
 using Dialysis.Prescription.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+
+using BuildingBlocks.TimeSync;
 
 using Shouldly;
 
@@ -120,6 +124,9 @@ public sealed class IngestRspK22ConflictTests
         var repository = new PrescriptionRepository(db, tenant);
         var parser = new RspK22Parser();
         var validator = new RspK22Validator();
-        return new IngestRspK22MessageCommandHandler(parser, validator, repository, tenant);
+        return new IngestRspK22MessageCommandHandler(
+            parser, validator, repository, tenant,
+            Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
+            NullLogger<IngestRspK22MessageCommandHandler>.Instance);
     }
 }

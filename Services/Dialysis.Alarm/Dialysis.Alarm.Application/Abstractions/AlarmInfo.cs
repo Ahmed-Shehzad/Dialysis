@@ -18,7 +18,8 @@ public sealed record AlarmInfo(
     string? DisplayName,
     DeviceId? DeviceId,
     string? SessionId,
-    DateTimeOffset OccurredAt)
+    DateTimeOffset OccurredAt,
+    double? MessageTimeDriftSeconds = null)
 {
     public static AlarmInfo Create(AlarmCreateParams p) =>
         new(null, p.AlarmType, p.SourceCode, p.SourceLimits, p.State.EventPhase, p.State.AlarmState, p.State.ActivityState, p.Priority, p.InterpretationType, p.Abnormality, p.DisplayName, p.DeviceId, p.SessionId, p.OccurredAt);

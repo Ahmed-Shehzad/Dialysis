@@ -30,6 +30,9 @@ internal sealed class IngestOruR40MessageCommandHandler : ICommandHandler<Ingest
     public async Task<IngestOruR40MessageResponse> HandleAsync(IngestOruR40MessageCommand request, CancellationToken cancellationToken = default)
     {
         DateTimeOffset? messageTimestamp = Hl7TimeSyncHelper.ExtractMessageTimestamp(request.RawHl7Message);
+        double? driftSeconds = null;
+        if (_timeSync.MaxAllowedDriftSeconds > 0)
+            driftSeconds = Hl7TimeSyncHelper.GetDriftSeconds(messageTimestamp);
         CheckTimestampDrift(messageTimestamp);
 
         OruR40ParseResult parseResult = _parser.Parse(request.RawHl7Message);
@@ -40,7 +43,8 @@ internal sealed class IngestOruR40MessageCommandHandler : ICommandHandler<Ingest
 
         foreach (AlarmInfo alarm in parseResult.Alarms)
         {
-            var command = new RecordAlarmCommand(alarm);
+            var alarmWithDrift = alarm with { MessageTimeDriftSeconds = driftSeconds };
+            var command = new RecordAlarmCommand(alarmWithDrift);
             RecordAlarmResponse response = await _sender.SendAsync(command, cancellationToken);
             alarmIds.Add(response.AlarmId);
         }

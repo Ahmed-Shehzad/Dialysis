@@ -1,6 +1,7 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.TimeSync;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Features.GetPrescriptionByMrn;
@@ -51,6 +52,7 @@ builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.Configure<PrescriptionIngestionOptions>(
     builder.Configuration.GetSection(PrescriptionIngestionOptions.SectionName));
+builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "prescription-db");

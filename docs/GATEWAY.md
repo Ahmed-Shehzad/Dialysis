@@ -11,7 +11,7 @@ The **Dialysis.Gateway** provides a unified entry point for all PDMS APIs using 
 | Project | `Gateway/Dialysis.Gateway` |
 | Framework | ASP.NET Core 10, YARP.ReverseProxy |
 | Port | 5000 (default); 5001 when using `docker compose` |
-| Health | `GET /health` – aggregates status of all backends; includes `serverTimeUtc` (ISO 8601) for time sync verification |
+| Health | `GET /health` – aggregates status of all backends; includes `serverTimeUtc` (ISO 8601) and `ntp-sync` check (IHE Consistent Time) |
 
 ---
 
@@ -74,6 +74,8 @@ Backend addresses are defined in `appsettings.json` under `ReverseProxy:Clusters
    ```
 
 4. Stop: `docker compose down`
+
+**Optional – Mirth for end-to-end HL7**: `docker compose --profile mirth up -d` adds Mirth Connect. Admin UI: http://localhost:9080, MLLP: 6661. Configure channels per [MIRTH-INTEGRATION-GUIDE.md](MIRTH-INTEGRATION-GUIDE.md). Set destination base URL to `http://gateway:5000` (internal) or `http://host.docker.internal:5001` (from Mirth to host gateway).
 
 ### Option B: Manual (each API + gateway)
 

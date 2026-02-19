@@ -17,7 +17,8 @@ public sealed record ObservationCreateParams(
     DateTimeOffset? EffectiveTime,
     string? Provenance,
     string? EquipmentInstanceId,
-    ContainmentLevel? Level);
+    ContainmentLevel? Level,
+    double? MessageTimeDriftSeconds = null);
 
 public sealed class Observation : BaseEntity
 {
@@ -40,6 +41,8 @@ public sealed class Observation : BaseEntity
     /// <summary>Containment level in the IEEE 11073 hierarchy.</summary>
     public ContainmentLevel? Level { get; private set; }
     public DateTimeOffset ObservedAtUtc { get; private set; }
+    /// <summary>Absolute drift in seconds between MSH-7 and server UTC (IHE CT audit).</summary>
+    public double? MessageTimeDriftSeconds { get; private set; }
 
     private Observation() { }
 
@@ -58,7 +61,8 @@ public sealed class Observation : BaseEntity
             Provenance = p.Provenance,
             EquipmentInstanceId = p.EquipmentInstanceId,
             Level = p.Level,
-            ObservedAtUtc = DateTimeOffset.UtcNow
+            ObservedAtUtc = DateTimeOffset.UtcNow,
+            MessageTimeDriftSeconds = p.MessageTimeDriftSeconds
         };
     }
 }

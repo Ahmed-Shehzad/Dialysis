@@ -1,10 +1,14 @@
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.TimeSync;
 
 using Dialysis.Prescription.Application.Abstractions;
 using Dialysis.Prescription.Application.Domain;
 using Dialysis.Prescription.Application.Exceptions;
 
 using Intercessor.Abstractions;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using PrescriptionAggregate = Dialysis.Prescription.Application.Domain.Prescription;
 
@@ -16,17 +20,24 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
     private readonly IRspK22Validator _validator;
     private readonly IPrescriptionRepository _repository;
     private readonly ITenantContext _tenant;
+    private readonly TimeSyncOptions _timeSync;
+    private readonly ILogger<IngestRspK22MessageCommandHandler> _logger;
 
-    public IngestRspK22MessageCommandHandler(IRspK22Parser parser, IRspK22Validator validator, IPrescriptionRepository repository, ITenantContext tenant)
+    public IngestRspK22MessageCommandHandler(IRspK22Parser parser, IRspK22Validator validator, IPrescriptionRepository repository, ITenantContext tenant, IOptions<TimeSyncOptions> timeSync, ILogger<IngestRspK22MessageCommandHandler> logger)
     {
         _parser = parser;
         _validator = validator;
         _repository = repository;
         _tenant = tenant;
+        _timeSync = timeSync.Value;
+        _logger = logger;
     }
 
     public async Task<IngestRspK22MessageResponse> HandleAsync(IngestRspK22MessageCommand request, CancellationToken cancellationToken = default)
     {
+        DateTimeOffset? messageTimestamp = Hl7TimeSyncHelper.ExtractMessageTimestamp(request.RawHl7Message);
+        CheckTimestampDrift(messageTimestamp);
+
         RspK22ParseResult result = _parser.Parse(request.RawHl7Message);
 
         RspK22ValidationResult validation = _validator.Validate(result, request.ValidationContext);
@@ -82,5 +93,16 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
         await _repository.SaveChangesAsync(cancellationToken);
 
         return new IngestRspK22MessageResponse(result.OrderId, result.PatientMrn.Value, result.Settings.Count, true);
+    }
+
+    private void CheckTimestampDrift(DateTimeOffset? messageTimestamp)
+    {
+        if (_timeSync.MaxAllowedDriftSeconds <= 0 || !_timeSync.LogDriftWarnings) return;
+
+        double? drift = Hl7TimeSyncHelper.GetDriftSeconds(messageTimestamp);
+        if (drift.HasValue && drift.Value > _timeSync.MaxAllowedDriftSeconds)
+            _logger.LogWarning(
+                "HL7 RSP^K22 message timestamp drift exceeds threshold. MessageTime={MessageTime}, DriftSeconds={Drift:F0}, MaxAllowed={MaxAllowed}",
+                messageTimestamp, drift.Value, _timeSync.MaxAllowedDriftSeconds);
     }
 }

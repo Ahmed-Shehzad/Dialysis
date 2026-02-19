@@ -25,6 +25,8 @@ public sealed class Alarm : AggregateRoot
     public DeviceId? DeviceId { get; private set; }
     public string? SessionId { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
+    /// <summary>Absolute drift in seconds between MSH-7 and server UTC (IHE CT audit).</summary>
+    public double? MessageTimeDriftSeconds { get; private set; }
 
     private Alarm() { }
 
@@ -44,7 +46,8 @@ public sealed class Alarm : AggregateRoot
             ActivityState = info.ActivityState,
             DeviceId = info.DeviceId,
             SessionId = info.SessionId,
-            OccurredAt = info.OccurredAt
+            OccurredAt = info.OccurredAt,
+            MessageTimeDriftSeconds = info.MessageTimeDriftSeconds
         };
 
         alarm.ApplyEvent(new AlarmRaisedEvent(

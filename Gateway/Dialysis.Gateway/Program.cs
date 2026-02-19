@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
+using BuildingBlocks.TimeSync;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Bind to 0.0.0.0 so Docker port mapping works; localhost-only causes "connection reset by peer"
@@ -22,6 +24,7 @@ string deviceUrl = GetBackendAddress("device-cluster", "device", "http://localho
 string fhirUrl = GetBackendAddress("fhir-cluster", "fhir", "http://localhost:5055");
 
 builder.Services.AddHealthChecks()
+    .AddNtpSyncCheck()
     .AddUrlGroup(new Uri(patientUrl.TrimEnd('/') + "/health"), "patient-api")
     .AddUrlGroup(new Uri(prescriptionUrl.TrimEnd('/') + "/health"), "prescription-api")
     .AddUrlGroup(new Uri(treatmentUrl.TrimEnd('/') + "/health"), "treatment-api")

@@ -31,6 +31,9 @@ internal sealed class IngestOruMessageCommandHandler : ICommandHandler<IngestOru
     {
         OruParseResult parseResult = _parser.Parse(request.RawHl7Message);
 
+        double? driftSeconds = null;
+        if (_timeSync.MaxAllowedDriftSeconds > 0)
+            driftSeconds = Hl7TimeSyncHelper.GetDriftSeconds(parseResult.MessageTimestamp);
         CheckTimestampDrift(parseResult.MessageTimestamp);
 
         if (!string.IsNullOrWhiteSpace(parseResult.DeviceEui64))
@@ -46,7 +49,8 @@ internal sealed class IngestOruMessageCommandHandler : ICommandHandler<IngestOru
             parseResult.Phase,
             parseResult.Observations,
             parseResult.DeviceEui64,
-            parseResult.TherapyId);
+            parseResult.TherapyId,
+            driftSeconds);
 
         RecordObservationResponse response = await _sender.SendAsync(recordCommand, cancellationToken);
         return new IngestOruMessageResponse(response.SessionId, response.ObservationCount, true);
