@@ -130,8 +130,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      gateway:
-        condition: service_started
 
   cds-api:
     build:
@@ -146,8 +144,6 @@ services:
       Cds__BaseUrl: http://gateway:5000
     ports:
       - "5056:5056"
-    depends_on:
-      - gateway
 
   reports-api:
     build:
@@ -162,8 +158,6 @@ services:
       Reports__BaseUrl: http://gateway:5000
     ports:
       - "5057:5057"
-    depends_on:
-      - gateway
 
   gateway:
     build:
