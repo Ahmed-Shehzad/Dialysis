@@ -30,7 +30,6 @@ builder.Services.AddHttpClient<FhirBulkExportService>(client =>
     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
 });
-builder.Services.AddScoped<FhirBulkExportService>();
 
 builder.Services.AddSingleton<ISubscriptionStore, InMemorySubscriptionStore>();
 builder.Services.AddHttpClient<SubscriptionDispatcher>(client =>

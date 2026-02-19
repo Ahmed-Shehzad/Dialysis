@@ -17,7 +17,8 @@ public sealed class ReportsAggregationService
     public async Task<SessionsSummaryReport> GetSessionsSummaryAsync(DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken cancellationToken = default)
     {
         string baseUrl = _config["Reports:BaseUrl"] ?? "http://localhost:5000";
-        using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/treatment-sessions/reports/summary?from={from:O}&to={to:O}");
+        string url = baseUrl.TrimEnd('/') + $"/api/treatment-sessions/reports/summary?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}";
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
         AddHeaders(req, request, tenantId);
         HttpResponseMessage response = await _http.SendAsync(req, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -28,7 +29,8 @@ public sealed class ReportsAggregationService
     public async Task<AlarmsBySeverityReport> GetAlarmsBySeverityAsync(DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken cancellationToken = default)
     {
         string baseUrl = _config["Reports:BaseUrl"] ?? "http://localhost:5000";
-        using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/alarms?from={from:O}&to={to:O}");
+        string alarmsUrl = baseUrl.TrimEnd('/') + $"/api/alarms?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}";
+        using var req = new HttpRequestMessage(HttpMethod.Get, alarmsUrl);
         AddHeaders(req, request, tenantId);
         HttpResponseMessage response = await _http.SendAsync(req, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -64,7 +66,7 @@ public sealed class ReportsAggregationService
 
     private async Task<IReadOnlyList<string>> GetSessionIdsInRangeAsync(string baseUrl, DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken ct)
     {
-        string url = baseUrl.TrimEnd('/') + $"/api/treatment-sessions/fhir?dateFrom={from:O}&dateTo={to:O}&limit=100";
+        string url = baseUrl.TrimEnd('/') + $"/api/treatment-sessions/fhir?dateFrom={Uri.EscapeDataString(from.ToString("O"))}&dateTo={Uri.EscapeDataString(to.ToString("O"))}&limit=100";
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         AddHeaders(req, request, tenantId);
         _ = req.Headers.TryAddWithoutValidation("Accept", "application/fhir+json");

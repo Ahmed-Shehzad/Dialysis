@@ -25,27 +25,28 @@ public sealed class SubscriptionNotifyController : ControllerBase
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> NotifyAsync([FromBody] SubscriptionNotifyRequest request, CancellationToken ct)
+    public async Task<IActionResult> NotifyAsync(
+        [FromBody] SubscriptionNotifyRequest request,
+        [FromHeader(Name = "X-Subscription-Notify-ApiKey")] string? subscriptionNotifyApiKey,
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromHeader(Name = "X-Tenant-Id")] string? xTenantId,
+        CancellationToken ct)
     {
         string? expectedKey = _config["FhirSubscription:NotifyApiKey"];
         if (!string.IsNullOrEmpty(expectedKey))
-        {
-            string? providedKey = Request.Headers["X-Subscription-Notify-ApiKey"].FirstOrDefault();
-            if (providedKey != expectedKey)
+            if (subscriptionNotifyApiKey != expectedKey)
                 return Unauthorized();
-        }
 
         if (string.IsNullOrEmpty(request.ResourceType) || string.IsNullOrEmpty(request.ResourceUrl))
             return BadRequest("ResourceType and ResourceUrl are required.");
 
-        string? auth = Request.Headers["Authorization"].FirstOrDefault();
-        string? tenantId = request.TenantId ?? Request.Headers["X-Tenant-Id"].FirstOrDefault();
+        string? tenantId = request.TenantId ?? xTenantId;
 
         await _dispatcher.DispatchAsync(
             request.ResourceType,
             request.ResourceUrl,
             tenantId,
-            auth,
+            authorization,
             ct);
 
         return Accepted();

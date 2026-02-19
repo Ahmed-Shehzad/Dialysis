@@ -7,7 +7,7 @@ using Intercessor.Abstractions;
 
 namespace Dialysis.Treatment.Application.Features.GetTreatmentSessions;
 
-internal sealed class GetTreatmentSessionsQueryHandler : IQueryHandler<GetTreatmentSessionsQuery, GetTreatmentSessionsResponse>
+public sealed class GetTreatmentSessionsQueryHandler : IQueryHandler<GetTreatmentSessionsQuery, GetTreatmentSessionsResponse>
 {
     private readonly ITreatmentSessionRepository _repository;
 
