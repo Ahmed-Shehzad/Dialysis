@@ -79,7 +79,22 @@ AUTH_HEADER="Bearer <your-access-token>" ./scripts/load-test.sh --endpoint all -
 
 `/health` remains unauthenticated; FHIR, HL7, Reports, and CDS endpoints require a valid JWT in Production.
 
-### 3.4 Dashboard (Optional)
+### 3.4 Seed Data (Optional)
+
+To populate the system with hundreds of prescriptions, treatment sessions, and alarms for dashboard and report testing:
+
+```bash
+# Seed 300 records (default) to Gateway at localhost:5001
+dotnet run --project Seeder/Seeder.csproj
+
+# Custom count and gateway
+dotnet run --project Seeder/Seeder.csproj -- --count 500
+dotnet run --project Seeder/Seeder.csproj -- --gateway http://localhost:5001 --count 200
+```
+
+Requires `docker compose up -d` and `Authentication:JwtBearer:DevelopmentBypass: true` (or a valid JWT) for unauthenticated requests. Seeds via HL7: RSP^K22 (Prescription), ORU^R01 batch (Treatment), ORU^R40 (Alarm).
+
+### 3.5 Dashboard (Optional)
 
 The React dashboard (`clients/dialysis-dashboard`) connects to the gateway. With `DevelopmentBypass` enabled, no JWT is required. For production, set a JWT token via the in-app token input or configure proper OAuth/OIDC.
 
@@ -87,7 +102,7 @@ The React dashboard (`clients/dialysis-dashboard`) connects to the gateway. With
 cd clients/dialysis-dashboard && npm run dev   # dev server on port 5173, proxies /api to gateway
 ```
 
-### 3.5 Load Test
+### 3.6 Load Test
 
 Run a simple load test to verify performance under concurrent requests:
 
@@ -104,7 +119,7 @@ BASE_URL=http://localhost:5001 X_TENANT_ID=default ./scripts/load-test.sh --endp
 
 See [scripts/load-test.sh](../scripts/load-test.sh) (curl-based) and [scripts/load-test.k6.js](../scripts/load-test.k6.js) (k6). Use `./scripts/run-k6.sh` to run k6 if installed, else curl.
 
-### 3.6 Stop
+### 3.7 Stop
 
 ```bash
 docker compose down
