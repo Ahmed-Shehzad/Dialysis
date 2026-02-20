@@ -14,10 +14,7 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
-import {
-    getObservationsInTimeRange,
-    getTreatmentSessions,
-} from "../api";
+import { getObservationsInTimeRange, getTreatmentSessions } from "../api";
 import { useSignalR } from "../hooks/useSignalR";
 import type { ObservationRecordedMessage } from "../types";
 
@@ -30,10 +27,7 @@ interface DataPoint {
 }
 
 /** MDC code → { name, description } for chart labels (IEEE 11073 / dialysis). */
-const MDC_METRICS: Record<
-    string,
-    { name: string; description: string }
-> = {
+const MDC_METRICS: Record<string, { name: string; description: string }> = {
     MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE: {
         name: "Blood Flow Rate",
         description: "Blood flow in milliliters per minute",
@@ -111,13 +105,12 @@ const MDC_METRICS: Record<
 /** Build descriptive chart label: channel – metric (unit) – description. */
 function toChartLabel(obs: ObservationRecordedMessage): string {
     const mdcCode = obs.code.split("^")[1] ?? obs.code;
-    const metric =
-        MDC_METRICS[mdcCode] ?? {
-            name: (mdcCode.startsWith("MDC_") ? mdcCode.slice(4) : mdcCode)
-                .replaceAll("_", " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase()),
-            description: "",
-        };
+    const metric = MDC_METRICS[mdcCode] ?? {
+        name: (mdcCode.startsWith("MDC_") ? mdcCode.slice(4) : mdcCode)
+            .replaceAll("_", " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase()),
+        description: "",
+    };
     const unit = obs.unit?.split("^")[0]?.trim();
     const channel = obs.channelName;
 
@@ -138,9 +131,9 @@ function buildChartData(
     const byTime = new Map<number, DataPoint>();
     let lastTs = 0;
     for (const obs of observations) {
-        const obsTs =
-            (obs as ObservationRecordedMessage & { _receivedAt?: number })
-                ._receivedAt;
+        const obsTs = (
+            obs as ObservationRecordedMessage & { _receivedAt?: number }
+        )._receivedAt;
         const ts = obsTs ?? lastTs;
         if (obsTs != null) lastTs = obsTs;
         const key = Math.floor(ts / 5000) * 5000;

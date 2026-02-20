@@ -17,28 +17,30 @@ namespace Dialysis.Patient.Tests;
 [Collection(PostgreSqlCollection.Name)]
 public sealed class PatientsControllerApiTests
 {
-    private readonly WebApplicationFactory<Dialysis.Patient.Api.Controllers.PatientsController> _factory;
+    private readonly PostgreSqlFixture _fixture;
 
     public PatientsControllerApiTests(PostgreSqlFixture fixture)
     {
-        _factory = new WebApplicationFactory<Dialysis.Patient.Api.Controllers.PatientsController>()
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public async Task Health_ReturnsOkAsync()
+    {
+        await _fixture.InitializeAsync();
+        using var factory = new WebApplicationFactory<Dialysis.Patient.Api.Controllers.PatientsController>()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureAppConfiguration((context, config) =>
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string?>
                     {
-                        ["ConnectionStrings:PatientDb"] = fixture.ConnectionString,
+                        ["ConnectionStrings:PatientDb"] = _fixture.ConnectionString,
                         ["Authentication:JwtBearer:DevelopmentBypass"] = "true"
                     });
                 });
             });
-    }
-
-    [Fact]
-    public async Task Health_ReturnsOkAsync()
-    {
-        using HttpClient client = _factory.CreateClient();
+        using HttpClient client = factory.CreateClient();
         HttpResponseMessage response = await client.GetAsync("/health");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
