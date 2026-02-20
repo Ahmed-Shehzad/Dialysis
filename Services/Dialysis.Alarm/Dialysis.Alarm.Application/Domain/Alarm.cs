@@ -3,6 +3,7 @@ using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.Events;
 using Dialysis.Alarm.Application.Domain.ValueObjects;
+using Dialysis.Alarm.Application.Events;
 
 using SessionId = BuildingBlocks.ValueObjects.SessionId;
 
@@ -52,6 +53,8 @@ public sealed class Alarm : AggregateRoot
 
         alarm.ApplyEvent(new AlarmRaisedEvent(
             alarm.Id, info.AlarmType, info.EventPhase, info.AlarmState, info.DeviceId, info.SessionId, info.OccurredAt));
+        alarm.ApplyEvent(new AlarmRaisedIntegrationEvent(
+            alarm.Id, info.AlarmType, info.EventPhase, info.AlarmState, info.DeviceId?.Value, info.SessionId?.Value, info.OccurredAt, alarm.TenantId.Value));
         return alarm;
     }
 

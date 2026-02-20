@@ -1,5 +1,6 @@
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain;
+using Dialysis.Treatment.Application.Domain.Services;
 
 using Intercessor.Abstractions;
 
@@ -8,10 +9,12 @@ namespace Dialysis.Treatment.Application.Features.RecordObservation;
 internal sealed class RecordObservationCommandHandler : ICommandHandler<RecordObservationCommand, RecordObservationResponse>
 {
     private readonly ITreatmentSessionRepository _repository;
+    private readonly VitalSignsMonitoringService _vitalSignsMonitoring;
 
-    public RecordObservationCommandHandler(ITreatmentSessionRepository repository)
+    public RecordObservationCommandHandler(ITreatmentSessionRepository repository, VitalSignsMonitoringService vitalSignsMonitoring)
     {
         _repository = repository;
+        _vitalSignsMonitoring = vitalSignsMonitoring;
     }
 
     public async Task<RecordObservationResponse> HandleAsync(RecordObservationCommand request, CancellationToken cancellationToken = default)
@@ -34,7 +37,8 @@ internal sealed class RecordObservationCommandHandler : ICommandHandler<RecordOb
                 obs.ReferenceRange, obs.ResultStatus, obs.EffectiveTime,
                 obs.Provenance, obs.EquipmentInstanceId, obs.Level,
                 request.MessageTimeDriftSeconds);
-            _ = session.AddObservation(createParams);
+            IReadOnlyList<ThresholdBreach> breaches = _vitalSignsMonitoring.Evaluate(obs.Code, obs.Value);
+            _ = session.AddObservation(createParams, breaches);
         }
 
         await _repository.SaveChangesAsync(cancellationToken);

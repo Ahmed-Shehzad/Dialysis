@@ -505,7 +505,7 @@ The Treatment API uses **Transponder SignalR transport** for real-time device ob
 
 ## 14a. Alarm API & SignalR (Transponder)
 
-The Alarm API uses **Transponder SignalR transport** for real-time alarm broadcast. When an ORU^R40 message is ingested, `AlarmRaisedEvent` is raised; `AlarmRaisedTransponderHandler` sends `AlarmRecordedMessage` to `signalr://group/session:{sessionId}` (or `device:{deviceId}` when no session). `AlarmRaisedIntegrationEventHandler` publishes `AlarmRaisedIntegrationEvent` via `IPublishEndpoint` for downstream consumers.
+The Alarm API uses **Transponder SignalR transport** for real-time alarm broadcast. When an ORU^R40 message is ingested, `AlarmRaisedEvent` is raised; `AlarmRaisedTransponderHandler` sends `AlarmRecordedMessage` to `signalr://group/session:{sessionId}` (or `device:{deviceId}` when no session). `Alarm.Raise` also adds `AlarmRaisedIntegrationEvent`; `IntegrationEventDispatcherInterceptor` dispatches it post-commit (eventual consistency) via `IPublishEndpoint` for downstream consumers.
 
 **Alarm REST API:**
 - `GET /api/alarms?deviceId=&sessionId=&from=&to=` – List alarms with optional filters (AlarmRead)
@@ -670,6 +670,8 @@ Aggregates use **strongly-typed value objects** instead of primitives (see `.cur
 | `MedicalRecordNumber` | Patient, Prescription | HL7 PID-3 |
 
 **Prescription persistence:** `Prescription.Settings` is exposed as `IReadOnlyCollection<ProfileSetting>`. The backing field `_settings` is mapped via EF Core `e.Property<List<ProfileSetting>>("_settings")` to `SettingsJson` (jsonb). Domain layer has no EF-specific types.
+
+**Event flow (eventual consistency):** Domain events are dispatched in `SavingChangesAsync` (before DB write) — handlers run atomically with the transaction (audit, FHIR notify, escalation). Integration events are dispatched in `SavedChangesAsync` (after DB write) — Transponder and in-process `IIntegrationEventHandler` consumers run post-commit. See `docs/DOMAIN-EVENTS-AND-SERVICES.md`.
 
 ---
 

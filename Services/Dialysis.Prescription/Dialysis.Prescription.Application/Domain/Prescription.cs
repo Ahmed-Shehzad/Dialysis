@@ -1,6 +1,7 @@
 using BuildingBlocks;
 using BuildingBlocks.ValueObjects;
 
+using Dialysis.Prescription.Application.Domain.Events;
 using Dialysis.Prescription.Application.Domain.ValueObjects;
 
 namespace Dialysis.Prescription.Application.Domain;
@@ -47,5 +48,14 @@ public sealed class Prescription : AggregateRoot
         if (_settings.Exists(s => s.Code == setting.Code && s.SubId == setting.SubId))
             throw new InvalidOperationException($"Duplicate setting: code '{setting.Code}', subId '{setting.SubId}'.");
         _settings.Add(setting);
+    }
+
+    /// <summary>
+    /// Marks ingestion complete and raises PrescriptionReceivedEvent. Call after all settings are added.
+    /// </summary>
+    public void CompleteIngestion()
+    {
+        ApplyEvent(new PrescriptionReceivedEvent(
+            Id, OrderId, PatientMrn, TenantId.Value));
     }
 }

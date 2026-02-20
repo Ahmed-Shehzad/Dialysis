@@ -71,9 +71,12 @@ string connectionString = builder.Configuration.GetConnectionString("TreatmentDb
                           ?? "Host=localhost;Database=dialysis_treatment;Username=postgres;Password=postgres";
 
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
+builder.Services.AddScoped<IntegrationEventDispatcherInterceptor>();
 builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
-     .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
+     .AddInterceptors(
+         sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
+         sp.GetRequiredService<IntegrationEventDispatcherInterceptor>()));
 builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();

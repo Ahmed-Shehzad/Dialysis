@@ -2,7 +2,9 @@ using BuildingBlocks;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Domain.Events;
+using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Domain.ValueObjects;
+using Dialysis.Treatment.Application.Events;
 
 namespace Dialysis.Treatment.Application.Domain;
 
@@ -49,7 +51,7 @@ public sealed class TreatmentSession : AggregateRoot
         return session;
     }
 
-    public Observation AddObservation(ObservationCreateParams createParams)
+    public Observation AddObservation(ObservationCreateParams createParams, IReadOnlyList<ThresholdBreach>? thresholdBreaches = null)
     {
         if (Status == TreatmentSessionStatus.Completed)
             throw new InvalidOperationException("Cannot add observations to a completed treatment session.");
@@ -65,6 +67,14 @@ public sealed class TreatmentSession : AggregateRoot
             ? ContainmentPath.GetChannelName(cid)
             : null;
         ApplyEvent(new ObservationRecordedEvent(Id, SessionId.Value, observation.Id, createParams.Code, createParams.Value, createParams.Unit, createParams.SubId, channelName));
+        ApplyEvent(new ObservationRecordedIntegrationEvent(Id, SessionId.Value, observation.Id, createParams.Code, createParams.Value, createParams.Unit, createParams.SubId, channelName, TenantId.Value));
+
+        if (thresholdBreaches is { Count: > 0 })
+        {
+            foreach (ThresholdBreach breach in thresholdBreaches)
+                ApplyEvent(new ThresholdBreachDetectedEvent(Id, SessionId.Value, observation.Id, breach.ObservationCode, breach));
+        }
+
         return observation;
     }
 

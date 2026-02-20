@@ -22,8 +22,14 @@ flowchart TD
         OBS[Observation : BaseEntity]
         TSSE[TreatmentSessionStartedEvent]
         ORE[ObservationRecordedEvent]
+        TBDE[ThresholdBreachDetectedEvent]
         TSCE[TreatmentSessionCompletedEvent]
         VSMS[VitalSignsMonitoringService]
+    end
+    subgraph prescriptionCtx [Prescription Context]
+        PR[Prescription : AggregateRoot]
+        PRE2[PrescriptionReceivedEvent]
+        PC[ProfileCalculator]
     end
     subgraph alarmCtx [Alarm Context]
         AL[Alarm : AggregateRoot]
@@ -36,6 +42,7 @@ flowchart TD
     P -->|extends| AR
     TS -->|extends| AR
     OBS -->|extends| BE
+    PR -->|extends| AR
     AL -->|extends| AR
     INT -->|dispatches| DE
 ```
@@ -51,6 +58,30 @@ Domain events are dispatched via the `DomainEventDispatcherInterceptor` (`Buildi
 5. `SaveChanges` then persists all changes (including those made by event handlers) atomically
 
 This "dispatch before save" pattern ensures that domain event handlers participate in the same unit of work as the original operation.
+
+### Domain vs Integration Events (Eventual Consistency)
+
+| Phase | When | Pattern |
+|-------|------|---------|
+| **Domain events** | Before SaveChanges (`SavingChangesAsync`) | Atomic — handlers run in same transaction; audit, FHIR notify, escalation |
+| **Integration events** | After SaveChanges (`SavedChangesAsync`) | Eventual — handlers run after commit; Transponder, in-process `IIntegrationEventHandler` |
+
+Integration events are raised by aggregates via `ApplyEvent(IIntegrationEvent)` and dispatched post-commit by `IntegrationEventDispatcherInterceptor`.
+
+### Domain Event Handlers (Selected)
+
+| Event | Handler | Location |
+|-------|---------|----------|
+| `PrescriptionReceivedEvent` | `PrescriptionReceivedEventHandler` | `Services/Dialysis.Prescription/.../Features/PrescriptionReceived/` |
+| `ThresholdBreachDetectedEvent` | `ThresholdBreachDetectedEventHandler` | `Services/Dialysis.Treatment/.../Features/ThresholdBreachDetected/` |
+| `AlarmRaisedEvent` | `AlarmEscalationCheckHandler` | `Services/Dialysis.Alarm/.../Features/AlarmRaised/` |
+
+### Integration Event Handlers
+
+| Event | Raised By | Dispatched By | In-Process Handler |
+|-------|-----------|---------------|--------------------|
+| `ObservationRecordedIntegrationEvent` | `TreatmentSession.AddObservation` | `IntegrationEventDispatcherInterceptor` (post-commit) | `ObservationRecordedIntegrationEventConsumer` |
+| `AlarmRaisedIntegrationEvent` | `Alarm.Raise` | `IntegrationEventDispatcherInterceptor` (post-commit) | — |
 
 ---
 
@@ -92,13 +123,14 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 |-------|------------|------------|
 | `TreatmentSessionStartedEvent` | A new treatment session is started via `TreatmentSession.Start()` | `TreatmentSessionId`, `SessionId`, `PatientMrn`, `DeviceId` |
 | `ObservationRecordedEvent` | A device observation is added via `TreatmentSession.AddObservation()` | `TreatmentSessionId`, `ObservationId`, `Code`, `Value`, `Unit` |
+| `ThresholdBreachDetectedEvent` | VitalSignsMonitoringService detects value outside clinical threshold during `AddObservation()` | `TreatmentSessionId`, `SessionId`, `ObservationId`, `Code`, `Breach` |
 | `TreatmentSessionCompletedEvent` | A treatment session is completed via `TreatmentSession.Complete()` | `TreatmentSessionId`, `SessionId` |
 
 ### Domain Services
 
 | Service | Purpose | Location |
 |---------|---------|----------|
-| `VitalSignsMonitoringService` | Evaluates observations against clinical thresholds (hypotension, tachycardia, bradycardia, high venous pressure) | `Services/Dialysis.Treatment/Dialysis.Treatment.Application/Domain/Services/VitalSignsMonitoringService.cs` |
+| `VitalSignsMonitoringService` | Evaluates observations against clinical thresholds (hypotension, tachycardia, bradycardia, high venous pressure). Invoked in `RecordObservationCommandHandler`; breaches raise `ThresholdBreachDetectedEvent`. | `Services/Dialysis.Treatment/Dialysis.Treatment.Application/Domain/Services/VitalSignsMonitoringService.cs` |
 
 **Clinical Thresholds:**
 
@@ -131,7 +163,29 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 
 | Service | Purpose | Location |
 |---------|---------|----------|
-| `AlarmEscalationService` | Evaluates alarm frequency for escalation; triggers when 3+ active alarms occur within a 5-minute window | `Services/Dialysis.Alarm/Dialysis.Alarm.Application/Domain/Services/AlarmEscalationService.cs` |
+| `AlarmEscalationService` | Evaluates alarm frequency for escalation; triggers when 3+ active alarms occur within a 5-minute window. Wired via `AlarmEscalationCheckHandler` on `AlarmRaisedEvent`. | `Services/Dialysis.Alarm/Dialysis.Alarm.Application/Domain/Services/AlarmEscalationService.cs` |
+
+---
+
+## Prescription Bounded Context
+
+### Aggregates
+
+| Type | Base Class | Location |
+|------|-----------|----------|
+| `Prescription` | `AggregateRoot` | `Services/Dialysis.Prescription/Dialysis.Prescription.Application/Domain/Prescription.cs` |
+
+### Domain Events
+
+| Event | Raised When | Properties |
+|-------|------------|------------|
+| `PrescriptionReceivedEvent` | `Prescription.CompleteIngestion()` called after all settings added (RSP^K22 ingest) | `PrescriptionId`, `OrderId`, `PatientMrn`, `TenantId` |
+
+### Domain Services
+
+| Service | Purpose | Location |
+|---------|---------|----------|
+| `ProfileCalculator` | Evaluates UF profile at time t (LINEAR, EXPONENTIAL, STEP, etc.) | `Services/Dialysis.Prescription/Dialysis.Prescription.Application/Domain/Services/ProfileCalculator.cs` |
 
 ---
 
@@ -177,7 +231,7 @@ internal sealed class DeviceRegisteredProjectionHandler : IDomainEventHandler<De
 }
 ```
 
-**Events suitable for projections:** `PatientRegisteredEvent`, `DeviceRegisteredEvent`, `TreatmentSessionStartedEvent`, `AlarmRaisedEvent`. Current handlers focus on audit and FHIR subscription notification; projection handlers would extend this for caches or analytics.
+**Events suitable for projections:** `PatientRegisteredEvent`, `DeviceRegisteredEvent`, `PrescriptionReceivedEvent`, `TreatmentSessionStartedEvent`, `AlarmRaisedEvent`, `ThresholdBreachDetectedEvent`. **Integration events:** `ObservationRecordedIntegrationEvent` and `AlarmRaisedIntegrationEvent` are raised by aggregates and dispatched post-commit by `IntegrationEventDispatcherInterceptor` to Transponder and in-process `IIntegrationEventHandler` consumers.
 
 ---
 
@@ -191,19 +245,23 @@ internal sealed class DeviceRegisteredProjectionHandler : IDomainEventHandler<De
 | `AggregateRoot` | Extends `BaseEntity` with domain/integration event lists and `ApplyEvent()` | `BuildingBlocks/AggregateRoot.cs` |
 | `DomainEvent` | Base record for domain events with `EventId` and `OccurredOn` | `BuildingBlocks/DomainEvent.cs` |
 
-### Interceptor
+### Interceptors
 
 | Class | Purpose | Location |
 |-------|---------|----------|
-| `DomainEventDispatcherInterceptor` | EF Core `SaveChangesInterceptor` that collects and dispatches domain events before save (in `SavingChangesAsync`) | `BuildingBlocks/Interceptors/DomainEventDispatcherInterceptor.cs` |
+| `DomainEventDispatcherInterceptor` | Collects and dispatches domain events before save (`SavingChangesAsync`) — atomic | `BuildingBlocks/Interceptors/DomainEventDispatcherInterceptor.cs` |
+| `IntegrationEventDispatcherInterceptor` | Collects and dispatches integration events after save (`SavedChangesAsync`) — eventual consistency | `BuildingBlocks/Interceptors/IntegrationEventDispatcherInterceptor.cs` |
 
 ### Registration
 
-Each service registers the interceptor in its `Program.cs`:
+Services that raise integration events (Treatment, Alarm) register both interceptors:
 
 ```csharp
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
+builder.Services.AddScoped<IntegrationEventDispatcherInterceptor>();
 builder.Services.AddDbContext<XxxDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
-     .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
+     .AddInterceptors(
+         sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
+         sp.GetRequiredService<IntegrationEventDispatcherInterceptor>()));
 ```

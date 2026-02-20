@@ -3,6 +3,7 @@ using BuildingBlocks.Testcontainers;
 
 using Dialysis.Hl7ToFhir;
 using Dialysis.Treatment.Application.Abstractions;
+using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
 using Dialysis.Treatment.Application.Features.RecordObservation;
@@ -186,7 +187,8 @@ public sealed class OruR01ToFhirIntegrationTests
         {
             if (request is RecordObservationCommand cmd)
             {
-                var handler = new RecordObservationCommandHandler(_repository);
+                var vitalSigns = new VitalSignsMonitoringService(NullLogger<VitalSignsMonitoringService>.Instance);
+                var handler = new RecordObservationCommandHandler(_repository, vitalSigns);
                 RecordObservationResponse result = await handler.HandleAsync(cmd, cancellationToken);
                 return (TResponse)(object)result;
             }

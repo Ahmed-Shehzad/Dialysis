@@ -53,9 +53,12 @@ string connectionString = builder.Configuration.GetConnectionString("AlarmDb")
                           ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
 
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
+builder.Services.AddScoped<IntegrationEventDispatcherInterceptor>();
 builder.Services.AddDbContext<AlarmDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
-     .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
+     .AddInterceptors(
+         sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
+         sp.GetRequiredService<IntegrationEventDispatcherInterceptor>()));
 builder.Services.AddDbContext<AlarmReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
 builder.Services.AddScoped<IAlarmReadStore, AlarmReadStore>();

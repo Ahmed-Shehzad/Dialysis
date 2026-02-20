@@ -140,7 +140,7 @@ flowchart TB
 | Generate ORA^R41 acknowledgment | Done | OraR41Builder, returned on POST |
 | Map Table 3 mandatory alarms | Done | MandatoryAlarmCatalog (12 entries) |
 | Broadcast via SignalR | Done | AlarmRaisedTransponderHandler |
-| Publish integration events | Done | AlarmRaisedIntegrationEventHandler |
+| Publish integration events | Done | Alarm.Raise + IntegrationEventDispatcherInterceptor (post-commit) |
 | Persist alarm history | Done | IAlarmRepository, state transitions |
 
 ---

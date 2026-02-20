@@ -74,6 +74,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
                         addedCount++;
                     }
 
+                    merged.CompleteIngestion();
                     _repository.Delete(existing);
                     await _repository.AddAsync(merged, cancellationToken);
                     await _repository.SaveChangesAsync(cancellationToken);
@@ -91,6 +92,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
         foreach (ProfileSetting setting in result.Settings)
             prescription.AddSetting(setting);
 
+        prescription.CompleteIngestion();
         await _repository.AddAsync(prescription, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
 

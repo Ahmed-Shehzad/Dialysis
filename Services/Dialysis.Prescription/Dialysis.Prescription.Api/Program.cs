@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Interceptors;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.TimeSync;
@@ -51,7 +52,10 @@ builder.Services.AddIntercessor(cfg =>
 string connectionString = builder.Configuration.GetConnectionString("PrescriptionDb")
                           ?? "Host=localhost;Database=dialysis_prescription;Username=postgres;Password=postgres";
 
-builder.Services.AddDbContext<PrescriptionDbContext>(o => o.UseNpgsql(connectionString));
+builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
+builder.Services.AddDbContext<PrescriptionDbContext>((sp, o) =>
+    o.UseNpgsql(connectionString)
+     .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 builder.Services.AddDbContext<PrescriptionReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
 builder.Services.AddScoped<IPrescriptionReadStore, PrescriptionReadStore>();

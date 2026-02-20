@@ -42,6 +42,28 @@ public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AlarmDomain>> GetRecentActiveAlarmsForEscalationAsync(DeviceId? deviceId, SessionId? sessionId, TimeSpan withinLast, Ulid? includeAlarmIdFromTracker, CancellationToken cancellationToken = default)
+    {
+        DateTimeOffset cutoff = DateTimeOffset.UtcNow - withinLast;
+        IQueryable<AlarmDomain> query = _db.Alarms
+            .Where(a => a.TenantId == new TenantId(_tenant.TenantId) && a.OccurredAt >= cutoff)
+            .Where(a => a.AlarmState != AlarmState.Cleared && a.AlarmState != AlarmState.Acknowledged);
+        if (deviceId is not null)
+            query = query.Where(a => a.DeviceId == deviceId);
+        if (sessionId is not null)
+            query = query.Where(a => a.SessionId == sessionId);
+        var fromDb = await query.OrderByDescending(a => a.OccurredAt).ToListAsync(cancellationToken);
+
+        if (includeAlarmIdFromTracker is null)
+            return fromDb;
+
+        AlarmDomain? pending = _db.Alarms.Local.OfType<AlarmDomain>().FirstOrDefault(a => a.Id == includeAlarmIdFromTracker);
+        if (pending is null || fromDb.Any(a => a.Id == pending.Id))
+            return fromDb;
+
+        return [pending, .. fromDb];
+    }
+
     public async override Task AddAsync(AlarmDomain entity, CancellationToken cancellationToken = default) =>
         _ = await _db.Alarms.AddAsync(entity, cancellationToken);
 

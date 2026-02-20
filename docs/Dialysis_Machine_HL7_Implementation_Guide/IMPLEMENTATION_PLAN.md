@@ -352,7 +352,7 @@ OBX-17 is **required** for settings, **optional** for measurements.
 **Transponder integration events**
 
 - `ObservationRecordedIntegrationEvent` published when observations are recorded
-- Handler: `ObservationRecordedIntegrationEventHandler` → `IPublishEndpoint.PublishAsync`
+- `TreatmentSession.AddObservation` raises `ObservationRecordedIntegrationEvent`; `IntegrationEventDispatcherInterceptor` dispatches post-commit via `IPublishEndpoint`
 - Enables downstream consumers (analytics, FHIR sync, etc.) without tight coupling
 - **Transport note**: With SignalR-only, events reach connected clients. For durable pub/sub to external services, add RabbitMQ or Kafka transport.
 
@@ -458,7 +458,7 @@ stateDiagram-v2
 **Transponder integration events**
 
 - `AlarmRaisedIntegrationEvent` published via `IPublishEndpoint.PublishAsync`
-- `AlarmRaisedIntegrationEventHandler` → enables downstream consumers (FHIR DetectedIssue, analytics)
+- `Alarm.Raise` adds `AlarmRaisedIntegrationEvent`; `IntegrationEventDispatcherInterceptor` dispatches post-commit → downstream consumers (FHIR DetectedIssue, analytics)
 
 #### 3.4.6 Implementation Tasks
 

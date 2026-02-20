@@ -2,6 +2,7 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 
 using Dialysis.Treatment.Application.Abstractions;
+using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 using Dialysis.Treatment.Application.Features.IngestOruBatch;
 using Dialysis.Treatment.Application.Features.IngestOruMessage;
@@ -119,7 +120,8 @@ public sealed class OruBatchToSessionsIntegrationTests
 
             if (request is RecordObservationCommand recordCmd)
             {
-                var recordHandler = new RecordObservationCommandHandler(_repository);
+                var vitalSigns = new VitalSignsMonitoringService(NullLogger<VitalSignsMonitoringService>.Instance);
+                var recordHandler = new RecordObservationCommandHandler(_repository, vitalSigns);
                 RecordObservationResponse result = await recordHandler.HandleAsync(recordCmd, cancellationToken);
                 return (TResponse)(object)result;
             }
