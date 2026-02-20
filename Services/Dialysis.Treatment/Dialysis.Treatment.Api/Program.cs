@@ -1,6 +1,7 @@
 using BuildingBlocks;
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
@@ -29,7 +30,6 @@ using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
 using Serilog;
-using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -109,7 +109,7 @@ builder.Services.AddAlarmApiClient(builder.Configuration);
 builder.Services.AddSingleton<IHl7BatchParser, Hl7BatchParser>();
 builder.Services.AddSingleton<IAckR01Builder, AckR01Builder>();
 builder.Services.AddSingleton<VitalSignsMonitoringService>();
-builder.Services.AddAuditRecorder();
+builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
@@ -134,22 +134,7 @@ if (app.Environment.IsDevelopment())
         await transponderDb.Database.MigrateAsync();
 }
 
-app.UseExceptionHandler(exceptionHandlerApp =>
-{
-    exceptionHandlerApp.Run(async context =>
-    {
-        Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-        if (exception is ValidationException validationException)
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
-            var errors = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-            await context.Response.WriteAsJsonAsync(new { errors });
-            return;
-        }
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    });
-});
+app.UseCentralExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();

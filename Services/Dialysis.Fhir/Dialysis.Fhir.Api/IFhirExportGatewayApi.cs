@@ -11,6 +11,7 @@ public interface IFhirExportGatewayApi
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetPatientsFhirAsync(
         [Query] int limit,
+        [Query("_id")] string? id,
         [Query] string? identifier,
         [Header("Authorization")] string? authorization,
         [Header("X-Tenant-Id")] string? tenantId,

@@ -160,7 +160,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
             return this;
         }
 
-        public Task<HttpResponseMessage> GetPatientsFhirAsync(int limit, string? identifier, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+        public Task<HttpResponseMessage> GetPatientsFhirAsync(int limit, string? id, string? identifier, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_patients, _patientsStatus));
 
         public Task<HttpResponseMessage> GetDevicesFhirAsync(int limit, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>

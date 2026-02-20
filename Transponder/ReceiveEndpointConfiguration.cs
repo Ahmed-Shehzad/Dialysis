@@ -2,7 +2,10 @@ using Transponder.Transports.Abstractions;
 
 namespace Transponder;
 
-internal sealed class ReceiveEndpointConfiguration : IReceiveEndpointConfiguration
+/// <summary>
+/// Configuration for connecting a receive endpoint to a transport host.
+/// </summary>
+public sealed class ReceiveEndpointConfiguration : IReceiveEndpointConfiguration
 {
     public ReceiveEndpointConfiguration(
         Uri inputAddress,

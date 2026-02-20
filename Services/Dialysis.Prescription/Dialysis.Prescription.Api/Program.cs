@@ -17,6 +17,7 @@ using Intercessor;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 using Transponder.Persistence.Redis;
 
@@ -60,14 +61,23 @@ builder.Services.AddDbContext<PrescriptionDbContext>((sp, o) =>
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 builder.Services.AddDbContext<PrescriptionReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
-builder.Services.AddScoped<IPrescriptionReadStore, PrescriptionReadStore>();
+builder.Services.AddScoped<PrescriptionReadStore>();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
+    _ = builder.Services.AddScoped<IPrescriptionReadStore>(sp => new CachedPrescriptionReadStore(
+        sp.GetRequiredService<PrescriptionReadStore>(),
+        sp.GetRequiredService<IDistributedCache>()));
+}
+else
+{
+    _ = builder.Services.AddScoped<IPrescriptionReadStore>(sp => sp.GetRequiredService<PrescriptionReadStore>());
+}
 builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
 builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();
 builder.Services.AddScoped<IRspK22Validator, RspK22Validator>();
-string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-if (!string.IsNullOrWhiteSpace(redisConnectionString))
-    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
 builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.Configure<PrescriptionIngestionOptions>(

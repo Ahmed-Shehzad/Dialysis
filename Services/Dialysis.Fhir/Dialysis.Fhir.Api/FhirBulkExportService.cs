@@ -34,6 +34,103 @@ public sealed class FhirBulkExportService
         _tenant = tenant;
     }
 
+    /// <summary>
+    /// FHIR-type search - returns a search set Bundle for the given resource type.
+    /// Supports Patient (_id, identifier).
+    /// </summary>
+    public async Task<Bundle> SearchAsync(
+        string resourceType,
+        IReadOnlyDictionary<string, string?> searchParams,
+        HttpRequest? originalRequest,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TypeToPath.TryGetValue(resourceType, out string? path))
+            throw new ArgumentException($"Unsupported search resource type: {resourceType}", nameof(resourceType));
+
+        string? auth = null;
+        if (originalRequest is { } req)
+        {
+            Microsoft.Extensions.Primitives.StringValues authHeader = req.Headers["Authorization"];
+            if (!Microsoft.Extensions.Primitives.StringValues.IsNullOrEmpty(authHeader))
+                auth = authHeader.ToString();
+        }
+        string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
+        int limit = 100;
+        if (searchParams.TryGetValue("_count", out string? countStr) && int.TryParse(countStr, out int c))
+            limit = Math.Min(Math.Max(1, c), 1000);
+
+        Bundle? bundle = resourceType switch
+        {
+            "Patient" => await FetchPatientSearchAsync(
+                limit,
+                searchParams.TryGetValue("_id", out string? id) ? id : null,
+                searchParams.TryGetValue("identifier", out string? ident) ? ident : null,
+                auth,
+                tenantId,
+                cancellationToken),
+            _ => await FetchBundleByPathAsync(path, limit, null, null, auth, tenantId, cancellationToken),
+        };
+
+        if (bundle is null)
+            return new Bundle { Type = Bundle.BundleType.Searchset, Entry = [] };
+
+        bundle.Type = Bundle.BundleType.Searchset;
+        return bundle;
+    }
+
+    private async Task<Bundle?> FetchPatientSearchAsync(
+        int limit,
+        string? id,
+        string? identifier,
+        string? auth,
+        string? tenantId,
+        CancellationToken cancellationToken)
+    {
+        HttpResponseMessage response = await _api.GetPatientsFhirAsync(limit, id, identifier, auth, tenantId, cancellationToken);
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            return FhirJsonHelper.FromJson<Bundle>(json);
+        }
+    }
+
+    private async Task<Bundle?> FetchBundleByPathAsync(
+        string path,
+        int limit,
+        string? patientId,
+        string? since,
+        string? auth,
+        string? tenantId,
+        CancellationToken cancellationToken)
+    {
+        HttpResponseMessage response = path switch
+        {
+            _ when path.Contains("patients", StringComparison.OrdinalIgnoreCase) => await _api.GetPatientsFhirAsync(
+                limit, null, null, auth, tenantId, cancellationToken),
+            _ when path.Contains("devices", StringComparison.OrdinalIgnoreCase) => await _api.GetDevicesFhirAsync(
+                limit, auth, tenantId, cancellationToken),
+            _ when path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) => await _api.GetPrescriptionsFhirAsync(
+                limit, patientId, patientId, auth, tenantId, cancellationToken),
+            _ when path.Contains("treatment-sessions", StringComparison.OrdinalIgnoreCase) => await _api.GetTreatmentSessionsFhirAsync(
+                limit, patientId, patientId, since, auth, tenantId, cancellationToken),
+            _ when path.Contains("alarms", StringComparison.OrdinalIgnoreCase) => await _api.GetAlarmsFhirAsync(
+                limit, since, auth, tenantId, cancellationToken),
+            _ when path.Contains("audit-events", StringComparison.OrdinalIgnoreCase) => await _api.GetAuditEventsAsync(
+                Math.Min(limit, 500), auth, tenantId, cancellationToken),
+            _ => throw new InvalidOperationException($"Unknown path: {path}"),
+        };
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            return FhirJsonHelper.FromJson<Bundle>(json);
+        }
+    }
+
     public async Task<Bundle> ExportAsync(
         string[] types,
         int limitPerType,
@@ -94,7 +191,7 @@ public sealed class FhirBulkExportService
         HttpResponseMessage response = path switch
         {
             _ when path.Contains("patients", StringComparison.OrdinalIgnoreCase) => await _api.GetPatientsFhirAsync(
-                limit, patientId, auth, tenantId, cancellationToken),
+                limit, null, patientId, auth, tenantId, cancellationToken),
             _ when path.Contains("devices", StringComparison.OrdinalIgnoreCase) => await _api.GetDevicesFhirAsync(
                 limit, auth, tenantId, cancellationToken),
             _ when path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) => await _api.GetPrescriptionsFhirAsync(

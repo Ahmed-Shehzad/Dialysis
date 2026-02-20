@@ -1,6 +1,8 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
+using BuildingBlocks.Options;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 
@@ -18,7 +20,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Serilog;
-using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,8 @@ builder.Host.UseSerilog((context, _, config) =>
     config.ReadFrom.Configuration(context.Configuration)
         .Enrich.With<ActivityEnricher>()
         .Enrich.FromLogContext());
+
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
@@ -61,7 +64,7 @@ builder.Services.AddScoped<IQbpQ22Parser, QbpQ22Parser>();
 builder.Services.AddScoped<IPatientRspK22Builder, PatientRspK22Builder>();
 builder.Services.AddScoped<IRspK22PatientParser, RspK22PatientParser>();
 builder.Services.AddScoped<IRspK22PatientValidator, RspK22PatientValidator>();
-builder.Services.AddAuditRecorder();
+builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 
 builder.Services.AddHealthChecks()
@@ -77,22 +80,7 @@ if (app.Environment.IsDevelopment())
     await db.Database.MigrateAsync();
 }
 
-app.UseExceptionHandler(exceptionHandlerApp =>
-{
-    exceptionHandlerApp.Run(async context =>
-    {
-        Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-        if (exception is ValidationException validationException)
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
-            var errors = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-            await context.Response.WriteAsJsonAsync(new { errors });
-            return;
-        }
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    });
-});
+app.UseCentralExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();

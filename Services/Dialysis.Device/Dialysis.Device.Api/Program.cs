@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
@@ -16,8 +17,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Serilog;
-
-using Verifier.Exceptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -55,7 +54,7 @@ builder.Services.AddDbContext<DeviceDbContext>((sp, o) =>
 builder.Services.AddDbContext<DeviceReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<IDeviceReadStore, DeviceReadStore>();
-builder.Services.AddAuditRecorder();
+builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 
 builder.Services.AddHealthChecks()
@@ -71,22 +70,7 @@ if (app.Environment.IsDevelopment())
     await db.Database.MigrateAsync();
 }
 
-app.UseExceptionHandler(exceptionHandlerApp =>
-{
-    exceptionHandlerApp.Run(async context =>
-    {
-        Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-        if (exception is ValidationException validationException)
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
-            var errors = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-            await context.Response.WriteAsJsonAsync(new { errors });
-            return;
-        }
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    });
-});
+app.UseCentralExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();

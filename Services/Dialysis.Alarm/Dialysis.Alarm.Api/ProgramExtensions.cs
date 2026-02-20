@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 using Transponder.Persistence.EntityFramework.PostgreSql;
 
-using Verifier.Exceptions;
 
 namespace Dialysis.Alarm.Api;
 
@@ -29,26 +28,6 @@ internal static class ProgramExtensions
                     }
                 };
             });
-    }
-
-    public static void UseAlarmExceptionHandler(this IApplicationBuilder app)
-    {
-        _ = app.UseExceptionHandler(exceptionHandlerApp =>
-        {
-            exceptionHandlerApp.Run(async context =>
-            {
-                Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-                if (exception is ValidationException validationException)
-                {
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    context.Response.ContentType = "application/json";
-                    var errors = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-                    await context.Response.WriteAsJsonAsync(new { errors });
-                    return;
-                }
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            });
-        });
     }
 
     public async static Task ApplyMigrationsIfDevelopmentAsync(this WebApplication app)

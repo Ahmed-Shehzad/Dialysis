@@ -44,6 +44,7 @@
   </Folder>
   <Folder Name="/Gateway/">
     <Project Path="Gateway/Dialysis.Gateway/Dialysis.Gateway.csproj" />
+    <Project Path="Gateway/Dialysis.Gateway.Tests/Dialysis.Gateway.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/" />
   <Folder Name="/Services/Dialysis.Alarm/">
@@ -54,6 +55,7 @@
   </Folder>
   <Folder Name="/Services/Dialysis.Hl7ToFhir/">
     <Project Path="Services/Dialysis.Hl7ToFhir/Dialysis.Hl7ToFhir.csproj" />
+    <Project Path="Services/Dialysis.Hl7ToFhir.Tests/Dialysis.Hl7ToFhir.Tests.csproj" />
   </Folder>
   <Folder Name="/Services/Dialysis.Patient/">
     <Project Path="Services/Dialysis.Patient/Dialysis.Patient.Api/Dialysis.Patient.Api.csproj" />

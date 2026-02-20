@@ -63,13 +63,9 @@ flowchart TB
     API --> CdsSvc
     API --> ReportsSvc
 
-    PatientSvc --> AzureSB
     TreatmentSvc --> AzureSB
-    PrescriptionSvc --> AzureSB
-    DeviceSvc --> AzureSB
     AlarmSvc --> AzureSB
 
-    PatientSvc --> SignalRHub
     TreatmentSvc --> SignalRHub
     AlarmSvc --> SignalRHub
 

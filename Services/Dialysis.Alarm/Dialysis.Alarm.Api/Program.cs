@@ -1,5 +1,6 @@
 using BuildingBlocks;
 using BuildingBlocks.Audit;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
@@ -15,6 +16,7 @@ using Dialysis.Alarm.Infrastructure;
 using Dialysis.Alarm.Infrastructure.DeviceRegistration;
 using Dialysis.Alarm.Infrastructure.FhirSubscription;
 using Dialysis.Alarm.Infrastructure.Hl7;
+using Dialysis.Alarm.Infrastructure.IntegrationEvents;
 using Dialysis.Alarm.Infrastructure.Persistence;
 
 using Intercessor;
@@ -62,15 +64,17 @@ builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((_, ob) =>
 builder.Services.AddTransponderPostgreSqlPersistence();
 
 var alarmBusAddress = new Uri("transponder://alarm");
+string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
 builder.Services.AddTransponder(alarmBusAddress, opts =>
 {
     _ = opts.TransportBuilder.UseSignalR(alarmBusAddress, [new Uri("signalr://alarm")]);
-    string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
     if (!string.IsNullOrWhiteSpace(asbConnectionString))
         _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(alarmBusAddress, connectionString: asbConnectionString));
     _ = opts.UseOutbox();
     _ = opts.UsePersistedMessageScheduler();
 });
+if (!string.IsNullOrWhiteSpace(asbConnectionString))
+    _ = builder.Services.AddThresholdBreachDetectedReceiveEndpoint(alarmBusAddress);
 
 builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
@@ -88,7 +92,7 @@ builder.Services.AddScoped<IOruR40MessageParser, OruR40Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
 builder.Services.AddSingleton<IOraR41Builder, OraR41Builder>();
 builder.Services.AddSingleton<AlarmEscalationService>();
-builder.Services.AddAuditRecorder();
+builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
@@ -103,7 +107,7 @@ WebApplication app = builder.Build();
 
 app.UseTenantResolution();
 await app.ApplyMigrationsIfDevelopmentAsync();
-app.UseAlarmExceptionHandler();
+app.UseCentralExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();
