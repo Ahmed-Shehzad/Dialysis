@@ -29,14 +29,120 @@ interface DataPoint {
     [key: string]: string | number | undefined;
 }
 
+/** MDC code → { name, description } for chart labels (IEEE 11073 / dialysis). */
+const MDC_METRICS: Record<
+    string,
+    { name: string; description: string }
+> = {
+    MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE: {
+        name: "Blood Flow Rate",
+        description: "Blood flow in milliliters per minute",
+    },
+    MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE_SETTING: {
+        name: "Blood Flow Rate Setting",
+        description: "Prescribed blood flow in milliliters per minute",
+    },
+    MDC_HDIALY_BLD_PUMP_PRESS_VEN: {
+        name: "Venous Pressure",
+        description: "Venous pressure in mmHg",
+    },
+    MDC_HDIALY_BLD_PUMP_PRESS_ART: {
+        name: "Arterial Pressure",
+        description: "Arterial pressure in mmHg",
+    },
+    MDC_HDIALY_BLD_PUMP_MODE: {
+        name: "Blood Pump Mode",
+        description: "Operating mode of the blood pump",
+    },
+    MDC_HDIALY_UF_RATE: {
+        name: "UF Rate",
+        description: "Ultrafiltration rate in milliliters per hour",
+    },
+    MDC_HDIALY_UF_RATE_SETTING: {
+        name: "UF Rate Setting",
+        description: "Prescribed ultrafiltration rate in mL/h",
+    },
+    MDC_HDIALY_UF_TARGET_VOL: {
+        name: "UF Target Volume",
+        description: "Target volume of fluid to remove in mL",
+    },
+    MDC_PRESS_BLD_ART: {
+        name: "Arterial Pressure",
+        description: "Pressure in the arterial blood line (mmHg)",
+    },
+    MDC_PRESS_BLD_VEN: {
+        name: "Venous Pressure",
+        description: "Pressure in the venous blood line (mmHg)",
+    },
+    MDC_PRESS_BLD_SYS: {
+        name: "Systolic Blood Pressure",
+        description: "Systolic blood pressure in mmHg",
+    },
+    MDC_PRESS_BLD_DIA: {
+        name: "Diastolic Blood Pressure",
+        description: "Diastolic blood pressure in mmHg",
+    },
+    MDC_DIA_BLD_FLOW_RATE: {
+        name: "Actual Blood Flow Rate",
+        description: "Actual blood flow in milliliters per minute",
+    },
+    MDC_DIA_BLD_FLOW_RATE_PRES: {
+        name: "Prescribed Blood Flow Rate",
+        description: "Prescribed blood flow in mL/min",
+    },
+    MDC_DIA_UF_RATE: {
+        name: "Actual UF Rate",
+        description: "Actual ultrafiltration rate in mL/h",
+    },
+    MDC_DIA_UF_RATE_PRES: {
+        name: "Prescribed UF Rate",
+        description: "Prescribed ultrafiltration rate in mL/h",
+    },
+    MDC_DIA_TEMP_DIALYSATE: {
+        name: "Dialysate Temperature",
+        description: "Temperature of the dialysate in °C",
+    },
+    MDC_TEMP_BLD: {
+        name: "Blood Temperature",
+        description: "Blood temperature in °C",
+    },
+};
+
+/** Build descriptive chart label: channel – metric (unit) – description. */
+function toChartLabel(obs: ObservationRecordedMessage): string {
+    const mdcCode = obs.code.split("^")[1] ?? obs.code;
+    const metric =
+        MDC_METRICS[mdcCode] ?? {
+            name: (mdcCode.startsWith("MDC_") ? mdcCode.slice(4) : mdcCode)
+                .replaceAll("_", " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            description: "",
+        };
+    const unit = obs.unit?.split("^")[0]?.trim();
+    const channel = obs.channelName;
+
+    let label: string;
+    if (channel && metric.name.toLowerCase() !== channel.toLowerCase()) {
+        label = unit
+            ? `${channel} – ${metric.name} (${unit})`
+            : `${channel} – ${metric.name}`;
+    } else {
+        label = unit ? `${metric.name} (${unit})` : metric.name;
+    }
+    return metric.description ? `${label} – ${metric.description}` : label;
+}
+
 function buildChartData(
     observations: ObservationRecordedMessage[],
 ): DataPoint[] {
     const byTime = new Map<number, DataPoint>();
+    let lastTs = 0;
     for (const obs of observations) {
-        const ts =
+        const obsTs =
             (obs as ObservationRecordedMessage & { _receivedAt?: number })
-                ._receivedAt ?? Date.now();
+                ._receivedAt;
+        const ts = obsTs ?? lastTs;
+        if (obsTs != null) lastTs = obsTs;
         const key = Math.floor(ts / 5000) * 5000;
         const numVal = obs.value ? Number.parseFloat(obs.value) : Number.NaN;
         if (!byTime.has(key)) {
@@ -46,8 +152,7 @@ function buildChartData(
             });
         }
         const pt = byTime.get(key)!;
-        const label =
-            obs.channelName || obs.code.replace(/^[^-]+-/, "").slice(0, 20);
+        const label = toChartLabel(obs);
         if (!Number.isNaN(numVal)) pt[label] = numVal;
     }
     return Array.from(byTime.values())
@@ -64,12 +169,8 @@ function getNumericSeries(
         const numVal = obs.value ? Number.parseFloat(obs.value) : Number.NaN;
         if (!Number.isNaN(numVal) && !seen.has(obs.code)) {
             seen.add(obs.code);
-            result.push({
-                code:
-                    obs.channelName ||
-                    obs.code.replace(/^[^-]+-/, "").slice(0, 30),
-                label: obs.channelName || obs.code,
-            });
+            const label = toChartLabel(obs);
+            result.push({ code: label, label });
         }
     }
     return result;
@@ -82,6 +183,12 @@ const COLORS = [
     "#ef4444",
     "#8b5cf6",
     "#ec4899",
+    "#06b6d4",
+    "#84cc16",
+    "#f97316",
+    "#6366f1",
+    "#14b8a6",
+    "#e11d48",
 ];
 
 function StatusBadge({ isConnected }: Readonly<{ isConnected: boolean }>) {
@@ -119,25 +226,20 @@ export function RealTimeCharts() {
         },
     );
 
-    const startUtc = useMemo(
-        () => new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        [],
-    );
-    const endUtc = useMemo(() => new Date().toISOString(), []);
-
     const { data: fetchedData } = useQuery({
-        queryKey: ["observations", activeSessionId, startUtc, endUtc],
-        queryFn: () =>
-            activeSessionId
-                ? getObservationsInTimeRange(
-                      activeSessionId,
-                      startUtc,
-                      endUtc,
-                  )
-                : Promise.resolve({
-                      sessionId: "",
-                      observations: [],
-                  }),
+        queryKey: ["observations", activeSessionId],
+        queryFn: () => {
+            if (!activeSessionId) {
+                return Promise.resolve({ sessionId: "", observations: [] });
+            }
+            const end = new Date();
+            const start = new Date(end.getTime() - 60 * 60 * 1000);
+            return getObservationsInTimeRange(
+                activeSessionId,
+                start.toISOString(),
+                end.toISOString(),
+            );
+        },
         enabled: Boolean(activeSessionId),
         staleTime: 0,
         refetchInterval: 10_000,
@@ -257,7 +359,7 @@ export function RealTimeCharts() {
                                     <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip />
                                     <Legend />
-                                    {series.slice(0, 4).map((s, i) => (
+                                    {series.map((s, i) => (
                                         <Line
                                             key={s.code}
                                             type="monotone"
@@ -299,7 +401,7 @@ export function RealTimeCharts() {
                                     <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip />
                                     <Legend />
-                                    {series.slice(0, 4).map((s, i) => (
+                                    {series.map((s, i) => (
                                         <Area
                                             key={s.code}
                                             type="monotone"
@@ -343,7 +445,7 @@ export function RealTimeCharts() {
                                         <YAxis tick={{ fontSize: 10 }} />
                                         <Tooltip />
                                         <Legend />
-                                        {series.slice(0, 4).map((s, i) => (
+                                        {series.map((s, i) => (
                                             <Bar
                                                 key={s.code}
                                                 dataKey={s.code}
