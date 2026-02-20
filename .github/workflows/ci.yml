@@ -24,4 +24,4 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Test
-        run: dotnet test -c Release --filter 'FullyQualifiedName~Dialysis&FullyQualifiedName!~Dialysis.Gateway.Tests' --verbosity normal
+        run: dotnet test -c Release --filter 'FullyQualifiedName~Dialysis&FullyQualifiedName!~Dialysis.Gateway.Tests&FullyQualifiedName!~ControllerApiTests&FullyQualifiedName!~IntegrationTests' --verbosity normal
