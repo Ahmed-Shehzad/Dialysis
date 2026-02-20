@@ -40,7 +40,7 @@ dotnet run --project DataProducerSimulator -- \
 |--------------------|-------------------------|----------------------------------------------|
 | `--gateway`        | `http://localhost:5001` | Gateway base URL                              |
 | `--tenant`         | `default`               | `X-Tenant-Id` header                          |
-| `--interval-oru`   | `5`                     | ORU^R01 (observations) interval in seconds   |
+| `--interval-oru`   | `2`                     | ORU^R01 (observations) interval in seconds   |
 | `--interval-alarm` | `30`                    | ORU^R40 (alarms) interval in seconds        |
 | `--interval-emr`   | `60`                    | EMR QBP (QBP^Q22, QBP^D01) interval in seconds|
 | `--enable-dialysis`| `true`                  | Run dialysis machine simulator               |
@@ -89,9 +89,9 @@ Press **Ctrl+C** to stop. On exit, it prints final counts.
 
 The Simulator and the React dashboard both fetch sessions from `GET /api/treatment-sessions/fhir` with the same parameters (limit=50, last 7 days). This keeps them in sync:
 
-- **Simulator**: Fetches at startup; refreshes every 60 seconds to pick up new sessions.
+- **Simulator**: Fetches at startup; refreshes every 60 seconds to pick up new sessions. Sends ORU^R01 in **round-robin** (every session gets observations every `interval-oru × session_count` seconds).
 - **Dashboard**: Fetches on load; refetches every 30 seconds.
-- Any session in the dashboard dropdown receives real-time data from the Simulator.
+- Subscribe to any session in the dropdown; charts update in real time as the simulator cycles through sessions (default 2s per observation).
 
 ## Related
 

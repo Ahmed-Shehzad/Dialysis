@@ -62,7 +62,18 @@ function parseAlarmMessage(data: unknown): AlarmRecordedMessage | null {
     return null;
 }
 
-export function useSignalR(sessionId: string | null) {
+export interface UseSignalROptions {
+    /** Called when an observation is received (for stats invalidation etc.) */
+    onObservation?: (obs: ObservationRecordedMessage) => void;
+    /** Called when an alarm is received (for stats invalidation etc.) */
+    onAlarm?: (alarm: AlarmRecordedMessage) => void;
+}
+
+export function useSignalR(
+    sessionId: string | null,
+    options?: UseSignalROptions,
+) {
+    const { onObservation, onAlarm } = options ?? {};
     const connectionRef = useRef<SignalR.HubConnection | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [observations, setObservations] = useState<
@@ -71,14 +82,22 @@ export function useSignalR(sessionId: string | null) {
     const [alarms, setAlarms] = useState<AlarmRecordedMessage[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    const addObservation = useCallback((obs: ObservationRecordedMessage) => {
-        const withTimestamp = { ...obs, _receivedAt: Date.now() };
-        setObservations((prev) => [...prev, withTimestamp].slice(-500));
-    }, []);
+    const addObservation = useCallback(
+        (obs: ObservationRecordedMessage) => {
+            const withTimestamp = { ...obs, _receivedAt: Date.now() };
+            setObservations((prev) => [...prev, withTimestamp].slice(-500));
+            onObservation?.(obs);
+        },
+        [onObservation],
+    );
 
-    const addAlarm = useCallback((alarm: AlarmRecordedMessage) => {
-        setAlarms((prev) => [...prev, alarm].slice(-100));
-    }, []);
+    const addAlarm = useCallback(
+        (alarm: AlarmRecordedMessage) => {
+            setAlarms((prev) => [...prev, alarm].slice(-100));
+            onAlarm?.(alarm);
+        },
+        [onAlarm],
+    );
 
     useEffect(() => {
         if (!sessionId?.trim()) return;

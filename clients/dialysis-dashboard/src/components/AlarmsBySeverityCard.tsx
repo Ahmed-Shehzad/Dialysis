@@ -15,6 +15,8 @@ export function AlarmsBySeverityCard({ from, to }: Readonly<Props>) {
         queryFn: () => getAlarmsBySeverity(from, to),
         enabled: Boolean(from ?? to),
         refetchInterval: STATS_REFETCH_INTERVAL_MS,
+        refetchIntervalInBackground: true,
+        staleTime: 0,
     });
 
     const cardBase = "p-5 border border-gray-200 rounded-lg bg-white shadow-sm";

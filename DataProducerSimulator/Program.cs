@@ -4,7 +4,7 @@ using Dialysis.DataProducerSimulator;
 
 string gateway = "http://localhost:5001";
 string tenantId = "default";
-int intervalOruSec = 5;
+int intervalOruSec = 2;
 int intervalAlarmSec = 30;
 int intervalEmrSec = 60;
 bool enableDialysis = true;
@@ -36,6 +36,8 @@ while (idx < args.Length)
     else
     { idx++; }
 }
+
+static int RoundRobinIndex(int value, int count) => ((value % count) + count) % count;
 
 static (bool value, int newIdx) ParseBoolFlag(string[] a, int idx)
 {
@@ -121,6 +123,7 @@ Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
 // Shared session list for sync between dialysis loop and refresh task
 var sessionsLock = new object();
+var alarmRoundRobin = 0;
 
 async Task RunSessionRefreshAsync()
 {
@@ -179,22 +182,39 @@ async Task RunDialysisMachineAsync()
 
             if (now >= nextOru)
             {
-                int count;
-                int i;
+                string[] mrnsCopy;
+                string[] sessionsCopy;
                 lock (sessionsLock)
                 {
-                    count = sessions.Count;
-                    i = count > 0 ? faker.Random.Int(0, count - 1) : 0;
+                    int count = sessions.Count;
+                    if (count == 0)
+                    {
+                        mrnsCopy = [];
+                        sessionsCopy = [];
+                    }
+                    else
+                    {
+                        mrnsCopy = mrns.ToArray();
+                        sessionsCopy = sessions.ToArray();
+                    }
                 }
-                if (count == 0) { await Task.Delay(TimeSpan.FromSeconds(1), cts.Token).ConfigureAwait(false); continue; }
-                string mrn = mrns[i];
-                string sid = sessions[i];
-                string msgId = $"ORU{++msgSeq:D5}";
-                string oru = Hl7Builders.OruR01(mrn, sid, msgId, now, faker);
-                if (await client.PostOruAsync(oru, cts.Token).ConfigureAwait(false))
-                    oruOk++;
-                else
-                    oruFail++;
+                if (sessionsCopy.Length == 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), cts.Token).ConfigureAwait(false);
+                    continue;
+                }
+                var oruTasks = new List<Task<bool>>(sessionsCopy.Length);
+                for (int j = 0; j < sessionsCopy.Length; j++)
+                {
+                    string mrn = mrnsCopy[j];
+                    string sid = sessionsCopy[j];
+                    string msgId = $"ORU{Interlocked.Increment(ref msgSeq):D5}";
+                    string oru = Hl7Builders.OruR01(mrn, sid, msgId, now, faker);
+                    oruTasks.Add(client.PostOruAsync(oru, cts.Token));
+                }
+                var results = await Task.WhenAll(oruTasks).ConfigureAwait(false);
+                oruOk += results.Count(r => r);
+                oruFail += results.Count(r => !r);
                 nextOru = now.Add(oruInterval);
             }
 
@@ -205,7 +225,7 @@ async Task RunDialysisMachineAsync()
                 lock (sessionsLock)
                 {
                     count = sessions.Count;
-                    i = count > 0 ? faker.Random.Int(0, count - 1) : 0;
+                    i = count > 0 ? RoundRobinIndex(Interlocked.Increment(ref alarmRoundRobin) - 1, count) : 0;
                 }
                 if (count == 0) { await Task.Delay(TimeSpan.FromSeconds(1), cts.Token).ConfigureAwait(false); continue; }
                 string mrn = mrns[i];
