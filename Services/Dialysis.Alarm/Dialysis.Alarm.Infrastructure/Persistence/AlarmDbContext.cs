@@ -20,13 +20,11 @@ public sealed class AlarmDbContext : DbContext, IDbContext
 
     public DbSet<AlarmDomain> Alarms => Set<AlarmDomain>();
     public DbSet<IntegrationEventOutboxEntity> IntegrationEventOutbox => Set<IntegrationEventOutboxEntity>();
-    public DbSet<IntegrationEventInboxEntity> IntegrationEventInbox => Set<IntegrationEventInboxEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         _ = modelBuilder.ApplyConfiguration(new AlarmEntityConfiguration());
         _ = modelBuilder.ApplyConfiguration(new IntegrationEventOutboxConfiguration());
-        _ = modelBuilder.ApplyConfiguration(new IntegrationEventInboxConfiguration());
     }
 }
 

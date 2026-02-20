@@ -13,6 +13,8 @@
         <ProjectReference Include="..\Dialysis.Treatment.Infrastructure\Dialysis.Treatment.Infrastructure.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
         <ProjectReference Include="..\..\..\Transponder\Transponder.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Persistence.EntityFramework.PostgreSql\Transponder.Persistence.EntityFramework.PostgreSql.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Transports.AzureServiceBus\Transponder.Transports.AzureServiceBus.csproj" />
         <ProjectReference Include="..\..\..\Transponder.Transports.SignalR\Transponder.Transports.SignalR.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
     </ItemGroup>

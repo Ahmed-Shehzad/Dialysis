@@ -2,111 +2,103 @@
 
 ## Purpose
 
-Idempotent consumption of integration events received from message brokers (RabbitMQ, Azure Service Bus, Kafka). When a service receives an event, it checks the Inbox by `MessageId`; if already processed, it skips. This prevents duplicate processing on retries or redeliveries.
+Idempotent consumption of integration events received from message brokers (RabbitMQ, Azure Service Bus, Kafka). When a service receives an event, it checks the Inbox by `MessageId` and `ConsumerId`; if already processed, it skips. This prevents duplicate processing on retries or redeliveries.
 
-## Schema
+## Transponder Inbox (Built-in)
 
-| Column | Type | Description |
-|--------|------|-------------|
-| MessageId | string (PK) | Unique identifier from the broker (e.g. Azure SB MessageId) |
-| ProcessedAtUtc | DateTimeOffset | When the message was processed |
-| TenantId | string (optional) | For multi-tenant isolation |
-| EventType | string (optional) | Event type for diagnostics |
+The Dialysis PDMS uses **Transponder.Persistence.EntityFramework.PostgreSql**, which provides a built-in inbox:
 
-## Flow
+| Table | Schema | Description |
+|-------|--------|-------------|
+| **InboxStates** | `transponder` DB | MessageId (PK) + ConsumerId (PK) for idempotent consumption |
+| **OutboxMessages** | `transponder` DB | Durable outbox for Bus.Send/Publish |
+| **ScheduledMessages** | `transponder` DB | Persisted scheduled messages |
+| **SagaStates** | `transponder` DB | Saga state persistence |
+
+### Enabling Transponder Persistence
+
+Treatment and Alarm APIs use Transponder PostgreSQL persistence:
+
+```csharp
+// Register storage
+builder.Services.AddSingleton<IPostgreSqlStorageOptions>(_ => new PostgreSqlStorageOptions());
+builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((_, ob) =>
+    ob.UseNpgsql(transponderConnectionString));
+builder.Services.AddTransponderPostgreSqlPersistence();
+
+// Enable Outbox and persisted scheduler
+builder.Services.AddTransponder(new Uri("transponder://treatment"), opts =>
+{
+    _ = opts.TransportBuilder.UseSignalR(new Uri("signalr://treatment"));
+    _ = opts.UseOutbox();
+    _ = opts.UsePersistedMessageScheduler();
+});
+```
+
+Connection string: `ConnectionStrings:TransponderDb` (e.g. `Host=postgres;Database=transponder;Username=postgres;Password=postgres`).
+
+### Inbox Flow
 
 ```mermaid
 sequenceDiagram
     participant Broker
     participant Consumer
+    participant IStorageSession
     participant Inbox
-    participant Business
 
     Broker->>Consumer: Deliver message (MessageId=M1)
-    Consumer->>Inbox: ExistsAsync(M1)
-    Inbox-->>Consumer: false
+    Consumer->>IStorageSession: CreateSessionAsync()
+    Consumer->>Inbox: GetAsync(M1, ConsumerId)
+    Inbox-->>Consumer: null (not seen)
     Consumer->>Business: Process message (same transaction)
-    Consumer->>Inbox: AddAsync(M1)
-    Consumer->>Consumer: Commit transaction
+    Consumer->>Inbox: TryAddAsync(InboxState)
+    Consumer->>IStorageSession: CommitAsync()
     Consumer->>Broker: Ack
 
     Note over Broker,Consumer: Redelivery (retry)
     Broker->>Consumer: Deliver message (MessageId=M1)
-    Consumer->>Inbox: ExistsAsync(M1)
-    Inbox-->>Consumer: true
+    Consumer->>Inbox: GetAsync(M1, ConsumerId)
+    Inbox-->>Consumer: existing state
     Consumer->>Broker: Ack (skip processing)
 ```
 
-## Usage
+### Using IStorageSession.Inbox
 
-### 1. Add Inbox to DbContext
+When consuming messages via Transponder (e.g. RabbitMQ, Azure Service Bus), use `IStorageSessionFactory` to get a session and check/record inbox state:
 
 ```csharp
-public DbSet<IntegrationEventInboxEntity> IntegrationEventInbox => Set<IntegrationEventInboxEntity>();
+// Inject IStorageSessionFactory
+await using var session = await _sessionFactory.CreateSessionAsync(ct);
 
-protected override void OnModelCreating(ModelBuilder modelBuilder)
+// Check idempotency
+IInboxState? existing = await session.Inbox.GetAsync(messageId, consumerId, ct);
+if (existing is not null)
 {
-    // ... other config ...
-    modelBuilder.ApplyConfiguration(new IntegrationEventInboxConfiguration());
+    return; // Already processed
 }
-```
 
-### 2. Add Migration
-
-```bash
-dotnet ef migrations AddIntegrationEventInbox -p Services/Dialysis.Xxx/Dialysis.Xxx.Infrastructure -s Services/Dialysis.Xxx/Dialysis.Xxx.Api
-```
-
-### 3. Register Store
-
-```csharp
-builder.Services.AddScoped<IIntegrationEventInboxStore>(sp =>
-    new IntegrationEventInboxStore(sp.GetRequiredService<XxxDbContext>()));
-```
-
-### 4. Consumer Pattern
-
-```csharp
-// In message handler (e.g. Azure Service Bus processor)
-public async Task HandleAsync(Message message, CancellationToken ct)
-{
-    string messageId = message.MessageId;
-    if (await _inboxStore.ExistsAsync(messageId, ct))
-    {
-        // Already processed; ack and return
-        return;
-    }
-
-    await using var transaction = await _context.Database.BeginTransactionAsync(ct);
-    try
-    {
-        // Business logic
-        await _sender.SendAsync(new ProcessEventCommand(...), ct);
-
-        // Record in Inbox (same transaction)
-        await _inboxStore.AddAsync(messageId, message.Label, tenantId, ct);
-        await _context.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
-    }
-    catch
-    {
-        await transaction.RollbackAsync(ct);
-        throw; // Broader will redeliver
-    }
-}
+// Process and record in same transaction
+await _handler.HandleAsync(message, ct);
+_ = await session.Inbox.TryAddAsync(new InboxState(messageId, consumerId), ct);
+await session.CommitAsync(ct);
 ```
 
 ## When to Use
 
-- **Broker-based consumers**: When receiving events from RabbitMQ, Azure Service Bus, Kafka
+- **Broker-based consumers**: When receiving events from RabbitMQ, Azure Service Bus, Kafka via Transponder
 - **Cross-service messaging**: When another service publishes events your service subscribes to
 
 ## When Not to Use
 
 - **In-process handlers**: Events dispatched via `IIntegrationEventBuffer` within the same process are already transactional; no Inbox needed
-- **HTTP callbacks**: Idempotency for HTTP is typically handled via idempotency keys in the API, not Inbox
+- **HTTP callbacks**: Idempotency for HTTP is typically handled via idempotency keys in the API
+
+## Azure Service Bus
+
+When `AzureServiceBus:ConnectionString` is configured, Treatment and Alarm publish to ASB topics. Receive endpoints (when added) can consume from ASB and must use the Inbox pattern for idempotent consumption. See [AZURE-SERVICE-BUS.md](AZURE-SERVICE-BUS.md).
 
 ## Related
 
-- **Outbox**: `IntegrationEventOutboxEntity` for reliable publishing (this project sends)
-- **Inbox**: `IntegrationEventInboxEntity` for idempotent consumption (this project receives)
+- **BuildingBlocks Outbox**: `IntegrationEventOutboxEntity` for domain-event-in-same-transaction publishing
+- **Transponder Outbox**: `OutboxMessages` for durable Bus.Send/Publish when `UseOutbox()` is enabled
+- **Transponder Inbox**: `InboxStates` for idempotent consumption when broker-based consumers are used

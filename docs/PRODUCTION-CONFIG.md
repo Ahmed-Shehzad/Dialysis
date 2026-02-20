@@ -18,6 +18,7 @@ All APIs require database connection strings. Provide via environment variables 
 | `ConnectionStrings__AlarmDb` | Alarm API | Same pattern with `dialysis_alarm` |
 | `ConnectionStrings__DeviceDb` | Device API | Same pattern with `dialysis_device` |
 | `ConnectionStrings__FhirDb` | FHIR API | Same pattern with `dialysis_fhir` (optional; if omitted, subscriptions use in-memory store) |
+| `ConnectionStrings__TransponderDb` | Treatment, Alarm | Same pattern with `transponder` (outbox, inbox, scheduled messages) |
 
 **Azure Key Vault:** Use `@Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/<secret>)` in App Service configuration. See §4 for Key Vault setup.
 
@@ -79,6 +80,7 @@ ConnectionStrings__TreatmentDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vau
 ConnectionStrings__AlarmDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/AlarmDbConnectionString)
 ConnectionStrings__DeviceDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/DeviceDbConnectionString)
 ConnectionStrings__FhirDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/FhirDbConnectionString)
+ConnectionStrings__TransponderDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/TransponderDbConnectionString)
 ```
 
 ### 4.3 Optional: FhirSubscription Notify API Key

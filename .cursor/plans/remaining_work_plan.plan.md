@@ -42,7 +42,7 @@ Rx Use and Prescription conflict handling are already implemented. Focus on:
 
 ## 3. Inbox Pattern
 
-- Add `IntegrationEventInbox` table (MessageId, ProcessedAtUtc)
+- Use Transponder `InboxStates` (MessageId + ConsumerId) for idempotent consumption
 - Document: before processing inbound integration event, check MessageId; if exists, skip (idempotent)
 - Optional: Background or inline inbox check in consumers
 

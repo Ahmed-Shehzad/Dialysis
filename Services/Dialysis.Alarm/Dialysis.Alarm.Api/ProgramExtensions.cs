@@ -2,6 +2,8 @@ using Dialysis.Alarm.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
 
+using Transponder.Persistence.EntityFramework.PostgreSql;
+
 using Verifier.Exceptions;
 
 namespace Dialysis.Alarm.Api;
@@ -57,5 +59,9 @@ internal static class ProgramExtensions
         using IServiceScope scope = app.Services.CreateScope();
         AlarmDbContext db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
         await db.Database.MigrateAsync();
+
+        var transponderFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PostgreSqlTransponderDbContext>>();
+        await using (var transponderDb = await transponderFactory.CreateDbContextAsync())
+            await transponderDb.Database.MigrateAsync();
     }
 }

@@ -39,6 +39,7 @@ dotnet ef database update --project Services/Dialysis.Prescription/Dialysis.Pres
 dotnet ef database update --project Services/Dialysis.Treatment/Dialysis.Treatment.Infrastructure --startup-project Services/Dialysis.Treatment/Dialysis.Treatment.Api
 dotnet ef database update --project Services/Dialysis.Alarm/Dialysis.Alarm.Infrastructure --startup-project Services/Dialysis.Alarm/Dialysis.Alarm.Api
 dotnet ef database update --project Services/Dialysis.Device/Dialysis.Device.Infrastructure --startup-project Services/Dialysis.Device/Dialysis.Device.Api
+dotnet ef database update --project Transponder.Persistence.EntityFramework.PostgreSql --startup-project Services/Dialysis.Treatment/Dialysis.Treatment.Api --context PostgreSqlTransponderDbContext
 dotnet ef database update --project Services/Dialysis.Fhir/Dialysis.Fhir.Infrastructure --startup-project Services/Dialysis.Fhir/Dialysis.Fhir.Api
 ```
 
@@ -198,7 +199,7 @@ ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Addres
 
 | Category | Variables |
 |----------|-----------|
-| **Connection Strings** | `ConnectionStrings__PatientDb`, `ConnectionStrings__PrescriptionDb`, `ConnectionStrings__TreatmentDb`, `ConnectionStrings__AlarmDb`, `ConnectionStrings__DeviceDb`, `ConnectionStrings__FhirDb` (Key Vault references) |
+| **Connection Strings** | `ConnectionStrings__PatientDb`, `ConnectionStrings__PrescriptionDb`, `ConnectionStrings__TreatmentDb`, `ConnectionStrings__AlarmDb`, `ConnectionStrings__DeviceDb`, `ConnectionStrings__FhirDb`, `ConnectionStrings__TransponderDb` (Key Vault references) |
 | **JWT** | `Authentication__JwtBearer__Authority`, `Authentication__JwtBearer__Audience`, `Authentication__JwtBearer__DevelopmentBypass=false` |
 | **Cross-Service** | `DeviceApi__BaseUrl`, `AlarmApi__BaseUrl`, `FhirSubscription__NotifyUrl`, `FhirExport__BaseUrl`, `Cds__BaseUrl`, `Reports__BaseUrl` |
 | **Gateway** | `Cors__AllowedOrigins`, `ReverseProxy__Clusters__*__Destinations__*__Address` |

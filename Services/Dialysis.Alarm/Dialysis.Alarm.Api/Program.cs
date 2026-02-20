@@ -23,8 +23,11 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
-using Serilog;
+using Transponder.Persistence.EntityFramework.PostgreSql;
+using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
+
+using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -42,9 +45,6 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
-builder.Services.AddTransponder(new Uri("transponder://alarm"), opts =>
-    opts.TransportBuilder.UseSignalR(new Uri("signalr://alarm")));
-
 builder.Services.AddIntercessor(cfg =>
 {
     cfg.RegisterFromAssembly(typeof(IngestOruR40MessageCommand).Assembly);
@@ -52,6 +52,25 @@ builder.Services.AddIntercessor(cfg =>
 
 string connectionString = builder.Configuration.GetConnectionString("AlarmDb")
                           ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
+string transponderConnectionString = builder.Configuration.GetConnectionString("TransponderDb")
+                                     ?? "Host=localhost;Database=transponder;Username=postgres;Password=postgres";
+
+builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.PostgreSql.Abstractions.IPostgreSqlStorageOptions>(
+    _ => new PostgreSqlStorageOptions());
+builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((_, ob) =>
+    ob.UseNpgsql(transponderConnectionString));
+builder.Services.AddTransponderPostgreSqlPersistence();
+
+var alarmBusAddress = new Uri("transponder://alarm");
+builder.Services.AddTransponder(alarmBusAddress, opts =>
+{
+    _ = opts.TransportBuilder.UseSignalR(alarmBusAddress, [new Uri("signalr://alarm")]);
+    string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+    if (!string.IsNullOrWhiteSpace(asbConnectionString))
+        _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(alarmBusAddress, connectionString: asbConnectionString));
+    _ = opts.UseOutbox();
+    _ = opts.UsePersistedMessageScheduler();
+});
 
 builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
@@ -77,7 +96,8 @@ builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(Tim
 builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString, name: "alarm-db");
+    .AddNpgSql(connectionString, name: "alarm-db")
+    .AddNpgSql(transponderConnectionString, name: "transponder-db");
 
 WebApplication app = builder.Build();
 

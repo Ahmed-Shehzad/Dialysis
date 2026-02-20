@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
+using Transponder.Persistence.Redis;
+
 using Serilog;
 
 using Verifier.Exceptions;
@@ -63,14 +65,19 @@ builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
 builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();
 builder.Services.AddScoped<IRspK22Validator, RspK22Validator>();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
 builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.Configure<PrescriptionIngestionOptions>(
     builder.Configuration.GetSection(PrescriptionIngestionOptions.SectionName));
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 
-builder.Services.AddHealthChecks()
+var healthChecks = builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "prescription-db");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = healthChecks.AddRedis(redisConnectionString, name: "redis");
 
 WebApplication app = builder.Build();
 

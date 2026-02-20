@@ -158,7 +158,19 @@
 
 ---
 
-## 11. References
+## 11. Future Alignment
+
+When the **formal Dialysis Machine FHIR IG** is published by the Dialysis Interoperability Consortium, the following reassessment will apply:
+
+- **Profile references**: Update to canonical IG URLs and profile versions.
+- **New requirements**: Any additional constraints or extensions specified in the formal IG.
+- **Deprecations**: Follow any resource or element deprecations.
+
+No implementation changes are required until the formal IG is published. The current implementation aligns with FHIR R4 base resources and QI-Core patterns.
+
+---
+
+## 12. References
 
 - [FHIR R4](https://hl7.org/fhir/R4/) – Base specification
 - [QI-Core NonPatient Hemodialysis Machine Observation](https://build.fhir.org/ig/HL7/fhir-qi-core/Observation-example-nonpatient-hemodialysis-machine.html)

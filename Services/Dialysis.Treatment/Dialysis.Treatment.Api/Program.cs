@@ -24,6 +24,8 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
+using Transponder.Persistence.EntityFramework.PostgreSql;
+using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
 using Serilog;
@@ -61,9 +63,6 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
-builder.Services.AddTransponder(new Uri("transponder://treatment"), opts =>
-    opts.TransportBuilder.UseSignalR(new Uri("signalr://treatment")));
-
 builder.Services.AddIntercessor(cfg =>
 {
     cfg.RegisterFromAssembly(typeof(GetTreatmentSessionQuery).Assembly);
@@ -71,6 +70,25 @@ builder.Services.AddIntercessor(cfg =>
 
 string connectionString = builder.Configuration.GetConnectionString("TreatmentDb")
                           ?? "Host=localhost;Database=dialysis_treatment;Username=postgres;Password=postgres";
+string transponderConnectionString = builder.Configuration.GetConnectionString("TransponderDb")
+                                     ?? "Host=localhost;Database=transponder;Username=postgres;Password=postgres";
+
+builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.PostgreSql.Abstractions.IPostgreSqlStorageOptions>(
+    _ => new PostgreSqlStorageOptions());
+builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((sp, ob) =>
+    ob.UseNpgsql(transponderConnectionString));
+builder.Services.AddTransponderPostgreSqlPersistence();
+
+var treatmentBusAddress = new Uri("transponder://treatment");
+builder.Services.AddTransponder(treatmentBusAddress, opts =>
+{
+    _ = opts.TransportBuilder.UseSignalR(treatmentBusAddress, [new Uri("signalr://treatment")]);
+    string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+    if (!string.IsNullOrWhiteSpace(asbConnectionString))
+        _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(treatmentBusAddress, connectionString: asbConnectionString));
+    _ = opts.UseOutbox();
+    _ = opts.UsePersistedMessageScheduler();
+});
 
 builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
@@ -99,7 +117,8 @@ builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString, name: "treatment-db");
+    .AddNpgSql(connectionString, name: "treatment-db")
+    .AddNpgSql(transponderConnectionString, name: "transponder-db");
 
 WebApplication app = builder.Build();
 
@@ -109,6 +128,10 @@ if (app.Environment.IsDevelopment())
     using IServiceScope scope = app.Services.CreateScope();
     TreatmentDbContext db = scope.ServiceProvider.GetRequiredService<TreatmentDbContext>();
     await db.Database.MigrateAsync();
+
+    var transponderFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PostgreSqlTransponderDbContext>>();
+    await using (var transponderDb = await transponderFactory.CreateDbContextAsync())
+        await transponderDb.Database.MigrateAsync();
 }
 
 app.UseExceptionHandler(exceptionHandlerApp =>

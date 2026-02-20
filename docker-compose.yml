@@ -7,6 +7,16 @@
 # Mirth (optional): docker compose --profile mirth up -d  → Admin http://localhost:9080, MLLP 6661
 
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
   postgres:
     image: postgres:16-alpine
     environment:
@@ -58,6 +68,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5052
       ConnectionStrings__PrescriptionDb: Host=postgres;Database=dialysis_prescription;Username=postgres;Password=postgres
+      ConnectionStrings__Redis: redis:6379
     ports:
       - "5052:5052"
     healthcheck:
@@ -68,6 +79,8 @@ services:
       start_period: 10s
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   treatment-api:
@@ -81,6 +94,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5050
       ConnectionStrings__TreatmentDb: Host=postgres;Database=dialysis_treatment;Username=postgres;Password=postgres
+      ConnectionStrings__TransponderDb: Host=postgres;Database=transponder;Username=postgres;Password=postgres
       DeviceApi__BaseUrl: http://device-api:5054
       AlarmApi__BaseUrl: http://alarm-api:5053
       FhirSubscription__NotifyUrl: http://gateway:5000
@@ -107,6 +121,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5053
       ConnectionStrings__AlarmDb: Host=postgres;Database=dialysis_alarm;Username=postgres;Password=postgres
+      ConnectionStrings__TransponderDb: Host=postgres;Database=transponder;Username=postgres;Password=postgres
       DeviceApi__BaseUrl: http://device-api:5054
       FhirSubscription__NotifyUrl: http://gateway:5000
     ports:
