@@ -7,16 +7,16 @@ todos:
     status: completed
   - id: prescription-persistence
     content: Remove SettingsForPersistence; map _settings via EF backing field
-    status: pending
+    status: completed
   - id: order-id-vo
     content: Add OrderId value object to Prescription domain
-    status: pending
+    status: completed
   - id: session-id-alarm
     content: Use SessionId value object in Alarm (from BuildingBlocks)
-    status: pending
+    status: completed
   - id: device-eui64-vo
     content: Add DeviceEui64 value object to Device domain
-    status: pending
+    status: completed
 isProject: true
 ---
 

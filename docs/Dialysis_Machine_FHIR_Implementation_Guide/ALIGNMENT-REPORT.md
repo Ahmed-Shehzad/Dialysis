@@ -3,6 +3,7 @@
 **Source**: FHIR R4, QI-Core, HL7-to-FHIR mapping  
 **Date**: 2025-02-19  
 **Last updated**: 2025-02-19  
+**FHIR IG version**: *Placeholder – formal Dialysis Machine FHIR IG not yet published*  
 **Scope**: Cross-reference of FHIR resource requirements with the Dialysis PDMS implementation.
 
 **Note:** A formal Dialysis Machine FHIR IG is in development by the Dialysis Interoperability Consortium. This report uses FHIR R4 base resources and QI-Core patterns as reference. When the formal IG is published, this alignment report will be updated to reference the canonical IG version and any profile changes.

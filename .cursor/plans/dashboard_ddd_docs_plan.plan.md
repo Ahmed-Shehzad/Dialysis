@@ -4,28 +4,28 @@ overview: Date range picker, JWT plumbing, UX improvements, DDD value objects (O
 todos:
   - id: date-picker
     content: Add date range picker for reports
-    status: in_progress
+    status: completed
   - id: jwt-plumbing
     content: Add JWT/auth plumbing for API calls (Bearer token when available)
-    status: pending
+    status: completed
   - id: ux-retry-skeleton
     content: Add retry on error, loading skeletons, error boundary
-    status: pending
+    status: completed
   - id: ddd-order-id
     content: Add OrderId value object in Prescription
-    status: pending
+    status: completed
   - id: ddd-session-id
     content: Use SessionId value object in Alarm (from BuildingBlocks)
-    status: pending
+    status: completed
   - id: ddd-device-eui64
     content: Add DeviceEui64 value object in Device
-    status: pending
+    status: completed
   - id: docs-serilog-ddd
     content: Update architecture docs for Serilog and DDD changes
-    status: pending
+    status: completed
   - id: docs-deployment
     content: Ensure DEPLOYMENT-RUNBOOK matches current deployment
-    status: pending
+    status: completed
 isProject: true
 ---
 

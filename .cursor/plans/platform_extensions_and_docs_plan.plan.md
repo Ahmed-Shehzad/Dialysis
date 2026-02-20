@@ -7,22 +7,22 @@ todos:
     status: completed
   - id: ef-runbook
     content: Update DEPLOYMENT-RUNBOOK with Prescription --context for dotnet ef
-    status: pending
+    status: completed
   - id: cds-expand
     content: Add CDS rule for blood pressure threshold (hypotension detection)
-    status: pending
+    status: completed
   - id: reports-expand
     content: Add report: treatment duration by patient, observations summary
-    status: pending
+    status: completed
   - id: ui-docs
     content: Add docs/UI-INTEGRATION-GUIDE.md for SPA/FHIR integration
-    status: pending
+    status: completed
   - id: docs-architecture
     content: Update SYSTEM-ARCHITECTURE.md with new CDS, reports, UI section
-    status: pending
+    status: completed
   - id: fhir-ig-docs
     content: Add FHIR IG update note and version placeholder to alignment docs
-    status: pending
+    status: completed
 isProject: true
 ---
 

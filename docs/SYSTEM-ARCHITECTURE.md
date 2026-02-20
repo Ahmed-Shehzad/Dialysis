@@ -657,6 +657,22 @@ Inter-service HTTP calls use **Refit** for typed API contracts. Each Refit inter
 
 ---
 
+## 15d. Domain Model Conventions (DDD)
+
+Aggregates use **strongly-typed value objects** instead of primitives (see `.cursor/rules/primitive-obsession.mdc`):
+
+| Value Object | Context | Purpose |
+|--------------|---------|---------|
+| `TenantId` | All | Multi-tenant isolation; default `default` |
+| `OrderId` | Prescription | HL7 RSP^K22 ORC-2 |
+| `SessionId` | Treatment, Alarm | HL7 OBR-3; shared via BuildingBlocks |
+| `DeviceEui64` | Device | HL7 MSH-3 |
+| `MedicalRecordNumber` | Patient, Prescription | HL7 PID-3 |
+
+**Prescription persistence:** `Prescription.Settings` is exposed as `IReadOnlyCollection<ProfileSetting>`. The backing field `_settings` is mapped via EF Core `e.Property<List<ProfileSetting>>("_settings")` to `SettingsJson` (jsonb). Domain layer has no EF-specific types.
+
+---
+
 ## 16. Docker Compose (Full Stack Run)
 
 The solution runs via `docker compose` for local development and integration testing.
