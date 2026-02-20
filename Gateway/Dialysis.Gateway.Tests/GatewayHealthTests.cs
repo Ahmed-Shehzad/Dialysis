@@ -11,12 +11,13 @@ namespace Dialysis.Gateway.Tests;
 
 /// <summary>
 /// Integration tests for Gateway health aggregation.
+/// Uses test-mode health checks (no backend URLs or NTP) so tests run reliably in CI.
 /// </summary>
-public sealed class GatewayHealthTests : IClassFixture<WebApplicationFactory<Dialysis.Gateway.Program>>
+public sealed class GatewayHealthTests : IClassFixture<GatewayWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public GatewayHealthTests(WebApplicationFactory<Dialysis.Gateway.Program> factory)
+    public GatewayHealthTests(GatewayWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
