@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlarmsBySeverityCard } from "./components/AlarmsBySeverityCard";
 import { PrescriptionComplianceCard } from "./components/PrescriptionComplianceCard";
+import { RealTimeCharts } from "./components/RealTimeCharts";
 import { SessionsSummaryCard } from "./components/SessionsSummaryCard";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAuth } from "./auth/useAuth";
@@ -116,10 +117,13 @@ function App() {
                         )}
                     </form>
                 </header>
-                <main className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-                    <SessionsSummaryCard from={fromIso} to={toIso} />
-                    <AlarmsBySeverityCard from={fromIso} to={toIso} />
-                    <PrescriptionComplianceCard from={fromIso} to={toIso} />
+                <main className="grid gap-6">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+                        <SessionsSummaryCard from={fromIso} to={toIso} />
+                        <AlarmsBySeverityCard from={fromIso} to={toIso} />
+                        <PrescriptionComplianceCard from={fromIso} to={toIso} />
+                    </div>
+                    <RealTimeCharts />
                 </main>
             </div>
         </ErrorBoundary>

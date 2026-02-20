@@ -47,9 +47,13 @@ public sealed class NtpSyncHealthCheck : IHealthCheck
         }
         catch (Exception ex)
         {
+            // Avoid attaching exception to reduce log noise in minimal containers (timedatectl not present)
+            bool isProcessNotFound = ex is System.ComponentModel.Win32Exception win32 && win32.NativeErrorCode == 2;
             return HealthCheckResult.Degraded(
-                "Could not run timedatectl (may be unavailable in minimal container).",
-                exception: ex);
+                isProcessNotFound
+                    ? "timedatectl unavailable (minimal container). NTP sync not verifiable."
+                    : "Could not run timedatectl (may be unavailable in minimal container).",
+                exception: isProcessNotFound ? null : ex);
         }
     }
 

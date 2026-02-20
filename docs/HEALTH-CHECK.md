@@ -85,7 +85,45 @@ The Gateway runs `AddNtpSyncCheck()` to verify the host clock is NTP-synchronize
 
 ---
 
-## 6. References
+## 6. Troubleshooting
+
+### Connection refused (alarm-api, treatment-api, etc.)
+
+**Symptom**: Gateway `/health` logs `Connection refused (alarm-api:5053)` or `Connection refused (treatment-api:5050)`.
+
+**Causes**:
+
+1. **Backend containers not running** – The Gateway health check calls backend `/health` endpoints. If treatment-api or alarm-api containers are down or failed to start, connection will be refused.
+2. **ASB overlay** – With `docker compose -f docker-compose.yml -f docker-compose.asb.yml up`, treatment-api and alarm-api depend on `servicebus-emulator`, which depends on `sqledge`. If sqledge fails (e.g. missing `ACCEPT_EULA=Y`, `MSSQL_SA_PASSWORD` in `.env`), the ASB-dependent APIs never become healthy.
+3. **Partial startup** – Running only the Gateway (e.g. `docker compose up gateway --no-deps`) skips backend startup.
+
+**Fixes**:
+
+```bash
+# Ensure all services (including backends) are running
+docker compose ps
+
+# Restart full stack; backends must be healthy before Gateway
+docker compose down && docker compose up -d
+
+# With ASB overlay: ensure .env has ACCEPT_EULA=Y and MSSQL_SA_PASSWORD
+# Then: docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d
+
+# Inspect backend logs if they crash
+docker compose logs treatment-api alarm-api
+```
+
+### NTP sync Degraded in containers
+
+**Symptom**: `ntp-sync` reports `Degraded` with message "timedatectl unavailable (minimal container)".
+
+**Cause**: Minimal container images (e.g. Alpine, distroless) do not include `timedatectl` or `systemd-timesyncd`.
+
+**Resolution**: Expected in containerized dev. The check returns Degraded (not Unhealthy) so the Gateway remains usable. For production, use a base image with NTP tools or configure time sync at the host/orchestrator level.
+
+---
+
+## 7. References
 
 - [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md) §5 – Health checks
 - [GATEWAY.md](GATEWAY.md) – Gateway overview

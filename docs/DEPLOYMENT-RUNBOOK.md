@@ -85,25 +85,17 @@ AUTH_HEADER="Bearer <your-access-token>" ./scripts/load-test.sh --endpoint all -
 
 ### 3.4 Seed Data (Optional)
 
-To populate the system with hundreds of prescriptions, treatment sessions, and alarms for dashboard and report testing:
+To populate the system with treatment sessions and observations for dashboard and report testing, run the Data Producer Simulator with `--seed` when no sessions exist:
 
 ```bash
-# Seed 300 records (default) to Gateway at localhost:5001
-dotnet run --project Seeder/Seeder.csproj
+# Start simulator; pre-seeds 30 sessions when API returns none
+dotnet run --project DataProducerSimulator -- --seed 30
 
-# Custom count and gateway
-dotnet run --project Seeder/Seeder.csproj -- --count 500
-dotnet run --project Seeder/Seeder.csproj -- --gateway http://localhost:5001 --count 200
+# Or use the run script (no pre-seed; uses existing sessions or creates 20)
+./run-simulator.sh
 ```
 
-Requires `docker compose up -d` and `Authentication:JwtBearer:DevelopmentBypass: true` (or a valid JWT) for unauthenticated requests. Seeds via HL7: RSP^K22 (Prescription), ORU^R01 batch (Treatment), ORU^R40 (Alarm).
-
-**If Seeder returns 500:** Rebuild and start the affected APIs and gateway, then check logs:
-
-```bash
-docker compose up -d --build prescription-api treatment-api alarm-api gateway
-docker compose logs prescription-api treatment-api alarm-api
-```
+Requires `docker compose up -d` and `Authentication:JwtBearer:DevelopmentBypass: true` (or a valid JWT) for unauthenticated requests.
 
 ### 3.5 Dashboard (Optional)
 

@@ -16,6 +16,11 @@ export default defineConfig({
         target: 'http://localhost:5001',
         changeOrigin: true,
       },
+      '/transponder': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
 })

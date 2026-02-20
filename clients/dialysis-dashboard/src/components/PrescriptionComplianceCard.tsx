@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getPrescriptionCompliance } from "../api";
+import { STATS_REFETCH_INTERVAL_MS } from "../constants";
 import { getErrorMessage } from "../utils/errorMessage";
 import { CardSkeleton } from "./CardSkeleton";
 
@@ -13,6 +14,7 @@ export function PrescriptionComplianceCard({ from, to }: Readonly<Props>) {
         queryKey: ["prescription-compliance", from, to],
         queryFn: () => getPrescriptionCompliance(from, to),
         enabled: Boolean(from ?? to),
+        refetchInterval: STATS_REFETCH_INTERVAL_MS,
     });
 
     const cardBase = "p-5 border border-gray-200 rounded-lg bg-white shadow-sm";

@@ -5,13 +5,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Dialysis.Seeder</RootNamespace>
+    <RootNamespace>Dialysis.DataProducerSimulator</RootNamespace>
     <NoWarn>$(NoWarn);S3776;S6966</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
     <PackageReference Include="Refit" />
+    <PackageReference Include="Refit.HttpClientFactory" />
   </ItemGroup>
 
 </Project>

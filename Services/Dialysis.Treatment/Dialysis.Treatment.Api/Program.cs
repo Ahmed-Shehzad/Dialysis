@@ -76,7 +76,8 @@ string transponderConnectionString = builder.Configuration.GetConnectionString("
 builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.PostgreSql.Abstractions.IPostgreSqlStorageOptions>(
     _ => new PostgreSqlStorageOptions());
 builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((sp, ob) =>
-    ob.UseNpgsql(transponderConnectionString));
+    ob.UseNpgsql(transponderConnectionString)
+      .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 builder.Services.AddTransponderPostgreSqlPersistence();
 
 var treatmentBusAddress = new Uri("transponder://treatment");

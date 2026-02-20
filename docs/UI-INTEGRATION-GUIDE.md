@@ -99,6 +99,8 @@ npm run dev
 
 Open http://localhost:5173. It fetches sessions-summary, alarms-by-severity, and prescription-compliance. Ensure PDMS is running (`docker compose up -d`).
 
+**Real-time charts**: The dashboard includes a Real-Time Monitoring section that connects via SignalR to receive live observations and alarms. Enter a session ID (e.g. from the Data Producer Simulator) and click Subscribe. Charts (line, area/mountain, bar) update as new data arrives. Run `./run-simulator.sh` to generate continuous data.
+
 ---
 
 ## 6. Suggested Tech Stacks

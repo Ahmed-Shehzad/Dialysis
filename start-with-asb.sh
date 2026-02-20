@@ -22,6 +22,6 @@ fi
 
 # 2. Start with ASB emulator
 echo "Starting docker compose with ASB emulator..."
-docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d --build
 
 echo "Done. Gateway: http://localhost:5001/health"

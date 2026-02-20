@@ -19,13 +19,12 @@ public static class ThresholdBreachDetectedServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(alarmBusAddress);
 
         services.TryAddScoped<ThresholdBreachDetectedReceiveHandler>();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IReceiveEndpoint>(sp =>
+        // Use AddSingleton (not TryAddEnumerable): factory provides Uri; Transponder resolves via GetServices<IReceiveEndpoint>()
+        return services.AddSingleton<IReceiveEndpoint>(sp =>
             new ThresholdBreachDetectedReceiveEndpoint(
                 alarmBusAddress,
                 sp.GetRequiredService<ITransportHostProvider>(),
                 sp.GetRequiredService<IServiceScopeFactory>(),
-                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ThresholdBreachDetectedReceiveEndpoint>>())));
-
-        return services;
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ThresholdBreachDetectedReceiveEndpoint>>()));
     }
 }
