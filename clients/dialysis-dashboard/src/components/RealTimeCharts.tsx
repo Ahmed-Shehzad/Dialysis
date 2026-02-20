@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     Area,
     AreaChart,
@@ -14,33 +14,12 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
-import { getTreatmentSessions } from "../api";
+import {
+    getObservationsInTimeRange,
+    getTreatmentSessions,
+} from "../api";
 import { useSignalR } from "../hooks/useSignalR";
 import type { ObservationRecordedMessage } from "../types";
-
-function generateDemoObservation(
-    sessionId: string,
-    index: number,
-): ObservationRecordedMessage & { _receivedAt?: number } {
-    const codes = [
-        "152348^MDC_HDIALY_BLD_PUMP_BLOOD_FLOW_RATE",
-        "158776^MDC_HDIALY_BLD_PUMP_PRESS_VEN",
-    ];
-    const code = codes[index % codes.length];
-    const channelName = code.includes("BLOOD_FLOW")
-        ? "Blood Flow"
-        : "Venous Pressure";
-    const value = String(280 + Math.floor(Math.random() * 70));
-    return {
-        sessionId,
-        observationId: `demo-${index}`,
-        code,
-        value,
-        unit: code.includes("BLOOD_FLOW") ? "ml/min" : "mmHg",
-        channelName,
-        _receivedAt: Date.now(),
-    };
-}
 
 const MAX_POINTS = 150;
 
@@ -105,33 +84,15 @@ const COLORS = [
     "#ec4899",
 ];
 
-function StatusBadge({
-    demoMode,
-    isConnected,
-}: Readonly<{
-    demoMode: boolean;
-    isConnected: boolean;
-}>) {
-    const text = demoMode
-        ? "● Demo mode"
-        : isConnected
-          ? "● Connected"
-          : "○ Connecting…";
-    const cls = demoMode
-        ? "text-amber-600"
-        : isConnected
-          ? "text-green-600"
-          : "text-amber-600";
+function StatusBadge({ isConnected }: Readonly<{ isConnected: boolean }>) {
+    const text = isConnected ? "● Connected" : "○ Connecting…";
+    const cls = isConnected ? "text-green-600" : "text-amber-600";
     return <span className={`text-sm ${cls}`}>{text}</span>;
 }
 
 export function RealTimeCharts() {
     const [sessionId, setSessionId] = useState("");
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-    const [demoMode, setDemoMode] = useState(false);
-    const [demoObservations, setDemoObservations] = useState<
-        (ObservationRecordedMessage & { _receivedAt?: number })[]
-    >([]);
 
     const queryClient = useQueryClient();
     const { data: sessions, isSuccess: sessionsLoaded } = useQuery({
@@ -142,53 +103,72 @@ export function RealTimeCharts() {
 
     const invalidateStats = useCallback(() => {
         void queryClient.invalidateQueries({ queryKey: ["sessions-summary"] });
-        void queryClient.invalidateQueries({ queryKey: ["alarms-by-severity"] });
+        void queryClient.invalidateQueries({
+            queryKey: ["alarms-by-severity"],
+        });
         void queryClient.invalidateQueries({
             queryKey: ["prescription-compliance"],
         });
     }, [queryClient]);
 
     const { isConnected, observations, alarms, error, clearData } = useSignalR(
-        demoMode ? null : activeSessionId,
+        activeSessionId,
         {
             onObservation: invalidateStats,
             onAlarm: invalidateStats,
         },
     );
 
-    const effectiveObservations = demoMode ? demoObservations : observations;
+    const startUtc = useMemo(
+        () => new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        [],
+    );
+    const endUtc = useMemo(() => new Date().toISOString(), []);
+
+    const { data: fetchedData } = useQuery({
+        queryKey: ["observations", activeSessionId, startUtc, endUtc],
+        queryFn: () =>
+            activeSessionId
+                ? getObservationsInTimeRange(
+                      activeSessionId,
+                      startUtc,
+                      endUtc,
+                  )
+                : Promise.resolve({
+                      sessionId: "",
+                      observations: [],
+                  }),
+        enabled: Boolean(activeSessionId),
+        staleTime: 0,
+        refetchInterval: 10_000,
+    });
+
+    const effectiveObservations = useMemo(() => {
+        const fetchedFormatted: (ObservationRecordedMessage & {
+            _receivedAt?: number;
+        })[] =
+            fetchedData?.observations?.map((o) => ({
+                sessionId: fetchedData.sessionId,
+                observationId: o.id,
+                code: o.code,
+                value: o.value,
+                unit: o.unit,
+                subId: o.subId,
+                channelName: o.channelName,
+                _receivedAt: new Date(o.observedAtUtc).getTime(),
+            })) ?? [];
+        return [...fetchedFormatted, ...observations];
+    }, [fetchedData, observations]);
+
     const chartData = useMemo(
         () => buildChartData(effectiveObservations),
         [effectiveObservations],
     );
+
     const series = useMemo(
         () => getNumericSeries(effectiveObservations),
         [effectiveObservations],
     );
-
-    useEffect(() => {
-        if (!demoMode) return;
-        const sid = sessionId.trim() || "DEMO-SESSION";
-        const addOne = () => {
-            setDemoObservations((prev) => {
-                const next = [
-                    ...prev,
-                    generateDemoObservation(sid, prev.length),
-                ].slice(-500);
-                return next;
-            });
-        };
-        addOne();
-        const interval = setInterval(addOne, 2000);
-        return () => clearInterval(interval);
-    }, [demoMode, sessionId]);
-
-    const handleDemoToggle = useCallback(() => {
-        setDemoMode((prev) => {
-            if (!prev) setDemoObservations([]);
-            return !prev;
-        });
-    }, []);
 
     const handleSubscribe = () => {
         const id = sessionId.trim();
@@ -239,40 +219,21 @@ export function RealTimeCharts() {
                 <button
                     type="button"
                     onClick={handleSubscribe}
-                    disabled={!sessionId.trim() || demoMode}
+                    disabled={!sessionId.trim()}
                     className="px-3 py-1 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Subscribe
                 </button>
-                <button
-                    type="button"
-                    onClick={handleDemoToggle}
-                    className={`px-3 py-1 rounded text-sm ${demoMode ? "bg-amber-600 text-white" : "bg-gray-200 hover:bg-gray-300"} `}
-                >
-                    {demoMode ? "Stop Demo" : "Run Demo"}
-                </button>
-                {(activeSessionId || demoMode) && (
-                    <StatusBadge
-                        demoMode={demoMode}
-                        isConnected={isConnected}
-                    />
-                )}
+                {activeSessionId && <StatusBadge isConnected={isConnected} />}
             </div>
 
             {error && <p className="text-sm text-red-600">SignalR: {error}</p>}
 
-            {(activeSessionId || demoMode) && chartData.length > 0 && (
+            {activeSessionId && chartData.length > 0 && (
                 <div className="space-y-6">
-                    {demoMode && (
-                        <p className="text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-200">
-                            <strong>Demo mode:</strong> Charts show simulated
-                            data. Click "Stop Demo" and "Subscribe" for live
-                            data from the simulator.
-                        </p>
-                    )}
                     <div>
                         <h4 className="text-sm font-medium mb-2">
-                            Observations – Line Chart {demoMode && "(demo)"}
+                            Observations – Line Chart
                         </h4>
                         <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
@@ -399,7 +360,7 @@ export function RealTimeCharts() {
                 </div>
             )}
 
-            {!demoMode && activeSessionId && alarms.length > 0 && (
+            {activeSessionId && alarms.length > 0 && (
                 <div>
                     <h4 className="text-sm font-medium mb-2">
                         Alarms ({alarms.length})
@@ -439,8 +400,7 @@ export function RealTimeCharts() {
                 </p>
             )}
 
-            {!demoMode &&
-                activeSessionId &&
+            {activeSessionId &&
                 chartData.length === 0 &&
                 !error &&
                 sessions &&
@@ -455,8 +415,8 @@ export function RealTimeCharts() {
                             <code className="bg-gray-200 px-1 rounded">
                                 ./run-simulator.sh
                             </code>{" "}
-                            is running. It sends ORU^R01 every 2s (round-robin) for sessions
-                            like{" "}
+                            is running. It sends ORU^R01 every 2s (round-robin)
+                            for sessions like{" "}
                             <code className="bg-gray-200 px-1 rounded">
                                 {activeSessionId}
                             </code>

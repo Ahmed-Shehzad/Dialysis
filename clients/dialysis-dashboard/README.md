@@ -23,6 +23,17 @@ npm run build
 npm run preview  # preview production build
 ```
 
+## E2E Tests (Playwright)
+
+With the React app running at http://localhost:5173:
+
+```bash
+npx playwright install
+npm run test:e2e
+```
+
+Or with UI: `npm run test:e2e:ui`
+
 ## Features
 
 - **Reports cards**: Sessions summary, alarms by severity, prescription compliance (date range)
@@ -48,7 +59,7 @@ npm run preview  # preview production build
 |-------|------------|
 | **No sessions in dropdown** | Run `./run-simulator.sh` first. Wait ~30s, then refresh the dashboard. Sessions are created when the simulator posts ORU^R01. |
 | **"○ Connecting…" never becomes "● Connected"** | Ensure PDMS is running (`docker compose up -d`). SignalR is at `/transponder/transport`; the Vite proxy forwards it to the Gateway. Check browser DevTools → Network for WebSocket errors or 401. |
-| **"● Connected" but no charts** | The simulator picks sessions from the same API. Select a session from the dropdown (don’t type a random ID). Simulator sends observations every 5s; wait a few seconds. |
+| **"● Connected" but no charts** | The simulator sends ORU^R01 for all sessions in parallel every 2s. Select a session from the dropdown; charts appear as observations arrive. |
 | **Gateway/APIs** | Dashboard proxies to `localhost:5001`. Ensure Gateway and Treatment API are up. |
 
 See [docs/UI-INTEGRATION-GUIDE.md](../../docs/UI-INTEGRATION-GUIDE.md).

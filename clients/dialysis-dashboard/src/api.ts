@@ -36,6 +36,26 @@ export async function getPrescriptionCompliance(from?: string, to?: string): Pro
   return get(`/reports/prescription-compliance?${params}`)
 }
 
+export interface TimeSeriesObservation {
+  id: string
+  code: string
+  value?: string
+  unit?: string
+  subId?: string
+  observedAtUtc: string
+  effectiveTime?: string
+  channelName?: string
+}
+
+export async function getObservationsInTimeRange(
+  sessionId: string,
+  start: string,
+  end: string
+): Promise<{ sessionId: string; observations: TimeSeriesObservation[] }> {
+  const params = new URLSearchParams({ start, end })
+  return get(`/treatment-sessions/${encodeURIComponent(sessionId)}/observations?${params}`)
+}
+
 export async function getTreatmentSessions(limit = 50): Promise<string[]> {
   const from = new Date()
   from.setDate(from.getDate() - 7)
