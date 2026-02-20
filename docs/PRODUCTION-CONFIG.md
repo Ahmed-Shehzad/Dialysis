@@ -19,7 +19,7 @@ All APIs require database connection strings. Provide via environment variables 
 | `ConnectionStrings__DeviceDb` | Device API | Same pattern with `dialysis_device` |
 | `ConnectionStrings__FhirDb` | FHIR API | Same pattern with `dialysis_fhir` (optional; if omitted, subscriptions use in-memory store) |
 
-**Azure Key Vault:** Use `@Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/<secret>)` in App Service configuration.
+**Azure Key Vault:** Use `@Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/<secret>)` in App Service configuration. See §4 for Key Vault setup.
 
 ### 1.2 JWT Authentication
 
@@ -38,7 +38,20 @@ All APIs require database connection strings. Provide via environment variables 
 
 ---
 
-## 2. appsettings.Production.json
+## 2. Cross-Service URLs (Internal)
+
+| Variable | Service | Description |
+|----------|---------|-------------|
+| `DeviceApi__BaseUrl` | Treatment, Alarm | Device registration API (e.g. `https://device-api.example.com`) |
+| `AlarmApi__BaseUrl` | Treatment | Alarm API for threshold-breach→alarm (e.g. `https://alarm-api.example.com`) |
+| `FhirSubscription__NotifyUrl` | Treatment, Alarm | FHIR subscription notify endpoint (e.g. `https://gateway.example.com`) |
+| `FhirExport__BaseUrl` | FHIR | Gateway for bulk export aggregation |
+| `Cds__BaseUrl` | CDS | Gateway for CDS calls |
+| `Reports__BaseUrl` | Reports | Gateway for reports aggregation |
+
+---
+
+## 3. appsettings.Production.json
 
 When `ASPNETCORE_ENVIRONMENT=Production`, `appsettings.Production.json` overlays `appsettings.json`:
 
@@ -49,7 +62,42 @@ Connection strings in base `appsettings.json` use localhost and must be overridd
 
 ---
 
-## 3. Verification
+## 4. Azure Key Vault Integration
+
+### 4.1 Enable Managed Identity
+
+For Azure App Service, enable **System-assigned** or **User-assigned** Managed Identity. Grant the identity **Key Vault Secrets User** role on the Key Vault.
+
+### 4.2 Connection String References
+
+In App Service Configuration (or `appsettings.Production.json`), reference secrets:
+
+```
+ConnectionStrings__PatientDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/PatientDbConnectionString)
+ConnectionStrings__PrescriptionDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/PrescriptionDbConnectionString)
+ConnectionStrings__TreatmentDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/TreatmentDbConnectionString)
+ConnectionStrings__AlarmDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/AlarmDbConnectionString)
+ConnectionStrings__DeviceDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/DeviceDbConnectionString)
+ConnectionStrings__FhirDb=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/FhirDbConnectionString)
+```
+
+### 4.3 Optional: FhirSubscription Notify API Key
+
+If using `FhirSubscription:NotifyApiKey` to protect the subscription-notify endpoint:
+
+```
+FhirSubscription__NotifyApiKey=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/FhirSubscriptionNotifyApiKey)
+```
+
+### 4.4 C5 Compliance
+
+- Never commit secrets to source control.
+- Rotate secrets periodically; Key Vault supports versioning.
+- Use separate Key Vaults per environment (dev/staging/prod) with appropriate access policies.
+
+---
+
+## 5. Verification
 
 Before deploy:
 

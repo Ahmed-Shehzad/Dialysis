@@ -54,7 +54,7 @@ For a full reset (prune, recreate `InitialCreate`, reapply), see [SYSTEM-ARCHITE
 docker compose up -d
 ```
 
-Wait for PostgreSQL health; APIs start in dependency order.
+PostgreSQL health runs first; each API has its own healthcheck (curl `/health`); Gateway waits for all backends to be healthy before starting. Total startup ~30–60s.
 
 ### 3.2 Verify
 
@@ -168,7 +168,7 @@ EF migrations are forward-only. To rollback schema:
 
 ### 5.2 Production Configuration
 
-See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) for required environment variables, Key Vault setup, and verification steps.
+See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) for required environment variables, Key Vault setup (§4), cross-service URLs (§2), and verification steps.
 
 ### 5.3 Connection Strings
 
@@ -193,6 +193,16 @@ ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Addres
 - Set `Authentication:JwtBearer:Authority` (e.g. Azure AD tenant)
 - Set `Authentication:JwtBearer:Audience`
 - Disable `DevelopmentBypass` in production (`Authentication:JwtBearer:DevelopmentBypass: false`)
+
+### 5.6 Production Environment Variables Summary
+
+| Category | Variables |
+|----------|-----------|
+| **Connection Strings** | `ConnectionStrings__PatientDb`, `ConnectionStrings__PrescriptionDb`, `ConnectionStrings__TreatmentDb`, `ConnectionStrings__AlarmDb`, `ConnectionStrings__DeviceDb`, `ConnectionStrings__FhirDb` (Key Vault references) |
+| **JWT** | `Authentication__JwtBearer__Authority`, `Authentication__JwtBearer__Audience`, `Authentication__JwtBearer__DevelopmentBypass=false` |
+| **Cross-Service** | `DeviceApi__BaseUrl`, `AlarmApi__BaseUrl`, `FhirSubscription__NotifyUrl`, `FhirExport__BaseUrl`, `Cds__BaseUrl`, `Reports__BaseUrl` |
+| **Gateway** | `Cors__AllowedOrigins`, `ReverseProxy__Clusters__*__Destinations__*__Address` |
+| **Optional** | `FhirSubscription__NotifyApiKey` |
 
 ---
 

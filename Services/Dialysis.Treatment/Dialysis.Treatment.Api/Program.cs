@@ -11,6 +11,7 @@ using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
 
 using Dialysis.Treatment.Infrastructure;
+using Dialysis.Treatment.Infrastructure.AlarmApi;
 using Dialysis.Treatment.Infrastructure.DeviceRegistration;
 using Dialysis.Treatment.Infrastructure.FhirSubscription;
 using Dialysis.Treatment.Infrastructure.Hl7;
@@ -86,6 +87,7 @@ builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionReposito
 builder.Services.AddScoped<ITreatmentReadStore, TreatmentReadStore>();
 builder.Services.AddScoped<IOruMessageParser, OruR01Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
+builder.Services.AddAlarmApiClient(builder.Configuration);
 builder.Services.AddSingleton<IHl7BatchParser, Hl7BatchParser>();
 builder.Services.AddSingleton<IAckR01Builder, AckR01Builder>();
 builder.Services.AddSingleton<VitalSignsMonitoringService>();

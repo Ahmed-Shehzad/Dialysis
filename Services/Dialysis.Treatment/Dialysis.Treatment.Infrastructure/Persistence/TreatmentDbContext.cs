@@ -21,12 +21,14 @@ public sealed class TreatmentDbContext : DbContext, IDbContext
     public DbSet<TreatmentSession> TreatmentSessions => Set<TreatmentSession>();
     public DbSet<Observation> Observations => Set<Observation>();
     public DbSet<IntegrationEventOutboxEntity> IntegrationEventOutbox => Set<IntegrationEventOutboxEntity>();
+    public DbSet<IntegrationEventInboxEntity> IntegrationEventInbox => Set<IntegrationEventInboxEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         _ = modelBuilder.ApplyConfiguration(new TreatmentSessionConfiguration());
         _ = modelBuilder.ApplyConfiguration(new ObservationConfiguration());
         _ = modelBuilder.ApplyConfiguration(new IntegrationEventOutboxConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new IntegrationEventInboxConfiguration());
     }
 }
 

@@ -1,7 +1,9 @@
 using BuildingBlocks.Abstractions;
 using BuildingBlocks.Tenancy;
 
+using Dialysis.Alarm.Api.Contracts;
 using Dialysis.Alarm.Application.Features.GetAlarms;
+using Dialysis.Alarm.Application.Features.RecordAlarmFromThresholdBreach;
 using Dialysis.Hl7ToFhir;
 
 using Hl7.Fhir.Model;
@@ -26,6 +28,33 @@ public sealed class AlarmsController : ControllerBase
         _sender = sender;
         _audit = audit;
         _tenant = tenant;
+    }
+
+    [HttpPost("from-threshold-breach")]
+    [Authorize(Policy = "AlarmWrite")]
+    [ProducesResponseType(typeof(RecordAlarmFromThresholdBreachResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RecordAlarmFromThresholdBreachAsync(
+        [FromBody] RecordAlarmFromThresholdBreachRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new RecordAlarmFromThresholdBreachCommand(
+            request.SessionId,
+            request.DeviceId,
+            request.BreachType,
+            request.Code,
+            request.ObservedValue,
+            request.ThresholdValue,
+            request.Direction,
+            Ulid.Parse(request.TreatmentSessionId),
+            Ulid.Parse(request.ObservationId),
+            request.TenantId ?? _tenant.TenantId);
+
+        RecordAlarmFromThresholdBreachResponse response = await _sender.SendAsync(command, cancellationToken);
+        await _audit.RecordAsync(new AuditRecordRequest(
+            AuditAction.Create, "Alarm", response.AlarmId, User.Identity?.Name,
+            AuditOutcome.Success, $"Threshold breach: {request.BreachType}", _tenant.TenantId), cancellationToken);
+        return Ok(response);
     }
 
     [HttpGet]

@@ -37,6 +37,12 @@ services:
       ConnectionStrings__PatientDb: Host=postgres;Database=dialysis_patient;Username=postgres;Password=postgres
     ports:
       - "5051:5051"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5051/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,6 +60,12 @@ services:
       ConnectionStrings__PrescriptionDb: Host=postgres;Database=dialysis_prescription;Username=postgres;Password=postgres
     ports:
       - "5052:5052"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5052/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,9 +82,16 @@ services:
       ASPNETCORE_URLS: http://+:5050
       ConnectionStrings__TreatmentDb: Host=postgres;Database=dialysis_treatment;Username=postgres;Password=postgres
       DeviceApi__BaseUrl: http://device-api:5054
+      AlarmApi__BaseUrl: http://alarm-api:5053
       FhirSubscription__NotifyUrl: http://gateway:5000
     ports:
       - "5050:5050"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,6 +111,12 @@ services:
       FhirSubscription__NotifyUrl: http://gateway:5000
     ports:
       - "5053:5053"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5053/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,6 +134,12 @@ services:
       ConnectionStrings__DeviceDb: Host=postgres;Database=dialysis_device;Username=postgres;Password=postgres
     ports:
       - "5054:5054"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5054/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -127,6 +158,12 @@ services:
       FhirExport__BaseUrl: http://gateway:5000
     ports:
       - "5055:5055"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -144,6 +181,12 @@ services:
       Cds__BaseUrl: http://gateway:5000
     ports:
       - "5056:5056"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5056/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   reports-api:
     build:
@@ -158,6 +201,12 @@ services:
       Reports__BaseUrl: http://gateway:5000
     ports:
       - "5057:5057"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5057/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   gateway:
     build:
@@ -178,15 +227,29 @@ services:
       ReverseProxy__Clusters__reports-cluster__Destinations__reports__Address: http://reports-api:5057
     ports:
       - "5001:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     depends_on:
-      - patient-api
-      - prescription-api
-      - treatment-api
-      - alarm-api
-      - device-api
-      - fhir-api
-      - cds-api
-      - reports-api
+      patient-api:
+        condition: service_healthy
+      prescription-api:
+        condition: service_healthy
+      treatment-api:
+        condition: service_healthy
+      alarm-api:
+        condition: service_healthy
+      device-api:
+        condition: service_healthy
+      fhir-api:
+        condition: service_healthy
+      cds-api:
+        condition: service_healthy
+      reports-api:
+        condition: service_healthy
 
   mirth:
     image: nextgenhealthcare/connect:4.5
