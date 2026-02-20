@@ -1,8 +1,10 @@
 using BuildingBlocks.Abstractions;
+using BuildingBlocks.Tenancy;
 
 using Dialysis.Alarm.Application.Abstractions;
 using Dialysis.Alarm.Application.Domain.Events;
 using Dialysis.Alarm.Application.Domain.Services;
+using Dialysis.Alarm.Application.Events;
 
 using Microsoft.Extensions.Logging;
 
@@ -14,18 +16,24 @@ internal sealed class AlarmEscalationCheckHandler : IDomainEventHandler<AlarmRai
 {
     private static readonly TimeSpan EscalationWindow = TimeSpan.FromMinutes(5);
 
+    private readonly IIntegrationEventBuffer _buffer;
     private readonly IAlarmRepository _repository;
     private readonly AlarmEscalationService _escalationService;
     private readonly ILogger<AlarmEscalationCheckHandler> _logger;
+    private readonly ITenantContext _tenant;
 
     public AlarmEscalationCheckHandler(
+        IIntegrationEventBuffer buffer,
         IAlarmRepository repository,
         AlarmEscalationService escalationService,
-        ILogger<AlarmEscalationCheckHandler> logger)
+        ILogger<AlarmEscalationCheckHandler> logger,
+        ITenantContext tenant)
     {
+        _buffer = buffer;
         _repository = repository;
         _escalationService = escalationService;
         _logger = logger;
+        _tenant = tenant;
     }
 
     public async Task HandleAsync(AlarmRaisedEvent notification, CancellationToken cancellationToken = default)
@@ -45,6 +53,13 @@ internal sealed class AlarmEscalationCheckHandler : IDomainEventHandler<AlarmRai
                 notification.SessionId,
                 result.ActiveAlarmCount,
                 result.Reason);
+
+            _buffer.Add(new AlarmEscalationTriggeredEvent(
+                notification.DeviceId?.Value,
+                notification.SessionId,
+                result.ActiveAlarmCount,
+                result.Reason ?? string.Empty,
+                _tenant.TenantId));
         }
     }
 }

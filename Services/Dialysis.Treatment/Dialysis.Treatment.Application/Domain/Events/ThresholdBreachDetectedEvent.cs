@@ -11,6 +11,7 @@ namespace Dialysis.Treatment.Application.Domain.Events;
 public sealed record ThresholdBreachDetectedEvent(
     Ulid TreatmentSessionId,
     string SessionId,
+    string? DeviceId,
     Ulid ObservationId,
     ObservationCode Code,
     ThresholdBreach Breach) : DomainEvent;

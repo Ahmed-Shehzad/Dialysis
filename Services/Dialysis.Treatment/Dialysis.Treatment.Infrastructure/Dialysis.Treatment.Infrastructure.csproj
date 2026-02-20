@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <ProjectReference Include="..\Dialysis.Treatment.Application\Dialysis.Treatment.Application.csproj" />
     </ItemGroup>
 

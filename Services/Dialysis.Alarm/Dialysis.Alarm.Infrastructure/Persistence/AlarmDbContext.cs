@@ -1,4 +1,5 @@
 using BuildingBlocks.Abstractions;
+using BuildingBlocks.Persistence;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
@@ -18,10 +19,12 @@ public sealed class AlarmDbContext : DbContext, IDbContext
     }
 
     public DbSet<AlarmDomain> Alarms => Set<AlarmDomain>();
+    public DbSet<IntegrationEventOutboxEntity> IntegrationEventOutbox => Set<IntegrationEventOutboxEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         _ = modelBuilder.ApplyConfiguration(new AlarmEntityConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new IntegrationEventOutboxConfiguration());
     }
 }
 

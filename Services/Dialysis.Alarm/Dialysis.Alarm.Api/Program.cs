@@ -1,3 +1,4 @@
+using BuildingBlocks;
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Logging;
@@ -52,13 +53,15 @@ builder.Services.AddIntercessor(cfg =>
 string connectionString = builder.Configuration.GetConnectionString("AlarmDb")
                           ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
 
+builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
-builder.Services.AddScoped<IntegrationEventDispatcherInterceptor>();
+builder.Services.AddScoped<IntegrationEventOutboxInterceptor>();
 builder.Services.AddDbContext<AlarmDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(
          sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
-         sp.GetRequiredService<IntegrationEventDispatcherInterceptor>()));
+         sp.GetRequiredService<IntegrationEventOutboxInterceptor>()));
+builder.Services.AddIntegrationEventOutboxPublisher<AlarmDbContext>();
 builder.Services.AddDbContext<AlarmReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
 builder.Services.AddScoped<IAlarmReadStore, AlarmReadStore>();

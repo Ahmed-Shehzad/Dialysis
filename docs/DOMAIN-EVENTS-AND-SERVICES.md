@@ -66,7 +66,11 @@ This "dispatch before save" pattern ensures that domain event handlers participa
 | **Domain events** | Before SaveChanges (`SavingChangesAsync`) | Atomic — handlers run in same transaction; audit, FHIR notify, escalation |
 | **Integration events** | After SaveChanges (`SavedChangesAsync`) | Eventual — handlers run after commit; Transponder, in-process `IIntegrationEventHandler` |
 
-Integration events are raised by aggregates via `ApplyEvent(IIntegrationEvent)` and dispatched post-commit by `IntegrationEventDispatcherInterceptor`.
+Integration events come from two sources:
+1. **Aggregates** — `ApplyEvent(IIntegrationEvent)` (e.g. `ObservationRecordedIntegrationEvent`, `AlarmRaisedIntegrationEvent`)
+2. **Domain event handlers** — `IIntegrationEventBuffer.Add(event)` for events that cannot be raised by aggregates (e.g. `ThresholdBreachDetectedIntegrationEvent`, `AlarmEscalationTriggeredEvent`)
+
+Both are persisted to the **IntegrationEventOutbox** table in the same transaction as business data (`IntegrationEventOutboxInterceptor` in `SavingChangesAsync`). A background `IntegrationEventOutboxPublisher` reads pending rows and publishes to Transponder and in-process handlers — survives server restarts.
 
 ### Domain Event Handlers (Selected)
 
@@ -80,8 +84,10 @@ Integration events are raised by aggregates via `ApplyEvent(IIntegrationEvent)` 
 
 | Event | Raised By | Dispatched By | In-Process Handler |
 |-------|-----------|---------------|--------------------|
-| `ObservationRecordedIntegrationEvent` | `TreatmentSession.AddObservation` | `IntegrationEventDispatcherInterceptor` (post-commit) | `ObservationRecordedIntegrationEventConsumer` |
-| `AlarmRaisedIntegrationEvent` | `Alarm.Raise` | `IntegrationEventDispatcherInterceptor` (post-commit) | — |
+| `ObservationRecordedIntegrationEvent` | `TreatmentSession.AddObservation` | Outbox → Publisher | `ObservationRecordedIntegrationEventConsumer` |
+| `ThresholdBreachDetectedIntegrationEvent` | `ThresholdBreachDetectedEventHandler` → `IIntegrationEventBuffer` | Outbox → Publisher | `ThresholdBreachDetectedIntegrationEventConsumer` |
+| `AlarmRaisedIntegrationEvent` | `Alarm.Raise` | Outbox → Publisher | — |
+| `AlarmEscalationTriggeredEvent` | `AlarmEscalationCheckHandler` → `IIntegrationEventBuffer` | Outbox → Publisher | `AlarmEscalationTriggeredEventConsumer` |
 
 ---
 
@@ -231,7 +237,7 @@ internal sealed class DeviceRegisteredProjectionHandler : IDomainEventHandler<De
 }
 ```
 
-**Events suitable for projections:** `PatientRegisteredEvent`, `DeviceRegisteredEvent`, `PrescriptionReceivedEvent`, `TreatmentSessionStartedEvent`, `AlarmRaisedEvent`, `ThresholdBreachDetectedEvent`. **Integration events:** `ObservationRecordedIntegrationEvent` and `AlarmRaisedIntegrationEvent` are raised by aggregates and dispatched post-commit by `IntegrationEventDispatcherInterceptor` to Transponder and in-process `IIntegrationEventHandler` consumers.
+**Events suitable for projections:** `PatientRegisteredEvent`, `DeviceRegisteredEvent`, `PrescriptionReceivedEvent`, `TreatmentSessionStartedEvent`, `AlarmRaisedEvent`, `ThresholdBreachDetectedEvent`. **Integration events:** Persisted to Outbox in the same transaction; `IntegrationEventOutboxPublisher` reads and publishes to Transponder and in-process `IIntegrationEventHandler` consumers. Survives server restarts.
 
 ---
 
@@ -245,23 +251,26 @@ internal sealed class DeviceRegisteredProjectionHandler : IDomainEventHandler<De
 | `AggregateRoot` | Extends `BaseEntity` with domain/integration event lists and `ApplyEvent()` | `BuildingBlocks/AggregateRoot.cs` |
 | `DomainEvent` | Base record for domain events with `EventId` and `OccurredOn` | `BuildingBlocks/DomainEvent.cs` |
 
-### Interceptors
+### Interceptors and Outbox
 
 | Class | Purpose | Location |
 |-------|---------|----------|
 | `DomainEventDispatcherInterceptor` | Collects and dispatches domain events before save (`SavingChangesAsync`) — atomic | `BuildingBlocks/Interceptors/DomainEventDispatcherInterceptor.cs` |
-| `IntegrationEventDispatcherInterceptor` | Collects and dispatches integration events after save (`SavedChangesAsync`) — eventual consistency | `BuildingBlocks/Interceptors/IntegrationEventDispatcherInterceptor.cs` |
+| `IntegrationEventOutboxInterceptor` | Persists integration events to Outbox table in `SavingChangesAsync` — same transaction as business data | `BuildingBlocks/Interceptors/IntegrationEventOutboxInterceptor.cs` |
+| `IntegrationEventOutboxPublisher<TContext>` | Background service reads pending Outbox, publishes to Transponder + in-process | `BuildingBlocks/IntegrationEventOutboxPublisher.cs` |
 
 ### Registration
 
-Services that raise integration events (Treatment, Alarm) register both interceptors:
+Services that raise integration events (Treatment, Alarm):
 
 ```csharp
+builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
-builder.Services.AddScoped<IntegrationEventDispatcherInterceptor>();
+builder.Services.AddScoped<IntegrationEventOutboxInterceptor>();
 builder.Services.AddDbContext<XxxDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(
          sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
-         sp.GetRequiredService<IntegrationEventDispatcherInterceptor>()));
+         sp.GetRequiredService<IntegrationEventOutboxInterceptor>()));
+builder.Services.AddIntegrationEventOutboxPublisher<XxxDbContext>();
 ```

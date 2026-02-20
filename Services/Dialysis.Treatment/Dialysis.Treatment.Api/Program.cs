@@ -1,3 +1,4 @@
+using BuildingBlocks;
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Logging;
@@ -70,13 +71,15 @@ builder.Services.AddIntercessor(cfg =>
 string connectionString = builder.Configuration.GetConnectionString("TreatmentDb")
                           ?? "Host=localhost;Database=dialysis_treatment;Username=postgres;Password=postgres";
 
+builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
-builder.Services.AddScoped<IntegrationEventDispatcherInterceptor>();
+builder.Services.AddScoped<IntegrationEventOutboxInterceptor>();
 builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(
          sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
-         sp.GetRequiredService<IntegrationEventDispatcherInterceptor>()));
+         sp.GetRequiredService<IntegrationEventOutboxInterceptor>()));
+builder.Services.AddIntegrationEventOutboxPublisher<TreatmentDbContext>();
 builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();

@@ -72,7 +72,7 @@ public sealed class TreatmentSession : AggregateRoot
         if (thresholdBreaches is { Count: > 0 })
         {
             foreach (ThresholdBreach breach in thresholdBreaches)
-                ApplyEvent(new ThresholdBreachDetectedEvent(Id, SessionId.Value, observation.Id, breach.ObservationCode, breach));
+                ApplyEvent(new ThresholdBreachDetectedEvent(Id, SessionId.Value, DeviceEui64, observation.Id, breach.ObservationCode, breach));
         }
 
         return observation;

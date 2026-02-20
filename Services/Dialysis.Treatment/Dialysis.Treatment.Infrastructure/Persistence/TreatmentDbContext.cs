@@ -1,4 +1,5 @@
 using BuildingBlocks.Abstractions;
+using BuildingBlocks.Persistence;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Treatment.Application.Domain;
@@ -19,11 +20,13 @@ public sealed class TreatmentDbContext : DbContext, IDbContext
 
     public DbSet<TreatmentSession> TreatmentSessions => Set<TreatmentSession>();
     public DbSet<Observation> Observations => Set<Observation>();
+    public DbSet<IntegrationEventOutboxEntity> IntegrationEventOutbox => Set<IntegrationEventOutboxEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         _ = modelBuilder.ApplyConfiguration(new TreatmentSessionConfiguration());
         _ = modelBuilder.ApplyConfiguration(new ObservationConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new IntegrationEventOutboxConfiguration());
     }
 }
 

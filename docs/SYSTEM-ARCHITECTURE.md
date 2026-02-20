@@ -671,7 +671,7 @@ Aggregates use **strongly-typed value objects** instead of primitives (see `.cur
 
 **Prescription persistence:** `Prescription.Settings` is exposed as `IReadOnlyCollection<ProfileSetting>`. The backing field `_settings` is mapped via EF Core `e.Property<List<ProfileSetting>>("_settings")` to `SettingsJson` (jsonb). Domain layer has no EF-specific types.
 
-**Event flow (eventual consistency):** Domain events are dispatched in `SavingChangesAsync` (before DB write) — handlers run atomically with the transaction (audit, FHIR notify, escalation). Integration events are dispatched in `SavedChangesAsync` (after DB write) — Transponder and in-process `IIntegrationEventHandler` consumers run post-commit. See `docs/DOMAIN-EVENTS-AND-SERVICES.md`.
+**Event flow (eventual consistency):** Domain events are dispatched in `SavingChangesAsync` (before DB write) — handlers run atomically. Integration events are persisted to `IntegrationEventOutbox` in the same transaction (`SavingChangesAsync`); `IntegrationEventOutboxPublisher` reads pending rows and publishes to Transponder — survives server restarts. See `docs/DOMAIN-EVENTS-AND-SERVICES.md`.
 
 ---
 
