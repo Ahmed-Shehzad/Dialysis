@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTenantIdToTreatmentSessions : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,6 +20,8 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                     SessionId = table.Column<string>(type: "text", nullable: false),
                     PatientMrn = table.Column<string>(type: "text", nullable: true),
                     DeviceId = table.Column<string>(type: "text", nullable: true),
+                    DeviceEui64 = table.Column<string>(type: "text", nullable: true),
+                    TherapyId = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
                     StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     EndedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -55,6 +57,7 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                     EquipmentInstanceId = table.Column<string>(type: "text", nullable: true),
                     Level = table.Column<string>(type: "text", nullable: true),
                     ObservedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    MessageTimeDriftSeconds = table.Column<double>(type: "double precision", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -70,6 +73,11 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Observations_SessionId_ObservedAtUtc",
+                table: "Observations",
+                columns: new[] { "TreatmentSessionId", "ObservedAtUtc" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Observations_TreatmentSessionId",
@@ -106,6 +114,11 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                 table: "TreatmentSessions",
                 columns: new[] { "TenantId", "SessionId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TreatmentSessions_TenantId_StartedAt",
+                table: "TreatmentSessions",
+                columns: new[] { "TenantId", "StartedAt" });
         }
 
         /// <inheritdoc />

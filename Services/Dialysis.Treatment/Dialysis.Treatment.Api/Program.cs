@@ -8,8 +8,7 @@ using BuildingBlocks.TimeSync;
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
-using Dialysis.Treatment.Application.Features.GetTreatmentSessions;
-using BuildingBlocks.Abstractions;
+using Dialysis.Treatment.Application.Features.IngestOruBatch;
 
 using Dialysis.Treatment.Infrastructure;
 using Dialysis.Treatment.Infrastructure.DeviceRegistration;
@@ -43,7 +42,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         opts.Authority = builder.Configuration["Authentication:JwtBearer:Authority"];
         opts.Audience = builder.Configuration["Authentication:JwtBearer:Audience"] ?? "api://dialysis-pdms";
         opts.RequireHttpsMetadata = builder.Configuration.GetValue("Authentication:JwtBearer:RequireHttpsMetadata", true);
-        opts.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        opts.Events = new JwtBearerEvents
         {
             OnMessageReceived = ctx =>
             {
@@ -67,10 +66,9 @@ builder.Services.AddTransponder(new Uri("transponder://treatment"), opts =>
 
 builder.Services.AddIntercessor(cfg =>
 {
-    cfg.RegisterFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
     cfg.RegisterFromAssembly(typeof(GetTreatmentSessionQuery).Assembly);
 });
-builder.Services.AddScoped<IRequestHandler<GetTreatmentSessionsQuery, GetTreatmentSessionsResponse>, GetTreatmentSessionsQueryHandler>();
+builder.Services.AddTransient<ICommandHandler<IngestOruBatchCommand, IngestOruBatchResponse>, IngestOruBatchCommandHandler>();
 
 string connectionString = builder.Configuration.GetConnectionString("TreatmentDb")
                           ?? "Host=localhost;Database=dialysis_treatment;Username=postgres;Password=postgres";
@@ -92,7 +90,7 @@ builder.Services.AddAuditRecorder();
 builder.Services.AddTenantResolution();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
+builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 builder.Services.AddHealthChecks()

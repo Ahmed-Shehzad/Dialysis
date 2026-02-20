@@ -39,7 +39,7 @@ public sealed class FhirExportController : ControllerBase
 
         Bundle bundle = await _exportService.ExportAsync(types, limit, patientId, since, Request, cancellationToken);
 
-        string json = Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(bundle);
+        string json = Hl7ToFhir.FhirJsonHelper.ToJson(bundle);
         return Content(json, "application/fhir+json");
     }
 

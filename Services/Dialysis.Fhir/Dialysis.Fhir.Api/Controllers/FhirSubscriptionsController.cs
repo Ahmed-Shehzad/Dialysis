@@ -44,7 +44,7 @@ public sealed class FhirSubscriptionsController : ControllerBase
     public IActionResult Get(string id)
     {
         if (_store.TryGet(id, out Subscription? sub))
-            return Content(Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(sub!), "application/fhir+json");
+            return Content(Hl7ToFhir.FhirJsonHelper.ToJson(sub!), "application/fhir+json");
 
         return NotFound();
     }

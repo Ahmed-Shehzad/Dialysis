@@ -29,7 +29,7 @@ public sealed class Prescription : AggregateRoot
     {
         return new Prescription
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantId.Default : new TenantId(tenantId),
             OrderId = orderId,
             PatientMrn = patientMrn,
             Modality = modality,

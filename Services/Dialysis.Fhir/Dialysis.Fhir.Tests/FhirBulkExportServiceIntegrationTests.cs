@@ -1,3 +1,6 @@
+using System.Net;
+using System.Net.Http;
+
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Api;
@@ -14,7 +17,7 @@ using Task = System.Threading.Tasks.Task;
 namespace Dialysis.Fhir.Tests;
 
 /// <summary>
-/// Integration-style tests for FhirBulkExportService using a mock HttpClient.
+/// Integration-style tests for FhirBulkExportService using a mock IFhirExportGatewayApi.
 /// </summary>
 public sealed class FhirBulkExportServiceIntegrationTests
 {
@@ -24,15 +27,9 @@ public sealed class FhirBulkExportServiceIntegrationTests
         string patientJson = """
             {"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1","identifier":[{"value":"MRN001"}]}}]}
             """;
-        var handler = new MockHttpMessageHandler(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["api/patients/fhir?limit=100"] = patientJson,
-        });
-        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-
+        var api = new MockFhirExportGatewayApi().Patients(patientJson);
         var tenant = new TenantContext { TenantId = "default" };
-        var service = new FhirBulkExportService(client, tenant);
+        var service = new FhirBulkExportService(api, tenant);
 
         Bundle bundle = await service.ExportAsync(["Patient"], 100, null, null, null);
 
@@ -48,16 +45,9 @@ public sealed class FhirBulkExportServiceIntegrationTests
     {
         string patientJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""";
         string deviceJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Device","id":"d1"}}]}""";
-        var handler = new MockHttpMessageHandler(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["api/patients/fhir?limit=50"] = patientJson,
-            ["api/devices/fhir?limit=50"] = deviceJson,
-        });
-        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-
+        var api = new MockFhirExportGatewayApi().Patients(patientJson).Devices(deviceJson);
         var tenant = new TenantContext { TenantId = "default" };
-        var service = new FhirBulkExportService(client, tenant);
+        var service = new FhirBulkExportService(api, tenant);
 
         Bundle bundle = await service.ExportAsync(["Patient", "Device"], 50, null, null, null);
 
@@ -75,15 +65,9 @@ public sealed class FhirBulkExportServiceIntegrationTests
                 {"resource":{"resourceType":"Observation","id":"obs1","status":"final","code":{"coding":[{"system":"urn:iso:std:iso:11073:10101","code":"150456","display":"Blood pump flow"}]}}}
             ]}
             """;
-        var handler = new MockHttpMessageHandler(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["api/treatment-sessions/fhir?limit=100"] = treatmentJson,
-        });
-        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-
+        var api = new MockFhirExportGatewayApi().TreatmentSessions(treatmentJson);
         var tenant = new TenantContext { TenantId = "default" };
-        var service = new FhirBulkExportService(client, tenant);
+        var service = new FhirBulkExportService(api, tenant);
 
         Bundle bundle = await service.ExportAsync(["Procedure", "Observation"], 100, null, null, null);
 
@@ -96,15 +80,9 @@ public sealed class FhirBulkExportServiceIntegrationTests
     public async Task ExportAsync_WhenRequestedTypesEmpty_DefaultsToPatientAsync()
     {
         string patientJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""";
-        var handler = new MockHttpMessageHandler(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["api/patients/fhir?limit=1000"] = patientJson,
-        });
-        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-
+        var api = new MockFhirExportGatewayApi().Patients(patientJson);
         var tenant = new TenantContext { TenantId = "default" };
-        var service = new FhirBulkExportService(client, tenant);
+        var service = new FhirBulkExportService(api, tenant);
 
         Bundle bundle = await service.ExportAsync([], 1000, null, null, null);
 
@@ -117,16 +95,9 @@ public sealed class FhirBulkExportServiceIntegrationTests
     {
         string patientJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1","identifier":[{"value":"MRN001"}]}}]}""";
         string treatmentJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Procedure","id":"proc-1","status":"completed","subject":{"reference":"Patient/MRN001"}}}]}""";
-        var handler = new MockHttpMessageHandler(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["api/patients/fhir?limit=100&identifier=MRN001"] = patientJson,
-            ["api/treatment-sessions/fhir?limit=100&subject=MRN001&patient=MRN001"] = treatmentJson,
-        });
-        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-
+        var api = new MockFhirExportGatewayApi().Patients(patientJson).TreatmentSessions(treatmentJson);
         var tenant = new TenantContext { TenantId = "default" };
-        var service = new FhirBulkExportService(client, tenant);
+        var service = new FhirBulkExportService(api, tenant);
 
         Bundle bundle = await service.ExportAsync(
             ["Patient", "Procedure"], 100, "MRN001", null, null);
@@ -139,15 +110,11 @@ public sealed class FhirBulkExportServiceIntegrationTests
     [Fact]
     public async Task ExportAsync_WhenBackendReturns404_OmitsThatTypeFromBundleAsync()
     {
-        var handler = new MockHttpMessageHandler(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["api/patients/fhir?limit=100"] = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""",
-        });
-        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-
+        var api = new MockFhirExportGatewayApi()
+            .Patients("""{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""")
+            .Devices(status: HttpStatusCode.NotFound);
         var tenant = new TenantContext { TenantId = "default" };
-        var service = new FhirBulkExportService(client, tenant);
+        var service = new FhirBulkExportService(api, tenant);
 
         Bundle bundle = await service.ExportAsync(["Patient", "Device"], 100, null, null, null);
 
@@ -155,22 +122,66 @@ public sealed class FhirBulkExportServiceIntegrationTests
         bundle.Entry[0].Resource.ShouldBeOfType<Patient>();
     }
 
-    private sealed class MockHttpMessageHandler : HttpMessageHandler
+#pragma warning disable IDE0044
+    private sealed class MockFhirExportGatewayApi : IFhirExportGatewayApi
     {
-        private readonly IReadOnlyDictionary<string, string> _responses;
+        private string _patients = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _patientsStatus = HttpStatusCode.OK;
+        private string _devices = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _devicesStatus = HttpStatusCode.OK;
+        private string _prescriptions = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _prescriptionsStatus = HttpStatusCode.OK;
+        private string _treatmentSessions = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _treatmentSessionsStatus = HttpStatusCode.OK;
+        private string _alarms = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _alarmsStatus = HttpStatusCode.OK;
+        private string _auditEvents = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _auditEventsStatus = HttpStatusCode.OK;
+#pragma warning restore IDE0044
 
-        public MockHttpMessageHandler(IReadOnlyDictionary<string, string> responses) => _responses = responses;
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public MockFhirExportGatewayApi Patients(string body, HttpStatusCode status = HttpStatusCode.OK)
         {
-            string path = (request.RequestUri?.PathAndQuery ?? "").TrimStart('/');
-            if (_responses.TryGetValue(path, out string? json))
-                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
-                {
-                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/fhir+json"),
-                });
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
+            _patients = body;
+            _patientsStatus = status;
+            return this;
         }
-    }
 
+        public MockFhirExportGatewayApi Devices(string body = """{"resourceType":"Bundle","type":"collection","entry":[]}""", HttpStatusCode status = HttpStatusCode.OK)
+        {
+            _devices = body;
+            _devicesStatus = status;
+            return this;
+        }
+
+        public MockFhirExportGatewayApi TreatmentSessions(string body, HttpStatusCode status = HttpStatusCode.OK)
+        {
+            _treatmentSessions = body;
+            _treatmentSessionsStatus = status;
+            return this;
+        }
+
+        public Task<HttpResponseMessage> GetPatientsFhirAsync(int limit, string? identifier, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Response(_patients, _patientsStatus));
+
+        public Task<HttpResponseMessage> GetDevicesFhirAsync(int limit, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Response(_devices, _devicesStatus));
+
+        public Task<HttpResponseMessage> GetPrescriptionsFhirAsync(int limit, string? subject, string? patient, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Response(_prescriptions, _prescriptionsStatus));
+
+        public Task<HttpResponseMessage> GetTreatmentSessionsFhirAsync(int limit, string? subject, string? patient, string? dateFrom, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Response(_treatmentSessions, _treatmentSessionsStatus));
+
+        public Task<HttpResponseMessage> GetAlarmsFhirAsync(int limit, string? from, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Response(_alarms, _alarmsStatus));
+
+        public Task<HttpResponseMessage> GetAuditEventsAsync(int count, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Response(_auditEvents, _auditEventsStatus));
+
+        private static HttpResponseMessage Response(string json, HttpStatusCode status) =>
+            new(status)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/fhir+json"),
+            };
+    }
 }

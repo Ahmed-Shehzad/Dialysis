@@ -56,7 +56,7 @@ public sealed class SubscriptionDispatcher
         return subscriptions.Where(s => MatchesCriteria(s.Criteria, resourceType)).ToList();
     }
 
-    private async System.Threading.Tasks.Task<Bundle?> FetchResourceBundleAsync(
+    private async Task<Bundle?> FetchResourceBundleAsync(
         string resourceUrl,
         string? tenantId,
         string? authorizationHeader,
@@ -78,7 +78,7 @@ public sealed class SubscriptionDispatcher
         }
 
         string bundleJson = await response.Content.ReadAsStringAsync(cancellationToken);
-        return Dialysis.Hl7ToFhir.FhirJsonHelper.FromJson<Bundle>(bundleJson);
+        return Hl7ToFhir.FhirJsonHelper.FromJson<Bundle>(bundleJson);
     }
 
     private static string BuildNotificationPayload(Bundle sourceBundle, string resourceType)
@@ -93,7 +93,7 @@ public sealed class SubscriptionDispatcher
             Entry = filtered.Count > 0 ? filtered : sourceBundle.Entry
         };
 
-        return Dialysis.Hl7ToFhir.FhirJsonHelper.ToJson(notificationBundle);
+        return Hl7ToFhir.FhirJsonHelper.ToJson(notificationBundle);
     }
 
     private async System.Threading.Tasks.Task PostToSubscribersAsync(

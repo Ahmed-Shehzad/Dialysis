@@ -24,8 +24,10 @@ alwaysApply: false
 - Workers/consumers that receive external messages deserialize and call `IPublisher.PublishAsync`; business logic lives in handlers
 
 ### Registration
-- Each service project MUST call `builder.Services.AddIntercessor(cfg => cfg.RegisterFromAssembly(Assembly.GetExecutingAssembly()))`
+- Each service project MUST call `builder.Services.AddIntercessor(cfg => cfg.RegisterFromAssembly(assembly))`
+- Use the assembly that contains handlers: typically the Application project (e.g. `typeof(GetXxxQuery).Assembly` or `typeof(XxxCommand).Assembly`). When handlers live in the Api project, use `Assembly.GetExecutingAssembly()`.
 - Handlers discovered via Scrutor assembly scan; no manual handler registration
+- When assembly scan fails in containerized deployments (e.g. Docker), add explicit `AddTransient<ICommandHandler<TCommand, TResponse>, THandler>()` for affected handlers
 
 ### Verifier (Validation)
 - Every command, query, and integration event MUST have an `AbstractValidator<T>` implementing `IValidator<T>`

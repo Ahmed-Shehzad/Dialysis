@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.Alarm.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AlarmDbContext))]
-    [Migration("20260218203903_AddObx8InterpretationCodesToAlarms")]
-    partial class AddObx8InterpretationCodesToAlarms
+    [Migration("20260219231138_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -65,6 +65,9 @@ namespace Dialysis.Alarm.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<double?>("MessageTimeDriftSeconds")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -73,6 +76,10 @@ namespace Dialysis.Alarm.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("SessionId")
                         .HasColumnType("text");
+
+                    b.Property<string>("SourceCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("SourceLimits")
                         .HasColumnType("text");

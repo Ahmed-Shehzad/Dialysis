@@ -15,12 +15,12 @@ public static class PatientTestData
 
     public static string Mrn() => Faker.Random.AlphaNumeric(8).ToUpperInvariant();
 
-    public static Dialysis.Patient.Application.Domain.ValueObjects.Person Person() =>
-        new Dialysis.Patient.Application.Domain.ValueObjects.Person(Faker.Name.FirstName(), Faker.Name.LastName());
+    public static Application.Domain.ValueObjects.Person Person() =>
+        new Application.Domain.ValueObjects.Person(Faker.Name.FirstName(), Faker.Name.LastName());
 
     public static DateOnly DateOfBirth() => DateOnly.FromDateTime(Faker.Date.PastOffset(60).Date);
 
-    public static Gender Gender() => Faker.PickRandom(Dialysis.Patient.Application.Domain.ValueObjects.Gender.Male, Dialysis.Patient.Application.Domain.ValueObjects.Gender.Female);
+    public static Gender Gender() => Faker.PickRandom(Application.Domain.ValueObjects.Gender.Male, Application.Domain.ValueObjects.Gender.Female);
 
     /// <summary>Builds QBP^Q22 message with given MRN.</summary>
     public static string QbpQ22ByMrn(string mrn) =>

@@ -1,5 +1,6 @@
 using BuildingBlocks.Tenancy;
 
+using Dialysis.Cds.Api;
 using Dialysis.Hl7ToFhir;
 
 using Hl7.Fhir.Model;
@@ -15,16 +16,18 @@ namespace Dialysis.Cds.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/cds")]
-[Authorize(Policy = "CdsRead")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = "CdsRead")]
 public sealed class HypotensionRiskController : ControllerBase
 {
     private readonly HypotensionRiskService _hypotension;
-    private readonly IHttpClientFactory _http;
+    private readonly ICdsGatewayApi _api;
+    private readonly ITenantContext _tenant;
 
-    public HypotensionRiskController(HypotensionRiskService hypotension, IHttpClientFactory http)
+    public HypotensionRiskController(HypotensionRiskService hypotension, ICdsGatewayApi api, ITenantContext tenant)
     {
         _hypotension = hypotension;
-        _http = http;
+        _api = api;
+        _tenant = tenant;
     }
 
     /// <summary>
@@ -38,18 +41,18 @@ public sealed class HypotensionRiskController : ControllerBase
         [FromQuery] string sessionId,
         CancellationToken cancellationToken = default)
     {
-        string baseUrl = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Cds:BaseUrl"] ?? "http://localhost:5000";
-        string tenantId = HttpContext.RequestServices.GetRequiredService<ITenantContext>().TenantId;
-        using var sessionRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/treatment-sessions/{sessionId}");
-        if (Request.Headers.Authorization.Count > 0)
-            sessionRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
-        if (!string.IsNullOrEmpty(tenantId))
-            sessionRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-        using HttpResponseMessage sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken);
-        sessionResponse.EnsureSuccessStatusCode();
-        TreatmentSessionResponse? session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
-        if (session is null)
+        string? auth = Request.Headers.Authorization.Count > 0 ? Request.Headers.Authorization.ToString() : null;
+        string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
+
+        TreatmentSessionResponse session;
+        try
+        {
+            session = await _api.GetTreatmentSessionAsync(sessionId, auth, tenantId, cancellationToken);
+        }
+        catch (Refit.ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
             return NotFound();
+        }
 
         var observations = session.Observations.Select(o => new ObservationDto(o.Code, o.Value, o.Unit)).ToList();
         DetectedIssue? issue = _hypotension.Evaluate(sessionId, session.PatientMrn, observations);

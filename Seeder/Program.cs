@@ -1,6 +1,8 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 
+using Dialysis.Seeder;
+
+using Refit;
 
 var count = 300;
 var gateway = "http://localhost:5001";
@@ -18,12 +20,12 @@ while (idx < args.Length)
 
 Console.WriteLine($"Seeding {count} records to {gateway} (Prescription, Treatment, Alarm)...");
 
-using var client = new HttpClient
-{
-    BaseAddress = new Uri(gateway),
-    DefaultRequestHeaders = { { "X-Tenant-Id", "default" } }
-};
-_ = client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
+var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+using var httpClient = new HttpClient { BaseAddress = new Uri(gateway.TrimEnd('/') + "/") };
+httpClient.DefaultRequestHeaders.Add("X-Tenant-Id", "default");
+httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+
+IGatewaySeederApi api = RestService.For<IGatewaySeederApi>(httpClient, new RefitSettings { ContentSerializer = new SystemTextJsonContentSerializer(jsonOptions) });
 
 var faker = new Bogus.Faker();
 faker.Random = new Bogus.Randomizer(42);
@@ -93,6 +95,7 @@ string BuildBatch(IEnumerable<string> messages)
 
 const int BatchSize = 25;
 int batchCount = (count + BatchSize - 1) / BatchSize;
+const string TenantId = "default";
 
 for (int b = 0; b < batchCount; b++)
 {
@@ -106,8 +109,8 @@ for (int b = 0; b < batchCount; b++)
         try
         {
             string msgId = $"MSG{faker.Random.Int(1000, 99999)}";
-            var rspReq = new { RawHl7Message = RspK22(mrn, $"ORD{faker.Random.AlphaNumeric(6).ToUpperInvariant()}", msgId), ValidationContext = (object?)null };
-            var r = await client.PostAsJsonAsync("/api/prescriptions/hl7/rsp-k22", rspReq, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var rspReq = new IngestRspK22Request(RspK22(mrn, $"ORD{faker.Random.AlphaNumeric(6).ToUpperInvariant()}", msgId), null);
+            HttpResponseMessage r = await api.PostRspK22Async(rspReq, TenantId);
             if (r.IsSuccessStatusCode) prescriptions++;
             else if (!loggedRsp) { loggedRsp = true; string body = await r.Content.ReadAsStringAsync(); Console.Error.WriteLine($"  RSP^K22: {(int)r.StatusCode} {(body.Length > 200 ? body[..200] + "..." : body)}"); }
         }
@@ -127,8 +130,8 @@ for (int b = 0; b < batchCount; b++)
 
     try
     {
-        var batchReq = new { RawHl7Batch = BuildBatch(oruMessages) };
-        var r = await client.PostAsJsonAsync("/api/hl7/oru/batch", batchReq, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var batchReq = new IngestOruBatchRequest(BuildBatch(oruMessages));
+        HttpResponseMessage r = await api.PostOruBatchAsync(batchReq, TenantId);
         if (r.IsSuccessStatusCode) treatments += take;
         else if (!loggedOru) { loggedOru = true; string body = await r.Content.ReadAsStringAsync(); Console.Error.WriteLine($"  ORU batch: {(int)r.StatusCode} {(body.Length > 200 ? body[..200] + "..." : body)}"); }
     }
@@ -142,8 +145,8 @@ for (int b = 0; b < batchCount; b++)
             string mrn = batchMrns[i];
             string sid = batchSessions[i];
             var ts = baseTime.AddHours(i * 2).AddMinutes(faker.Random.Int(5, 90));
-            var alarmReq = new { RawHl7Message = OruR40(mrn, sid, $"A{start + i:D4}", ts) };
-            var r = await client.PostAsJsonAsync("/api/hl7/alarm", alarmReq, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var alarmReq = new IngestAlarmRequest(OruR40(mrn, sid, $"A{start + i:D4}", ts));
+            HttpResponseMessage r = await api.PostAlarmAsync(alarmReq, TenantId);
             if (r.IsSuccessStatusCode) alarms++;
             else if (!loggedAlarm) { loggedAlarm = true; string body = await r.Content.ReadAsStringAsync(); Console.Error.WriteLine($"  Alarm: {(int)r.StatusCode} {(body.Length > 200 ? body[..200] + "..." : body)}"); }
         }
@@ -156,4 +159,4 @@ for (int b = 0; b < batchCount; b++)
 
 Console.WriteLine($"\nDone. Seeded {prescriptions} prescriptions, {treatments} treatments, {alarms} alarms.");
 if (prescriptions == 0 && treatments == 0 && alarms == 0)
-    Console.Error.WriteLine("Tip: Ensure 'docker compose up -d' and migrations are applied. Check API logs for 500 errors.");
+    Console.Error.WriteLine("Tip: Run 'docker compose up -d --build prescription-api treatment-api alarm-api gateway' to rebuild. For 500 errors: docker compose logs prescription-api treatment-api alarm-api");

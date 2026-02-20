@@ -104,7 +104,7 @@ public sealed class PostgresSubscriptionStoreTests
         store2.TryGet(id, out Subscription? _).ShouldBeFalse();
     }
 
-    private async System.Threading.Tasks.Task<FhirDbContext> CreateDbContextAsync()
+    private async Task<FhirDbContext> CreateDbContextAsync()
     {
         DbContextOptions<FhirDbContext> options = new DbContextOptionsBuilder<FhirDbContext>()
             .UseNpgsql(_fixture.ConnectionString)

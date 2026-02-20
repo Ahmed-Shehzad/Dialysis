@@ -13,7 +13,7 @@ namespace Dialysis.Fhir.Api;
 /// </summary>
 public sealed class FhirBulkExportService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IFhirExportGatewayApi _api;
     private readonly ITenantContext _tenant;
 
     private static readonly IReadOnlyDictionary<string, string> TypeToPath = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -28,9 +28,9 @@ public sealed class FhirBulkExportService
         ["AuditEvent"] = "api/audit-events",
     };
 
-    public FhirBulkExportService(HttpClient httpClient, ITenantContext tenant)
+    public FhirBulkExportService(IFhirExportGatewayApi api, ITenantContext tenant)
     {
-        _httpClient = httpClient;
+        _api = api;
         _tenant = tenant;
     }
 
@@ -39,16 +39,25 @@ public sealed class FhirBulkExportService
         int limitPerType,
         string? patientId,
         DateTimeOffset? since,
-        Microsoft.AspNetCore.Http.HttpRequest? originalRequest,
+        HttpRequest? originalRequest,
         CancellationToken cancellationToken = default)
     {
         HashSet<string> requestedTypes = NormalizeRequestedTypes(types);
         HashSet<string> pathsToFetch = ResolvePaths(requestedTypes);
         var bundle = new Bundle { Type = Bundle.BundleType.Collection, Entry = [] };
 
+        string? auth = null;
+        if (originalRequest is { } req)
+        {
+            StringValues authHeader = req.Headers["Authorization"];
+            if (!StringValues.IsNullOrEmpty(authHeader))
+                auth = authHeader.ToString();
+        }
+        string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
+
         foreach (string path in pathsToFetch)
         {
-            Bundle? sourceBundle = await FetchBundleAsync(path, limitPerType, patientId, since, originalRequest, cancellationToken);
+            Bundle? sourceBundle = await FetchBundleAsync(path, limitPerType, patientId, since, auth, tenantId, cancellationToken);
             MergeEntries(bundle, sourceBundle, requestedTypes);
         }
 
@@ -78,54 +87,40 @@ public sealed class FhirBulkExportService
         int limit,
         string? patientId,
         DateTimeOffset? since,
-        Microsoft.AspNetCore.Http.HttpRequest? originalRequest,
+        string? auth,
+        string? tenantId,
         CancellationToken cancellationToken)
     {
-        string queryString = BuildQueryString(path, limit, patientId, since);
-        using var request = new HttpRequestMessage(HttpMethod.Get, path + queryString);
-        StringValues authHeader = originalRequest?.Headers["Authorization"] ?? default;
-        if (!StringValues.IsNullOrEmpty(authHeader))
-            _ = request.Headers.TryAddWithoutValidation("Authorization", authHeader.ToString());
-        if (!string.IsNullOrEmpty(_tenant.TenantId))
-            _ = request.Headers.TryAddWithoutValidation("X-Tenant-Id", _tenant.TenantId);
-
-        using HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return null;
-        string json = await response.Content.ReadAsStringAsync(cancellationToken);
-        return FhirJsonHelper.FromJson<Bundle>(json);
-    }
-
-    private static string BuildQueryString(string path, int limit, string? patientId, DateTimeOffset? since)
-    {
-        var query = path.Contains("audit-events", StringComparison.OrdinalIgnoreCase)
-            ? new List<string> { "count=" + Math.Min(limit, 500) }
-            : new List<string> { "limit=" + limit };
-
-        if (path.Contains("patients", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(patientId))
-            query.Add("identifier=" + Uri.EscapeDataString(patientId));
-
-        if (path.Contains("treatment-sessions", StringComparison.OrdinalIgnoreCase))
+        HttpResponseMessage response = path switch
         {
-            if (!string.IsNullOrEmpty(patientId))
-            {
-                query.Add("subject=" + Uri.EscapeDataString(patientId));
-                query.Add("patient=" + Uri.EscapeDataString(patientId));
-            }
-            if (since.HasValue)
-                query.Add("dateFrom=" + Uri.EscapeDataString(since.Value.ToString("o")));
-        }
+            _ when path.Contains("patients", StringComparison.OrdinalIgnoreCase) => await _api.GetPatientsFhirAsync(
+                limit, patientId, auth, tenantId, cancellationToken),
+            _ when path.Contains("devices", StringComparison.OrdinalIgnoreCase) => await _api.GetDevicesFhirAsync(
+                limit, auth, tenantId, cancellationToken),
+            _ when path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) => await _api.GetPrescriptionsFhirAsync(
+                limit, patientId, patientId, auth, tenantId, cancellationToken),
+            _ when path.Contains("treatment-sessions", StringComparison.OrdinalIgnoreCase) => await _api.GetTreatmentSessionsFhirAsync(
+                limit,
+                patientId,
+                patientId,
+                since?.ToString("o"),
+                auth,
+                tenantId,
+                cancellationToken),
+            _ when path.Contains("alarms", StringComparison.OrdinalIgnoreCase) => await _api.GetAlarmsFhirAsync(
+                limit, since?.ToString("o"), auth, tenantId, cancellationToken),
+            _ when path.Contains("audit-events", StringComparison.OrdinalIgnoreCase) => await _api.GetAuditEventsAsync(
+                Math.Min(limit, 500), auth, tenantId, cancellationToken),
+            _ => throw new InvalidOperationException($"Unknown path: {path}"),
+        };
 
-        if (path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(patientId))
+        using (response)
         {
-            query.Add("subject=" + Uri.EscapeDataString(patientId));
-            query.Add("patient=" + Uri.EscapeDataString(patientId));
+            if (!response.IsSuccessStatusCode)
+                return null;
+            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            return FhirJsonHelper.FromJson<Bundle>(json);
         }
-
-        if (path.Contains("alarms", StringComparison.OrdinalIgnoreCase) && since.HasValue)
-            query.Add("from=" + Uri.EscapeDataString(since.Value.ToString("o")));
-
-        return "?" + string.Join("&", query);
     }
 
     private static void MergeEntries(Bundle target, Bundle? source, HashSet<string> requestedTypes)

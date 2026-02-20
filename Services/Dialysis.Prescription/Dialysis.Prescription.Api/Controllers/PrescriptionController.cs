@@ -47,9 +47,9 @@ public sealed class PrescriptionController : ControllerBase
             AuditAction.Read, "Prescription", null, User.Identity?.Name,
             AuditOutcome.Success, $"FHIR prescriptions ({response.Prescriptions.Count})", _tenant.TenantId), cancellationToken);
 
-        var bundle = new Hl7.Fhir.Model.Bundle
+        var bundle = new Bundle
         {
-            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
+            Type = Bundle.BundleType.Collection,
             Entry = response.Prescriptions.Select(p =>
             {
                 var input = new PrescriptionMappingInput(
@@ -63,7 +63,7 @@ public sealed class PrescriptionController : ControllerBase
                     p.ReceivedAt);
                 ServiceRequest fhir = PrescriptionMapper.ToFhirServiceRequest(input);
                 fhir.Id = p.OrderId;
-                return new Hl7.Fhir.Model.Bundle.EntryComponent
+                return new Bundle.EntryComponent
                 {
                     FullUrl = $"urn:uuid:prescription-{p.OrderId}",
                     Resource = fhir
@@ -112,7 +112,7 @@ public sealed class PrescriptionController : ControllerBase
             response.UfRateMlH,
             response.UfTargetVolumeMl,
             null);
-        Hl7.Fhir.Model.ServiceRequest fhirServiceRequest = PrescriptionMapper.ToFhirServiceRequest(input);
+        ServiceRequest fhirServiceRequest = PrescriptionMapper.ToFhirServiceRequest(input);
         fhirServiceRequest.Id = response.OrderId;
         string json = FhirJsonHelper.ToJson(fhirServiceRequest);
         return Content(json, "application/fhir+json");

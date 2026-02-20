@@ -1,5 +1,3 @@
-using System.Net.Http.Json;
-
 using BuildingBlocks.Abstractions;
 
 using Microsoft.Extensions.Configuration;
@@ -9,16 +7,16 @@ namespace Dialysis.Alarm.Infrastructure.FhirSubscription;
 
 public sealed class FhirSubscriptionNotifyClient : IFhirSubscriptionNotifyClient
 {
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IFhirSubscriptionNotifyApi _api;
     private readonly IConfiguration _config;
     private readonly ILogger<FhirSubscriptionNotifyClient> _logger;
 
     public FhirSubscriptionNotifyClient(
-        IHttpClientFactory httpClientFactory,
+        IFhirSubscriptionNotifyApi api,
         IConfiguration config,
         ILogger<FhirSubscriptionNotifyClient> logger)
     {
-        _httpClientFactory = httpClientFactory;
+        _api = api;
         _config = config;
         _logger = logger;
     }
@@ -34,22 +32,17 @@ public sealed class FhirSubscriptionNotifyClient : IFhirSubscriptionNotifyClient
         if (string.IsNullOrEmpty(baseUrl))
             return;
 
-        string notifyUrl = baseUrl.TrimEnd('/') + "/api/fhir/subscription-notify";
         string? apiKey = _config["FhirSubscription:NotifyApiKey"];
 
         try
         {
-            using var client = _httpClientFactory.CreateClient();
-            using var request = new HttpRequestMessage(HttpMethod.Post, notifyUrl);
-            request.Content = JsonContent.Create(new { resourceType, resourceUrl, tenantId });
-            if (!string.IsNullOrEmpty(apiKey))
-                _ = request.Headers.TryAddWithoutValidation("X-Subscription-Notify-ApiKey", apiKey);
-            if (!string.IsNullOrEmpty(authorization))
-                _ = request.Headers.TryAddWithoutValidation("Authorization", authorization);
-            if (!string.IsNullOrEmpty(tenantId))
-                _ = request.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
+            HttpResponseMessage response = await _api.NotifyAsync(
+                new SubscriptionNotifyRequest(resourceType, resourceUrl, tenantId),
+                apiKey,
+                authorization,
+                tenantId,
+                cancellationToken);
 
-            HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 _logger.LogWarning("FHIR subscription notify failed: {StatusCode}", response.StatusCode);
         }

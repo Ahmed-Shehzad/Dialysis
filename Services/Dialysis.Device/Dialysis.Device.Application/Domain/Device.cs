@@ -24,7 +24,7 @@ public sealed class Device : AggregateRoot
     {
         var device = new Device
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantId.Default : new TenantId(tenantId),
             DeviceEui64 = deviceEui64,
             Manufacturer = manufacturer?.Trim(),
             Model = model?.Trim(),

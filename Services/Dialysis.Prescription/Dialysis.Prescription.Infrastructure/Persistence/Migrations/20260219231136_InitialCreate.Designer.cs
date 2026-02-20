@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.Prescription.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PrescriptionDbContext))]
-    [Migration("20260218121615_AddTenantIdToPrescriptions")]
-    partial class AddTenantIdToPrescriptions
+    [Migration("20260219231136_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -63,10 +63,6 @@ namespace Dialysis.Prescription.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ReceivedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("SettingsJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("SettingsJson");
-
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -76,6 +72,11 @@ namespace Dialysis.Prescription.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("_settings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("SettingsJson");
 
                     b.HasKey("Id");
 

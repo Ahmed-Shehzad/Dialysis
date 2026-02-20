@@ -3,18 +3,23 @@ using Dialysis.Alarm.Application.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using Refit;
+
 namespace Dialysis.Alarm.Infrastructure.DeviceRegistration;
 
 public static class DeviceRegistrationServiceCollectionExtensions
 {
-    public static IHttpClientBuilder AddDeviceRegistrationClient(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDeviceRegistrationClient(this IServiceCollection services, IConfiguration configuration)
     {
         _ = services.Configure<DeviceApiOptions>(configuration.GetSection(DeviceApiOptions.SectionName));
 
-        return services.AddHttpClient<IDeviceRegistrationClient, DeviceRegistrationClient>((sp, client) =>
-        {
-            string baseUrl = configuration["DeviceApi:BaseUrl"] ?? "http://localhost:5054";
-            client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-        });
+        _ = services.AddRefitClient<IDeviceApi>()
+            .ConfigureHttpClient((_, client) =>
+            {
+                string baseUrl = configuration["DeviceApi:BaseUrl"] ?? "http://localhost:5054";
+                client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+            });
+
+        return services.AddScoped<IDeviceRegistrationClient, DeviceRegistrationClient>();
     }
 }

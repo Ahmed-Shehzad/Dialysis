@@ -15,6 +15,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Refit" />
+        <PackageReference Include="Refit.HttpClientFactory" />
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Settings.Configuration" />

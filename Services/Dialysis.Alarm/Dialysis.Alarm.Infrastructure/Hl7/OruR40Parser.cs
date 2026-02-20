@@ -75,7 +75,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
 
             DateTimeOffset occurredAt = GetEffectiveTime(obx1, messageTimestamp);
             DeviceId? deviceIdVo = string.IsNullOrWhiteSpace(deviceId) ? null : (DeviceId?)new DeviceId(deviceId);
-            BuildingBlocks.ValueObjects.SessionId? sessionIdVo = string.IsNullOrWhiteSpace(sessionId) ? null : new BuildingBlocks.ValueObjects.SessionId(sessionId);
+            SessionId? sessionIdVo = string.IsNullOrWhiteSpace(sessionId) ? null : new SessionId(sessionId);
 
             AlarmCreateParams finalParams = createParams with { OccurredAt = occurredAt, DeviceId = deviceIdVo, SessionId = sessionIdVo };
             alarms.Add(AlarmInfo.Create(finalParams));

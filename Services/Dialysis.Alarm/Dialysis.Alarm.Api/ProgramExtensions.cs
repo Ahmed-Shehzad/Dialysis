@@ -8,7 +8,7 @@ namespace Dialysis.Alarm.Api;
 
 internal static class ProgramExtensions
 {
-    public static void AddAlarmJwtAuthentication(this IServiceCollection services, Microsoft.Extensions.Configuration.IConfiguration configuration)
+    public static void AddAlarmJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         _ = services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(opts =>
@@ -29,7 +29,7 @@ internal static class ProgramExtensions
             });
     }
 
-    public static void UseAlarmExceptionHandler(this Microsoft.AspNetCore.Builder.IApplicationBuilder app)
+    public static void UseAlarmExceptionHandler(this IApplicationBuilder app)
     {
         _ = app.UseExceptionHandler(exceptionHandlerApp =>
         {

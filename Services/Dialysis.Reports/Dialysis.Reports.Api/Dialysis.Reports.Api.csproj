@@ -11,11 +11,13 @@
         <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Serilog.AspNetCore" />
-        <PackageReference Include="Serilog.Settings.Configuration" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Settings.Configuration" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Refit" />
+    <PackageReference Include="Refit.HttpClientFactory" />
+  </ItemGroup>
 
 </Project>

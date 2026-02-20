@@ -97,36 +97,54 @@ public class IntercessorBuilder
 
         var distinctAssemblies = _assemblies.Distinct().ToList();
 
+        // Pre-warm assemblies to surface ReflectionTypeLoadException (e.g. in Docker) before Scrutor scan.
+        foreach (Assembly assembly in distinctAssemblies)
+        {
+            if (assembly.IsDynamic) continue;
+            try
+            {
+                _ = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException reflectionEx)
+            {
+                string loaderErrors = string.Join("; ", reflectionEx.LoaderExceptions?.Select(e => e?.Message) ?? Enumerable.Empty<string>());
+                throw new InvalidOperationException(
+                    $"Failed to load types from assembly {assembly.FullName}. Loader errors: {loaderErrors}",
+                    reflectionEx);
+            }
+        }
+
+        // publicOnly: false so internal handlers (and all handler visibility) are discovered in Docker/published apps.
         _ = _services.Scan(scan => scan
             .FromAssemblies(distinctAssemblies)
 
             // Register IQueryHandler<,>
-            .AddClasses(classes => classes.AssignableToAny(typeof(IQueryHandler<,>)))
+            .AddClasses(classes => classes.AssignableToAny(typeof(IQueryHandler<,>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithTransientLifetime()
 
             // Register ICommandHandler<>
-            .AddClasses(classes => classes.AssignableToAny(typeof(ICommandHandler<>)))
+            .AddClasses(classes => classes.AssignableToAny(typeof(ICommandHandler<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithTransientLifetime()
 
             // Register ICommandHandler<,>
-            .AddClasses(classes => classes.AssignableToAny(typeof(ICommandHandler<,>)))
+            .AddClasses(classes => classes.AssignableToAny(typeof(ICommandHandler<,>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithTransientLifetime()
 
             // Register INotificationHandler<>
-            .AddClasses(classes => classes.AssignableToAny(typeof(INotificationHandler<>)))
+            .AddClasses(classes => classes.AssignableToAny(typeof(INotificationHandler<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithTransientLifetime()
 
             // Register IPipelineBehavior<>
-            .AddClasses(classes => classes.AssignableToAny(typeof(IPipelineBehavior<>)))
+            .AddClasses(classes => classes.AssignableToAny(typeof(IPipelineBehavior<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithTransientLifetime()
 
             // Register IPipelineBehavior<,>
-            .AddClasses(classes => classes.AssignableToAny(typeof(IPipelineBehavior<,>)))
+            .AddClasses(classes => classes.AssignableToAny(typeof(IPipelineBehavior<,>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithTransientLifetime()
         );

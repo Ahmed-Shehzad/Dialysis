@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TreatmentDbContext))]
-    [Migration("20260218201613_AddTimeSeriesObservationIndex")]
-    partial class AddTimeSeriesObservationIndex
+    [Migration("20260219231137_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -51,6 +51,9 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Level")
                         .HasColumnType("text");
+
+                    b.Property<double?>("MessageTimeDriftSeconds")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTimeOffset>("ObservedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -105,6 +108,9 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DeviceEui64")
+                        .HasColumnType("text");
+
                     b.Property<string>("DeviceId")
                         .HasColumnType("text");
 
@@ -147,6 +153,9 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasDefaultValue("default");
 
+                    b.Property<string>("TherapyId")
+                        .HasColumnType("text");
+
                     b.Property<int?>("TherapyTimePrescribedMin")
                         .HasColumnType("integer");
 
@@ -163,6 +172,9 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId", "SessionId")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "StartedAt")
+                        .HasDatabaseName("IX_TreatmentSessions_TenantId_StartedAt");
 
                     b.ToTable("TreatmentSessions", (string)null);
                 });

@@ -1,5 +1,6 @@
 using BuildingBlocks.Tenancy;
 
+using Dialysis.Cds.Api;
 using Dialysis.Hl7ToFhir;
 
 using Hl7.Fhir.Model;
@@ -14,16 +15,18 @@ namespace Dialysis.Cds.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/cds")]
-[Authorize(Policy = "CdsRead")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = "CdsRead")]
 public sealed class VenousPressureRiskController : ControllerBase
 {
     private readonly VenousPressureRiskService _service;
-    private readonly IHttpClientFactory _http;
+    private readonly ICdsGatewayApi _api;
+    private readonly ITenantContext _tenant;
 
-    public VenousPressureRiskController(VenousPressureRiskService service, IHttpClientFactory http)
+    public VenousPressureRiskController(VenousPressureRiskService service, ICdsGatewayApi api, ITenantContext tenant)
     {
         _service = service;
-        _http = http;
+        _api = api;
+        _tenant = tenant;
     }
 
     [HttpGet("venous-pressure-risk")]
@@ -44,16 +47,16 @@ public sealed class VenousPressureRiskController : ControllerBase
 
     private async Task<TreatmentSessionResponse?> FetchSessionAsync(string sessionId, CancellationToken ct)
     {
-        string baseUrl = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Cds:BaseUrl"] ?? "http://localhost:5000";
-        string tenantId = HttpContext.RequestServices.GetRequiredService<ITenantContext>().TenantId;
-        using var req = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/treatment-sessions/{sessionId}");
-        if (Request.Headers.Authorization.Count > 0)
-            req.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
-        if (!string.IsNullOrEmpty(tenantId))
-            req.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-        using var response = await _http.CreateClient().SendAsync(req, ct);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TreatmentSessionResponse>(ct);
+        string? auth = Request.Headers.Authorization.Count > 0 ? Request.Headers.Authorization.ToString() : null;
+        string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
+        try
+        {
+            return await _api.GetTreatmentSessionAsync(sessionId, auth, tenantId, ct);
+        }
+        catch (Refit.ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     private IActionResult ToFhirBundle(DetectedIssue? issue)

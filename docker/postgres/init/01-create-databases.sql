@@ -7,3 +7,4 @@ CREATE DATABASE dialysis_treatment;
 CREATE DATABASE dialysis_alarm;
 CREATE DATABASE dialysis_device;
 CREATE DATABASE dialysis_fhir;
+CREATE DATABASE transponder;

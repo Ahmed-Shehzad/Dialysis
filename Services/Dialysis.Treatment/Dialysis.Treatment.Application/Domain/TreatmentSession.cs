@@ -37,7 +37,7 @@ public sealed class TreatmentSession : AggregateRoot
     {
         var session = new TreatmentSession
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantId.Default : new TenantId(tenantId),
             SessionId = sessionId,
             PatientMrn = patientMrn,
             DeviceId = deviceId,

@@ -7,6 +7,7 @@ using BuildingBlocks.Tenancy;
 using Dialysis.Fhir.Abstractions;
 
 using Serilog;
+using Refit;
 using Dialysis.Fhir.Api;
 using Dialysis.Fhir.Api.Subscriptions;
 using Dialysis.Fhir.Infrastructure.Persistence;
@@ -50,11 +51,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddTenantResolution();
 
 string baseUrl = builder.Configuration["FhirExport:BaseUrl"] ?? "http://localhost:5000";
-builder.Services.AddHttpClient<FhirBulkExportService>(client =>
-{
-    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-});
+builder.Services.AddRefitClient<IFhirExportGatewayApi>()
+    .ConfigureHttpClient(client =>
+    {
+        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
+    });
+builder.Services.AddScoped<FhirBulkExportService>();
 
 string? fhirConnectionString = builder.Configuration.GetConnectionString("FhirDb");
 if (!string.IsNullOrEmpty(fhirConnectionString))

@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.Alarm.Application.Features.IngestOruR40Message;
 
-internal sealed class IngestOruR40MessageCommandHandler : ICommandHandler<IngestOruR40MessageCommand, IngestOruR40MessageResponse>
+public sealed class IngestOruR40MessageCommandHandler : ICommandHandler<IngestOruR40MessageCommand, IngestOruR40MessageResponse>
 {
     private readonly ISender _sender;
     private readonly IOruR40MessageParser _parser;

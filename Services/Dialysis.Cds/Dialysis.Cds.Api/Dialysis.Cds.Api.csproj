@@ -13,6 +13,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Refit" />
+        <PackageReference Include="Refit.HttpClientFactory" />
+    </ItemGroup>
+    <ItemGroup>
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Settings.Configuration" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

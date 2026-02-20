@@ -1,9 +1,11 @@
 using System.Net;
+using System.Net.Http;
 
 using Dialysis.Reports.Api;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
+using Refit;
 
 using Shouldly;
 
@@ -14,27 +16,24 @@ using Task = System.Threading.Tasks.Task;
 namespace Dialysis.Reports.Tests;
 
 /// <summary>
-/// Integration-style tests for ReportsAggregationService using a mock HttpClient.
+/// Integration-style tests for ReportsAggregationService using a mock IReportsGatewayApi.
 /// </summary>
 public sealed class ReportsAggregationServiceTests
 {
     private static readonly ILogger<ReportsAggregationService> Logger = new LoggerFactory().CreateLogger<ReportsAggregationService>();
 
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+    };
+
     [Fact]
     public async Task GetSessionsSummaryAsync_WithMockedResponse_ReturnsReportAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(req =>
-        {
-            if (req.RequestUri?.AbsoluteUri.Contains("reports/summary") == true)
-                return (HttpStatusCode.OK, """{"sessionCount":5,"avgDurationMinutes":180.5,"from":"2025-01-01T00:00:00Z","to":"2025-01-08T00:00:00Z"}""");
-            return (HttpStatusCode.NotFound, "");
-        });
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi()
+            .SessionSummary("""{"sessionCount":5,"avgDurationMinutes":180.5,"from":"2025-01-01T00:00:00Z","to":"2025-01-08T00:00:00Z"}""");
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -49,18 +48,9 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetAlarmsBySeverityAsync_WithMockedResponse_ReturnsGroupedReportAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(req =>
-        {
-            if (req.RequestUri?.AbsoluteUri.Contains("/api/alarms") == true)
-                return (HttpStatusCode.OK, """{"alarms":[{"priority":"high"},{"priority":"high"},{"priority":"low"}]}""");
-            return (HttpStatusCode.NotFound, "");
-        });
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi()
+            .Alarms("""{"alarms":[{"priority":"high"},{"priority":"high"},{"priority":"low"}]}""");
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -73,18 +63,8 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetAlarmsBySeverityAsync_WhenNoAlarms_ReturnsEmptyBySeverityAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(req =>
-        {
-            if (req.RequestUri?.AbsoluteUri.Contains("/api/alarms") == true)
-                return (HttpStatusCode.OK, """{"alarms":[]}""");
-            return (HttpStatusCode.NotFound, "");
-        });
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi().Alarms("""{"alarms":[]}""");
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -96,18 +76,9 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetPrescriptionComplianceAsync_WhenNoSessionsInRange_ReturnsZeroReportAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(req =>
-        {
-            if (req.RequestUri?.AbsoluteUri.Contains("treatment-sessions/fhir") == true)
-                return (HttpStatusCode.OK, """{"resourceType":"Bundle","type":"collection","entry":[]}""");
-            return (HttpStatusCode.NotFound, "");
-        });
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi()
+            .TreatmentSessionsFhir("""{"resourceType":"Bundle","type":"collection","entry":[]}""");
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -121,21 +92,10 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetPrescriptionComplianceAsync_WithSessionsAndCompliantCds_ReturnsComplianceReportAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(req =>
-        {
-            string? uri = req.RequestUri?.AbsoluteUri;
-            if (uri != null && uri.Contains("treatment-sessions/fhir"))
-                return (HttpStatusCode.OK, """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Procedure","id":"proc-sess1"}}]}""");
-            if (uri != null && uri.Contains("cds/prescription-compliance"))
-                return (HttpStatusCode.OK, """{"resourceType":"Bundle","type":"collection","entry":[]}""");
-            return (HttpStatusCode.NotFound, "");
-        });
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi()
+            .TreatmentSessionsFhir("""{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Procedure","id":"proc-sess1"}}]}""")
+            .PrescriptionCompliance("""{"resourceType":"Bundle","type":"collection","entry":[]}""");
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -149,18 +109,8 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetAlarmsBySeverityAsync_WhenBackendReturns500_ReturnsEmptyReportAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(req =>
-        {
-            if (req.RequestUri?.AbsoluteUri.Contains("/api/alarms") == true)
-                return (HttpStatusCode.InternalServerError, "Internal Server Error");
-            return (HttpStatusCode.NotFound, "");
-        });
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi().Alarms(status: HttpStatusCode.InternalServerError);
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -174,13 +124,8 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetSessionsSummaryAsync_WhenBackendReturns404_ThrowsAsync()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Reports:BaseUrl"] = "http://localhost:5000" })
-            .Build();
-        var handler = new MockReportHttpHandler(_ => (HttpStatusCode.NotFound, ""));
-        using var client = new HttpClient(handler);
-
-        var service = new ReportsAggregationService(client, config, Logger);
+        var api = new MockReportsGatewayApi().SessionSummary("", HttpStatusCode.NotFound);
+        var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var to = new DateTimeOffset(2025, 1, 8, 0, 0, 0, TimeSpan.Zero);
@@ -189,20 +134,73 @@ public sealed class ReportsAggregationServiceTests
             service.GetSessionsSummaryAsync(from, to, "default", null));
     }
 
-    private sealed class MockReportHttpHandler : HttpMessageHandler
+    private sealed class MockReportsGatewayApi : IReportsGatewayApi
     {
-        private readonly Func<HttpRequestMessage, (HttpStatusCode status, string body)> _responder;
+        private string _sessionSummary = "";
+        private HttpStatusCode _sessionSummaryStatus = HttpStatusCode.OK;
+        private string _alarms = """{"alarms":[]}""";
+        private HttpStatusCode _alarmsStatus = HttpStatusCode.OK;
+        private string _treatmentSessionsFhir = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _treatmentSessionsFhirStatus = HttpStatusCode.OK;
+        private string _prescriptionCompliance = """{"resourceType":"Bundle","type":"collection","entry":[]}""";
+        private HttpStatusCode _prescriptionComplianceStatus = HttpStatusCode.OK;
 
-        public MockReportHttpHandler(Func<HttpRequestMessage, (HttpStatusCode status, string body)> responder) =>
-            _responder = responder;
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public MockReportsGatewayApi SessionSummary(string body = "", HttpStatusCode status = HttpStatusCode.OK)
         {
-            (HttpStatusCode status, string body) = _responder(request);
-            return Task.FromResult(new HttpResponseMessage(status)
-            {
-                Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
-            });
+            _sessionSummary = body;
+            _sessionSummaryStatus = status;
+            return this;
         }
+
+        public MockReportsGatewayApi Alarms(string body = """{"alarms":[]}""", HttpStatusCode status = HttpStatusCode.OK)
+        {
+            _alarms = body;
+            _alarmsStatus = status;
+            return this;
+        }
+
+        public MockReportsGatewayApi TreatmentSessionsFhir(string body, HttpStatusCode status = HttpStatusCode.OK)
+        {
+            _treatmentSessionsFhir = body;
+            _treatmentSessionsFhirStatus = status;
+            return this;
+        }
+
+        public MockReportsGatewayApi PrescriptionCompliance(string body, HttpStatusCode status = HttpStatusCode.OK)
+        {
+            _prescriptionCompliance = body;
+            _prescriptionComplianceStatus = status;
+            return this;
+        }
+
+        public Task<SessionsSummaryReport> GetSessionsSummaryAsync(string from, string to, string? authorization, string? tenantId, CancellationToken cancellationToken = default)
+        {
+            if (_sessionSummaryStatus != HttpStatusCode.OK)
+                throw new HttpRequestException($"Response status: {_sessionSummaryStatus}");
+            return Task.FromResult(System.Text.Json.JsonSerializer.Deserialize<SessionsSummaryReport>(_sessionSummary, JsonOptions)!);
+        }
+
+        public Task<IApiResponse<AlarmsListResponse>> GetAlarmsAsync(string from, string to, string? authorization, string? tenantId, CancellationToken cancellationToken = default)
+        {
+            var response = new HttpResponseMessage(_alarmsStatus);
+            if (_alarmsStatus != HttpStatusCode.OK)
+                return Task.FromResult<IApiResponse<AlarmsListResponse>>(new ApiResponse<AlarmsListResponse>(response, null, null!, null));
+            var content = System.Text.Json.JsonSerializer.Deserialize<AlarmsListResponse>(_alarms, JsonOptions);
+            return Task.FromResult<IApiResponse<AlarmsListResponse>>(new ApiResponse<AlarmsListResponse>(response, content, null!, null));
+        }
+
+        public Task<IApiResponse<string>> GetTreatmentSessionsFhirAsync(string dateFrom, string dateTo, int limit, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IApiResponse<string>>(new ApiResponse<string>(
+                new HttpResponseMessage(_treatmentSessionsFhirStatus),
+                _treatmentSessionsFhirStatus == HttpStatusCode.OK ? _treatmentSessionsFhir : null,
+                null!,
+                null));
+
+        public Task<IApiResponse<string>> GetPrescriptionComplianceAsync(string sessionId, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IApiResponse<string>>(new ApiResponse<string>(
+                new HttpResponseMessage(_prescriptionComplianceStatus),
+                _prescriptionComplianceStatus == HttpStatusCode.OK ? _prescriptionCompliance : null,
+                null!,
+                null));
     }
 }

@@ -6,6 +6,8 @@ using Dialysis.Cds.Api;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
+using Refit;
+
 using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -26,7 +28,10 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationH
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("CdsRead", p => p.Requirements.Add(new ScopeOrBypassRequirement("Treatment:Read", "Prescription:Read")));
 builder.Services.AddControllers();
-builder.Services.AddHttpClient();
+
+string cdsBaseUrl = builder.Configuration["Cds:BaseUrl"] ?? "http://localhost:5000";
+builder.Services.AddRefitClient<ICdsGatewayApi>()
+    .ConfigureHttpClient(client => client.BaseAddress = new Uri(cdsBaseUrl.TrimEnd('/') + "/"));
 builder.Services.AddSingleton<PrescriptionComplianceService>();
 builder.Services.AddSingleton<HypotensionRiskService>();
 builder.Services.AddSingleton<VenousPressureRiskService>();

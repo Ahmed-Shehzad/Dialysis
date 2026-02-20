@@ -34,7 +34,7 @@ public sealed class Alarm : AggregateRoot
     {
         var alarm = new Alarm
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantId.Default : new TenantId(tenantId),
             AlarmType = info.AlarmType,
             SourceCode = info.SourceCode,
             SourceLimits = info.SourceLimits,

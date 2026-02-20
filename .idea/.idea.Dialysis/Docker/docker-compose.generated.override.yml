@@ -14,7 +14,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57427"
+    - "--roslyn-worker-port=57454"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -22,15 +22,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.alarm.api:dev"
     ports:
-    - "127.0.0.1:57027:57000"
-    - "127.0.0.1:57227:57200"
-    - "127.0.0.1:57427:57427"
+    - "127.0.0.1:57054:57000"
+    - "127.0.0.1:57254:57200"
+    - "127.0.0.1:57454:57454"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Alarm/Dialysis.Alarm.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   cds-api:
     build:
@@ -46,7 +46,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57428"
+    - "--roslyn-worker-port=57455"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -54,15 +54,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.cds.api:dev"
     ports:
-    - "127.0.0.1:57028:57000"
-    - "127.0.0.1:57228:57200"
-    - "127.0.0.1:57428:57428"
+    - "127.0.0.1:57055:57000"
+    - "127.0.0.1:57255:57200"
+    - "127.0.0.1:57455:57455"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Cds/Dialysis.Cds.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   device-api:
     build:
@@ -78,7 +78,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57429"
+    - "--roslyn-worker-port=57456"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -86,15 +86,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.device.api:dev"
     ports:
-    - "127.0.0.1:57029:57000"
-    - "127.0.0.1:57229:57200"
-    - "127.0.0.1:57429:57429"
+    - "127.0.0.1:57056:57000"
+    - "127.0.0.1:57256:57200"
+    - "127.0.0.1:57456:57456"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Device/Dialysis.Device.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   fhir-api:
     build:
@@ -110,7 +110,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57430"
+    - "--roslyn-worker-port=57457"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -118,15 +118,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.fhir.api:dev"
     ports:
-    - "127.0.0.1:57030:57000"
-    - "127.0.0.1:57230:57200"
-    - "127.0.0.1:57430:57430"
+    - "127.0.0.1:57057:57000"
+    - "127.0.0.1:57257:57200"
+    - "127.0.0.1:57457:57457"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Fhir/Dialysis.Fhir.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   gateway:
     build:
@@ -142,7 +142,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57431"
+    - "--roslyn-worker-port=57458"
     - "--timeout=60"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
@@ -151,15 +151,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.gateway:dev"
     ports:
-    - "127.0.0.1:57031:57000"
-    - "127.0.0.1:57231:57200"
-    - "127.0.0.1:57431:57431"
+    - "127.0.0.1:57058:57000"
+    - "127.0.0.1:57258:57200"
+    - "127.0.0.1:57458:57458"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Gateway/Dialysis.Gateway:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   patient-api:
     build:
@@ -175,7 +175,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57432"
+    - "--roslyn-worker-port=57459"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -183,15 +183,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.patient.api:dev"
     ports:
-    - "127.0.0.1:57032:57000"
-    - "127.0.0.1:57232:57200"
-    - "127.0.0.1:57432:57432"
+    - "127.0.0.1:57059:57000"
+    - "127.0.0.1:57259:57200"
+    - "127.0.0.1:57459:57459"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Patient/Dialysis.Patient.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   prescription-api:
     build:
@@ -207,7 +207,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57433"
+    - "--roslyn-worker-port=57460"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -215,15 +215,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.prescription.api:dev"
     ports:
-    - "127.0.0.1:57033:57000"
-    - "127.0.0.1:57233:57200"
-    - "127.0.0.1:57433:57433"
+    - "127.0.0.1:57060:57000"
+    - "127.0.0.1:57260:57200"
+    - "127.0.0.1:57460:57460"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Prescription/Dialysis.Prescription.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   reports-api:
     build:
@@ -239,7 +239,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57434"
+    - "--roslyn-worker-port=57461"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -247,15 +247,15 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.reports.api:dev"
     ports:
-    - "127.0.0.1:57034:57000"
-    - "127.0.0.1:57234:57200"
-    - "127.0.0.1:57434:57434"
+    - "127.0.0.1:57061:57000"
+    - "127.0.0.1:57261:57200"
+    - "127.0.0.1:57461:57461"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Reports/Dialysis.Reports.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"
   treatment-api:
     build:
@@ -271,7 +271,7 @@ services:
     - "--mode=server"
     - "--frontend-port=57000"
     - "--backend-port=57200"
-    - "--roslyn-worker-port=57435"
+    - "--roslyn-worker-port=57462"
     - "--timeout=60"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -279,13 +279,13 @@ services:
       RESHARPER_LOG_CONF: "/etc/opt/JetBrains/RiderDebuggerTools/backend-log.xml"
     image: "dialysis.treatment.api:dev"
     ports:
-    - "127.0.0.1:57035:57000"
-    - "127.0.0.1:57235:57200"
-    - "127.0.0.1:57435:57435"
+    - "127.0.0.1:57062:57000"
+    - "127.0.0.1:57262:57200"
+    - "127.0.0.1:57462:57462"
     volumes:
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis/Services/Dialysis.Treatment/Dialysis.Treatment.Api:/app:rw"
     - "/Users/muhammadahmedshehzad/Personal/RiderProjects/Dialysis:/src:rw"
     - "/Users/muhammadahmedshehzad/.nuget/packages:/root/.nuget/packages"
     - "/Users/muhammadahmedshehzad/.local/share/JetBrains/RiderRemoteDebugger/2025.3.3/LinuxArm64:/opt/JetBrains/RiderDebuggerTools"
-    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_19_23_39_28:/var/opt/JetBrains/RiderDebuggerTools:rw"
+    - "/Users/muhammadahmedshehzad/Library/Logs/JetBrains/Rider2025.3/DebuggerWorker/JetBrains.Debugger.Worker.2026_2_20_10_32_18:/var/opt/JetBrains/RiderDebuggerTools:rw"
     working_dir: "/app"

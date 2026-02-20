@@ -1,5 +1,3 @@
-using System.Net.Http.Json;
-
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -7,22 +5,24 @@ using Dialysis.Alarm.Application.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+using Refit;
+
 namespace Dialysis.Alarm.Infrastructure.DeviceRegistration;
 
 internal sealed class DeviceRegistrationClient : IDeviceRegistrationClient
 {
-    private readonly HttpClient _httpClient;
+    private readonly IDeviceApi _deviceApi;
     private readonly ITenantContext _tenant;
     private readonly ILogger<DeviceRegistrationClient> _logger;
     private readonly DeviceApiOptions _options;
 
     public DeviceRegistrationClient(
-        HttpClient httpClient,
+        IDeviceApi deviceApi,
         ITenantContext tenant,
         ILogger<DeviceRegistrationClient> logger,
         IOptions<DeviceApiOptions> options)
     {
-        _httpClient = httpClient;
+        _deviceApi = deviceApi;
         _tenant = tenant;
         _logger = logger;
         _options = options.Value;
@@ -35,11 +35,11 @@ internal sealed class DeviceRegistrationClient : IDeviceRegistrationClient
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, "api/devices");
-            _ = request.Headers.TryAddWithoutValidation("X-Tenant-Id", _tenant.TenantId ?? "default");
-            request.Content = JsonContent.Create(new { deviceEui64 = deviceEui64.Trim() });
+            ApiResponse<RegisterDeviceResponse> response = await _deviceApi.RegisterAsync(
+                new RegisterDeviceRequest(deviceEui64.Trim()),
+                _tenant.TenantId ?? "default",
+                cancellationToken).ConfigureAwait(false);
 
-            HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
                 _logger.LogWarning(
                     "Device registration failed for {DeviceEui64}: {StatusCode} {Reason}",

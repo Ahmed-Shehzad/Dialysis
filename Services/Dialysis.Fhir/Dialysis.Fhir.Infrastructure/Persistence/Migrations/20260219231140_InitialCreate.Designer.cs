@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.Fhir.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(FhirDbContext))]
-    [Migration("20260219141503_InitialCreate")]
+    [Migration("20260219231140_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

@@ -1,11 +1,14 @@
 using BuildingBlocks.Tenancy;
 
+using Dialysis.Cds.Api;
 using Dialysis.Hl7ToFhir;
 
 using Hl7.Fhir.Model;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+using Refit;
 
 namespace Dialysis.Cds.Api.Controllers;
 
@@ -15,16 +18,18 @@ namespace Dialysis.Cds.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/cds")]
-[Authorize(Policy = "CdsRead")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = "CdsRead")]
 public sealed class PrescriptionComplianceController : ControllerBase
 {
     private readonly PrescriptionComplianceService _cds;
-    private readonly IHttpClientFactory _http;
+    private readonly ICdsGatewayApi _api;
+    private readonly ITenantContext _tenant;
 
-    public PrescriptionComplianceController(PrescriptionComplianceService cds, IHttpClientFactory http)
+    public PrescriptionComplianceController(PrescriptionComplianceService cds, ICdsGatewayApi api, ITenantContext tenant)
     {
         _cds = cds;
-        _http = http;
+        _api = api;
+        _tenant = tenant;
     }
 
     /// <summary>
@@ -38,32 +43,24 @@ public sealed class PrescriptionComplianceController : ControllerBase
         [FromQuery] string sessionId,
         CancellationToken cancellationToken = default)
     {
-        string baseUrl = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Cds:BaseUrl"] ?? "http://localhost:5000";
-        string tenantId = HttpContext.RequestServices.GetRequiredService<ITenantContext>().TenantId;
-        using var sessionRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/treatment-sessions/{sessionId}");
-        if (Request.Headers.Authorization.Count > 0)
-            sessionRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
-        if (!string.IsNullOrEmpty(tenantId))
-            sessionRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
+        string? auth = Request.Headers.Authorization.Count > 0 ? Request.Headers.Authorization.ToString() : null;
+        string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
 
-        using HttpResponseMessage sessionResponse = await _http.CreateClient().SendAsync(sessionRequest, cancellationToken);
-        sessionResponse.EnsureSuccessStatusCode();
-        TreatmentSessionResponse? session = await sessionResponse.Content.ReadFromJsonAsync<TreatmentSessionResponse>(cancellationToken);
-        if (session is null)
-            return NotFound();
-
-        using var rxRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl.TrimEnd('/') + $"/api/prescriptions/{session.PatientMrn}");
-        if (Request.Headers.Authorization.Count > 0)
-            rxRequest.Headers.TryAddWithoutValidation("Authorization", Request.Headers.Authorization.ToString());
-        if (!string.IsNullOrEmpty(tenantId))
-            rxRequest.Headers.TryAddWithoutValidation("X-Tenant-Id", tenantId);
-
-        using HttpResponseMessage rxResponse = await _http.CreateClient().SendAsync(rxRequest, cancellationToken);
-        PrescriptionDto? prescription = null;
-        if (rxResponse.IsSuccessStatusCode)
+        TreatmentSessionResponse session;
+        try
         {
-            PrescriptionByMrnResponse? prescriptionResponse = await rxResponse.Content.ReadFromJsonAsync<PrescriptionByMrnResponse>(cancellationToken);
-            if (prescriptionResponse is not null)
+            session = await _api.GetTreatmentSessionAsync(sessionId, auth, tenantId, cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return NotFound();
+        }
+
+        PrescriptionDto? prescription = null;
+        if (!string.IsNullOrEmpty(session.PatientMrn))
+        {
+            IApiResponse<PrescriptionByMrnResponse> rxResponse = await _api.GetPrescriptionByMrnAsync(session.PatientMrn, auth, tenantId, cancellationToken);
+            if (rxResponse.IsSuccessStatusCode && rxResponse.Content is { } prescriptionResponse)
                 prescription = new PrescriptionDto(prescriptionResponse.BloodFlowRateMlMin, prescriptionResponse.UfRateMlH, prescriptionResponse.UfTargetVolumeMl);
         }
 
@@ -72,14 +69,14 @@ public sealed class PrescriptionComplianceController : ControllerBase
 
         if (issue is null)
         {
-            var emptyBundle = new Hl7.Fhir.Model.Bundle { Type = Hl7.Fhir.Model.Bundle.BundleType.Collection, Entry = [] };
+            var emptyBundle = new Bundle { Type = Bundle.BundleType.Collection, Entry = [] };
             return Content(FhirJsonHelper.ToJson(emptyBundle), "application/fhir+json");
         }
 
-        var bundle = new Hl7.Fhir.Model.Bundle
+        var bundle = new Bundle
         {
-            Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
-            Entry = [new Hl7.Fhir.Model.Bundle.EntryComponent { Resource = issue }]
+            Type = Bundle.BundleType.Collection,
+            Entry = [new Bundle.EntryComponent { Resource = issue }]
         };
         return Content(FhirJsonHelper.ToJson(bundle), "application/fhir+json");
     }

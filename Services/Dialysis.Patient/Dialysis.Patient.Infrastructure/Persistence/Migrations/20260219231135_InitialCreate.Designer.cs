@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.Patient.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PatientDbContext))]
-    [Migration("20260218222206_AddSocialSecurityNumberToPatients")]
-    partial class AddSocialSecurityNumberToPatients
+    [Migration("20260219231135_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -70,6 +70,9 @@ namespace Dialysis.Patient.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Patients_TenantId");
 
                     b.HasIndex("TenantId", "MedicalRecordNumber")
                         .IsUnique();

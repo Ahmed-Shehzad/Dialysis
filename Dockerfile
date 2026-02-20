@@ -9,7 +9,7 @@ ARG PROJECT_PATH
 
 COPY . .
 RUN dotnet restore "${PROJECT_PATH}"
-RUN dotnet publish "${PROJECT_PATH}" -c Release -o /app --no-restore
+RUN dotnet publish "${PROJECT_PATH}" -c Release -o /app --no-restore -p:PublishTrimmed=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app

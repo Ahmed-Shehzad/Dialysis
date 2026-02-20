@@ -578,7 +578,7 @@ These services are **stateless aggregators**. They consume data via REST from do
 
 ## 15. Migrations (EF Core)
 
-All Dialysis services (Patient, Prescription, Treatment, Alarm, Device) use EF Core migrations. Apply on startup in Development via `MigrateAsync()`.
+All Dialysis services (Patient, Prescription, Treatment, Alarm, Device, FHIR) use EF Core migrations. Apply on startup in Development via `MigrateAsync()`.
 
 **Add a new migration:** From the solution root, run:
 
@@ -593,6 +593,7 @@ dotnet ef migrations add <MigrationName> --project <InfrastructureProject> --sta
 | Treatment    | `Services/Dialysis.Treatment/Dialysis.Treatment.Infrastructure/Dialysis.Treatment.Infrastructure.csproj` | `Services/Dialysis.Treatment/Dialysis.Treatment.Api/Dialysis.Treatment.Api.csproj` |
 | Alarm        | `Services/Dialysis.Alarm/Dialysis.Alarm.Infrastructure/Dialysis.Alarm.Infrastructure.csproj` | `Services/Dialysis.Alarm/Dialysis.Alarm.Api/Dialysis.Alarm.Api.csproj` |
 | Device       | `Services/Dialysis.Device/Dialysis.Device.Infrastructure/Dialysis.Device.Infrastructure.csproj` | `Services/Dialysis.Device/Dialysis.Device.Api/Dialysis.Device.Api.csproj` |
+| FHIR         | `Services/Dialysis.Fhir/Dialysis.Fhir.Infrastructure/Dialysis.Fhir.Infrastructure.csproj` | `Services/Dialysis.Fhir/Dialysis.Fhir.Api/Dialysis.Fhir.Api.csproj` |
 
 **When to run migrations:**
 
@@ -603,6 +604,14 @@ dotnet ef migrations add <MigrationName> --project <InfrastructureProject> --sta
 | **Docker Compose** | Startup (ASPNETCORE_ENVIRONMENT=Development) | Per-service DBs; migrations apply when each API starts |
 
 For production, prefer running migrations as a distinct CI/CD step or hosted job before the API starts, to avoid multiple instances applying concurrently. If using startup, ensure only one replica migrates (e.g. leader election or init container).
+
+**Prune and recreate (schema drift, clean slate):** When migrations are broken or a full reset is needed:
+
+1. Drop databases (terminate connections first): `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`, `dialysis_fhir`, `transponder`
+2. Remove existing migration files in each Infrastructure project's `Persistence/Migrations` folder
+3. Add a fresh `InitialCreate` per DbContext: `dotnet ef migrations add InitialCreate --project <InfrastructureProject> --startup-project <ApiProject> --output-dir Persistence/Migrations`
+4. Recreate databases (Postgres init script or manual `CREATE DATABASE`)
+5. Apply migrations: `dotnet ef database update` for each service (and Transponder)
 
 **Read DbContexts:** `XxxReadDbContext` projects map to the same tables as write DbContexts. They do **not** need migrations. Register both DbContexts with the same connection string: `AddDbContext<XxxDbContext>(...)` and `AddDbContext<XxxReadDbContext>(...)`.
 
@@ -657,7 +666,7 @@ curl http://localhost:5001/health  # Aggregate health
 docker compose down               # Stop all
 ```
 
-PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`. Each API runs EF migrations on startup (ASPNETCORE_ENVIRONMENT=Development). FHIR, CDS, and Reports APIs are stateless; they aggregate data from other services via the gateway.
+PostgreSQL init creates `dialysis_patient`, `dialysis_prescription`, `dialysis_treatment`, `dialysis_alarm`, `dialysis_device`, `dialysis_fhir`, and `transponder`. Each API runs EF migrations on startup (ASPNETCORE_ENVIRONMENT=Development). FHIR, CDS, and Reports APIs are stateless; they aggregate data from other services via the gateway. Transponder uses its own migrations (run explicitly or via startup).
 
 ---
 

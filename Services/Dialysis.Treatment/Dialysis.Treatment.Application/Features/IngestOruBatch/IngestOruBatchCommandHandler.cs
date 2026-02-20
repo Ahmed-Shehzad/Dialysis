@@ -4,7 +4,7 @@ using Intercessor.Abstractions;
 
 namespace Dialysis.Treatment.Application.Features.IngestOruBatch;
 
-internal sealed class IngestOruBatchCommandHandler : ICommandHandler<IngestOruBatchCommand, IngestOruBatchResponse>
+public sealed class IngestOruBatchCommandHandler : ICommandHandler<IngestOruBatchCommand, IngestOruBatchResponse>
 {
     private readonly IHl7BatchParser _batchParser;
     private readonly ISender _sender;

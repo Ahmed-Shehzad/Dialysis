@@ -9,7 +9,6 @@ using Dialysis.Alarm.Api;
 using Dialysis.Alarm.Application.Abstractions;
 using Dialysis.Alarm.Application.Domain.Services;
 using Dialysis.Alarm.Application.Features.IngestOruR40Message;
-using BuildingBlocks.Abstractions;
 
 using Dialysis.Alarm.Infrastructure;
 using Dialysis.Alarm.Infrastructure.DeviceRegistration;
@@ -18,6 +17,7 @@ using Dialysis.Alarm.Infrastructure.Hl7;
 using Dialysis.Alarm.Infrastructure.Persistence;
 
 using Intercessor;
+using Intercessor.Abstractions;
 
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -47,9 +47,9 @@ builder.Services.AddTransponder(new Uri("transponder://alarm"), opts =>
 
 builder.Services.AddIntercessor(cfg =>
 {
-    cfg.RegisterFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
     cfg.RegisterFromAssembly(typeof(IngestOruR40MessageCommand).Assembly);
 });
+builder.Services.AddTransient<ICommandHandler<IngestOruR40MessageCommand, IngestOruR40MessageResponse>, IngestOruR40MessageCommandHandler>();
 
 string connectionString = builder.Configuration.GetConnectionString("AlarmDb")
                           ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
@@ -70,7 +70,7 @@ builder.Services.AddTenantResolution();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
-builder.Services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
+builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "alarm-db");

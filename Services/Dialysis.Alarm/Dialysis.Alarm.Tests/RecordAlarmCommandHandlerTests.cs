@@ -143,7 +143,7 @@ public sealed class RecordAlarmCommandHandlerTests
         var state = new AlarmStateDescriptor(phase, new AlarmState(alarmState), ActivityState.Enabled);
         var @params = new AlarmCreateParams(
             "Test Alarm", sourceCode, "100-500", state, null, null, null, "Test Alarm",
-            deviceId ?? new DeviceId("DEV1"), new BuildingBlocks.ValueObjects.SessionId(sessionId ?? "sess-001"), occurredAt ?? DateTimeOffset.UtcNow);
+            deviceId ?? new DeviceId("DEV1"), new SessionId(sessionId ?? "sess-001"), occurredAt ?? DateTimeOffset.UtcNow);
         return AlarmInfo.Create(@params);
     }
 

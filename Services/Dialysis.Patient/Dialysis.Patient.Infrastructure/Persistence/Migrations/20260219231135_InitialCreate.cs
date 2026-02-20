@@ -1,16 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Dialysis.Patient.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTenantIdToPatients : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            _ = migrationBuilder.CreateTable(
+            migrationBuilder.CreateTable(
                 name: "Patients",
                 columns: table => new
                 {
@@ -18,6 +19,7 @@ namespace Dialysis.Patient.Infrastructure.Persistence.Migrations
                     TenantId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false, defaultValue: "default"),
                     MedicalRecordNumber = table.Column<string>(type: "text", nullable: false),
                     PersonNumber = table.Column<string>(type: "text", nullable: true),
+                    SocialSecurityNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     FirstName = table.Column<string>(type: "text", nullable: false),
                     LastName = table.Column<string>(type: "text", nullable: false),
                     DateOfBirth = table.Column<DateOnly>(type: "date", nullable: true),
@@ -29,10 +31,15 @@ namespace Dialysis.Patient.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    _ = table.PrimaryKey("PK_Patients", x => x.Id);
+                    table.PrimaryKey("PK_Patients", x => x.Id);
                 });
 
-            _ = migrationBuilder.CreateIndex(
+            migrationBuilder.CreateIndex(
+                name: "IX_Patients_TenantId",
+                table: "Patients",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Patients_TenantId_MedicalRecordNumber",
                 table: "Patients",
                 columns: new[] { "TenantId", "MedicalRecordNumber" },
@@ -42,7 +49,7 @@ namespace Dialysis.Patient.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            _ = migrationBuilder.DropTable(
+            migrationBuilder.DropTable(
                 name: "Patients");
         }
     }

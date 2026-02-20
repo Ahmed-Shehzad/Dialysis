@@ -25,6 +25,7 @@ CREATE DATABASE dialysis_treatment;
 CREATE DATABASE dialysis_alarm;
 CREATE DATABASE dialysis_device;
 CREATE DATABASE dialysis_fhir;
+CREATE DATABASE transponder;
 ```
 
 ### 2.2 Run Migrations
@@ -40,6 +41,8 @@ dotnet ef database update --project Services/Dialysis.Alarm/Dialysis.Alarm.Infra
 dotnet ef database update --project Services/Dialysis.Device/Dialysis.Device.Infrastructure --startup-project Services/Dialysis.Device/Dialysis.Device.Api
 dotnet ef database update --project Services/Dialysis.Fhir/Dialysis.Fhir.Infrastructure --startup-project Services/Dialysis.Fhir/Dialysis.Fhir.Api
 ```
+
+For a full reset (prune, recreate `InitialCreate`, reapply), see [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §15.
 
 ---
 
@@ -93,6 +96,13 @@ dotnet run --project Seeder/Seeder.csproj -- --gateway http://localhost:5001 --c
 ```
 
 Requires `docker compose up -d` and `Authentication:JwtBearer:DevelopmentBypass: true` (or a valid JWT) for unauthenticated requests. Seeds via HL7: RSP^K22 (Prescription), ORU^R01 batch (Treatment), ORU^R40 (Alarm).
+
+**If Seeder returns 500:** Rebuild and start the affected APIs and gateway, then check logs:
+
+```bash
+docker compose up -d --build prescription-api treatment-api alarm-api gateway
+docker compose logs prescription-api treatment-api alarm-api
+```
 
 ### 3.5 Dashboard (Optional)
 
@@ -213,7 +223,7 @@ Before production deploy:
 
 | Symptom | Possible Cause | Action |
 |---------|----------------|--------|
-| 500 on HL7 endpoint | Handler not registered (Docker) | Ensure explicit handler registration in API `Program.cs` (Patient, Prescription) |
+| 500 on HL7 endpoint | Handler not registered (Docker); gateway route wrong | Treatment/Alarm: explicit handler in API `Program.cs`; Prescription RSP^K22: check gateway route `/api/prescriptions/hl7/rsp-k22`. Rebuild APIs: `docker compose up -d --build prescription-api treatment-api alarm-api gateway` |
 | Health shows Unhealthy | Downstream API unreachable | Check network, firewall, backend URLs |
 | DB connection failed | Wrong connection string, DB not created | Verify `ConnectionStrings__*Db`, run init script |
 | JWT 401/403 | Missing/invalid token, wrong scope | Check `Authorization` header, scope policy |

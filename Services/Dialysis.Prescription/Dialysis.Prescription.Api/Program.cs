@@ -45,7 +45,6 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddIntercessor(cfg =>
 {
-    cfg.RegisterFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
     cfg.RegisterFromAssembly(typeof(GetPrescriptionByMrnQuery).Assembly);
 });
 

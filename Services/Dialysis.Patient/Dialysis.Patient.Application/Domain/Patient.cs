@@ -29,7 +29,7 @@ public sealed class Patient : AggregateRoot
     {
         var patient = new Patient
         {
-            TenantId = string.IsNullOrWhiteSpace(tenantId) ? BuildingBlocks.ValueObjects.TenantId.Default : new TenantId(tenantId),
+            TenantId = string.IsNullOrWhiteSpace(tenantId) ? TenantId.Default : new TenantId(tenantId),
             MedicalRecordNumber = medicalRecordNumber,
             PersonNumber = personNumber,
             SocialSecurityNumber = socialSecurityNumber,
