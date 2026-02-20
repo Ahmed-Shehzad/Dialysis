@@ -1,5 +1,6 @@
 # Dialysis PDMS – full solution run
 # Usage: docker compose up -d
+# With ASB emulator: docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d (requires .env with ACCEPT_EULA, MSSQL_SA_PASSWORD)
 # Gateway: http://localhost:5001 | Health: http://localhost:5001/health
 # (Host port 5001 avoids conflict with other services using 5000)
 # APIs: Patient 5051, Prescription 5052, Treatment 5050, Alarm 5053, Device 5054

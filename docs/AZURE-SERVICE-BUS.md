@@ -35,10 +35,30 @@ await session.CommitAsync(ct);
 
 See [INBOX-PATTERN.md](INBOX-PATTERN.md).
 
-## Local Development
+## Local Development with Emulator
 
-- Use Azure Service Bus namespace (trial tier) or [Azure Service Bus Emulator](https://github.com/Azure/azure-service-bus-emulator) (if available).
-- For SignalR-only (no ASB): omit `AzureServiceBus:ConnectionString`.
+Use the [Azure Service Bus Emulator](https://hub.docker.com/r/microsoft/azure-messaging-servicebus-emulator) for local testing:
+
+```bash
+# Single command (from project root):
+./start-with-asb.sh
+```
+
+Or manually:
+```bash
+cp docker/asb-emulator/.env.example .env   # edit MSSQL_SA_PASSWORD if needed
+docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d
+```
+
+The emulator provides topic `ThresholdBreachDetectedIntegrationEvent` with subscription `alarm-threshold-breach` for the Treatment→Alarm workflow. Treatment and Alarm are automatically wired to the emulator when using the ASB compose file.
+
+**Connection string** (used by docker-compose.asb.yml):
+```
+Endpoint=sb://servicebus-emulator;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=DUMMY_KEY_FOR_EMULATOR_DEV;UseDevelopmentEmulator=true
+```
+
+- Use Azure Service Bus namespace (trial tier) for production-like testing.
+- For SignalR-only (no ASB): omit `AzureServiceBus:ConnectionString` or run without docker-compose.asb.yml.
 
 ## Docker
 

@@ -1,0 +1,50 @@
+# Azure Service Bus Emulator – local development
+# Usage: docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d
+# Enables Treatment→Alarm workflow via ASB (ThresholdBreachDetectedIntegrationEvent).
+# Requires: ACCEPT_EULA=Y and MSSQL_SA_PASSWORD in .env (see docker/asb-emulator/.env.example)
+
+services:
+  sqledge:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: dialysis-sqledge
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA:-N}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStr0ng!Password}
+    networks:
+      default:
+        aliases:
+          - sqledge
+
+  servicebus-emulator:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    container_name: dialysis-servicebus-emulator
+    volumes:
+      - ./docker/asb-emulator/Config.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+    ports:
+      - "5672:5672"
+    environment:
+      SQL_SERVER: sqledge
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStr0ng!Password}
+      ACCEPT_EULA: ${ACCEPT_EULA:-N}
+    depends_on:
+      - sqledge
+    networks:
+      default:
+        aliases:
+          - servicebus-emulator
+
+  treatment-api:
+    environment:
+      AzureServiceBus__ConnectionString: >-
+        Endpoint=sb://servicebus-emulator;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=DUMMY_KEY_FOR_EMULATOR_DEV;UseDevelopmentEmulator=true
+    depends_on:
+      servicebus-emulator:
+        condition: service_started
+
+  alarm-api:
+    environment:
+      AzureServiceBus__ConnectionString: >-
+        Endpoint=sb://servicebus-emulator;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=DUMMY_KEY_FOR_EMULATOR_DEV;UseDevelopmentEmulator=true
+    depends_on:
+      servicebus-emulator:
+        condition: service_started
