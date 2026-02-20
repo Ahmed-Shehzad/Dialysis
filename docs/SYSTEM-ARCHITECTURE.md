@@ -641,6 +641,22 @@ Configuration: `appsettings.json` or environment overrides. See `BuildingBlocks.
 
 ---
 
+## 15c. Refit HTTP Clients and Resilience
+
+Inter-service HTTP calls use **Refit** for typed API contracts. Each Refit interface defines route templates with a leading slash (e.g. `[Get("/api/devices")]`) per Refit path validation.
+
+| Client | Service | Purpose |
+|--------|--------|---------|
+| `IDeviceApi` | Treatment, Alarm | Device registration (HL7 auto-register) |
+| `IFhirSubscriptionNotifyApi` | Treatment, Alarm | FHIR subscription notifications |
+| `IFhirExportGatewayApi` | FHIR | Bulk export aggregation from Patient, Device, Prescription, Treatment, Alarm |
+| `ICdsGatewayApi` | CDS | Treatment sessions and prescriptions for clinical rules |
+| `IReportsGatewayApi` | Reports | Sessions summary, alarms, prescription compliance |
+
+**Resilience:** All Refit clients use `AddStandardResilienceHandler()` (Microsoft.Extensions.Http.Resilience) with rate limiter, total/attempt timeouts, retry, and circuit breaker (Polly). Base URL is configured via `DeviceApi__BaseUrl`, `FhirSubscription__NotifyUrl`, gateway URL for aggregate services, etc.
+
+---
+
 ## 16. Docker Compose (Full Stack Run)
 
 The solution runs via `docker compose` for local development and integration testing.

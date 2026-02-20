@@ -5,6 +5,7 @@ using BuildingBlocks.Tenancy;
 using Dialysis.Cds.Api;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 
@@ -31,7 +32,8 @@ builder.Services.AddControllers();
 
 string cdsBaseUrl = builder.Configuration["Cds:BaseUrl"] ?? "http://localhost:5000";
 builder.Services.AddRefitClient<ICdsGatewayApi>()
-    .ConfigureHttpClient(client => client.BaseAddress = new Uri(cdsBaseUrl.TrimEnd('/') + "/"));
+    .ConfigureHttpClient(client => client.BaseAddress = new Uri(cdsBaseUrl.TrimEnd('/') + "/"))
+    .AddStandardResilienceHandler();
 builder.Services.AddSingleton<PrescriptionComplianceService>();
 builder.Services.AddSingleton<HypotensionRiskService>();
 builder.Services.AddSingleton<VenousPressureRiskService>();

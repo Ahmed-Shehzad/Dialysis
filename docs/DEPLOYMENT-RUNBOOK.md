@@ -223,7 +223,7 @@ Before production deploy:
 
 | Symptom | Possible Cause | Action |
 |---------|----------------|--------|
-| 500 on HL7 endpoint | Handler not registered (Docker); gateway route wrong | Treatment/Alarm: explicit handler in API `Program.cs`; Prescription RSP^K22: check gateway route `/api/prescriptions/hl7/rsp-k22`. Rebuild APIs: `docker compose up -d --build prescription-api treatment-api alarm-api gateway` |
+| 500 on HL7 endpoint | Refit path missing leading `/`; gateway route wrong; handler not found (rare) | Refit interfaces must use `/api/...`; Prescription RSP^K22: check gateway route. Rebuild: `docker compose up -d --build prescription-api treatment-api alarm-api gateway` |
 | Health shows Unhealthy | Downstream API unreachable | Check network, firewall, backend URLs |
 | DB connection failed | Wrong connection string, DB not created | Verify `ConnectionStrings__*Db`, run init script |
 | JWT 401/403 | Missing/invalid token, wrong scope | Check `Authorization` header, scope policy |

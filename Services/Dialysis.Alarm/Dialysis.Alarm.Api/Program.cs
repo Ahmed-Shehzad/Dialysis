@@ -17,7 +17,6 @@ using Dialysis.Alarm.Infrastructure.Hl7;
 using Dialysis.Alarm.Infrastructure.Persistence;
 
 using Intercessor;
-using Intercessor.Abstractions;
 
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +48,6 @@ builder.Services.AddIntercessor(cfg =>
 {
     cfg.RegisterFromAssembly(typeof(IngestOruR40MessageCommand).Assembly);
 });
-builder.Services.AddTransient<ICommandHandler<IngestOruR40MessageCommand, IngestOruR40MessageResponse>, IngestOruR40MessageCommandHandler>();
 
 string connectionString = builder.Configuration.GetConnectionString("AlarmDb")
                           ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";

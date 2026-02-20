@@ -2,6 +2,7 @@ using Dialysis.Alarm.Application.Abstractions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 
@@ -18,7 +19,8 @@ public static class DeviceRegistrationServiceCollectionExtensions
             {
                 string baseUrl = configuration["DeviceApi:BaseUrl"] ?? "http://localhost:5054";
                 client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-            });
+            })
+            .AddStandardResilienceHandler();
 
         return services.AddScoped<IDeviceRegistrationClient, DeviceRegistrationClient>();
     }

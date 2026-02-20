@@ -7,7 +7,7 @@ namespace Dialysis.Treatment.Infrastructure.DeviceRegistration;
 /// </summary>
 internal interface IDeviceApi
 {
-    [Post("api/devices")]
+    [Post("/api/devices")]
     Task<ApiResponse<RegisterDeviceResponse>> RegisterAsync(
         [Body] RegisterDeviceRequest request,
         [Header("X-Tenant-Id")] string tenantId,

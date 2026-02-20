@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlarmsBySeverityCard } from "./components/AlarmsBySeverityCard";
 import { PrescriptionComplianceCard } from "./components/PrescriptionComplianceCard";
 import { SessionsSummaryCard } from "./components/SessionsSummaryCard";
@@ -9,8 +10,18 @@ function formatDateForInput(d: Date): string {
     return d.toISOString().slice(0, 10);
 }
 
+type DatePreset = "7" | "30" | "90";
+
+function applyPreset(days: DatePreset): { from: string; to: string } {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - Number(days));
+    return { from: formatDateForInput(from), to: formatDateForInput(to) };
+}
+
 function App() {
-    const { setToken, isAuthenticated } = useAuth();
+    const { token, setToken, isAuthenticated } = useAuth();
+    const queryClient = useQueryClient();
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const now = new Date();
@@ -18,10 +29,20 @@ function App() {
     const [to, setTo] = useState(formatDateForInput(now));
     const [tokenInput, setTokenInput] = useState("");
 
+    useEffect(() => {
+        queryClient.invalidateQueries();
+    }, [token, queryClient]);
+
     const fromIso = (from && new Date(from + "T00:00:00").toISOString()) || undefined;
     const toIso = (to && new Date(to + "T23:59:59").toISOString()) || undefined;
 
-    const handleTokenSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handlePreset = (days: DatePreset) => {
+        const { from: f, to: t } = applyPreset(days);
+        setFrom(f);
+        setTo(t);
+    };
+
+    const handleTokenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const trimmed = tokenInput.trim();
         setToken(trimmed || null);
@@ -38,6 +59,19 @@ function App() {
                         Reports from PDMS Gateway (ensure services are running)
                     </p>
                     <div className="flex flex-wrap gap-4 items-center">
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <span className="text-sm text-gray-600">Presets:</span>
+                            {(["7", "30", "90"] as const).map((days) => (
+                                <button
+                                    key={days}
+                                    type="button"
+                                    onClick={() => handlePreset(days)}
+                                    className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300"
+                                >
+                                    Last {days} days
+                                </button>
+                            ))}
+                        </div>
                         <label className="flex items-center gap-2">
                             <span className="text-sm text-gray-600">From</span>
                             <input

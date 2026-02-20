@@ -7,7 +7,7 @@ namespace Dialysis.Treatment.Infrastructure.FhirSubscription;
 /// </summary>
 public interface IFhirSubscriptionNotifyApi
 {
-    [Post("api/fhir/subscription-notify")]
+    [Post("/api/fhir/subscription-notify")]
     Task<HttpResponseMessage> NotifyAsync(
         [Body] SubscriptionNotifyRequest body,
         [Header("X-Subscription-Notify-ApiKey")] string? apiKey,

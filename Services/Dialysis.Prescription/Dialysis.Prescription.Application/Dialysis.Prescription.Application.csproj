@@ -8,7 +8,6 @@
 
     <ItemGroup>
     <InternalsVisibleTo Include="Dialysis.Prescription.Api" />
-    <InternalsVisibleTo Include="Dialysis.Prescription.Infrastructure" />
     <InternalsVisibleTo Include="Dialysis.Prescription.Tests" />
     </ItemGroup>
 

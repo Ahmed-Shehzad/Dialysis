@@ -7,7 +7,7 @@ namespace Dialysis.Fhir.Api;
 /// </summary>
 public interface IFhirExportGatewayApi
 {
-    [Get("api/patients/fhir")]
+    [Get("/api/patients/fhir")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetPatientsFhirAsync(
         [Query] int limit,
@@ -16,7 +16,7 @@ public interface IFhirExportGatewayApi
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
 
-    [Get("api/devices/fhir")]
+    [Get("/api/devices/fhir")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetDevicesFhirAsync(
         [Query] int limit,
@@ -24,7 +24,7 @@ public interface IFhirExportGatewayApi
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
 
-    [Get("api/prescriptions/fhir")]
+    [Get("/api/prescriptions/fhir")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetPrescriptionsFhirAsync(
         [Query] int limit,
@@ -34,7 +34,7 @@ public interface IFhirExportGatewayApi
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
 
-    [Get("api/treatment-sessions/fhir")]
+    [Get("/api/treatment-sessions/fhir")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetTreatmentSessionsFhirAsync(
         [Query] int limit,
@@ -45,7 +45,7 @@ public interface IFhirExportGatewayApi
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
 
-    [Get("api/alarms/fhir")]
+    [Get("/api/alarms/fhir")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetAlarmsFhirAsync(
         [Query] int limit,
@@ -54,7 +54,7 @@ public interface IFhirExportGatewayApi
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
 
-    [Get("api/audit-events")]
+    [Get("/api/audit-events")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetAuditEventsAsync(
         [Query] int count,

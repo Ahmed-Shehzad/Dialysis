@@ -2,6 +2,7 @@ using BuildingBlocks.Abstractions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 
@@ -13,7 +14,8 @@ public static class FhirSubscriptionServiceCollectionExtensions
     {
         string baseUrl = configuration["FhirSubscription:NotifyUrl"] ?? "http://localhost";
         _ = services.AddRefitClient<IFhirSubscriptionNotifyApi>()
-            .ConfigureHttpClient(client => client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/"));
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/"))
+            .AddStandardResilienceHandler();
 
         return services.AddScoped<IFhirSubscriptionNotifyClient, FhirSubscriptionNotifyClient>();
     }

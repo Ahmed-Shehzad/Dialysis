@@ -8,7 +8,6 @@ using BuildingBlocks.TimeSync;
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain.Services;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
-using Dialysis.Treatment.Application.Features.IngestOruBatch;
 
 using Dialysis.Treatment.Infrastructure;
 using Dialysis.Treatment.Infrastructure.DeviceRegistration;
@@ -17,7 +16,6 @@ using Dialysis.Treatment.Infrastructure.Hl7;
 using Dialysis.Treatment.Infrastructure.Persistence;
 
 using Intercessor;
-using Intercessor.Abstractions;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -68,7 +66,6 @@ builder.Services.AddIntercessor(cfg =>
 {
     cfg.RegisterFromAssembly(typeof(GetTreatmentSessionQuery).Assembly);
 });
-builder.Services.AddTransient<ICommandHandler<IngestOruBatchCommand, IngestOruBatchResponse>, IngestOruBatchCommandHandler>();
 
 string connectionString = builder.Configuration.GetConnectionString("TreatmentDb")
                           ?? "Host=localhost;Database=dialysis_treatment;Username=postgres;Password=postgres";

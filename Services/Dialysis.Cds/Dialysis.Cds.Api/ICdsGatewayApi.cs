@@ -9,14 +9,14 @@ namespace Dialysis.Cds.Api;
 /// </summary>
 public interface ICdsGatewayApi
 {
-    [Get("api/treatment-sessions/{sessionId}")]
+    [Get("/api/treatment-sessions/{sessionId}")]
     Task<TreatmentSessionResponse> GetTreatmentSessionAsync(
         string sessionId,
         [Header("Authorization")] string? authorization,
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
 
-    [Get("api/prescriptions/{mrn}")]
+    [Get("/api/prescriptions/{mrn}")]
     Task<IApiResponse<PrescriptionByMrnResponse>> GetPrescriptionByMrnAsync(
         string mrn,
         [Header("Authorization")] string? authorization,

@@ -5,6 +5,7 @@ using BuildingBlocks.Tenancy;
 using Dialysis.Reports.Api;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 
@@ -31,7 +32,8 @@ builder.Services.AddControllers();
 
 string reportsBaseUrl = builder.Configuration["Reports:BaseUrl"] ?? "http://localhost:5000";
 _ = builder.Services.AddRefitClient<IReportsGatewayApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(reportsBaseUrl.TrimEnd('/') + "/"));
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(reportsBaseUrl.TrimEnd('/') + "/"))
+    .AddStandardResilienceHandler();
 builder.Services.AddScoped<ReportsAggregationService>();
 
 builder.Services.AddTenantResolution();

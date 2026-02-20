@@ -6,6 +6,7 @@ using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Abstractions;
 
+using Microsoft.Extensions.Http.Resilience;
 using Serilog;
 using Refit;
 using Dialysis.Fhir.Api;
@@ -56,7 +57,8 @@ builder.Services.AddRefitClient<IFhirExportGatewayApi>()
     {
         client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
-    });
+    })
+    .AddStandardResilienceHandler();
 builder.Services.AddScoped<FhirBulkExportService>();
 
 string? fhirConnectionString = builder.Configuration.GetConnectionString("FhirDb");

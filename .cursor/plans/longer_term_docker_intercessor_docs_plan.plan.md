@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: fix-intercessor-docker
     content: "Revisit Intercessor registration once scan works (remove explicit fallbacks)"
-    status: pending
+    status: completed
   - id: update-docs-seeder
     content: "Update docs with Seeder usage and targeted rebuild tip"
     status: completed
