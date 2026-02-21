@@ -1,0 +1,41 @@
+# Horizontal scaling overlay – run multiple replicas of stateless APIs
+# Usage (Docker Swarm): docker stack deploy -c docker-compose.yml -c docker-compose.scale.yml pdms
+# Usage (Compose without Swarm): docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --scale patient-api=2 --scale gateway=2 --scale treatment-api=2 --scale alarm-api=2
+# Requires: Redis (ConnectionStrings:Redis) for SignalR backplane on Treatment and Alarm
+
+services:
+  gateway:
+    deploy:
+      replicas: 2
+
+  patient-api:
+    deploy:
+      replicas: 2
+
+  prescription-api:
+    deploy:
+      replicas: 2
+
+  treatment-api:
+    deploy:
+      replicas: 2
+
+  alarm-api:
+    deploy:
+      replicas: 2
+
+  device-api:
+    deploy:
+      replicas: 2
+
+  fhir-api:
+    deploy:
+      replicas: 2
+
+  cds-api:
+    deploy:
+      replicas: 2
+
+  reports-api:
+    deploy:
+      replicas: 2

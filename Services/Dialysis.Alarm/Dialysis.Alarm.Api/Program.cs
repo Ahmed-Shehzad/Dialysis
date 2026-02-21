@@ -50,7 +50,10 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AlarmWrite", p => p.Requirements.Add(new ScopeOrBypassRequirement("Alarm:Write", "Alarm:Admin")));
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddSignalR();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+var signalrBuilder = builder.Services.AddSignalR();
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = signalrBuilder.AddStackExchangeRedis(redisConnectionString, o => o.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("Alarm"));
 
 builder.Services.AddIntercessor(cfg =>
 {
@@ -101,7 +104,6 @@ builder.Services.AddDbContext<AlarmReadDbContext>(o => o.UseNpgsql(connectionStr
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
 builder.Services.AddScoped<IEscalationIncidentStore, EscalationIncidentStore>();
 builder.Services.AddScoped<AlarmReadStore>();
-string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
     _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);

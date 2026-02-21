@@ -24,6 +24,7 @@
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
         <PackageReference Include="AspNetCore.HealthChecks.Redis" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Settings.Configuration" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

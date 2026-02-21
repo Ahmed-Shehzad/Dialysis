@@ -725,6 +725,73 @@ To build a SPA or client application consuming PDMS APIs, see [UI-INTEGRATION-GU
 
 ---
 
+## 18. Horizontal Scaling
+
+APIs are stateless except SignalR (Treatment, Alarm). To scale horizontally:
+
+### 18.1 Prerequisites
+
+| Requirement | Purpose |
+|-------------|---------|
+| **Redis** | SignalR backplane for Treatment and Alarm; read-through cache |
+| **ConnectionStrings:Redis** | When set, Treatment and Alarm use `AddStackExchangeRedis` for SignalR scale-out |
+| **ConnectionStrings:FhirDb** | FHIR subscriptions must persist in PostgreSQL (not InMemorySubscriptionStore) |
+| **Load balancer** | Distribute traffic; no sticky sessions needed with Redis backplane |
+
+### 18.2 SignalR Redis Backplane
+
+When `ConnectionStrings:Redis` is configured, Treatment and Alarm automatically add the Redis backplane:
+
+- **Treatment**: `ChannelPrefix = "Treatment"`
+- **Alarm**: `ChannelPrefix = "Alarm"`
+
+Multiple instances share connection state via Redis; clients can connect to any instance.
+
+### 18.3 Scaling Diagram
+
+```mermaid
+flowchart TB
+    subgraph LB [Load Balancer]
+    end
+
+    subgraph Gateways [Gateway Pool]
+        G1[Gateway 1]
+        G2[Gateway 2]
+    end
+
+    subgraph TreatmentPool [Treatment API Pool]
+        T1[Treatment 1]
+        T2[Treatment 2]
+    end
+
+    subgraph AlarmPool [Alarm API Pool]
+        A1[Alarm 1]
+        A2[Alarm 2]
+    end
+
+    LB --> Gateways
+    Gateways --> TreatmentPool
+    Gateways --> AlarmPool
+
+    TreatmentPool --> Redis[(Redis Backplane)]
+    AlarmPool --> Redis
+    TreatmentPool --> Postgres[(PostgreSQL)]
+    AlarmPool --> Postgres
+```
+
+### 18.4 Docker Compose Scale
+
+Use `docker-compose.scale.yml` overlay. With Compose (no Swarm):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d \
+  --scale patient-api=2 --scale gateway=2 --scale treatment-api=2 --scale alarm-api=2
+```
+
+With Docker Swarm, `deploy.replicas` in the overlay applies automatically.
+
+---
+
 ## Document Maintenance
 
 - **On every architecture change**: Update this document and commit.

@@ -137,6 +137,16 @@ Before deploy:
 
 ---
 
+## 6. Horizontal Scaling
+
+To run multiple instances of APIs behind a load balancer:
+
+1. **Redis**: Set `ConnectionStrings:Redis` – Treatment and Alarm use Redis as SignalR backplane when configured.
+2. **FHIR**: Set `ConnectionStrings:FhirDb` – Subscriptions must persist (not in-memory).
+3. **Scale**: Use `docker-compose.scale.yml` or Kubernetes replicas. See [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §18.
+
+---
+
 ## References
 
 - [DEPLOYMENT-RUNBOOK.md](DEPLOYMENT-RUNBOOK.md) – Deploy steps

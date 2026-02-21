@@ -33,6 +33,7 @@ using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
 using Serilog;
+using StackExchange.Redis;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -64,7 +65,10 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("TreatmentWrite", p => p.Requirements.Add(new ScopeOrBypassRequirement("Treatment:Write", "Treatment:Admin")));
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddSignalR();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+var signalrBuilder = builder.Services.AddSignalR();
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = signalrBuilder.AddStackExchangeRedis(redisConnectionString, o => o.Configuration.ChannelPrefix = RedisChannel.Literal("Treatment"));
 
 builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
 builder.Services.AddCentralExceptionHandler(builder.Configuration);
@@ -114,7 +118,6 @@ builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectio
 
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();
 builder.Services.AddScoped<TreatmentReadStore>();
-string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
     _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);

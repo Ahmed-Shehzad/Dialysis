@@ -133,16 +133,16 @@ Flow for dialysis machine requesting prescription by MRN.
 
 ```mermaid
 flowchart TD
-    QBP[POST /api/hl7/qbp-d01] --> Parse[QbpD01Parser.Parse]
-    Parse --> MRN[Extract MRN + QueryTag]
-    MRN --> Repo[PrescriptionRepo.GetLatestByMrnAsync]
-    Repo --> Found{Prescription found?}
-    Found -->|No| BuildNF[RspK22Builder.BuildNotFound]
-    BuildNF --> RSP_NF[RSP^K22 with MSA\|NF]
-    Found -->|Yes| Entity[Prescription entity + Settings]
-    Entity --> BuildRx[RspK22Builder.BuildFromPrescription]
-    BuildRx --> RSP_OK[RSP^K22 with ORC + OBX]
-    RSP_NF --> Response[application/x-hl7-v2+er7]
+    QBP["POST /api/hl7/qbp-d01"] --> Parse["QbpD01Parser.Parse"]
+    Parse --> MRN["Extract MRN + QueryTag"]
+    MRN --> Repo["PrescriptionRepo.GetLatestByMrnAsync"]
+    Repo --> Found{"Prescription found?"}
+    Found -->|No| BuildNF["RspK22Builder.BuildNotFound"]
+    BuildNF --> RSP_NF["RSP^K22 with MSA-NF"]
+    Found -->|Yes| Entity["Prescription entity + Settings"]
+    Entity --> BuildRx["RspK22Builder.BuildFromPrescription"]
+    BuildRx --> RSP_OK["RSP^K22 with ORC + OBX"]
+    RSP_NF --> Response["application/x-hl7-v2+er7"]
     RSP_OK --> Response
 ```
 
