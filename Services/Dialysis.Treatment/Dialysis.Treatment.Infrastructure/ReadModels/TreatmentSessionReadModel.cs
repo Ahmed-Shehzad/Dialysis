@@ -15,4 +15,6 @@ public sealed class TreatmentSessionReadModel
     public string Status { get; init; } = string.Empty;
     public DateTimeOffset? StartedAt { get; init; }
     public DateTimeOffset? EndedAt { get; init; }
+    public DateTimeOffset? SignedAt { get; init; }
+    public string? SignedBy { get; init; }
 }

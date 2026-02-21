@@ -81,6 +81,7 @@ They are persisted to the **OutboxMessages** table (Transponder format) in the s
 | `ThresholdBreachDetectedEvent` | `ThresholdBreachDetectedEventHandler` | `Services/Dialysis.Treatment/.../Features/ThresholdBreachDetected/` |
 | `TreatmentSessionStartedEvent` | `TreatmentSessionStartedEventHandler` | Audit, logging |
 | `TreatmentSessionStartedFhirNotifyEvent` | `FhirSubscriptionNotifyHandler` | FHIR subscription notify |
+| `TreatmentSessionSignedEvent` | `TreatmentSessionSignedEventHandler` | Audit, logging |
 | `ObservationRecordedSignalRBroadcastEvent` | `ObservationRecordedTransponderHandler` | SignalR broadcast |
 | `ObservationRecordedFhirNotifyEvent` | `FhirSubscriptionNotifyHandler` | FHIR subscription notify |
 | `AlarmRaisedEvent` | `AlarmRaisedEventHandler` | Audit, logging |
@@ -141,6 +142,7 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 | `ObservationRecordedFhirNotifyEvent` | `TreatmentSession.AddObservation()` | `TreatmentSessionId`, `SessionId`, `ObservationId`, `Code`, `Value`, `Unit`, `SubId`, `ChannelName` |
 | `ThresholdBreachDetectedEvent` | VitalSignsMonitoringService detects value outside clinical threshold during `AddObservation()` | `TreatmentSessionId`, `SessionId`, `ObservationId`, `Code`, `Breach` |
 | `TreatmentSessionCompletedEvent` | A treatment session is completed via `TreatmentSession.Complete()` | `TreatmentSessionId`, `SessionId` |
+| `TreatmentSessionSignedEvent` | A completed session is signed via `TreatmentSession.Sign()` | `TreatmentSessionId`, `SessionId`, `SignedBy` |
 
 ### Domain Services
 

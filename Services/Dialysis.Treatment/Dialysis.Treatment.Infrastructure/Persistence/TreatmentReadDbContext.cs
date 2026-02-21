@@ -20,6 +20,7 @@ public sealed class TreatmentReadDbContext : DbContext, IReadOnlyDbContext
 
     public DbSet<TreatmentSessionReadModel> TreatmentSessions => Set<TreatmentSessionReadModel>();
     public DbSet<ObservationReadModel> Observations => Set<ObservationReadModel>();
+    public DbSet<PreAssessmentReadModel> PreAssessments => Set<PreAssessmentReadModel>();
 
     public override int SaveChanges() =>
         throw new InvalidOperationException("TreatmentReadDbContext is read-only. Do not call SaveChanges.");
@@ -41,6 +42,8 @@ public sealed class TreatmentReadDbContext : DbContext, IReadOnlyDbContext
             _ = e.Property(x => x.Status);
             _ = e.Property(x => x.StartedAt);
             _ = e.Property(x => x.EndedAt);
+            _ = e.Property(x => x.SignedAt);
+            _ = e.Property(x => x.SignedBy).HasMaxLength(200);
         });
 
         _ = modelBuilder.Entity<ObservationReadModel>(e =>
@@ -57,6 +60,19 @@ public sealed class TreatmentReadDbContext : DbContext, IReadOnlyDbContext
             _ = e.Property(x => x.Provenance);
             _ = e.Property(x => x.EffectiveTime);
             _ = e.Property(x => x.ObservedAtUtc);
+        });
+
+        _ = modelBuilder.Entity<PreAssessmentReadModel>(e =>
+        {
+            _ = e.ToTable("PreAssessments");
+            _ = e.HasKey(x => x.Id);
+            _ = e.Property(x => x.Id);
+            _ = e.Property(x => x.TenantId).HasMaxLength(100);
+            _ = e.Property(x => x.SessionId).IsRequired();
+            _ = e.Property(x => x.PreWeightKg).HasPrecision(10, 2);
+            _ = e.Property(x => x.AccessTypeValue).HasMaxLength(10);
+            _ = e.Property(x => x.PainSymptomNotes).HasMaxLength(2000);
+            _ = e.Property(x => x.RecordedBy).HasMaxLength(200);
         });
     }
 }

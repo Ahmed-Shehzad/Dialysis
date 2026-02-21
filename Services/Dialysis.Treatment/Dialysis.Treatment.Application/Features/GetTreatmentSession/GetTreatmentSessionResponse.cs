@@ -12,6 +12,9 @@ namespace Dialysis.Treatment.Application.Features.GetTreatmentSession;
 /// <param name="StartedAt">Session start time.</param>
 /// <param name="Observations">Device observations for FHIR mapping.</param>
 /// <param name="EndedAt">Session end time (when completed).</param>
+/// <param name="SignedAt">Session sign time (when signed by clinician).</param>
+/// <param name="SignedBy">Clinician identifier who signed the session.</param>
+/// <param name="PreAssessment">Pre-treatment assessment when recorded.</param>
 public sealed record GetTreatmentSessionResponse(
     string SessionId,
     string? PatientMrn,
@@ -21,7 +24,20 @@ public sealed record GetTreatmentSessionResponse(
     string Status,
     DateTimeOffset? StartedAt,
     IReadOnlyList<ObservationDto> Observations,
-    DateTimeOffset? EndedAt = null);
+    DateTimeOffset? EndedAt = null,
+    DateTimeOffset? SignedAt = null,
+    string? SignedBy = null,
+    PreAssessmentResponse? PreAssessment = null);
+
+public sealed record PreAssessmentResponse(
+    decimal? PreWeightKg,
+    int? BpSystolic,
+    int? BpDiastolic,
+    string? AccessTypeValue,
+    bool PrescriptionConfirmed,
+    string? PainSymptomNotes,
+    DateTimeOffset RecordedAt,
+    string? RecordedBy);
 
 /// <summary>
 /// Observation data for FHIR mapping.

@@ -39,10 +39,16 @@ Returns a FHIR R4 Bundle with resources aggregated from all services. Use for da
 
 ```
 GET /api/treatment-sessions/fhir?dateFrom=...&dateTo=...&limit=500
+GET /api/treatment-sessions/{sessionId}
 GET /api/treatment-sessions/{sessionId}/fhir
+POST /api/treatment-sessions/{sessionId}/complete
+POST /api/treatment-sessions/{sessionId}/sign
 ```
 
-Procedure and Observation resources for treatment history and real-time monitoring.
+- **GET** – JSON session details (status, observations, signedAt, signedBy, preAssessment) or FHIR Bundle
+- **POST pre-assessment** – Record pre-assessment (preWeightKg, bpSystolic, bpDiastolic, accessTypeValue, prescriptionConfirmed, painSymptomNotes)
+- **POST complete** – End session (sets Status=Completed)
+- **POST sign** – Sign completed session (optional body `{ "signedBy": "..." }`)
 
 ### 3.3 Reports
 

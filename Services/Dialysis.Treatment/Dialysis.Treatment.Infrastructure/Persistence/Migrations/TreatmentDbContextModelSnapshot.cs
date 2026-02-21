@@ -96,6 +96,56 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                     b.ToTable("Observations", (string)null);
                 });
 
+            modelBuilder.Entity("Dialysis.Treatment.Application.Domain.PreAssessment", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<string>("AccessTypeValue")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("BpDiastolic")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BpSystolic")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PainSymptomNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<decimal?>("PreWeightKg")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<bool>("PrescriptionConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RecordedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "SessionId")
+                        .IsUnique();
+
+                    b.ToTable("PreAssessments", (string)null);
+                });
+
             modelBuilder.Entity("Dialysis.Treatment.Application.Domain.TreatmentSession", b =>
                 {
                     b.Property<string>("Id")
@@ -138,6 +188,13 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                     b.Property<string>("SessionId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("SignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SignedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTimeOffset?>("StartedAt")
                         .HasColumnType("timestamp with time zone");

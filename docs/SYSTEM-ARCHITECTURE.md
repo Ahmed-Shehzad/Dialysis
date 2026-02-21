@@ -498,6 +498,42 @@ sequenceDiagram
 
 ---
 
+## 12a. Treatment Session Workflow (Complete, Sign)
+
+Clinician actions on treatment sessions are exposed via REST and consumed by the PDMS Dashboard.
+
+### Session Creation (Machine-Driven)
+
+Sessions are created when the dialysis machine sends ORU^R01. `RecordObservationCommandHandler` calls `GetOrCreateAsync`; if no session exists, `TreatmentSession.Start()` creates it. SessionId comes from OBR-3 (Therapy_ID). See [START-TREATMENT-FLOW.md](START-TREATMENT-FLOW.md).
+
+### Complete Session
+
+| Endpoint | Method | Policy | Description |
+|----------|--------|--------|-------------|
+| `/api/treatment-sessions/{sessionId}/complete` | POST | TreatmentWrite | Sets `Status = Completed`, `EndedAt = now` |
+
+`CompleteTreatmentSessionCommand` → `CompleteTreatmentSessionCommandHandler` → `TreatmentSession.Complete()` → `TreatmentSessionCompletedEvent`.
+
+### Sign Session
+
+| Endpoint | Method | Policy | Description |
+|----------|--------|--------|-------------|
+| `/api/treatment-sessions/{sessionId}/sign` | POST | TreatmentWrite | Sets `SignedAt`, `SignedBy`; session must be Completed |
+
+Optional body: `{ "signedBy": "clinician-id" }`. If omitted, uses `User.Identity?.Name`. `SignTreatmentSessionCommand` → `SignTreatmentSessionCommandHandler` → `TreatmentSession.Sign()` → `TreatmentSessionSignedEvent`.
+
+### State Transitions
+
+```mermaid
+stateDiagram-v2
+    [*] --> Active: Machine sends ORU (session created)
+    Active --> Completed: POST /complete
+    Completed --> Signed: POST /sign
+    Signed --> [*]: Read-only
+```
+
+---
+
 ## 14. SignalR Real-Time Observations (Transponder)
 
 The Treatment API uses **Transponder SignalR transport** for real-time device observation broadcast. When an ORU^R01 message is ingested, `ObservationRecordedSignalRBroadcastEvent` is raised; `ObservationRecordedTransponderHandler` sends `ObservationRecordedMessage` via Transponder to `signalr://group/session:{sessionId}`.

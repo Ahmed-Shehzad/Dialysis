@@ -35,6 +35,7 @@ public static class ProblemDetailsFactory
         {
             ValidationException validationException => CreateValidationProblem(validationException, httpContext, includeStackTrace),
             ArgumentException argEx => CreateArgumentProblem(argEx, httpContext, includeStackTrace),
+            KeyNotFoundException => CreateNotFoundProblem(exception, httpContext, includeStackTrace),
             _ => CreateInternalServerProblem(exception, httpContext, includeStackTrace),
         };
     }
@@ -76,6 +77,25 @@ public static class ProblemDetailsFactory
         if (includeStackTrace)
             problem.Extensions[StackTraceKey] = argEx.StackTrace;
         return (problem, StatusCodes.Status400BadRequest);
+    }
+
+    private static (ProblemDetails Problem, int StatusCode) CreateNotFoundProblem(
+        Exception exception,
+        HttpContext httpContext,
+        bool includeStackTrace)
+    {
+        var problem = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+            Title = "Not Found",
+            Status = StatusCodes.Status404NotFound,
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path,
+        };
+        AddTraceId(httpContext, problem);
+        if (includeStackTrace)
+            problem.Extensions[StackTraceKey] = exception.StackTrace;
+        return (problem, StatusCodes.Status404NotFound);
     }
 
     private static (ProblemDetails Problem, int StatusCode) CreateInternalServerProblem(

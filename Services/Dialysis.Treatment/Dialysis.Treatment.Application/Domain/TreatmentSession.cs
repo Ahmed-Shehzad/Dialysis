@@ -23,6 +23,8 @@ public sealed class TreatmentSession : AggregateRoot
     public TreatmentSessionStatus Status { get; private set; }
     public DateTimeOffset? StartedAt { get; private set; }
     public DateTimeOffset? EndedAt { get; private set; }
+    public DateTimeOffset? SignedAt { get; private set; }
+    public string? SignedBy { get; private set; }
 
     // ─── Treatment context derived from HL7 OBX observations ─────────────────
     public ModeOfOperation? Mode { get; private set; }
@@ -112,6 +114,19 @@ public sealed class TreatmentSession : AggregateRoot
         EndedAt = DateTimeOffset.UtcNow;
         ApplyUpdateDateTime();
         ApplyEvent(new TreatmentSessionCompletedEvent(Id, SessionId));
+    }
+
+    public void Sign(string? signedBy = null)
+    {
+        if (Status != TreatmentSessionStatus.Completed)
+            throw new InvalidOperationException("Cannot sign a session that is not completed.");
+        if (SignedAt.HasValue)
+            return; // Idempotent: already signed
+
+        SignedAt = DateTimeOffset.UtcNow;
+        SignedBy = signedBy;
+        ApplyUpdateDateTime();
+        ApplyEvent(new TreatmentSessionSignedEvent(Id, SessionId, SignedBy));
     }
 
     private void UpdateContextFromObservation(ObservationCode code, string? value)

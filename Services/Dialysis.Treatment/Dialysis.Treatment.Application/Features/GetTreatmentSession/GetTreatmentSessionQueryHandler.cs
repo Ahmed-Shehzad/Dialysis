@@ -23,6 +23,18 @@ internal sealed class GetTreatmentSessionQueryHandler : IQueryHandler<GetTreatme
         if (dto is null)
             return null;
 
+        PreAssessmentResponse? preAssessment = dto.PreAssessment is not null
+            ? new PreAssessmentResponse(
+                dto.PreAssessment.PreWeightKg,
+                dto.PreAssessment.BpSystolic,
+                dto.PreAssessment.BpDiastolic,
+                dto.PreAssessment.AccessTypeValue,
+                dto.PreAssessment.PrescriptionConfirmed,
+                dto.PreAssessment.PainSymptomNotes,
+                dto.PreAssessment.RecordedAt,
+                dto.PreAssessment.RecordedBy)
+            : null;
+
         return new GetTreatmentSessionResponse(
             dto.SessionId,
             dto.PatientMrn,
@@ -32,6 +44,9 @@ internal sealed class GetTreatmentSessionQueryHandler : IQueryHandler<GetTreatme
             dto.Status,
             dto.StartedAt,
             dto.Observations,
-            dto.EndedAt);
+            dto.EndedAt,
+            dto.SignedAt,
+            dto.SignedBy,
+            preAssessment);
     }
 }

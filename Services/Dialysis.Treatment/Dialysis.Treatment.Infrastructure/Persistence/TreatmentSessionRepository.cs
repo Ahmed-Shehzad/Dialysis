@@ -30,6 +30,13 @@ public sealed class TreatmentSessionRepository : Repository<TreatmentSession>, I
             .FirstOrDefaultAsync(s => s.TenantId == new TenantId(_tenant.TenantId) && s.SessionId == sessionId, cancellationToken);
     }
 
+    public async Task<TreatmentSession?> GetBySessionIdForUpdateAsync(SessionId sessionId, CancellationToken cancellationToken = default)
+    {
+        return await _db.TreatmentSessions
+            .Include(s => s.Observations)
+            .FirstOrDefaultAsync(s => s.TenantId == new TenantId(_tenant.TenantId) && s.SessionId == sessionId, cancellationToken);
+    }
+
     public async Task<TreatmentSession> GetOrCreateAsync(SessionId sessionId, MedicalRecordNumber? patientMrn, DeviceId? deviceId, CancellationToken cancellationToken = default)
     {
         TreatmentSession? existing = await _db.TreatmentSessions

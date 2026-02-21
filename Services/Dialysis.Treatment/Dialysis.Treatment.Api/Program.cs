@@ -117,6 +117,7 @@ builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
 builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();
+builder.Services.AddScoped<IPreAssessmentRepository, PreAssessmentRepository>();
 builder.Services.AddScoped<TreatmentReadStore>();
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {

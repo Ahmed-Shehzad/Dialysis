@@ -31,6 +31,10 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
             .ToListAsync(cancellationToken);
 
         var observations = obsList.Select(ToObservationDto).ToList();
+        PreAssessmentReadModel? preAssessment = await _db.PreAssessments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.TenantId == tenantId && p.SessionId == sessionId, cancellationToken);
+        PreAssessmentDto? preAssessmentDto = preAssessment is not null ? ToPreAssessmentDto(preAssessment) : null;
         return new TreatmentSessionReadDto(
             session.SessionId,
             session.PatientMrn,
@@ -40,7 +44,10 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
             session.Status,
             session.StartedAt,
             session.EndedAt,
-            observations);
+            session.SignedAt,
+            session.SignedBy,
+            observations,
+            preAssessmentDto);
     }
 
     public async Task<IReadOnlyList<TreatmentSessionReadDto>> GetAllForTenantAsync(string tenantId, int limit, CancellationToken cancellationToken = default)
@@ -92,6 +99,7 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
     {
         if (sessions.Count == 0) return [];
         var sessionIds = sessions.Select(s => s.Id).ToList();
+        var sessionIdStrings = sessions.Select(s => s.SessionId).Distinct().ToList();
 
         List<ObservationReadModel> allObs = await _db.Observations
             .AsNoTracking()
@@ -100,12 +108,21 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
             .ThenBy(o => o.ObservedAtUtc)
             .ToListAsync(cancellationToken);
 
+        List<PreAssessmentReadModel> allPreAssessments = await _db.PreAssessments
+            .AsNoTracking()
+            .Where(p => p.TenantId == sessions[0].TenantId && sessionIdStrings.Contains(p.SessionId))
+            .ToListAsync(cancellationToken);
+
         var obsBySession = allObs.GroupBy(o => o.TreatmentSessionId).ToDictionary(g => g.Key, g => g.ToList());
+        var preAssessmentBySession = allPreAssessments.ToDictionary(p => p.SessionId, p => p);
 
         return sessions.Select(s =>
         {
             List<ObservationReadModel> obs = obsBySession.TryGetValue(s.Id, out List<ObservationReadModel>? list) ? list : [];
             var observationDtos = obs.Select(ToObservationDto).ToList();
+            PreAssessmentDto? preAssessmentDto = preAssessmentBySession.TryGetValue(s.SessionId, out PreAssessmentReadModel? pa) && pa is not null
+                ? ToPreAssessmentDto(pa)
+                : null;
             return new TreatmentSessionReadDto(
                 s.SessionId,
                 s.PatientMrn,
@@ -115,9 +132,15 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
                 s.Status,
                 s.StartedAt,
                 s.EndedAt,
-                observationDtos);
+                s.SignedAt,
+                s.SignedBy,
+                observationDtos,
+                preAssessmentDto);
         }).ToList();
     }
+
+    private static PreAssessmentDto ToPreAssessmentDto(PreAssessmentReadModel p) =>
+        new(p.PreWeightKg, p.BpSystolic, p.BpDiastolic, p.AccessTypeValue, p.PrescriptionConfirmed, p.PainSymptomNotes, p.RecordedAt, p.RecordedBy);
 
     private static ObservationDto ToObservationDto(ObservationReadModel o)
     {

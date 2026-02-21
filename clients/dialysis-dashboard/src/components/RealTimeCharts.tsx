@@ -190,12 +190,23 @@ function StatusBadge({ isConnected }: Readonly<{ isConnected: boolean }>) {
     return <span className={`text-sm ${cls}`}>{text}</span>;
 }
 
-export function RealTimeCharts() {
-    const [sessionId, setSessionId] = useState("");
-    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+interface RealTimeChartsProps {
+    sessionId?: string | null;
+    onSessionChange?: (sessionId: string | null) => void;
+}
+
+export function RealTimeCharts({
+    sessionId: propSessionId,
+    onSessionChange,
+}: Readonly<RealTimeChartsProps> = {}) {
+    const [localSessionId, setLocalSessionId] = useState("");
+    const isControlled = onSessionChange != null;
+    const activeSessionId = isControlled
+        ? (propSessionId ?? null)
+        : (localSessionId || null);
 
     const queryClient = useQueryClient();
-    const { data: sessions, isSuccess: sessionsLoaded } = useQuery({
+    const { data: sessions = [], isSuccess: sessionsLoaded } = useQuery({
         queryKey: ["treatment-sessions"],
         queryFn: () => getTreatmentSessions(50),
         refetchInterval: 30_000, // Refresh every 30s to stay in sync with DataProducerSimulator
@@ -266,16 +277,18 @@ export function RealTimeCharts() {
     );
 
     const handleSubscribe = () => {
-        const id = sessionId.trim();
+        const id = (propSessionId ?? localSessionId).trim();
         if (id) {
-            setActiveSessionId(id);
+            onSessionChange?.(id);
+            setLocalSessionId(id);
             clearData();
         }
     };
 
     const handleSelectSession = (id: string) => {
-        setSessionId(id);
-        setActiveSessionId(id);
+        const value = id || null;
+        setLocalSessionId(value ?? "");
+        onSessionChange?.(value);
         clearData();
     };
 
@@ -290,15 +303,15 @@ export function RealTimeCharts() {
                     <span className="text-sm text-gray-600">Session ID</span>
                     <input
                         type="text"
-                        value={sessionId}
-                        onChange={(e) => setSessionId(e.target.value)}
+                        value={(propSessionId ?? localSessionId) || ""}
+                        onChange={(e) => setLocalSessionId(e.target.value)}
                         placeholder="e.g. THERAPY123ABC"
                         className="border border-gray-300 rounded px-2 py-1 text-sm w-48"
                     />
                 </label>
-                {sessions && sessions.length > 0 && (
+                {sessions.length > 0 && (
                     <select
-                        value={sessionId}
+                        value={(propSessionId ?? localSessionId) || ""}
                         onChange={(e) => handleSelectSession(e.target.value)}
                         className="border border-gray-300 rounded px-2 py-1 text-sm"
                         aria-label="Select treatment session"
@@ -314,7 +327,7 @@ export function RealTimeCharts() {
                 <button
                     type="button"
                     onClick={handleSubscribe}
-                    disabled={!sessionId.trim()}
+                    disabled={!(propSessionId ?? localSessionId).trim()}
                     className="px-3 py-1 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Subscribe

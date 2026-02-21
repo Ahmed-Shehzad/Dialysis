@@ -22,7 +22,20 @@ public sealed record TreatmentSessionReadDto(
     string Status,
     DateTimeOffset? StartedAt,
     DateTimeOffset? EndedAt,
-    IReadOnlyList<ObservationDto> Observations);
+    DateTimeOffset? SignedAt,
+    string? SignedBy,
+    IReadOnlyList<ObservationDto> Observations,
+    PreAssessmentDto? PreAssessment = null);
+
+public sealed record PreAssessmentDto(
+    decimal? PreWeightKg,
+    int? BpSystolic,
+    int? BpDiastolic,
+    string? AccessTypeValue,
+    bool PrescriptionConfirmed,
+    string? PainSymptomNotes,
+    DateTimeOffset RecordedAt,
+    string? RecordedBy);
 
 public sealed record ObservationReadDto(
     string Id,

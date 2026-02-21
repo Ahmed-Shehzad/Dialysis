@@ -8,5 +8,6 @@ namespace Dialysis.Treatment.Application.Abstractions;
 public interface ITreatmentSessionRepository : IRepository<TreatmentSession>
 {
     Task<TreatmentSession?> GetBySessionIdAsync(SessionId sessionId, CancellationToken cancellationToken = default);
+    Task<TreatmentSession?> GetBySessionIdForUpdateAsync(SessionId sessionId, CancellationToken cancellationToken = default);
     Task<TreatmentSession> GetOrCreateAsync(SessionId sessionId, MedicalRecordNumber? patientMrn, DeviceId? deviceId, CancellationToken cancellationToken = default);
 }

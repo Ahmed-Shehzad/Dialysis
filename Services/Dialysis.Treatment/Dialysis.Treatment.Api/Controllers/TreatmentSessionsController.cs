@@ -2,9 +2,15 @@ using BuildingBlocks.Abstractions;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
+using Dialysis.Treatment.Api.Contracts;
+using Dialysis.Treatment.Application.Domain.ValueObjects;
+
 using Dialysis.Hl7ToFhir;
 using Dialysis.Treatment.Application.Features.GetObservationsInTimeRange;
+using Dialysis.Treatment.Application.Features.CompleteTreatmentSession;
 using Dialysis.Treatment.Application.Features.GetTreatmentSession;
+using Dialysis.Treatment.Application.Features.SignTreatmentSession;
+using Dialysis.Treatment.Application.Features.RecordPreAssessment;
 using Dialysis.Treatment.Application.Features.GetTreatmentSessions;
 
 using Hl7.Fhir.Model;
@@ -143,6 +149,84 @@ public sealed class TreatmentSessionsController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPost("{sessionId}/complete")]
+    [Authorize(Policy = "TreatmentWrite")]
+    [ProducesResponseType(typeof(CompleteTreatmentSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompleteAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        var command = new CompleteTreatmentSessionCommand(new SessionId(sessionId));
+        try
+        {
+            CompleteTreatmentSessionResponse response = await _sender.SendAsync(command, cancellationToken);
+            await _audit.RecordAsync(new AuditRecordRequest(
+                AuditAction.Update, "TreatmentSession", sessionId, User.Identity?.Name,
+                AuditOutcome.Success, "Session completed by clinician", _tenant.TenantId), cancellationToken);
+            return Ok(response);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPost("{sessionId}/pre-assessment")]
+    [Authorize(Policy = "TreatmentWrite")]
+    [ProducesResponseType(typeof(RecordPreAssessmentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RecordPreAssessmentAsync(string sessionId, [FromBody] RecordPreAssessmentRequest? body, CancellationToken cancellationToken = default)
+    {
+        if (body is null)
+            return BadRequest();
+        string? recordedBy = body.RecordedBy ?? User.Identity?.Name;
+        AccessType? accessType = !string.IsNullOrWhiteSpace(body.AccessTypeValue)
+            ? new AccessType(body.AccessTypeValue)
+            : (AccessType?)null;
+        var command = new RecordPreAssessmentCommand(
+            new SessionId(sessionId),
+            body.PreWeightKg,
+            body.BpSystolic,
+            body.BpDiastolic,
+            accessType,
+            body.PrescriptionConfirmed,
+            body.PainSymptomNotes,
+            recordedBy);
+        try
+        {
+            RecordPreAssessmentResponse response = await _sender.SendAsync(command, cancellationToken);
+            await _audit.RecordAsync(new AuditRecordRequest(
+                AuditAction.Create, "PreAssessment", sessionId, User.Identity?.Name,
+                AuditOutcome.Success, "Pre-assessment recorded", _tenant.TenantId), cancellationToken);
+            return Ok(response);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPost("{sessionId}/sign")]
+    [Authorize(Policy = "TreatmentWrite")]
+    [ProducesResponseType(typeof(SignTreatmentSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SignAsync(string sessionId, [FromBody] SignSessionRequest? body = null, CancellationToken cancellationToken = default)
+    {
+        string? signedBy = body?.SignedBy ?? User.Identity?.Name;
+        var command = new SignTreatmentSessionCommand(new SessionId(sessionId), signedBy);
+        try
+        {
+            SignTreatmentSessionResponse response = await _sender.SendAsync(command, cancellationToken);
+            await _audit.RecordAsync(new AuditRecordRequest(
+                AuditAction.Update, "TreatmentSession", sessionId, User.Identity?.Name,
+                AuditOutcome.Success, "Session signed by clinician", _tenant.TenantId), cancellationToken);
+            return Ok(response);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpGet("{sessionId}")]
     [Authorize(Policy = "TreatmentRead")]
     [ProducesResponseType(typeof(GetTreatmentSessionResponse), StatusCodes.Status200OK)]
@@ -234,3 +318,5 @@ public sealed class TreatmentSessionsController : ControllerBase
 }
 
 internal sealed record SessionsSummaryReport(int SessionCount, decimal AvgDurationMinutes, DateTimeOffset From, DateTimeOffset To);
+
+public sealed record SignSessionRequest(string? SignedBy);

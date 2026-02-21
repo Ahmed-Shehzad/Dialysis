@@ -21,6 +21,7 @@ public sealed class TreatmentDbContext : DbContext, IDbContext
 
     public DbSet<TreatmentSession> TreatmentSessions => Set<TreatmentSession>();
     public DbSet<Observation> Observations => Set<Observation>();
+    public DbSet<PreAssessment> PreAssessments => Set<PreAssessment>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -32,6 +33,7 @@ public sealed class TreatmentDbContext : DbContext, IDbContext
     {
         _ = modelBuilder.ApplyConfiguration(new TreatmentSessionConfiguration());
         _ = modelBuilder.ApplyConfiguration(new ObservationConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new PreAssessmentConfiguration());
         _ = modelBuilder.ApplyTransponderModel().ApplyPostgreSqlTransponderTypes();
     }
 }
@@ -53,6 +55,8 @@ internal sealed class TreatmentSessionConfiguration : IEntityTypeConfiguration<T
         _ = e.Property(x => x.PatientMrn).HasConversion(NullableStringConverter<MedicalRecordNumber>(v => v.Value, v => new MedicalRecordNumber(v)));
         _ = e.Property(x => x.DeviceId).HasConversion(NullableStringConverter<DeviceId>(v => v.Value, v => new DeviceId(v)));
         _ = e.Property(x => x.Status).HasConversion(v => v.Value, v => new TreatmentSessionStatus(v)).IsRequired();
+        _ = e.Property(x => x.SignedAt);
+        _ = e.Property(x => x.SignedBy).HasMaxLength(200);
         _ = e.Property(x => x.Mode).HasConversion(NullableStringConverter<ModeOfOperation>(v => v.Value, v => new ModeOfOperation(v)));
         _ = e.Property(x => x.Modality).HasConversion(NullableStringConverter<TreatmentModality>(v => v.Value, v => new TreatmentModality(v)));
         _ = e.Property(x => x.Phase).HasConversion(NullableStringConverter<EventPhase>(v => v.Value, v => new EventPhase(v)));
@@ -73,6 +77,27 @@ internal sealed class TreatmentSessionConfiguration : IEntityTypeConfiguration<T
         return new ValueConverter<T?, string?>(
             v => v.HasValue ? toStore(v.Value) : null,
             v => v != null ? fromStore(v) : null);
+    }
+}
+
+internal sealed class PreAssessmentConfiguration : IEntityTypeConfiguration<PreAssessment>
+{
+    public void Configure(EntityTypeBuilder<PreAssessment> e)
+    {
+        _ = e.ToTable("PreAssessments");
+        _ = e.HasKey(x => x.Id);
+        _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
+        _ = e.Property(x => x.TenantId).HasMaxLength(100).IsRequired();
+        _ = e.Property(x => x.SessionId)
+            .HasConversion(v => v.Value, v => new SessionId(v))
+            .IsRequired();
+        _ = e.Property(x => x.PreWeightKg).HasPrecision(10, 2);
+        _ = e.Property(x => x.AccessTypeValue).HasConversion(
+            v => v.HasValue ? v.Value.Value : null,
+            v => !string.IsNullOrEmpty(v) ? new AccessType(v) : (AccessType?)null);
+        _ = e.Property(x => x.PainSymptomNotes).HasMaxLength(2000);
+        _ = e.Property(x => x.RecordedBy).HasMaxLength(200);
+        _ = e.HasIndex(x => new { x.TenantId, x.SessionId }).IsUnique();
     }
 }
 
