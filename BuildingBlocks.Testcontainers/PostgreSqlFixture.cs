@@ -1,4 +1,5 @@
 using Testcontainers.PostgreSql;
+using Npgsql;
 
 using Xunit;
 
@@ -30,7 +31,7 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
     {
         if (_container is not null)
         {
-            ConnectionString = _container.GetConnectionString();
+            ConnectionString = await CreateIsolatedDatabaseConnectionStringAsync(_container).ConfigureAwait(false);
             return;
         }
 
@@ -39,7 +40,7 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
         {
             if (_container is not null)
             {
-                ConnectionString = _container.GetConnectionString();
+                ConnectionString = await CreateIsolatedDatabaseConnectionStringAsync(_container).ConfigureAwait(false);
                 return;
             }
 
@@ -49,11 +50,35 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
 #pragma warning disable IDE0058
             await _container.StartAsync();
 #pragma warning restore IDE0058
-            ConnectionString = _container.GetConnectionString();
+            ConnectionString = await CreateIsolatedDatabaseConnectionStringAsync(_container).ConfigureAwait(false);
         }
         finally
         {
             InitLock.Release();
         }
+    }
+
+    private static async Task<string> CreateIsolatedDatabaseConnectionStringAsync(PostgreSqlContainer container)
+    {
+        string baseConnectionString = container.GetConnectionString();
+        string databaseName = $"test_{Guid.NewGuid():N}";
+
+        var adminBuilder = new NpgsqlConnectionStringBuilder(baseConnectionString)
+        {
+            Database = "postgres"
+        };
+
+        await using var adminConnection = new NpgsqlConnection(adminBuilder.ConnectionString);
+        await adminConnection.OpenAsync().ConfigureAwait(false);
+
+        await using var createDbCommand = adminConnection.CreateCommand();
+        createDbCommand.CommandText = $"CREATE DATABASE \"{databaseName}\"";
+        _ = await createDbCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+        var isolatedBuilder = new NpgsqlConnectionStringBuilder(baseConnectionString)
+        {
+            Database = databaseName
+        };
+        return isolatedBuilder.ConnectionString;
     }
 }
