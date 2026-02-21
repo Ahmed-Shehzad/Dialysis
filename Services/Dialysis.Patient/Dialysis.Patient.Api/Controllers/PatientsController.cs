@@ -82,7 +82,7 @@ public sealed class PatientsController : ControllerBase
                 fhirPatient.Id = p.Id;
                 return new Hl7.Fhir.Model.Bundle.EntryComponent
                 {
-                    FullUrl = $"urn:uuid:patient-{p.Id}",
+                    FullUrl = $"Patient/{p.Id}",
                     Resource = fhirPatient
                 };
             }).ToList()

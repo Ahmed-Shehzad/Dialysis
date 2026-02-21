@@ -79,7 +79,7 @@ public sealed class DevicesController : ControllerBase
                 fhir.Id = d.Id;
                 return new Hl7.Fhir.Model.Bundle.EntryComponent
                 {
-                    FullUrl = $"urn:uuid:device-{d.Id}",
+                    FullUrl = $"Device/{d.Id}",
                     Resource = fhir
                 };
             }).ToList()

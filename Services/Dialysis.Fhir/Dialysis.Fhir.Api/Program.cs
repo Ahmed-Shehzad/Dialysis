@@ -56,6 +56,7 @@ builder.Services.AddRefitClient<IFhirExportGatewayApi>()
     {
         client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/fhir+json");
+        client.Timeout = TimeSpan.FromSeconds(30);
     })
     .AddStandardResilienceHandler();
 builder.Services.AddScoped<FhirBulkExportService>();
