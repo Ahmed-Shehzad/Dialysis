@@ -38,4 +38,17 @@ public sealed class GatewayHealthTests : IClassFixture<GatewayWebApplicationFact
         root.TryGetProperty("entries", out JsonElement entries).ShouldBeTrue();
         entries.ValueKind.ShouldBe(JsonValueKind.Object);
     }
+
+    /// <summary>
+    /// Verifies that /api/patients/* is routed (YARP matches the route).
+    /// When backends are down, YARP returns 502; 404 would indicate no route matched.
+    /// </summary>
+    [Fact]
+    public async Task PatientRoute_WhenBackendUnavailable_Returns502Async()
+    {
+        HttpResponseMessage response = await _client.GetAsync("/api/patients/123");
+
+        // 502 = route matched, backend unreachable; 404 = no route matched
+        response.StatusCode.ShouldBeOneOf(HttpStatusCode.BadGateway, HttpStatusCode.ServiceUnavailable);
+    }
 }

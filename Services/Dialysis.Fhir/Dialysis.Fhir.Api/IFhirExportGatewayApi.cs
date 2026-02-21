@@ -20,7 +20,8 @@ public interface IFhirExportGatewayApi
     [Get("/api/devices/fhir")]
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetDevicesFhirAsync(
-        [Query] int limit,
+        [Query("_id")] string? id,
+        [Query] string? identifier,
         [Header("Authorization")] string? authorization,
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
@@ -41,7 +42,9 @@ public interface IFhirExportGatewayApi
         [Query] int limit,
         [Query] string? subject,
         [Query] string? patient,
+        [Query] string? date,
         [Query] string? dateFrom,
+        [Query] string? dateTo,
         [Header("Authorization")] string? authorization,
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);
@@ -50,7 +53,12 @@ public interface IFhirExportGatewayApi
     [Headers("Accept: application/fhir+json")]
     Task<HttpResponseMessage> GetAlarmsFhirAsync(
         [Query] int limit,
+        [Query("_id")] string? id,
+        [Query] string? deviceId,
+        [Query] string? sessionId,
+        [Query] string? date,
         [Query] string? from,
+        [Query] string? to,
         [Header("Authorization")] string? authorization,
         [Header("X-Tenant-Id")] string? tenantId,
         CancellationToken cancellationToken = default);

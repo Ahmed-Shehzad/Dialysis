@@ -3,6 +3,7 @@ using BuildingBlocks.Authorization;
 using BuildingBlocks.Caching;
 using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
+using BuildingBlocks.Options;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 
@@ -28,6 +29,8 @@ builder.Host.UseSerilog((context, _, config) =>
         .Enrich.With<ActivityEnricher>()
         .Enrich.FromLogContext());
 
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
     {

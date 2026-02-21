@@ -94,7 +94,7 @@ The Gateway runs `AddNtpSyncCheck()` to verify the host clock is NTP-synchronize
 **Causes**:
 
 1. **Backend containers not running** – The Gateway health check calls backend `/health` endpoints. If treatment-api or alarm-api containers are down or failed to start, connection will be refused.
-2. **ASB overlay** – With `docker compose -f docker-compose.yml -f docker-compose.asb.yml up`, treatment-api and alarm-api depend on `servicebus-emulator`, which depends on `sqledge`. If sqledge fails (e.g. missing `ACCEPT_EULA=Y`, `MSSQL_SA_PASSWORD` in `.env`), the ASB-dependent APIs never become healthy.
+2. **ASB overlay** – With `docker compose -f docker-compose.yml -f docker-compose.asb.yml up`, treatment-api and alarm-api depend on `servicebus-emulator`, which depends on `mssql`. If mssql fails (e.g. missing `ACCEPT_EULA=Y`, `MSSQL_SA_PASSWORD` in `.env`), the ASB-dependent APIs never become healthy.
 3. **Partial startup** – Running only the Gateway (e.g. `docker compose up gateway --no-deps`) skips backend startup.
 
 **Fixes**:

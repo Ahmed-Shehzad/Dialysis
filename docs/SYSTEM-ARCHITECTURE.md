@@ -395,6 +395,12 @@ sequenceDiagram
 
 ## 9. Messaging Flow (Transponder + Azure Service Bus)
 
+**Treatment** and **Alarm** use Transponder with optional Azure Service Bus. When `AzureServiceBus:ConnectionString` is set, Treatment publishes `ThresholdBreachDetectedIntegrationEvent` to ASB; Alarm consumes via receive endpoint with Inbox pattern for idempotency. See [AZURE-SERVICE-BUS.md](AZURE-SERVICE-BUS.md).
+
+**Management**: Entity provisioning (topics, subscriptions) uses `ServiceBusAdministrationClient` from `Azure.Messaging.ServiceBus` (connection string). Namespace-level provisioning uses `Azure.ResourceManager.ServiceBus` (Microsoft Entra ID). See [Microsoft management libraries](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-management-libraries).
+
+**Local development**: [Azure Service Bus emulator](https://learn.microsoft.com/en-us/azure/service-bus-messaging/test-locally-with-service-bus-emulator) via `docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d`.
+
 ```mermaid
 sequenceDiagram
     participant ServiceA

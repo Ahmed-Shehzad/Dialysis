@@ -1,7 +1,9 @@
 using System.Text.Json;
 
 using BuildingBlocks.Authorization;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
+using BuildingBlocks.Options;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Abstractions;
@@ -35,6 +37,8 @@ builder.Services.AddControllers()
             o.JsonSerializerOptions.Converters.Add(converter);
     });
 
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
     {
@@ -79,6 +83,7 @@ builder.Services.AddScoped<SubscriptionDispatcher>();
 WebApplication app = builder.Build();
 
 app.UseTenantResolution();
+app.UseCentralExceptionHandler();
 if (app.Environment.IsDevelopment() && !string.IsNullOrEmpty(fhirConnectionString))
 {
     using IServiceScope scope = app.Services.CreateScope();

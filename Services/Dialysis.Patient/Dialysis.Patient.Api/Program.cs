@@ -32,6 +32,7 @@ builder.Host.UseSerilog((context, _, config) =>
         .Enrich.FromLogContext());
 
 builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
@@ -105,3 +106,5 @@ app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true })
 app.MapControllers();
 
 await app.RunAsync();
+
+namespace Dialysis.Patient.Api { public partial class Program { } }

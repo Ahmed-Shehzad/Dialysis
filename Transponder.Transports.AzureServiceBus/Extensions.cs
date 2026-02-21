@@ -1,3 +1,5 @@
+using Azure.Core;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -73,9 +75,9 @@ public static class Extensions
 
     /// <summary>
     /// Ensures the topic and subscription for ThresholdBreachDetectedIntegrationEvent exist.
-    /// Call at startup when ASB is configured, before Transponder receive endpoints start.
+    /// Call at startup when ASB is configured (connection string), before Transponder receive endpoints start.
     /// </summary>
-    public async static Task EnsureThresholdBreachTopicAndSubscriptionAsync(
+    public static async Task EnsureThresholdBreachTopicAndSubscriptionAsync(
         this IServiceProvider serviceProvider,
         string connectionString,
         CancellationToken cancellationToken = default)
@@ -85,6 +87,31 @@ public static class Extensions
 
         var provisioner = new AzureServiceBusTopologyProvisioner(
             connectionString,
+            serviceProvider.GetRequiredService<ILogger<AzureServiceBusTopologyProvisioner>>());
+
+        await provisioner.EnsureTopicAndSubscriptionAsync(
+            "ThresholdBreachDetectedIntegrationEvent",
+            "alarm-threshold-breach",
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Ensures the topic and subscription for ThresholdBreachDetectedIntegrationEvent exist.
+    /// Call at startup when ASB is configured (passwordless), before Transponder receive endpoints start.
+    /// </summary>
+    public static async Task EnsureThresholdBreachTopicAndSubscriptionAsync(
+        this IServiceProvider serviceProvider,
+        string fullyQualifiedNamespace,
+        TokenCredential credential,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fullyQualifiedNamespace);
+        ArgumentNullException.ThrowIfNull(credential);
+
+        var provisioner = new AzureServiceBusTopologyProvisioner(
+            fullyQualifiedNamespace,
+            credential,
             serviceProvider.GetRequiredService<ILogger<AzureServiceBusTopologyProvisioner>>());
 
         await provisioner.EnsureTopicAndSubscriptionAsync(

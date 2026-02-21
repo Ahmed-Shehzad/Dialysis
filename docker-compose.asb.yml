@@ -1,33 +1,38 @@
 # Azure Service Bus Emulator – local development
+# Aligns with: https://learn.microsoft.com/en-us/azure/service-bus-messaging/test-locally-with-service-bus-emulator
 # Usage: docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d
 # Enables Treatment→Alarm workflow via ASB (ThresholdBreachDetectedIntegrationEvent).
 # Requires: ACCEPT_EULA=Y and MSSQL_SA_PASSWORD in .env (see docker/asb-emulator/.env.example)
 
 services:
-  sqledge:
-    image: mcr.microsoft.com/azure-sql-edge:latest
-    container_name: dialysis-sqledge
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dialysis-mssql
     environment:
       ACCEPT_EULA: ${ACCEPT_EULA:-N}
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStr0ng!Password}
     networks:
       default:
         aliases:
-          - sqledge
+          - mssql
 
   servicebus-emulator:
     image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    pull_policy: always
     container_name: dialysis-servicebus-emulator
     volumes:
-      - ./docker/asb-emulator/Config.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+      - "${CONFIG_PATH:-./docker/asb-emulator/Config.json}:/ServiceBus_Emulator/ConfigFiles/Config.json"
     ports:
       - "5672:5672"
+      - "5300:${EMULATOR_HTTP_PORT:-5300}"
     environment:
-      SQL_SERVER: sqledge
+      SQL_SERVER: mssql
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStr0ng!Password}
       ACCEPT_EULA: ${ACCEPT_EULA:-N}
+      EMULATOR_HTTP_PORT: ${EMULATOR_HTTP_PORT:-5300}
+      SQL_WAIT_INTERVAL: ${SQL_WAIT_INTERVAL:-15}
     depends_on:
-      - sqledge
+      - mssql
     networks:
       default:
         aliases:

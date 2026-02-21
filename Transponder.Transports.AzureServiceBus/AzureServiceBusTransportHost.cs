@@ -9,6 +9,7 @@ namespace Transponder.Transports.AzureServiceBus;
 
 /// <summary>
 /// Azure Service Bus transport host backed by Service Bus clients.
+/// Supports connection string or passwordless (TokenCredential + namespace) auth.
 /// </summary>
 public sealed class AzureServiceBusTransportHost : TransportHostBase
 {
@@ -23,7 +24,6 @@ public sealed class AzureServiceBusTransportHost : TransportHostBase
         Settings = settings;
         _resilienceOptions = (settings as ITransportHostResilienceSettings)?.ResilienceOptions;
         _resiliencePipeline = TransportResiliencePipeline.Create(_resilienceOptions);
-        if (string.IsNullOrWhiteSpace(settings.ConnectionString)) throw new InvalidOperationException("Azure Service Bus connection string must be provided.");
 
         var options = new ServiceBusClientOptions
         {
@@ -32,7 +32,19 @@ public sealed class AzureServiceBusTransportHost : TransportHostBase
                 : ServiceBusTransportType.AmqpTcp
         };
 
-        _client = new ServiceBusClient(settings.ConnectionString, options);
+        if (!string.IsNullOrWhiteSpace(settings.ConnectionString))
+        {
+            _client = new ServiceBusClient(settings.ConnectionString, options);
+        }
+        else if (!string.IsNullOrWhiteSpace(settings.FullyQualifiedNamespace) && settings.Credential is not null)
+        {
+            _client = new ServiceBusClient(settings.FullyQualifiedNamespace, settings.Credential, options);
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "Azure Service Bus requires either ConnectionString or (FullyQualifiedNamespace + Credential) for passwordless auth.");
+        }
     }
 
     public IAzureServiceBusHostSettings Settings { get; }

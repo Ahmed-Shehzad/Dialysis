@@ -1,3 +1,5 @@
+using Azure.Core;
+
 using Transponder.Transports.Abstractions;
 using Transponder.Transports.AzureServiceBus.Abstractions;
 
@@ -5,6 +7,7 @@ namespace Transponder.Transports.AzureServiceBus;
 
 /// <summary>
 /// Default Azure Service Bus transport host settings.
+/// Use connection string for emulator/local, or FullyQualifiedNamespace + Credential for passwordless (Azure).
 /// </summary>
 public sealed class AzureServiceBusHostSettings : TransportHostSettings, IAzureServiceBusHostSettings
 {
@@ -14,6 +17,7 @@ public sealed class AzureServiceBusHostSettings : TransportHostSettings, IAzureS
         AzureServiceBusTransportType transportType = AzureServiceBusTransportType.AmqpTcp,
         string? connectionString = null,
         string? fullyQualifiedNamespace = null,
+        TokenCredential? credential = null,
         string? sharedAccessKeyName = null,
         string? sharedAccessKey = null,
         IReadOnlyDictionary<string, object?>? settings = null,
@@ -24,6 +28,7 @@ public sealed class AzureServiceBusHostSettings : TransportHostSettings, IAzureS
         TransportType = transportType;
         ConnectionString = connectionString;
         FullyQualifiedNamespace = fullyQualifiedNamespace;
+        Credential = credential;
         SharedAccessKeyName = sharedAccessKeyName;
         SharedAccessKey = sharedAccessKey;
     }
@@ -33,6 +38,8 @@ public sealed class AzureServiceBusHostSettings : TransportHostSettings, IAzureS
     public string? ConnectionString { get; }
 
     public string? FullyQualifiedNamespace { get; }
+
+    public TokenCredential? Credential { get; }
 
     public string? SharedAccessKeyName { get; }
 

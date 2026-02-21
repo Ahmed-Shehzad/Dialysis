@@ -6,7 +6,8 @@ using Hl7.Fhir.Model;
 namespace Dialysis.Fhir.Api.Controllers;
 
 /// <summary>
-/// FHIR-type unified search. GET /api/fhir/Patient with _id, identifier query params.
+/// FHIR-type unified search. GET /api/fhir/{resourceType} with resource-specific query params.
+/// Supports: Patient, Device, ServiceRequest, Procedure, Observation, DetectedIssue, AuditEvent.
 /// </summary>
 [ApiController]
 [Route("api/fhir")]
@@ -21,8 +22,10 @@ public sealed class FhirSearchController : ControllerBase
     }
 
     /// <summary>
-    /// FHIR search for a resource type. Supports Patient (_id, identifier, _count).
-    /// Returns a search set Bundle.
+    /// FHIR search for a resource type. Returns a search set Bundle.
+    /// Params: Patient (_id, identifier, _count); Device (_id, identifier);
+    /// ServiceRequest (subject, patient, _count); Procedure/Observation (subject, patient, date, dateFrom, dateTo, _count);
+    /// DetectedIssue (_id, device, date, from, to, _count); AuditEvent (_count).
     /// </summary>
     [HttpGet("{resourceType}")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK, "application/fhir+json")]

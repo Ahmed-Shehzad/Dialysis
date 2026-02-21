@@ -1,8 +1,10 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.Caching;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.Logging;
+using BuildingBlocks.Options;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.TimeSync;
 
@@ -23,8 +25,6 @@ using Transponder.Persistence.Redis;
 
 using Serilog;
 
-using Verifier.Exceptions;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, _, config) =>
@@ -32,6 +32,9 @@ builder.Host.UseSerilog((context, _, config) =>
         .Enrich.With<ActivityEnricher>()
         .Enrich.FromLogContext());
 
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
+builder.Services.AddExceptionHandler<PrescriptionExceptionHandler>();
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
     {
@@ -98,46 +101,7 @@ if (app.Environment.IsDevelopment())
     await db.Database.MigrateAsync();
 }
 
-app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(HandleExceptionAsync));
-
-async static Task HandleExceptionAsync(HttpContext context)
-{
-    Exception? exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
-    if (exception is ValidationException validationException)
-    {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        context.Response.ContentType = "application/json";
-        var errors = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-        await context.Response.WriteAsJsonAsync(new { errors });
-        return;
-    }
-    if (exception is Dialysis.Prescription.Application.Exceptions.RspK22ValidationException rspEx)
-    {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { errorCode = rspEx.ErrorCode, message = rspEx.Message });
-        return;
-    }
-    if (exception is Dialysis.Prescription.Application.Exceptions.PrescriptionConflictException conflictEx)
-    {
-        context.Response.StatusCode = StatusCodes.Status409Conflict;
-        context.Response.ContentType = "application/json";
-        var body = new Dictionary<string, object?> { ["orderId"] = conflictEx.OrderId, ["message"] = conflictEx.Message };
-        if (!string.IsNullOrEmpty(conflictEx.CallbackPhone))
-            body["callbackPhone"] = conflictEx.CallbackPhone;
-        await context.Response.WriteAsJsonAsync(body);
-        return;
-    }
-    if (exception is ArgumentException argEx)
-    {
-        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { message = argEx.Message });
-        return;
-    }
-    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-}
-
+app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -106,6 +106,45 @@ public sealed class FhirBulkExportServiceIntegrationTests
     }
 
     [Fact]
+    public async Task SearchAsync_Device_WithIdAndIdentifier_PassesParamsToApiAsync()
+    {
+        string deviceJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Device","id":"dev-1","identifier":[{"value":"EUI64-123"}]}}]}""";
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().Devices(deviceJson);
+        var tenant = new TenantContext { TenantId = "default" };
+        var service = new FhirBulkExportService(api, tenant);
+
+        var searchParams = new Dictionary<string, string?>
+        {
+            ["_id"] = "dev-1",
+            ["identifier"] = "EUI64-123",
+        };
+        Bundle bundle = await service.SearchAsync("Device", searchParams, null);
+
+        bundle.Type.ShouldBe(Bundle.BundleType.Searchset);
+        bundle.Entry.ShouldNotBeEmpty();
+        bundle.Entry[0].Resource.ShouldBeOfType<Hl7.Fhir.Model.Device>();
+        ((Hl7.Fhir.Model.Device)bundle.Entry[0].Resource!).Id.ShouldBe("dev-1");
+    }
+
+    [Fact]
+    public async Task SearchAsync_ServiceRequest_WithSubject_PassesMrnToApiAsync()
+    {
+        string rxJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"ServiceRequest","id":"rx-1","status":"active","intent":"order","subject":{"reference":"Patient/MRN001"}}}]}""";
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().Prescriptions(rxJson);
+        var tenant = new TenantContext { TenantId = "default" };
+        var service = new FhirBulkExportService(api, tenant);
+
+        var searchParams = new Dictionary<string, string?>
+        {
+            ["subject"] = "Patient/MRN001",
+        };
+        Bundle bundle = await service.SearchAsync("ServiceRequest", searchParams, null);
+
+        bundle.Type.ShouldBe(Bundle.BundleType.Searchset);
+        bundle.Entry.ShouldNotBeEmpty();
+    }
+
+    [Fact]
     public async Task ExportAsync_WhenBackendReturns404_OmitsThatTypeFromBundleAsync()
     {
         MockFhirExportGatewayApi api = new MockFhirExportGatewayApi()
@@ -158,19 +197,26 @@ public sealed class FhirBulkExportServiceIntegrationTests
             return this;
         }
 
+        public MockFhirExportGatewayApi Prescriptions(string body, HttpStatusCode status = HttpStatusCode.OK)
+        {
+            _prescriptions = body;
+            _prescriptionsStatus = status;
+            return this;
+        }
+
         public Task<HttpResponseMessage> GetPatientsFhirAsync(int limit, string? id, string? identifier, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_patients, _patientsStatus));
 
-        public Task<HttpResponseMessage> GetDevicesFhirAsync(int limit, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+        public Task<HttpResponseMessage> GetDevicesFhirAsync(string? id, string? identifier, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_devices, _devicesStatus));
 
         public Task<HttpResponseMessage> GetPrescriptionsFhirAsync(int limit, string? subject, string? patient, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_prescriptions, _prescriptionsStatus));
 
-        public Task<HttpResponseMessage> GetTreatmentSessionsFhirAsync(int limit, string? subject, string? patient, string? dateFrom, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+        public Task<HttpResponseMessage> GetTreatmentSessionsFhirAsync(int limit, string? subject, string? patient, string? date, string? dateFrom, string? dateTo, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_treatmentSessions, _treatmentSessionsStatus));
 
-        public Task<HttpResponseMessage> GetAlarmsFhirAsync(int limit, string? from, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+        public Task<HttpResponseMessage> GetAlarmsFhirAsync(int limit, string? id, string? deviceId, string? sessionId, string? date, string? from, string? to, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_alarms, _alarmsStatus));
 
         public Task<HttpResponseMessage> GetAuditEventsAsync(int count, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>

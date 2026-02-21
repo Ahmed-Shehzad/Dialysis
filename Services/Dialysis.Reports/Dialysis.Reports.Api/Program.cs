@@ -1,4 +1,6 @@
 using BuildingBlocks.Authorization;
+using BuildingBlocks.ExceptionHandling;
+using BuildingBlocks.Options;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 
@@ -17,6 +19,8 @@ builder.Host.UseSerilog((context, _, config) =>
         .Enrich.With<ActivityEnricher>()
         .Enrich.FromLogContext());
 
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
     {
@@ -42,6 +46,7 @@ builder.Services.AddHealthChecks()
 WebApplication app = builder.Build();
 
 app.UseTenantResolution();
+app.UseCentralExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

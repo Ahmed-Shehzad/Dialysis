@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-The Dialysis PDMS is a learning platform for healthcare systems, dialysis domain, and FHIR interoperability. It implements HL7 v2 (PDQ, prescription, PCD-01, PCD-04), FHIR R4 resources, C5 compliance (auth, audit, multi-tenancy), and a microservice architecture. Most features are complete; the main gaps are in audit consistency, ASB receive/inbox usage, cache-aside implementation, and a few security/config items.
+The Dialysis PDMS is a learning platform for healthcare systems, dialysis domain, and FHIR interoperability. It implements HL7 v2 (PDQ, prescription, PCD-01, PCD-04), FHIR R4 resources, C5 compliance (auth, audit, multi-tenancy), and a microservice architecture. Most features are complete; remaining items are subscription-notify auth hardening and config validation.
 
 ---
 
@@ -31,9 +31,9 @@ The Dialysis PDMS is a learning platform for healthcare systems, dialysis domain
 
 | Gap | Severity | Recommendation |
 |-----|----------|-----------------|
-| **ASB receive endpoints not wired** | Medium | Treatment and Alarm publish to ASB when configured; no service consumes from ASB. Add receive endpoints for cross-service events (e.g. Alarm subscribes to ThresholdBreachDetected) and apply Inbox pattern per [INBOX-PATTERN.md](INBOX-PATTERN.md). |
-| **Unified FHIR search** | Low | Search is done via per-resource endpoints in downstream APIs. Consider `GET /api/fhir/Patient?_id=&identifier=` if FHIR API compliance is required beyond bulk export. |
-| **System architecture diagram** | Low | [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) shows Patient, Prescription, Device connecting to Azure SB; only Treatment and Alarm use Transponder/ASB. Update diagram. |
+| ~~ASB receive endpoints not wired~~ | — | **Resolved.** Alarm consumes `ThresholdBreachDetectedIntegrationEvent` from ASB via `ThresholdBreachDetectedReceiveEndpoint` with Inbox pattern when `AzureServiceBus:ConnectionString` is set. See [AZURE-SERVICE-BUS.md](AZURE-SERVICE-BUS.md). |
+| ~~Unified FHIR search~~ | — | **Resolved.** `GET /api/fhir/{resourceType}` supports Patient, Device, ServiceRequest, Procedure, Observation, DetectedIssue, AuditEvent with resource-specific search params (_id, identifier, subject, patient, date, dateFrom, dateTo, device, from, to, _count). |
+| ~~System architecture diagram~~ | — | **Resolved.** §1 diagram correctly shows only Treatment and Alarm connecting to Azure SB. §9 Messaging Flow updated with ASB management and emulator references. |
 
 ---
 
@@ -45,22 +45,18 @@ The Dialysis PDMS is a learning platform for healthcare systems, dialysis domain
 |-----|----------|----------------|--------|
 | Patient, Prescription, Treatment, Alarm, Device, FHIR, CDS, Reports | ✓ | Read/Write/Admin per service | Complete |
 | Gateway | None (pass-through) | — | By design; backends enforce auth |
-| SubscriptionNotify | Optional API key | — | **Gap** (see below) |
+| SubscriptionNotify | Optional API key | — | **Resolved** (see below) |
 
-**SubscriptionNotifyController gap:** When `FhirSubscription:NotifyApiKey` is empty or unset, the subscription-notify endpoint accepts any request. In production, this can allow unauthenticated injection of subscription notifications.
-
-**Recommendation:** Require `FhirSubscription:NotifyApiKey` when `!IsDevelopment`, or protect the endpoint with `[Authorize(Policy = "FhirNotify")]` and a dedicated scope.
+**SubscriptionNotifyController:** When `FhirSubscription:NotifyApiKey` is empty in production, the controller returns 503. When the key is configured and the request header does not match, it returns 401. This prevents unauthenticated injection of subscription notifications.
 
 ### 2.2 Audit
 
 | Service | Audit Recorder | Storage |
 |---------|----------------|---------|
 | Prescription | FhirAuditRecorder | FHIR AuditEvent (GET /api/audit-events) |
-| Patient, Treatment, Alarm, Device | LoggingAuditRecorder | Logs only |
+| Patient, Treatment, Alarm, Device | FhirAuditRecorder | FHIR AuditEvent (GET /api/patients/audit-events, /api/treatment-sessions/audit-events, /api/alarms/audit-events, /api/devices/audit-events) |
 
-**Inconsistency:** C5 expects security-relevant actions to be audited with provenance. Only Prescription persists AuditEvent; others log only.
-
-**Recommendation:** Standardize on FhirAuditRecorder (or equivalent) for all write paths, or document why log-only is acceptable for non-Prescription services.
+**Resolved.** All services use FhirAuditRecorder and expose audit events as FHIR AuditEvent Bundles. Events are stored in-memory per service; for production persistence, consider EntityFrameworkAuditEventStore.
 
 ### 2.3 Multi-Tenancy
 
@@ -69,7 +65,7 @@ The Dialysis PDMS is a learning platform for healthcare systems, dialysis domain
 | Patient, Prescription, Treatment, Alarm, Device | ✓ | ✓ |
 | FHIR, CDS, Reports | ✓ | N/A (aggregators) |
 
-**Redis cache keys:** [REDIS-CACHE.md](REDIS-CACHE.md) recommends tenant-scoped keys (e.g. `{tenantId}:prescription:{mrn}`). Prescription wires Redis but no domain cache-aside usage exists yet; when implemented, scope keys by tenant.
+**Redis cache keys:** [REDIS-CACHE.md](REDIS-CACHE.md) defines tenant-scoped keys (e.g. `{tenantId}:prescription:{mrn}`). Implemented in Patient, Prescription, Treatment, Alarm, Device.
 
 ---
 
@@ -79,21 +75,20 @@ The Dialysis PDMS is a learning platform for healthcare systems, dialysis domain
 
 | Service | Redis | Usage |
 |---------|-------|-------|
-| Prescription | AddTransponderRedisCache | IDistributedCache when configured |
+| Patient, Prescription, Treatment, Alarm, Device | AddTransponderRedisCache | Read-through (`IReadThroughCache`) + invalidation (`ICacheInvalidator`) when configured |
 | Others | None | — |
 
-**Gap:** No service implements cache-aside for domain data. Prescription has Redis wired; handlers do not yet use `IDistributedCache` for prescription lookups. Intercessor has `RedisCachingBehavior` but no Dialysis service wires it.
-
-**Recommendation:** When read-heavy scenarios emerge (e.g. prescription by MRN), implement cache-aside per [REDIS-CACHE.md](REDIS-CACHE.md) with tenant-scoped keys.
+**Cache-aside (implemented):** Patient, Prescription, Treatment, Alarm, and Device use `Cached*ReadStore` decorators with `IReadThroughCache.GetOrLoadAsync` for lookups and `ICacheInvalidator.InvalidateAsync` on writes. Keys are tenant-scoped per [REDIS-CACHE.md](REDIS-CACHE.md). When Redis is not configured, `NullReadThroughCache` and `NullCacheInvalidator` are used.
 
 ### 3.2 Transponder / Azure Service Bus
 
-| Service | Transponder | Outbox | ASB |
-|---------|-------------|--------|-----|
-| Treatment, Alarm | ✓ | ✓ | Optional when `AzureServiceBus:ConnectionString` set |
-| Others | ✗ | — | — |
+| Service | Transponder | Outbox | ASB Publish | ASB Consume |
+|---------|-------------|--------|-------------|-------------|
+| Treatment | ✓ | ✓ | ✓ when configured | — |
+| Alarm | ✓ | ✓ | ✓ when configured | ✓ when configured |
+| Others | ✗ | — | — | — |
 
-**Inbox:** InboxStates exist in Transponder DB for idempotent consumption. No Dialysis service currently consumes from a broker; inbox would be used when ASB receive endpoints are added.
+ASB is optional when `AzureServiceBus:ConnectionString` or `AzureServiceBus:FullyQualifiedNamespace` is set. **Alarm consumes** `ThresholdBreachDetectedIntegrationEvent` from ASB via `ThresholdBreachDetectedReceiveEndpoint` with Inbox pattern for idempotency.
 
 ### 3.3 Cross-Service Communication
 
@@ -144,8 +139,8 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 
 | Gap | Recommendation |
 |-----|-----------------|
-| **Gateway** | No dedicated tests; add basic routing/health tests |
-| **Hl7ToFhir mappers** | No direct mapper tests; covered indirectly via integration tests |
+| ~~**Gateway**~~ | **Resolved.** GatewayHealthTests (health aggregation, routing). |
+| ~~**Hl7ToFhir mappers**~~ | **Resolved.** ObservationMapperTests, ProcedureMapperTests in Dialysis.Hl7ToFhir.Tests. |
 | **Controller-level** | Most tests target handlers; consider API-level tests for critical flows |
 
 ---
@@ -164,8 +159,8 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 
 | Area | Notes |
 |------|-------|
-| **Startup config validation** | No explicit validation for required config (JWT authority, DB); consider IOptions validation |
-| **Central exception middleware** | Per-API exception handlers; consider shared middleware |
+| ~~**Startup config validation**~~ | **Done.** AddJwtBearerStartupValidation validates Authority when not in Development. |
+| ~~**Central exception middleware**~~ | **Done.** IExceptionHandler-based CentralExceptionHandler; Prescription adds PrescriptionExceptionHandler for domain exceptions. |
 | **Per-tenant DB** | C5 mentions per-tenant DBs; implementation uses shared DB + TenantId filter (acceptable for learning platform) |
 
 ---
@@ -182,7 +177,7 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 
 ### 7.2 Recommended Updates
 
-- **SYSTEM-ARCHITECTURE.md:** Fix diagram – only Treatment and Alarm connect to Azure SB; Patient, Prescription, Device do not.
+- ~~**SYSTEM-ARCHITECTURE.md:** Fix diagram~~ — Done. §1 diagram correctly shows Treatment and Alarm only; §9 updated with ASB management and emulator references.
 
 ---
 
@@ -190,10 +185,10 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 
 | Tier | Items | Count |
 |------|-------|-------|
-| **Tier 1 – Must Do** | Subscription-notify auth, Audit consistency | 2 |
-| **Tier 2 – Should Do** | ASB receive + Inbox, Architecture diagram | 2 |
-| **Tier 3 – Nice to Have** | Redis cache-aside, Gateway tests, Hl7ToFhir mapper tests | 3 |
-| **Tier 4 – Defer** | FHIR unified search, Startup validation, Exception middleware, Controller API tests | 4 |
+| **Tier 1 – Must Do** | ~~Subscription-notify auth~~, ~~Audit consistency~~ (both done) | 0 |
+| **Tier 2 – Should Do** | ~~ASB receive + Inbox~~, ~~Architecture diagram~~ (both done) | 0 |
+| **Tier 3 – Nice to Have** | ~~Redis cache-aside~~, ~~Gateway tests~~, ~~Hl7ToFhir mapper tests~~ (all done) | 0 |
+| **Tier 4 – Defer** | FHIR unified search, Controller API tests (Patient health + routing done) | 2 |
 
 ---
 
@@ -217,32 +212,32 @@ Before implementation, items are ranked by:
 
 | # | Item | Effort | Rationale |
 |---|------|--------|-----------|
-| **1** | **Subscription-notify auth** | Low | Unprotected endpoint when `NotifyApiKey` empty; production security risk. Fix: require key when `!IsDevelopment`, or `[Authorize]` with scope. |
-| **2** | **Audit consistency** | Medium | C5: "Security-relevant actions MUST be audited." Only Prescription persists AuditEvent; others log only. Standardize FhirAuditRecorder (or equivalent) across Patient, Treatment, Alarm, Device. |
+| **1** | ~~**Subscription-notify auth**~~ | — | **Done.** Controller returns 503 when key not configured in production; 401 when key mismatch. |
+| **2** | ~~**Audit consistency**~~ | — | **Done.** All services use FhirAuditRecorder; Patient, Treatment, Alarm, Device expose GET /api/{service}/audit-events. |
 
 ### Tier 2 – Should Do (Feature Completeness / Correctness)
 
 | # | Item | Effort | Rationale |
 |---|------|--------|-----------|
-| **3** | **ASB receive + Inbox** | High | ASB publish is wired; receive + Inbox completes idempotent cross-service messaging. Enables Alarm to consume ThresholdBreachDetected, etc. |
-| **4** | **System architecture diagram** | Low | Low effort; docs must match reality. Only Treatment and Alarm connect to ASB. |
+| **3** | ~~**ASB receive + Inbox**~~ | — | **Done.** Alarm consumes ThresholdBreachDetectedIntegrationEvent via ASB with Inbox pattern. |
+| **4** | ~~**System architecture diagram**~~ | — | **Done.** §1 and §9 updated. |
 
 ### Tier 3 – Nice to Have (Performance / Polish)
 
 | # | Item | Effort | Rationale |
 |---|------|--------|-----------|
-| **5** | **Redis cache-aside** | Medium | Prescription has Redis wired; no cache usage yet. Implement when read load justifies it; tenant-scoped keys. |
-| **6** | **Gateway tests** | Low | No tests today; add routing and health aggregation to prevent regressions. |
-| **7** | **Hl7ToFhir mapper tests** | Low | Covered indirectly; direct unit tests improve maintainability. |
+| **5** | ~~**Redis cache-aside**~~ | — | **Done.** Patient, Prescription, Treatment, Alarm, Device use Cached*ReadStore with IReadThroughCache and ICacheInvalidator; tenant-scoped keys per REDIS-CACHE.md. |
+| **6** | ~~**Gateway tests**~~ | — | **Done.** GatewayHealthTests (health, routing). |
+| **7** | ~~**Hl7ToFhir mapper tests**~~ | — | **Done.** ObservationMapperTests, ProcedureMapperTests. |
 
 ### Tier 4 – Defer (Optional / Future)
 
 | # | Item | Effort | Rationale |
 |---|------|--------|-----------|
 | **8** | **FHIR unified search** | High | Per-resource search via downstream APIs works. Only needed if full FHIR API compliance is required. Defer until required. |
-| **9** | **Startup config validation** | Low | IOptions validation improves fail-fast; not blocking. |
-| **10** | **Central exception middleware** | Low | Per-API handlers work; shared middleware is a refactor. |
-| **11** | **Controller-level API tests** | Medium | Handler-level coverage exists; add when critical flows need contract tests. |
+| **9** | ~~**Startup config validation**~~ | — | **Done.** AddJwtBearerStartupValidation in all JWT APIs. |
+| **10** | ~~**Central exception middleware**~~ | — | **Done.** CentralExceptionHandler (IExceptionHandler); PrescriptionExceptionHandler for domain exceptions. |
+| **11** | ~~**Controller-level API tests**~~ | — | **Done.** PatientsControllerApiTests (health); PatientApiWebApplicationFactory with Testcontainers. |
 
 ---
 
@@ -250,12 +245,12 @@ Before implementation, items are ranked by:
 
 | Phase | Items | Notes |
 |-------|-------|-------|
-| **Phase 1** | 1 (Subscription-notify auth) | Single change; high security impact. |
-| **Phase 2** | 2 (Audit consistency) | Touches Patient, Treatment, Alarm, Device; plan per-service rollout. |
-| **Phase 3** | 4 (Architecture diagram) | Quick win; aligns docs with implementation. |
-| **Phase 4** | 3 (ASB receive + Inbox) | Larger; create plan in `.cursor/plans/` before implementing. |
-| **Phase 5** | 6, 7 (Gateway + mapper tests) | ✓ Done – GatewayHealthTests, ObservationMapperTests added. |
-| **Phase 6** | 5 (Redis cache-aside) | When read load or performance requirements emerge. |
+| **Phase 1** | ~~1 (Subscription-notify auth)~~ | Done. |
+| **Phase 2** | ~~2 (Audit consistency)~~ | Done. AuditEventsController added to Patient, Treatment, Alarm, Device. |
+| **Phase 3** | ~~4 (Architecture diagram)~~ | Done. |
+| **Phase 4** | ~~3 (ASB receive + Inbox)~~ | Done. See [asb_receive_inbox_plan](.cursor/plans/asb_receive_inbox_plan.plan.md). |
+| **Phase 5** | 6, 7 (Gateway + mapper tests) | ✓ Done – GatewayHealthTests (health + routing), ObservationMapperTests, ProcedureMapperTests. |
+| **Phase 6** | 5 (Redis cache-aside) | ✓ Done – Cached*ReadStore with IReadThroughCache and ICacheInvalidator across Patient, Prescription, Treatment, Alarm, Device. |
 
 ---
 

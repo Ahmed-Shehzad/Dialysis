@@ -1,45 +1,38 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
-
-using Verifier.Exceptions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BuildingBlocks.ExceptionHandling;
 
 /// <summary>
-/// Central exception handling for APIs. Handles ValidationException, ArgumentException.
+/// Central exception handling for APIs. Returns RFC 7807 Problem Details.
+/// Stack trace only in Development; in Production, emails full report to dev inbox.
 /// </summary>
 public static class CentralExceptionHandlerExtensions
 {
     /// <summary>
-    /// Uses a central exception handler that returns 400 for ValidationException and ArgumentException,
-    /// 500 for unhandled exceptions.
+    /// Registers the central exception handler and exception report email sender.
+    /// When configuration is provided, binds ExceptionHandling:Email. The sender no-ops when disabled.
+    /// Call before Build().
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">Optional. When provided, configures exception report email. Pass builder.Configuration to enable.</param>
+    public static IServiceCollection AddCentralExceptionHandler(this IServiceCollection services, IConfiguration? configuration = null)
+    {
+        services.AddExceptionHandler<CentralExceptionHandler>();
+
+        if (configuration is not null)
+            services.Configure<ExceptionReportEmailOptions>(configuration.GetSection(ExceptionReportEmailOptions.SectionName));
+
+        return services.AddSingleton<IExceptionReportEmailSender, ExceptionReportEmailSender>();
+    }
+
+    /// <summary>
+    /// Uses the central exception handler pipeline. Returns application/problem+json for all exceptions.
+    /// Requires AddCentralExceptionHandler() to be called.
     /// </summary>
     public static IApplicationBuilder UseCentralExceptionHandler(this IApplicationBuilder app)
     {
-        _ = app.UseExceptionHandler(exceptionHandlerApp =>
-        {
-            exceptionHandlerApp.Run(async context =>
-            {
-                Exception? exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
-                if (exception is ValidationException validationException)
-                {
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    context.Response.ContentType = "application/json";
-                    var errors = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
-                    await context.Response.WriteAsJsonAsync(new { errors });
-                    return;
-                }
-                if (exception is ArgumentException argEx)
-                {
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    context.Response.ContentType = "application/json";
-                    await context.Response.WriteAsJsonAsync(new { message = argEx.Message });
-                    return;
-                }
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            });
-        });
-        return app;
+        return app.UseExceptionHandler(_ => { });
     }
 }

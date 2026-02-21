@@ -3,6 +3,7 @@ using BuildingBlocks.Authorization;
 using BuildingBlocks.Caching;
 using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
+using BuildingBlocks.Options;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.TimeSync;
@@ -23,6 +24,8 @@ using Intercessor;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+
+using Azure.Identity;
 
 using Transponder;
 using Transponder.Persistence.Redis;
@@ -63,6 +66,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 builder.Services.AddIntercessor(cfg =>
 {
     cfg.RegisterFromAssembly(typeof(GetTreatmentSessionQuery).Assembly);
@@ -84,12 +89,16 @@ builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IScheduledMes
     Transponder.Persistence.EntityFramework.EntityFrameworkScheduledMessageStore<TreatmentDbContext>>();
 
 var treatmentBusAddress = new Uri("transponder://treatment");
+string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+string? asbNamespace = builder.Configuration["AzureServiceBus:FullyQualifiedNamespace"];
+
 builder.Services.AddTransponder(treatmentBusAddress, opts =>
 {
     _ = opts.TransportBuilder.UseSignalR(treatmentBusAddress, [new Uri("signalr://treatment")]);
-    string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
     if (!string.IsNullOrWhiteSpace(asbConnectionString))
         _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(treatmentBusAddress, connectionString: asbConnectionString));
+    else if (!string.IsNullOrWhiteSpace(asbNamespace))
+        _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(treatmentBusAddress, fullyQualifiedNamespace: asbNamespace, credential: new DefaultAzureCredential()));
     _ = opts.UseOutbox();
     _ = opts.UsePersistedMessageScheduler();
 });

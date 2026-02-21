@@ -3,6 +3,7 @@ using BuildingBlocks.Authorization;
 using BuildingBlocks.Caching;
 using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
+using BuildingBlocks.Options;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.TimeSync;
@@ -24,6 +25,8 @@ using Intercessor;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
+using Azure.Identity;
+
 using Transponder;
 using Transponder.Persistence.Redis;
 using Transponder.Transports.AzureServiceBus;
@@ -38,7 +41,9 @@ builder.Host.UseSerilog((context, _, config) =>
         .Enrich.With<ActivityEnricher>()
         .Enrich.FromLogContext());
 
+builder.Services.AddJwtBearerStartupValidation(builder.Configuration);
 builder.Services.AddAlarmJwtAuthentication(builder.Configuration);
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ScopeOrBypassHandler>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AlarmRead", p => p.Requirements.Add(new ScopeOrBypassRequirement("Alarm:Read", "Alarm:Admin")))
@@ -69,15 +74,20 @@ builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IScheduledMes
 
 var alarmBusAddress = new Uri("transponder://alarm");
 string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+string? asbNamespace = builder.Configuration["AzureServiceBus:FullyQualifiedNamespace"];
+bool asbConfigured = !string.IsNullOrWhiteSpace(asbConnectionString) || !string.IsNullOrWhiteSpace(asbNamespace);
+
 builder.Services.AddTransponder(alarmBusAddress, opts =>
 {
     _ = opts.TransportBuilder.UseSignalR(alarmBusAddress, [new Uri("signalr://alarm")]);
     if (!string.IsNullOrWhiteSpace(asbConnectionString))
         _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(alarmBusAddress, connectionString: asbConnectionString));
+    else if (!string.IsNullOrWhiteSpace(asbNamespace))
+        _ = opts.TransportBuilder.UseAzureServiceBus(_ => new AzureServiceBusHostSettings(alarmBusAddress, fullyQualifiedNamespace: asbNamespace, credential: new DefaultAzureCredential()));
     _ = opts.UseOutbox();
     _ = opts.UsePersistedMessageScheduler();
 });
-if (!string.IsNullOrWhiteSpace(asbConnectionString))
+if (asbConfigured)
     _ = builder.Services.AddThresholdBreachDetectedReceiveEndpoint(alarmBusAddress);
 
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
@@ -131,10 +141,13 @@ app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true })
 app.MapHub<TransponderSignalRHub>("/transponder/transport").RequireAuthorization("AlarmRead");
 app.MapControllers();
 
-if (!string.IsNullOrWhiteSpace(asbConnectionString))
+if (asbConfigured)
     try
     {
-        await app.Services.EnsureThresholdBreachTopicAndSubscriptionAsync(asbConnectionString);
+        if (!string.IsNullOrWhiteSpace(asbConnectionString))
+            await app.Services.EnsureThresholdBreachTopicAndSubscriptionAsync(asbConnectionString);
+        else if (!string.IsNullOrWhiteSpace(asbNamespace))
+            await app.Services.EnsureThresholdBreachTopicAndSubscriptionAsync(asbNamespace, new DefaultAzureCredential());
     }
     catch (Exception ex)
     {

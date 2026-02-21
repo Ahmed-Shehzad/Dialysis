@@ -16,7 +16,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Azure.Identity" />
       <PackageReference Include="Azure.Messaging.ServiceBus" />
+      <PackageReference Include="Azure.ResourceManager.ServiceBus" />
     </ItemGroup>
 
 </Project>

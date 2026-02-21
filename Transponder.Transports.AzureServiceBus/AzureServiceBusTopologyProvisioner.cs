@@ -1,3 +1,5 @@
+using Azure.Core;
+
 using Azure.Messaging.ServiceBus.Administration;
 
 using Microsoft.Extensions.Logging;
@@ -6,11 +8,15 @@ namespace Transponder.Transports.AzureServiceBus;
 
 /// <summary>
 /// Provisions Azure Service Bus topics and subscriptions at startup.
-/// Ensures entities exist before receive endpoints start (works with real ASB and emulator).
+/// Uses <see cref="ServiceBusAdministrationClient"/> from Azure.Messaging.ServiceBus (client library approach)
+/// for entity management in an existing namespace. Supports connection string or passwordless (TokenCredential) auth.
+/// See: https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-management-libraries
 /// </summary>
 public sealed class AzureServiceBusTopologyProvisioner
 {
-    private readonly string _connectionString;
+    private readonly string? _connectionString;
+    private readonly string? _fullyQualifiedNamespace;
+    private readonly TokenCredential? _credential;
     private readonly ILogger<AzureServiceBusTopologyProvisioner> _logger;
 
     public AzureServiceBusTopologyProvisioner(
@@ -19,6 +25,18 @@ public sealed class AzureServiceBusTopologyProvisioner
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         _connectionString = connectionString;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public AzureServiceBusTopologyProvisioner(
+        string fullyQualifiedNamespace,
+        TokenCredential credential,
+        ILogger<AzureServiceBusTopologyProvisioner> logger)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fullyQualifiedNamespace);
+        ArgumentNullException.ThrowIfNull(credential);
+        _fullyQualifiedNamespace = fullyQualifiedNamespace;
+        _credential = credential;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -34,8 +52,7 @@ public sealed class AzureServiceBusTopologyProvisioner
         ArgumentException.ThrowIfNullOrWhiteSpace(topicName);
         ArgumentException.ThrowIfNullOrWhiteSpace(subscriptionName);
 
-        string adminConnectionString = GetAdminConnectionString(_connectionString);
-        var client = new ServiceBusAdministrationClient(adminConnectionString);
+        ServiceBusAdministrationClient client = CreateAdministrationClient();
 
         await EnsureTopicExistsAsync(client, topicName, cancellationToken).ConfigureAwait(false);
         await EnsureSubscriptionExistsAsync(client, topicName, subscriptionName, cancellationToken).ConfigureAwait(false);
@@ -43,6 +60,20 @@ public sealed class AzureServiceBusTopologyProvisioner
             "ASB topology provisioned. Topic={TopicName} Subscription={SubscriptionName}",
             topicName,
             subscriptionName);
+    }
+
+    private ServiceBusAdministrationClient CreateAdministrationClient()
+    {
+        if (!string.IsNullOrWhiteSpace(_connectionString))
+        {
+            string adminConnectionString = GetAdminConnectionString(_connectionString);
+            return new ServiceBusAdministrationClient(adminConnectionString);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_fullyQualifiedNamespace) && _credential is not null)
+            return new ServiceBusAdministrationClient(_fullyQualifiedNamespace, _credential);
+
+        throw new InvalidOperationException("Provisioner requires connection string or (FullyQualifiedNamespace + Credential).");
     }
 
     private static string GetAdminConnectionString(string connectionString)
