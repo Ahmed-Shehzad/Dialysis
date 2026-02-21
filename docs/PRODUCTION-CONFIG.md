@@ -91,7 +91,17 @@ If using `FhirSubscription:NotifyApiKey` to protect the subscription-notify endp
 FhirSubscription__NotifyApiKey=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/FhirSubscriptionNotifyApiKey)
 ```
 
-### 4.4 C5 Compliance
+### 4.4 Azure Service Bus (Optional)
+
+When using ASB for cross-service messaging (Treatment→Alarm via `ThresholdBreachDetectedIntegrationEvent`):
+
+```
+AzureServiceBus__ConnectionString=@Microsoft.KeyVault(SecretUri=https://pdms-kv.vault.azure.net/secrets/AzureServiceBusConnectionString)
+```
+
+Ensure the ASB namespace has the topic `ThresholdBreachDetectedIntegrationEvent` and subscription `alarm-threshold-breach`. The Alarm API provisions these at startup when configured; for production, consider pre-creating via ARM/Bicep/Terraform if the app identity lacks Manage permissions.
+
+### 4.5 C5 Compliance
 
 - Never commit secrets to source control.
 - Rotate secrets periodically; Key Vault supports versioning.

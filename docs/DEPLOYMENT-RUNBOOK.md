@@ -64,6 +64,16 @@ curl http://localhost:5001/health
 ./scripts/smoke-test-fhir.sh --hl7
 ```
 
+### 3.2a ASB Verify (when using docker-compose.asb.yml)
+
+When running with Azure Service Bus emulator (`docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d`):
+
+```bash
+./scripts/smoke-test-asb.sh
+```
+
+This ingests an ORU^R01 with hypotension (systolic 85 mmHg), verifies Treatment publishes to ASB, and Alarm consumes and creates the alarm. Expect ~5–15 seconds for ASB delivery.
+
 ### 3.3 Production Smoke Test (optional)
 
 To verify with `ASPNETCORE_ENVIRONMENT=Production` (JWT required, no DevelopmentBypass):
@@ -195,7 +205,7 @@ ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Addres
 | **JWT** | `Authentication__JwtBearer__Authority`, `Authentication__JwtBearer__Audience`, `Authentication__JwtBearer__DevelopmentBypass=false` |
 | **Cross-Service** | `DeviceApi__BaseUrl`, `AlarmApi__BaseUrl`, `FhirSubscription__NotifyUrl`, `FhirExport__BaseUrl`, `Cds__BaseUrl`, `Reports__BaseUrl` |
 | **Gateway** | `Cors__AllowedOrigins`, `ReverseProxy__Clusters__*__Destinations__*__Address` |
-| **Optional** | `FhirSubscription__NotifyApiKey` |
+| **Optional** | `FhirSubscription__NotifyApiKey`, `AzureServiceBus__ConnectionString` (Key Vault) |
 
 ---
 

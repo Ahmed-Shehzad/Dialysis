@@ -77,3 +77,23 @@ ASB connection string is not set in docker-compose by default. For production, i
 environment:
   AzureServiceBus__ConnectionString: "Endpoint=sb://..."
 ```
+
+## Production (Key Vault)
+
+Store the ASB connection string in Azure Key Vault and reference from App Service configuration:
+
+```
+AzureServiceBus__ConnectionString=@Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/AzureServiceBusConnectionString)
+```
+
+See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) §4.4.
+
+## Smoke Test
+
+When running with ASB (emulator or real):
+
+```bash
+./scripts/smoke-test-asb.sh
+```
+
+Verifies Treatment→ASB→Alarm flow (ORU^R01 with hypotension → ThresholdBreachDetectedIntegrationEvent → alarm created).
