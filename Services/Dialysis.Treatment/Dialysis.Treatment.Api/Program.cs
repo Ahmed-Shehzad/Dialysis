@@ -74,11 +74,10 @@ string connectionString = builder.Configuration.GetConnectionString("TreatmentDb
 builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.PostgreSql.Abstractions.IPostgreSqlStorageOptions>(
     _ => new Transponder.Persistence.EntityFramework.PostgreSql.PostgreSqlStorageOptions());
 
-builder.Services.AddDbContextFactory<TreatmentDbContext>((_, ob) =>
-    ob.UseNpgsql(connectionString)
-      .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.Abstractions.IEntityFrameworkDbContextFactory<TreatmentDbContext>,
-    Transponder.Persistence.EntityFramework.EntityFrameworkDbContextFactory<TreatmentDbContext>>();
+// Custom factory for Transponder (outbox, scheduler) to avoid AddDbContext + AddDbContextFactory conflict
+// that causes "Cannot resolve scoped service from root provider" when both register the same DbContext type.
+builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.Abstractions.IEntityFrameworkDbContextFactory<TreatmentDbContext>>(
+    _ => new TransponderTreatmentDbContextFactory(connectionString));
 builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IStorageSessionFactory,
     Transponder.Persistence.EntityFramework.EntityFrameworkStorageSessionFactory<TreatmentDbContext>>();
 builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IScheduledMessageStore,
