@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useAlerts } from "../hooks/useAlerts";
 import type { Alert } from "../types";
+import { PrescriptionModal } from "./PrescriptionModal";
 
 interface AlertsPanelProps {
     sessionId: string | null;
@@ -31,6 +33,7 @@ const SEVERITY_STYLES: Record<
 
 export function AlertsPanel({ sessionId }: Readonly<AlertsPanelProps>) {
     const { alerts, acknowledge, isLoading } = useAlerts(sessionId);
+    const [prescriptionModalMrn, setPrescriptionModalMrn] = useState<string | null>(null);
 
     if (!sessionId) return null;
 
@@ -70,9 +73,16 @@ export function AlertsPanel({ sessionId }: Readonly<AlertsPanelProps>) {
                         key={alert.id}
                         alert={alert}
                         onAcknowledge={() => acknowledge(alert.id)}
+                        onReviewPrescription={(mrn) => setPrescriptionModalMrn(mrn)}
                     />
                 ))}
             </ul>
+            {prescriptionModalMrn && (
+                <PrescriptionModal
+                    patientMrn={prescriptionModalMrn}
+                    onClose={() => setPrescriptionModalMrn(null)}
+                />
+            )}
         </div>
     );
 }
@@ -80,10 +90,12 @@ export function AlertsPanel({ sessionId }: Readonly<AlertsPanelProps>) {
 function AlertRow({
     alert,
     onAcknowledge,
-}: {
+    onReviewPrescription,
+}: Readonly<{
     alert: Alert;
     onAcknowledge: () => void;
-}) {
+    onReviewPrescription?: (mrn: string) => void;
+}>) {
     const style = SEVERITY_STYLES[alert.severity];
     const needsAck = alert.severity === "critical" && !alert.acknowledged;
 
@@ -107,17 +119,26 @@ function AlertRow({
                     <p className="mt-0.5 text-sm text-slate-600">{alert.detail}</p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
-                    {alert.actionLabel && (
-                        <a
-                            href={alert.actionLink ?? "#"}
-                            onClick={(e) => {
-                                if (!alert.actionLink) e.preventDefault();
-                            }}
-                            className="text-sm font-medium text-blue-600 hover:underline"
-                        >
-                            {alert.actionLabel}
-                        </a>
-                    )}
+                    {alert.actionLabel &&
+                        (alert.actionPayload?.patientMrn && onReviewPrescription ? (
+                            <button
+                                type="button"
+                                onClick={() => onReviewPrescription(alert.actionPayload!.patientMrn!)}
+                                className="text-sm font-medium text-blue-600 hover:underline bg-transparent border-none cursor-pointer p-0"
+                            >
+                                {alert.actionLabel}
+                            </button>
+                        ) : (
+                            <a
+                                href={alert.actionLink ?? "#"}
+                                onClick={(e) => {
+                                    if (!alert.actionLink) e.preventDefault();
+                                }}
+                                className="text-sm font-medium text-blue-600 hover:underline"
+                            >
+                                {alert.actionLabel}
+                            </a>
+                        ))}
                     {needsAck && (
                         <button
                             type="button"

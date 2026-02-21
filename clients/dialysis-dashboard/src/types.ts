@@ -115,6 +115,8 @@ export interface Alert {
   detail?: string
   actionLink?: string
   actionLabel?: string
+  /** Payload for action handlers (e.g. patientMrn for prescription review). */
+  actionPayload?: { patientMrn?: string }
   source: 'cds' | 'alarm' | 'derived'
   occurredAt?: string
   acknowledged?: boolean

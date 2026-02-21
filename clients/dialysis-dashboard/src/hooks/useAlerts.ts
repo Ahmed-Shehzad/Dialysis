@@ -56,7 +56,8 @@ function mapCdsToAlerts(
     type: Alert["type"],
     title: string,
     defaultSeverity: Alert["severity"],
-    actionLabel?: string
+    actionLabel?: string,
+    actionPayload?: Alert["actionPayload"]
 ): Alert[] {
     return issues.map((issue) => ({
         id: `cds-${source}-${issue.id}`,
@@ -66,6 +67,7 @@ function mapCdsToAlerts(
         detail: issue.detail,
         actionLink: undefined,
         actionLabel,
+        actionPayload,
         source: "cds",
         acknowledged: false,
     }));
@@ -173,7 +175,8 @@ export function useAlerts(sessionId: string | null) {
                 "prescription-mismatch",
                 "Prescription mismatch",
                 "warning",
-                "Review prescription"
+                "Review prescription",
+                sess?.patientMrn ? { patientMrn: sess.patientMrn } : undefined
             )
         );
     }

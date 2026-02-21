@@ -6,6 +6,7 @@ import {
     Bar,
     BarChart,
     CartesianGrid,
+    Cell,
     Legend,
     Line,
     LineChart,
@@ -276,6 +277,18 @@ export function RealTimeCharts({
         [effectiveObservations],
     );
 
+    const barChartData = useMemo(() => {
+        if (chartData.length === 0 || series.length === 0) return [];
+        const last = chartData[chartData.length - 1];
+        return series
+            .map((s, i) => ({
+                name: s.label.length > 50 ? s.label.slice(0, 47) + "…" : s.label,
+                value: last[s.code] as number | undefined,
+                fill: COLORS[i % COLORS.length],
+            }))
+            .filter((d) => d.value != null && !Number.isNaN(d.value));
+    }, [chartData, series]);
+
     const handleSubscribe = () => {
         const id = (propSessionId ?? localSessionId).trim();
         if (id) {
@@ -338,20 +351,20 @@ export function RealTimeCharts({
             {error && <p className="text-sm text-red-600">SignalR: {error}</p>}
 
             {activeSessionId && chartData.length > 0 && (
-                <div className="space-y-6">
-                    <div>
+                <div className="space-y-6 min-w-0">
+                    <div className="min-w-0">
                         <h4 className="text-sm font-medium mb-2">
                             Observations – Line Chart
                         </h4>
-                        <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-80 w-full min-h-[280px]">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={280}>
                                 <LineChart
                                     data={chartData}
                                     margin={{
-                                        top: 5,
-                                        right: 20,
-                                        left: 0,
-                                        bottom: 5,
+                                        top: 10,
+                                        right: 30,
+                                        left: 10,
+                                        bottom: 10,
                                     }}
                                 >
                                     <CartesianGrid
@@ -360,11 +373,16 @@ export function RealTimeCharts({
                                     />
                                     <XAxis
                                         dataKey="time"
-                                        tick={{ fontSize: 10 }}
+                                        tick={{ fontSize: 11 }}
+                                        interval="preserveStartEnd"
                                     />
-                                    <YAxis tick={{ fontSize: 10 }} />
+                                    <YAxis
+                                        tick={{ fontSize: 11 }}
+                                        width={40}
+                                        domain={["auto", "auto"]}
+                                    />
                                     <Tooltip />
-                                    <Legend />
+                                    <Legend wrapperStyle={{ paddingTop: 8 }} />
                                     {series.map((s, i) => (
                                         <Line
                                             key={s.code}
@@ -372,7 +390,9 @@ export function RealTimeCharts({
                                             dataKey={s.code}
                                             name={s.label}
                                             stroke={COLORS[i % COLORS.length]}
-                                            dot={false}
+                                            strokeWidth={2.5}
+                                            dot={{ r: 2 }}
+                                            activeDot={{ r: 4 }}
                                             isAnimationActive={false}
                                         />
                                     ))}
@@ -381,19 +401,19 @@ export function RealTimeCharts({
                         </div>
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                         <h4 className="text-sm font-medium mb-2">
                             Observations – Area (Mountain) Chart
                         </h4>
-                        <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-80 w-full min-h-[280px]">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={280}>
                                 <AreaChart
                                     data={chartData}
                                     margin={{
-                                        top: 5,
-                                        right: 20,
-                                        left: 0,
-                                        bottom: 5,
+                                        top: 10,
+                                        right: 30,
+                                        left: 10,
+                                        bottom: 10,
                                     }}
                                 >
                                     <CartesianGrid
@@ -402,11 +422,16 @@ export function RealTimeCharts({
                                     />
                                     <XAxis
                                         dataKey="time"
-                                        tick={{ fontSize: 10 }}
+                                        tick={{ fontSize: 11 }}
+                                        interval="preserveStartEnd"
                                     />
-                                    <YAxis tick={{ fontSize: 10 }} />
+                                    <YAxis
+                                        tick={{ fontSize: 11 }}
+                                        width={40}
+                                        domain={["auto", "auto"]}
+                                    />
                                     <Tooltip />
-                                    <Legend />
+                                    <Legend wrapperStyle={{ paddingTop: 8 }} />
                                     {series.map((s, i) => (
                                         <Area
                                             key={s.code}
@@ -414,8 +439,9 @@ export function RealTimeCharts({
                                             dataKey={s.code}
                                             name={s.label}
                                             stroke={COLORS[i % COLORS.length]}
+                                            strokeWidth={2}
                                             fill={COLORS[i % COLORS.length]}
-                                            fillOpacity={0.3}
+                                            fillOpacity={0.35}
                                             isAnimationActive={false}
                                         />
                                     ))}
@@ -424,42 +450,49 @@ export function RealTimeCharts({
                         </div>
                     </div>
 
-                    {chartData.length > 0 && series.length > 0 && (
-                        <div>
+                    {barChartData.length > 0 && (
+                        <div className="min-w-0">
                             <h4 className="text-sm font-medium mb-2">
                                 Latest Values – Bar Chart
                             </h4>
-                            <div className="h-48">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="h-56 w-full min-h-[200px]">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={200}>
                                     <BarChart
-                                        data={chartData.slice(-1)}
+                                        data={barChartData}
+                                        layout="vertical"
                                         margin={{
-                                            top: 5,
-                                            right: 20,
-                                            left: 0,
-                                            bottom: 5,
+                                            top: 10,
+                                            right: 30,
+                                            left: 10,
+                                            bottom: 10,
                                         }}
                                     >
                                         <CartesianGrid
                                             strokeDasharray="3 3"
                                             stroke="#e5e7eb"
+                                            horizontal={true}
+                                            vertical={false}
                                         />
-                                        <XAxis
-                                            dataKey="time"
+                                        <XAxis type="number" tick={{ fontSize: 11 }} />
+                                        <YAxis
+                                            type="category"
+                                            dataKey="name"
+                                            width={200}
                                             tick={{ fontSize: 10 }}
                                         />
-                                        <YAxis tick={{ fontSize: 10 }} />
                                         <Tooltip />
-                                        <Legend />
-                                        {series.map((s, i) => (
-                                            <Bar
-                                                key={s.code}
-                                                dataKey={s.code}
-                                                name={s.label}
-                                                fill={COLORS[i % COLORS.length]}
-                                                isAnimationActive={false}
-                                            />
-                                        ))}
+                                        <Bar
+                                            dataKey="value"
+                                            radius={[0, 4, 4, 0]}
+                                            isAnimationActive={false}
+                                        >
+                                            {barChartData.map((entry) => (
+                                                <Cell
+                                                    key={`${entry.name}-${entry.value}`}
+                                                    fill={entry.fill}
+                                                />
+                                            ))}
+                                        </Bar>
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>

@@ -7,6 +7,7 @@ string tenantId = "default";
 int intervalOruSec = 2;
 int intervalAlarmSec = 30;
 int intervalEmrSec = 60;
+int intervalCompleteSec = 120;
 bool enableDialysis = true;
 bool enableEmr = true;
 bool enableEhr = true;
@@ -25,6 +26,8 @@ while (idx < args.Length)
     { intervalAlarmSec = Math.Clamp(ialm, 5, 3600); idx += 2; }
     else if (args[idx] == "--interval-emr" && idx + 1 < args.Length && int.TryParse(args[idx + 1], out int iemr))
     { intervalEmrSec = Math.Clamp(iemr, 10, 3600); idx += 2; }
+    else if (args[idx] == "--interval-complete" && idx + 1 < args.Length && int.TryParse(args[idx + 1], out int icmp))
+    { intervalCompleteSec = Math.Clamp(icmp, 30, 3600); idx += 2; }
     else if (args[idx] == "--enable-dialysis")
     { (enableDialysis, idx) = ParseBoolFlag(args, idx); }
     else if (args[idx] == "--enable-emr")
@@ -48,7 +51,7 @@ static (bool value, int newIdx) ParseBoolFlag(string[] a, int idx)
 
 Console.WriteLine("Data Producer Simulator - Continuous HL7 to Gateway");
 Console.WriteLine($"  Gateway: {gateway} | Tenant: {tenantId}");
-Console.WriteLine($"  Dialysis (ORU^R01): every {intervalOruSec}s | Alarms (ORU^R40): every {intervalAlarmSec}s");
+Console.WriteLine($"  Dialysis (ORU^R01): every {intervalOruSec}s | Alarms (ORU^R40): every {intervalAlarmSec}s | Complete (OBR-12 end): every {intervalCompleteSec}s");
 Console.WriteLine($"  EMR (QBP^Q22/D01): every {intervalEmrSec}s");
 if (enableEhr) Console.WriteLine($"  EHR (RSP^K22 Patient/Prescription): at seed + every {intervalEmrSec}s");
 if (seedCount > 0) Console.WriteLine($"  Pre-seed: {seedCount} session(s)");
@@ -117,6 +120,7 @@ int oruOk = 0, oruFail = 0;
 int alarmOk = 0, alarmFail = 0;
 int emrOk = 0, emrFail = 0;
 int ehrOk = 0, ehrFail = 0;
+int msgSeq = 0;
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
@@ -124,6 +128,7 @@ Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 // Shared session list for sync between dialysis loop and refresh task
 var sessionsLock = new object();
 var alarmRoundRobin = 0;
+var completedSessions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 async Task RunSessionRefreshAsync()
 {
@@ -168,7 +173,6 @@ async Task RunSessionRefreshAsync()
 
 async Task RunDialysisMachineAsync()
 {
-    int msgSeq = 0;
     var oruInterval = TimeSpan.FromSeconds(intervalOruSec);
     var alarmInterval = TimeSpan.FromSeconds(intervalAlarmSec);
     var nextOru = DateTime.UtcNow;
@@ -186,17 +190,12 @@ async Task RunDialysisMachineAsync()
                 string[] sessionsCopy;
                 lock (sessionsLock)
                 {
-                    int count = sessions.Count;
-                    if (count == 0)
-                    {
-                        mrnsCopy = [];
-                        sessionsCopy = [];
-                    }
-                    else
-                    {
-                        mrnsCopy = mrns.ToArray();
-                        sessionsCopy = sessions.ToArray();
-                    }
+                    var active = sessions
+                        .Select((s, i) => (Session: s, Mrn: mrns[i]))
+                        .Where(x => !completedSessions.Contains(x.Session))
+                        .ToList();
+                    mrnsCopy = active.Select(x => x.Mrn).ToArray();
+                    sessionsCopy = active.Select(x => x.Session).ToArray();
                 }
                 if (sessionsCopy.Length == 0)
                 {
@@ -209,7 +208,8 @@ async Task RunDialysisMachineAsync()
                     string mrn = mrnsCopy[j];
                     string sid = sessionsCopy[j];
                     string msgId = $"ORU{Interlocked.Increment(ref msgSeq):D5}";
-                    string oru = Hl7Builders.OruR01(mrn, sid, msgId, now, faker);
+                    string eventPhase = "update";
+                    string oru = Hl7Builders.OruR01(mrn, sid, msgId, now, faker, eventPhase);
                     oruTasks.Add(client.PostOruAsync(oru, cts.Token));
                 }
                 var results = await Task.WhenAll(oruTasks).ConfigureAwait(false);
@@ -220,16 +220,27 @@ async Task RunDialysisMachineAsync()
 
             if (now >= nextAlarm)
             {
-                int count;
-                int i;
+                int count = 0;
+                int i = 0;
+                string[]? alarmSessionsCopy = null;
+                string[]? alarmMrnsCopy = null;
                 lock (sessionsLock)
                 {
-                    count = sessions.Count;
-                    i = count > 0 ? RoundRobinIndex(Interlocked.Increment(ref alarmRoundRobin) - 1, count) : 0;
+                    var active = sessions
+                        .Select((s, idx) => (Session: s, Mrn: mrns[idx], Idx: idx))
+                        .Where(x => !completedSessions.Contains(x.Session))
+                        .ToList();
+                    count = active.Count;
+                    if (count > 0)
+                    {
+                        i = RoundRobinIndex(Interlocked.Increment(ref alarmRoundRobin) - 1, count);
+                        alarmMrnsCopy = active.Select(x => x.Mrn).ToArray();
+                        alarmSessionsCopy = active.Select(x => x.Session).ToArray();
+                    }
                 }
-                if (count == 0) { await Task.Delay(TimeSpan.FromSeconds(1), cts.Token).ConfigureAwait(false); continue; }
-                string mrn = mrns[i];
-                string sid = sessions[i];
+                if (count == 0 || alarmSessionsCopy == null || alarmMrnsCopy == null) { await Task.Delay(TimeSpan.FromSeconds(1), cts.Token).ConfigureAwait(false); continue; }
+                string mrn = alarmMrnsCopy[i];
+                string sid = alarmSessionsCopy[i];
                 string msgId = $"ALM{++msgSeq:D5}";
                 string alarm = Hl7Builders.OruR40(mrn, sid, msgId, now, faker);
                 if (await client.PostAlarmAsync(alarm, cts.Token).ConfigureAwait(false))
@@ -284,6 +295,49 @@ async Task RunEmrSimulatorAsync()
     }
 }
 
+async Task RunSessionCompletionAsync()
+{
+    var interval = TimeSpan.FromSeconds(intervalCompleteSec);
+    var next = DateTime.UtcNow.Add(interval);
+
+    while (!cts.Token.IsCancellationRequested)
+    {
+        try
+        {
+            if (DateTime.UtcNow >= next)
+            {
+                string? mrn = null;
+                string? sid = null;
+                lock (sessionsLock)
+                {
+                    var active = sessions
+                        .Select((s, i) => (Session: s, Mrn: mrns[i]))
+                        .Where(x => !completedSessions.Contains(x.Session))
+                        .ToList();
+                    if (active.Count > 0)
+                    {
+                        var pick = faker.PickRandom(active);
+                        mrn = pick.Mrn;
+                        sid = pick.Session;
+                        _ = completedSessions.Add(pick.Session);
+                    }
+                }
+                if (mrn != null && sid != null)
+                {
+                    string msgId = $"END{Interlocked.Increment(ref msgSeq):D5}";
+                    string oru = Hl7Builders.OruR01(mrn, sid, msgId, DateTime.UtcNow, faker, "end");
+                    if (await client.PostOruAsync(oru, cts.Token).ConfigureAwait(false))
+                        Console.WriteLine($"  [Complete] Session {sid} ended (OBR-12 end)");
+                }
+                next = DateTime.UtcNow.Add(interval);
+            }
+            await Task.Delay(TimeSpan.FromSeconds(5), cts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) { break; }
+        catch (Exception ex) { Console.Error.WriteLine($"[Complete] {ex.Message}"); }
+    }
+}
+
 async Task RunEhrIngestAsync()
 {
     var interval = TimeSpan.FromSeconds(intervalEmrSec);
@@ -323,7 +377,11 @@ async Task RunEhrIngestAsync()
 }
 
 var tasks = new List<Task> { RunSessionRefreshAsync() };
-if (enableDialysis) tasks.Add(RunDialysisMachineAsync());
+if (enableDialysis)
+{
+    tasks.Add(RunDialysisMachineAsync());
+    tasks.Add(RunSessionCompletionAsync());
+}
 if (enableEmr) tasks.Add(RunEmrSimulatorAsync());
 if (enableEhr) tasks.Add(RunEhrIngestAsync());
 
