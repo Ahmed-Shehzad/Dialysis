@@ -89,6 +89,8 @@ internal sealed class ThresholdBreachDetectedReceiveHandler
             throw new InvalidOperationException("Inbox TryAdd failed; possible duplicate.");
         }
 
+        await session.Inbox.MarkProcessedAsync(id, ConsumerId, DateTimeOffset.UtcNow, cancellationToken)
+            .ConfigureAwait(false);
         await session.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 }

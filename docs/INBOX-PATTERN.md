@@ -52,6 +52,7 @@ sequenceDiagram
     Inbox-->>Consumer: null (not seen)
     Consumer->>Business: Process message (same transaction)
     Consumer->>Inbox: TryAddAsync(InboxState)
+    Consumer->>Inbox: MarkProcessedAsync(messageId, consumerId, processedTime)
     Consumer->>IStorageSession: CommitAsync()
     Consumer->>Broker: Ack
 
@@ -80,6 +81,7 @@ if (existing is not null)
 // Process and record in same transaction
 await _handler.HandleAsync(message, ct);
 _ = await session.Inbox.TryAddAsync(new InboxState(messageId, consumerId), ct);
+await session.Inbox.MarkProcessedAsync(messageId, consumerId, DateTimeOffset.UtcNow, ct);
 await session.CommitAsync(ct);
 ```
 

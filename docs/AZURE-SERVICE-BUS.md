@@ -36,6 +36,7 @@ if (existing is not null) return; // Already processed
 
 await _handler.HandleAsync(message, ct);
 _ = await session.Inbox.TryAddAsync(new InboxState(messageId, consumerId), ct);
+await session.Inbox.MarkProcessedAsync(messageId, consumerId, DateTimeOffset.UtcNow, ct);
 await session.CommitAsync(ct);
 ```
 
