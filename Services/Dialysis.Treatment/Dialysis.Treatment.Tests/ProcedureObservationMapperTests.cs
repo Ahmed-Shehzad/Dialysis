@@ -1,5 +1,7 @@
 using Dialysis.Hl7ToFhir;
 
+using Hl7.Fhir.Model;
+
 using Shouldly;
 
 #pragma warning disable IDE0058 // Expression value is never used - assertions
@@ -15,7 +17,7 @@ public sealed class ProcedureObservationMapperTests
     [Fact]
     public void ProcedureMapper_WhenPatientIdIsNull_SetsSubjectToUnknownPlaceholder()
     {
-        var proc = ProcedureMapper.ToFhirProcedure(
+        Procedure proc = ProcedureMapper.ToFhirProcedure(
             "sess-1", null, "device-1", "Completed", null, null);
 
         proc.Subject.ShouldNotBeNull().Reference.ShouldBe("Patient/unknown");
@@ -26,7 +28,7 @@ public sealed class ProcedureObservationMapperTests
     [Fact]
     public void ProcedureMapper_WhenPatientIdProvided_SetsSubjectReference()
     {
-        var proc = ProcedureMapper.ToFhirProcedure(
+        Procedure proc = ProcedureMapper.ToFhirProcedure(
             "sess-1", "MRN001", "device-1", "Active", null, null);
 
         proc.Subject.ShouldNotBeNull().Reference.ShouldBe("Patient/MRN001");
@@ -38,7 +40,7 @@ public sealed class ProcedureObservationMapperTests
         var input = new ObservationMappingInput(
             "", "120", "mmHg", null, null, null, null, "device-1", "MRN001", null);
 
-        var obs = ObservationMapper.ToFhirObservation(input);
+        Observation obs = ObservationMapper.ToFhirObservation(input);
 
         obs.Code.ShouldNotBeNull();
         obs.Code.Coding.ShouldNotBeEmpty();
@@ -52,7 +54,7 @@ public sealed class ProcedureObservationMapperTests
         var input = new ObservationMappingInput(
             "150456", "300", "ml/min", null, null, null, null, "device-1", "MRN001", null);
 
-        var obs = ObservationMapper.ToFhirObservation(input);
+        Observation obs = ObservationMapper.ToFhirObservation(input);
 
         obs.Code.ShouldNotBeNull();
         obs.Code.Coding[0].Code.ShouldBe("150456");

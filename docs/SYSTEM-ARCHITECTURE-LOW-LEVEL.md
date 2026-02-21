@@ -226,7 +226,7 @@ sequenceDiagram
     participant Gateway as API Gateway
     participant Subscriber as External Subscriber
 
-    Note over Handler: Treatment: ObservationRecordedEvent<br/>Alarm: AlarmRaisedEvent
+    Note over Handler: Treatment: ObservationRecordedFhirNotifyEvent, TreatmentSessionStartedFhirNotifyEvent<br/>Alarm: AlarmFhirNotifyEvent
     Handler->>FH: HandleAsync(domainEvent)
     FH->>Client: NotifyAsync(ResourceType, ResourceUrl, TenantId)
 

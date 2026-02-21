@@ -1,8 +1,6 @@
 using System.Net;
 using System.Text.Json;
 
-using Microsoft.AspNetCore.Mvc.Testing;
-
 using Shouldly;
 
 using Xunit;
@@ -31,7 +29,7 @@ public sealed class GatewayHealthTests : IClassFixture<GatewayWebApplicationFact
         response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
 
         string json = await response.Content.ReadAsStringAsync();
-        using JsonDocument doc = JsonDocument.Parse(json);
+        using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
 
         root.TryGetProperty("status", out JsonElement status).ShouldBeTrue();

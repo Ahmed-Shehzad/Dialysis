@@ -70,10 +70,8 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
         sp.GetRequiredService<PrescriptionReadStore>(),
         sp.GetRequiredService<IDistributedCache>()));
 }
-else
-{
-    _ = builder.Services.AddScoped<IPrescriptionReadStore>(sp => sp.GetRequiredService<PrescriptionReadStore>());
-}
+else _ = builder.Services.AddScoped<IPrescriptionReadStore>(sp => sp.GetRequiredService<PrescriptionReadStore>());
+
 builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();
 builder.Services.AddScoped<IRspK22Builder, RspK22Builder>();
@@ -84,7 +82,7 @@ builder.Services.Configure<PrescriptionIngestionOptions>(
     builder.Configuration.GetSection(PrescriptionIngestionOptions.SectionName));
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 
-var healthChecks = builder.Services.AddHealthChecks()
+IHealthChecksBuilder healthChecks = builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "prescription-db");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
     _ = healthChecks.AddRedis(redisConnectionString, name: "redis");

@@ -38,7 +38,7 @@ public sealed class ProcessQbpD01IntegrationTests
         string phone = PrescriptionTestData.CallbackPhone();
         string qbpD01 = PrescriptionTestData.QbpD01ByMrn(mrn);
 
-        await using var db = CreateDbContext();
+        await using PrescriptionDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Prescriptions.ExecuteDeleteAsync();
 
@@ -87,7 +87,7 @@ public sealed class ProcessQbpD01IntegrationTests
         string mrn = PrescriptionTestData.Mrn();
         string qbpD01 = PrescriptionTestData.QbpD01ByMrn(mrn);
 
-        await using var db = CreateDbContext();
+        await using PrescriptionDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Prescriptions.ExecuteDeleteAsync();
 
@@ -123,7 +123,7 @@ public sealed class ProcessQbpD01IntegrationTests
         string rspK22 = PrescriptionTestData.MinimalRspK22(mrn, orderId, provider, phone);
         string qbpD01 = PrescriptionTestData.QbpD01ByMrn(mrn);
 
-        await using var db = CreateDbContext();
+        await using PrescriptionDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
         _ = await db.Prescriptions.ExecuteDeleteAsync();
 
@@ -167,7 +167,7 @@ public sealed class ProcessQbpD01IntegrationTests
             RCP|I||RD
             """;
 
-        await using var db = CreateDbContext();
+        await using PrescriptionDbContext db = CreateDbContext();
         _ = await db.Database.EnsureCreatedAsync();
 
         var repository = new PrescriptionRepository(db, new TenantContext { TenantId = TenantContext.DefaultTenantId });

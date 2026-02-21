@@ -35,7 +35,7 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.SaveChangesAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var readStore = CreateReadStore();
+        IAlarmReadStore readStore = CreateReadStore();
         var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery();
@@ -58,7 +58,7 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.SaveChangesAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var readStore = CreateReadStore();
+        IAlarmReadStore readStore = CreateReadStore();
         var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery(SessionId: "sess-001");
@@ -81,7 +81,7 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.SaveChangesAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var readStore = CreateReadStore();
+        IAlarmReadStore readStore = CreateReadStore();
         var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery(SessionId: "sess-001", FromUtc: baseTime.AddHours(-1), ToUtc: baseTime);
@@ -99,7 +99,7 @@ public sealed class GetAlarmsQueryHandlerTests
         _ = await db.Alarms.ExecuteDeleteAsync();
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
-        var readStore = CreateReadStore();
+        IAlarmReadStore readStore = CreateReadStore();
         var handler = new GetAlarmsQueryHandler(readStore, tenant);
 
         var query = new GetAlarmsQuery();

@@ -53,6 +53,10 @@ public sealed class Alarm : AggregateRoot
 
         alarm.ApplyEvent(new AlarmRaisedEvent(
             alarm.Id, info.AlarmType, info.EventPhase, info.AlarmState, info.DeviceId, info.SessionId, info.OccurredAt));
+        alarm.ApplyEvent(new AlarmEscalationCheckEvent(alarm.Id, info.DeviceId, info.SessionId, info.OccurredAt));
+        alarm.ApplyEvent(new AlarmFhirNotifyEvent(alarm.Id));
+        alarm.ApplyEvent(new AlarmSignalRBroadcastEvent(
+            alarm.Id, info.AlarmType, info.EventPhase, info.AlarmState, info.DeviceId, info.SessionId, info.OccurredAt));
         alarm.ApplyEvent(new AlarmRaisedIntegrationEvent(
             alarm.Id, info.AlarmType, info.EventPhase, info.AlarmState, info.DeviceId?.Value, info.SessionId?.Value, info.OccurredAt, alarm.TenantId.Value));
         return alarm;

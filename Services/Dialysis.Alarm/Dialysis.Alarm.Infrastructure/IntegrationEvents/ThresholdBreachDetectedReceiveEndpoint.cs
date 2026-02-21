@@ -43,7 +43,7 @@ internal sealed class ThresholdBreachDetectedReceiveEndpoint : IReceiveEndpoint
             async ctx =>
             {
                 await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
-                var handler = scope.ServiceProvider.GetRequiredService<ThresholdBreachDetectedReceiveHandler>();
+                ThresholdBreachDetectedReceiveHandler handler = scope.ServiceProvider.GetRequiredService<ThresholdBreachDetectedReceiveHandler>();
                 await handler.HandleAsync(ctx, ctx.CancellationToken).ConfigureAwait(false);
             });
 

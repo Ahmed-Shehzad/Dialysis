@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http;
 
 using Dialysis.Reports.Api;
 
@@ -31,7 +30,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetSessionsSummaryAsync_WithMockedResponse_ReturnsReportAsync()
     {
-        var api = new MockReportsGatewayApi()
+        MockReportsGatewayApi api = new MockReportsGatewayApi()
             .SessionSummary("""{"sessionCount":5,"avgDurationMinutes":180.5,"from":"2025-01-01T00:00:00Z","to":"2025-01-08T00:00:00Z"}""");
         var service = new ReportsAggregationService(api, Logger);
 
@@ -48,7 +47,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetAlarmsBySeverityAsync_WithMockedResponse_ReturnsGroupedReportAsync()
     {
-        var api = new MockReportsGatewayApi()
+        MockReportsGatewayApi api = new MockReportsGatewayApi()
             .Alarms("""{"alarms":[{"priority":"high"},{"priority":"high"},{"priority":"low"}]}""");
         var service = new ReportsAggregationService(api, Logger);
 
@@ -63,7 +62,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetAlarmsBySeverityAsync_WhenNoAlarms_ReturnsEmptyBySeverityAsync()
     {
-        var api = new MockReportsGatewayApi().Alarms("""{"alarms":[]}""");
+        MockReportsGatewayApi api = new MockReportsGatewayApi().Alarms("""{"alarms":[]}""");
         var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -76,7 +75,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetPrescriptionComplianceAsync_WhenNoSessionsInRange_ReturnsZeroReportAsync()
     {
-        var api = new MockReportsGatewayApi()
+        MockReportsGatewayApi api = new MockReportsGatewayApi()
             .TreatmentSessionsFhir("""{"resourceType":"Bundle","type":"collection","entry":[]}""");
         var service = new ReportsAggregationService(api, Logger);
 
@@ -92,7 +91,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetPrescriptionComplianceAsync_WithSessionsAndCompliantCds_ReturnsComplianceReportAsync()
     {
-        var api = new MockReportsGatewayApi()
+        MockReportsGatewayApi api = new MockReportsGatewayApi()
             .TreatmentSessionsFhir("""{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Procedure","id":"proc-sess1"}}]}""")
             .PrescriptionCompliance("""{"resourceType":"Bundle","type":"collection","entry":[]}""");
         var service = new ReportsAggregationService(api, Logger);
@@ -109,7 +108,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetAlarmsBySeverityAsync_WhenBackendReturns500_ReturnsEmptyReportAsync()
     {
-        var api = new MockReportsGatewayApi().Alarms(status: HttpStatusCode.InternalServerError);
+        MockReportsGatewayApi api = new MockReportsGatewayApi().Alarms(status: HttpStatusCode.InternalServerError);
         var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -124,7 +123,7 @@ public sealed class ReportsAggregationServiceTests
     [Fact]
     public async Task GetSessionsSummaryAsync_WhenBackendReturns404_ThrowsAsync()
     {
-        var api = new MockReportsGatewayApi().SessionSummary("", HttpStatusCode.NotFound);
+        MockReportsGatewayApi api = new MockReportsGatewayApi().SessionSummary("", HttpStatusCode.NotFound);
         var service = new ReportsAggregationService(api, Logger);
 
         var from = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -185,7 +184,7 @@ public sealed class ReportsAggregationServiceTests
             var response = new HttpResponseMessage(_alarmsStatus);
             if (_alarmsStatus != HttpStatusCode.OK)
                 return Task.FromResult<IApiResponse<AlarmsListResponse>>(new ApiResponse<AlarmsListResponse>(response, null, null!, null));
-            var content = System.Text.Json.JsonSerializer.Deserialize<AlarmsListResponse>(_alarms, JsonOptions);
+            AlarmsListResponse? content = System.Text.Json.JsonSerializer.Deserialize<AlarmsListResponse>(_alarms, JsonOptions);
             return Task.FromResult<IApiResponse<AlarmsListResponse>>(new ApiResponse<AlarmsListResponse>(response, content, null!, null));
         }
 

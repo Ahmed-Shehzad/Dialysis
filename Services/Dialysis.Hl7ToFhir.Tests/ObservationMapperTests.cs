@@ -1,5 +1,3 @@
-using Dialysis.Hl7ToFhir;
-
 using Hl7.Fhir.Model;
 
 using Shouldly;

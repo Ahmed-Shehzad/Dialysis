@@ -37,7 +37,7 @@ internal sealed class RecordAlarmFromThresholdBreachCommandHandler : ICommandHan
             SessionId: sessionId,
             OccurredAt: DateTimeOffset.UtcNow);
 
-        AlarmInfo info = AlarmInfo.Create(createParams);
+        var info = AlarmInfo.Create(createParams);
         RecordAlarmResponse recordResponse = await _sender.SendAsync(new RecordAlarmCommand(info), cancellationToken);
         return new RecordAlarmFromThresholdBreachResponse(recordResponse.AlarmId);
     }

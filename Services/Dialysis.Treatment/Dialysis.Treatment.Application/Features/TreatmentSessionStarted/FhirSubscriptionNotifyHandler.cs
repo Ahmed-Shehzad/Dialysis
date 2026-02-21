@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Dialysis.Treatment.Application.Features.TreatmentSessionStarted;
 
-internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<TreatmentSessionStartedEvent>
+internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<TreatmentSessionStartedFhirNotifyEvent>
 {
     private readonly IFhirSubscriptionNotifyClient _notifyClient;
     private readonly ITenantContext _tenant;
@@ -27,7 +27,7 @@ internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<Treatm
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task HandleAsync(TreatmentSessionStartedEvent notification, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(TreatmentSessionStartedFhirNotifyEvent notification, CancellationToken cancellationToken = default)
     {
         string? baseUrl = _config["FhirSubscription:NotifyUrl"];
         if (string.IsNullOrEmpty(baseUrl))

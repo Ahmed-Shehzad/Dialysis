@@ -2,6 +2,7 @@ using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
 
+using Dialysis.Patient.Application.Domain.ValueObjects;
 using Dialysis.Patient.Application.Features.ProcessQbpQ22Query;
 using Dialysis.Patient.Application.Features.RegisterPatient;
 using Dialysis.Patient.Infrastructure.Hl7;
@@ -28,7 +29,7 @@ public sealed class QbpQ22ToRspK22IntegrationTests
     public async Task QbpQ22_RegisteredPatient_ReturnsRspK22WithPidAsync()
     {
         string mrn = PatientTestData.Mrn();
-        var person = PatientTestData.Person();
+        Person person = PatientTestData.Person();
         string qbpQ22 = PatientTestData.QbpQ22ByMrn(mrn);
 
         await using PatientDbContext db = CreateDbContext();

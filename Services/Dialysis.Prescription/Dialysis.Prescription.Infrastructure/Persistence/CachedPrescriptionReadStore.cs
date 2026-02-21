@@ -28,20 +28,15 @@ public sealed class CachedPrescriptionReadStore : IPrescriptionReadStore
     {
         string key = $"{tenantId}:{KeyPrefix}:{mrn}";
         byte[]? cached = await _cache.GetAsync(key, cancellationToken).ConfigureAwait(false);
-        if (cached is not null)
-        {
-            return JsonSerializer.Deserialize<PrescriptionReadDto>(cached, JsonOptions);
-        }
+        if (cached is not null) return JsonSerializer.Deserialize<PrescriptionReadDto>(cached, JsonOptions);
 
         PrescriptionReadDto? dto = await _inner.GetLatestByMrnAsync(tenantId, mrn, cancellationToken).ConfigureAwait(false);
         if (dto is not null)
-        {
             await _cache.SetAsync(
                 key,
                 JsonSerializer.SerializeToUtf8Bytes(dto, JsonOptions),
                 new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheDuration },
                 cancellationToken).ConfigureAwait(false);
-        }
 
         return dto;
     }

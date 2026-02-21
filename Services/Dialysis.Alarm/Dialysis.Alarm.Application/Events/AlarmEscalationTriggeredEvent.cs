@@ -4,7 +4,7 @@ namespace Dialysis.Alarm.Application.Events;
 
 /// <summary>
 /// Integration event published when AlarmEscalationService determines escalation is needed (3+ active alarms in 5 min).
-/// Dispatched post-commit via IIntegrationEventBuffer. Consumable by nursing dashboard, FHIR DetectedIssue.
+/// Raised by EscalationIncident aggregate; dispatched post-commit via Outbox. Consumable by nursing dashboard, FHIR DetectedIssue.
 /// </summary>
 public sealed record AlarmEscalationTriggeredEvent(
     string? DeviceId,

@@ -2,7 +2,6 @@ using Dialysis.Treatment.Application.Abstractions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 

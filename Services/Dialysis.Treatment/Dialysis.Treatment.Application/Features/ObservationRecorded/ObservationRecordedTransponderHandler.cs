@@ -7,7 +7,7 @@ using Transponder.Abstractions;
 
 namespace Dialysis.Treatment.Application.Features.ObservationRecorded;
 
-internal sealed class ObservationRecordedTransponderHandler : IDomainEventHandler<ObservationRecordedEvent>
+internal sealed class ObservationRecordedTransponderHandler : IDomainEventHandler<ObservationRecordedSignalRBroadcastEvent>
 {
     private readonly ISendEndpointProvider _sendEndpointProvider;
 
@@ -16,7 +16,7 @@ internal sealed class ObservationRecordedTransponderHandler : IDomainEventHandle
         _sendEndpointProvider = sendEndpointProvider;
     }
 
-    public async Task HandleAsync(ObservationRecordedEvent notification, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(ObservationRecordedSignalRBroadcastEvent notification, CancellationToken cancellationToken = default)
     {
         var message = new ObservationRecordedMessage(
             notification.SessionId,

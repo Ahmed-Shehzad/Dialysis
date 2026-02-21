@@ -44,7 +44,7 @@ public sealed class IngestOruR40MessageCommandHandler : ICommandHandler<IngestOr
 
         foreach (AlarmInfo alarm in parseResult.Alarms)
         {
-            var alarmWithDrift = alarm with { MessageTimeDriftSeconds = driftSeconds };
+            AlarmInfo alarmWithDrift = alarm with { MessageTimeDriftSeconds = driftSeconds };
             var command = new RecordAlarmCommand(alarmWithDrift);
             RecordAlarmResponse response = await _sender.SendAsync(command, cancellationToken);
             alarmIds.Add(response.AlarmId);

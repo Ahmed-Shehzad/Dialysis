@@ -1,0 +1,39 @@
+---
+description: Each event serves one purpose; each event has exactly one handler. Applies to domain events and integration events.
+globs: "**/*.cs"
+alwaysApply: true
+---
+# Event Conventions
+
+## Rule
+
+**Each event serves one purpose. Each event has exactly one handler.**
+
+Applies to both domain events and integration events.
+
+## One Purpose
+
+- An event represents a single occurrence with a single intent (e.g. audit, escalation check, FHIR notify, SignalR broadcast)
+- Do not overload one event type to drive multiple unrelated side effects
+- If a handler would do multiple distinct jobs, split into separate events
+
+## One Handler
+
+- Each event type MUST have exactly one handler
+- Domain events: `IDomainEventHandler<TEvent>` (or `INotificationHandler<TEvent>`)
+- Integration events: `IIntegrationEventHandler<TEvent>` (or in-process consumer)
+- One event → one handler → one responsibility
+
+## Examples
+
+| Event | Handler | Purpose |
+|-------|---------|---------|
+| `AlarmRaisedEvent` | `AlarmRaisedEventHandler` | Audit, logging |
+| `AlarmEscalationCheckEvent` | `AlarmEscalationCheckHandler` | Escalation evaluation |
+| `AlarmFhirNotifyEvent` | `FhirSubscriptionNotifyHandler` | FHIR subscription notify |
+| `AlarmSignalRBroadcastEvent` | `AlarmRaisedTransponderHandler` | SignalR broadcast |
+
+## Alignment
+
+- `docs/DOMAIN-EVENTS-AND-SERVICES.md` — event and handler inventory
+- `intercessor.mdc` — Intercessor usage for events

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Dialysis.Alarm.Application.Features.AlarmRaised;
 
-internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<AlarmRaisedEvent>
+internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<AlarmFhirNotifyEvent>
 {
     private readonly IFhirSubscriptionNotifyClient _notifyClient;
     private readonly ITenantContext _tenant;
@@ -27,7 +27,7 @@ internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<AlarmR
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task HandleAsync(AlarmRaisedEvent notification, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(AlarmFhirNotifyEvent notification, CancellationToken cancellationToken = default)
     {
         string? baseUrl = _config["FhirSubscription:NotifyUrl"];
         if (string.IsNullOrEmpty(baseUrl))

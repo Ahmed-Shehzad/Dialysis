@@ -1,11 +1,9 @@
 using BuildingBlocks.Tenancy;
 
-using Dialysis.Cds.Api;
 using Dialysis.Hl7ToFhir;
 
 using Hl7.Fhir.Model;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Cds.Api.Controllers;

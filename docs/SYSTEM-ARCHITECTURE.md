@@ -487,7 +487,7 @@ sequenceDiagram
 
 ## 14. SignalR Real-Time Observations (Transponder)
 
-The Treatment API uses **Transponder SignalR transport** for real-time device observation broadcast. When an ORU^R01 message is ingested, `ObservationRecordedEvent` is raised; `ObservationRecordedTransponderHandler` sends `ObservationRecordedMessage` via Transponder to `signalr://group/session:{sessionId}`.
+The Treatment API uses **Transponder SignalR transport** for real-time device observation broadcast. When an ORU^R01 message is ingested, `ObservationRecordedSignalRBroadcastEvent` is raised; `ObservationRecordedTransponderHandler` sends `ObservationRecordedMessage` via Transponder to `signalr://group/session:{sessionId}`.
 
 **Flow:**
 1. Client connects to Transponder hub at `/transponder/transport` with JWT (`access_token` query param).

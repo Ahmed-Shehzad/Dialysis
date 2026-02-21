@@ -1,5 +1,4 @@
 using BuildingBlocks.Abstractions;
-using BuildingBlocks.Persistence;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Alarm.Application.Domain.ValueObjects;
@@ -7,7 +6,10 @@ using Dialysis.Alarm.Application.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+using Transponder.Persistence.EntityFramework;
+
 using AlarmDomain = Dialysis.Alarm.Application.Domain.Alarm;
+using EscalationIncidentDomain = Dialysis.Alarm.Application.Domain.EscalationIncident;
 
 namespace Dialysis.Alarm.Infrastructure.Persistence;
 
@@ -19,12 +21,40 @@ public sealed class AlarmDbContext : DbContext, IDbContext
     }
 
     public DbSet<AlarmDomain> Alarms => Set<AlarmDomain>();
-    public DbSet<IntegrationEventOutboxEntity> IntegrationEventOutbox => Set<IntegrationEventOutboxEntity>();
+    public DbSet<EscalationIncidentDomain> EscalationIncidents => Set<EscalationIncidentDomain>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        _ = configurationBuilder.ApplyTransponderUlidConventions();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         _ = modelBuilder.ApplyConfiguration(new AlarmEntityConfiguration());
-        _ = modelBuilder.ApplyConfiguration(new IntegrationEventOutboxConfiguration());
+        _ = modelBuilder.ApplyConfiguration(new EscalationIncidentEntityConfiguration());
+        _ = modelBuilder.ApplyTransponderModel().ApplyPostgreSqlTransponderTypes();
+    }
+}
+
+internal sealed class EscalationIncidentEntityConfiguration : IEntityTypeConfiguration<EscalationIncidentDomain>
+{
+    public void Configure(EntityTypeBuilder<EscalationIncidentDomain> e)
+    {
+        _ = e.ToTable("EscalationIncidents");
+        _ = e.HasKey(x => x.Id);
+        _ = e.Property(x => x.Id).HasConversion(v => v.ToString(), v => Ulid.Parse(v));
+        _ = e.Property(x => x.DeviceId).HasMaxLength(100);
+        _ = e.Property(x => x.SessionId).HasMaxLength(100);
+        _ = e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        _ = e.Property(x => x.TenantId)
+            .HasConversion(v => v.Value, v => new TenantId(v))
+            .HasMaxLength(100)
+            .HasDefaultValue(TenantId.Default);
+        _ = e.Property(x => x.OccurredAt).IsRequired();
+        _ = e.HasIndex(x => new { x.TenantId, x.OccurredAt });
+        _ = e.Ignore(x => x.DomainEvents);
+        _ = e.Ignore(x => x.IntegrationEvents);
     }
 }
 

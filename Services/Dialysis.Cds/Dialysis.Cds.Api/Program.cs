@@ -5,7 +5,6 @@ using BuildingBlocks.Tenancy;
 using Dialysis.Cds.Api;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 

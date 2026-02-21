@@ -97,7 +97,7 @@ The HL7 Implementation Guide alignment and diagrams plan is complete. Remaining 
 | `PatientDemographicsUpdatedEvent`              | `PatientDemographicsUpdatedEventHandler`          | Log; audit                                      |
 | `AlarmRaisedEvent`                             | `AlarmRaisedEventHandler`                         | Log; audit (C5)                                 |
 | `TreatmentSessionStartedEvent`                 | `TreatmentSessionStartedEventHandler`             | Log                                             |
-| `ObservationRecordedEvent`                     | Optional – high volume; consider sampling or skip |                                                 |
+| `ObservationRecordedSignalRBroadcastEvent` / `ObservationRecordedFhirNotifyEvent` | `ObservationRecordedTransponderHandler` / `FhirSubscriptionNotifyHandler` | SignalR broadcast / FHIR notify; audit optional (high volume) |
 | `TreatmentSessionCompletedEvent`               | `TreatmentSessionCompletedEventHandler`           | Log                                             |
 | `AlarmAcknowledgedEvent` / `AlarmClearedEvent` | Handlers                                          | Log; audit                                      |
 

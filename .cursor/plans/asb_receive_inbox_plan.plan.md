@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: asb-receive-4
     content: Create ASB topic subscription for Alarm (e.g. alarm-threshold-breach)
-    status: pending
+    status: completed
 isProject: true
 ---
 

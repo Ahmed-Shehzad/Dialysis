@@ -143,7 +143,7 @@ sequenceDiagram
 - Subscription resource CRUD (`POST|GET|DELETE /api/fhir/Subscription`)
 - Channel: rest-hook (callback URL)
 - Internal notify: `POST /api/fhir/subscription-notify` (ResourceType, ResourceUrl); protected by `FhirSubscription:NotifyApiKey`
-- Treatment: `FhirSubscriptionNotifyHandler` on `TreatmentSessionStartedEvent` (Procedure), `ObservationRecordedEvent` (Observation)
+- Treatment: `FhirSubscriptionNotifyHandler` on `TreatmentSessionStartedFhirNotifyEvent` (Procedure), `ObservationRecordedFhirNotifyEvent` (Observation)
 - Alarm: `FhirSubscriptionNotifyHandler` on `AlarmRaisedEvent` (DetectedIssue)
 - Criteria: resource type match (e.g. `Observation`, `Procedure`)
 

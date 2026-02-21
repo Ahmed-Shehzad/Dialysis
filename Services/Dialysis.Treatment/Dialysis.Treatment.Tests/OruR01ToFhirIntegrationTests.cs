@@ -49,7 +49,7 @@ public sealed class OruR01ToFhirIntegrationTests
         _ = await db.TreatmentSessions.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
-        var readStore = CreateReadStore();
+        ITreatmentReadStore readStore = CreateReadStore();
         var ingestHandler = new IngestOruMessageCommandHandler(
             new Sender(repository),
             new OruR01Parser(),

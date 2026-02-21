@@ -9,11 +9,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Persistence.EntityFramework\Transponder.Persistence.EntityFramework.csproj" />
         <ProjectReference Include="..\Dialysis.Treatment.Application\Dialysis.Treatment.Application.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Http" />
         <PackageReference Include="Microsoft.Extensions.Http.Resilience" />

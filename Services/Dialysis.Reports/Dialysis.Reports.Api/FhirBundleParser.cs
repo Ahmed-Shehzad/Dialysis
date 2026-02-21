@@ -17,11 +17,11 @@ internal static class FhirBundleParser
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("entry", out var entries))
+            if (!doc.RootElement.TryGetProperty("entry", out JsonElement entries))
                 return ids;
-            foreach (var e in entries.EnumerateArray())
+            foreach (JsonElement e in entries.EnumerateArray())
             {
-                if (!IsResourceType(e, ProcedureType) || !TryGetId(e, "proc-", out var sessionId))
+                if (!IsResourceType(e, ProcedureType) || !TryGetId(e, "proc-", out string sessionId))
                     continue;
                 ids.Add(sessionId);
             }
@@ -36,9 +36,9 @@ internal static class FhirBundleParser
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("entry", out var entries))
+            if (!doc.RootElement.TryGetProperty("entry", out JsonElement entries))
                 return [];
-            foreach (var e in entries.EnumerateArray())
+            foreach (JsonElement e in entries.EnumerateArray())
             {
                 if (!IsResourceType(e, ProcedureType))
                     continue;
@@ -46,7 +46,7 @@ internal static class FhirBundleParser
                 if (string.IsNullOrEmpty(mrn) || mrn == "unknown")
                     continue;
                 double minutes = ExtractDurationMinutes(e);
-                if (!durations.TryGetValue(mrn, out var list))
+                if (!durations.TryGetValue(mrn, out List<double>? list))
                 {
                     list = [];
                     durations[mrn] = list;
@@ -66,9 +66,9 @@ internal static class FhirBundleParser
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("entry", out var entries))
+            if (!doc.RootElement.TryGetProperty("entry", out JsonElement entries))
                 return [];
-            foreach (var e in entries.EnumerateArray())
+            foreach (JsonElement e in entries.EnumerateArray())
             {
                 if (!IsResourceType(e, ObservationType))
                     continue;
@@ -85,9 +85,9 @@ internal static class FhirBundleParser
 
     private static bool IsResourceType(JsonElement entry, string resourceType)
     {
-        if (!entry.TryGetProperty("resource", out var res))
+        if (!entry.TryGetProperty("resource", out JsonElement res))
             return false;
-        if (!res.TryGetProperty("resourceType", out var rt))
+        if (!res.TryGetProperty("resourceType", out JsonElement rt))
             return false;
         return rt.GetString() == resourceType;
     }
@@ -95,7 +95,7 @@ internal static class FhirBundleParser
     private static bool TryGetId(JsonElement entry, string prefix, out string id)
     {
         id = "";
-        if (!entry.TryGetProperty("resource", out var res) || !res.TryGetProperty("id", out var idProp))
+        if (!entry.TryGetProperty("resource", out JsonElement res) || !res.TryGetProperty("id", out JsonElement idProp))
             return false;
         string raw = idProp.GetString() ?? "";
         if (!raw.StartsWith(prefix, StringComparison.Ordinal))
@@ -106,9 +106,9 @@ internal static class FhirBundleParser
 
     private static string? ExtractPatientMrn(JsonElement entry)
     {
-        if (!entry.TryGetProperty("resource", out var res))
+        if (!entry.TryGetProperty("resource", out JsonElement res))
             return null;
-        if (!res.TryGetProperty("subject", out var sub) || !sub.TryGetProperty("reference", out var refEl))
+        if (!res.TryGetProperty("subject", out JsonElement sub) || !sub.TryGetProperty("reference", out JsonElement refEl))
             return null;
         string? patientRef = refEl.GetString();
         if (string.IsNullOrEmpty(patientRef) || !patientRef.StartsWith(PatientPrefix, StringComparison.Ordinal))
@@ -118,22 +118,22 @@ internal static class FhirBundleParser
 
     private static double ExtractDurationMinutes(JsonElement entry)
     {
-        if (!entry.TryGetProperty("resource", out var res) || !res.TryGetProperty("performedPeriod", out var perf))
+        if (!entry.TryGetProperty("resource", out JsonElement res) || !res.TryGetProperty("performedPeriod", out JsonElement perf))
             return 0;
-        if (!perf.TryGetProperty("start", out var startEl) || !perf.TryGetProperty("end", out var endEl))
+        if (!perf.TryGetProperty("start", out JsonElement startEl) || !perf.TryGetProperty("end", out JsonElement endEl))
             return 0;
-        if (!DateTimeOffset.TryParse(startEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var start) ||
-            !DateTimeOffset.TryParse(endEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out var end))
+        if (!DateTimeOffset.TryParse(startEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out DateTimeOffset start) ||
+            !DateTimeOffset.TryParse(endEl.GetString(), System.Globalization.CultureInfo.InvariantCulture, out DateTimeOffset end))
             return 0;
         return (end - start).TotalMinutes;
     }
 
     private static string? ExtractObservationCode(JsonElement entry)
     {
-        if (!entry.TryGetProperty("resource", out var res) || !res.TryGetProperty("code", out var codeEl) || !codeEl.TryGetProperty("coding", out var codings))
+        if (!entry.TryGetProperty("resource", out JsonElement res) || !res.TryGetProperty("code", out JsonElement codeEl) || !codeEl.TryGetProperty("coding", out JsonElement codings))
             return null;
-        foreach (var c in codings.EnumerateArray())
-            if (c.TryGetProperty("code", out var codeProp))
+        foreach (JsonElement c in codings.EnumerateArray())
+            if (c.TryGetProperty("code", out JsonElement codeProp))
                 return codeProp.GetString();
         return null;
     }

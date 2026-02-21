@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using Transponder.Transports.Abstractions;
 using Transponder.Transports.AzureServiceBus.Abstractions;
@@ -68,6 +69,28 @@ public static class Extensions
             (_, settings) => new AzureServiceBusTransportHost(settings));
 
         return builder;
+    }
+
+    /// <summary>
+    /// Ensures the topic and subscription for ThresholdBreachDetectedIntegrationEvent exist.
+    /// Call at startup when ASB is configured, before Transponder receive endpoints start.
+    /// </summary>
+    public static async Task EnsureThresholdBreachTopicAndSubscriptionAsync(
+        this IServiceProvider serviceProvider,
+        string connectionString,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+
+        var provisioner = new AzureServiceBusTopologyProvisioner(
+            connectionString,
+            serviceProvider.GetRequiredService<ILogger<AzureServiceBusTopologyProvisioner>>());
+
+        await provisioner.EnsureTopicAndSubscriptionAsync(
+            "ThresholdBreachDetectedIntegrationEvent",
+            "alarm-threshold-breach",
+            cancellationToken).ConfigureAwait(false);
     }
 
     private static IServiceCollection AddTransportRegistration(

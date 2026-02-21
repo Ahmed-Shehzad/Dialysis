@@ -1,4 +1,3 @@
-using BuildingBlocks;
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
 using BuildingBlocks.ExceptionHandling;
@@ -25,7 +24,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
-using Transponder.Persistence.EntityFramework.PostgreSql;
 using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
@@ -70,15 +68,19 @@ builder.Services.AddIntercessor(cfg =>
 
 string connectionString = builder.Configuration.GetConnectionString("TreatmentDb")
                           ?? "Host=localhost;Database=dialysis_treatment;Username=postgres;Password=postgres";
-string transponderConnectionString = builder.Configuration.GetConnectionString("TransponderDb")
-                                     ?? "Host=localhost;Database=transponder;Username=postgres;Password=postgres";
 
 builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.PostgreSql.Abstractions.IPostgreSqlStorageOptions>(
-    _ => new PostgreSqlStorageOptions());
-builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((sp, ob) =>
-    ob.UseNpgsql(transponderConnectionString)
+    _ => new Transponder.Persistence.EntityFramework.PostgreSql.PostgreSqlStorageOptions());
+
+builder.Services.AddDbContextFactory<TreatmentDbContext>((_, ob) =>
+    ob.UseNpgsql(connectionString)
       .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-builder.Services.AddTransponderPostgreSqlPersistence();
+builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.Abstractions.IEntityFrameworkDbContextFactory<TreatmentDbContext>,
+    Transponder.Persistence.EntityFramework.EntityFrameworkDbContextFactory<TreatmentDbContext>>();
+builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IStorageSessionFactory,
+    Transponder.Persistence.EntityFramework.EntityFrameworkStorageSessionFactory<TreatmentDbContext>>();
+builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IScheduledMessageStore,
+    Transponder.Persistence.EntityFramework.EntityFrameworkScheduledMessageStore<TreatmentDbContext>>();
 
 var treatmentBusAddress = new Uri("transponder://treatment");
 builder.Services.AddTransponder(treatmentBusAddress, opts =>
@@ -91,15 +93,13 @@ builder.Services.AddTransponder(treatmentBusAddress, opts =>
     _ = opts.UsePersistedMessageScheduler();
 });
 
-builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
-builder.Services.AddScoped<IntegrationEventOutboxInterceptor>();
+builder.Services.AddScoped<IntegrationEventDispatchInterceptor>();
 builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(
          sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
-         sp.GetRequiredService<IntegrationEventOutboxInterceptor>()));
-builder.Services.AddIntegrationEventOutboxPublisher<TreatmentDbContext>();
+         sp.GetRequiredService<IntegrationEventDispatchInterceptor>()));
 builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();
@@ -118,8 +118,7 @@ builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString, name: "treatment-db")
-    .AddNpgSql(transponderConnectionString, name: "transponder-db");
+    .AddNpgSql(connectionString, name: "treatment-db");
 
 WebApplication app = builder.Build();
 
@@ -129,10 +128,6 @@ if (app.Environment.IsDevelopment())
     using IServiceScope scope = app.Services.CreateScope();
     TreatmentDbContext db = scope.ServiceProvider.GetRequiredService<TreatmentDbContext>();
     await db.Database.MigrateAsync();
-
-    var transponderFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PostgreSqlTransponderDbContext>>();
-    await using (var transponderDb = await transponderFactory.CreateDbContextAsync())
-        await transponderDb.Database.MigrateAsync();
 }
 
 app.UseCentralExceptionHandler();

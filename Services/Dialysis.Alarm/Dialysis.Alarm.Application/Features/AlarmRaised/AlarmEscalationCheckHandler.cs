@@ -2,9 +2,9 @@ using BuildingBlocks.Abstractions;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Alarm.Application.Abstractions;
+using Dialysis.Alarm.Application.Domain;
 using Dialysis.Alarm.Application.Domain.Events;
 using Dialysis.Alarm.Application.Domain.Services;
-using Dialysis.Alarm.Application.Events;
 
 using Microsoft.Extensions.Logging;
 
@@ -12,33 +12,36 @@ using SessionId = BuildingBlocks.ValueObjects.SessionId;
 
 namespace Dialysis.Alarm.Application.Features.AlarmRaised;
 
-internal sealed class AlarmEscalationCheckHandler : IDomainEventHandler<AlarmRaisedEvent>
+/// <summary>
+/// When escalation is triggered, creates EscalationIncident aggregate which raises AlarmEscalationTriggeredEvent.
+/// </summary>
+internal sealed class AlarmEscalationCheckHandler : IDomainEventHandler<AlarmEscalationCheckEvent>
 {
     private static readonly TimeSpan EscalationWindow = TimeSpan.FromMinutes(5);
 
-    private readonly IIntegrationEventBuffer _buffer;
+    private readonly IEscalationIncidentStore _escalationStore;
     private readonly IAlarmRepository _repository;
     private readonly AlarmEscalationService _escalationService;
     private readonly ILogger<AlarmEscalationCheckHandler> _logger;
     private readonly ITenantContext _tenant;
 
     public AlarmEscalationCheckHandler(
-        IIntegrationEventBuffer buffer,
+        IEscalationIncidentStore escalationStore,
         IAlarmRepository repository,
         AlarmEscalationService escalationService,
         ILogger<AlarmEscalationCheckHandler> logger,
         ITenantContext tenant)
     {
-        _buffer = buffer;
-        _repository = repository;
-        _escalationService = escalationService;
-        _logger = logger;
-        _tenant = tenant;
+        _escalationStore = escalationStore ?? throw new ArgumentNullException(nameof(escalationStore));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _escalationService = escalationService ?? throw new ArgumentNullException(nameof(escalationService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _tenant = tenant ?? throw new ArgumentNullException(nameof(tenant));
     }
 
-    public async Task HandleAsync(AlarmRaisedEvent notification, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(AlarmEscalationCheckEvent notification, CancellationToken cancellationToken = default)
     {
-        SessionId? sessionId = string.IsNullOrEmpty(notification.SessionId) ? null : new SessionId(notification.SessionId);
+        SessionId? sessionId = notification.SessionId;
 
         IReadOnlyList<Domain.Alarm> recentAlarms = await _repository.GetRecentActiveAlarmsForEscalationAsync(
             notification.DeviceId, sessionId, EscalationWindow, notification.AlarmId, cancellationToken);
@@ -50,16 +53,18 @@ internal sealed class AlarmEscalationCheckHandler : IDomainEventHandler<AlarmRai
             _logger.LogWarning(
                 "Alarm escalation: DeviceId={DeviceId} SessionId={SessionId} ActiveCount={Count} Reason={Reason}",
                 notification.DeviceId?.Value,
-                notification.SessionId,
+                notification.SessionId?.Value,
                 result.ActiveAlarmCount,
                 result.Reason);
 
-            _buffer.Add(new AlarmEscalationTriggeredEvent(
+            var incident = EscalationIncident.Record(
                 notification.DeviceId?.Value,
-                notification.SessionId,
+                notification.SessionId?.Value ?? string.Empty,
                 result.ActiveAlarmCount,
                 result.Reason ?? string.Empty,
-                _tenant.TenantId));
+                _tenant.TenantId);
+
+            _escalationStore.Add(incident);
         }
     }
 }

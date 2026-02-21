@@ -35,6 +35,15 @@ await session.CommitAsync(ct);
 
 See [INBOX-PATTERN.md](INBOX-PATTERN.md).
 
+## Topic and Subscription Provisioning
+
+When ASB is configured, the Alarm API provisions the topic and subscription at startup:
+
+- **Topic**: `ThresholdBreachDetectedIntegrationEvent`
+- **Subscription**: `alarm-threshold-breach`
+
+Provisioning uses `ServiceBusAdministrationClient`. For the emulator (with `UseDevelopmentEmulator=true`), port 5300 is used for management operations. If provisioning fails (e.g. insufficient permissions), the app logs a warning and continues; ensure entities exist via emulator `Config.json` or infrastructure (ARM/Bicep/Terraform).
+
 ## Local Development with Emulator
 
 Use the [Azure Service Bus Emulator](https://hub.docker.com/r/microsoft/azure-messaging-servicebus-emulator) for local testing:
@@ -50,7 +59,7 @@ cp docker/asb-emulator/.env.example .env   # edit MSSQL_SA_PASSWORD if needed
 docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d
 ```
 
-The emulator provides topic `ThresholdBreachDetectedIntegrationEvent` with subscription `alarm-threshold-breach` for the Treatment→Alarm workflow. Treatment and Alarm are automatically wired to the emulator when using the ASB compose file.
+The emulator `Config.json` pre-provisions topic `ThresholdBreachDetectedIntegrationEvent` with subscription `alarm-threshold-breach`. Alternatively, the Alarm API provisions them at startup via `ServiceBusAdministrationClient`. Treatment and Alarm are automatically wired to the emulator when using the ASB compose file.
 
 **Connection string** (used by docker-compose.asb.yml):
 ```

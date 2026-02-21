@@ -1,6 +1,5 @@
 using Dialysis.Fhir.Api.Subscriptions;
 
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Fhir.Api.Controllers;

@@ -2,7 +2,6 @@ using Dialysis.Treatment.Application.Abstractions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http.Resilience;
 
 using Refit;
 
@@ -16,11 +15,9 @@ public static class AlarmApiServiceCollectionExtensions
 
         string? baseUrl = configuration["AlarmApi:BaseUrl"];
         if (!string.IsNullOrWhiteSpace(baseUrl))
-        {
             _ = services.AddRefitClient<IAlarmApi>()
                 .ConfigureHttpClient((_, client) => client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/"))
                 .AddStandardResilienceHandler();
-        }
 
         return services.AddScoped<IAlarmApiClient, AlarmApiClient>();
     }

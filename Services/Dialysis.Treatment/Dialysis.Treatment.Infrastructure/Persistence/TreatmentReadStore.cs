@@ -104,7 +104,7 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
 
         return sessions.Select(s =>
         {
-            var obs = obsBySession.TryGetValue(s.Id, out var list) ? list : [];
+            List<ObservationReadModel> obs = obsBySession.TryGetValue(s.Id, out List<ObservationReadModel>? list) ? list : [];
             var observationDtos = obs.Select(ToObservationDto).ToList();
             return new TreatmentSessionReadDto(
                 s.SessionId,

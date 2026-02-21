@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 using Refit;
 
@@ -77,7 +77,7 @@ public sealed class ReportsAggregationService
             try
             {
                 using var doc = System.Text.Json.JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("entry", out var entries))
+                if (doc.RootElement.TryGetProperty("entry", out JsonElement entries))
                 {
                     if (entries.GetArrayLength() == 0)
                         compliant++;
@@ -110,7 +110,7 @@ public sealed class ReportsAggregationService
         IApiResponse<string> response = await _api.GetTreatmentSessionsFhirAsync(from.ToString("o"), to.ToString("o"), 1000, auth, tenantId, cancellationToken);
         if (!response.IsSuccessStatusCode || response.Content is null)
             return new TreatmentDurationByPatientReport([], from, to);
-        var byPatient = FhirBundleParser.ParseDurationByPatient(response.Content);
+        IReadOnlyList<PatientDurationSummary> byPatient = FhirBundleParser.ParseDurationByPatient(response.Content);
         return new TreatmentDurationByPatientReport(byPatient, from, to);
     }
 
@@ -120,7 +120,7 @@ public sealed class ReportsAggregationService
         IApiResponse<string> response = await _api.GetTreatmentSessionsFhirAsync(from.ToString("o"), to.ToString("o"), 1000, auth, tenantId, cancellationToken);
         if (!response.IsSuccessStatusCode || response.Content is null)
             return new ObservationsSummaryReport([], from, to);
-        var byCode = FhirBundleParser.ParseObservationsByCode(response.Content, codeFilter);
+        IReadOnlyList<ObservationCountByCode> byCode = FhirBundleParser.ParseObservationsByCode(response.Content, codeFilter);
         return new ObservationsSummaryReport(byCode, from, to);
     }
 }

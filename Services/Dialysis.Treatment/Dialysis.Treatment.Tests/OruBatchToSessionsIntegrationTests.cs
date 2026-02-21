@@ -45,7 +45,7 @@ public sealed class OruBatchToSessionsIntegrationTests
         _ = await db.Database.EnsureCreatedAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new TreatmentSessionRepository(db, tenant);
-        var readStore = CreateReadStore();
+        ITreatmentReadStore readStore = CreateReadStore();
         var sender = new BatchTestSender(repository);
         var batchHandler = new IngestOruBatchCommandHandler(new Hl7BatchParser(), sender);
         var getHandler = new GetTreatmentSessionQueryHandler(readStore, tenant);

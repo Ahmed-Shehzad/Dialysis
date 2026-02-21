@@ -52,16 +52,13 @@ public sealed class AlarmRepository : Repository<AlarmDomain>, IAlarmRepository
             query = query.Where(a => a.DeviceId == deviceId);
         if (sessionId is not null)
             query = query.Where(a => a.SessionId == sessionId);
-        var fromDb = await query.OrderByDescending(a => a.OccurredAt).ToListAsync(cancellationToken);
+        List<AlarmDomain> fromDb = await query.OrderByDescending(a => a.OccurredAt).ToListAsync(cancellationToken);
 
         if (includeAlarmIdFromTracker is null)
             return fromDb;
 
-        AlarmDomain? pending = _db.Alarms.Local.OfType<AlarmDomain>().FirstOrDefault(a => a.Id == includeAlarmIdFromTracker);
-        if (pending is null || fromDb.Any(a => a.Id == pending.Id))
-            return fromDb;
-
-        return [pending, .. fromDb];
+        AlarmDomain? pending = await _db.Alarms.FirstOrDefaultAsync(a => a.Id == includeAlarmIdFromTracker, cancellationToken);
+        return pending is null || fromDb.Any(a => a.Id == pending.Id) ? fromDb : (IReadOnlyList<AlarmDomain>)[pending, .. fromDb];
     }
 
     public async override Task AddAsync(AlarmDomain entity, CancellationToken cancellationToken = default) =>

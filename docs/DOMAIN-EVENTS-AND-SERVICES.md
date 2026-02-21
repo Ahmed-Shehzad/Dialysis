@@ -2,6 +2,8 @@
 
 This document lists all domain events, domain services, aggregates, and entities across the Dialysis PDMS bounded contexts.
 
+**Convention** (see `.cursor/rules/event-conventions.mdc`): Each event serves one purpose; each event has exactly one handler.
+
 ## Architecture Overview
 
 ```mermaid
@@ -21,7 +23,8 @@ flowchart TD
         TS[TreatmentSession : AggregateRoot]
         OBS[Observation : BaseEntity]
         TSSE[TreatmentSessionStartedEvent]
-        ORE[ObservationRecordedEvent]
+        ORE[ObservationRecordedSignalRBroadcastEvent]
+        ORE2[ObservationRecordedFhirNotifyEvent]
         TBDE[ThresholdBreachDetectedEvent]
         TSCE[TreatmentSessionCompletedEvent]
         VSMS[VitalSignsMonitoringService]
@@ -66,11 +69,9 @@ This "dispatch before save" pattern ensures that domain event handlers participa
 | **Domain events** | Before SaveChanges (`SavingChangesAsync`) | Atomic — handlers run in same transaction; audit, FHIR notify, escalation |
 | **Integration events** | After SaveChanges (`SavedChangesAsync`) | Eventual — handlers run after commit; Transponder, in-process `IIntegrationEventHandler` |
 
-Integration events come from two sources:
-1. **Aggregates** — `ApplyEvent(IIntegrationEvent)` (e.g. `ObservationRecordedIntegrationEvent`, `AlarmRaisedIntegrationEvent`)
-2. **Domain event handlers** — `IIntegrationEventBuffer.Add(event)` for events that cannot be raised by aggregates (e.g. `ThresholdBreachDetectedIntegrationEvent`, `AlarmEscalationTriggeredEvent`)
+Integration events originate **only from aggregate roots** via `ApplyEvent(IIntegrationEvent)`.
 
-Both are persisted to the **IntegrationEventOutbox** table in the same transaction as business data (`IntegrationEventOutboxInterceptor` in `SavingChangesAsync`). A background `IntegrationEventOutboxPublisher` reads pending rows and publishes to Transponder and in-process handlers — survives server restarts.
+They are persisted to the **OutboxMessages** table (Transponder format) in the same transaction as business data (`TransponderOutboxInterceptor` in `SavingChangesAsync`). In-process handlers are dispatched in `SavedChangesAsync`. Transponder's `OutboxDispatcher` reads pending rows and publishes to ASB/SignalR — survives server restarts.
 
 ### Domain Event Handlers (Selected)
 
@@ -78,16 +79,23 @@ Both are persisted to the **IntegrationEventOutbox** table in the same transacti
 |-------|---------|----------|
 | `PrescriptionReceivedEvent` | `PrescriptionReceivedEventHandler` | `Services/Dialysis.Prescription/.../Features/PrescriptionReceived/` |
 | `ThresholdBreachDetectedEvent` | `ThresholdBreachDetectedEventHandler` | `Services/Dialysis.Treatment/.../Features/ThresholdBreachDetected/` |
-| `AlarmRaisedEvent` | `AlarmEscalationCheckHandler` | `Services/Dialysis.Alarm/.../Features/AlarmRaised/` |
+| `TreatmentSessionStartedEvent` | `TreatmentSessionStartedEventHandler` | Audit, logging |
+| `TreatmentSessionStartedFhirNotifyEvent` | `FhirSubscriptionNotifyHandler` | FHIR subscription notify |
+| `ObservationRecordedSignalRBroadcastEvent` | `ObservationRecordedTransponderHandler` | SignalR broadcast |
+| `ObservationRecordedFhirNotifyEvent` | `FhirSubscriptionNotifyHandler` | FHIR subscription notify |
+| `AlarmRaisedEvent` | `AlarmRaisedEventHandler` | Audit, logging |
+| `AlarmEscalationCheckEvent` | `AlarmEscalationCheckHandler` | Escalation evaluation |
+| `AlarmFhirNotifyEvent` | `FhirSubscriptionNotifyHandler` | FHIR subscription notify |
+| `AlarmSignalRBroadcastEvent` | `AlarmRaisedTransponderHandler` | SignalR broadcast |
 
 ### Integration Event Handlers
 
 | Event | Raised By | Dispatched By | In-Process Handler |
 |-------|-----------|---------------|--------------------|
 | `ObservationRecordedIntegrationEvent` | `TreatmentSession.AddObservation` | Outbox → Publisher | `ObservationRecordedIntegrationEventConsumer` |
-| `ThresholdBreachDetectedIntegrationEvent` | `ThresholdBreachDetectedEventHandler` → `IIntegrationEventBuffer` | Outbox → Publisher | `ThresholdBreachDetectedIntegrationEventConsumer` |
+| `ThresholdBreachDetectedIntegrationEvent` | `TreatmentSession.AddObservation` (per breach) | Outbox → Publisher | `ThresholdBreachDetectedIntegrationEventConsumer` |
 | `AlarmRaisedIntegrationEvent` | `Alarm.Raise` | Outbox → Publisher | — |
-| `AlarmEscalationTriggeredEvent` | `AlarmEscalationCheckHandler` → `IIntegrationEventBuffer` | Outbox → Publisher | `AlarmEscalationTriggeredEventConsumer` |
+| `AlarmEscalationTriggeredEvent` | `EscalationIncident.Record` (via `AlarmEscalationCheckHandler`) | Outbox → Publisher | `AlarmEscalationTriggeredEventConsumer` |
 
 ---
 
@@ -128,7 +136,9 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 | Event | Raised When | Properties |
 |-------|------------|------------|
 | `TreatmentSessionStartedEvent` | A new treatment session is started via `TreatmentSession.Start()` | `TreatmentSessionId`, `SessionId`, `PatientMrn`, `DeviceId` |
-| `ObservationRecordedEvent` | A device observation is added via `TreatmentSession.AddObservation()` | `TreatmentSessionId`, `ObservationId`, `Code`, `Value`, `Unit` |
+| `TreatmentSessionStartedFhirNotifyEvent` | `TreatmentSession.Start()` | `TreatmentSessionId`, `SessionId`, `PatientMrn`, `DeviceId` |
+| `ObservationRecordedSignalRBroadcastEvent` | A device observation is added via `TreatmentSession.AddObservation()` | `TreatmentSessionId`, `SessionId`, `ObservationId`, `Code`, `Value`, `Unit`, `SubId`, `ChannelName` |
+| `ObservationRecordedFhirNotifyEvent` | `TreatmentSession.AddObservation()` | `TreatmentSessionId`, `SessionId`, `ObservationId`, `Code`, `Value`, `Unit`, `SubId`, `ChannelName` |
 | `ThresholdBreachDetectedEvent` | VitalSignsMonitoringService detects value outside clinical threshold during `AddObservation()` | `TreatmentSessionId`, `SessionId`, `ObservationId`, `Code`, `Breach` |
 | `TreatmentSessionCompletedEvent` | A treatment session is completed via `TreatmentSession.Complete()` | `TreatmentSessionId`, `SessionId` |
 
@@ -156,12 +166,16 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 | Type | Base Class | Location |
 |------|-----------|----------|
 | `Alarm` | `AggregateRoot` | `Services/Dialysis.Alarm/Dialysis.Alarm.Application/Domain/Alarm.cs` |
+| `EscalationIncident` | `AggregateRoot` | `Services/Dialysis.Alarm/Dialysis.Alarm.Application/Domain/EscalationIncident.cs` |
 
 ### Domain Events
 
 | Event | Raised When | Properties |
 |-------|------------|------------|
 | `AlarmRaisedEvent` | A new alarm is detected via `Alarm.Raise()` | `AlarmId`, `AlarmType`, `EventPhase`, `AlarmState`, `DeviceId`, `SessionId`, `OccurredAt` |
+| `AlarmEscalationCheckEvent` | `Alarm.Raise()` | `AlarmId`, `DeviceId`, `SessionId`, `OccurredAt` |
+| `AlarmFhirNotifyEvent` | `Alarm.Raise()` | `AlarmId` |
+| `AlarmSignalRBroadcastEvent` | `Alarm.Raise()` | `AlarmId`, `AlarmType`, `EventPhase`, `AlarmState`, `DeviceId`, `SessionId`, `OccurredAt` |
 | `AlarmAcknowledgedEvent` | An alarm is acknowledged via `Alarm.Acknowledge()` | `AlarmId` |
 | `AlarmClearedEvent` | An alarm condition is resolved via `Alarm.Clear()` | `AlarmId` |
 
@@ -169,7 +183,7 @@ None. Patient context is simple demographic CRUD aligned with PDQ (Patient Demog
 
 | Service | Purpose | Location |
 |---------|---------|----------|
-| `AlarmEscalationService` | Evaluates alarm frequency for escalation; triggers when 3+ active alarms occur within a 5-minute window. Wired via `AlarmEscalationCheckHandler` on `AlarmRaisedEvent`. | `Services/Dialysis.Alarm/Dialysis.Alarm.Application/Domain/Services/AlarmEscalationService.cs` |
+| `AlarmEscalationService` | Evaluates alarm frequency for escalation; triggers when 3+ active alarms occur within a 5-minute window. Wired via `AlarmEscalationCheckHandler` on `AlarmEscalationCheckEvent`. | `Services/Dialysis.Alarm/Dialysis.Alarm.Application/Domain/Services/AlarmEscalationService.cs` |
 
 ---
 
@@ -256,21 +270,19 @@ internal sealed class DeviceRegisteredProjectionHandler : IDomainEventHandler<De
 | Class | Purpose | Location |
 |-------|---------|----------|
 | `DomainEventDispatcherInterceptor` | Collects and dispatches domain events before save (`SavingChangesAsync`) — atomic | `BuildingBlocks/Interceptors/DomainEventDispatcherInterceptor.cs` |
-| `IntegrationEventOutboxInterceptor` | Persists integration events to Outbox table in `SavingChangesAsync` — same transaction as business data | `BuildingBlocks/Interceptors/IntegrationEventOutboxInterceptor.cs` |
-| `IntegrationEventOutboxPublisher<TContext>` | Background service reads pending Outbox, publishes to Transponder + in-process | `BuildingBlocks/IntegrationEventOutboxPublisher.cs` |
+| `IntegrationEventDispatchInterceptor` | Persists integration events to Transponder outbox (shared transaction) in `SavingChangesAsync`; dispatches in-process in `SavedChangesAsync` | `BuildingBlocks/Interceptors/IntegrationEventDispatchInterceptor.cs` |
+| `OutboxDispatcher` | Transponder background service reads pending OutboxMessages, publishes to ASB/SignalR | `Transponder/OutboxDispatcher.cs` |
 
 ### Registration
 
 Services that raise integration events (Treatment, Alarm):
 
 ```csharp
-builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
-builder.Services.AddScoped<IntegrationEventOutboxInterceptor>();
+builder.Services.AddScoped<IntegrationEventDispatchInterceptor>();
 builder.Services.AddDbContext<XxxDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(
          sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
-         sp.GetRequiredService<IntegrationEventOutboxInterceptor>()));
-builder.Services.AddIntegrationEventOutboxPublisher<XxxDbContext>();
+         sp.GetRequiredService<IntegrationEventDispatchInterceptor>()));
 ```

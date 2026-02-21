@@ -42,10 +42,8 @@ internal sealed class JwtBearerStartupValidator : IValidateOptions<JwtBearerStar
             return ValidateOptionsResult.Success;
 
         if (string.IsNullOrWhiteSpace(options?.Authority))
-        {
             return ValidateOptionsResult.Fail(
                 "Authentication:JwtBearer:Authority is required when not in Development.");
-        }
 
         return ValidateOptionsResult.Success;
     }

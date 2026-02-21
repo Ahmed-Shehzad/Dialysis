@@ -10,12 +10,14 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <ProjectReference Include="..\Dialysis.Alarm.Application\Dialysis.Alarm.Application.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Persistence.EntityFramework\Transponder.Persistence.EntityFramework.csproj" />
         <ProjectReference Include="..\..\..\Transponder\Transponder.csproj" />
         <ProjectReference Include="..\..\..\Transponder.Persistence\Transponder.Persistence.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Http" />
         <PackageReference Include="Microsoft.Extensions.Http.Resilience" />

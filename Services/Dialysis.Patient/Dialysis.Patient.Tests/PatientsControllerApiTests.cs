@@ -2,12 +2,12 @@ using System.Net;
 
 using BuildingBlocks.Testcontainers;
 
+using Dialysis.Patient.Api.Controllers;
+
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 
 using Shouldly;
-
-using Xunit;
 
 namespace Dialysis.Patient.Tests;
 
@@ -28,7 +28,7 @@ public sealed class PatientsControllerApiTests
     public async Task Health_ReturnsOkAsync()
     {
         await _fixture.InitializeAsync();
-        using var factory = new WebApplicationFactory<Dialysis.Patient.Api.Controllers.PatientsController>()
+        using WebApplicationFactory<PatientsController> factory = new WebApplicationFactory<Dialysis.Patient.Api.Controllers.PatientsController>()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureAppConfiguration((context, config) =>

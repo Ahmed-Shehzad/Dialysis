@@ -1,4 +1,3 @@
-using BuildingBlocks;
 using BuildingBlocks.Audit;
 using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Authorization;
@@ -25,7 +24,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
-using Transponder.Persistence.EntityFramework.PostgreSql;
 using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
@@ -54,15 +52,19 @@ builder.Services.AddIntercessor(cfg =>
 
 string connectionString = builder.Configuration.GetConnectionString("AlarmDb")
                           ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
-string transponderConnectionString = builder.Configuration.GetConnectionString("TransponderDb")
-                                     ?? "Host=localhost;Database=transponder;Username=postgres;Password=postgres";
 
 builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.PostgreSql.Abstractions.IPostgreSqlStorageOptions>(
-    _ => new PostgreSqlStorageOptions());
-builder.Services.AddDbContextFactory<PostgreSqlTransponderDbContext>((_, ob) =>
-    ob.UseNpgsql(transponderConnectionString)
+    _ => new Transponder.Persistence.EntityFramework.PostgreSql.PostgreSqlStorageOptions());
+
+builder.Services.AddDbContextFactory<AlarmDbContext>((_, ob) =>
+    ob.UseNpgsql(connectionString)
       .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-builder.Services.AddTransponderPostgreSqlPersistence();
+builder.Services.AddSingleton<Transponder.Persistence.EntityFramework.Abstractions.IEntityFrameworkDbContextFactory<AlarmDbContext>,
+    Transponder.Persistence.EntityFramework.EntityFrameworkDbContextFactory<AlarmDbContext>>();
+builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IStorageSessionFactory,
+    Transponder.Persistence.EntityFramework.EntityFrameworkStorageSessionFactory<AlarmDbContext>>();
+builder.Services.AddSingleton<Transponder.Persistence.Abstractions.IScheduledMessageStore,
+    Transponder.Persistence.EntityFramework.EntityFrameworkScheduledMessageStore<AlarmDbContext>>();
 
 var alarmBusAddress = new Uri("transponder://alarm");
 string? asbConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
@@ -77,17 +79,16 @@ builder.Services.AddTransponder(alarmBusAddress, opts =>
 if (!string.IsNullOrWhiteSpace(asbConnectionString))
     _ = builder.Services.AddThresholdBreachDetectedReceiveEndpoint(alarmBusAddress);
 
-builder.Services.AddIntegrationEventBuffer();
 builder.Services.AddScoped<DomainEventDispatcherInterceptor>();
-builder.Services.AddScoped<IntegrationEventOutboxInterceptor>();
+builder.Services.AddScoped<IntegrationEventDispatchInterceptor>();
 builder.Services.AddDbContext<AlarmDbContext>((sp, o) =>
     o.UseNpgsql(connectionString)
      .AddInterceptors(
          sp.GetRequiredService<DomainEventDispatcherInterceptor>(),
-         sp.GetRequiredService<IntegrationEventOutboxInterceptor>()));
-builder.Services.AddIntegrationEventOutboxPublisher<AlarmDbContext>();
+         sp.GetRequiredService<IntegrationEventDispatchInterceptor>()));
 builder.Services.AddDbContext<AlarmReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
+builder.Services.AddScoped<IEscalationIncidentStore, EscalationIncidentStore>();
 builder.Services.AddScoped<IAlarmReadStore, AlarmReadStore>();
 builder.Services.AddScoped<IOruR40MessageParser, OruR40Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
@@ -101,8 +102,7 @@ builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(Tim
 builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString, name: "alarm-db")
-    .AddNpgSql(transponderConnectionString, name: "transponder-db");
+    .AddNpgSql(connectionString, name: "alarm-db");
 
 WebApplication app = builder.Build();
 
@@ -117,5 +117,17 @@ app.MapOpenApi();
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true });
 app.MapHub<TransponderSignalRHub>("/transponder/transport").RequireAuthorization("AlarmRead");
 app.MapControllers();
+
+if (!string.IsNullOrWhiteSpace(asbConnectionString))
+{
+    try
+    {
+        await app.Services.EnsureThresholdBreachTopicAndSubscriptionAsync(asbConnectionString);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "ASB topology provisioning failed. Ensure topic ThresholdBreachDetectedIntegrationEvent and subscription alarm-threshold-breach exist (e.g. via emulator Config.json or infra).");
+    }
+}
 
 await app.RunAsync();

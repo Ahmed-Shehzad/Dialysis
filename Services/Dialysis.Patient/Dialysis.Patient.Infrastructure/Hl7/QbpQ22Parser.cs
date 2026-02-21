@@ -22,8 +22,8 @@ public sealed class QbpQ22Parser : IQbpQ22Parser
         string? queryTag = ParseQueryTag(segments);
         string? queryName = ParseQueryName(segments);
 
-        var demographics = ParseQpdDemographics(segments);
-        var (mrn, personNumber, socialSecurityNumber, universalId, firstName, lastName, birthdate) = demographics;
+        QpdDemographics demographics = ParseQpdDemographics(segments);
+        (string? mrn, string? personNumber, string? socialSecurityNumber, string? universalId, string? firstName, string? lastName, DateOnly? birthdate) = demographics;
 
         if (string.IsNullOrWhiteSpace(mrn) && string.IsNullOrWhiteSpace(personNumber) && string.IsNullOrWhiteSpace(socialSecurityNumber) && string.IsNullOrWhiteSpace(universalId) && string.IsNullOrWhiteSpace(lastName) && !birthdate.HasValue)
             throw new ArgumentException("QBP^Q22 must contain patient MRN (@PID.3), name (@PID.5), or birthdate (@PID.7) in QPD-3.", nameof(hl7Message));

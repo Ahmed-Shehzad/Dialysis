@@ -4,6 +4,7 @@ using BuildingBlocks.ValueObjects;
 using Dialysis.Prescription.Application.Domain.ValueObjects;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using PrescriptionEntity = Dialysis.Prescription.Application.Domain.Prescription;
 using ProfileSetting = Dialysis.Prescription.Application.Domain.ProfileSetting;
@@ -41,7 +42,7 @@ public sealed class PrescriptionDbContext : DbContext, IDbContext
             _ = e.Property(x => x.OrderingProvider).HasMaxLength(200);
             _ = e.Property(x => x.CallbackPhone).HasMaxLength(50);
             _ = e.Property(x => x.ReceivedAt);
-            var settingsProp = e.Property<List<ProfileSetting>>("_settings")
+            PropertyBuilder<List<ProfileSetting>> settingsProp = e.Property<List<ProfileSetting>>("_settings")
                 .HasColumnName("SettingsJson")
                 .HasColumnType("jsonb")
                 .HasConversion(ProfileSettingListConverter.Instance);

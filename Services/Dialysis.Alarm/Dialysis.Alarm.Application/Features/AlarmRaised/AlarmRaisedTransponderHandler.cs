@@ -7,7 +7,7 @@ using Transponder.Abstractions;
 
 namespace Dialysis.Alarm.Application.Features.AlarmRaised;
 
-internal sealed class AlarmRaisedTransponderHandler : IDomainEventHandler<AlarmRaisedEvent>
+internal sealed class AlarmRaisedTransponderHandler : IDomainEventHandler<AlarmSignalRBroadcastEvent>
 {
     private readonly ISendEndpointProvider _sendEndpointProvider;
 
@@ -16,7 +16,7 @@ internal sealed class AlarmRaisedTransponderHandler : IDomainEventHandler<AlarmR
         _sendEndpointProvider = sendEndpointProvider;
     }
 
-    public async Task HandleAsync(AlarmRaisedEvent notification, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(AlarmSignalRBroadcastEvent notification, CancellationToken cancellationToken = default)
     {
         var message = new AlarmRecordedMessage(
             notification.AlarmId.ToString(),
@@ -24,11 +24,11 @@ internal sealed class AlarmRaisedTransponderHandler : IDomainEventHandler<AlarmR
             notification.EventPhase.Value,
             notification.AlarmState.Value,
             notification.DeviceId?.Value,
-            notification.SessionId,
+            notification.SessionId?.Value,
             notification.OccurredAt);
 
-        string groupName = !string.IsNullOrEmpty(notification.SessionId)
-            ? $"session:{notification.SessionId}"
+        string groupName = !string.IsNullOrEmpty(notification.SessionId?.Value)
+            ? $"session:{notification.SessionId!.Value}"
             : $"device:{notification.DeviceId?.Value ?? "unknown"}";
         Uri destination = new($"signalr://group/{groupName}");
 

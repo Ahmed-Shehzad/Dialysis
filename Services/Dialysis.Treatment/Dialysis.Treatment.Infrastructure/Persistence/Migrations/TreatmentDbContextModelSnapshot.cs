@@ -22,41 +22,11 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BuildingBlocks.Persistence.IntegrationEventOutboxEntity", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Error")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("ProcessedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAtUtc");
-
-                    b.ToTable("IntegrationEventOutbox", (string)null);
-                });
-
             modelBuilder.Entity("Dialysis.Treatment.Application.Domain.Observation", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text");
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -100,7 +70,8 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("TreatmentSessionId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
 
                     b.Property<string>("Unit")
                         .HasColumnType("text");
@@ -128,7 +99,8 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Dialysis.Treatment.Application.Domain.TreatmentSession", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text");
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -205,6 +177,141 @@ namespace Dialysis.Treatment.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_TreatmentSessions_TenantId_StartedAt");
 
                     b.ToTable("TreatmentSessions", (string)null);
+                });
+
+            modelBuilder.Entity("Transponder.Persistence.EntityFramework.InboxStateRecord", b =>
+                {
+                    b.Property<string>("MessageId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<string>("ConsumerId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("ProcessedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ReceivedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("MessageId", "ConsumerId");
+
+                    b.ToTable("InboxStates", (string)null);
+                });
+
+            modelBuilder.Entity("Transponder.Persistence.EntityFramework.OutboxMessageRecord", b =>
+                {
+                    b.Property<string>("MessageId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<byte[]>("Body")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConversationId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<string>("DestinationAddress")
+                        .HasMaxLength(2048)
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("EnqueuedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Headers")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("MessageType")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("SentTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SourceAddress")
+                        .HasMaxLength(2048)
+                        .HasColumnType("text");
+
+                    b.HasKey("MessageId");
+
+                    b.ToTable("OutboxMessages", (string)null);
+                });
+
+            modelBuilder.Entity("Transponder.Persistence.EntityFramework.SagaStateRecord", b =>
+                {
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<string>("StateType")
+                        .HasMaxLength(500)
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConversationId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<string>("StateData")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("UpdatedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CorrelationId", "StateType");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("SagaStates", (string)null);
+                });
+
+            modelBuilder.Entity("Transponder.Persistence.EntityFramework.ScheduledMessageRecord", b =>
+                {
+                    b.Property<string>("TokenId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character(26)");
+
+                    b.Property<byte[]>("Body")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DispatchedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Headers")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ScheduledTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("TokenId");
+
+                    b.HasIndex("ScheduledTime", "DispatchedTime");
+
+                    b.ToTable("ScheduledMessages", (string)null);
                 });
 
             modelBuilder.Entity("Dialysis.Treatment.Application.Domain.Observation", b =>

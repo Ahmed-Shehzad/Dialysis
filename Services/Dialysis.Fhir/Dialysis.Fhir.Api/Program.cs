@@ -6,7 +6,6 @@ using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Abstractions;
 
-using Microsoft.Extensions.Http.Resilience;
 using Serilog;
 using Refit;
 using Dialysis.Fhir.Api;

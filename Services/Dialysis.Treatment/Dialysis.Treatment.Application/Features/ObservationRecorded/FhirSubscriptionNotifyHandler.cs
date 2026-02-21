@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Dialysis.Treatment.Application.Features.ObservationRecorded;
 
-internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<ObservationRecordedEvent>
+internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<ObservationRecordedFhirNotifyEvent>
 {
     private readonly IFhirSubscriptionNotifyClient _notifyClient;
     private readonly ITenantContext _tenant;
@@ -27,7 +27,7 @@ internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<Observ
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task HandleAsync(ObservationRecordedEvent notification, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(ObservationRecordedFhirNotifyEvent notification, CancellationToken cancellationToken = default)
     {
         string? baseUrl = _config["FhirSubscription:NotifyUrl"];
         if (string.IsNullOrEmpty(baseUrl))

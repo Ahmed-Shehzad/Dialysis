@@ -48,6 +48,7 @@ public sealed class TreatmentSession : AggregateRoot
         };
 
         session.ApplyEvent(new TreatmentSessionStartedEvent(session.Id, sessionId, patientMrn, deviceId));
+        session.ApplyEvent(new TreatmentSessionStartedFhirNotifyEvent(session.Id, sessionId, patientMrn, deviceId));
         return session;
     }
 
@@ -66,14 +67,18 @@ public sealed class TreatmentSession : AggregateRoot
         string? channelName = createParams.SubId is not null && ContainmentPath.TryParse(createParams.SubId) is { } path && path.ChannelId is { } cid
             ? ContainmentPath.GetChannelName(cid)
             : null;
-        ApplyEvent(new ObservationRecordedEvent(Id, SessionId.Value, observation.Id, createParams.Code, createParams.Value, createParams.Unit, createParams.SubId, channelName));
+        ApplyEvent(new ObservationRecordedSignalRBroadcastEvent(Id, SessionId.Value, observation.Id, createParams.Code, createParams.Value, createParams.Unit, createParams.SubId, channelName));
+        ApplyEvent(new ObservationRecordedFhirNotifyEvent(Id, SessionId.Value, observation.Id, createParams.Code, createParams.Value, createParams.Unit, createParams.SubId, channelName));
         ApplyEvent(new ObservationRecordedIntegrationEvent(Id, SessionId.Value, observation.Id, createParams.Code, createParams.Value, createParams.Unit, createParams.SubId, channelName, TenantId.Value));
 
         if (thresholdBreaches is { Count: > 0 })
-        {
             foreach (ThresholdBreach breach in thresholdBreaches)
+            {
                 ApplyEvent(new ThresholdBreachDetectedEvent(Id, SessionId.Value, DeviceEui64, observation.Id, breach.ObservationCode, breach));
-        }
+                ApplyEvent(new ThresholdBreachDetectedIntegrationEvent(
+                    Id, SessionId.Value, DeviceEui64, observation.Id, breach.ObservationCode.Value,
+                    breach.BreachType.ToString(), breach.ObservedValue, breach.ThresholdValue, breach.Direction.ToString(), TenantId.Value));
+            }
 
         return observation;
     }

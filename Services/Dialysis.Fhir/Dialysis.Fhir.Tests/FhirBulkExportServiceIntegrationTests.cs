@@ -1,10 +1,8 @@
 using System.Net;
-using System.Net.Http;
 
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Fhir.Api;
-using Dialysis.Hl7ToFhir;
 
 using Hl7.Fhir.Model;
 
@@ -27,7 +25,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
         string patientJson = """
             {"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1","identifier":[{"value":"MRN001"}]}}]}
             """;
-        var api = new MockFhirExportGatewayApi().Patients(patientJson);
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().Patients(patientJson);
         var tenant = new TenantContext { TenantId = "default" };
         var service = new FhirBulkExportService(api, tenant);
 
@@ -35,7 +33,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
 
         bundle.Type.ShouldBe(Bundle.BundleType.Collection);
         bundle.Entry.ShouldNotBeEmpty();
-        Patient? p = bundle.Entry.FirstOrDefault(e => e.Resource is Patient)?.Resource as Patient;
+        var p = bundle.Entry.FirstOrDefault(e => e.Resource is Patient)?.Resource as Patient;
         p.ShouldNotBeNull();
         p.Id.ShouldBe("p1");
     }
@@ -45,7 +43,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
     {
         string patientJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""";
         string deviceJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Device","id":"d1"}}]}""";
-        var api = new MockFhirExportGatewayApi().Patients(patientJson).Devices(deviceJson);
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().Patients(patientJson).Devices(deviceJson);
         var tenant = new TenantContext { TenantId = "default" };
         var service = new FhirBulkExportService(api, tenant);
 
@@ -65,7 +63,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
                 {"resource":{"resourceType":"Observation","id":"obs1","status":"final","code":{"coding":[{"system":"urn:iso:std:iso:11073:10101","code":"150456","display":"Blood pump flow"}]}}}
             ]}
             """;
-        var api = new MockFhirExportGatewayApi().TreatmentSessions(treatmentJson);
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().TreatmentSessions(treatmentJson);
         var tenant = new TenantContext { TenantId = "default" };
         var service = new FhirBulkExportService(api, tenant);
 
@@ -80,7 +78,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
     public async Task ExportAsync_WhenRequestedTypesEmpty_DefaultsToPatientAsync()
     {
         string patientJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""";
-        var api = new MockFhirExportGatewayApi().Patients(patientJson);
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().Patients(patientJson);
         var tenant = new TenantContext { TenantId = "default" };
         var service = new FhirBulkExportService(api, tenant);
 
@@ -95,7 +93,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
     {
         string patientJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1","identifier":[{"value":"MRN001"}]}}]}""";
         string treatmentJson = """{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Procedure","id":"proc-1","status":"completed","subject":{"reference":"Patient/MRN001"}}}]}""";
-        var api = new MockFhirExportGatewayApi().Patients(patientJson).TreatmentSessions(treatmentJson);
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi().Patients(patientJson).TreatmentSessions(treatmentJson);
         var tenant = new TenantContext { TenantId = "default" };
         var service = new FhirBulkExportService(api, tenant);
 
@@ -110,7 +108,7 @@ public sealed class FhirBulkExportServiceIntegrationTests
     [Fact]
     public async Task ExportAsync_WhenBackendReturns404_OmitsThatTypeFromBundleAsync()
     {
-        var api = new MockFhirExportGatewayApi()
+        MockFhirExportGatewayApi api = new MockFhirExportGatewayApi()
             .Patients("""{"resourceType":"Bundle","type":"collection","entry":[{"resource":{"resourceType":"Patient","id":"p1"}}]}""")
             .Devices(status: HttpStatusCode.NotFound);
         var tenant = new TenantContext { TenantId = "default" };

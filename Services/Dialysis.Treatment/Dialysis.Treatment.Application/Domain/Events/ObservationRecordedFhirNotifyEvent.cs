@@ -4,7 +4,7 @@ using Dialysis.Treatment.Application.Domain.ValueObjects;
 
 namespace Dialysis.Treatment.Application.Domain.Events;
 
-public sealed record ObservationRecordedEvent(
+public sealed record ObservationRecordedFhirNotifyEvent(
     Ulid TreatmentSessionId,
     string SessionId,
     Ulid ObservationId,

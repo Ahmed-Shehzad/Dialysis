@@ -59,10 +59,7 @@ bool useTestHealthChecks = builder.Configuration.GetValue<bool>("HealthChecks:Us
 
 IHealthChecksBuilder healthBuilder = builder.Services.AddHealthChecks();
 
-if (useTestHealthChecks)
-{
-    healthBuilder.AddCheck("gateway", () => HealthCheckResult.Healthy("Test mode"));
-}
+if (useTestHealthChecks) healthBuilder.AddCheck("gateway", () => HealthCheckResult.Healthy("Test mode"));
 else
 {
     string patientUrl = GetBackendAddress("patient-cluster", "patient", "http://localhost:5051");

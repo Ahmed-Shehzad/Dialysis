@@ -46,7 +46,7 @@ public sealed class OruR40ToFhirIntegrationTests
         _ = await db.Database.EnsureCreatedAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var readStore = CreateReadStore();
+        IAlarmReadStore readStore = CreateReadStore();
         var ingestHandler = new IngestOruR40MessageCommandHandler(
             new RecordAlarmSender(repository),
             new OruR40Parser(),
