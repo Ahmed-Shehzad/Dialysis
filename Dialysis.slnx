@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Core/">
     <Project Path="BuildingBlocks/BuildingBlocks.csproj" />
+    <Project Path="BuildingBlocks.ExceptionHandling.Tests/BuildingBlocks.ExceptionHandling.Tests.csproj" />
     <Project Path="BuildingBlocks.Testcontainers/BuildingBlocks.Testcontainers.csproj" />
   </Folder>
   <Folder Name="/Libraries/" />

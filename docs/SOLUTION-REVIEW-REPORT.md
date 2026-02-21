@@ -141,7 +141,7 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 |-----|-----------------|
 | ~~**Gateway**~~ | **Resolved.** GatewayHealthTests (health aggregation, routing). |
 | ~~**Hl7ToFhir mappers**~~ | **Resolved.** ObservationMapperTests, ProcedureMapperTests in Dialysis.Hl7ToFhir.Tests. |
-| **Controller-level** | Most tests target handlers; consider API-level tests for critical flows |
+| ~~**Controller-level**~~ | **Resolved.** PatientsControllerApiTests, TreatmentControllerApiTests, AlarmControllerApiTests, PrescriptionControllerApiTests (health + Patient search). |
 
 ---
 
@@ -154,6 +154,7 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 | `FhirSubscription:NotifyApiKey` | Optional; empty = subscription-notify unprotected |
 | `AzureServiceBus:ConnectionString` | Optional; not set in docker-compose |
 | `ConnectionStrings:Redis` | Optional; set in docker-compose for Prescription |
+| `ExceptionHandling:Email` | Production error report email. When `Enabled` and `DevelopmentEmail` set, unhandled exceptions are emailed. See [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) §1.4. |
 
 ### 6.2 Potential Improvements
 
@@ -161,7 +162,7 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 |------|-------|
 | ~~**Startup config validation**~~ | **Done.** AddJwtBearerStartupValidation validates Authority when not in Development. |
 | ~~**Central exception middleware**~~ | **Done.** IExceptionHandler-based CentralExceptionHandler; Prescription adds PrescriptionExceptionHandler for domain exceptions. |
-| **Per-tenant DB** | C5 mentions per-tenant DBs; implementation uses shared DB + TenantId filter (acceptable for learning platform) |
+| **Per-tenant DB** | Documented in [C5-MULTI-TENANCY.md](C5-MULTI-TENANCY.md). Current: shared DB + TenantId filter (acceptable for learning platform); per-tenant DB is future enhancement. |
 
 ---
 
@@ -188,7 +189,7 @@ HL7 and FHIR implementation guides are aligned per [ALIGNMENT-REPORT.md](docs/Di
 | **Tier 1 – Must Do** | ~~Subscription-notify auth~~, ~~Audit consistency~~ (both done) | 0 |
 | **Tier 2 – Should Do** | ~~ASB receive + Inbox~~, ~~Architecture diagram~~ (both done) | 0 |
 | **Tier 3 – Nice to Have** | ~~Redis cache-aside~~, ~~Gateway tests~~, ~~Hl7ToFhir mapper tests~~ (all done) | 0 |
-| **Tier 4 – Defer** | FHIR unified search, Controller API tests (Patient health + routing done) | 2 |
+| **Tier 4 – Defer** | FHIR unified search (implemented) | 1 |
 
 ---
 
@@ -237,7 +238,7 @@ Before implementation, items are ranked by:
 | **8** | **FHIR unified search** | High | Per-resource search via downstream APIs works. Only needed if full FHIR API compliance is required. Defer until required. |
 | **9** | ~~**Startup config validation**~~ | — | **Done.** AddJwtBearerStartupValidation in all JWT APIs. |
 | **10** | ~~**Central exception middleware**~~ | — | **Done.** CentralExceptionHandler (IExceptionHandler); PrescriptionExceptionHandler for domain exceptions. |
-| **11** | ~~**Controller-level API tests**~~ | — | **Done.** PatientsControllerApiTests (health); PatientApiWebApplicationFactory with Testcontainers. |
+| **11** | ~~**Controller-level API tests**~~ | — | **Done.** PatientsControllerApiTests, TreatmentControllerApiTests, AlarmControllerApiTests, PrescriptionControllerApiTests (health + Patient search); WebApplicationFactory + Testcontainers. |
 
 ---
 

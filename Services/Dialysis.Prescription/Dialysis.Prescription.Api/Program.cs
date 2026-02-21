@@ -101,7 +101,7 @@ if (app.Environment.IsDevelopment())
     await db.Database.MigrateAsync();
 }
 
-app.UseExceptionHandler();
+app.UseCentralExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -110,3 +110,5 @@ app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => true })
 app.MapControllers();
 
 await app.RunAsync();
+
+namespace Dialysis.Prescription.Api { public partial class Program { } }

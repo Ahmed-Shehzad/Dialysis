@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
 using BuildingBlocks.TimeSync;
 
@@ -51,6 +52,7 @@ if (corsOrigins.Length > 0)
     });
 
 builder.Services.AddOpenApi();
+builder.Services.AddCentralExceptionHandler(builder.Configuration);
 
 string GetBackendAddress(string cluster, string destination, string @default) =>
     builder.Configuration[$"ReverseProxy:Clusters:{cluster}:Destinations:{destination}:Address"] ?? @default;
@@ -85,6 +87,7 @@ else
 
 WebApplication app = builder.Build();
 
+app.UseCentralExceptionHandler();
 if (corsOrigins.Length > 0)
     app.UseCors();
 

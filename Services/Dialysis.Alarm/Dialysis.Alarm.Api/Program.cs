@@ -155,3 +155,5 @@ if (asbConfigured)
     }
 
 await app.RunAsync();
+
+namespace Dialysis.Alarm.Api { public partial class Program { } }

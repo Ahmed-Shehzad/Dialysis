@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <NoWarn>$(NoWarn);IDE0005;IDE0058</NoWarn>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -12,12 +13,14 @@
     <Compile Include="..\..\..\BuildingBlocks.Testcontainers\PostgreSqlCollectionDefinition.cs" Link="PostgreSqlCollectionDefinition.cs" />
     <ProjectReference Include="..\..\..\BuildingBlocks.Testcontainers\BuildingBlocks.Testcontainers.csproj" />
     <ProjectReference Include="..\..\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
+    <ProjectReference Include="..\Dialysis.Alarm.Api\Dialysis.Alarm.Api.csproj" />
     <ProjectReference Include="..\Dialysis.Alarm.Application\Dialysis.Alarm.Application.csproj" />
     <ProjectReference Include="..\Dialysis.Alarm.Infrastructure\Dialysis.Alarm.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />

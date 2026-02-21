@@ -4,16 +4,16 @@ overview: Standardize API error responses using RFC 7807 Problem Details, includ
 todos:
   - id: pd-1
     content: Add Problem Details model and extend CentralExceptionHandler
-    status: pending
+    status: completed
   - id: pd-2
     content: Add IExceptionReportEmailSender abstraction and SMTP implementation
-    status: pending
+    status: completed
   - id: pd-3
     content: Wire environment-aware behavior (stack trace + email) in handler
-    status: pending
+    status: completed
   - id: pd-4
     content: Add configuration and optional registration
-    status: pending
+    status: completed
   - id: pd-5
     content: Update all APIs to use extended AddCentralExceptionHandler
     status: completed

@@ -37,6 +37,23 @@ All APIs require database connection strings. Provide via environment variables 
 | `Cors__AllowedOrigins` | JSON array of allowed SPA origins (e.g. `["https://app.example.com"]`). Empty = CORS disabled. |
 | `ReverseProxy__Clusters__<cluster>__Destinations__<name>__Address` | Backend URLs. Override each cluster (patient-cluster, prescription-cluster, etc.) with production API addresses. |
 
+### 1.4 Exception Report Email (APIs)
+
+When `ASPNETCORE_ENVIRONMENT=Production`, unhandled exceptions are emailed to a development inbox. Configure via `ExceptionHandling:Email` (or env vars `ExceptionHandling__Email__*`):
+
+| Variable | Description |
+|----------|-------------|
+| `ExceptionHandling__Email__Enabled` | `true` to send emails; `false` to no-op (default when not configured) |
+| `ExceptionHandling__Email__DevelopmentEmail` | Recipient address (e.g. `dev-errors@example.com`). Required when Enabled. |
+| `ExceptionHandling__Email__SmtpHost` | SMTP server host |
+| `ExceptionHandling__Email__SmtpPort` | SMTP port (e.g. 587) |
+| `ExceptionHandling__Email__SmtpUser` | SMTP username (optional; use Key Vault for credentials) |
+| `ExceptionHandling__Email__SmtpPassword` | SMTP password (optional; use Key Vault) |
+| `ExceptionHandling__Email__FromAddress` | Sender address |
+| `ExceptionHandling__Email__FromDisplayName` | Sender display name |
+
+When `Enabled` is false or `DevelopmentEmail` is empty, the sender no-ops. See `appsettings.Production.json` in Patient API for an example.
+
 ---
 
 ## 2. Cross-Service URLs (Internal)

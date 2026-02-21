@@ -165,3 +165,5 @@ app.MapHub<TransponderSignalRHub>("/transponder/transport").RequireAuthorization
 app.MapControllers();
 
 await app.RunAsync();
+
+namespace Dialysis.Treatment.Api { public partial class Program { } }

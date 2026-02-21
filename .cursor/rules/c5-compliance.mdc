@@ -12,7 +12,7 @@ We **strictly follow C5** (BSI Cloud Computing Compliance Criteria Catalogue, C5
 1. **Access Control**: Use least privilege. All APIs require JWT; scope policies (Read/Write/Admin). No anonymous business endpoints except health.
 2. **Audit**: Security-relevant actions MUST be audited (e.g. RecordAudit in AuditConsent). Provenance for FHIR writes.
 3. **Encryption**: Never hardcode secrets. Use configuration / Key Vault. All external traffic over HTTPS.
-4. **Multi-Tenancy**: Tenant isolation via `X-Tenant-Id`, per-tenant DBs, tenant-scoped cache keys.
+4. **Multi-Tenancy**: Tenant isolation via `X-Tenant-Id`, tenant-scoped cache keys. Per-tenant DBs preferred; current implementation uses shared DB + TenantId filter (acceptable for learning platform; see docs/C5-MULTI-TENANCY.md).
 5. **Transparency**: Document data flows, jurisdictions, and processing locations.
 
 ### When Adding or Changing

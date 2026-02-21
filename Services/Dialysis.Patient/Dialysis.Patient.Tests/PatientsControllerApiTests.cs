@@ -31,4 +31,18 @@ public sealed class PatientsControllerApiTests
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task GetPatientsSearch_ReturnsOkAsync()
+    {
+        await _fixture.InitializeAsync();
+        ArgumentException.ThrowIfNullOrWhiteSpace(_fixture.ConnectionString);
+
+        using PatientApiWebApplicationFactory factory = new(_fixture.ConnectionString);
+        using HttpClient client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Tenant-Id", "default");
+        HttpResponseMessage response = await client.GetAsync("/api/patients/search?firstName=Test&lastName=User");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }

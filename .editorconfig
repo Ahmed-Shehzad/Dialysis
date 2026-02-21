@@ -235,6 +235,8 @@ dotnet_naming_symbols.async_methods.applicable_accessibilities = public, interna
 [**/Migrations/*.cs]
 # EF Core migrations are auto-generated; relax strict rules.
 dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.IDE0055.severity = none
+dotnet_diagnostic.IDE0058.severity = none
 
 [**/ExceptionHandling/*.cs]
 # Microsoft.AspNetCore.Http required for HttpContext, IHeaderDictionary; analyzer false positive

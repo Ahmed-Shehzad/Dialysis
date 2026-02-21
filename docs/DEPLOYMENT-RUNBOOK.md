@@ -206,6 +206,7 @@ ReverseProxy__Clusters__prescription-cluster__Destinations__prescription__Addres
 | **Cross-Service** | `DeviceApi__BaseUrl`, `AlarmApi__BaseUrl`, `FhirSubscription__NotifyUrl`, `FhirExport__BaseUrl`, `Cds__BaseUrl`, `Reports__BaseUrl` |
 | **Gateway** | `Cors__AllowedOrigins`, `ReverseProxy__Clusters__*__Destinations__*__Address` |
 | **Optional** | `FhirSubscription__NotifyApiKey`, `AzureServiceBus__ConnectionString` (Key Vault) |
+| **Exception Report Email** | `ExceptionHandling__Email__Enabled`, `ExceptionHandling__Email__DevelopmentEmail`, `ExceptionHandling__Email__SmtpHost`, etc. – see [PRODUCTION-CONFIG.md](PRODUCTION-CONFIG.md) §1.4 |
 
 ---
 
@@ -232,7 +233,27 @@ Before production deploy:
 
 ---
 
-## 7. Troubleshooting
+## 7. Manual Verification: Exception Report Email
+
+To verify that Production exception reports are emailed correctly:
+
+1. Set `ASPNETCORE_ENVIRONMENT=Production` and configure `ExceptionHandling:Email` (Enabled, DevelopmentEmail, SMTP).
+2. Trigger an unhandled exception (e.g. call an endpoint that throws, or use a test route that throws).
+3. Confirm:
+   - Response is `application/problem+json` with status 500 (no stack trace in body).
+   - Email arrives at `DevelopmentEmail` with full report (request, response, exception including stack trace).
+
+Example test endpoint (add temporarily for verification):
+
+```csharp
+app.MapGet("/api/test/throw", () => throw new InvalidOperationException("Verification test"));
+```
+
+Remove after verification.
+
+---
+
+## 8. Troubleshooting
 
 | Symptom | Possible Cause | Action |
 |---------|----------------|--------|
@@ -245,7 +266,7 @@ Before production deploy:
 
 ---
 
-## 8. References
+## 9. References
 
 - [DEPLOYMENT-REQUIREMENTS.md](DEPLOYMENT-REQUIREMENTS.md)
 - [GATEWAY.md](GATEWAY.md)
