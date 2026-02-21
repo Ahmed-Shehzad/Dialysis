@@ -29,7 +29,7 @@ public sealed class RecordAlarmCommandHandlerTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
 
         AlarmInfo info = CreateAlarmInfo(EventPhase.Start, "active", "MDC_PUMP_VEN");
         var command = new RecordAlarmCommand(info);
@@ -50,7 +50,7 @@ public sealed class RecordAlarmCommandHandlerTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
 
         var deviceId = new DeviceId("DEV1");
         string sessionId = "sess-001";
@@ -82,7 +82,7 @@ public sealed class RecordAlarmCommandHandlerTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
 
         var deviceId = new DeviceId("DEV1");
         string sessionId = "sess-001";
@@ -109,7 +109,7 @@ public sealed class RecordAlarmCommandHandlerTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
 
         AlarmInfo endInfo = CreateAlarmInfo(EventPhase.End, "inactive", "MDC_PUMP_VEN", new DeviceId("DEV1"), "sess-001", DateTimeOffset.UtcNow);
         RecordAlarmResponse response = await handler.HandleAsync(new RecordAlarmCommand(endInfo));
@@ -127,7 +127,7 @@ public sealed class RecordAlarmCommandHandlerTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
 
         AlarmInfo continueInfo = CreateAlarmInfo(EventPhase.Continue, "active", "MDC_PUMP_VEN", new DeviceId("DEV1"), "sess-001", DateTimeOffset.UtcNow);
         RecordAlarmResponse response = await handler.HandleAsync(new RecordAlarmCommand(continueInfo));

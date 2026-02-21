@@ -136,7 +136,8 @@ public sealed class OruR40ToFhirIntegrationTests
         {
             if (request is RecordAlarmCommand cmd)
             {
-                var handler = new RecordAlarmCommandHandler(_repository, new TenantContext { TenantId = TenantContext.DefaultTenantId });
+                var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
+                var handler = new RecordAlarmCommandHandler(_repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
                 RecordAlarmResponse result = await handler.HandleAsync(cmd, cancellationToken);
                 return (TResponse)(object)result;
             }

@@ -121,7 +121,8 @@ public sealed class OruBatchToSessionsIntegrationTests
             if (request is RecordObservationCommand recordCmd)
             {
                 var vitalSigns = new VitalSignsMonitoringService(NullLogger<VitalSignsMonitoringService>.Instance);
-                var recordHandler = new RecordObservationCommandHandler(_repository, vitalSigns);
+                var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
+                var recordHandler = new RecordObservationCommandHandler(_repository, vitalSigns, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
                 RecordObservationResponse result = await recordHandler.HandleAsync(recordCmd, cancellationToken);
                 return (TResponse)(object)result;
             }

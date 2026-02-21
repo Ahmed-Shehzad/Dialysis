@@ -1,5 +1,7 @@
 using System.Globalization;
 
+using BuildingBlocks.Caching;
+using BuildingBlocks.Tenancy;
 using BuildingBlocks.ValueObjects;
 
 using Dialysis.Patient.Application.Abstractions;
@@ -16,14 +18,19 @@ internal sealed class IngestRspK22CommandHandler : ICommandHandler<IngestRspK22C
     private const string StatusNf = "NF";
     private const string StatusAe = "AE";
     private const string StatusAr = "AR";
+    private const string PatientKeyPrefix = "patient";
 
     private readonly IRspK22PatientParser _parser;
     private readonly IPatientRepository _repository;
+    private readonly ICacheInvalidator _cacheInvalidator;
+    private readonly ITenantContext _tenant;
 
-    public IngestRspK22CommandHandler(IRspK22PatientParser parser, IPatientRepository repository)
+    public IngestRspK22CommandHandler(IRspK22PatientParser parser, IPatientRepository repository, ICacheInvalidator cacheInvalidator, ITenantContext tenant)
     {
         _parser = parser;
         _repository = repository;
+        _cacheInvalidator = cacheInvalidator;
+        _tenant = tenant;
     }
 
     public async Task<IngestRspK22Response> HandleAsync(IngestRspK22Command request, CancellationToken cancellationToken = default)
@@ -69,6 +76,7 @@ internal sealed class IngestRspK22CommandHandler : ICommandHandler<IngestRspK22C
             (string? pn, string? ss) = GetIdentifiersForUpdate(data);
             existing.UpdateDemographics(pn, ss, name, dob, gender);
             _repository.Update(existing);
+            await InvalidatePatientCacheAsync(existing.MedicalRecordNumber.Value, existing.Id.ToString(), ct);
             return;
         }
 
@@ -78,9 +86,17 @@ internal sealed class IngestRspK22CommandHandler : ICommandHandler<IngestRspK22C
             name,
             dob,
             gender,
+            _tenant.TenantId,
             personNumber: personNumber,
             socialSecurityNumber: ssn);
         await _repository.AddAsync(patient, ct);
+        await InvalidatePatientCacheAsync(patient.MedicalRecordNumber.Value, patient.Id.ToString(), ct);
+    }
+
+    private async Task InvalidatePatientCacheAsync(string mrn, string id, CancellationToken cancellationToken)
+    {
+        var keys = new[] { $"{_tenant.TenantId}:{PatientKeyPrefix}:{mrn}", $"{_tenant.TenantId}:{PatientKeyPrefix}:id:{id}" };
+        await _cacheInvalidator.InvalidateAsync(keys, cancellationToken);
     }
 
     private static (string? pn, string? ss) GetIdentifiersForUpdate(PidPatientData data)

@@ -12,7 +12,14 @@ docker compose up -d
 - **Health**: http://localhost:5001/health
 - **Stop**: `docker compose down`
 
-See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16 for details.
+**With Azure Service Bus** (Treatment→Alarm via ASB):
+
+```bash
+./start-with-asb.sh
+# After ~30-60s: ./scripts/smoke-test-asb.sh
+```
+
+See [GATEWAY.md](GATEWAY.md) §5, [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16, and [AZURE-SERVICE-BUS.md](AZURE-SERVICE-BUS.md) for details.
 
 ## Deployment & Operations
 
@@ -47,6 +54,10 @@ See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTUR
   - Endpoints: `GET /api/devices`, `GET /api/devices/{id}/fhir`, `POST /api/devices`
   - DB: PostgreSQL `dialysis_device`
 
+## Onboarding
+
+- [ONBOARDING.md](ONBOARDING.md) – Quick start for new contributors
+
 ## Architecture
 
 - [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) – Microservices, DDD, CQRS, Vertical Slice, diagrams
@@ -58,6 +69,7 @@ See [GATEWAY.md](GATEWAY.md) §5 and [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTUR
 
 - [Dialysis_Implementation_Plan.md](Dialysis_Implementation_Plan.md) – HL7 v2 and FHIR implementation plan (Parts A, B, C)
 - [Dialysis_Machine_HL7_Implementation_Guide/](Dialysis_Machine_HL7_Implementation_Guide/) – IHE-based HL7 v2.6 Implementation Guide ([PDF](Dialysis_Machine_HL7_Implementation_Guide/Dialysis_Machine_HL7_Implementation_Guide_rev4.pdf) Rev 4.0, March 2023)
+  - [REMAINING-GAPS.md](Dialysis_Machine_HL7_Implementation_Guide/REMAINING-GAPS.md) – Future work and lower-priority items
 - [Dialysis_Machine_FHIR_Implementation_Guide/](Dialysis_Machine_FHIR_Implementation_Guide/) – FHIR R4 resources, mapping, and Firely SDK notes
   - [IMPLEMENTATION_PLAN.md](Dialysis_Machine_FHIR_Implementation_Guide/IMPLEMENTATION_PLAN.md) – Phase-by-phase plan
   - [ALIGNMENT-REPORT.md](Dialysis_Machine_FHIR_Implementation_Guide/ALIGNMENT-REPORT.md) – FHIR IG vs PDMS alignment

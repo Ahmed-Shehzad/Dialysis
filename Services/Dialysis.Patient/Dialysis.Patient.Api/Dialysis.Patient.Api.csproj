@@ -7,15 +7,18 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks.csproj" />
         <ProjectReference Include="..\Dialysis.Patient.Application\Dialysis.Patient.Application.csproj" />
         <ProjectReference Include="..\Dialysis.Patient.Infrastructure\Dialysis.Patient.Infrastructure.csproj" />
         <ProjectReference Include="..\..\..\Services\Dialysis.Hl7ToFhir\Dialysis.Hl7ToFhir.csproj" />
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Persistence.Redis\Transponder.Persistence.Redis.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+        <PackageReference Include="AspNetCore.HealthChecks.Redis" />
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Settings.Configuration" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

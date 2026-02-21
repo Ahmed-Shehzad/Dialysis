@@ -1,3 +1,4 @@
+using BuildingBlocks.Caching;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.TimeSync;
 
@@ -17,18 +18,22 @@ namespace Dialysis.Prescription.Application.Features.IngestRspK22Message;
 
 internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<IngestRspK22MessageCommand, IngestRspK22MessageResponse>
 {
+    private const string PrescriptionKeyPrefix = "prescription";
+
     private readonly IRspK22Parser _parser;
     private readonly IRspK22Validator _validator;
     private readonly IPrescriptionRepository _repository;
+    private readonly ICacheInvalidator _cacheInvalidator;
     private readonly ITenantContext _tenant;
     private readonly TimeSyncOptions _timeSync;
     private readonly ILogger<IngestRspK22MessageCommandHandler> _logger;
 
-    public IngestRspK22MessageCommandHandler(IRspK22Parser parser, IRspK22Validator validator, IPrescriptionRepository repository, ITenantContext tenant, IOptions<TimeSyncOptions> timeSync, ILogger<IngestRspK22MessageCommandHandler> logger)
+    public IngestRspK22MessageCommandHandler(IRspK22Parser parser, IRspK22Validator validator, IPrescriptionRepository repository, ICacheInvalidator cacheInvalidator, ITenantContext tenant, IOptions<TimeSyncOptions> timeSync, ILogger<IngestRspK22MessageCommandHandler> logger)
     {
         _parser = parser;
         _validator = validator;
         _repository = repository;
+        _cacheInvalidator = cacheInvalidator;
         _tenant = tenant;
         _timeSync = timeSync.Value;
         _logger = logger;
@@ -47,6 +52,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
 
         var orderId = new OrderId(result.OrderId);
         PrescriptionAggregate? existing = await _repository.GetByOrderIdAsync(orderId, cancellationToken);
+        string? previousMrnForInvalidation = null;
         if (existing is not null)
             switch (request.ConflictPolicy)
             {
@@ -56,6 +62,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
                     throw new PrescriptionConflictException(orderId.Value, existing.CallbackPhone);
                 case PrescriptionConflictPolicy.Replace:
                     _repository.Delete(existing);
+                    previousMrnForInvalidation = existing.PatientMrn.Value;
                     break;
                 case PrescriptionConflictPolicy.Ignore:
                     return new IngestRspK22MessageResponse(result.OrderId, result.PatientMrn.Value, result.Settings.Count, true);
@@ -78,6 +85,7 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
                     _repository.Delete(existing);
                     await _repository.AddAsync(merged, cancellationToken);
                     await _repository.SaveChangesAsync(cancellationToken);
+                    await InvalidatePrescriptionCacheAsync(result.PatientMrn.Value, existing.PatientMrn.Value, cancellationToken);
                     return new IngestRspK22MessageResponse(result.OrderId, result.PatientMrn.Value, addedCount, true);
             }
 
@@ -95,8 +103,17 @@ internal sealed class IngestRspK22MessageCommandHandler : ICommandHandler<Ingest
         prescription.CompleteIngestion();
         await _repository.AddAsync(prescription, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
+        await InvalidatePrescriptionCacheAsync(result.PatientMrn.Value, previousMrnForInvalidation, cancellationToken);
 
         return new IngestRspK22MessageResponse(result.OrderId, result.PatientMrn.Value, result.Settings.Count, true);
+    }
+
+    private async Task InvalidatePrescriptionCacheAsync(string mrn, string? previousMrn, CancellationToken cancellationToken)
+    {
+        var keys = new List<string> { $"{_tenant.TenantId}:{PrescriptionKeyPrefix}:{mrn}" };
+        if (!string.IsNullOrEmpty(previousMrn) && previousMrn != mrn)
+            keys.Add($"{_tenant.TenantId}:{PrescriptionKeyPrefix}:{previousMrn}");
+        await _cacheInvalidator.InvalidateAsync(keys, cancellationToken);
     }
 
     private void CheckTimestampDrift(DateTimeOffset? messageTimestamp)

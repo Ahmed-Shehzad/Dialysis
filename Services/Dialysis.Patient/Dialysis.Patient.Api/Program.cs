@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Caching;
 using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Options;
@@ -18,6 +19,8 @@ using Intercessor;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+
+using Transponder.Persistence.Redis;
 
 using Serilog;
 
@@ -59,7 +62,17 @@ builder.Services.AddDbContext<PatientDbContext>((sp, o) =>
 builder.Services.AddDbContext<PatientReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
-builder.Services.AddScoped<IPatientReadStore, PatientReadStore>();
+builder.Services.AddScoped<PatientReadStore>();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
+    _ = builder.Services.AddReadThroughCache();
+}
+else _ = builder.Services.AddNullReadThroughCache();
+builder.Services.AddScoped<IPatientReadStore>(sp => new CachedPatientReadStore(
+    sp.GetRequiredService<PatientReadStore>(),
+    sp.GetRequiredService<IReadThroughCache>()));
 builder.Services.AddScoped<IQbpQ22Parser, QbpQ22Parser>();
 builder.Services.AddScoped<IPatientRspK22Builder, PatientRspK22Builder>();
 builder.Services.AddScoped<IRspK22PatientParser, RspK22PatientParser>();
@@ -67,8 +80,10 @@ builder.Services.AddScoped<IRspK22PatientValidator, RspK22PatientValidator>();
 builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 
-builder.Services.AddHealthChecks()
+IHealthChecksBuilder patientHealthChecks = builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "patient-db");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = patientHealthChecks.AddRedis(redisConnectionString, name: "redis");
 
 WebApplication app = builder.Build();
 

@@ -42,6 +42,15 @@ Dialysis machines sending HL7 messages (ORU^R01, ORU^R40, QBP^Q22, QBP^D01) must
 | Docker host | Same as host OS | Containers inherit host clock |
 | Azure App Service | N/A | Azure manages NTP; verify via health UTC |
 
+### 1.5 IHE Consistent Time (CT) Compliance Checklist
+
+| Check | Action |
+|-------|--------|
+| PDMS host NTP | Verify `timedatectl status` or equivalent shows synchronized |
+| Dialysis machine NTP | Facility IT configures machines per manufacturer; document in DPA |
+| Time drift | PDMS logs warning when MSH-7 drifts > `TimeSync:MaxAllowedDriftSeconds` |
+| Health UTC | Gateway `/health` returns server UTC for verification |
+
 ---
 
 ## 2. Database
@@ -112,6 +121,15 @@ See [SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md) §16. Ensure the host runni
 | Data flows | Document: Mirth → PDMS Gateway → APIs; PDMS → FHIR export; PDMS → CDS/Reports. |
 | GDPR | If processing EU patient data, deploy in EU region; document data processing in DPA. |
 | Cross-region | Avoid cross-region calls between DB and APIs; keep latency predictable. |
+
+### 6.5 Data Residency – Detailed Guidance
+
+| Requirement | Notes |
+|-------------|-------|
+| **Region selection** | Choose Azure region at deployment (e.g. `West Europe` for EU, `East US` for US). All PDMS components (PostgreSQL, App Services, Key Vault) should be in the same region. |
+| **GDPR** | For EU data: deploy in EU region; document data processing in Data Processing Agreement (DPA); ensure sub-processors (Azure) are GDPR-compliant. |
+| **Data flows** | Mirth/HL7 → Gateway → APIs (treatment, alarm, prescription, patient); PDMS → FHIR $export; PDMS → CDS/Reports. No patient data leaves the chosen region unless explicitly configured (e.g. cross-border FHIR export). |
+| **Backup region** | Azure geo-redundant backup may replicate to paired region; document in DPA if required. |
 
 ---
 

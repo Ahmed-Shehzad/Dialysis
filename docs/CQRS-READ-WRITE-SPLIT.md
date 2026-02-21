@@ -15,6 +15,8 @@ Same database; Read and Write DbContexts map to the same tables.
 
 **Projections:** Domain events (e.g. `DeviceRegisteredEvent`, `PatientRegisteredEvent`) can drive async projections to caches or analytics stores. See [DOMAIN-EVENTS-AND-SERVICES.md](DOMAIN-EVENTS-AND-SERVICES.md) § Read-Model Projections.
 
+**Cache:** Read-Through and Write-Through (invalidation) distributed cache via Redis. See [REDIS-CACHE.md](REDIS-CACHE.md).
+
 ---
 
 ## 2. Read Side
@@ -25,6 +27,7 @@ Same database; Read and Write DbContexts map to the same tables.
 |-----------|----------|-----------------|
 | `IXxxReadStore` | Application/Abstractions | Interface; methods take `tenantId` |
 | `XxxReadStore` | Infrastructure | Implementation; uses `XxxReadDbContext` |
+| `CachedXxxReadStore` | Infrastructure | Read-Through decorator; uses `IReadThroughCache` for GetById/GetByMrn/etc. |
 | `XxxReadDbContext` | Infrastructure/Persistence | Implements `IReadOnlyDbContext`; `SaveChanges` throws |
 | `XxxReadModel` | Infrastructure/ReadModels | Flat entity; maps to table |
 | `XxxReadDto` | Application/Abstractions | DTO returned to query handlers |

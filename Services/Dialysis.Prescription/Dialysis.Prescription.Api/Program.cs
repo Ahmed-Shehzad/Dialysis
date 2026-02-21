@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Caching;
 using BuildingBlocks.Interceptors;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
@@ -17,7 +18,6 @@ using Intercessor;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 
 using Transponder.Persistence.Redis;
 
@@ -66,11 +66,12 @@ string? redisConnectionString = builder.Configuration.GetConnectionString("Redis
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
     _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
-    _ = builder.Services.AddScoped<IPrescriptionReadStore>(sp => new CachedPrescriptionReadStore(
-        sp.GetRequiredService<PrescriptionReadStore>(),
-        sp.GetRequiredService<IDistributedCache>()));
+    _ = builder.Services.AddReadThroughCache();
 }
-else _ = builder.Services.AddScoped<IPrescriptionReadStore>(sp => sp.GetRequiredService<PrescriptionReadStore>());
+else _ = builder.Services.AddNullReadThroughCache();
+builder.Services.AddScoped<IPrescriptionReadStore>(sp => new CachedPrescriptionReadStore(
+    sp.GetRequiredService<PrescriptionReadStore>(),
+    sp.GetRequiredService<IReadThroughCache>()));
 
 builder.Services.AddScoped<IQbpD01Parser, QbpD01Parser>();
 builder.Services.AddScoped<IRspK22Parser, RspK22Parser>();

@@ -46,6 +46,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5051
       ConnectionStrings__PatientDb: Host=postgres;Database=dialysis_patient;Username=postgres;Password=postgres
+      ConnectionStrings__Redis: redis:6379
     ports:
       - "5051:5051"
     healthcheck:
@@ -56,6 +57,8 @@ services:
       start_period: 10s
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   prescription-api:
@@ -96,6 +99,7 @@ services:
       ASPNETCORE_URLS: http://+:5050
       ConnectionStrings__TreatmentDb: Host=postgres;Database=dialysis_treatment;Username=postgres;Password=postgres
       ConnectionStrings__TransponderDb: Host=postgres;Database=transponder;Username=postgres;Password=postgres
+      ConnectionStrings__Redis: redis:6379
       DeviceApi__BaseUrl: http://device-api:5054
       AlarmApi__BaseUrl: http://alarm-api:5053
       FhirSubscription__NotifyUrl: http://gateway:5000
@@ -105,10 +109,12 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   alarm-api:
@@ -123,6 +129,7 @@ services:
       ASPNETCORE_URLS: http://+:5053
       ConnectionStrings__AlarmDb: Host=postgres;Database=dialysis_alarm;Username=postgres;Password=postgres
       ConnectionStrings__TransponderDb: Host=postgres;Database=transponder;Username=postgres;Password=postgres
+      ConnectionStrings__Redis: redis:6379
       DeviceApi__BaseUrl: http://device-api:5054
       FhirSubscription__NotifyUrl: http://gateway:5000
     ports:
@@ -131,10 +138,12 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:5053/health"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   device-api:
@@ -148,6 +157,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5054
       ConnectionStrings__DeviceDb: Host=postgres;Database=dialysis_device;Username=postgres;Password=postgres
+      ConnectionStrings__Redis: redis:6379
     ports:
       - "5054:5054"
     healthcheck:
@@ -158,6 +168,8 @@ services:
       start_period: 10s
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   fhir-api:

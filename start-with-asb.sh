@@ -25,3 +25,6 @@ echo "Starting docker compose with ASB emulator..."
 docker compose -f docker-compose.yml -f docker-compose.asb.yml up -d --build
 
 echo "Done. Gateway: http://localhost:5001/health"
+echo ""
+echo "After services are healthy (~30-60s), run ASB smoke test:"
+echo "  ./scripts/smoke-test-asb.sh"

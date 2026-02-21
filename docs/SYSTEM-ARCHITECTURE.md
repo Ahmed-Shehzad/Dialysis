@@ -48,6 +48,7 @@ flowchart TB
         AzureSB[Azure Service Bus]
         SignalRHub[SignalR Hub]
         Postgres[(PostgreSQL)]
+        Redis[(Redis)]
     end
 
     DialysisMachines -->|HL7 MLLP| Mirth
@@ -74,6 +75,12 @@ flowchart TB
     PrescriptionSvc --> Postgres
     DeviceSvc --> Postgres
     AlarmSvc --> Postgres
+
+    PatientSvc -.->|Read-Through cache| Redis
+    PrescriptionSvc -.->|Read-Through cache| Redis
+    TreatmentSvc -.->|Read-Through cache| Redis
+    DeviceSvc -.->|Read-Through cache| Redis
+    AlarmSvc -.->|Read-Through cache| Redis
 
     TreatmentSvc -.->|device registration| DeviceSvc
     AlarmSvc -.->|device registration| DeviceSvc

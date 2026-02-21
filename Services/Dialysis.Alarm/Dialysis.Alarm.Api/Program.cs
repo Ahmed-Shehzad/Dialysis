@@ -1,6 +1,7 @@
 using BuildingBlocks.Audit;
-using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Caching;
+using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Interceptors;
@@ -24,6 +25,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
+using Transponder.Persistence.Redis;
 using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
@@ -89,7 +91,17 @@ builder.Services.AddDbContext<AlarmDbContext>((sp, o) =>
 builder.Services.AddDbContext<AlarmReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IAlarmRepository, AlarmRepository>();
 builder.Services.AddScoped<IEscalationIncidentStore, EscalationIncidentStore>();
-builder.Services.AddScoped<IAlarmReadStore, AlarmReadStore>();
+builder.Services.AddScoped<AlarmReadStore>();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
+    _ = builder.Services.AddReadThroughCache();
+}
+else _ = builder.Services.AddNullReadThroughCache();
+builder.Services.AddScoped<IAlarmReadStore>(sp => new CachedAlarmReadStore(
+    sp.GetRequiredService<AlarmReadStore>(),
+    sp.GetRequiredService<IReadThroughCache>()));
 builder.Services.AddScoped<IOruR40MessageParser, OruR40Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
 builder.Services.AddSingleton<IOraR41Builder, OraR41Builder>();
@@ -101,8 +113,10 @@ builder.Services.AddHttpClient();
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
 builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
-builder.Services.AddHealthChecks()
+IHealthChecksBuilder alarmHealthChecks = builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "alarm-db");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = alarmHealthChecks.AddRedis(redisConnectionString, name: "redis");
 
 WebApplication app = builder.Build();
 
@@ -119,7 +133,6 @@ app.MapHub<TransponderSignalRHub>("/transponder/transport").RequireAuthorization
 app.MapControllers();
 
 if (!string.IsNullOrWhiteSpace(asbConnectionString))
-{
     try
     {
         await app.Services.EnsureThresholdBreachTopicAndSubscriptionAsync(asbConnectionString);
@@ -128,6 +141,5 @@ if (!string.IsNullOrWhiteSpace(asbConnectionString))
     {
         app.Logger.LogWarning(ex, "ASB topology provisioning failed. Ensure topic ThresholdBreachDetectedIntegrationEvent and subscription alarm-threshold-breach exist (e.g. via emulator Config.json or infra).");
     }
-}
 
 await app.RunAsync();

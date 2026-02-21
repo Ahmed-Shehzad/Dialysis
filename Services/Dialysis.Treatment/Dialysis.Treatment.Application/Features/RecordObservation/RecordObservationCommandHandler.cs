@@ -1,3 +1,6 @@
+using BuildingBlocks.Caching;
+using BuildingBlocks.Tenancy;
+
 using Dialysis.Treatment.Application.Abstractions;
 using Dialysis.Treatment.Application.Domain;
 using Dialysis.Treatment.Application.Domain.Services;
@@ -8,13 +11,19 @@ namespace Dialysis.Treatment.Application.Features.RecordObservation;
 
 internal sealed class RecordObservationCommandHandler : ICommandHandler<RecordObservationCommand, RecordObservationResponse>
 {
+    private const string TreatmentKeyPrefix = "treatment";
+
     private readonly ITreatmentSessionRepository _repository;
     private readonly VitalSignsMonitoringService _vitalSignsMonitoring;
+    private readonly ICacheInvalidator _cacheInvalidator;
+    private readonly ITenantContext _tenant;
 
-    public RecordObservationCommandHandler(ITreatmentSessionRepository repository, VitalSignsMonitoringService vitalSignsMonitoring)
+    public RecordObservationCommandHandler(ITreatmentSessionRepository repository, VitalSignsMonitoringService vitalSignsMonitoring, ICacheInvalidator cacheInvalidator, ITenantContext tenant)
     {
         _repository = repository;
         _vitalSignsMonitoring = vitalSignsMonitoring;
+        _cacheInvalidator = cacheInvalidator;
+        _tenant = tenant;
     }
 
     public async Task<RecordObservationResponse> HandleAsync(RecordObservationCommand request, CancellationToken cancellationToken = default)
@@ -42,6 +51,7 @@ internal sealed class RecordObservationCommandHandler : ICommandHandler<RecordOb
         }
 
         await _repository.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateAsync($"{_tenant.TenantId}:{TreatmentKeyPrefix}:{request.SessionId.Value}", cancellationToken);
         return new RecordObservationResponse(request.SessionId, request.Observations.Count);
     }
 }

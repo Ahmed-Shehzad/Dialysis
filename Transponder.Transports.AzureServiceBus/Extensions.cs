@@ -75,7 +75,7 @@ public static class Extensions
     /// Ensures the topic and subscription for ThresholdBreachDetectedIntegrationEvent exist.
     /// Call at startup when ASB is configured, before Transponder receive endpoints start.
     /// </summary>
-    public static async Task EnsureThresholdBreachTopicAndSubscriptionAsync(
+    public async static Task EnsureThresholdBreachTopicAndSubscriptionAsync(
         this IServiceProvider serviceProvider,
         string connectionString,
         CancellationToken cancellationToken = default)

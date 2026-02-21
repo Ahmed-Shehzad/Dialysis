@@ -1,3 +1,4 @@
+using BuildingBlocks.Caching;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
@@ -127,7 +128,7 @@ public sealed class IngestRspK22ConflictTests
         var parser = new RspK22Parser();
         var validator = new RspK22Validator();
         return new IngestRspK22MessageCommandHandler(
-            parser, validator, repository, tenant,
+            parser, validator, repository, new NullCacheInvalidator(), tenant,
             Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
             NullLogger<IngestRspK22MessageCommandHandler>.Instance);
     }

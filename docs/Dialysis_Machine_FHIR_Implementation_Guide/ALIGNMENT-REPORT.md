@@ -168,6 +168,17 @@ When the **formal Dialysis Machine FHIR IG** is published by the Dialysis Intero
 
 No implementation changes are required until the formal IG is published. The current implementation aligns with FHIR R4 base resources and QI-Core patterns.
 
+### 11.1 Formal IG Publication Checklist
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Monitor Dialysis Interop Consortium for IG publication | Pending | [Dialysis Interoperability Consortium](https://www.dialysisinterop.org/) (or HL7 ballot) |
+| Update FHIR IG version in this report | Pending | Replace placeholder with canonical version |
+| Re-run alignment against formal profiles | Pending | Device, Observation, Procedure, DetectedIssue, ServiceRequest |
+| Add profile references to mappers | Pending | `meta.profile` with canonical URLs |
+| Document any new required extensions | Pending | Per formal IG |
+| Update IMPLEMENTATION_PLAN.md | Pending | Phase-by-phase changes if any |
+
 ---
 
 ## 12. References

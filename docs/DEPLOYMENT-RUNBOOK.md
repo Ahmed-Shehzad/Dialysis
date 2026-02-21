@@ -236,6 +236,7 @@ Before production deploy:
 
 | Symptom | Possible Cause | Action |
 |---------|----------------|--------|
+| **treatment-api / alarm-api unhealthy** | DB not created (postgres init runs only on first volume creation); migrations slow; app crash on startup | 1. `docker compose logs treatment-api` to see errors. 2. If "database does not exist": `docker compose down -v` then `docker compose up -d` (recreates postgres volume, runs init). 3. Or manually: `docker compose exec postgres psql -U postgres -c "CREATE DATABASE dialysis_treatment;"` etc. 4. Health checks now use start_period 30s and 5 retries. |
 | 500 on HL7 endpoint | Refit path missing leading `/`; gateway route wrong; handler not found (rare) | Refit interfaces must use `/api/...`; Prescription RSP^K22: check gateway route. Rebuild: `docker compose up -d --build prescription-api treatment-api alarm-api gateway` |
 | Health shows Unhealthy | Downstream API unreachable | Check network, firewall, backend URLs |
 | DB connection failed | Wrong connection string, DB not created | Verify `ConnectionStrings__*Db`, run init script |

@@ -188,7 +188,8 @@ public sealed class OruR01ToFhirIntegrationTests
             if (request is RecordObservationCommand cmd)
             {
                 var vitalSigns = new VitalSignsMonitoringService(NullLogger<VitalSignsMonitoringService>.Instance);
-                var handler = new RecordObservationCommandHandler(_repository, vitalSigns);
+                var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
+                var handler = new RecordObservationCommandHandler(_repository, vitalSigns, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
                 RecordObservationResponse result = await handler.HandleAsync(cmd, cancellationToken);
                 return (TResponse)(object)result;
             }

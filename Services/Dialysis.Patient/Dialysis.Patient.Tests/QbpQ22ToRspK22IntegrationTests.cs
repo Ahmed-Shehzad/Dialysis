@@ -38,7 +38,7 @@ public sealed class QbpQ22ToRspK22IntegrationTests
 
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new PatientRepository(db, tenant);
-        var registerHandler = new RegisterPatientCommandHandler(repository, tenant);
+        var registerHandler = new RegisterPatientCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
         var processHandler = new ProcessQbpQ22QueryCommandHandler(
             new QbpQ22Parser(),
             new PatientRspK22Builder(),

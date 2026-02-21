@@ -1,3 +1,4 @@
+using BuildingBlocks.Caching;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Patient.Application.Abstractions;
@@ -8,12 +9,16 @@ namespace Dialysis.Patient.Application.Features.RegisterPatient;
 
 internal sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPatientCommand, RegisterPatientResponse>
 {
+    private const string PatientKeyPrefix = "patient";
+
     private readonly IPatientRepository _repository;
+    private readonly ICacheInvalidator _cacheInvalidator;
     private readonly ITenantContext _tenant;
 
-    public RegisterPatientCommandHandler(IPatientRepository repository, ITenantContext tenant)
+    public RegisterPatientCommandHandler(IPatientRepository repository, ICacheInvalidator cacheInvalidator, ITenantContext tenant)
     {
         _repository = repository;
+        _cacheInvalidator = cacheInvalidator;
         _tenant = tenant;
     }
 
@@ -30,6 +35,14 @@ internal sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPa
 
         await _repository.SaveChangesAsync(cancellationToken);
 
+        await InvalidatePatientCacheAsync(patient.MedicalRecordNumber.Value, patient.Id.ToString(), cancellationToken);
+
         return new RegisterPatientResponse(patient.Id.ToString());
+    }
+
+    private async Task InvalidatePatientCacheAsync(string mrn, string id, CancellationToken cancellationToken)
+    {
+        var keys = new[] { $"{_tenant.TenantId}:{PatientKeyPrefix}:{mrn}", $"{_tenant.TenantId}:{PatientKeyPrefix}:id:{id}" };
+        await _cacheInvalidator.InvalidateAsync(keys, cancellationToken);
     }
 }

@@ -1,9 +1,10 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Caching;
 using BuildingBlocks.ExceptionHandling;
-using BuildingBlocks.Interceptors;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
+using BuildingBlocks.Interceptors;
 
 using Dialysis.Device.Application.Abstractions;
 using Dialysis.Device.Application.Features.RegisterDevice;
@@ -15,6 +16,8 @@ using Intercessor;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+
+using Transponder.Persistence.Redis;
 
 using Serilog;
 
@@ -53,12 +56,24 @@ builder.Services.AddDbContext<DeviceDbContext>((sp, o) =>
      .AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>()));
 builder.Services.AddDbContext<DeviceReadDbContext>(o => o.UseNpgsql(connectionString));
 builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
-builder.Services.AddScoped<IDeviceReadStore, DeviceReadStore>();
+builder.Services.AddScoped<DeviceReadStore>();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
+    _ = builder.Services.AddReadThroughCache();
+}
+else _ = builder.Services.AddNullReadThroughCache();
+builder.Services.AddScoped<IDeviceReadStore>(sp => new CachedDeviceReadStore(
+    sp.GetRequiredService<DeviceReadStore>(),
+    sp.GetRequiredService<IReadThroughCache>()));
 builder.Services.AddFhirAuditRecorder();
 builder.Services.AddTenantResolution();
 
-builder.Services.AddHealthChecks()
+IHealthChecksBuilder deviceHealthChecks = builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "device-db");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = deviceHealthChecks.AddRedis(redisConnectionString, name: "redis");
 
 WebApplication app = builder.Build();
 

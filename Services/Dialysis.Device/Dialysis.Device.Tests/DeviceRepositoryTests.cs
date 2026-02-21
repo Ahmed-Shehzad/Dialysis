@@ -32,7 +32,7 @@ public sealed class DeviceRepositoryTests
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new DeviceRepository(db, tenant);
         IDeviceReadStore readStore = CreateReadStore();
-        var registerHandler = new RegisterDeviceCommandHandler(repository, tenant);
+        var registerHandler = new RegisterDeviceCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
         var getHandler = new GetDeviceQueryHandler(readStore, tenant);
 
         string deviceEui64 = DeviceTestData.DeviceEui64();
@@ -73,7 +73,7 @@ public sealed class DeviceRepositoryTests
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new DeviceRepository(db, tenant);
         IDeviceReadStore readStore = CreateReadStore();
-        var handler = new RegisterDeviceCommandHandler(repository, tenant);
+        var handler = new RegisterDeviceCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
 
         RegisterDeviceResponse first = await handler.HandleAsync(new RegisterDeviceCommand(deviceEui64, manufacturer1, model1));
         Assert.True(first.Created);

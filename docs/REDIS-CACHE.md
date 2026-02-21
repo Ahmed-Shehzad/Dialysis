@@ -1,8 +1,26 @@
-# Redis Distributed Cache
+# Redis Distributed Cache – Read-Through & Write-Through
 
 ## Overview
 
-When `ConnectionStrings:Redis` is configured, services can use `IDistributedCache` for read-heavy caching (e.g. prescription lookup by MRN, patient by identifier). The Prescription API wires `AddTransponderRedisCache` when Redis is available.
+When `ConnectionStrings:Redis` is configured, services use **Read-Through** and **Write-Through** (invalidation) patterns via `BuildingBlocks.Caching`. When Redis is not configured, no-op implementations are used and all reads go to the database.
+
+## Strategies
+
+### Read-Through
+
+The cache provider handles cache misses automatically. On miss, the loader (DB query) is invoked, the result is stored in cache, and returned. Callers just "get"; no explicit cache-aside logic.
+
+- **Abstraction**: `IReadThroughCache.GetOrLoadAsync<T>(key, loader, options, ct)`
+- **Implementation**: `ReadThroughDistributedCache` (uses `IDistributedCache`)
+- **No-op**: `NullReadThroughCache` when Redis is not configured
+
+### Write-Through (Invalidation)
+
+On write, affected cache keys are invalidated so the next read loads fresh data from the database. Simpler than storing updated values when DTOs differ from domain.
+
+- **Abstraction**: `ICacheInvalidator.InvalidateAsync(key)` / `InvalidateAsync(keys)`
+- **Implementation**: `DistributedCacheInvalidator` (uses `IDistributedCache.RemoveAsync`)
+- **No-op**: `NullCacheInvalidator` when Redis is not configured
 
 ## Configuration
 
@@ -10,36 +28,47 @@ When `ConnectionStrings:Redis` is configured, services can use `IDistributedCach
 |-----|-------------|
 | `ConnectionStrings:Redis` | Redis connection string (e.g. `localhost:6379` or `redis:6379` in Docker) |
 
-## Usage
+## Cache Key Format (C5 Multi-Tenancy)
 
-Inject `IDistributedCache` for cache-aside patterns:
+All keys are tenant-scoped: `{tenantId}:{entity}:{identifier}`
+
+| Service | Key Pattern | Example |
+|---------|-------------|---------|
+| Prescription | `{tenantId}:prescription:{mrn}` | `default:prescription:MRN123` |
+| Patient | `{tenantId}:patient:{mrn}` | `default:patient:MRN456` |
+| Patient | `{tenantId}:patient:id:{id}` | `default:patient:id:01ARZ3NDEKTSV4RRFFQ69G5FAV` |
+| Treatment | `{tenantId}:treatment:{sessionId}` | `default:treatment:sess-001` |
+| Device | `{tenantId}:device:id:{deviceId}` | `default:device:id:01ARZ3NDEKTSV4RRFFQ69G5FAV` |
+| Device | `{tenantId}:device:eui64:{eui64}` | `default:device:eui64:00-11-22-33-44-55-66-77` |
+| Alarm | `{tenantId}:alarm:{alarmId}` | `default:alarm:01ARZ3NDEKTSV4RRFFQ69G5FAV` |
+
+## TTL
+
+Default: 5 minutes (`AbsoluteExpirationRelativeToNow`). Configurable per call via `DistributedCacheEntryOptions`.
+
+## Invalidation Points
+
+| Service | Command / Handler | Keys Invalidated |
+|---------|-------------------|------------------|
+| Prescription | IngestRspK22MessageCommandHandler | `{tenantId}:prescription:{mrn}` (current + previous on Replace) |
+| Patient | RegisterPatientCommandHandler, IngestRspK22CommandHandler | `{tenantId}:patient:{mrn}`, `{tenantId}:patient:id:{id}` |
+| Treatment | RecordObservationCommandHandler | `{tenantId}:treatment:{sessionId}` |
+| Device | RegisterDeviceCommandHandler | `{tenantId}:device:id:{id}`, `{tenantId}:device:eui64:{eui64}` |
+| Alarm | RecordAlarmCommandHandler | `{tenantId}:alarm:{alarmId}` |
+
+## Registration
 
 ```csharp
-public class CachedPrescriptionService
+// When Redis is configured
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
-    private readonly IDistributedCache _cache;
-    private readonly IPrescriptionRepository _repository;
-
-    public async Task<Prescription?> GetByMrnAsync(MedicalRecordNumber mrn, CancellationToken ct)
-    {
-        string key = $"prescription:{mrn}";
-        byte[]? cached = await _cache.GetAsync(key, ct);
-        if (cached is not null)
-            return JsonSerializer.Deserialize<Prescription>(cached);
-
-        var prescription = await _repository.GetByMrnAsync(mrn, ct);
-        if (prescription is not null)
-            await _cache.SetAsync(key, JsonSerializer.SerializeToUtf8Bytes(prescription),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }, ct);
-        return prescription;
-    }
+    builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
+    builder.Services.AddReadThroughCache();
 }
+else
+    builder.Services.AddNullReadThroughCache();
 ```
 
 ## Docker
 
-Redis is included in docker-compose. Prescription API uses it when `ConnectionStrings__Redis` is set.
-
-## Multi-Tenancy
-
-Per `.cursor/rules/multi-tenancy.mdc`, use tenant-scoped cache keys (e.g. `{tenantId}:prescription:{mrn}`) when applicable.
+Redis is included in docker-compose. Patient, Prescription, Treatment, Alarm, and Device APIs use it when `ConnectionStrings__Redis` is set. Each depends on `redis:service_healthy`.

@@ -1,3 +1,4 @@
+using BuildingBlocks.Caching;
 using BuildingBlocks.Tenancy;
 
 using Dialysis.Alarm.Application.Abstractions;
@@ -12,12 +13,16 @@ namespace Dialysis.Alarm.Application.Features.RecordAlarm;
 
 internal sealed class RecordAlarmCommandHandler : ICommandHandler<RecordAlarmCommand, RecordAlarmResponse>
 {
+    private const string AlarmKeyPrefix = "alarm";
+
     private readonly IAlarmRepository _repository;
+    private readonly ICacheInvalidator _cacheInvalidator;
     private readonly ITenantContext _tenant;
 
-    public RecordAlarmCommandHandler(IAlarmRepository repository, ITenantContext tenant)
+    public RecordAlarmCommandHandler(IAlarmRepository repository, ICacheInvalidator cacheInvalidator, ITenantContext tenant)
     {
         _repository = repository;
+        _cacheInvalidator = cacheInvalidator;
         _tenant = tenant;
     }
 
@@ -30,6 +35,7 @@ internal sealed class RecordAlarmCommandHandler : ICommandHandler<RecordAlarmCom
             var alarm = AlarmDomain.Raise(info, _tenant.TenantId);
             await _repository.AddAsync(alarm, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
+            await InvalidateAlarmCacheAsync(alarm.Id.ToString(), cancellationToken);
             return new RecordAlarmResponse(alarm.Id.ToString());
         }
 
@@ -41,6 +47,7 @@ internal sealed class RecordAlarmCommandHandler : ICommandHandler<RecordAlarmCom
                 existing.UpdateState(info.EventPhase, info.AlarmState, info.ActivityState, info.OccurredAt);
                 _repository.Update(existing);
                 await _repository.SaveChangesAsync(cancellationToken);
+                await InvalidateAlarmCacheAsync(existing.Id.ToString(), cancellationToken);
                 return new RecordAlarmResponse(existing.Id.ToString());
             }
 
@@ -49,6 +56,7 @@ internal sealed class RecordAlarmCommandHandler : ICommandHandler<RecordAlarmCom
                 var orphanAlarm = AlarmDomain.Raise(info, _tenant.TenantId);
                 await _repository.AddAsync(orphanAlarm, cancellationToken);
                 await _repository.SaveChangesAsync(cancellationToken);
+                await InvalidateAlarmCacheAsync(orphanAlarm.Id.ToString(), cancellationToken);
                 return new RecordAlarmResponse(orphanAlarm.Id.ToString());
             }
 
@@ -58,6 +66,13 @@ internal sealed class RecordAlarmCommandHandler : ICommandHandler<RecordAlarmCom
         var fallbackAlarm = AlarmDomain.Raise(info, _tenant.TenantId);
         await _repository.AddAsync(fallbackAlarm, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
+        await InvalidateAlarmCacheAsync(fallbackAlarm.Id.ToString(), cancellationToken);
         return new RecordAlarmResponse(fallbackAlarm.Id.ToString());
+    }
+
+    private async Task InvalidateAlarmCacheAsync(string alarmId, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrEmpty(alarmId))
+            await _cacheInvalidator.InvalidateAsync($"{_tenant.TenantId}:{AlarmKeyPrefix}:{alarmId}", cancellationToken);
     }
 }

@@ -33,7 +33,7 @@ public sealed class IngestOruR40IntegrationTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
         var parser = new OruR40Parser();
 
         const string oruR40 = """
@@ -76,7 +76,7 @@ public sealed class IngestOruR40IntegrationTests
         _ = await db.Alarms.ExecuteDeleteAsync();
         var tenant = new TenantContext { TenantId = TenantContext.DefaultTenantId };
         var repository = new AlarmRepository(db, tenant);
-        var handler = new RecordAlarmCommandHandler(repository, tenant);
+        var handler = new RecordAlarmCommandHandler(repository, new BuildingBlocks.Caching.NullCacheInvalidator(), tenant);
         var parser = new OruR40Parser();
 
         const string start = """

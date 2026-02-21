@@ -14,6 +14,7 @@
         <ProjectReference Include="..\..\..\Intercessor\Intercessor.csproj" />
         <ProjectReference Include="..\..\..\Transponder\Transponder.csproj" />
         <ProjectReference Include="..\..\..\Transponder.Persistence.EntityFramework.PostgreSql\Transponder.Persistence.EntityFramework.PostgreSql.csproj" />
+        <ProjectReference Include="..\..\..\Transponder.Persistence.Redis\Transponder.Persistence.Redis.csproj" />
         <ProjectReference Include="..\..\..\Transponder.Transports.AzureServiceBus\Transponder.Transports.AzureServiceBus.csproj" />
         <ProjectReference Include="..\..\..\Transponder.Transports.SignalR\Transponder.Transports.SignalR.csproj" />
         <ProjectReference Include="..\..\..\Verifier\Verifier.csproj" />
@@ -21,6 +22,7 @@
 
     <ItemGroup>
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+        <PackageReference Include="AspNetCore.HealthChecks.Redis" />
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Settings.Configuration" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

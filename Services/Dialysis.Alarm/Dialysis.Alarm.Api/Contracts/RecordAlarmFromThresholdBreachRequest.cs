@@ -1,16 +1,18 @@
+using System.Text.Json.Serialization;
+
 namespace Dialysis.Alarm.Api.Contracts;
 
 /// <summary>
 /// Request body for POST /api/alarms/from-threshold-breach (internal cross-context).
 /// </summary>
 public sealed record RecordAlarmFromThresholdBreachRequest(
-    string SessionId,
+    [property: JsonRequired] string SessionId,
     string? DeviceId,
-    string BreachType,
-    string Code,
-    double ObservedValue,
-    double ThresholdValue,
-    string Direction,
-    string TreatmentSessionId,
-    string ObservationId,
+    [property: JsonRequired] string BreachType,
+    [property: JsonRequired] string Code,
+    [property: JsonRequired] double ObservedValue,
+    [property: JsonRequired] double ThresholdValue,
+    [property: JsonRequired] string Direction,
+    [property: JsonRequired] string TreatmentSessionId,
+    [property: JsonRequired] string ObservationId,
     string? TenantId);

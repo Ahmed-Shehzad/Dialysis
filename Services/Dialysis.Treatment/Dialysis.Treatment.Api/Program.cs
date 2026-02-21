@@ -1,5 +1,6 @@
 using BuildingBlocks.Audit;
 using BuildingBlocks.Authorization;
+using BuildingBlocks.Caching;
 using BuildingBlocks.ExceptionHandling;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Tenancy;
@@ -24,6 +25,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 using Transponder;
+using Transponder.Persistence.Redis;
 using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
@@ -103,7 +105,17 @@ builder.Services.AddDbContext<TreatmentDbContext>((sp, o) =>
 builder.Services.AddDbContext<TreatmentReadDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ITreatmentSessionRepository, TreatmentSessionRepository>();
-builder.Services.AddScoped<ITreatmentReadStore, TreatmentReadStore>();
+builder.Services.AddScoped<TreatmentReadStore>();
+string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    _ = builder.Services.AddTransponderRedisCache(opts => opts.ConnectionString = redisConnectionString);
+    _ = builder.Services.AddReadThroughCache();
+}
+else _ = builder.Services.AddNullReadThroughCache();
+builder.Services.AddScoped<ITreatmentReadStore>(sp => new CachedTreatmentReadStore(
+    sp.GetRequiredService<TreatmentReadStore>(),
+    sp.GetRequiredService<IReadThroughCache>()));
 builder.Services.AddScoped<IOruMessageParser, OruR01Parser>();
 builder.Services.AddDeviceRegistrationClient(builder.Configuration);
 builder.Services.AddAlarmApiClient(builder.Configuration);
@@ -117,8 +129,10 @@ builder.Services.AddHttpClient();
 builder.Services.AddFhirSubscriptionNotifyClient(builder.Configuration);
 
 builder.Services.Configure<TimeSyncOptions>(builder.Configuration.GetSection(TimeSyncOptions.SectionName));
-builder.Services.AddHealthChecks()
+IHealthChecksBuilder treatmentHealthChecks = builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "treatment-db");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    _ = treatmentHealthChecks.AddRedis(redisConnectionString, name: "redis");
 
 WebApplication app = builder.Build();
 

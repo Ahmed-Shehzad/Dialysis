@@ -1,3 +1,4 @@
+using BuildingBlocks.Caching;
 using BuildingBlocks.Tenancy;
 using BuildingBlocks.Testcontainers;
 using BuildingBlocks.ValueObjects;
@@ -135,7 +136,7 @@ public sealed class ProcessQbpD01IntegrationTests
         var rspBuilder = new RspK22Builder();
 
         var ingestHandler = new IngestRspK22MessageCommandHandler(
-            rspParser, rspValidator, repository, tenant,
+            rspParser, rspValidator, repository, new NullCacheInvalidator(), tenant,
             Options.Create(new TimeSyncOptions { MaxAllowedDriftSeconds = 0 }),
             NullLogger<IngestRspK22MessageCommandHandler>.Instance);
         var queryHandler = new ProcessQbpD01QueryCommandHandler(qbpParser, rspBuilder, repository);
