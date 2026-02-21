@@ -51,7 +51,7 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 string? redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-var signalrBuilder = builder.Services.AddSignalR();
+Microsoft.AspNetCore.SignalR.ISignalRServerBuilder signalrBuilder = builder.Services.AddSignalR();
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
     _ = signalrBuilder.AddStackExchangeRedis(redisConnectionString, o => o.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("Alarm"));
 

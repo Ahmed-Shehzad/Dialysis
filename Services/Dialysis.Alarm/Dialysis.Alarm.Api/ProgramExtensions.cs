@@ -34,7 +34,7 @@ internal static class ProgramExtensions
 
         string connectionString = app.Configuration.GetConnectionString("AlarmDb")
             ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
-        var options = new DbContextOptionsBuilder<AlarmDbContext>()
+        DbContextOptions<AlarmDbContext> options = new DbContextOptionsBuilder<AlarmDbContext>()
             .UseNpgsql(connectionString)
             .Options;
         await using var db = new AlarmDbContext(options);

@@ -37,7 +37,7 @@ public sealed class ReadThroughDistributedCache : IReadThroughCache
         if (value is null)
             return null;
 
-        var opts = options ?? new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = DefaultTtl };
+        DistributedCacheEntryOptions opts = options ?? new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = DefaultTtl };
         await _cache.SetAsync(
             key,
             JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions),

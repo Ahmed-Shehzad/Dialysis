@@ -20,7 +20,7 @@ public sealed class CentralExceptionHandlerTests
     {
         var ex = new Verifier.Exceptions.ValidationException(
             new List<Verifier.ValidationFailure> { new("Name", "Required") });
-        var (context, mockSender) = CreateContext();
+        (DefaultHttpContext context, Mock<IExceptionReportEmailSender> mockSender) = CreateContext();
 
         var env = new Mock<IWebHostEnvironment>();
         env.Setup(e => e.EnvironmentName).Returns("Production");
@@ -37,7 +37,7 @@ public sealed class CentralExceptionHandlerTests
     public async Task TryHandleAsync_InProduction_SendsEmailReportAsync()
     {
         var ex = new InvalidOperationException("Test");
-        var (context, mockSender) = CreateContext();
+        (DefaultHttpContext context, Mock<IExceptionReportEmailSender> mockSender) = CreateContext();
 
         var env = new Mock<IWebHostEnvironment>();
         env.Setup(e => e.EnvironmentName).Returns("Production");
@@ -61,7 +61,7 @@ public sealed class CentralExceptionHandlerTests
     public async Task TryHandleAsync_InDevelopment_DoesNotSendEmailAsync()
     {
         var ex = new InvalidOperationException("Test");
-        var (context, mockSender) = CreateContext();
+        (DefaultHttpContext context, Mock<IExceptionReportEmailSender> mockSender) = CreateContext();
 
         var env = new Mock<IWebHostEnvironment>();
         env.Setup(e => e.EnvironmentName).Returns("Development");

@@ -38,10 +38,9 @@ public static class ProcedureMapper
                 Coding = [new Coding(SnomedSystem, HemodialysisSnomed, "Hemodialysis")],
                 Text = "Hemodialysis"
             },
-            Performed = BuildPerformedPeriod(startedAt, endedAt)
+            Performed = BuildPerformedPeriod(startedAt, endedAt),
+            Subject = new ResourceReference(string.IsNullOrEmpty(patientId) ? "Patient/unknown" : $"Patient/{patientId}")
         };
-
-        proc.Subject = new ResourceReference(string.IsNullOrEmpty(patientId) ? "Patient/unknown" : $"Patient/{patientId}");
 
         proc.Identifier.Add(new Identifier("urn:dialysis:session", sessionId));
 

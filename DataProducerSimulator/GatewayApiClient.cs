@@ -71,8 +71,8 @@ internal sealed class GatewayApiClient : IDisposable
     {
         try
         {
-            var from = DateTimeOffset.UtcNow.AddDays(-7);
-            var to = DateTimeOffset.UtcNow;
+            DateTimeOffset from = DateTimeOffset.UtcNow.AddDays(-7);
+            DateTimeOffset to = DateTimeOffset.UtcNow;
             FhirBundle bundle = await _api.GetTreatmentSessionsFhirAsync(
                 limit,
                 from.ToString("o"),
@@ -80,9 +80,9 @@ internal sealed class GatewayApiClient : IDisposable
                 ct).ConfigureAwait(false);
 
             var ids = new List<string>();
-            foreach (var e in bundle?.Entry ?? [])
+            foreach (FhirEntry e in bundle?.Entry ?? [])
             {
-                var res = e?.Resource;
+                FhirResource? res = e?.Resource;
                 if (res?.ResourceType == "Procedure" && res.Id?.StartsWith("proc-", StringComparison.Ordinal) == true)
                     ids.Add(res.Id["proc-".Length..]);
             }

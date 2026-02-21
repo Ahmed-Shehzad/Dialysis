@@ -53,7 +53,7 @@ internal sealed class RegisterDeviceCommandHandler : ICommandHandler<RegisterDev
 
     private async Task InvalidateDeviceCacheAsync(string deviceId, string deviceEui64, CancellationToken cancellationToken)
     {
-        var keys = new[] { $"{_tenant.TenantId}:{DeviceKeyPrefix}:id:{deviceId}", $"{_tenant.TenantId}:{DeviceKeyPrefix}:eui64:{deviceEui64}" };
+        string[] keys = new[] { $"{_tenant.TenantId}:{DeviceKeyPrefix}:id:{deviceId}", $"{_tenant.TenantId}:{DeviceKeyPrefix}:eui64:{deviceEui64}" };
         await _cacheInvalidator.InvalidateAsync(keys, cancellationToken);
     }
 }

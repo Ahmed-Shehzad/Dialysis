@@ -64,7 +64,7 @@ public sealed class ExceptionReportEmailSender : IExceptionReportEmailSender
             message.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();
-            var secureSocketOptions = _options.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable;
+            SecureSocketOptions secureSocketOptions = _options.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable;
             await client.ConnectAsync(_options.SmtpHost, _options.SmtpPort, secureSocketOptions, cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(_options.SmtpUser) && !string.IsNullOrWhiteSpace(_options.SmtpPassword))

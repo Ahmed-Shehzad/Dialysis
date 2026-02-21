@@ -58,8 +58,10 @@ if (seedCount > 0) Console.WriteLine($"  Pre-seed: {seedCount} session(s)");
 Console.WriteLine("  Press Ctrl+C to stop.\n");
 
 using var client = new GatewayApiClient(gateway, tenantId);
-var faker = new Faker();
-faker.Random = new Randomizer(Environment.TickCount);
+var faker = new Faker
+{
+    Random = new Randomizer(Environment.TickCount)
+};
 
 var mrns = new List<string>();
 var sessions = new List<string>();
@@ -67,7 +69,7 @@ var sessions = new List<string>();
 const int SessionLimit = 50;  // Must match React client; both fetch same API
 
 // Try to use existing sessions from the API (aligns with dashboard dropdown)
-var existingSessions = await client.GetTreatmentSessionIdsAsync(SessionLimit).ConfigureAwait(false);
+IReadOnlyList<string> existingSessions = await client.GetTreatmentSessionIdsAsync(SessionLimit).ConfigureAwait(false);
 if (existingSessions.Count > 0)
 {
     sessions.AddRange(existingSessions.Take(SessionLimit));
@@ -126,21 +128,21 @@ using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
 // Shared session list for sync between dialysis loop and refresh task
-var sessionsLock = new object();
-var alarmRoundRobin = 0;
+object sessionsLock = new object();
+int alarmRoundRobin = 0;
 var completedSessions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 async Task RunSessionRefreshAsync()
 {
     var interval = TimeSpan.FromSeconds(60);
-    var next = DateTime.UtcNow.Add(interval);
+    DateTime next = DateTime.UtcNow.Add(interval);
     while (!cts.Token.IsCancellationRequested)
     {
         try
         {
             if (DateTime.UtcNow >= next)
             {
-                var fresh = await client.GetTreatmentSessionIdsAsync(SessionLimit).ConfigureAwait(false);
+                IReadOnlyList<string> fresh = await client.GetTreatmentSessionIdsAsync(SessionLimit).ConfigureAwait(false);
                 if (fresh.Count > 0)
                 {
                     int added;
@@ -149,7 +151,7 @@ async Task RunSessionRefreshAsync()
                     {
                         var existing = new HashSet<string>(sessions);
                         added = 0;
-                        foreach (var s in fresh.Take(SessionLimit))
+                        foreach (string? s in fresh.Take(SessionLimit))
                         {
                             if (existing.Add(s))
                             {
@@ -175,14 +177,14 @@ async Task RunDialysisMachineAsync()
 {
     var oruInterval = TimeSpan.FromSeconds(intervalOruSec);
     var alarmInterval = TimeSpan.FromSeconds(intervalAlarmSec);
-    var nextOru = DateTime.UtcNow;
-    var nextAlarm = DateTime.UtcNow.AddSeconds(intervalAlarmSec / 2.0);
+    DateTime nextOru = DateTime.UtcNow;
+    DateTime nextAlarm = DateTime.UtcNow.AddSeconds(intervalAlarmSec / 2.0);
 
     while (!cts.Token.IsCancellationRequested)
     {
         try
         {
-            var now = DateTime.UtcNow;
+            DateTime now = DateTime.UtcNow;
 
             if (now >= nextOru)
             {
@@ -212,7 +214,7 @@ async Task RunDialysisMachineAsync()
                     string oru = Hl7Builders.OruR01(mrn, sid, msgId, now, faker, eventPhase);
                     oruTasks.Add(client.PostOruAsync(oru, cts.Token));
                 }
-                var results = await Task.WhenAll(oruTasks).ConfigureAwait(false);
+                bool[] results = await Task.WhenAll(oruTasks).ConfigureAwait(false);
                 oruOk += results.Count(r => r);
                 oruFail += results.Count(r => !r);
                 nextOru = now.Add(oruInterval);
@@ -261,7 +263,7 @@ async Task RunEmrSimulatorAsync()
 {
     int msgSeq = 0;
     var interval = TimeSpan.FromSeconds(intervalEmrSec);
-    var next = DateTime.UtcNow;
+    DateTime next = DateTime.UtcNow;
 
     while (!cts.Token.IsCancellationRequested)
     {
@@ -298,7 +300,7 @@ async Task RunEmrSimulatorAsync()
 async Task RunSessionCompletionAsync()
 {
     var interval = TimeSpan.FromSeconds(intervalCompleteSec);
-    var next = DateTime.UtcNow.Add(interval);
+    DateTime next = DateTime.UtcNow.Add(interval);
 
     while (!cts.Token.IsCancellationRequested)
     {
@@ -316,7 +318,7 @@ async Task RunSessionCompletionAsync()
                         .ToList();
                     if (active.Count > 0)
                     {
-                        var pick = faker.PickRandom(active);
+                        (string Session, string Mrn) pick = faker.PickRandom(active);
                         mrn = pick.Mrn;
                         sid = pick.Session;
                         _ = completedSessions.Add(pick.Session);
@@ -341,7 +343,7 @@ async Task RunSessionCompletionAsync()
 async Task RunEhrIngestAsync()
 {
     var interval = TimeSpan.FromSeconds(intervalEmrSec);
-    var next = DateTime.UtcNow.AddSeconds(intervalEmrSec / 2.0); // Offset from EMR
+    DateTime next = DateTime.UtcNow.AddSeconds(intervalEmrSec / 2.0); // Offset from EMR
 
     while (!cts.Token.IsCancellationRequested)
     {

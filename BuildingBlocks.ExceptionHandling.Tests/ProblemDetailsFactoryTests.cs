@@ -19,7 +19,7 @@ public sealed class ProblemDetailsFactoryTests
     {
         var failures = new List<ValidationFailure> { new("Name", "Required") };
         var ex = new ValidationException(failures);
-        var context = CreateHttpContext("/api/patients");
+        DefaultHttpContext context = CreateHttpContext("/api/patients");
 
         (ProblemDetails problem, int statusCode) = ProblemDetailsFactory.Create(ex, context, includeStackTrace: false);
 
@@ -34,7 +34,7 @@ public sealed class ProblemDetailsFactoryTests
     {
         var failures = new List<ValidationFailure> { new("Name", "Required") };
         var ex = new ValidationException(failures);
-        var context = CreateHttpContext("/api/patients");
+        DefaultHttpContext context = CreateHttpContext("/api/patients");
 
         (ProblemDetails problem, _) = ProblemDetailsFactory.Create(ex, context, includeStackTrace: true);
 
@@ -45,7 +45,7 @@ public sealed class ProblemDetailsFactoryTests
     public void Create_ArgumentException_Returns400()
     {
         var ex = new ArgumentException("Invalid id");
-        var context = CreateHttpContext("/api/patients/123");
+        DefaultHttpContext context = CreateHttpContext("/api/patients/123");
 
         (ProblemDetails problem, int statusCode) = ProblemDetailsFactory.Create(ex, context, includeStackTrace: false);
 
@@ -58,7 +58,7 @@ public sealed class ProblemDetailsFactoryTests
     public void Create_UnhandledException_Returns500()
     {
         var ex = new InvalidOperationException("Connection refused");
-        var context = CreateHttpContext("/api/patients");
+        DefaultHttpContext context = CreateHttpContext("/api/patients");
 
         (ProblemDetails problem, int statusCode) = ProblemDetailsFactory.Create(ex, context, includeStackTrace: false);
 
@@ -72,7 +72,7 @@ public sealed class ProblemDetailsFactoryTests
     public void Create_UnhandledException_WithStackTrace_IncludesStackTrace()
     {
         var ex = new InvalidOperationException("Connection refused");
-        var context = CreateHttpContext("/api/patients");
+        DefaultHttpContext context = CreateHttpContext("/api/patients");
 
         (ProblemDetails problem, _) = ProblemDetailsFactory.Create(ex, context, includeStackTrace: true);
 

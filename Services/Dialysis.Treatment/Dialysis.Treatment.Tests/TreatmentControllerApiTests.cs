@@ -59,7 +59,7 @@ public sealed class TreatmentControllerApiTests
         HttpResponseMessage getResponse = await client.GetAsync($"/api/treatment-sessions/{sessionId}");
         getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        var session = await getResponse.Content.ReadFromJsonAsync<SessionResponse>(options);
+        SessionResponse? session = await getResponse.Content.ReadFromJsonAsync<SessionResponse>(options);
         session.ShouldNotBeNull();
         session.Status.ShouldBe("Completed");
         session.SignedAt.ShouldNotBeNull();
@@ -97,7 +97,7 @@ public sealed class TreatmentControllerApiTests
         HttpResponseMessage getResponse = await client.GetAsync($"/api/treatment-sessions/{sessionId}");
         getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        var session = await getResponse.Content.ReadFromJsonAsync<SessionWithPreAssessmentResponse>(options);
+        SessionWithPreAssessmentResponse? session = await getResponse.Content.ReadFromJsonAsync<SessionWithPreAssessmentResponse>(options);
         session.ShouldNotBeNull();
         session.PreAssessment.ShouldNotBeNull();
         session.PreAssessment.PreWeightKg.ShouldBe(72.5m);

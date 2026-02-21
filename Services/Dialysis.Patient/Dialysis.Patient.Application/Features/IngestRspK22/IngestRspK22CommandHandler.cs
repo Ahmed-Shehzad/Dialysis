@@ -95,7 +95,7 @@ internal sealed class IngestRspK22CommandHandler : ICommandHandler<IngestRspK22C
 
     private async Task InvalidatePatientCacheAsync(string mrn, string id, CancellationToken cancellationToken)
     {
-        var keys = new[] { $"{_tenant.TenantId}:{PatientKeyPrefix}:{mrn}", $"{_tenant.TenantId}:{PatientKeyPrefix}:id:{id}" };
+        string[] keys = new[] { $"{_tenant.TenantId}:{PatientKeyPrefix}:{mrn}", $"{_tenant.TenantId}:{PatientKeyPrefix}:id:{id}" };
         await _cacheInvalidator.InvalidateAsync(keys, cancellationToken);
     }
 

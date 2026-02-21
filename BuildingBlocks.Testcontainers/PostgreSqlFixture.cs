@@ -71,7 +71,7 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
         await using var adminConnection = new NpgsqlConnection(adminBuilder.ConnectionString);
         await adminConnection.OpenAsync().ConfigureAwait(false);
 
-        await using var createDbCommand = adminConnection.CreateCommand();
+        await using NpgsqlCommand createDbCommand = adminConnection.CreateCommand();
         createDbCommand.CommandText = $"CREATE DATABASE \"{databaseName}\"";
         _ = await createDbCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
 
