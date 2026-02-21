@@ -32,8 +32,12 @@ internal static class ProgramExtensions
         if (!app.Environment.IsDevelopment())
             return;
 
-        using IServiceScope scope = app.Services.CreateScope();
-        AlarmDbContext db = scope.ServiceProvider.GetRequiredService<AlarmDbContext>();
+        string connectionString = app.Configuration.GetConnectionString("AlarmDb")
+            ?? "Host=localhost;Database=dialysis_alarm;Username=postgres;Password=postgres";
+        var options = new DbContextOptionsBuilder<AlarmDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+        await using var db = new AlarmDbContext(options);
         await db.Database.MigrateAsync();
     }
 }

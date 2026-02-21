@@ -24,9 +24,7 @@ public sealed class DistributedCacheInvalidator : ICacheInvalidator
     {
         ArgumentNullException.ThrowIfNull(keys);
         foreach (string key in keys)
-        {
             if (!string.IsNullOrWhiteSpace(key))
                 await _cache.RemoveAsync(key, cancellationToken).ConfigureAwait(false);
-        }
     }
 }

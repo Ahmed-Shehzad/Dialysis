@@ -139,8 +139,10 @@ WebApplication app = builder.Build();
 app.UseTenantResolution();
 if (app.Environment.IsDevelopment())
 {
-    using IServiceScope scope = app.Services.CreateScope();
-    TreatmentDbContext db = scope.ServiceProvider.GetRequiredService<TreatmentDbContext>();
+    var options = new DbContextOptionsBuilder<TreatmentDbContext>()
+        .UseNpgsql(connectionString)
+        .Options;
+    await using var db = new TreatmentDbContext(options);
     await db.Database.MigrateAsync();
 }
 
