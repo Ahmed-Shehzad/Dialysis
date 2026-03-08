@@ -87,8 +87,8 @@ public sealed class AlarmsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        DateTimeOffset? fromUtc = from ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
-        DateTimeOffset? toUtc = to ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
+        DateTimeOffset? fromUtc = from ?? date?.Date;
+        DateTimeOffset? toUtc = to ?? date?.Date.AddDays(1).AddTicks(-1);
         var query = new GetAlarmsQuery(id, deviceId, sessionId, fromUtc, toUtc);
         GetAlarmsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(
@@ -98,7 +98,7 @@ public sealed class AlarmsController : ControllerBase
         var bundle = new Bundle
         {
             Type = Bundle.BundleType.Collection,
-            Entry = response.Alarms
+            Entry = [.. response.Alarms
                 .Select(a =>
                 {
                     var input = new AlarmMappingInput(
@@ -121,8 +121,7 @@ public sealed class AlarmsController : ControllerBase
                         FullUrl = $"urn:uuid:alarm-{a.Id}",
                         Resource = di
                     };
-                })
-                .ToList()
+                })]
         };
 
         string json = FhirJsonHelper.ToJson(bundle);

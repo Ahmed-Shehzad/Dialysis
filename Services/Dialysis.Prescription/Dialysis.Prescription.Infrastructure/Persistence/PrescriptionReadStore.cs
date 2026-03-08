@@ -36,7 +36,7 @@ public sealed class PrescriptionReadStore : IPrescriptionReadStore
             .OrderByDescending(p => p.ReceivedAt)
             .Take(Math.Max(1, Math.Min(limit, 10_000)))
             .ToListAsync(cancellationToken);
-        return list.Select(ToDto).ToList();
+        return [.. list.Select(ToDto)];
     }
 
     public async Task<IReadOnlyList<PrescriptionReadDto>> GetByPatientMrnAsync(string tenantId, string mrn, int limit, CancellationToken cancellationToken = default)
@@ -48,7 +48,7 @@ public sealed class PrescriptionReadStore : IPrescriptionReadStore
             .OrderByDescending(p => p.ReceivedAt)
             .Take(Math.Max(1, Math.Min(limit, 10_000)))
             .ToListAsync(cancellationToken);
-        return list.Select(ToDto).ToList();
+        return [.. list.Select(ToDto)];
     }
 
     private static PrescriptionReadDto ToDto(PrescriptionReadModel m)

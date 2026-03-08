@@ -42,7 +42,7 @@ public sealed class PatientReadStore : IPatientReadStore
             .ThenBy(x => x.FirstName)
             .Take(Math.Max(1, Math.Min(limit, 1000)))
             .ToListAsync(cancellationToken);
-        return list.Select(ToDtoNonNull).ToList();
+        return [.. list.Select(ToDtoNonNull)];
     }
 
     public async Task<IReadOnlyList<PatientReadDto>> SearchAsync(string tenantId, string? identifier, string? familyName, string? givenName, DateOnly? birthdate, int limit, CancellationToken cancellationToken = default)
@@ -63,7 +63,7 @@ public sealed class PatientReadStore : IPatientReadStore
             .ThenBy(x => x.FirstName)
             .Take(Math.Max(1, Math.Min(limit, 1000)))
             .ToListAsync(cancellationToken);
-        return list.Select(ToDtoNonNull).ToList();
+        return [.. list.Select(ToDtoNonNull)];
     }
 
     private static PatientReadDto? ToDto(PatientReadModel? p) =>

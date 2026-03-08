@@ -51,8 +51,8 @@ public sealed class TreatmentSessionsController : ControllerBase
     {
         string? mrn = !string.IsNullOrWhiteSpace(subject) ? subject : patient;
         MedicalRecordNumber? mrnVal = !string.IsNullOrWhiteSpace(mrn) ? new MedicalRecordNumber(mrn) : null;
-        DateTimeOffset? from = dateFrom ?? (date.HasValue ? date.Value.Date : (DateTimeOffset?)null);
-        DateTimeOffset? to = dateTo ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : (DateTimeOffset?)null);
+        DateTimeOffset? from = dateFrom ?? (date.HasValue ? date.Value.Date : null);
+        DateTimeOffset? to = dateTo ?? (date.HasValue ? date.Value.Date.AddDays(1).AddTicks(-1) : null);
         var query = new GetTreatmentSessionsQuery(Math.Min(limit, 1_000), mrnVal, from, to);
         GetTreatmentSessionsResponse response = await _sender.SendAsync(query, cancellationToken);
         await _audit.RecordAsync(new AuditRecordRequest(
@@ -181,7 +181,7 @@ public sealed class TreatmentSessionsController : ControllerBase
         string? recordedBy = body.RecordedBy ?? User.Identity?.Name;
         AccessType? accessType = !string.IsNullOrWhiteSpace(body.AccessTypeValue)
             ? new AccessType(body.AccessTypeValue)
-            : (AccessType?)null;
+            : null;
         var command = new RecordPreAssessmentCommand(
             new SessionId(sessionId),
             body.PreWeightKg,

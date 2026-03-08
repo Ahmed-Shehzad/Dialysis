@@ -79,7 +79,7 @@ internal sealed class AzureServiceBusReceiveEndpoint : IReceiveEndpoint
         Ulid? conversationId = headers.TryGetValue("ConversationId", out object? conv)
                                && Ulid.TryParse(conv?.ToString(), out Ulid parsedConversationId)
             ? parsedConversationId
-            : (Ulid?)null;
+            : null;
         _ = headers.Remove("ConversationId");
 
         var transportMessage = new TransportMessage(

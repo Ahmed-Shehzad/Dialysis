@@ -58,10 +58,7 @@ internal sealed class ThresholdBreachDetectedReceiveHandler
         }
 
         ThresholdBreachDetectedMessage? evt = JsonSerializer.Deserialize<ThresholdBreachDetectedMessage>(
-            message.Body.Span, JsonOptions);
-
-        if (evt is null) throw new InvalidOperationException("Failed to deserialize ThresholdBreachDetectedMessage.");
-
+            message.Body.Span, JsonOptions) ?? throw new InvalidOperationException("Failed to deserialize ThresholdBreachDetectedMessage.");
         if (!Ulid.TryParse(evt.TreatmentSessionId, out Ulid treatmentSessionId))
             throw new ArgumentException($"Invalid TreatmentSessionId: {evt.TreatmentSessionId}");
         if (!Ulid.TryParse(evt.ObservationId, out Ulid observationId))

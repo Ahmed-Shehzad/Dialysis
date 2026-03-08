@@ -40,7 +40,7 @@ public sealed class DeviceReadStore : IDeviceReadStore
             .Where(d => d.TenantId == tenantId)
             .OrderBy(d => d.DeviceEui64)
             .ToListAsync(cancellationToken);
-        return list.Select(ToDto).ToList();
+        return [.. list.Select(ToDto)];
     }
 
     private static DeviceReadDto ToDto(DeviceReadModel m) =>

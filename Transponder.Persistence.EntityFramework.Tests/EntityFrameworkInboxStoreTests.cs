@@ -9,7 +9,10 @@ public sealed class EntityFrameworkInboxStoreTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public EntityFrameworkInboxStoreTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public EntityFrameworkInboxStoreTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task TryAddAsync_Returns_False_For_Duplicate_StateAsync()

@@ -34,7 +34,7 @@ internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<Observ
             return;
 
         string resourceUrl = baseUrl.TrimEnd('/') + "/api/treatment-sessions/" + notification.SessionId + "/fhir";
-        string? auth = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
+        string? auth = _httpContextAccessor.HttpContext?.Request.Headers.Authorization.FirstOrDefault();
 
         await _notifyClient.NotifyAsync(
             "Observation",

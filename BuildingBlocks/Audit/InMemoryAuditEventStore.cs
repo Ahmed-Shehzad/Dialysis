@@ -35,7 +35,7 @@ public sealed class InMemoryAuditEventStore : IAuditEventStore
         {
             int take = Math.Min(count, _buffer.Count);
             int skip = Math.Max(0, _buffer.Count - take);
-            return Task.FromResult<IReadOnlyList<AuditRecordRequest>>(_buffer.Skip(skip).Take(take).ToList());
+            return Task.FromResult<IReadOnlyList<AuditRecordRequest>>([.. _buffer.Skip(skip).Take(take)]);
         }
     }
 }

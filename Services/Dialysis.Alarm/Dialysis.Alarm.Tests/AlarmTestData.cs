@@ -7,7 +7,10 @@ namespace Dialysis.Alarm.Tests;
 /// </summary>
 public static class AlarmTestData
 {
-    static AlarmTestData() => Randomizer.Seed = new Random(42);
+    static AlarmTestData()
+    {
+        Randomizer.Seed = new Random(42);
+    }
 
     private static readonly Faker Faker = new();
 

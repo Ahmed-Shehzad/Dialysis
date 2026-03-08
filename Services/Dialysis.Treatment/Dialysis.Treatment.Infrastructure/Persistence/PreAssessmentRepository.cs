@@ -27,18 +27,9 @@ public sealed class PreAssessmentRepository : IPreAssessmentRepository
                 cancellationToken);
     }
 
-    public async Task AddAsync(PreAssessment entity, CancellationToken cancellationToken = default)
-    {
-        _ = await _db.PreAssessments.AddAsync(entity, cancellationToken);
-    }
+    public async Task AddAsync(PreAssessment entity, CancellationToken cancellationToken = default) => _ = await _db.PreAssessments.AddAsync(entity, cancellationToken);
 
-    public void Update(PreAssessment entity)
-    {
-        _ = _db.PreAssessments.Update(entity);
-    }
+    public void Update(PreAssessment entity) => _ = _db.PreAssessments.Update(entity);
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        _ = await _db.SaveChangesAsync(cancellationToken);
-    }
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default) => _ = await _db.SaveChangesAsync(cancellationToken);
 }

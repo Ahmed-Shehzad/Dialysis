@@ -2,9 +2,7 @@ namespace Transponder.Tests;
 
 public sealed class TransponderRequestAddressResolverTests
 {
-    private sealed class TestMessage
-    {
-    }
+    private sealed class TestMessage;
 
     private sealed class Outer
     {

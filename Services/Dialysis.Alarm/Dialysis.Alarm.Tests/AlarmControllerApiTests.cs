@@ -16,7 +16,10 @@ public sealed class AlarmControllerApiTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public AlarmControllerApiTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public AlarmControllerApiTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task Health_ReturnsOkAsync()

@@ -22,7 +22,7 @@ public sealed class ProcedureObservationMapperTests
 
         proc.Subject.ShouldNotBeNull().Reference.ShouldBe("Patient/unknown");
         proc.Code.ShouldNotBeNull();
-        proc.Status.ShouldBe(Hl7.Fhir.Model.EventStatus.Completed);
+        proc.Status.ShouldBe(EventStatus.Completed);
     }
 
     [Fact]

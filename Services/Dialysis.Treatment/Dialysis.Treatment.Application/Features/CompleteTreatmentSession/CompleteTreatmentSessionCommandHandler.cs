@@ -29,10 +29,7 @@ internal sealed class CompleteTreatmentSessionCommandHandler : ICommandHandler<C
 
     public async Task<CompleteTreatmentSessionResponse> HandleAsync(CompleteTreatmentSessionCommand request, CancellationToken cancellationToken = default)
     {
-        TreatmentSession? session = await _repository.GetBySessionIdForUpdateAsync(request.SessionId, cancellationToken);
-        if (session is null)
-            throw new KeyNotFoundException($"Treatment session {request.SessionId.Value} not found.");
-
+        TreatmentSession? session = await _repository.GetBySessionIdForUpdateAsync(request.SessionId, cancellationToken) ?? throw new KeyNotFoundException($"Treatment session {request.SessionId.Value} not found.");
         if (session.Status != TreatmentSessionStatus.Completed)
         {
             session.Complete();

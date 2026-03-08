@@ -71,7 +71,7 @@ internal sealed class AlarmEntityConfiguration : IEntityTypeConfiguration<AlarmD
             .HasDefaultValue(TenantId.Default);
         _ = e.Property(x => x.Priority).HasConversion(
             v => v.HasValue ? v.Value.Value : null,
-            v => v != null ? new AlarmPriority(v) : (AlarmPriority?)null);
+            v => v != null ? new AlarmPriority(v) : null);
         _ = e.Property(x => x.SourceCode).HasMaxLength(100);
         _ = e.Property(x => x.InterpretationType).HasMaxLength(10);
         _ = e.Property(x => x.Abnormality).HasMaxLength(5);
@@ -87,11 +87,11 @@ internal sealed class AlarmEntityConfiguration : IEntityTypeConfiguration<AlarmD
         _ = e.Property(x => x.DeviceId)
             .HasConversion(
                 v => v.HasValue ? v.Value.Value : null,
-                v => v != null ? new DeviceId(v) : (DeviceId?)null);
+                v => v != null ? new DeviceId(v) : null);
         _ = e.Property(x => x.SessionId)
             .HasConversion(
                 v => v.HasValue ? v.Value.Value : null,
-                v => !string.IsNullOrWhiteSpace(v) ? new SessionId(v) : (SessionId?)null);
+                v => !string.IsNullOrWhiteSpace(v) ? new SessionId(v) : null);
         _ = e.HasIndex(x => new { x.TenantId, x.DeviceId });
         _ = e.HasIndex(x => new { x.TenantId, x.SessionId });
         _ = e.HasIndex(x => x.OccurredAt);

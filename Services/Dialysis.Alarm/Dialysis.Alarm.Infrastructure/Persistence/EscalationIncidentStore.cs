@@ -12,8 +12,5 @@ public sealed class EscalationIncidentStore : IEscalationIncidentStore
         _db = db ?? throw new ArgumentNullException(nameof(db));
     }
 
-    public void Add(EscalationIncident incident)
-    {
-        _ = _db.EscalationIncidents.Add(incident);
-    }
+    public void Add(EscalationIncident incident) => _ = _db.EscalationIncidents.Add(incident);
 }

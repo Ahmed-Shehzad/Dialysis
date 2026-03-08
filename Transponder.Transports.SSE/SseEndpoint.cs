@@ -123,7 +123,7 @@ internal static class SseEndpoint
             results.AddRange(segments);
         }
 
-        return results.Count == 0 ? results : results.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return results.Count == 0 ? results : [.. results.Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static string? GetLastEventId(HttpContext context)

@@ -106,10 +106,7 @@ public sealed class NtpSyncHealthCheck : IHealthCheck
             CreateNoWindow = true
         };
 
-        using var process = Process.Start(startInfo);
-        if (process is null)
-            throw new InvalidOperationException($"Failed to start {fileName}.");
-
+        using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Failed to start {fileName}.");
         try
         {
             string output = await process.StandardOutput.ReadToEndAsync(cts.Token);

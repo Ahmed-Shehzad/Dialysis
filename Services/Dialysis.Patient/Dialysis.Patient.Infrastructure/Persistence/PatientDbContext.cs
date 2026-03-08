@@ -42,7 +42,7 @@ public sealed class PatientDbContext : DbContext, IDbContext
             _ = e.Property(x => x.Gender)
                 .HasConversion(
                     v => v.HasValue ? v.Value.Value : null,
-                    v => v != null ? new Gender(v) : (Gender?)null)
+                    v => v != null ? new Gender(v) : null)
                 .HasColumnName("Gender");
             _ = e.Property(x => x.SocialSecurityNumber).HasColumnName("SocialSecurityNumber").HasMaxLength(20);
             _ = e.HasIndex(x => new { x.TenantId, x.MedicalRecordNumber }).IsUnique();

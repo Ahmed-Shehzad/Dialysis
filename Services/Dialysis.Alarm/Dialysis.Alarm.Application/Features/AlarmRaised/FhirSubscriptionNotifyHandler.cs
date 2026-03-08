@@ -34,7 +34,7 @@ internal sealed class FhirSubscriptionNotifyHandler : IDomainEventHandler<AlarmF
             return;
 
         string resourceUrl = baseUrl.TrimEnd('/') + "/api/alarms/fhir?_id=" + notification.AlarmId;
-        string? auth = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
+        string? auth = _httpContextAccessor.HttpContext?.Request.Headers.Authorization.FirstOrDefault();
 
         await _notifyClient.NotifyAsync(
             "DetectedIssue",

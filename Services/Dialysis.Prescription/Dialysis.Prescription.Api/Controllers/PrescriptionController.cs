@@ -50,7 +50,7 @@ public sealed class PrescriptionController : ControllerBase
         var bundle = new Bundle
         {
             Type = Bundle.BundleType.Collection,
-            Entry = response.Prescriptions.Select(p =>
+            Entry = [.. response.Prescriptions.Select(p =>
             {
                 var input = new PrescriptionMappingInput(
                     p.OrderId,
@@ -68,7 +68,7 @@ public sealed class PrescriptionController : ControllerBase
                     FullUrl = $"urn:uuid:prescription-{p.OrderId}",
                     Resource = fhir
                 };
-            }).ToList()
+            })]
         };
         string json = FhirJsonHelper.ToJson(bundle);
         return Content(json, "application/fhir+json");

@@ -37,7 +37,10 @@ public sealed class OruR40ToFhirIntegrationTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public OruR40ToFhirIntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public OruR40ToFhirIntegrationTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task OruR40_IngestAndRecord_ProducesFhirBundleWithDetectedIssueAsync()
@@ -130,7 +133,10 @@ public sealed class OruR40ToFhirIntegrationTests
     {
         private readonly IAlarmRepository _repository;
 
-        public RecordAlarmSender(IAlarmRepository repository) => _repository = repository;
+        public RecordAlarmSender(IAlarmRepository repository)
+        {
+            _repository = repository;
+        }
 
         public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {

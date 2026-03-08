@@ -58,7 +58,7 @@ public sealed class PrescriptionComplianceController : ControllerBase
         if (!string.IsNullOrEmpty(session.PatientMrn))
         {
             IApiResponse<PrescriptionByMrnResponse> rxResponse = await _api.GetPrescriptionByMrnAsync(session.PatientMrn, auth, tenantId, cancellationToken);
-            if (rxResponse.IsSuccessStatusCode && rxResponse.Content is { } prescriptionResponse)
+            if (rxResponse is { IsSuccessStatusCode: true, Content: { } prescriptionResponse })
                 prescription = new PrescriptionDto(prescriptionResponse.BloodFlowRateMlMin, prescriptionResponse.UfRateMlH, prescriptionResponse.UfTargetVolumeMl);
         }
 

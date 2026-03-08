@@ -16,7 +16,10 @@ public sealed class AuditEventsController : ControllerBase
 {
     private readonly IAuditEventStore _store;
 
-    public AuditEventsController(IAuditEventStore store) => _store = store;
+    public AuditEventsController(IAuditEventStore store)
+    {
+        _store = store;
+    }
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -30,13 +33,12 @@ public sealed class AuditEventsController : ControllerBase
         var bundle = new Bundle
         {
             Type = Bundle.BundleType.Collection,
-            Entry = records
+            Entry = [.. records
                 .Select((r, i) => new Bundle.EntryComponent
                 {
                     FullUrl = $"urn:uuid:audit-{i}-{Guid.NewGuid():N}",
                     Resource = AuditEventMapper.ToFhirAuditEvent(r, "dialysis-alarm-api")
-                })
-                .ToList()
+                })]
         };
 
         string json = FhirJsonHelper.ToJson(bundle);

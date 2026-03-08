@@ -19,7 +19,10 @@ public sealed class PostgresSubscriptionStoreTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public PostgresSubscriptionStoreTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public PostgresSubscriptionStoreTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async System.Threading.Tasks.Task Add_AndTryGet_ReturnsSubscriptionAsync()

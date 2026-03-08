@@ -36,7 +36,10 @@ public sealed class OruBatchToSessionsIntegrationTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public OruBatchToSessionsIntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public OruBatchToSessionsIntegrationTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task OruBatch_TwoOruMessages_ProducesTwoSessionsAsync()
@@ -102,7 +105,10 @@ public sealed class OruBatchToSessionsIntegrationTests
     {
         private readonly ITreatmentSessionRepository _repository;
 
-        public BatchTestSender(ITreatmentSessionRepository repository) => _repository = repository;
+        public BatchTestSender(ITreatmentSessionRepository repository)
+        {
+            _repository = repository;
+        }
 
         public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {

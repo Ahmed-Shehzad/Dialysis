@@ -55,9 +55,7 @@ internal static class FhirBundleParser
             }
         }
         catch { /* ignore */ }
-        return durations
-            .Select(kv => new PatientDurationSummary(kv.Key, kv.Value.Count, (decimal)kv.Value.Sum(), (decimal)(kv.Value.Count > 0 ? kv.Value.Average() : 0)))
-            .ToList();
+        return [.. durations.Select(kv => new PatientDurationSummary(kv.Key, kv.Value.Count, (decimal)kv.Value.Sum(), (decimal)(kv.Value.Count > 0 ? kv.Value.Average() : 0)))];
     }
 
     public static IReadOnlyList<ObservationCountByCode> ParseObservationsByCode(string json, string? codeFilter)
@@ -80,7 +78,7 @@ internal static class FhirBundleParser
             }
         }
         catch { /* ignore */ }
-        return counts.OrderByDescending(kv => kv.Value).Select(kv => new ObservationCountByCode(kv.Key, kv.Value)).ToList();
+        return [.. counts.OrderByDescending(kv => kv.Value).Select(kv => new ObservationCountByCode(kv.Key, kv.Value))];
     }
 
     private static bool IsResourceType(JsonElement entry, string resourceType)

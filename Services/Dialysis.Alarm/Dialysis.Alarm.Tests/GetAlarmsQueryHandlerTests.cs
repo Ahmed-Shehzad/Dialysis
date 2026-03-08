@@ -22,7 +22,10 @@ public sealed class GetAlarmsQueryHandlerTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public GetAlarmsQueryHandlerTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public GetAlarmsQueryHandlerTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task HandleAsync_NoFilters_ReturnsAllAlarmsAsync()

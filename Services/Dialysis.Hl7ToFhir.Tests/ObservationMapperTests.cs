@@ -43,8 +43,8 @@ public sealed class ObservationMapperTests
 
         Observation obs = ObservationMapper.ToFhirObservation(input);
 
-        obs.Value.ShouldBeOfType<Hl7.Fhir.Model.Quantity>();
-        var qty = (Hl7.Fhir.Model.Quantity)obs.Value!;
+        obs.Value.ShouldBeOfType<Quantity>();
+        var qty = (Quantity)obs.Value!;
         qty.Value.ShouldBe(300);
         qty.Unit.ShouldBe("ml/min");
         qty.System.ShouldBe("http://unitsofmeasure.org");

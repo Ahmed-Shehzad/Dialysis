@@ -107,7 +107,7 @@ internal sealed class KafkaReceiveEndpoint : IReceiveEndpoint
     {
         Dictionary<string, object?> headers = KafkaTransportHeaders.ReadHeaders(result.Message.Headers);
         (string? ContentType, string? MessageType, Ulid? CorrelationId, Ulid? ConversationId) parsed = ParseMessageHeaders(headers);
-        Ulid? messageId = Ulid.TryParse(result.Message.Key, out Ulid mid) ? mid : (Ulid?)null;
+        Ulid? messageId = Ulid.TryParse(result.Message.Key, out Ulid mid) ? mid : null;
         return new TransportMessage(
             result.Message.Value ?? [],
             parsed.ContentType,
@@ -126,12 +126,12 @@ internal sealed class KafkaReceiveEndpoint : IReceiveEndpoint
         Ulid? correlationId = headers.TryGetValue("CorrelationId", out object? corr)
                               && Ulid.TryParse(corr?.ToString(), out Ulid parsedCorrelationId)
             ? parsedCorrelationId
-            : (Ulid?)null;
+            : null;
         _ = headers.Remove("CorrelationId");
         Ulid? conversationId = headers.TryGetValue("ConversationId", out object? conv)
                                && Ulid.TryParse(conv?.ToString(), out Ulid parsedConversationId)
             ? parsedConversationId
-            : (Ulid?)null;
+            : null;
         _ = headers.Remove("ConversationId");
         return (contentType, messageType, correlationId, conversationId);
     }

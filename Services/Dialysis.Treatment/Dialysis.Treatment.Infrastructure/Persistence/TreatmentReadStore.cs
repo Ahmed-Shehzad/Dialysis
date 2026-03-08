@@ -92,7 +92,7 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
             .Where(o => o.TreatmentSessionId == session.Id && o.ObservedAtUtc >= startUtc && o.ObservedAtUtc <= endUtc)
             .OrderBy(o => o.ObservedAtUtc)
             .ToListAsync(cancellationToken);
-        return obsList.Select(ToObservationReadDto).ToList();
+        return [.. obsList.Select(ToObservationReadDto)];
     }
 
     private async Task<IReadOnlyList<TreatmentSessionReadDto>> LoadSessionsWithObservationsAsync(List<TreatmentSessionReadModel> sessions, CancellationToken cancellationToken)
@@ -116,7 +116,7 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
         var obsBySession = allObs.GroupBy(o => o.TreatmentSessionId).ToDictionary(g => g.Key, g => g.ToList());
         var preAssessmentBySession = allPreAssessments.ToDictionary(p => p.SessionId, p => p);
 
-        return sessions.Select(s =>
+        return [.. sessions.Select(s =>
         {
             List<ObservationReadModel> obs = obsBySession.TryGetValue(s.Id, out List<ObservationReadModel>? list) ? list : [];
             var observationDtos = obs.Select(ToObservationDto).ToList();
@@ -136,7 +136,7 @@ public sealed class TreatmentReadStore : ITreatmentReadStore
                 s.SignedBy,
                 observationDtos,
                 preAssessmentDto);
-        }).ToList();
+        })];
     }
 
     private static PreAssessmentDto ToPreAssessmentDto(PreAssessmentReadModel p) =>

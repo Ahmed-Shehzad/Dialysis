@@ -23,7 +23,10 @@ public sealed record RspK22ConflictParams(
 /// </summary>
 public static class PrescriptionTestData
 {
-    static PrescriptionTestData() => Randomizer.Seed = new Random(42);
+    static PrescriptionTestData()
+    {
+        Randomizer.Seed = new Random(42);
+    }
 
     private static readonly Faker Faker = new();
 

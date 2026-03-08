@@ -9,14 +9,12 @@ public static class ExceptionSnapshotBuilder
     {
         var data = new Dictionary<string, string>();
         if (exception.Data.Count > 0)
-        {
             foreach (System.Collections.DictionaryEntry entry in exception.Data)
             {
                 string key = entry.Key?.ToString() ?? "(null)";
                 string value = entry.Value?.ToString() ?? "(null)";
                 data[key] = value;
             }
-        }
 
         return new ExceptionSnapshot
         {

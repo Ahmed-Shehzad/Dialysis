@@ -48,10 +48,10 @@ public sealed class FhirBulkExportService
             throw new ArgumentException($"Unsupported search resource type: {resourceType}", nameof(resourceType));
 
         string? auth = null;
-        if (originalRequest is { } req)
+        if (originalRequest != null)
         {
-            Microsoft.Extensions.Primitives.StringValues authHeader = req.Headers["Authorization"];
-            if (!Microsoft.Extensions.Primitives.StringValues.IsNullOrEmpty(authHeader))
+            StringValues authHeader = originalRequest.Headers.Authorization;
+            if (!StringValues.IsNullOrEmpty(authHeader))
                 auth = authHeader.ToString();
         }
         string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
@@ -300,9 +300,9 @@ public sealed class FhirBulkExportService
         var bundle = new Bundle { Type = Bundle.BundleType.Collection, Entry = [] };
 
         string? auth = null;
-        if (originalRequest is { } req)
+        if (originalRequest != null)
         {
-            StringValues authHeader = req.Headers["Authorization"];
+            StringValues authHeader = originalRequest.Headers.Authorization;
             if (!StringValues.IsNullOrEmpty(authHeader))
                 auth = authHeader.ToString();
         }

@@ -119,4 +119,4 @@ app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 await app.RunAsync();
 
-namespace Dialysis.Gateway { public partial class Program { } }
+namespace Dialysis.Gateway { public partial class Program; }

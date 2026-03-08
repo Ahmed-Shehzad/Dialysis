@@ -198,11 +198,10 @@ public sealed class RspK22Parser : IRspK22Parser
     private static IReadOnlyList<decimal> ParseDecimalArray(string? raw)
     {
         if (string.IsNullOrEmpty(raw)) return [];
-        return raw.Split(RepeatSeparator, '^', '&')
+        return [.. raw.Split(RepeatSeparator, '^', '&')
             .Select(s => decimal.TryParse(s.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal v) ? v : (decimal?)null)
             .Where(v => v.HasValue)
-            .Select(v => v!.Value)
-            .ToList();
+            .Select(v => v!.Value)];
     }
 
     private static IReadOnlyList<decimal>? ParseNullableDecimalArray(string? raw)

@@ -19,7 +19,10 @@ public sealed class RecordAlarmCommandHandlerTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public RecordAlarmCommandHandlerTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public RecordAlarmCommandHandlerTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task HandleAsync_Start_AlwaysCreatesNewAlarmAsync()

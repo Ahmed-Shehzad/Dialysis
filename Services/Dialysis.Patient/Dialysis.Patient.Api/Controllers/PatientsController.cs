@@ -69,7 +69,7 @@ public sealed class PatientsController : ControllerBase
         var bundle = new Hl7.Fhir.Model.Bundle
         {
             Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
-            Entry = response.Patients.Select(p =>
+            Entry = [.. response.Patients.Select(p =>
             {
                 var input = new PatientMappingInput(
                     p.MedicalRecordNumber,
@@ -85,7 +85,7 @@ public sealed class PatientsController : ControllerBase
                     FullUrl = $"Patient/{p.Id}",
                     Resource = fhirPatient
                 };
-            }).ToList()
+            })]
         };
         string json = FhirJsonHelper.ToJson(bundle);
         return Content(json, "application/fhir+json");

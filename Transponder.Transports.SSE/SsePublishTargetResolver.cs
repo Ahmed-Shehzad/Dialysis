@@ -108,7 +108,7 @@ internal static class SsePublishTargetResolver
     }
 
     private static List<string> Deduplicate(List<string> values)
-        => values.Count == 0 ? values : values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        => values.Count == 0 ? values : [.. values.Distinct(StringComparer.OrdinalIgnoreCase)];
 
     private static void ApplyDestination(
         Uri destination,

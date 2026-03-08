@@ -46,18 +46,12 @@ public static class ChannelPresenceByMode
     /// Returns the set of channel IDs present for the given mode of operation.
     /// For Idle/Service, only Machine channel is present.
     /// </summary>
-    public static IReadOnlySet<int> GetChannelsForMode(ModeOfOperation mode)
-    {
-        return PresenceMap.GetValueOrDefault(mode.Value, [Machine]);
-    }
+    public static IReadOnlySet<int> GetChannelsForMode(ModeOfOperation mode) => PresenceMap.GetValueOrDefault(mode.Value, [Machine]);
 
     /// <summary>
     /// Returns the set of channel IDs present for the given treatment modality.
     /// </summary>
-    public static IReadOnlySet<int> GetChannelsForModality(TreatmentModality modality)
-    {
-        return PresenceMap.GetValueOrDefault(modality.Value, [Machine]);
-    }
+    public static IReadOnlySet<int> GetChannelsForModality(TreatmentModality modality) => PresenceMap.GetValueOrDefault(modality.Value, [Machine]);
 
     /// <summary>
     /// Returns true if the channel (1.1.x) is present for the given modality.

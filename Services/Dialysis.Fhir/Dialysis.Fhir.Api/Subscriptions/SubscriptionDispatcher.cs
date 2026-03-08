@@ -53,7 +53,7 @@ public sealed class SubscriptionDispatcher
     private IReadOnlyList<Subscription> GetMatchingSubscriptions(string resourceType)
     {
         IReadOnlyList<Subscription> subscriptions = _store.GetActiveRestHookSubscriptions();
-        return subscriptions.Where(s => MatchesCriteria(s.Criteria, resourceType)).ToList();
+        return [.. subscriptions.Where(s => MatchesCriteria(s.Criteria, resourceType))];
     }
 
     private async Task<Bundle?> FetchResourceBundleAsync(

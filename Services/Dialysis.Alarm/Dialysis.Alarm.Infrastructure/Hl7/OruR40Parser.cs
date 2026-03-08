@@ -18,9 +18,9 @@ public sealed class OruR40Parser : IOruR40MessageParser
     private const char FieldSeparator = '|';
     private const char ComponentSeparator = '^';
 
-    private static readonly string EventPhaseCode = "68481";
-    private static readonly string AlarmStateCode = "68482";
-    private static readonly string ActivityStateCode = "68483";
+    private const string EventPhaseCode = "68481";
+    private const string AlarmStateCode = "68482";
+    private const string ActivityStateCode = "68483";
 
     public OruR40ParseResult Parse(string hl7Message)
     {
@@ -40,8 +40,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
     private static string? ParseDeviceId(string[] segments)
     {
         string? msh = FindFirstSegment(segments, "MSH");
-        if (msh is null) return null;
-        return ExtractField(msh, 2) ?? ExtractField(msh, 3);
+        return msh is null ? null : ExtractField(msh, 2) ?? ExtractField(msh, 3);
     }
 
     private static string? ParseSessionId(string[] segments)
@@ -64,7 +63,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
 
     private static List<AlarmInfo> ParseAlarmGroups(string[] segments, string? deviceId, string? sessionId, DateTimeOffset? messageTimestamp)
     {
-        string[] obxList = segments.Where(s => s.StartsWith("OBX", StringComparison.Ordinal)).ToArray();
+        string[] obxList = [.. segments.Where(s => s.StartsWith("OBX", StringComparison.Ordinal))];
         var alarms = new List<AlarmInfo>();
 
         for (int i = 0; i + 4 < obxList.Length; i += 5)
@@ -74,7 +73,7 @@ public sealed class OruR40Parser : IOruR40MessageParser
                 continue;
 
             DateTimeOffset occurredAt = GetEffectiveTime(obx1, messageTimestamp);
-            DeviceId? deviceIdVo = string.IsNullOrWhiteSpace(deviceId) ? null : (DeviceId?)new DeviceId(deviceId);
+            DeviceId? deviceIdVo = string.IsNullOrWhiteSpace(deviceId) ? null : new DeviceId(deviceId);
             SessionId? sessionIdVo = string.IsNullOrWhiteSpace(sessionId) ? null : new SessionId(sessionId);
 
             AlarmCreateParams finalParams = createParams with { OccurredAt = occurredAt, DeviceId = deviceIdVo, SessionId = sessionIdVo };
@@ -160,12 +159,18 @@ public sealed class OruR40Parser : IOruR40MessageParser
         foreach (string code in codes)
         {
             string c = code.Trim();
-            if (c is "PH" or "PM" or "PL" or "PI" or "PN" or "PU")
-                priority = new AlarmPriority(c);
-            else if (c is "SP" or "ST" or "SA")
-                interpretationType = c;
-            else if (c is "L" or "H")
-                abnormality = c;
+            switch (c)
+            {
+                case "PH" or "PM" or "PL" or "PI" or "PN" or "PU":
+                    priority = new AlarmPriority(c);
+                    break;
+                case "SP" or "ST" or "SA":
+                    interpretationType = c;
+                    break;
+                case "L" or "H":
+                    abnormality = c;
+                    break;
+            }
         }
 
         return (priority, interpretationType, abnormality);
@@ -215,11 +220,16 @@ public sealed class OruR40Parser : IOruR40MessageParser
     {
         int idx = raw.LastIndexOf('+');
         if (idx < 0) idx = raw.LastIndexOf('-');
-        if (idx >= 0 && idx + 5 <= raw.Length && char.IsDigit(raw[idx + 1]))
+        switch (idx)
         {
-            string tz = raw[idx..];
-            if (tz.Length == 5 && char.IsDigit(tz[1]) && char.IsDigit(tz[2]) && char.IsDigit(tz[3]) && char.IsDigit(tz[4]))
-                return raw[..idx] + tz[..3] + ":" + tz[3..];
+            case >= 0 when idx + 5 <= raw.Length && char.IsDigit(raw[idx + 1]):
+                {
+                    string tz = raw[idx..];
+                    if (tz.Length == 5 && char.IsDigit(tz[1]) && char.IsDigit(tz[2]) && char.IsDigit(tz[3]) && char.IsDigit(tz[4]))
+                        return raw[..idx] + tz[..3] + ":" + tz[3..];
+
+                    break;
+                }
         }
         return raw;
     }
@@ -230,19 +240,11 @@ public sealed class OruR40Parser : IOruR40MessageParser
         return normalized.Split('\r', StringSplitOptions.RemoveEmptyEntries);
     }
 
-    private static string? FindFirstSegment(string[] segments, string segmentType)
-    {
-        foreach (string seg in segments)
-            if (seg.StartsWith(segmentType + FieldSeparator, StringComparison.Ordinal) || seg.Equals(segmentType, StringComparison.Ordinal))
-                return seg;
-
-        return null;
-    }
+    private static string? FindFirstSegment(string[] segments, string segmentType) => segments.FirstOrDefault(seg => seg.StartsWith(segmentType + FieldSeparator, StringComparison.Ordinal) || seg.Equals(segmentType, StringComparison.Ordinal));
 
     private static string? ExtractField(string segment, int fieldIndex)
     {
         string[] fields = segment.Split(FieldSeparator);
-        if (fieldIndex < 0 || fieldIndex >= fields.Length) return null;
-        return fields[fieldIndex].Trim();
+        return fieldIndex < 0 || fieldIndex >= fields.Length ? null : fields[fieldIndex].Trim();
     }
 }

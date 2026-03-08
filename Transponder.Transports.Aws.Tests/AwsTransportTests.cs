@@ -15,9 +15,7 @@ public sealed class AwsTransportTests
         public IReadOnlyDictionary<string, object?> Settings { get; } = new Dictionary<string, object?>();
     }
 
-    private sealed class SampleMessage
-    {
-    }
+    private sealed class SampleMessage;
 
     [Fact]
     public void AwsTopology_Uses_Path_For_Queue_Name()

@@ -73,7 +73,7 @@ public sealed class DevicesController : ControllerBase
         var bundle = new Hl7.Fhir.Model.Bundle
         {
             Type = Hl7.Fhir.Model.Bundle.BundleType.Collection,
-            Entry = response.Devices.Select(d =>
+            Entry = [.. response.Devices.Select(d =>
             {
                 Hl7.Fhir.Model.Device fhir = DeviceMapper.ToFhirDevice(d.DeviceEui64, d.Manufacturer, d.Model);
                 fhir.Id = d.Id;
@@ -82,7 +82,7 @@ public sealed class DevicesController : ControllerBase
                     FullUrl = $"Device/{d.Id}",
                     Resource = fhir
                 };
-            }).ToList()
+            })]
         };
         string json = FhirJsonHelper.ToJson(bundle);
         return Content(json, "application/fhir+json");

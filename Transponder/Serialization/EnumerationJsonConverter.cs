@@ -10,10 +10,7 @@ public sealed class EnumerationJsonConverterFactory : JsonConverterFactory
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        Type? enumerationBase = FindEnumerationBaseType(typeToConvert);
-        if (enumerationBase == null)
-            throw new InvalidOperationException($"Type '{typeToConvert.Name}' does not derive from Enumeration<T>.");
-
+        Type? enumerationBase = FindEnumerationBaseType(typeToConvert) ?? throw new InvalidOperationException($"Type '{typeToConvert.Name}' does not derive from Enumeration<T>.");
         Type idType = enumerationBase.GetGenericArguments()[0];
         Type converterType = typeof(EnumerationJsonConverter<,>).MakeGenericType(typeToConvert, idType);
 

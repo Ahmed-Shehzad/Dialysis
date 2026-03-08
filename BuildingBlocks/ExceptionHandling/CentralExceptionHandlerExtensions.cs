@@ -31,8 +31,5 @@ public static class CentralExceptionHandlerExtensions
     /// Uses the central exception handler pipeline. Returns application/problem+json for all exceptions.
     /// Requires AddCentralExceptionHandler() to be called.
     /// </summary>
-    public static IApplicationBuilder UseCentralExceptionHandler(this IApplicationBuilder app)
-    {
-        return app.UseExceptionHandler(_ => { });
-    }
+    public static IApplicationBuilder UseCentralExceptionHandler(this IApplicationBuilder app) => app.UseExceptionHandler(_ => { });
 }

@@ -15,9 +15,7 @@ public sealed class AzureServiceBusTransportTests
         public IReadOnlyDictionary<string, object?> Settings { get; } = new Dictionary<string, object?>();
     }
 
-    private sealed class SampleMessage
-    {
-    }
+    private sealed class SampleMessage;
 
     [Fact]
     public void AzureServiceBusTopology_Resolves_Queue_And_Subscription()

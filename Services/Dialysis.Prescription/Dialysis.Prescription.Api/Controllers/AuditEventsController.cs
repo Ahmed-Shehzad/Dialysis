@@ -33,13 +33,12 @@ public sealed class AuditEventsController : ControllerBase
         var bundle = new Bundle
         {
             Type = Bundle.BundleType.Collection,
-            Entry = records
+            Entry = [.. records
                 .Select((r, i) => new Bundle.EntryComponent
                 {
                     FullUrl = $"urn:uuid:audit-{i}-{Guid.NewGuid():N}",
                     Resource = AuditEventMapper.ToFhirAuditEvent(r, "dialysis-prescription-api")
-                })
-                .ToList()
+                })]
         };
 
         string json = FhirJsonHelper.ToJson(bundle);

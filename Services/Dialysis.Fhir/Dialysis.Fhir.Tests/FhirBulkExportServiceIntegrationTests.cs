@@ -122,8 +122,8 @@ public sealed class FhirBulkExportServiceIntegrationTests
 
         bundle.Type.ShouldBe(Bundle.BundleType.Searchset);
         bundle.Entry.ShouldNotBeEmpty();
-        bundle.Entry[0].Resource.ShouldBeOfType<Hl7.Fhir.Model.Device>();
-        ((Hl7.Fhir.Model.Device)bundle.Entry[0].Resource!).Id.ShouldBe("dev-1");
+        bundle.Entry[0].Resource.ShouldBeOfType<Device>();
+        ((Device)bundle.Entry[0].Resource!).Id.ShouldBe("dev-1");
     }
 
     [Fact]

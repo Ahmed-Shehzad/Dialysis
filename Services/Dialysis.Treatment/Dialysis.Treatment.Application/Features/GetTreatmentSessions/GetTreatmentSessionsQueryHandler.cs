@@ -30,7 +30,7 @@ public sealed class GetTreatmentSessionsQueryHandler : IQueryHandler<GetTreatmen
             s.Status,
             s.StartedAt,
             s.EndedAt,
-            s.Observations.ToList())).ToList();
+            [.. s.Observations])).ToList();
         return new GetTreatmentSessionsResponse(summaries);
     }
 }

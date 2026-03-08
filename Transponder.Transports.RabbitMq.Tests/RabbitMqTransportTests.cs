@@ -15,9 +15,7 @@ public sealed class RabbitMqTransportTests
         public IReadOnlyDictionary<string, object?> Settings { get; } = new Dictionary<string, object?>();
     }
 
-    private sealed class SampleMessage
-    {
-    }
+    private sealed class SampleMessage;
 
     [Fact]
     public void RabbitMqTopology_Uses_Defaults()

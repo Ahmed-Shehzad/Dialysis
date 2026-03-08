@@ -7,7 +7,10 @@ namespace Dialysis.Device.Tests;
 /// </summary>
 public static class DeviceTestData
 {
-    static DeviceTestData() => Randomizer.Seed = new Random(42);
+    static DeviceTestData()
+    {
+        Randomizer.Seed = new Random(42);
+    }
 
     private static readonly Faker Faker = new();
 

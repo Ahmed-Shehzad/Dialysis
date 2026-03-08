@@ -32,14 +32,13 @@ public sealed partial class OruR01Parser : IOruMessageParser
 
         EventPhase? phase = !string.IsNullOrEmpty(eventPhaseStr) ? new EventPhase(eventPhaseStr) : null;
 
-        string? deviceId = sendingApp;
         string? eui64 = deviceEui64 ?? sendingApp;
         List<ObservationInfo> observations = ParseAllObx(segments);
 
         return new OruParseResult(
             new SessionId(sessionId),
             !string.IsNullOrWhiteSpace(patientMrn) ? new MedicalRecordNumber(patientMrn) : null,
-            !string.IsNullOrWhiteSpace(deviceId) ? new DeviceId(deviceId) : null,
+            !string.IsNullOrWhiteSpace(sendingApp) ? new DeviceId(sendingApp) : null,
             phase,
             sendingApp,
             sendingFacility,

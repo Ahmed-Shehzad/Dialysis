@@ -17,7 +17,7 @@ public sealed class SseClientRegistry
         new(StringComparer.OrdinalIgnoreCase);
 
     public IReadOnlyCollection<SseClientConnection> GetAll()
-        => _connections.Values.ToList();
+        => [.. _connections.Values];
 
     public bool TryGet(string connectionId, out SseClientConnection? connection)
         => _connections.TryGetValue(connectionId, out connection);
@@ -107,10 +107,10 @@ public sealed class SseClientRegistry
         IEnumerable<SseClientConnection> connections,
         IReadOnlyList<string> excludedConnectionIds)
     {
-        if (excludedConnectionIds.Count == 0) return connections.ToList();
+        if (excludedConnectionIds.Count == 0) return [.. connections];
 
         var excluded = new HashSet<string>(excludedConnectionIds, StringComparer.OrdinalIgnoreCase);
-        return connections.Where(connection => !excluded.Contains(connection.Id)).ToList();
+        return [.. connections.Where(connection => !excluded.Contains(connection.Id))];
     }
 
     private static void AddIndex(

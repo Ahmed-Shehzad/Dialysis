@@ -11,7 +11,10 @@ public sealed class EntityFrameworkOutboxStoreTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public EntityFrameworkOutboxStoreTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public EntityFrameworkOutboxStoreTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task GetPendingAsync_Returns_Unsent_MessagesAsync()

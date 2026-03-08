@@ -31,10 +31,7 @@ public sealed class MdcToObxSubIdCatalogTests
     }
 
     [Fact]
-    public void GetOrDefault_KnownCode_ReturnsMappedSubId()
-    {
-        MdcToObxSubIdCatalog.GetOrDefault("MDC_HDIALY_UF_MODE").ShouldBe("1.1.9.1");
-    }
+    public void GetOrDefault_KnownCode_ReturnsMappedSubId() => MdcToObxSubIdCatalog.GetOrDefault("MDC_HDIALY_UF_MODE").ShouldBe("1.1.9.1");
 
     [Fact]
     public void GetOrDefault_UnknownCode_ReturnsDefault()

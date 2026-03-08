@@ -17,8 +17,5 @@ internal static class ProfileSettingListValueComparer
         return PrescriptionSettingsSerializer.ToJson(a) == PrescriptionSettingsSerializer.ToJson(b);
     }
 
-    private static int ComputeHashCode(List<ProfileSetting>? c)
-    {
-        return c == null ? 0 : PrescriptionSettingsSerializer.ToJson(c).GetHashCode();
-    }
+    private static int ComputeHashCode(List<ProfileSetting>? c) => c == null ? 0 : PrescriptionSettingsSerializer.ToJson(c).GetHashCode();
 }

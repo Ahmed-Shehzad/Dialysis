@@ -94,7 +94,7 @@ internal sealed class PreAssessmentConfiguration : IEntityTypeConfiguration<PreA
         _ = e.Property(x => x.PreWeightKg).HasPrecision(10, 2);
         _ = e.Property(x => x.AccessTypeValue).HasConversion(
             v => v.HasValue ? v.Value.Value : null,
-            v => !string.IsNullOrEmpty(v) ? new AccessType(v) : (AccessType?)null);
+            v => !string.IsNullOrEmpty(v) ? new AccessType(v) : null);
         _ = e.Property(x => x.PainSymptomNotes).HasMaxLength(2000);
         _ = e.Property(x => x.RecordedBy).HasMaxLength(200);
         _ = e.HasIndex(x => new { x.TenantId, x.SessionId }).IsUnique();

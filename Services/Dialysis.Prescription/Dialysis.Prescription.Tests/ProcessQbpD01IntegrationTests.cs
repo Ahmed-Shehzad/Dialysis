@@ -28,7 +28,10 @@ public sealed class ProcessQbpD01IntegrationTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public ProcessQbpD01IntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public ProcessQbpD01IntegrationTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task RoundTrip_PrescriptionExists_ReturnsRspK22WithPrescriptionAsync()

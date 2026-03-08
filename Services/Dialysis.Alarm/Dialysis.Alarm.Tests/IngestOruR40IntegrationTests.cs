@@ -23,7 +23,10 @@ public sealed class IngestOruR40IntegrationTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public IngestOruR40IntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public IngestOruR40IntegrationTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task IngestOruR40_ParsesAndStoresAlarm_RetrievableViaReadStoreAsync()

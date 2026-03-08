@@ -21,7 +21,10 @@ public sealed class DeviceRepositoryTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public DeviceRepositoryTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public DeviceRepositoryTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task RegisterAndGet_Device_ReturnsDeviceAsync()

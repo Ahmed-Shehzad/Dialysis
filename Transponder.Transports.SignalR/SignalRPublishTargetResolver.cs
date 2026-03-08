@@ -70,7 +70,7 @@ internal static class SignalRPublishTargetResolver
             }
         }
 
-        return values.Count == 0 ? values : values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return values.Count == 0 ? values : [.. values.Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static void AddDelimited(List<string> values, string? raw)
@@ -83,7 +83,7 @@ internal static class SignalRPublishTargetResolver
     }
 
     private static List<string> Deduplicate(List<string> values)
-        => values.Count == 0 ? values : values.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        => values.Count == 0 ? values : [.. values.Distinct(StringComparer.OrdinalIgnoreCase)];
 
     private static void ApplyDestination(
         Uri destination,

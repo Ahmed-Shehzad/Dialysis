@@ -9,7 +9,7 @@ public abstract class BaseEntity
     public bool IsDeleted { get; private set; } = false;
 
     public void ApplyCreatedDateTime() => CreatedAtUtc = DateTime.UtcNow;
-    public void ApplyUpdateDateTime() => UpdatedAtUtc = DateTime.UtcNow;
+    protected void ApplyUpdateDateTime() => UpdatedAtUtc = DateTime.UtcNow;
 
     public void ApplySoftDelete()
     {

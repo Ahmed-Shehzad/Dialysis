@@ -18,7 +18,10 @@ public sealed class FhirSubscriptionsController : ControllerBase
 {
     private readonly ISubscriptionStore _store;
 
-    public FhirSubscriptionsController(ISubscriptionStore store) => _store = store;
+    public FhirSubscriptionsController(ISubscriptionStore store)
+    {
+        _store = store;
+    }
 
     [HttpPost]
     [Produces("application/fhir+json", "application/json")]

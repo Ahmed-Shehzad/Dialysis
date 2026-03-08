@@ -23,7 +23,10 @@ public sealed class QbpQ22ToRspK22IntegrationTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public QbpQ22ToRspK22IntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public QbpQ22ToRspK22IntegrationTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task QbpQ22_RegisteredPatient_ReturnsRspK22WithPidAsync()

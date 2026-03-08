@@ -16,7 +16,10 @@ public sealed class PrescriptionControllerApiTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public PrescriptionControllerApiTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public PrescriptionControllerApiTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task Health_ReturnsOkAsync()

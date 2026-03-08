@@ -31,7 +31,10 @@ public sealed class IngestRspK22ConflictTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public IngestRspK22ConflictTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public IngestRspK22ConflictTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task Callback_WhenConflict_ThrowsPrescriptionConflictExceptionWithCallbackPhoneAsync()

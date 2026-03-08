@@ -51,7 +51,7 @@ internal sealed class AlarmEscalationTriggeredEventConsumer : IIntegrationEventH
             parts.Add("sessionId=" + Uri.EscapeDataString(notification.SessionId));
         string queryString = parts.Count > 0 ? string.Join("&", parts) : "";
         string resourceUrl = baseUrl.TrimEnd('/') + "/api/alarms/fhir" + (string.IsNullOrEmpty(queryString) ? "" : "?" + queryString);
-        string? auth = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
+        string? auth = _httpContextAccessor.HttpContext?.Request.Headers.Authorization.FirstOrDefault();
 
         await _notifyClient.NotifyAsync(
             "DetectedIssue",

@@ -14,8 +14,5 @@ public static class TimeSyncHealthCheckExtensions
     /// Adds <see cref="NtpSyncHealthCheck"/> to verify system clock is NTP-synchronized (IHE Consistent Time).
     /// Returns Degraded (not Unhealthy) when status is unknown or not synced.
     /// </summary>
-    public static IHealthChecksBuilder AddNtpSyncCheck(this IHealthChecksBuilder builder)
-    {
-        return builder.AddCheck<NtpSyncHealthCheck>(NtpSyncCheckName, failureStatus: HealthStatus.Degraded);
-    }
+    public static IHealthChecksBuilder AddNtpSyncCheck(this IHealthChecksBuilder builder) => builder.AddCheck<NtpSyncHealthCheck>(NtpSyncCheckName, failureStatus: HealthStatus.Degraded);
 }

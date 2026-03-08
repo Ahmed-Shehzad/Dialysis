@@ -26,14 +26,14 @@ internal static class PrescriptionSettingsSerializer
         if (string.IsNullOrEmpty(json)) return [];
         List<SettingDto>? dtos = JsonSerializer.Deserialize<List<SettingDto>>(json, Options);
         if (dtos is null) return [];
-        return dtos.Select(FromDto).ToList();
+        return [.. dtos.Select(FromDto)];
     }
 
     private static SettingDto ToDto(ProfileSetting s)
     {
         ProfileDescriptorDto? p = s.Profile is null ? null : new ProfileDescriptorDto(
             s.Profile.Type.Value,
-            s.Profile.Values.ToList(),
+            [.. s.Profile.Values],
             s.Profile.Times?.ToList(),
             s.Profile.HalfTimeMinutes,
             s.Profile.VendorName);

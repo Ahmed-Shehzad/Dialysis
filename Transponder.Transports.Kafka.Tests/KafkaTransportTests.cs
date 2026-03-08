@@ -15,9 +15,7 @@ public sealed class KafkaTransportTests
         public IReadOnlyDictionary<string, object?> Settings { get; } = new Dictionary<string, object?>();
     }
 
-    private sealed class SampleMessage
-    {
-    }
+    private sealed class SampleMessage;
 
     [Fact]
     public void KafkaTopology_Uses_Address_For_Topic_And_Group()

@@ -170,4 +170,4 @@ app.MapControllers();
 
 await app.RunAsync();
 
-namespace Dialysis.Treatment.Api { public partial class Program { } }
+namespace Dialysis.Treatment.Api { public partial class Program; }

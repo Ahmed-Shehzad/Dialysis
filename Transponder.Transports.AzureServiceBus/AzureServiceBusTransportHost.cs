@@ -32,19 +32,11 @@ public sealed class AzureServiceBusTransportHost : TransportHostBase
                 : ServiceBusTransportType.AmqpTcp
         };
 
-        if (!string.IsNullOrWhiteSpace(settings.ConnectionString))
-        {
-            _client = new ServiceBusClient(settings.ConnectionString, options);
-        }
-        else if (!string.IsNullOrWhiteSpace(settings.FullyQualifiedNamespace) && settings.Credential is not null)
-        {
-            _client = new ServiceBusClient(settings.FullyQualifiedNamespace, settings.Credential, options);
-        }
+        if (!string.IsNullOrWhiteSpace(settings.ConnectionString)) _client = new ServiceBusClient(settings.ConnectionString, options);
+        else if (!string.IsNullOrWhiteSpace(settings.FullyQualifiedNamespace) && settings.Credential is not null) _client = new ServiceBusClient(settings.FullyQualifiedNamespace, settings.Credential, options);
         else
-        {
             throw new InvalidOperationException(
                 "Azure Service Bus requires either ConnectionString or (FullyQualifiedNamespace + Credential) for passwordless auth.");
-        }
     }
 
     public IAzureServiceBusHostSettings Settings { get; }

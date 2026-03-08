@@ -88,7 +88,7 @@ public sealed class RequestClientTests
             _logger);
 
         // Act - Call multiple times concurrently
-        Task[] tasks = Enumerable.Range(0, 10)
+        Task[] tasks = [.. Enumerable.Range(0, 10)
             .Select(_ => Task.Run(async () =>
             {
                 try
@@ -99,8 +99,7 @@ public sealed class RequestClientTests
                 {
                     // Expected to timeout
                 }
-            }))
-            .ToArray();
+            }))];
 
         await Task.WhenAll(tasks);
 

@@ -47,12 +47,8 @@ internal class Sender : ISender
     private async static Task<TResponse> InvokeHandlerAsync<TResponse>(object handler, IRequest<TResponse> request, CancellationToken cancellationToken)
     {
         const string methodName = "HandleAsync";
-        MethodInfo? method = handler.GetType().GetMethod(methodName, [request.GetType(), typeof(CancellationToken)]);
-        if (method is null)
-            throw new InvalidOperationException($"Handler {handler.GetType().Name} does not implement {methodName}(request, cancellationToken).");
-        var task = (Task?)method.Invoke(handler, [request, cancellationToken]);
-        if (task is null)
-            throw new InvalidOperationException($"Handler {handler.GetType().Name}.{methodName} returned null.");
+        MethodInfo? method = handler.GetType().GetMethod(methodName, [request.GetType(), typeof(CancellationToken)]) ?? throw new InvalidOperationException($"Handler {handler.GetType().Name} does not implement {methodName}(request, cancellationToken).");
+        var task = (Task?)method.Invoke(handler, [request, cancellationToken]) ?? throw new InvalidOperationException($"Handler {handler.GetType().Name}.{methodName} returned null.");
         await task;
         return ((dynamic)task).Result;
     }
@@ -60,12 +56,8 @@ internal class Sender : ISender
     private async static Task<TResponse> InvokeBehaviorAsync<TResponse>(object behavior, IRequest<TResponse> request, Func<Task<TResponse>> next, CancellationToken cancellationToken)
     {
         const string methodName = "HandleAsync";
-        MethodInfo? method = behavior.GetType().GetMethod(methodName, [request.GetType(), typeof(Func<Task<TResponse>>), typeof(CancellationToken)]);
-        if (method is null)
-            throw new InvalidOperationException($"Behavior {behavior.GetType().Name} does not implement {methodName}(request, next, cancellationToken).");
-        var task = (Task?)method.Invoke(behavior, [request, next, cancellationToken]);
-        if (task is null)
-            throw new InvalidOperationException($"Behavior {behavior.GetType().Name}.{methodName} returned null.");
+        MethodInfo? method = behavior.GetType().GetMethod(methodName, [request.GetType(), typeof(Func<Task<TResponse>>), typeof(CancellationToken)]) ?? throw new InvalidOperationException($"Behavior {behavior.GetType().Name} does not implement {methodName}(request, next, cancellationToken).");
+        var task = (Task?)method.Invoke(behavior, [request, next, cancellationToken]) ?? throw new InvalidOperationException($"Behavior {behavior.GetType().Name}.{methodName} returned null.");
         await task;
         return ((dynamic)task).Result;
     }

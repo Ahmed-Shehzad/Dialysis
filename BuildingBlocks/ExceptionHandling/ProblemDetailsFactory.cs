@@ -52,7 +52,7 @@ public static class ProblemDetailsFactory
             Status = StatusCodes.Status400BadRequest,
             Detail = validationException.Message,
             Instance = httpContext.Request.Path,
-            Extensions = { [ErrorsKey] = validationException.Errors.Select(e => new { e.PropertyName, ErrorMessage = e.ErrorMessage }).ToArray() },
+            Extensions = { [ErrorsKey] = validationException.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }).ToArray() },
         };
         AddTraceId(httpContext, problem);
         if (includeStackTrace)

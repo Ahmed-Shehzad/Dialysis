@@ -76,7 +76,7 @@ public sealed class ReportsAggregationService
                 continue;
             try
             {
-                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                using var doc = JsonDocument.Parse(json);
                 if (doc.RootElement.TryGetProperty("entry", out JsonElement entries))
                 {
                     if (entries.GetArrayLength() == 0)

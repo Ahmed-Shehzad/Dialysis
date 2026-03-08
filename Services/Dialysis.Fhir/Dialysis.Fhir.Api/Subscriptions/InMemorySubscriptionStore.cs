@@ -29,18 +29,14 @@ public sealed class InMemorySubscriptionStore : ISubscriptionStore
             return _store.Remove(id);
     }
 
-    private static bool IsRestHook(Subscription s)
-    {
-        return s.Channel?.Type == Subscription.SubscriptionChannelType.RestHook;
-    }
+    private static bool IsRestHook(Subscription s) => s.Channel?.Type == Subscription.SubscriptionChannelType.RestHook;
 
     public IReadOnlyList<Subscription> GetActiveRestHookSubscriptions()
     {
         lock (_store)
-            return _store.Values
+            return [.. _store.Values
                 .Where(s => s.Status == Subscription.SubscriptionStatus.Active
                             && IsRestHook(s)
-                            && !string.IsNullOrEmpty(s.Channel?.Endpoint))
-                .ToList();
+                            && !string.IsNullOrEmpty(s.Channel?.Endpoint))];
     }
 }

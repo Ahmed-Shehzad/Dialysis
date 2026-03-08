@@ -28,10 +28,7 @@ internal sealed class SignTreatmentSessionCommandHandler : ICommandHandler<SignT
 
     public async Task<SignTreatmentSessionResponse> HandleAsync(SignTreatmentSessionCommand request, CancellationToken cancellationToken = default)
     {
-        TreatmentSession? session = await _repository.GetBySessionIdForUpdateAsync(request.SessionId, cancellationToken);
-        if (session is null)
-            throw new KeyNotFoundException($"Treatment session {request.SessionId.Value} not found.");
-
+        TreatmentSession? session = await _repository.GetBySessionIdForUpdateAsync(request.SessionId, cancellationToken) ?? throw new KeyNotFoundException($"Treatment session {request.SessionId.Value} not found.");
         session.Sign(request.SignedBy);
         _repository.Update(session);
         await _repository.SaveChangesAsync(cancellationToken);

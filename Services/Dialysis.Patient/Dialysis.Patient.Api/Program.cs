@@ -107,4 +107,4 @@ app.MapControllers();
 
 await app.RunAsync();
 
-namespace Dialysis.Patient.Api { public partial class Program { } }
+namespace Dialysis.Patient.Api { public partial class Program; }

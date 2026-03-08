@@ -31,19 +31,25 @@ public sealed class AlarmReadStore : IAlarmReadStore
         IQueryable<AlarmReadModel> query = _db.Alarms
             .AsNoTracking()
             .Where(a => a.TenantId == tenantId);
+
         if (deviceId is not null)
             query = query.Where(a => a.DeviceId == deviceId.Value);
+
         if (!string.IsNullOrEmpty(sessionId))
             query = query.Where(a => a.SessionId == sessionId);
+
         if (fromUtc is not null)
             query = query.Where(a => a.OccurredAt >= fromUtc.Value);
+
         if (toUtc is not null)
             query = query.Where(a => a.OccurredAt <= toUtc.Value);
 
-        List<AlarmReadModel> list = await query
+        List<AlarmReadDto> list = await query
             .OrderByDescending(a => a.OccurredAt)
+            .Select(x => ToDto(x))
             .ToListAsync(cancellationToken);
-        return list.Select(ToDto).ToList();
+
+        return list;
     }
 
     private static AlarmReadDto ToDto(AlarmReadModel m) =>

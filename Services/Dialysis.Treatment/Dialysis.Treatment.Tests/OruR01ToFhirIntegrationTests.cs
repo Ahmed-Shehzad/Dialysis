@@ -38,7 +38,10 @@ public sealed class OruR01ToFhirIntegrationTests
 {
     private readonly PostgreSqlFixture _fixture;
 
-    public OruR01ToFhirIntegrationTests(PostgreSqlFixture fixture) => _fixture = fixture;
+    public OruR01ToFhirIntegrationTests(PostgreSqlFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public async Task OruR01_IngestAndRecord_ProducesFhirBundleWithProcedureAndObservationsAsync()
@@ -181,7 +184,10 @@ public sealed class OruR01ToFhirIntegrationTests
     {
         private readonly ITreatmentSessionRepository _repository;
 
-        public Sender(ITreatmentSessionRepository repository) => _repository = repository;
+        public Sender(ITreatmentSessionRepository repository)
+        {
+            _repository = repository;
+        }
 
         public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {
