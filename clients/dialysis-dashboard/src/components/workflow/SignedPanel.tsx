@@ -44,11 +44,11 @@ function ReadOnlyField({
     label,
     value,
     unit,
-}: {
+}: Readonly<{
     label: string;
     value: string;
     unit?: string;
-}) {
+}>) {
     return (
         <div>
             <span className="text-xs font-medium text-slate-600">{label}</span>

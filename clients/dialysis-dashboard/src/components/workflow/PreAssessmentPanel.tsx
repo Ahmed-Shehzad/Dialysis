@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useId, useState } from "react";
+import type { SubmitEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { recordPreAssessment } from "../../api";
 import type { PreAssessmentContext } from "../../types";
@@ -12,28 +13,28 @@ interface PreAssessmentPanelProps {
     onSessionSelect?: (sessionId: string | null) => void;
 }
 
-export function PreAssessmentPanel({
+export function PreAssessmentPanel(props: Readonly<PreAssessmentPanelProps>) {
+    const formInstanceKey = `${props.sessionId ?? "no-session"}-${props.preAssessment?.recordedAt ?? "new"}`;
+    return <PreAssessmentPanelInner key={formInstanceKey} {...props} />;
+}
+
+function PreAssessmentPanelInner({
     sessionId,
     preAssessment,
 }: Readonly<PreAssessmentPanelProps>) {
     const queryClient = useQueryClient();
+    const formFieldIdsPrefix = useId();
+    const preWeightFieldId = `${formFieldIdsPrefix}-pre-weight`;
+    const bpSystolicFieldId = `${formFieldIdsPrefix}-bp-systolic`;
+    const bpDiastolicFieldId = `${formFieldIdsPrefix}-bp-diastolic`;
+    const accessTypeFieldId = `${formFieldIdsPrefix}-access-type`;
+    const painNotesFieldId = `${formFieldIdsPrefix}-pain-notes`;
     const [preWeightKg, setPreWeightKg] = useState<string>(preAssessment?.preWeightKg?.toString() ?? "");
     const [bpSystolic, setBpSystolic] = useState<string>(preAssessment?.bpSystolic?.toString() ?? "");
     const [bpDiastolic, setBpDiastolic] = useState<string>(preAssessment?.bpDiastolic?.toString() ?? "");
     const [accessType, setAccessType] = useState<string>(preAssessment?.accessTypeValue ?? "");
     const [prescriptionConfirmed, setPrescriptionConfirmed] = useState<boolean>(preAssessment?.prescriptionConfirmed ?? false);
     const [painNotes, setPainNotes] = useState<string>(preAssessment?.painSymptomNotes ?? "");
-
-    useEffect(() => {
-        if (preAssessment) {
-            setPreWeightKg(preAssessment.preWeightKg?.toString() ?? "");
-            setBpSystolic(preAssessment.bpSystolic?.toString() ?? "");
-            setBpDiastolic(preAssessment.bpDiastolic?.toString() ?? "");
-            setAccessType(preAssessment.accessTypeValue ?? "");
-            setPrescriptionConfirmed(preAssessment.prescriptionConfirmed ?? false);
-            setPainNotes(preAssessment.painSymptomNotes ?? "");
-        }
-    }, [preAssessment]);
 
     const recordMutation = useMutation({
         mutationFn: () =>
@@ -51,7 +52,7 @@ export function PreAssessmentPanel({
     });
 
     const handleSubmit = useCallback(
-        (e: React.FormEvent) => {
+        (e: SubmitEvent<HTMLFormElement>) => {
             e.preventDefault();
             if (!sessionId) return;
             recordMutation.mutate();
@@ -70,8 +71,11 @@ export function PreAssessmentPanel({
             </div>
             <form onSubmit={handleSubmit} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                    <label className="block text-xs font-medium text-amber-800">Pre-weight (kg)</label>
+                    <label htmlFor={preWeightFieldId} className="block text-xs font-medium text-amber-800">
+                        Pre-weight (kg)
+                    </label>
                     <input
+                        id={preWeightFieldId}
                         type="number"
                         step="0.1"
                         value={preWeightKg}
@@ -81,8 +85,11 @@ export function PreAssessmentPanel({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-amber-800">BP systolic (mmHg)</label>
+                    <label htmlFor={bpSystolicFieldId} className="block text-xs font-medium text-amber-800">
+                        BP systolic (mmHg)
+                    </label>
                     <input
+                        id={bpSystolicFieldId}
                         type="number"
                         value={bpSystolic}
                         onChange={(e) => setBpSystolic(e.target.value)}
@@ -91,8 +98,11 @@ export function PreAssessmentPanel({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-amber-800">BP diastolic (mmHg)</label>
+                    <label htmlFor={bpDiastolicFieldId} className="block text-xs font-medium text-amber-800">
+                        BP diastolic (mmHg)
+                    </label>
                     <input
+                        id={bpDiastolicFieldId}
                         type="number"
                         value={bpDiastolic}
                         onChange={(e) => setBpDiastolic(e.target.value)}
@@ -101,8 +111,11 @@ export function PreAssessmentPanel({
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-amber-800">Access type</label>
+                    <label htmlFor={accessTypeFieldId} className="block text-xs font-medium text-amber-800">
+                        Access type
+                    </label>
                     <select
+                        id={accessTypeFieldId}
                         value={accessType}
                         onChange={(e) => setAccessType(e.target.value)}
                         className="mt-0.5 w-full rounded border border-amber-300 bg-white px-2 py-1.5 text-sm"
@@ -116,8 +129,11 @@ export function PreAssessmentPanel({
                     </select>
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-amber-800">Pain / symptom check</label>
+                    <label htmlFor={painNotesFieldId} className="block text-xs font-medium text-amber-800">
+                        Pain / symptom check
+                    </label>
                     <input
+                        id={painNotesFieldId}
                         type="text"
                         value={painNotes}
                         onChange={(e) => setPainNotes(e.target.value)}

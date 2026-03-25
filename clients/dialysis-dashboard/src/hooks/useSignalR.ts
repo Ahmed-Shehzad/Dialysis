@@ -15,7 +15,8 @@ function decodeEnvelopeBody(body: number[] | string): unknown {
     if (typeof body === "string") {
         const binary = atob(body);
         bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        for (let i = 0; i < binary.length; i++)
+            bytes[i] = binary.codePointAt(i) ?? 0;
     } else {
         bytes = new Uint8Array(body);
     }
@@ -34,9 +35,10 @@ function parseObservationMessage(
         typeof obj.code === "string"
     ) {
         return {
-            sessionId: obj.sessionId as string,
-            observationId: (obj.observationId ?? "") as string,
-            code: obj.code as string,
+            sessionId: obj.sessionId,
+            observationId:
+                typeof obj.observationId === "string" ? obj.observationId : "",
+            code: obj.code,
             value: obj.value as string | undefined,
             unit: obj.unit as string | undefined,
             subId: obj.subId as string | undefined,
@@ -50,13 +52,16 @@ function parseAlarmMessage(data: unknown): AlarmRecordedMessage | null {
     const obj = data as Record<string, unknown>;
     if (obj && typeof obj.alarmId === "string") {
         return {
-            alarmId: obj.alarmId as string,
-            alarmType: obj.alarmType as string | undefined,
-            eventPhase: (obj.eventPhase ?? "") as string,
-            alarmState: (obj.alarmState ?? "") as string,
-            deviceId: obj.deviceId as string | undefined,
-            sessionId: obj.sessionId as string | undefined,
-            occurredAt: (obj.occurredAt ?? new Date().toISOString()) as string,
+            alarmId: obj.alarmId,
+            alarmType: typeof obj.alarmType === "string" ? obj.alarmType : undefined,
+            eventPhase: typeof obj.eventPhase === "string" ? obj.eventPhase : "",
+            alarmState: typeof obj.alarmState === "string" ? obj.alarmState : "",
+            deviceId: typeof obj.deviceId === "string" ? obj.deviceId : undefined,
+            sessionId: typeof obj.sessionId === "string" ? obj.sessionId : undefined,
+            occurredAt:
+                typeof obj.occurredAt === "string"
+                    ? obj.occurredAt
+                    : new Date().toISOString(),
         };
     }
     return null;
@@ -118,7 +123,7 @@ export function useSignalR(
                 const msgType = envelope?.messageType ?? "";
                 if (msgType.includes("ObservationRecorded")) {
                     const obs = parseObservationMessage(data);
-                    if (obs && obs.sessionId === sessionId) addObservation(obs);
+                    if (obs?.sessionId === sessionId) addObservation(obs);
                 } else if (msgType.includes("AlarmRecorded")) {
                     const alarm = parseAlarmMessage(data);
                     if (

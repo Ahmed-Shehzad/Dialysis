@@ -2,9 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { completeTreatmentSession, getObservationsInTimeRange } from "../../api";
 import { useSignalR } from "../../hooks/useSignalR";
-import type { TreatmentSessionContext } from "../../types";
+import type { ObservationRecordedMessage, TreatmentSessionContext } from "../../types";
 import { getObsValue, MDC } from "../../utils/observations";
-import type { ObservationRecordedMessage } from "../../types";
 
 interface RunningPanelProps {
     session: TreatmentSessionContext;

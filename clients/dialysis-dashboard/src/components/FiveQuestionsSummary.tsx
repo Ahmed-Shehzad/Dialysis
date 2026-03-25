@@ -70,9 +70,9 @@ export function FiveQuestionsSummary({ sessionId }: Readonly<FiveQuestionsSummar
                 Minimal UI checklist
             </summary>
             <ul className="list-none space-y-1 px-3 pb-2 text-xs">
-                {items.map((item, i) => (
+                {items.map((item) => (
                     <li
-                        key={i}
+                        key={item.q}
                         className={`flex items-center gap-2 ${item.ok ? "text-slate-700" : "text-amber-700"}`}
                     >
                         <span

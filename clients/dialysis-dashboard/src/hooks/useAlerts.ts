@@ -14,7 +14,7 @@ import type { Alert, AlarmContext } from "../types";
 const STORAGE_KEY = "pdms:acknowledged-alerts";
 
 function loadAcknowledged(): Set<string> {
-    if (typeof window === "undefined") return new Set();
+    if (globalThis.window === undefined) return new Set();
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         const ids = stored ? (JSON.parse(stored) as string[]) : [];
@@ -25,7 +25,7 @@ function loadAcknowledged(): Set<string> {
 }
 
 function saveAcknowledged(ids: Set<string>): void {
-    if (typeof window === "undefined") return;
+    if (globalThis.window === undefined) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
 }
 
@@ -42,7 +42,7 @@ function extractDetectedIssues(
     if (!bundle?.entry) return [];
     return bundle.entry
         .map((e) => e.resource)
-        .filter((r): r is DetectedIssueLike => r != null && r.resourceType === "DetectedIssue")
+        .filter((r): r is DetectedIssueLike => r?.resourceType === "DetectedIssue")
         .map((r) => ({
             id: r.id ?? "unknown",
             detail: r.detail,
@@ -73,6 +73,13 @@ function mapCdsToAlerts(
     }));
 }
 
+function alarmPriorityToAlertSeverity(priority: string | undefined): Alert["severity"] {
+    const normalized = priority?.toLowerCase();
+    if (normalized === "high" || normalized === "critical") return "critical";
+    if (normalized === "medium") return "warning";
+    return "info";
+}
+
 function mapAlarmsToAlerts(alarms: AlarmContext[]): Alert[] {
     const active = alarms.filter(
         (a) =>
@@ -82,9 +89,7 @@ function mapAlarmsToAlerts(alarms: AlarmContext[]): Alert[] {
     );
     return active.map((a) => {
         const id = `alarm-${a.id}`;
-        const priority = a.priority?.toLowerCase();
-        const severity: Alert["severity"] =
-            priority === "high" || priority === "critical" ? "critical" : priority === "medium" ? "warning" : "info";
+        const severity = alarmPriorityToAlertSeverity(a.priority);
         return {
             id,
             type: "device-alarm" as const,

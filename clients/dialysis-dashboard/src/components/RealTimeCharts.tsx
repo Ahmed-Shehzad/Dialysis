@@ -109,7 +109,7 @@ function toChartLabel(obs: ObservationRecordedMessage): string {
     const metric = MDC_METRICS[mdcCode] ?? {
         name: (mdcCode.startsWith("MDC_") ? mdcCode.slice(4) : mdcCode)
             .replaceAll("_", " ")
-            .replace(/\b\w/g, (c) => c.toUpperCase()),
+            .replaceAll(/\b\w/g, (c) => c.toUpperCase()),
         description: "",
     };
     const unit = obs.unit?.split("^")[0]?.trim();
@@ -279,7 +279,8 @@ export function RealTimeCharts({
 
     const barChartData = useMemo(() => {
         if (chartData.length === 0 || series.length === 0) return [];
-        const last = chartData[chartData.length - 1];
+        const last = chartData.at(-1);
+        if (last === undefined) return [];
         return series
             .map((s, i) => ({
                 name: s.label.length > 50 ? s.label.slice(0, 47) + "…" : s.label,
@@ -299,9 +300,8 @@ export function RealTimeCharts({
     };
 
     const handleSelectSession = (id: string) => {
-        const value = id || null;
-        setLocalSessionId(value ?? "");
-        onSessionChange?.(value);
+        setLocalSessionId(id);
+        onSessionChange?.(id || null);
         clearData();
     };
 
@@ -561,7 +561,7 @@ export function RealTimeCharts({
                             <code className="bg-gray-200 px-1 rounded">
                                 {activeSessionId}
                             </code>
-                            . Charts appear as data arrives.
+                            {". Charts appear as data arrives."}
                         </p>
                     </div>
                 )}

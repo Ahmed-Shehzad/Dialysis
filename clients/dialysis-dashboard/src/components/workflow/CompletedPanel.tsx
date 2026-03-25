@@ -28,6 +28,14 @@ export function CompletedPanel({
             ? Number(ufActual) - Number(ufTarget)
             : null;
 
+    let ufVarianceDisplay: string;
+    if (ufVariance === null) {
+        ufVarianceDisplay = "—";
+    } else {
+        const signPrefix = ufVariance >= 0 ? "+" : "";
+        ufVarianceDisplay = `${signPrefix}${ufVariance}`;
+    }
+
     return (
         <div className="rounded-lg border border-blue-200 bg-blue-50/30 p-6">
             <div className="mb-4 flex items-center gap-2">
@@ -41,11 +49,7 @@ export function CompletedPanel({
                 <Field label="Final BP" value={bpSys && bpDia ? `${bpSys}/${bpDia}` : "—"} unit="mmHg" />
                 <Field label="UF achieved" value={ufActual ?? "—"} unit="mL" />
                 <Field label="UF target" value={ufTarget ?? "—"} unit="mL" />
-                <Field
-                    label="UF variance"
-                    value={ufVariance != null ? `${ufVariance >= 0 ? "+" : ""}${ufVariance}` : "—"}
-                    unit="mL"
-                />
+                <Field label="UF variance" value={ufVarianceDisplay} unit="mL" />
             </div>
             <div className="mt-6 space-y-4">
                 <div>
@@ -78,11 +82,11 @@ function Field({
     label,
     value,
     unit,
-}: {
+}: Readonly<{
     label: string;
     value: string;
     unit?: string;
-}) {
+}>) {
     return (
         <div>
             <span className="text-xs font-medium text-blue-800">{label}</span>
