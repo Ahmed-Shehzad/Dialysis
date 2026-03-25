@@ -1,5 +1,17 @@
 namespace Dialysis.Treatment.Application.Abstractions;
 
+public sealed record RecordAlarmFromThresholdBreachClientRequest(
+    string SessionId,
+    string? DeviceId,
+    string BreachType,
+    string Code,
+    double ObservedValue,
+    double ThresholdValue,
+    string Direction,
+    string TreatmentSessionId,
+    string ObservationId,
+    string? TenantId);
+
 /// <summary>
 /// Client for creating alarms from threshold breaches (cross-context: Treatment → Alarm).
 /// When AlarmApi:BaseUrl is not configured, implementations may no-op.
@@ -7,15 +19,6 @@ namespace Dialysis.Treatment.Application.Abstractions;
 public interface IAlarmApiClient
 {
     Task<bool> RecordFromThresholdBreachAsync(
-        string sessionId,
-        string? deviceId,
-        string breachType,
-        string code,
-        double observedValue,
-        double thresholdValue,
-        string direction,
-        string treatmentSessionId,
-        string observationId,
-        string? tenantId,
+        RecordAlarmFromThresholdBreachClientRequest request,
         CancellationToken cancellationToken = default);
 }

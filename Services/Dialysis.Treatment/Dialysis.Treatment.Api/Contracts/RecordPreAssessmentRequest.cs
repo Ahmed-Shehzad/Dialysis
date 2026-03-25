@@ -5,6 +5,6 @@ public sealed record RecordPreAssessmentRequest(
     int? BpSystolic,
     int? BpDiastolic,
     string? AccessTypeValue,
-    bool PrescriptionConfirmed,
+    bool? PrescriptionConfirmed,
     string? PainSymptomNotes,
     string? RecordedBy);

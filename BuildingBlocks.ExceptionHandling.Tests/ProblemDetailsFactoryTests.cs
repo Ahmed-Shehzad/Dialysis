@@ -25,7 +25,7 @@ public sealed class ProblemDetailsFactoryTests
 
         statusCode.ShouldBe(400);
         problem.Status.ShouldBe(400);
-        problem.Detail.ShouldContain("Required");
+        problem.Detail?.ShouldContain("Required");
         problem.Extensions.ShouldNotContainKey("stackTrace");
     }
 

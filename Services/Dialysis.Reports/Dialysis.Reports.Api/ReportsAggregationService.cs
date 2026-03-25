@@ -74,34 +74,34 @@ public sealed class ReportsAggregationService
             string? json = response.Content;
             if (string.IsNullOrEmpty(json))
                 continue;
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("entry", out JsonElement entries))
-                {
-                    if (entries.GetArrayLength() == 0)
-                        compliant++;
-                }
-                else
-                    compliant++;
-            }
-            catch
-            {
-                // ignore parse errors
-            }
+            if (IsPrescriptionCompliantFromBundleJson(json))
+                compliant++;
         }
 
         decimal percent = toCheck > 0 ? Math.Round(100m * compliant / toCheck, 1) : 0;
         return new PrescriptionComplianceReport(compliant, toCheck, percent, from, to);
     }
 
+    private static bool IsPrescriptionCompliantFromBundleJson(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("entry", out JsonElement entries))
+                return true;
+            return entries.GetArrayLength() == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task<IReadOnlyList<string>> GetSessionIdsInRangeAsync(DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken ct)
     {
         string? auth = request?.Headers.Authorization.Count > 0 ? request.Headers.Authorization.ToString() : null;
         IApiResponse<string> response = await _api.GetTreatmentSessionsFhirAsync(from.ToString("o"), to.ToString("o"), 100, auth, tenantId, ct);
-        if (!response.IsSuccessStatusCode || response.Content is null)
-            return [];
-        return FhirBundleParser.ExtractProcedureSessionIds(response.Content);
+        return !response.IsSuccessStatusCode || response.Content is null ? [] : FhirBundleParser.ExtractProcedureSessionIds(response.Content);
     }
 
     public async Task<TreatmentDurationByPatientReport> GetTreatmentDurationByPatientAsync(DateTimeOffset from, DateTimeOffset to, string? tenantId, HttpRequest? request, CancellationToken cancellationToken = default)

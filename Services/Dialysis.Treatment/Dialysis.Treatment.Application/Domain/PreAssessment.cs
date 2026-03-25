@@ -2,6 +2,15 @@ using Dialysis.Treatment.Application.Domain.ValueObjects;
 
 namespace Dialysis.Treatment.Application.Domain;
 
+public sealed record PreAssessmentClinicalInput(
+    decimal? PreWeightKg,
+    int? BpSystolic,
+    int? BpDiastolic,
+    AccessType? AccessType,
+    bool PrescriptionConfirmed,
+    string? PainSymptomNotes,
+    string? RecordedBy);
+
 /// <summary>
 /// Pre-treatment assessment recorded by clinician for a session.
 /// </summary>
@@ -21,49 +30,33 @@ public sealed class PreAssessment
 
     private PreAssessment() { }
 
-    public static PreAssessment Create(
-        SessionId sessionId,
-        string tenantId,
-        decimal? preWeightKg,
-        int? bpSystolic,
-        int? bpDiastolic,
-        AccessType? accessType,
-        bool prescriptionConfirmed,
-        string? painSymptomNotes,
-        string? recordedBy)
+    public static PreAssessment Create(SessionId sessionId, string tenantId, PreAssessmentClinicalInput clinical)
     {
         return new PreAssessment
         {
             Id = Ulid.NewUlid(),
             TenantId = tenantId,
             SessionId = sessionId,
-            PreWeightKg = preWeightKg,
-            BpSystolic = bpSystolic,
-            BpDiastolic = bpDiastolic,
-            AccessTypeValue = accessType,
-            PrescriptionConfirmed = prescriptionConfirmed,
-            PainSymptomNotes = painSymptomNotes,
+            PreWeightKg = clinical.PreWeightKg,
+            BpSystolic = clinical.BpSystolic,
+            BpDiastolic = clinical.BpDiastolic,
+            AccessTypeValue = clinical.AccessType,
+            PrescriptionConfirmed = clinical.PrescriptionConfirmed,
+            PainSymptomNotes = clinical.PainSymptomNotes,
             RecordedAt = DateTimeOffset.UtcNow,
-            RecordedBy = recordedBy
+            RecordedBy = clinical.RecordedBy
         };
     }
 
-    public void Update(
-        decimal? preWeightKg,
-        int? bpSystolic,
-        int? bpDiastolic,
-        AccessType? accessType,
-        bool prescriptionConfirmed,
-        string? painSymptomNotes,
-        string? recordedBy)
+    public void Update(PreAssessmentClinicalInput clinical)
     {
-        PreWeightKg = preWeightKg;
-        BpSystolic = bpSystolic;
-        BpDiastolic = bpDiastolic;
-        AccessTypeValue = accessType;
-        PrescriptionConfirmed = prescriptionConfirmed;
-        PainSymptomNotes = painSymptomNotes;
-        RecordedBy = recordedBy;
+        PreWeightKg = clinical.PreWeightKg;
+        BpSystolic = clinical.BpSystolic;
+        BpDiastolic = clinical.BpDiastolic;
+        AccessTypeValue = clinical.AccessType;
+        PrescriptionConfirmed = clinical.PrescriptionConfirmed;
+        PainSymptomNotes = clinical.PainSymptomNotes;
+        RecordedBy = clinical.RecordedBy;
         RecordedAt = DateTimeOffset.UtcNow;
     }
 }

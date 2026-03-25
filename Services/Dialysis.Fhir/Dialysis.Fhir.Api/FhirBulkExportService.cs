@@ -16,6 +16,11 @@ public sealed class FhirBulkExportService
     private readonly IFhirExportGatewayApi _api;
     private readonly ITenantContext _tenant;
 
+    private readonly record struct GatewayHttpContext(
+        string? Auth,
+        string? TenantId,
+        CancellationToken CancellationToken);
+
     private static readonly IReadOnlyDictionary<string, string> TypeToPath = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["Patient"] = "api/patients/fhir",
@@ -59,36 +64,30 @@ public sealed class FhirBulkExportService
         if (searchParams.TryGetValue("_count", out string? countStr) && int.TryParse(countStr, out int c))
             limit = Math.Min(Math.Max(1, c), 1000);
 
+        var http = new GatewayHttpContext(auth, tenantId, cancellationToken);
+
         Bundle? bundle = resourceType switch
         {
             "Patient" => await FetchPatientSearchAsync(
                 limit,
                 GetParam(searchParams, "_id"),
                 GetParam(searchParams, "identifier"),
-                auth,
-                tenantId,
-                cancellationToken),
+                http),
             "Device" => await FetchDeviceSearchAsync(
                 GetParam(searchParams, "_id"),
                 GetParam(searchParams, "identifier"),
-                auth,
-                tenantId,
-                cancellationToken),
+                http),
             "ServiceRequest" => await FetchPrescriptionSearchAsync(
                 limit,
                 ExtractMrn(GetParam(searchParams, "subject") ?? GetParam(searchParams, "patient")),
-                auth,
-                tenantId,
-                cancellationToken),
+                http),
             "Procedure" or "Observation" or "Provenance" => await FetchTreatmentSearchAsync(
                 limit,
                 ExtractMrn(GetParam(searchParams, "subject") ?? GetParam(searchParams, "patient")),
                 GetParam(searchParams, "date"),
                 GetParam(searchParams, "dateFrom"),
                 GetParam(searchParams, "dateTo"),
-                auth,
-                tenantId,
-                cancellationToken),
+                http),
             "DetectedIssue" => await FetchAlarmSearchAsync(
                 limit,
                 GetParam(searchParams, "_id"),
@@ -96,15 +95,11 @@ public sealed class FhirBulkExportService
                 GetParam(searchParams, "date"),
                 GetParam(searchParams, "from"),
                 GetParam(searchParams, "to"),
-                auth,
-                tenantId,
-                cancellationToken),
+                http),
             "AuditEvent" => await FetchAuditEventSearchAsync(
                 limit,
-                auth,
-                tenantId,
-                cancellationToken),
-            _ => await FetchBundleByPathAsync(path, limit, null, null, auth, tenantId, cancellationToken),
+                http),
+            _ => await FetchBundleByPathAsync(path, limit, null, null, http),
         };
 
         if (bundle is null)
@@ -133,16 +128,14 @@ public sealed class FhirBulkExportService
         int limit,
         string? id,
         string? identifier,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
-        HttpResponseMessage response = await _api.GetPatientsFhirAsync(limit, id, identifier, auth, tenantId, cancellationToken);
+        HttpResponseMessage response = await _api.GetPatientsFhirAsync(limit, id, identifier, http.Auth, http.TenantId, http.CancellationToken);
         using (response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
@@ -150,16 +143,14 @@ public sealed class FhirBulkExportService
     private async Task<Bundle?> FetchDeviceSearchAsync(
         string? id,
         string? identifier,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
-        HttpResponseMessage response = await _api.GetDevicesFhirAsync(id, identifier, auth, tenantId, cancellationToken);
+        HttpResponseMessage response = await _api.GetDevicesFhirAsync(id, identifier, http.Auth, http.TenantId, http.CancellationToken);
         using (response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
@@ -167,16 +158,14 @@ public sealed class FhirBulkExportService
     private async Task<Bundle?> FetchPrescriptionSearchAsync(
         int limit,
         string? mrn,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
-        HttpResponseMessage response = await _api.GetPrescriptionsFhirAsync(limit, mrn, mrn, auth, tenantId, cancellationToken);
+        HttpResponseMessage response = await _api.GetPrescriptionsFhirAsync(limit, mrn, mrn, http.Auth, http.TenantId, http.CancellationToken);
         using (response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
@@ -187,17 +176,15 @@ public sealed class FhirBulkExportService
         string? date,
         string? dateFrom,
         string? dateTo,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
         HttpResponseMessage response = await _api.GetTreatmentSessionsFhirAsync(
-            limit, mrn, mrn, date, dateFrom, dateTo, auth, tenantId, cancellationToken);
+            new TreatmentSessionsFhirQuery(limit, mrn, mrn, date, dateFrom, dateTo), http.Auth, http.TenantId, http.CancellationToken);
         using (response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
@@ -209,35 +196,31 @@ public sealed class FhirBulkExportService
         string? date,
         string? from,
         string? to,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
         string? deviceId = ExtractReferenceId(deviceRef, "Device");
         HttpResponseMessage response = await _api.GetAlarmsFhirAsync(
-            limit, id, deviceId, null, date, from, to, auth, tenantId, cancellationToken);
+            new AlarmsFhirQuery(limit, id, deviceId, null, date, from, to), http.Auth, http.TenantId, http.CancellationToken);
         using (response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
 
     private async Task<Bundle?> FetchAuditEventSearchAsync(
         int limit,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
         HttpResponseMessage response = await _api.GetAuditEventsAsync(
-            Math.Min(limit, 500), auth, tenantId, cancellationToken);
+            Math.Min(limit, 500), http.Auth, http.TenantId, http.CancellationToken);
         using (response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
@@ -257,24 +240,22 @@ public sealed class FhirBulkExportService
         int limit,
         string? patientId,
         string? since,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
         HttpResponseMessage response = path switch
         {
             _ when path.Contains("patients", StringComparison.OrdinalIgnoreCase) => await _api.GetPatientsFhirAsync(
-                limit, null, null, auth, tenantId, cancellationToken),
+                limit, null, null, http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("devices", StringComparison.OrdinalIgnoreCase) => await _api.GetDevicesFhirAsync(
-                null, null, auth, tenantId, cancellationToken),
+                null, null, http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) => await _api.GetPrescriptionsFhirAsync(
-                limit, patientId, patientId, auth, tenantId, cancellationToken),
+                limit, patientId, patientId, http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("treatment-sessions", StringComparison.OrdinalIgnoreCase) => await _api.GetTreatmentSessionsFhirAsync(
-                limit, patientId, patientId, null, since, null, auth, tenantId, cancellationToken),
+                new TreatmentSessionsFhirQuery(limit, patientId, patientId, null, since, null), http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("alarms", StringComparison.OrdinalIgnoreCase) => await _api.GetAlarmsFhirAsync(
-                limit, null, null, null, null, since, null, auth, tenantId, cancellationToken),
+                new AlarmsFhirQuery(limit, null, null, null, null, since, null), http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("audit-events", StringComparison.OrdinalIgnoreCase) => await _api.GetAuditEventsAsync(
-                Math.Min(limit, 500), auth, tenantId, cancellationToken),
+                Math.Min(limit, 500), http.Auth, http.TenantId, http.CancellationToken),
             _ => throw new InvalidOperationException($"Unknown path: {path}"),
         };
 
@@ -282,7 +263,7 @@ public sealed class FhirBulkExportService
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }
@@ -308,9 +289,11 @@ public sealed class FhirBulkExportService
         }
         string? tenantId = string.IsNullOrEmpty(_tenant.TenantId) ? null : _tenant.TenantId;
 
+        var exportHttp = new GatewayHttpContext(auth, tenantId, cancellationToken);
+
         foreach (string path in pathsToFetch)
         {
-            Bundle? sourceBundle = await FetchBundleAsync(path, limitPerType, patientId, since, auth, tenantId, cancellationToken);
+            Bundle? sourceBundle = await FetchBundleAsync(path, limitPerType, patientId, since, exportHttp);
             MergeEntries(bundle, sourceBundle, requestedTypes);
         }
 
@@ -340,25 +323,23 @@ public sealed class FhirBulkExportService
         int limit,
         string? patientId,
         DateTimeOffset? since,
-        string? auth,
-        string? tenantId,
-        CancellationToken cancellationToken)
+        GatewayHttpContext http)
     {
         string? sinceStr = since?.ToString("o");
         HttpResponseMessage response = path switch
         {
             _ when path.Contains("patients", StringComparison.OrdinalIgnoreCase) => await _api.GetPatientsFhirAsync(
-                limit, null, patientId, auth, tenantId, cancellationToken),
+                limit, null, patientId, http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("devices", StringComparison.OrdinalIgnoreCase) => await _api.GetDevicesFhirAsync(
-                null, null, auth, tenantId, cancellationToken),
+                null, null, http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("prescriptions", StringComparison.OrdinalIgnoreCase) => await _api.GetPrescriptionsFhirAsync(
-                limit, patientId, patientId, auth, tenantId, cancellationToken),
+                limit, patientId, patientId, http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("treatment-sessions", StringComparison.OrdinalIgnoreCase) => await _api.GetTreatmentSessionsFhirAsync(
-                limit, patientId, patientId, null, sinceStr, null, auth, tenantId, cancellationToken),
+                new TreatmentSessionsFhirQuery(limit, patientId, patientId, null, sinceStr, null), http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("alarms", StringComparison.OrdinalIgnoreCase) => await _api.GetAlarmsFhirAsync(
-                limit, null, null, null, null, sinceStr, null, auth, tenantId, cancellationToken),
+                new AlarmsFhirQuery(limit, null, null, null, null, sinceStr, null), http.Auth, http.TenantId, http.CancellationToken),
             _ when path.Contains("audit-events", StringComparison.OrdinalIgnoreCase) => await _api.GetAuditEventsAsync(
-                Math.Min(limit, 500), auth, tenantId, cancellationToken),
+                Math.Min(limit, 500), http.Auth, http.TenantId, http.CancellationToken),
             _ => throw new InvalidOperationException($"Unknown path: {path}"),
         };
 
@@ -366,7 +347,7 @@ public sealed class FhirBulkExportService
         {
             if (!response.IsSuccessStatusCode)
                 return null;
-            string json = await response.Content.ReadAsStringAsync(cancellationToken);
+            string json = await response.Content.ReadAsStringAsync(http.CancellationToken);
             return FhirJsonHelper.FromJson<Bundle>(json);
         }
     }

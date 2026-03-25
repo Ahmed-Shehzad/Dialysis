@@ -21,16 +21,7 @@ internal sealed class AlarmApiClient : IAlarmApiClient
     }
 
     public async Task<bool> RecordFromThresholdBreachAsync(
-        string sessionId,
-        string? deviceId,
-        string breachType,
-        string code,
-        double observedValue,
-        double thresholdValue,
-        string direction,
-        string treatmentSessionId,
-        string observationId,
-        string? tenantId,
+        RecordAlarmFromThresholdBreachClientRequest request,
         CancellationToken cancellationToken = default)
     {
         if (_api is null)
@@ -39,15 +30,23 @@ internal sealed class AlarmApiClient : IAlarmApiClient
             return false;
         }
 
-        var request = new RecordAlarmFromThresholdBreachApiRequest(
-            sessionId, deviceId, breachType, code, observedValue, thresholdValue, direction,
-            treatmentSessionId, observationId, tenantId);
+        var body = new RecordAlarmFromThresholdBreachApiRequest(
+            request.SessionId,
+            request.DeviceId,
+            request.BreachType,
+            request.Code,
+            request.ObservedValue,
+            request.ThresholdValue,
+            request.Direction,
+            request.TreatmentSessionId,
+            request.ObservationId,
+            request.TenantId);
 
-        ApiResponse<RecordAlarmFromThresholdBreachApiResponse> response = await _api.RecordFromThresholdBreachAsync(request, tenantId ?? "default", cancellationToken);
+        ApiResponse<RecordAlarmFromThresholdBreachApiResponse> response = await _api.RecordFromThresholdBreachAsync(body, request.TenantId ?? "default", cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
-            _logger.LogInformation("Created alarm {AlarmId} from threshold breach {BreachType}", response.Content?.AlarmId, breachType);
+            _logger.LogInformation("Created alarm {AlarmId} from threshold breach {BreachType}", response.Content?.AlarmId, request.BreachType);
             return true;
         }
 

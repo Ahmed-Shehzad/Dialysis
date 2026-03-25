@@ -188,7 +188,7 @@ public sealed class TreatmentSessionsController : ControllerBase
             body.BpSystolic,
             body.BpDiastolic,
             accessType,
-            body.PrescriptionConfirmed,
+            body.PrescriptionConfirmed ?? false,
             body.PainSymptomNotes,
             recordedBy);
         try

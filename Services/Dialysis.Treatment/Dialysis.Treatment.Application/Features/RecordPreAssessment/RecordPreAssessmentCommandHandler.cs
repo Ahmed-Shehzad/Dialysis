@@ -36,30 +36,23 @@ internal sealed class RecordPreAssessmentCommandHandler : ICommandHandler<Record
 
         PreAssessment? existing = await _preAssessmentRepository.GetBySessionIdAsync(request.SessionId, cancellationToken);
 
+        var clinical = new PreAssessmentClinicalInput(
+            request.PreWeightKg,
+            request.BpSystolic,
+            request.BpDiastolic,
+            request.AccessTypeValue,
+            request.PrescriptionConfirmed,
+            request.PainSymptomNotes,
+            request.RecordedBy);
+
         if (existing is not null)
         {
-            existing.Update(
-                request.PreWeightKg,
-                request.BpSystolic,
-                request.BpDiastolic,
-                request.AccessTypeValue,
-                request.PrescriptionConfirmed,
-                request.PainSymptomNotes,
-                request.RecordedBy);
+            existing.Update(clinical);
             _preAssessmentRepository.Update(existing);
         }
         else
         {
-            var preAssessment = PreAssessment.Create(
-                request.SessionId,
-                _tenant.TenantId,
-                request.PreWeightKg,
-                request.BpSystolic,
-                request.BpDiastolic,
-                request.AccessTypeValue,
-                request.PrescriptionConfirmed,
-                request.PainSymptomNotes,
-                request.RecordedBy);
+            var preAssessment = PreAssessment.Create(request.SessionId, _tenant.TenantId, clinical);
             await _preAssessmentRepository.AddAsync(preAssessment, cancellationToken);
         }
 

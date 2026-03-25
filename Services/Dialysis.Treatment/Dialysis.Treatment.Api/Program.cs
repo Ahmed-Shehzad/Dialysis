@@ -33,6 +33,7 @@ using Transponder.Transports.AzureServiceBus;
 using Transponder.Transports.SignalR;
 
 using Serilog;
+
 using StackExchange.Redis;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

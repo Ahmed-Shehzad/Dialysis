@@ -213,10 +213,10 @@ public sealed class FhirBulkExportServiceIntegrationTests
         public Task<HttpResponseMessage> GetPrescriptionsFhirAsync(int limit, string? subject, string? patient, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_prescriptions, _prescriptionsStatus));
 
-        public Task<HttpResponseMessage> GetTreatmentSessionsFhirAsync(int limit, string? subject, string? patient, string? date, string? dateFrom, string? dateTo, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+        public Task<HttpResponseMessage> GetTreatmentSessionsFhirAsync(TreatmentSessionsFhirQuery query, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_treatmentSessions, _treatmentSessionsStatus));
 
-        public Task<HttpResponseMessage> GetAlarmsFhirAsync(int limit, string? id, string? deviceId, string? sessionId, string? date, string? from, string? to, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
+        public Task<HttpResponseMessage> GetAlarmsFhirAsync(AlarmsFhirQuery query, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Response(_alarms, _alarmsStatus));
 
         public Task<HttpResponseMessage> GetAuditEventsAsync(int count, string? authorization, string? tenantId, CancellationToken cancellationToken = default) =>

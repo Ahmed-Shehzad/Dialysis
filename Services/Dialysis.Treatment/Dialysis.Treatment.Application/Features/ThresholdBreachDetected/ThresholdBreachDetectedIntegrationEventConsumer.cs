@@ -32,7 +32,7 @@ internal sealed class ThresholdBreachDetectedIntegrationEventConsumer : IIntegra
             notification.Code,
             notification.BreachType);
 
-        _ = await _alarmApiClient.RecordFromThresholdBreachAsync(
+        var request = new RecordAlarmFromThresholdBreachClientRequest(
             notification.SessionId,
             notification.DeviceId,
             notification.BreachType,
@@ -42,7 +42,7 @@ internal sealed class ThresholdBreachDetectedIntegrationEventConsumer : IIntegra
             notification.Direction,
             notification.TreatmentSessionId.ToString(),
             notification.ObservationId.ToString(),
-            notification.TenantId,
-            cancellationToken);
+            notification.TenantId);
+        _ = await _alarmApiClient.RecordFromThresholdBreachAsync(request, cancellationToken);
     }
 }
