@@ -146,3 +146,34 @@ public sealed class RaSecurityMechanismHardening
 
     public DateTime AssessedAtUtc { get; set; }
 }
+
+/// <summary>RA Fig. 6 row 18 — narrow log of external specialist touchpoints (not a full referral network).</summary>
+public sealed class RaSpecialistEncounterRecord
+{
+    public Guid Id { get; set; }
+
+    public Guid PatientId { get; set; }
+
+    public string SpecialtyCode { get; set; } = string.Empty;
+
+    public string ExternalSystemCode { get; set; } = string.Empty;
+
+    public string Summary { get; set; } = string.Empty;
+
+    public DateTime RecordedAtUtc { get; set; }
+}
+
+/// <summary>RA Fig. 6 row 28 — education / research activity metadata (not an LMS).</summary>
+public sealed class RaResearchEducationActivity
+{
+    public Guid Id { get; set; }
+
+    /// <summary>Lowercase: <c>education</c> or <c>research</c>.</summary>
+    public string ActivityKindCode { get; set; } = string.Empty;
+
+    public string Title { get; set; } = string.Empty;
+
+    public string ExternalReference { get; set; } = string.Empty;
+
+    public DateTime RecordedAtUtc { get; set; }
+}

@@ -1,4 +1,6 @@
 using Dialysis.CQRS.Queries;
+using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
+using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Ports;
 
 namespace Dialysis.HIS.RaCapabilities.Features;
@@ -78,4 +80,22 @@ public sealed class ListSecurityMechanismHardeningsQueryHandler(IRaCapabilitiesR
 {
     public Task<IReadOnlyList<RaSecurityMechanismRow>> Handle(ListSecurityMechanismHardeningsQuery request, CancellationToken cancellationToken) =>
         store.ListSecurityMechanismHardeningsAsync(cancellationToken);
+}
+
+public sealed class ListSpecialistEncountersQueryHandler(IRaCapabilitiesReadStore store)
+    : IQueryHandler<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>>
+{
+    public Task<IReadOnlyList<RaSpecialistEncounterRow>> Handle(
+        ListSpecialistEncountersQuery request,
+        CancellationToken cancellationToken) =>
+        store.ListSpecialistEncountersAsync(cancellationToken);
+}
+
+public sealed class ListResearchEducationActivitiesQueryHandler(IRaCapabilitiesReadStore store)
+    : IQueryHandler<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>>
+{
+    public Task<IReadOnlyList<RaResearchEducationActivityRow>> Handle(
+        ListResearchEducationActivitiesQuery request,
+        CancellationToken cancellationToken) =>
+        store.ListResearchEducationActivitiesAsync(cancellationToken);
 }

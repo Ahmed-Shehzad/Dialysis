@@ -22,4 +22,6 @@ internal static class HisSeed
     internal static readonly Guid RaDemoSecurityMechId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd0b");
     internal static readonly Guid RaDemoPatientId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd0c");
     internal static readonly Guid RaDemoMedicationOrderId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd0d");
+    internal static readonly Guid RaDemoSpecialistEncounterId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd0e");
+    internal static readonly Guid RaDemoResearchEducationActivityId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd0f");
 }

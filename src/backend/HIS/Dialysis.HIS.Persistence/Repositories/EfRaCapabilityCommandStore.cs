@@ -43,4 +43,8 @@ public sealed class EfRaCapabilityCommandStore(HisDbContext db) : IRaCapabilityC
     }
 
     public void AddSecurityMechanismHardening(RaSecurityMechanismHardening row) => db.RaSecurityMechanismHardenings.Add(row);
+
+    public void AddSpecialistEncounterRecord(RaSpecialistEncounterRecord record) => db.RaSpecialistEncounterRecords.Add(record);
+
+    public void AddResearchEducationActivity(RaResearchEducationActivity activity) => db.RaResearchEducationActivities.Add(activity);
 }

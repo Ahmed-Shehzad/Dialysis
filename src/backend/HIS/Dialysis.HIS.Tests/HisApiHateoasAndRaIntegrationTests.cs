@@ -3,6 +3,8 @@ using System.Text.Json;
 using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 using Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment;
 using Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
+using Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity;
+using Dialysis.HIS.RaCapabilities.Features.RegisterSpecialistEncounter;
 using Dialysis.HIS.RaCapabilities.Features.UpdateQualityWorkflowTaskStatus;
 using Asp.Versioning;
 using Dialysis.HIS.Api;
@@ -68,6 +70,15 @@ public sealed class HisApiHateoasEnvelopeTests : IClassFixture<HisApiDefaultFact
         Assert.Contains("/api/v1.0/reference-architecture/catalog", catalog.GetProperty("href").GetString(), StringComparison.Ordinal);
         var cap = linkList.Single(l => l.GetProperty("rel").GetString() == "ra:capabilities-index");
         Assert.Contains("/api/v1.0/reference-architecture/capabilities", cap.GetProperty("href").GetString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Health_ready_returns_plain_ok_when_database_connects()
+    {
+        using var response = await _client.GetAsync(new Uri("/health/ready", UriKind.Relative));
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Equal("OK", body.Trim());
     }
 
     [Fact]
@@ -142,7 +153,7 @@ public sealed class HisApiRaCapabilitiesIntegrationTests : IClassFixture<HisApiD
         Assert.True(root.TryGetProperty("data", out var data));
         Assert.True(data.TryGetProperty("endpoints", out var endpoints));
         Assert.Equal(JsonValueKind.Array, endpoints.ValueKind);
-        Assert.Equal(11, endpoints.GetArrayLength());
+        Assert.Equal(13, endpoints.GetArrayLength());
         Assert.All(
             endpoints.EnumerateArray(),
             e =>
@@ -179,6 +190,50 @@ public sealed class HisApiRaCapabilitiesIntegrationTests : IClassFixture<HisApiD
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var data = doc.RootElement.GetProperty("data");
         Assert.Equal(JsonValueKind.Array, data.ValueKind);
+    }
+
+    [Fact]
+    public async Task Specialist_encounters_list_returns_seed_and_post_registers()
+    {
+        using var list = await _client.GetAsync(
+            new Uri("/api/v1.0/reference-architecture/capabilities/patient-monitoring/specialist-encounters", UriKind.Relative));
+        list.EnsureSuccessStatusCode();
+        using var listDoc = JsonDocument.Parse(await list.Content.ReadAsStringAsync());
+        var data = listDoc.RootElement.GetProperty("data");
+        Assert.Equal(JsonValueKind.Array, data.ValueKind);
+        Assert.NotEmpty(data.EnumerateArray());
+
+        var demoPatientId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd0c");
+        var body = new RegisterSpecialistEncounterCommand(
+            demoPatientId,
+            SpecialtyCode: "cardiology",
+            ExternalSystemCode: "ext-ref-stub",
+            Summary: "integration-test specialist note");
+        using var post = await _client.PostAsJsonAsync(
+            new Uri("/api/v1.0/reference-architecture/capabilities/patient-monitoring/specialist-encounters/records", UriKind.Relative),
+            body);
+        Assert.Equal(System.Net.HttpStatusCode.Created, post.StatusCode);
+    }
+
+    [Fact]
+    public async Task Research_education_list_returns_seed_and_post_registers()
+    {
+        using var list = await _client.GetAsync(
+            new Uri("/api/v1.0/reference-architecture/capabilities/generic-mis/research-education", UriKind.Relative));
+        list.EnsureSuccessStatusCode();
+        using var listDoc = JsonDocument.Parse(await list.Content.ReadAsStringAsync());
+        var data = listDoc.RootElement.GetProperty("data");
+        Assert.Equal(JsonValueKind.Array, data.ValueKind);
+        Assert.NotEmpty(data.EnumerateArray());
+
+        var body = new RegisterResearchEducationActivityCommand(
+            ActivityKindCode: "research",
+            Title: "integration-test dataset registration",
+            ExternalReference: "urn:his:test:research:1");
+        using var post = await _client.PostAsJsonAsync(
+            new Uri("/api/v1.0/reference-architecture/capabilities/generic-mis/research-education/activities", UriKind.Relative),
+            body);
+        Assert.Equal(System.Net.HttpStatusCode.Created, post.StatusCode);
     }
 
     [Fact]

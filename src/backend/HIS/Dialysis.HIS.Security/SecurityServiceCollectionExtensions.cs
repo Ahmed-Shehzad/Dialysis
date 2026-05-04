@@ -8,7 +8,7 @@ public static class SecurityServiceCollectionExtensions
 {
     /// <summary>
     /// Registers authorization services and <see cref="ICurrentUser"/> (scoped). Bind <see cref="HisAuthenticationOptions"/> from <c>His:Authentication</c>.
-    /// When <see cref="HisAuthenticationOptions.Authority"/> is unset, behavior matches <see cref="DevelopmentCurrentUser"/>.
+    /// When <see cref="HisAuthenticationOptions.Authority"/> is unset, <see cref="HttpContextCurrentUser"/> grants all <see cref="HisPermissions"/> for local development.
     /// </summary>
     public static IServiceCollection AddHisSecurityCore(this IServiceCollection services, IConfiguration configuration)
     {

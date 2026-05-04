@@ -1,12 +1,14 @@
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Dialysis.HIS.Api.Authorization;
+using Dialysis.HIS.Api.Middleware;
 using Dialysis.HIS.Api.OpenApi;
 using Dialysis.HIS.Composition;
+using Dialysis.HIS.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +41,13 @@ builder.Services.AddHospitalInformationSystem(
         : s => s.AddHisTransponderRabbitMqIfConfigured(rabbitUri, rabbitQueue, rabbitExchange));
 
 var authAuthority = builder.Configuration["His:Authentication:Authority"];
+var requireAuthorityOutsideDev = builder.Configuration.GetValue("His:Authentication:RequireAuthorityWhenNotDevelopment", false);
+if (requireAuthorityOutsideDev && !builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(authAuthority))
+{
+    throw new InvalidOperationException(
+        "His:Authentication:Authority must be set when His:Authentication:RequireAuthorityWhenNotDevelopment is true and ASPNETCORE_ENVIRONMENT is not Development.");
+}
+
 if (!string.IsNullOrWhiteSpace(authAuthority))
 {
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -86,8 +95,12 @@ builder.Services.AddApiVersioning(options =>
 });
 
 builder.Services.AddHisVersionedOpenApi();
+builder.Services.AddExceptionHandler<HisPermissionDeniedExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+app.UseExceptionHandler();
+app.UseMiddleware<CorrelationIdMiddleware>();
 if (builder.Configuration.GetValue("His:UseForwardedHeaders", false))
     app.UseForwardedHeaders();
 
@@ -105,5 +118,12 @@ if (!string.IsNullOrWhiteSpace(authAuthority))
 
 app.UseRateLimiter();
 app.MapOpenApi();
+app.MapGet(
+        "/health/ready",
+        async (HisDbContext db, CancellationToken cancellationToken) =>
+            await db.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false)
+                ? Results.Text("OK", "text/plain", statusCode: StatusCodes.Status200OK)
+                : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
+    .AllowAnonymous();
 app.MapControllers();
 await app.RunAsync().ConfigureAwait(false);

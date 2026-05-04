@@ -8,7 +8,11 @@ using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 using Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 using Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEvaluation;
 using Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment;
+using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
+using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
+using Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity;
+using Dialysis.HIS.RaCapabilities.Features.RegisterSpecialistEncounter;
 using Dialysis.HIS.RaCapabilities.Features.RequestAnalyticsExportJob;
 using Dialysis.HIS.RaCapabilities.Features.UpdateQualityWorkflowTaskStatus;
 using Dialysis.HIS.RaCapabilities.Ports;
@@ -47,6 +51,8 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
             L("ra:analytics-exports", "/data-management/analytics-exports"),
             L("ra:full-text", "/data-management/full-text-and-indexing"),
             L("ra:security-hardening", "/security/mechanisms-hardening"),
+            L("ra:specialist-encounters", "/patient-monitoring/specialist-encounters"),
+            L("ra:research-education", "/generic-mis/research-education"),
         };
         return OkResource(new CapabilityIndexDto(endpoints));
     }
@@ -104,6 +110,37 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
     }
 
+    [HttpGet("generic-mis/research-education")]
+    public async Task<IActionResult> ResearchEducationActivities(CancellationToken cancellationToken)
+    {
+        var data = await gateway
+            .SendQueryAsync<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>>(
+                new ListResearchEducationActivitiesQuery(),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+    }
+
+    [HttpPost("generic-mis/research-education/activities")]
+    [ProducesResponseType(typeof(ResourceEnvelope<RegisterResearchEducationActivityResponse>), StatusCodes.Status201Created)]
+    public async Task<IActionResult> RegisterResearchEducationActivity(
+        [FromBody] RegisterResearchEducationActivityCommand command,
+        CancellationToken cancellationToken)
+    {
+        var id = await gateway
+            .SendCommandAsync<RegisterResearchEducationActivityCommand, Guid>(command, cancellationToken)
+            .ConfigureAwait(false);
+        return CreatedResource(
+            $"{Request.Path}/{id}",
+            new RegisterResearchEducationActivityResponse(id),
+            LinkTo(
+                "ra:research-education",
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/research-education",
+                "GET"));
+    }
+
+    public sealed record RegisterResearchEducationActivityResponse(Guid Id);
+
     [HttpGet("planning-and-scheduling/waitlists")]
     public async Task<IActionResult> Waitlists(CancellationToken cancellationToken)
     {
@@ -150,6 +187,37 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     }
 
     public sealed record RegisterEhrDocumentResponse(Guid Id);
+
+    [HttpGet("patient-monitoring/specialist-encounters")]
+    public async Task<IActionResult> SpecialistEncounters(CancellationToken cancellationToken)
+    {
+        var data = await gateway
+            .SendQueryAsync<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>>(
+                new ListSpecialistEncountersQuery(),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+    }
+
+    [HttpPost("patient-monitoring/specialist-encounters/records")]
+    [ProducesResponseType(typeof(ResourceEnvelope<RegisterSpecialistEncounterResponse>), StatusCodes.Status201Created)]
+    public async Task<IActionResult> RegisterSpecialistEncounterRecord(
+        [FromBody] RegisterSpecialistEncounterCommand command,
+        CancellationToken cancellationToken)
+    {
+        var id = await gateway
+            .SendCommandAsync<RegisterSpecialistEncounterCommand, Guid>(command, cancellationToken)
+            .ConfigureAwait(false);
+        return CreatedResource(
+            $"{Request.Path}/{id}",
+            new RegisterSpecialistEncounterResponse(id),
+            LinkTo(
+                "ra:specialist-encounters",
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/patient-monitoring/specialist-encounters",
+                "GET"));
+    }
+
+    public sealed record RegisterSpecialistEncounterResponse(Guid Id);
 
     [HttpGet("patient-monitoring/advanced-alerting")]
     public async Task<IActionResult> AdvancedAlerting(CancellationToken cancellationToken)

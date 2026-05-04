@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.HIS.Composition/Dialysis.HIS.Composition.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../Dialysis.HIS.DataServices/Dialysis.HIS.DataServices.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />

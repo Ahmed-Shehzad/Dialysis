@@ -1,4 +1,6 @@
 using Dialysis.BuildingBlocks.Verifier;
+using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
+using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 
 namespace Dialysis.HIS.RaCapabilities.Features;
 
@@ -31,3 +33,7 @@ public sealed class ListFullTextSearchEntriesQueryValidator : AbstractValidator<
 }
 
 public sealed class ListSecurityMechanismHardeningsQueryValidator : AbstractValidator<ListSecurityMechanismHardeningsQuery>;
+
+public sealed class ListSpecialistEncountersQueryValidator : AbstractValidator<ListSpecialistEncountersQuery>;
+
+public sealed class ListResearchEducationActivitiesQueryValidator : AbstractValidator<ListResearchEducationActivitiesQuery>;

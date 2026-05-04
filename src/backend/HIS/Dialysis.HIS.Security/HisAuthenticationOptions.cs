@@ -22,4 +22,10 @@ public sealed class HisAuthenticationOptions
 
     /// <summary>Optional explicit patient id claim for portal routes when <see cref="Authority"/> is set. Also accepts <c>sub</c> / nameidentifier matching route <c>patientId</c>.</summary>
     public string PatientPortalPatientIdClaimType { get; set; } = "his_patient_id";
+
+    /// <summary>
+    /// When true and <see cref="Authority"/> is unset, the host fails at startup (except Development), so production cannot accidentally run with dev-wide permissions.
+    /// Default false; set true in staging/production configuration.
+    /// </summary>
+    public bool RequireAuthorityWhenNotDevelopment { get; set; }
 }

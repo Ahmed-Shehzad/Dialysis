@@ -145,6 +145,25 @@ internal static class HisDataSeeder
                 Notes = "Demo security mechanisms record; replace with IdP-backed policy in production.",
                 AssessedAtUtc = utc,
             });
+        db.RaSpecialistEncounterRecords.Add(
+            new RaSpecialistEncounterRecord
+            {
+                Id = HisSeed.RaDemoSpecialistEncounterId,
+                PatientId = HisSeed.RaDemoPatientId,
+                SpecialtyCode = "nephrology",
+                ExternalSystemCode = "referral-hub-stub",
+                Summary = "Demo specialist encounter log (RA row 18).",
+                RecordedAtUtc = utc,
+            });
+        db.RaResearchEducationActivities.Add(
+            new RaResearchEducationActivity
+            {
+                Id = HisSeed.RaDemoResearchEducationActivityId,
+                ActivityKindCode = "education",
+                Title = "Demo staff training completion",
+                ExternalReference = "urn:his:demo:education:1",
+                RecordedAtUtc = utc,
+            });
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         logger.LogInformation("Seeded RA capability demo rows (schema his_ra).");

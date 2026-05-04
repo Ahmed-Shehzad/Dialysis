@@ -76,6 +76,10 @@ public sealed class HisDbContext(
 
     public DbSet<RaSecurityMechanismHardening> RaSecurityMechanismHardenings => Set<RaSecurityMechanismHardening>();
 
+    public DbSet<RaSpecialistEncounterRecord> RaSpecialistEncounterRecords => Set<RaSpecialistEncounterRecord>();
+
+    public DbSet<RaResearchEducationActivity> RaResearchEducationActivities => Set<RaResearchEducationActivity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -329,6 +333,26 @@ public sealed class HisDbContext(
             e.Property(x => x.AppliedLevel).HasMaxLength(32).IsRequired();
             e.Property(x => x.Notes).HasMaxLength(2000).IsRequired();
             e.Property(x => x.AssessedAtUtc).IsRequired();
+        });
+
+        modelBuilder.Entity<RaSpecialistEncounterRecord>(e =>
+        {
+            e.ToTable("RaSpecialistEncounterRecords", "his_ra");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SpecialtyCode).HasMaxLength(64).IsRequired();
+            e.Property(x => x.ExternalSystemCode).HasMaxLength(64).IsRequired();
+            e.Property(x => x.Summary).HasMaxLength(2000).IsRequired();
+            e.Property(x => x.RecordedAtUtc).IsRequired();
+        });
+
+        modelBuilder.Entity<RaResearchEducationActivity>(e =>
+        {
+            e.ToTable("RaResearchEducationActivities", "his_ra");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ActivityKindCode).HasMaxLength(32).IsRequired();
+            e.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            e.Property(x => x.ExternalReference).HasMaxLength(512).IsRequired();
+            e.Property(x => x.RecordedAtUtc).IsRequired();
         });
     }
 

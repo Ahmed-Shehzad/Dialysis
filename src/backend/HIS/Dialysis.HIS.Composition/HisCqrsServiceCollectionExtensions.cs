@@ -33,7 +33,11 @@ using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 using Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 using Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEvaluation;
 using Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment;
+using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
+using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
+using Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity;
+using Dialysis.HIS.RaCapabilities.Features.RegisterSpecialistEncounter;
 using Dialysis.HIS.RaCapabilities.Features.RequestAnalyticsExportJob;
 using Dialysis.HIS.RaCapabilities.Features.UpdateQualityWorkflowTaskStatus;
 using Dialysis.HIS.RaCapabilities.Ports;
@@ -104,6 +108,8 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddQueryBehavior<ListAnalyticsExportJobsQuery, IReadOnlyList<RaAnalyticsExportJobRow>, AuthorizationPipelineBehavior<ListAnalyticsExportJobsQuery, IReadOnlyList<RaAnalyticsExportJobRow>>>();
             cqrs.AddQueryBehavior<ListFullTextSearchEntriesQuery, IReadOnlyList<RaFullTextSearchEntryRow>, AuthorizationPipelineBehavior<ListFullTextSearchEntriesQuery, IReadOnlyList<RaFullTextSearchEntryRow>>>();
             cqrs.AddQueryBehavior<ListSecurityMechanismHardeningsQuery, IReadOnlyList<RaSecurityMechanismRow>, AuthorizationPipelineBehavior<ListSecurityMechanismHardeningsQuery, IReadOnlyList<RaSecurityMechanismRow>>>();
+            cqrs.AddQueryBehavior<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>, AuthorizationPipelineBehavior<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>>>();
+            cqrs.AddQueryBehavior<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>, AuthorizationPipelineBehavior<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>>>();
             cqrs.AddCommandBehavior<EnqueueWaitlistEntryCommand, Guid, AuthorizationPipelineBehavior<EnqueueWaitlistEntryCommand, Guid>>();
             cqrs.AddCommandBehavior<ClearPatientAlertCommand, Unit, AuthorizationPipelineBehavior<ClearPatientAlertCommand, Unit>>();
             cqrs.AddCommandBehavior<RecordClinicalDecisionSupportEvaluationCommand, Guid, AuthorizationPipelineBehavior<RecordClinicalDecisionSupportEvaluationCommand, Guid>>();
@@ -112,5 +118,7 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<RegisterEhrDocumentExchangeCommand, Guid, AuthorizationPipelineBehavior<RegisterEhrDocumentExchangeCommand, Guid>>();
             cqrs.AddCommandBehavior<UpdateQualityWorkflowTaskStatusCommand, Unit, AuthorizationPipelineBehavior<UpdateQualityWorkflowTaskStatusCommand, Unit>>();
             cqrs.AddCommandBehavior<RecordSecurityMechanismAssessmentCommand, Guid, AuthorizationPipelineBehavior<RecordSecurityMechanismAssessmentCommand, Guid>>();
+            cqrs.AddCommandBehavior<RegisterSpecialistEncounterCommand, Guid, AuthorizationPipelineBehavior<RegisterSpecialistEncounterCommand, Guid>>();
+            cqrs.AddCommandBehavior<RegisterResearchEducationActivityCommand, Guid, AuthorizationPipelineBehavior<RegisterResearchEducationActivityCommand, Guid>>();
         });
 }

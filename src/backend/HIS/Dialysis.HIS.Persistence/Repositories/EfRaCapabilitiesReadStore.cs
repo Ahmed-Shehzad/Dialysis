@@ -91,4 +91,18 @@ public sealed class EfRaCapabilitiesReadStore(HisDbContext db) : IRaCapabilities
             .OrderByDescending(x => x.AssessedAtUtc)
             .Select(x => new RaSecurityMechanismRow(x.Id, x.MechanismCode, x.AppliedLevel, x.Notes, x.AssessedAtUtc))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<RaSpecialistEncounterRow>> ListSpecialistEncountersAsync(
+        CancellationToken cancellationToken = default) =>
+        await db.RaSpecialistEncounterRecords.AsNoTracking()
+            .OrderByDescending(x => x.RecordedAtUtc)
+            .Select(x => new RaSpecialistEncounterRow(x.Id, x.PatientId, x.SpecialtyCode, x.ExternalSystemCode, x.Summary, x.RecordedAtUtc))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<RaResearchEducationActivityRow>> ListResearchEducationActivitiesAsync(
+        CancellationToken cancellationToken = default) =>
+        await db.RaResearchEducationActivities.AsNoTracking()
+            .OrderByDescending(x => x.RecordedAtUtc)
+            .Select(x => new RaResearchEducationActivityRow(x.Id, x.ActivityKindCode, x.Title, x.ExternalReference, x.RecordedAtUtc))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 }

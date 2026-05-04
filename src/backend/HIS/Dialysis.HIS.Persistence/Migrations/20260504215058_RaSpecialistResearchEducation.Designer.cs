@@ -4,6 +4,7 @@ using Dialysis.HIS.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Dialysis.HIS.Persistence.Migrations
 {
     [DbContext(typeof(HisDbContext))]
-    partial class HisDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504215058_RaSpecialistResearchEducation")]
+    partial class RaSpecialistResearchEducation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

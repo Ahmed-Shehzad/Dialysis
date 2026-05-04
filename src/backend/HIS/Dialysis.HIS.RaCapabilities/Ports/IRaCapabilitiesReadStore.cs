@@ -25,6 +25,10 @@ public interface IRaCapabilitiesReadStore
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<RaSecurityMechanismRow>> ListSecurityMechanismHardeningsAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RaSpecialistEncounterRow>> ListSpecialistEncountersAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RaResearchEducationActivityRow>> ListResearchEducationActivitiesAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed record RaOrgCommunicationRow(Guid Id, string ThreadCode, string Subject, string Body, DateTime SentAtUtc);
@@ -78,3 +82,18 @@ public sealed record RaAnalyticsExportJobRow(Guid Id, string PipelineCode, DateT
 public sealed record RaFullTextSearchEntryRow(Guid Id, string CorpusCode, string ExternalId, string SearchText, DateTime IndexedAtUtc);
 
 public sealed record RaSecurityMechanismRow(Guid Id, string MechanismCode, string AppliedLevel, string Notes, DateTime AssessedAtUtc);
+
+public sealed record RaSpecialistEncounterRow(
+    Guid Id,
+    Guid PatientId,
+    string SpecialtyCode,
+    string ExternalSystemCode,
+    string Summary,
+    DateTime RecordedAtUtc);
+
+public sealed record RaResearchEducationActivityRow(
+    Guid Id,
+    string ActivityKindCode,
+    string Title,
+    string ExternalReference,
+    DateTime RecordedAtUtc);

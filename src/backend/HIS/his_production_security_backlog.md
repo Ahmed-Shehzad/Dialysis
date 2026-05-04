@@ -2,7 +2,7 @@
 
 Aligns with **[README.md](./README.md)** gaps **B2b** (real identity) and **B3** (secrets, transport, password policy) and with **Phase I** (production consent / patient-scoped auth).
 
-Current posture: **development-oriented** — e.g. `DevelopmentCurrentUser` grants broad permissions, local user store, stub password handling, and RA “security mechanisms” with **read list + narrow write** for hardening assessments (`his.ra.commands.write` on **`POST …/security/mechanisms-hardening/assessments`**; `his_ra_submodules.md` rows 4–6).
+Current posture: **development-oriented** — when JWT **`His:Authentication:Authority`** is unset in Development, `ICurrentUser` still exposes all `HisPermissions` for local work; local user store, stub password handling, and RA “security mechanisms” with **read list + narrow write** for hardening assessments (`his.ra.commands.write` on **`POST …/security/mechanisms-hardening/assessments`**; `his_ra_submodules.md` rows 4–6).
 
 ## 1. Identity and access management (B2b)
 
@@ -23,6 +23,13 @@ Current posture: **development-oriented** — e.g. `DevelopmentCurrentUser` gran
 | Key rotation | Signing keys, API keys, connection strings |
 | Password policy | If local passwords remain: complexity, hashing (e.g. Argon2id), lockout, reset flow — or delegate entirely to IdP |
 
+**Checklist (engineering)**
+
+- [ ] Ingress TLS certificates valid; HSTS max-age aligned with org policy.
+- [ ] `His:UseForwardedHeaders` enabled when the API sits behind a reverse proxy; probe paths documented for LB health vs app `/health` and `/health/ready`.
+- [ ] `His:RequireHttpsRedirection` / `His:UseHsts` enabled for production hosts that receive client traffic on HTTPS.
+- [ ] All sensitive settings injected via secret store or CI secrets — never committed (see [his_production_deployment.md](./his_production_deployment.md) §1).
+
 ## 3. Application security
 
 | Item | Description |
@@ -32,6 +39,12 @@ Current posture: **development-oriented** — e.g. `DevelopmentCurrentUser` gran
 | Input validation | Continue Verifier on all commands/queries; review file/upload paths when added |
 | CORS / API surface | Restrict origins and methods in production |
 | Dependency updates | Track CVEs on ASP.NET, EF, messaging clients |
+
+**Checklist (engineering)**
+
+- [ ] **OpenAPI** (`/openapi/v*.json`) exposure reviewed — restrict by network or disable in hardened environments if required.
+- [ ] **CORS** policy explicit for any browser clients (no permissive wildcard with credentials).
+- [ ] **JWT**: `His:Authentication:Authority` set; `RequireAuthorityWhenNotDevelopment` where appropriate; `RolePermissionMap` documented for operations; integration tests cover **403** for under-privileged tokens (see `Dialysis.HIS.Tests`).
 
 ## 4. Compliance-oriented (region-specific)
 
@@ -43,7 +56,7 @@ Current posture: **development-oriented** — e.g. `DevelopmentCurrentUser` gran
 
 ## 5. Definition of done (production security slice)
 
-- No reliance on `DevelopmentCurrentUser` in production configuration.
+- No reliance on unauthenticated “all permissions” `ICurrentUser` in production: configure **`His:Authentication:Authority`** (and optionally **`RequireAuthorityWhenNotDevelopment`**) so staff APIs use real JWT claims.
 - Threat model reviewed for **HIS.Api** and integration entrypoints.
 - Security testing (e.g. OWASP API checks) on authz boundaries and portal routes.
 

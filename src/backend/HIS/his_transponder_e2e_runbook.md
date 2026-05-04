@@ -34,6 +34,15 @@ docker compose -f src/backend/HIS/docker-compose.integration.yml up -d
 
 Same ports (`5672`, `15672`) as the `docker run` example above; use `docker compose … down` when finished.
 
+### CI recipe (GitHub Actions)
+
+The workflow **[`.github/workflows/his-ci.yml`](../../../.github/workflows/his-ci.yml)** starts **SQL Server** and **RabbitMQ** service containers, then:
+
+1. Runs **`Dialysis.HIS.Tests`** with the default in-memory configuration (integration tests; the outbox golden-path test is **skipped** when `HIS_CI_OUTBOX_E2E` is unset).
+2. Runs the same project filtered to **`HisOutboxRelayGoldenPathTests`** with `HIS_CI_OUTBOX_E2E=1`, `ConnectionStrings__His`, `His__Transponder__EnableOutboxRelay=true`, and `His__Transponder__RabbitMq__ConnectionUri` set — asserts a **`MedicationOrderPlacedIntegrationEvent`** outbox row reaches **`ProcessedAtUtc`** after relay.
+
+Environment naming and Key Vault mapping are documented in **[his_production_deployment.md](./his_production_deployment.md)**.
+
 ## Observability and idempotency
 
 - **Correlation**: Transponder envelopes carry correlation metadata where configured on the bus; extend per message type in integration consumers when you add production adapters.

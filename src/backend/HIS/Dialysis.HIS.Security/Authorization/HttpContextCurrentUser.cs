@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace Dialysis.HIS.Security.Authorization;
 
 /// <summary>
-/// Resolves <see cref="ICurrentUser"/> from <see cref="HttpContext.User"/> when JWT is configured; otherwise matches <see cref="DevelopmentCurrentUser"/> behavior.
+/// Resolves <see cref="ICurrentUser"/> from <see cref="HttpContext.User"/> when <see cref="HisAuthenticationOptions.Authority"/> is set; otherwise grants all <see cref="HisPermissions"/> for local development.
 /// </summary>
 public sealed class HttpContextCurrentUser(
     IHttpContextAccessor httpContextAccessor,

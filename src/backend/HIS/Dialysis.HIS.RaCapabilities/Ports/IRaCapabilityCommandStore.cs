@@ -19,4 +19,8 @@ public interface IRaCapabilityCommandStore
     Task<bool> TryUpdateQualityWorkflowTaskStatusAsync(Guid taskId, string newStatusCode, CancellationToken cancellationToken = default);
 
     void AddSecurityMechanismHardening(RaSecurityMechanismHardening row);
+
+    void AddSpecialistEncounterRecord(RaSpecialistEncounterRecord record);
+
+    void AddResearchEducationActivity(RaResearchEducationActivity activity);
 }

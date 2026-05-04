@@ -9,6 +9,7 @@ Modular monolith under `src/backend/HIS`, aligned with **Tummers et al. (2021)**
 | [his_ddd_modular_plan.md](./his_ddd_modular_plan.md) | Full architecture plan: RA mapping, bounded contexts, physical layout, phased feature checklist, definition of done |
 | [his_ra_submodules.md](./his_ra_submodules.md) | **Fig. 6 (34 sub-modules)** traceability table (labels, Stub/Partial status, code and API links) |
 | [his_production_security_backlog.md](./his_production_security_backlog.md) | Production security backlog (IdP, TLS, secrets, audit/PHI) — aligns with B2b/B3 |
+| [his_production_deployment.md](./his_production_deployment.md) | Env / Key Vault mapping, TLS and ingress, migrations job, backup scope, observability, CI pointer |
 | [his_integration_backlog.md](./his_integration_backlog.md) | Real integrations backlog (broker, HL7/FHIR, LIS/pharmacy, data pipelines) |
 | [his_transponder_e2e_runbook.md](./his_transponder_e2e_runbook.md) | Broker + outbox relay: config, RabbitMQ example, observability/idempotency notes |
 | [his_api_threat_model_notes.md](./his_api_threat_model_notes.md) | Lightweight API / trust-boundary checklist (threat modeling aid) |
@@ -49,7 +50,7 @@ Use a **generic host** so `IHostedService` runs (database initializer; optional 
 
 **Configuration keys** (see `Dialysis.HIS.Api/appsettings.json`):
 
-- **`His:Authentication:Authority`** — when set, registers JWT Bearer; permission claims use type **`His:Authentication:PermissionClaimType`** (default `his_permission`) with values from `HisPermissions`. When **empty**, `ICurrentUser` keeps all dev permissions (same as the former `DevelopmentCurrentUser`).
+- **`His:Authentication:Authority`** — when set, registers JWT Bearer; permission claims use type **`His:Authentication:PermissionClaimType`** (default `his_permission`) with values from `HisPermissions`. When **empty** in Development, `ICurrentUser` exposes all `HisPermissions` for local work; set Authority and real claims in non-dev environments (see **`His:Authentication:RequireAuthorityWhenNotDevelopment`**).
 - **`His:Authentication:RoleClaimType`** + **`His:Authentication:RolePermissionMap`** — map IdP role/group names to HIS permission strings (merged with direct `his_permission` claims). **`His:Authentication:PatientPortalPatientIdClaimType`** — optional explicit patient id claim for portal scoping (default `his_patient_id`; `sub` also accepted when it equals route `patientId`).
 - **`His:PatientAccess:RequireExplicitConsentRowForPortal`** — when `true`, portal consent gate requires a persisted `PortalConsentPreference` row (no legacy implicit allow-all).
 - **`His:RequireHttpsRedirection`** / **`His:UseHsts`** — when `true` and not Development, enables HTTPS redirection and HSTS (B3; TLS still expected at ingress).
@@ -57,6 +58,13 @@ Use a **generic host** so `IHostedService` runs (database initializer; optional 
 - **`His:Laboratory:BaseUri`** — when set, **`ILaboratoryGateway`** uses HTTP to this base instead of the in-process stub (integration spine demo).
 - **`His:Transponder:EnableOutboxRelay`** — when `true`, publishes outbox rows to **`ITransponderBus`**.
 - **`His:Transponder:RabbitMq:ConnectionUri`** — when set, **`Dialysis.HIS.Api`** replaces the in-memory bus with RabbitMQ (same subscriptions as `AddHisIntegrationConsumers`).
+- **`His:Telemetry:EnableOpenTelemetry`** / **`His:Telemetry:OtlpExporterEndpoint`** — reserved in `appsettings.json` for a future OpenTelemetry export hook.
+
+---
+
+## Production deployment (engineering)
+
+For a concrete env/secret matrix, TLS and forwarded-headers posture, EF migration job expectations, backup scope (`his_*`, `his_migrations`, `transponder`), and the **GitHub Actions** SQL + Rabbit outbox recipe, see **[his_production_deployment.md](./his_production_deployment.md)**. Automated broker proof lives in **[`.github/workflows/his-ci.yml`](../../../.github/workflows/his-ci.yml)** (also linked from [his_transponder_e2e_runbook.md](./his_transponder_e2e_runbook.md)).
 
 ---
 
@@ -75,7 +83,7 @@ Legend: **[x]** first vertical slice in code · **[ ]** still to do or harden fo
 ### Phase B — Security
 
 - [x] **B1**: Local user model + registration (stub password handling)
-- [x] **B2**: Permissions + `AuthorizationPipelineBehavior` on permissioned commands/queries; `DevelopmentCurrentUser` grants all for dev
+- [x] **B2**: Permissions + `AuthorizationPipelineBehavior` on permissioned commands/queries; Development host grants all `HisPermissions` on `ICurrentUser` when JWT Authority is not configured
 - [x] **B2b**: **Real identity** (claims / IdP) and least-privilege roles — **partial**: optional JWT + `his_permission` claims when `His:Authentication:Authority` is set (`HttpContextCurrentUser`); **IdP role → `HisPermissions`** via **`His:Authentication:RolePermissionMap`**; portal **patient scope** filter when Authority is set
 - [x] **B3**: **Partial** — optional **`His:RequireHttpsRedirection`**, **`His:UseHsts`**, **`His:UseForwardedHeaders`** (ingress/TLS posture; secrets/password policy still follow backlog)
 - [x] **B4**: `IAuditTrail` + EF-backed audit rows (separate save from domain transaction — refine if you need single UoW)
@@ -114,7 +122,7 @@ Legend: **[x]** first vertical slice in code · **[ ]** still to do or harden fo
 - [x] **H1**: `IntegrationEventCatalog` + contract records in `Dialysis.HIS.Contracts`
 - [x] **H2**: **`ILaboratoryGateway`** stub + **`LaboratoryReferralFromHisStubConsumer`** (ACL-shaped path)
 - [x] **H3**: Device ingest + **rate limiter**; optional **`ExternalMessageId`** + filtered unique index for **idempotent** replays
-- [x] **H***: **Partial** — optional HTTP **`ILaboratoryGateway`** / **`IPharmacyGateway`** when lab/pharmacy **BaseUri** is set; **`docker-compose.integration.yml`** + runbook for Rabbit; broker/outbox under **`his_transponder_e2e_runbook.md`**; full-scale idempotency/DLQ still open
+- [x] **H***: **Partial** — optional HTTP **`ILaboratoryGateway`** / **`IPharmacyGateway`** when lab/pharmacy **BaseUri** is set; **`docker-compose.integration.yml`** + runbook for Rabbit; broker/outbox under **`his_transponder_e2e_runbook.md`**; **`.github/workflows/his-ci.yml`** exercises SQL + Rabbit + outbox relay; full-scale idempotency/DLQ still open
 
 ### Phase I — Patient portal
 
@@ -123,7 +131,7 @@ Legend: **[x]** first vertical slice in code · **[ ]** still to do or harden fo
 
 ### Quality
 
-- [x] **Tests**: **xUnit** (`Dialysis.HIS.Tests`) — medication discontinue, book-appointment validator, formulary safety policy, portal consent gate; **`WebApplicationFactory`** integration tests for HATEOAS envelope + RA capabilities + health default-version links
+- [x] **Tests**: **xUnit** (`Dialysis.HIS.Tests`) — medication discontinue, book-appointment validator, formulary safety policy, portal consent gate; **`WebApplicationFactory`** integration tests for HATEOAS envelope + RA capabilities + health default-version links + **`GET /health/ready`**; JWT **403** coverage; **`HisOutboxRelayGoldenPathTests`** when `HIS_CI_OUTBOX_E2E=1` (see CI workflow)
 - [x] **Architecture tests** (optional): **`BoundedContextReferenceTests`** — key assemblies must not reference foreign bounded-context **domain** packages (scheduling/medication vs patient flow; data services vs patient flow; integration vs RA capabilities)
 
 ---

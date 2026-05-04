@@ -19,6 +19,7 @@ This document supports the production security backlog ([his_production_security
 - **Patient portal** — `PatientPortalPatientScopeFilter` ties route `patientId` to token `sub` / `his_patient_id` when `His:Authentication:Authority` is set.
 - **Device ingest** — rate limited; optional idempotency key.
 - **OpenAPI** — `/openapi/v*.json` exposes surface area; restrict in production if needed.
+- **RA specialist / research-education** — `POST …/reference-architecture/capabilities/patient-monitoring/specialist-encounters/records` and `POST …/reference-architecture/capabilities/generic-mis/research-education/activities` require **`his.ra.commands.write`**; validate short text fields and external codes to avoid oversized or abusive payloads (same posture as other RA POST surfaces).
 
 ## Top risks and mitigations (API-focused)
 

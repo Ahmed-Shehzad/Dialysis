@@ -1,3 +1,5 @@
+using Dialysis.HIS.Security;
+
 namespace Dialysis.HIS.Security.Authorization;
 
 public sealed class HisAuthorizationService(ICurrentUser currentUser) : IHisAuthorizationService
@@ -8,6 +10,6 @@ public sealed class HisAuthorizationService(ICurrentUser currentUser) : IHisAuth
         if (currentUser.Permissions.Contains(permission, StringComparer.Ordinal))
             return Task.CompletedTask;
 
-        throw new UnauthorizedAccessException($"Missing permission '{permission}' for user '{currentUser.UserId}'.");
+        throw new HisPermissionDeniedException(permission, currentUser.UserId);
     }
 }
