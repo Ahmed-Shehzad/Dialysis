@@ -1,0 +1,165 @@
+{
+  "id": "7b3e4c2a-0000-4000-8000-000000000001",
+  "realm": "dialysis",
+  "displayName": "Dialysis",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "name": "offline_access",
+        "description": "${role_offline-access}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "7b3e4c2a-0000-4000-8000-000000000001"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "name": "uma_authorization",
+        "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "7b3e4c2a-0000-4000-8000-000000000001"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000010",
+        "name": "his-admin",
+        "description": "Dialysis HIS admin realm role (map via His:Authentication:RolePermissionMap)",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "7b3e4c2a-0000-4000-8000-000000000001"
+      },
+      {
+        "id": "10000000-0000-4000-8000-000000000011",
+        "name": "his-developer",
+        "description": "Dialysis HIS developer realm role",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "7b3e4c2a-0000-4000-8000-000000000001"
+      }
+    ]
+  },
+  "defaultRoles": ["offline_access", "uma_authorization"],
+  "users": [
+    {
+      "username": "demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "email": "demo@localhost.invalid",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["his-developer", "offline_access", "uma_authorization"]
+    }
+  ],
+  "clients": [
+    {
+      "id": "20000000-0000-4000-8000-000000000001",
+      "clientId": "dialysis-his-api",
+      "name": "Dialysis HIS API",
+      "description": "Resource server audience for HIS JwtBearer",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "his-api-placeholder-secret-not-used-for-login",
+      "redirectUris": ["http://localhost:0/*"],
+      "webOrigins": [],
+      "notBefore": 0,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000002",
+      "clientId": "dialysis-bff",
+      "name": "Dialysis Identity BFF",
+      "description": "Confidential client for ASP.NET BFF (authorization code + token exchange)",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "bff-dev-secret-change-me",
+      "redirectUris": [
+        "http://localhost:5275/*",
+        "http://127.0.0.1:5275/*",
+        "https://localhost:5275/*"
+      ],
+      "webOrigins": ["http://localhost:5275", "http://127.0.0.1:5275", "https://localhost:5275"],
+      "notBefore": 0,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "attributes": {
+        "standard.token.exchange.enabled": "true",
+        "post.logout.redirect.uris": "+"
+      },
+      "protocolMappers": [
+        {
+          "id": "30000000-0000-4000-8000-000000000001",
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        }
+      ],
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    }
+  ],
+  "browserSecurityHeaders": {
+    "contentSecurityPolicyReportOnly": "",
+    "xContentTypeOptions": "nosniff",
+    "referrerPolicy": "no-referrer",
+    "xRobotsTag": "none",
+    "xFrameOptions": "SAMEORIGIN",
+    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
+    "xXSSProtection": "1; mode=block",
+    "strictTransportSecurity": "max-age=31536000; includeSubDomains"
+  }
+}

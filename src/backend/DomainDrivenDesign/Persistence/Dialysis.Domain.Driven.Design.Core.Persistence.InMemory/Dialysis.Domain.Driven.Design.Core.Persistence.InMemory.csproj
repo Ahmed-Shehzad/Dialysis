@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.DomainDrivenDesign.Persistence.InMemory</RootNamespace>
+    <AssemblyName>Dialysis.Domain.Driven.Design.Core.Persistence.InMemory</AssemblyName>
+    <Description>In-memory persistence adapters for DDD building blocks.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

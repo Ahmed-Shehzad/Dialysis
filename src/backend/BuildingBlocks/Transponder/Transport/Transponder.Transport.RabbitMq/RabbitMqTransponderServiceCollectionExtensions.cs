@@ -1,0 +1,33 @@
+using Dialysis.BuildingBlocks.Transponder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+namespace Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
+
+public static class RabbitMqTransponderServiceCollectionExtensions
+{
+    /// <summary>
+    /// Replaces the default in-process <see cref="ITransponderBus"/> with RabbitMQ publish/consume.
+    /// Call after <see cref="TransponderServiceCollectionExtensions.AddTransponder"/> so consumers and serializers are registered.
+    /// </summary>
+    public static IServiceCollection AddTransponderRabbitMq(
+        this IServiceCollection services,
+        Action<TransponderRabbitMqOptions> configureOptions,
+        Action<RabbitMqSubscriptionBuilder>? configureSubscriptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(configureOptions);
+        services.AddLogging();
+        services.Configure(configureOptions);
+
+        var registry = new RabbitMqSubscriptionRegistry();
+        configureSubscriptions?.Invoke(new RabbitMqSubscriptionBuilder(services, registry));
+        new RabbitMqSubscriptionBuilder(services, registry).Listen<TransponderMessageChunk>();
+        services.AddSingleton(registry);
+
+        services.RemoveDescriptorsFor(typeof(ITransponderBus));
+        services.AddSingleton<ITransponderTransport, RabbitMqTransponderTransport>();
+        services.AddSingleton<ITransponderBus, RabbitMqTransponderBus>();
+        services.AddHostedService<RabbitMqTransponderConsumerHostedService>();
+        return services;
+    }
+}

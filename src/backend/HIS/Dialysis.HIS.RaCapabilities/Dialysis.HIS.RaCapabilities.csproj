@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.HIS.RaCapabilities</RootNamespace>
+    <Description>RA-aligned capability slices (Tummers et al. 2021) — extended modules beyond first vertical stubs.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

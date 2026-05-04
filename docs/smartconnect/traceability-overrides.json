@@ -1,0 +1,99 @@
+{
+  "byId": {
+    "bd7cdd708bef": {
+      "mapping": "ASP.NET Core host + SmartConnect wiring",
+      "status": "In progress",
+      "evidence": "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Program.cs"
+    },
+    "e338fa38150f": {
+      "mapping": "Cross-stack requirements differ from MC installer",
+      "status": "N/A",
+      "evidence": "SmartConnect is .NET/K8s-hosted; compare with deployment docs"
+    },
+    "b81be5d5dc05": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JVM channel runtime in SmartConnect host"
+    },
+    "746ed16e96e7": {
+      "mapping": "EF Core persistence for flows + ledger",
+      "status": "In progress",
+      "evidence": "src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/SmartConnectDbContext.cs"
+    },
+    "27d6f22a63a4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Different distribution model (.NET deploy vs MC installer)"
+    },
+    "049903eb867c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Different distribution model (.NET deploy vs MC CLI installer)"
+    },
+    "a4c05bf787c0": {
+      "mapping": "N/A",
+      "status": "In progress",
+      "evidence": "No MC Server Manager UI; operations via K8s + management API"
+    },
+    "664b9143f91d": {
+      "mapping": "FlowRuntimeEngine dispatch + outbound slots",
+      "status": "In progress",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "001a54fbd3e2": {
+      "mapping": "Inbound HTTP webhook routes",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/SmartConnectInboundEndpointExtensions.cs"
+    },
+    "519ffc586eec": {
+      "mapping": "MLLP TCP listener framing",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpInboundHostedService.cs"
+    },
+    "1e802e478244": {
+      "mapping": "HTTP outbound adapter",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundAdapter.cs"
+    },
+    "a9149b98297c": {
+      "mapping": "File outbound adapter",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/FileOutboundAdapter.cs"
+    },
+    "b0e26e4772e5": {
+      "mapping": "SMTP outbound adapter (basic)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/SmtpOutboundAdapter.cs"
+    },
+    "75e73d330f1a": {
+      "mapping": "Sandboxed JS transform stage (Jint + timeout)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptTransformStageTests.cs"
+    },
+    "6c09f0e130ae": {
+      "mapping": "N/A",
+      "status": "In progress",
+      "evidence": "No MC-style JavaScript reader connector in core"
+    },
+    "ee6dd2c1e477": {
+      "mapping": "N/A",
+      "status": "In progress",
+      "evidence": "No database reader source connector in core"
+    },
+    "1048ab38243e": {
+      "mapping": "Management HTTP API (flows, lifecycle, import/export JSON)",
+      "status": "In progress",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs"
+    },
+    "c304f38f491b": {
+      "mapping": "Flow/channel definition import (subset of Administrator import)",
+      "status": "In progress",
+      "evidence": "Management routes (flow import); parity with MC UI import is partial"
+    },
+    "620627148862": {
+      "mapping": "Operator shell (static UI + JSON APIs)",
+      "status": "In progress",
+      "evidence": "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html"
+    }
+  }
+}

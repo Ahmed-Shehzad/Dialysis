@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Transponder.Scheduling.Quartz</RootNamespace>
+    <AssemblyName>Transponder.Scheduling.Quartz</AssemblyName>
+    <Description>Quartz.NET scheduling integration for Transponder.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../Transponder.Core/Transponder.Core.csproj" />
+    <PackageReference Include="Quartz.Extensions.Hosting" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,127 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/backend/" />
+  <Folder Name="/src/backend/BuildingBlocks/Verifier/">
+    <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Abstractions/Verifier.Abstractions.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Intercessor/">
+    <Project Path="src/backend/BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Intercessor/Intercessor.Core/Intercessor.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Transponder/">
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Tests/Dialysis.BuildingBlocks.Transponder.Tests/Dialysis.BuildingBlocks.Transponder.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Transponder/Transport/">
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.AzureServiceBus/Transponder.Transport.AzureServiceBus.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.AwsSqsSns/Transponder.Transport.AwsSqsSns.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.Nats/Transponder.Transport.Nats.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.Grpc/Transponder.Transport.Grpc.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.SignalR/Transponder.Transport.SignalR.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.ServerSentEvents/Transponder.Transport.ServerSentEvents.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Transponder/Persistence/">
+    <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Postgresql/Transponder.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.SqlServer/Transponder.Persistence.EntityFrameworkCore.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Transponder/Scheduling/">
+    <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Hangfire/Transponder.Scheduling.Hangfire.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Quartz/Transponder.Scheduling.Quartz.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.TickerQ/Transponder.Scheduling.TickerQ.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/Core/">
+    <Project Path="src/backend/Core/Dialysis.Core.Abstraction/Dialysis.Core.Abstraction.csproj" />
+    <Project Path="src/backend/Core/Dialysis.Core/Dialysis.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/Core/Persistence/">
+    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.Abstractions/Dialysis.Core.Persistence.Abstractions.csproj" />
+    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.InMemory/Dialysis.Core.Persistence.InMemory.csproj" />
+    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.Postgresql/Dialysis.Core.Persistence.Postgresql.csproj" />
+    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.SqlServer/Dialysis.Core.Persistence.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/CQRS/">
+    <Project Path="src/backend/CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <Project Path="src/backend/CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/CQRS/Persistence/">
+    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.Abstractions/Dialysis.CQRS.Core.Persistence.Abstractions.csproj" />
+    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.InMemory/Dialysis.CQRS.Core.Persistence.InMemory.csproj" />
+    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.Postgresql/Dialysis.CQRS.Core.Persistence.Postgresql.csproj" />
+    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.SqlServer/Dialysis.CQRS.Core.Persistence.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/DomainDrivenDesign/">
+    <Project Path="src/backend/DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+    <Project Path="src/backend/DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core/Dialysis.Domain.Driven.Design.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/DomainDrivenDesign/Persistence/">
+    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.InMemory/Dialysis.Domain.Driven.Design.Core.Persistence.InMemory.csproj" />
+    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Postgresql/Dialysis.Domain.Driven.Design.Core.Persistence.Postgresql.csproj" />
+    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.SqlServer/Dialysis.Domain.Driven.Design.Core.Persistence.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/EHR/">
+    <Project Path="src/backend/EHR/Dialysis.EHR.Core.Abstraction/Dialysis.EHR.Core.Abstraction.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Core/Dialysis.EHR.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/EHR/Persistence/">
+    <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Abstractions/Dialysis.EHR.Core.Persistence.Abstractions.csproj" />
+    <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.InMemory/Dialysis.EHR.Core.Persistence.InMemory.csproj" />
+    <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Postgresql/Dialysis.EHR.Core.Persistence.Postgresql.csproj" />
+    <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.SqlServer/Dialysis.EHR.Core.Persistence.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/PDMS/">
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Core.Abstraction/Dialysis.PDMS.Core.Abstraction.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Core/Dialysis.PDMS.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/PDMS/Persistence/">
+    <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Abstractions/Dialysis.PDMS.Core.Persistence.Abstractions.csproj" />
+    <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.InMemory/Dialysis.PDMS.Core.Persistence.InMemory.csproj" />
+    <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Postgresql/Dialysis.PDMS.Core.Persistence.Postgresql.csproj" />
+    <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.SqlServer/Dialysis.PDMS.Core.Persistence.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/HIS/">
+    <Project Path="src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Composition/Dialysis.HIS.Composition.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.DataServices/Dialysis.HIS.DataServices.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Operations/Dialysis.HIS.Operations.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.PatientFlow/Dialysis.HIS.PatientFlow.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.RaCapabilities/Dialysis.HIS.RaCapabilities.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Scheduling/Dialysis.HIS.Scheduling.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Security/Dialysis.HIS.Security.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Tests/Dialysis.HIS.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/Identity/">
+    <Project Path="src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/">
+    <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
+    <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/Inbound/">
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/Dialysis.SmartConnect.Inbound.AspNetCore.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/Dialysis.SmartConnect.Inbound.Hosting.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/Dialysis.SmartConnect.Inbound.Mllp.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/Api/">
+    <Project Path="src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/Persistence/">
+    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
+    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
+    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.SqlServer/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/Tests/">
+    <Project Path="src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/Dialysis.SmartConnect.Tests.csproj" />
+  </Folder>
+</Solution>

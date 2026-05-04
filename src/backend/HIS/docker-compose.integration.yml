@@ -1,0 +1,9 @@
+# Local broker for HIS Transponder E2E (see his_transponder_e2e_runbook.md).
+# Usage: docker compose -f src/backend/HIS/docker-compose.integration.yml up -d
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: his-rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"

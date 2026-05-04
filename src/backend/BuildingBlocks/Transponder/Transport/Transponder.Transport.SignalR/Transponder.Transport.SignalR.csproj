@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Transponder.Transport.SignalR</RootNamespace>
+    <AssemblyName>Transponder.Transport.SignalR</AssemblyName>
+    <Description>SignalR transport plugin for Transponder (ASP.NET Core shared framework).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../Transponder.Core/Transponder.Core.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+  </ItemGroup>
+
+</Project>

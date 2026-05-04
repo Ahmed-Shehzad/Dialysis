@@ -1,0 +1,56 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Quartz;
+
+namespace Dialysis.BuildingBlocks.Transponder.Scheduling.Quartz;
+
+/// <summary>Quartz <see cref="IJob"/> that deserializes <see cref="TransponderScheduledEnvelope"/> and calls <see cref="ITransponderBus.PublishPreparedAsync"/>.</summary>
+public sealed class TransponderQuartzPublishJob(
+    ITransponderBus bus,
+    IMessageSerializer serializer,
+    ILogger<TransponderQuartzPublishJob> logger) : IJob
+{
+    internal const string EnvelopeJobDataKey = "transponderEnvelopeJson";
+
+    public async Task Execute(IJobExecutionContext context)
+    {
+        var json = context.MergedJobDataMap.GetString(EnvelopeJobDataKey);
+        if (string.IsNullOrEmpty(json))
+        {
+            logger.LogError("Transponder Quartz job {JobKey} missing envelope payload", context.JobDetail.Key);
+            throw new InvalidOperationException("Missing envelope job data.");
+        }
+
+        var envelope = JsonSerializer.Deserialize<TransponderScheduledEnvelope>(json);
+        if (envelope is null)
+        {
+            logger.LogError("Transponder Quartz job {JobKey} envelope JSON invalid", context.JobDetail.Key);
+            throw new InvalidOperationException("Invalid envelope JSON.");
+        }
+
+        var type = Type.GetType(envelope.AssemblyQualifiedMessageTypeName, throwOnError: false, ignoreCase: false);
+        if (type is null)
+        {
+            logger.LogError("Transponder Quartz job: unknown type {TypeName}", envelope.AssemblyQualifiedMessageTypeName);
+            throw new InvalidOperationException($"Could not load type '{envelope.AssemblyQualifiedMessageTypeName}'.");
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(envelope.JsonPayload);
+        var body = serializer.Deserialize(type, bytes);
+        if (body is null)
+        {
+            logger.LogError("Transponder Quartz job: deserialization returned null for {TypeName}", type.FullName);
+            throw new InvalidOperationException("Deserialized message was null.");
+        }
+
+        var routingKey = type.FullName ?? type.Name;
+        await bus
+            .PublishPreparedAsync(
+                routingKey,
+                body,
+                new TransponderPublishOptions(envelope.CorrelationId, envelope.DeduplicationId),
+                context.CancellationToken)
+            .ConfigureAwait(false);
+    }
+}

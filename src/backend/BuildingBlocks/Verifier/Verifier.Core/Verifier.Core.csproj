@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Verifier</RootNamespace>
+    <AssemblyName>Verifier.Core</AssemblyName>
+    <Description>Default Verifier implementation: fluent rules, AbstractValidator, rule extensions.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Verifier.Abstractions/Verifier.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

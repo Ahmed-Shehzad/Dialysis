@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Transponder.Transport.Nats</RootNamespace>
+    <AssemblyName>Transponder.Transport.Nats</AssemblyName>
+    <Description>NATS transport plugin for Transponder (NATS .NET v2).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../Transponder.Core/Transponder.Core.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="NATS.Client.JetStream" />
+    <PackageReference Include="NATS.Net" />
+  </ItemGroup>
+
+</Project>

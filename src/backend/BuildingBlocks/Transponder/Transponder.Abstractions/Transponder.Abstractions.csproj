@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Transponder</RootNamespace>
+    <AssemblyName>Transponder.Abstractions</AssemblyName>
+    <Description>Transponder: distributed application framework for asynchronous messaging in .NET. Message-driven programming model—contracts, produce, consume, compose workflows; command, event, and request/response patterns—with a consistent API across supported transports.</Description>
+  </PropertyGroup>
+
+</Project>

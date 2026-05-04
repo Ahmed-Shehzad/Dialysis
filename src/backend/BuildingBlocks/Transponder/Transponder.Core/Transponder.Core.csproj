@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Transponder</RootNamespace>
+    <AssemblyName>Transponder.Core</AssemblyName>
+    <Description>Transponder runtime for .NET: production-oriented defaults—retries, delayed redelivery, outbox, fault handling, scheduling, sagas, observability—and integration with dependency injection and hosted services so consumers and workflows run as part of the application.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+</Project>

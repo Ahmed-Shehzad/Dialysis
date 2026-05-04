@@ -1,0 +1,4446 @@
+{
+  "sourcePdf": "docs/book/mirth-connect-user-guide.pdf",
+  "generatedAt": "2026-05-04T19:27:43.025029+00:00",
+  "entries": [
+    {
+      "id": "0fa53d8d19f6",
+      "title": "Contents",
+      "level": 0,
+      "page": 3
+    },
+    {
+      "id": "b53f48a4b0a4",
+      "title": "Legal Notice",
+      "level": 0,
+      "page": 19
+    },
+    {
+      "id": "e0c81a8ab836",
+      "title": "Introduction to Mirth Connect",
+      "level": 0,
+      "page": 20
+    },
+    {
+      "id": "edcdb2082802",
+      "title": "The NextGen Connected Health Solutions Mission",
+      "level": 1,
+      "page": 20
+    },
+    {
+      "id": "b1df0f9bba3b",
+      "title": "About Mirth Connect",
+      "level": 1,
+      "page": 20
+    },
+    {
+      "id": "15e6ad86afec",
+      "title": "The Healthcare Interoperability Challenge and Solution",
+      "level": 1,
+      "page": 21
+    },
+    {
+      "id": "f7cd3c783cac",
+      "title": "Mirth Connect as Open Source Software",
+      "level": 1,
+      "page": 22
+    },
+    {
+      "id": "bd7cdd708bef",
+      "title": "Getting Started with Mirth Connect",
+      "level": 0,
+      "page": 23
+    },
+    {
+      "id": "e338fa38150f",
+      "title": "Mirth Connect System Requirements",
+      "level": 1,
+      "page": 23
+    },
+    {
+      "id": "b81be5d5dc05",
+      "title": "Java Requirements",
+      "level": 2,
+      "page": 24
+    },
+    {
+      "id": "746ed16e96e7",
+      "title": "Database Requirements",
+      "level": 2,
+      "page": 24
+    },
+    {
+      "id": "27d6f22a63a4",
+      "title": "Install Mirth Connect Using the Mirth Connect Installer",
+      "level": 1,
+      "page": 25
+    },
+    {
+      "id": "049903eb867c",
+      "title": "Install Mirth Connect Using the Command-Line Installer",
+      "level": 2,
+      "page": 36
+    },
+    {
+      "id": "a4c05bf787c0",
+      "title": "The Mirth Connect Server Manager",
+      "level": 1,
+      "page": 44
+    },
+    {
+      "id": "b36678b2c6be",
+      "title": "Service Tab",
+      "level": 2,
+      "page": 44
+    },
+    {
+      "id": "a08bc1b6f966",
+      "title": "Server Tab",
+      "level": 2,
+      "page": 44
+    },
+    {
+      "id": "4352e3fdcdcd",
+      "title": "Database Tab",
+      "level": 2,
+      "page": 46
+    },
+    {
+      "id": "df9dee6092c9",
+      "title": "Info Tab",
+      "level": 2,
+      "page": 47
+    },
+    {
+      "id": "620627148862",
+      "title": "The Web Dashboard",
+      "level": 1,
+      "page": 47
+    },
+    {
+      "id": "94b9bfb26a81",
+      "title": "Changing the Database Type",
+      "level": 1,
+      "page": 49
+    },
+    {
+      "id": "25e220f01b32",
+      "title": "Backup Current Server Configuration",
+      "level": 2,
+      "page": 49
+    },
+    {
+      "id": "2e3358acf9d7",
+      "title": "Change Database Settings",
+      "level": 2,
+      "page": 50
+    },
+    {
+      "id": "f5ab12768c17",
+      "title": "Editing the Properties File Directly for Windows, Linux, and Mac",
+      "level": 3,
+      "page": 52
+    },
+    {
+      "id": "a23cad09bec9",
+      "title": "Restart the Mirth Connect Server",
+      "level": 2,
+      "page": 53
+    },
+    {
+      "id": "3cc9c1d75a71",
+      "title": "Restore Server Configuration",
+      "level": 2,
+      "page": 53
+    },
+    {
+      "id": "6faed7fb5f75",
+      "title": "Using Java 9 or greater",
+      "level": 1,
+      "page": 55
+    },
+    {
+      "id": "f4d7f4f95db0",
+      "title": "Mirth Connect Administrator Overview",
+      "level": 1,
+      "page": 55
+    },
+    {
+      "id": "504a7e83bca6",
+      "title": "Download the Administrator Launcher",
+      "level": 2,
+      "page": 55
+    },
+    {
+      "id": "b837c994bf25",
+      "title": "Launch the Administrator",
+      "level": 2,
+      "page": 56
+    },
+    {
+      "id": "6fd63ec29458",
+      "title": "Log On",
+      "level": 2,
+      "page": 57
+    },
+    {
+      "id": "50e35a801b57",
+      "title": "Logging on for the First Time",
+      "level": 2,
+      "page": 58
+    },
+    {
+      "id": "f08a7e51d0c2",
+      "title": "The Fundamentals of Mirth Connect",
+      "level": 0,
+      "page": 60
+    },
+    {
+      "id": "cb6cf78e7048",
+      "title": "About Channels and Connectors",
+      "level": 1,
+      "page": 60
+    },
+    {
+      "id": "8f8485279c1d",
+      "title": "Channel Components",
+      "level": 2,
+      "page": 60
+    },
+    {
+      "id": "5584b7a1846b",
+      "title": "General Channel Properties",
+      "level": 3,
+      "page": 61
+    },
+    {
+      "id": "6ff60c0decb8",
+      "title": "Source Connector",
+      "level": 3,
+      "page": 61
+    },
+    {
+      "id": "40c45dd1279d",
+      "title": "Destination Connectors",
+      "level": 3,
+      "page": 62
+    },
+    {
+      "id": "5788dfaf6043",
+      "title": "Channel Scripts",
+      "level": 3,
+      "page": 62
+    },
+    {
+      "id": "b30529234a69",
+      "title": "Connector Components",
+      "level": 2,
+      "page": 63
+    },
+    {
+      "id": "5e271d1b17c5",
+      "title": "General Connector Properties",
+      "level": 3,
+      "page": 63
+    },
+    {
+      "id": "e6c5e2baab30",
+      "title": "Connector-Specific Properties",
+      "level": 3,
+      "page": 63
+    },
+    {
+      "id": "473c249a4370",
+      "title": "Filter",
+      "level": 3,
+      "page": 65
+    },
+    {
+      "id": "b71747f1c8c4",
+      "title": "Transformer",
+      "level": 3,
+      "page": 65
+    },
+    {
+      "id": "dc7441c576af",
+      "title": "About Message Data",
+      "level": 1,
+      "page": 65
+    },
+    {
+      "id": "41d81271f349",
+      "title": "Message Metadata",
+      "level": 2,
+      "page": 66
+    },
+    {
+      "id": "644e25fd5ab8",
+      "title": "Message Content",
+      "level": 2,
+      "page": 67
+    },
+    {
+      "id": "32cd9bafea30",
+      "title": "Message Attachments",
+      "level": 2,
+      "page": 68
+    },
+    {
+      "id": "664b9143f91d",
+      "title": "The Message Processing Lifecycle",
+      "level": 1,
+      "page": 68
+    },
+    {
+      "id": "27fd5020ecec",
+      "title": "Source Processing Steps",
+      "level": 2,
+      "page": 69
+    },
+    {
+      "id": "08ca078d887e",
+      "title": "Destination Processing Steps",
+      "level": 2,
+      "page": 70
+    },
+    {
+      "id": "66290c37fc29",
+      "title": "Final Processing Steps",
+      "level": 2,
+      "page": 70
+    },
+    {
+      "id": "906e1dbd0a6a",
+      "title": "Destination Chains",
+      "level": 2,
+      "page": 71
+    },
+    {
+      "id": "a1192781e4bc",
+      "title": "About Data Types",
+      "level": 1,
+      "page": 72
+    },
+    {
+      "id": "049e1774caf1",
+      "title": "About Filters",
+      "level": 1,
+      "page": 74
+    },
+    {
+      "id": "3439031dbadf",
+      "title": "The \"msg\" Object",
+      "level": 2,
+      "page": 75
+    },
+    {
+      "id": "0043eaf93157",
+      "title": "Filter Rule Types",
+      "level": 2,
+      "page": 75
+    },
+    {
+      "id": "055deed2a6dc",
+      "title": "About Transformers",
+      "level": 1,
+      "page": 76
+    },
+    {
+      "id": "dd16e2703a60",
+      "title": "The \"msg\" Object",
+      "level": 2,
+      "page": 76
+    },
+    {
+      "id": "d8fb6242d453",
+      "title": "The \"tmp\" Object",
+      "level": 2,
+      "page": 76
+    },
+    {
+      "id": "30de38489db7",
+      "title": "Response Transformers",
+      "level": 2,
+      "page": 76
+    },
+    {
+      "id": "803fb9390d22",
+      "title": "Transformer Step Types",
+      "level": 2,
+      "page": 77
+    },
+    {
+      "id": "120a91251454",
+      "title": "Administrator Launcher Overview",
+      "level": 0,
+      "page": 78
+    },
+    {
+      "id": "1931c0f3e8bd",
+      "title": "Mirth Connect Administrator",
+      "level": 0,
+      "page": 79
+    },
+    {
+      "id": "2d0bec540b7a",
+      "title": "Administrator Layout",
+      "level": 1,
+      "page": 79
+    },
+    {
+      "id": "63e3af7c81fd",
+      "title": "Working With Tables",
+      "level": 1,
+      "page": 80
+    },
+    {
+      "id": "03c7396e5578",
+      "title": "Monitor Views",
+      "level": 1,
+      "page": 84
+    },
+    {
+      "id": "63bb320096ed",
+      "title": "Dashboard View",
+      "level": 2,
+      "page": 84
+    },
+    {
+      "id": "3c8ead8f4688",
+      "title": "Dashboard Table",
+      "level": 3,
+      "page": 86
+    },
+    {
+      "id": "e703605125ea",
+      "title": "Dashboard Table Columns",
+      "level": 4,
+      "page": 86
+    },
+    {
+      "id": "14c6d4a3296b",
+      "title": "View Messages for a Channel",
+      "level": 4,
+      "page": 88
+    },
+    {
+      "id": "37ce1861b0eb",
+      "title": "Show or Hide Channel Groups",
+      "level": 4,
+      "page": 88
+    },
+    {
+      "id": "70b3f6effa66",
+      "title": "Change How Tags Display",
+      "level": 4,
+      "page": 89
+    },
+    {
+      "id": "1cbaf2ccb2eb",
+      "title": "Server Log",
+      "level": 3,
+      "page": 89
+    },
+    {
+      "id": "6e7763c9e4e7",
+      "title": "Connection Log",
+      "level": 3,
+      "page": 91
+    },
+    {
+      "id": "9ba7dbb80afe",
+      "title": "Global Maps",
+      "level": 3,
+      "page": 92
+    },
+    {
+      "id": "4c6c3ad55310",
+      "title": "Global Maps Table Columns",
+      "level": 4,
+      "page": 92
+    },
+    {
+      "id": "b5cc8390e49a",
+      "title": "Dashboard Tasks",
+      "level": 3,
+      "page": 93
+    },
+    {
+      "id": "f6052f76c1fd",
+      "title": "Send Message",
+      "level": 4,
+      "page": 95
+    },
+    {
+      "id": "e4542d05530f",
+      "title": "Remove All Messages",
+      "level": 4,
+      "page": 96
+    },
+    {
+      "id": "e37510af8771",
+      "title": "Clear Statistics",
+      "level": 4,
+      "page": 97
+    },
+    {
+      "id": "99097a44b22e",
+      "title": "Filter By Channel Name or Tag",
+      "level": 3,
+      "page": 98
+    },
+    {
+      "id": "b765115cf57d",
+      "title": "View All Available Tags/Names",
+      "level": 4,
+      "page": 98
+    },
+    {
+      "id": "61c13f92df62",
+      "title": "Auto-Complete Tags/Names",
+      "level": 4,
+      "page": 99
+    },
+    {
+      "id": "790cf22b8dc7",
+      "title": "Filter By Channel Tags",
+      "level": 4,
+      "page": 99
+    },
+    {
+      "id": "c76458c0dab9",
+      "title": "Filter By Channel",
+      "level": 4,
+      "page": 101
+    },
+    {
+      "id": "1310a6d32f12",
+      "title": "Filter By Partial Channel Name",
+      "level": 4,
+      "page": 101
+    },
+    {
+      "id": "c21736a470a6",
+      "title": "Filter By Multiple Criteria",
+      "level": 4,
+      "page": 102
+    },
+    {
+      "id": "690c7a839977",
+      "title": "Clear Filter Criteria",
+      "level": 4,
+      "page": 102
+    },
+    {
+      "id": "eb267384985d",
+      "title": "Message Browser View",
+      "level": 2,
+      "page": 103
+    },
+    {
+      "id": "dd41f11b0f31",
+      "title": "Navigation",
+      "level": 3,
+      "page": 104
+    },
+    {
+      "id": "7910938ae1a4",
+      "title": "From the Dashboard",
+      "level": 4,
+      "page": 104
+    },
+    {
+      "id": "137b1bbd1d82",
+      "title": "From the Channels View",
+      "level": 4,
+      "page": 105
+    },
+    {
+      "id": "d57cc0f98c28",
+      "title": "Metadata Table",
+      "level": 3,
+      "page": 106
+    },
+    {
+      "id": "e32d40cb052d",
+      "title": "Add a Column to the Metadata Table",
+      "level": 4,
+      "page": 107
+    },
+    {
+      "id": "58b454bd41c2",
+      "title": "Metadata Table Columns",
+      "level": 4,
+      "page": 108
+    },
+    {
+      "id": "7ad5ec970f92",
+      "title": "Custom Metadata Columns",
+      "level": 4,
+      "page": 111
+    },
+    {
+      "id": "e97a4e12318c",
+      "title": "Message Content Tab",
+      "level": 3,
+      "page": 111
+    },
+    {
+      "id": "fd87fb2f2635",
+      "title": "View Message Content",
+      "level": 4,
+      "page": 112
+    },
+    {
+      "id": "4c79a22b8705",
+      "title": "Message Content Types",
+      "level": 4,
+      "page": 113
+    },
+    {
+      "id": "2efc1e95967b",
+      "title": "Formatting Messages",
+      "level": 4,
+      "page": 114
+    },
+    {
+      "id": "5d229b40aa2d",
+      "title": "Mappings Tab",
+      "level": 3,
+      "page": 115
+    },
+    {
+      "id": "14fd187586ca",
+      "title": "View Mappings",
+      "level": 4,
+      "page": 116
+    },
+    {
+      "id": "341366726e2f",
+      "title": "Mappings Table Columns",
+      "level": 4,
+      "page": 116
+    },
+    {
+      "id": "5a5903d10960",
+      "title": "Errors Tab",
+      "level": 3,
+      "page": 116
+    },
+    {
+      "id": "ff479e0920d1",
+      "title": "View Message Errors",
+      "level": 4,
+      "page": 117
+    },
+    {
+      "id": "6c32dd2aa4e1",
+      "title": "Error Content Types",
+      "level": 4,
+      "page": 118
+    },
+    {
+      "id": "a23e8bb2a424",
+      "title": "Attachments Tab",
+      "level": 3,
+      "page": 118
+    },
+    {
+      "id": "5888c5a3e6f6",
+      "title": "Attachment Table Columns",
+      "level": 4,
+      "page": 119
+    },
+    {
+      "id": "b275dfced60b",
+      "title": "View Attachments",
+      "level": 4,
+      "page": 119
+    },
+    {
+      "id": "2a64eb396355",
+      "title": "Text Attachment Viewer",
+      "level": 4,
+      "page": 120
+    },
+    {
+      "id": "d7c4994ec221",
+      "title": "Image Attachment Viewer",
+      "level": 4,
+      "page": 121
+    },
+    {
+      "id": "8780172310f0",
+      "title": "DICOM Attachment Viewer",
+      "level": 4,
+      "page": 122
+    },
+    {
+      "id": "dba2fb93ad73",
+      "title": "PDF Attachment Viewer",
+      "level": 4,
+      "page": 123
+    },
+    {
+      "id": "afc8e4c3f060",
+      "title": "Search Messages",
+      "level": 3,
+      "page": 124
+    },
+    {
+      "id": "736247a4bb0a",
+      "title": "Message Search Options",
+      "level": 4,
+      "page": 125
+    },
+    {
+      "id": "18d71fe936b8",
+      "title": "Advanced Search Filter",
+      "level": 4,
+      "page": 127
+    },
+    {
+      "id": "eb6a41544dcf",
+      "title": "Message Browser Tasks",
+      "level": 3,
+      "page": 130
+    },
+    {
+      "id": "f1ab76555544",
+      "title": "Import Messages",
+      "level": 4,
+      "page": 131
+    },
+    {
+      "id": "eddf45bc29b4",
+      "title": "Export Results",
+      "level": 4,
+      "page": 133
+    },
+    {
+      "id": "0858c2e885b0",
+      "title": "Remove Results",
+      "level": 4,
+      "page": 135
+    },
+    {
+      "id": "341763e159ff",
+      "title": "Reprocess Results",
+      "level": 4,
+      "page": 136
+    },
+    {
+      "id": "e0f496104a04",
+      "title": "Reprocess Message",
+      "level": 4,
+      "page": 137
+    },
+    {
+      "id": "27e26a88f711",
+      "title": "Export Attachment",
+      "level": 4,
+      "page": 138
+    },
+    {
+      "id": "44b685818f8f",
+      "title": "Alerts View",
+      "level": 2,
+      "page": 139
+    },
+    {
+      "id": "a719fded8b65",
+      "title": "Navigation",
+      "level": 3,
+      "page": 139
+    },
+    {
+      "id": "fc8d4a7bb89c",
+      "title": "Alerts Table",
+      "level": 3,
+      "page": 140
+    },
+    {
+      "id": "3308fd0fd198",
+      "title": "Alerts Table Columns",
+      "level": 4,
+      "page": 140
+    },
+    {
+      "id": "8ebe4b804d88",
+      "title": "Alerts Tasks",
+      "level": 3,
+      "page": 140
+    },
+    {
+      "id": "ff0230f151f9",
+      "title": "Events View",
+      "level": 2,
+      "page": 141
+    },
+    {
+      "id": "167fafb422e2",
+      "title": "Navigation",
+      "level": 3,
+      "page": 142
+    },
+    {
+      "id": "5eb4a7958208",
+      "title": "Events Table",
+      "level": 3,
+      "page": 142
+    },
+    {
+      "id": "20e34cf87402",
+      "title": "Metadata Table Columns",
+      "level": 4,
+      "page": 143
+    },
+    {
+      "id": "e198e9ef5eb4",
+      "title": "PHI Events",
+      "level": 4,
+      "page": 144
+    },
+    {
+      "id": "cb4b8503ad35",
+      "title": "Event Attributes Table",
+      "level": 3,
+      "page": 145
+    },
+    {
+      "id": "6d1db4c03a71",
+      "title": "Searching Events",
+      "level": 3,
+      "page": 145
+    },
+    {
+      "id": "6982d7114011",
+      "title": "Advanced Search Filter",
+      "level": 4,
+      "page": 146
+    },
+    {
+      "id": "73f805716ab9",
+      "title": "Event Tasks",
+      "level": 3,
+      "page": 147
+    },
+    {
+      "id": "2e414e6e48d9",
+      "title": "Export All Events",
+      "level": 4,
+      "page": 147
+    },
+    {
+      "id": "23d7d23954b8",
+      "title": "Management Views",
+      "level": 1,
+      "page": 148
+    },
+    {
+      "id": "ab0b0657f405",
+      "title": "Channels View",
+      "level": 2,
+      "page": 148
+    },
+    {
+      "id": "5fa610fbf3d2",
+      "title": "Navigation",
+      "level": 3,
+      "page": 149
+    },
+    {
+      "id": "41c983f0c08b",
+      "title": "Channel Table",
+      "level": 3,
+      "page": 150
+    },
+    {
+      "id": "a4fe7d347dfb",
+      "title": "Channel Table Columns",
+      "level": 4,
+      "page": 151
+    },
+    {
+      "id": "7b06e3fea95f",
+      "title": "Show or Hide Channel Groups",
+      "level": 4,
+      "page": 151
+    },
+    {
+      "id": "29d12efd261d",
+      "title": "Change How Tags Display",
+      "level": 4,
+      "page": 151
+    },
+    {
+      "id": "e0b27b68d52d",
+      "title": "Filter By Channel Name or Tag",
+      "level": 4,
+      "page": 151
+    },
+    {
+      "id": "5674b33d7229",
+      "title": "Use Drag and Drop",
+      "level": 4,
+      "page": 152
+    },
+    {
+      "id": "0fa473a59508",
+      "title": "Get the Channel Name/ID",
+      "level": 5,
+      "page": 152
+    },
+    {
+      "id": "09def024b34a",
+      "title": "Assign Channels to a Group",
+      "level": 5,
+      "page": 152
+    },
+    {
+      "id": "de57382c2001",
+      "title": "Import Channels/Groups Using Drag-and-Drop",
+      "level": 5,
+      "page": 153
+    },
+    {
+      "id": "14cd1a3e9d34",
+      "title": "Channel Tasks",
+      "level": 3,
+      "page": 154
+    },
+    {
+      "id": "c304f38f491b",
+      "title": "Import Channel",
+      "level": 4,
+      "page": 156
+    },
+    {
+      "id": "857ba44219fd",
+      "title": "Debug Channel",
+      "level": 4,
+      "page": 157
+    },
+    {
+      "id": "89e43ed350c9",
+      "title": "Export Channel",
+      "level": 4,
+      "page": 157
+    },
+    {
+      "id": "dd60e165bbd5",
+      "title": "Group Tasks",
+      "level": 3,
+      "page": 158
+    },
+    {
+      "id": "e82ee17dce99",
+      "title": "Edit Group Details",
+      "level": 4,
+      "page": 159
+    },
+    {
+      "id": "9897d4a86607",
+      "title": "Import Group",
+      "level": 4,
+      "page": 160
+    },
+    {
+      "id": "65722f321eb3",
+      "title": "Export Group",
+      "level": 4,
+      "page": 160
+    },
+    {
+      "id": "88db8bc2a8b4",
+      "title": "Users View",
+      "level": 2,
+      "page": 160
+    },
+    {
+      "id": "880dddf2e789",
+      "title": "Navigation",
+      "level": 3,
+      "page": 161
+    },
+    {
+      "id": "25d9946b5ffb",
+      "title": "Users Table",
+      "level": 3,
+      "page": 161
+    },
+    {
+      "id": "c0716e3d6056",
+      "title": "Users Table Columns",
+      "level": 4,
+      "page": 162
+    },
+    {
+      "id": "ee6b616f2d66",
+      "title": "Users Tasks",
+      "level": 3,
+      "page": 163
+    },
+    {
+      "id": "92158c65ee21",
+      "title": "Add/Update a User Account",
+      "level": 4,
+      "page": 163
+    },
+    {
+      "id": "f8ed507bf36c",
+      "title": "Settings View",
+      "level": 2,
+      "page": 166
+    },
+    {
+      "id": "cb67b19541a6",
+      "title": "Navigation",
+      "level": 3,
+      "page": 166
+    },
+    {
+      "id": "8ed243f3ce44",
+      "title": "Server Settings Tab",
+      "level": 3,
+      "page": 167
+    },
+    {
+      "id": "b4435df52a24",
+      "title": "General Settings",
+      "level": 4,
+      "page": 169
+    },
+    {
+      "id": "8252a73ec326",
+      "title": "Channel Settings",
+      "level": 4,
+      "page": 170
+    },
+    {
+      "id": "48f754affefe",
+      "title": "Email Settings",
+      "level": 4,
+      "page": 171
+    },
+    {
+      "id": "610ce7ba36bc",
+      "title": "Notification Settings",
+      "level": 4,
+      "page": 172
+    },
+    {
+      "id": "507967433858",
+      "title": "Tasks",
+      "level": 4,
+      "page": 173
+    },
+    {
+      "id": "7cda6572c24e",
+      "title": "Restore Config",
+      "level": 4,
+      "page": 174
+    },
+    {
+      "id": "0ab20a857be1",
+      "title": "Clear All Statistics",
+      "level": 4,
+      "page": 174
+    },
+    {
+      "id": "5b1af9c5062e",
+      "title": "Administrator Settings Tab",
+      "level": 3,
+      "page": 174
+    },
+    {
+      "id": "54ebed23b65a",
+      "title": "System Preferences",
+      "level": 4,
+      "page": 175
+    },
+    {
+      "id": "358db0b36953",
+      "title": "User Preferences",
+      "level": 4,
+      "page": 177
+    },
+    {
+      "id": "692a2def89d7",
+      "title": "Code Editor Preferences",
+      "level": 4,
+      "page": 178
+    },
+    {
+      "id": "1d139d57ee8e",
+      "title": "Tasks",
+      "level": 4,
+      "page": 179
+    },
+    {
+      "id": "d28d92e49252",
+      "title": "Tags Settings Tab",
+      "level": 3,
+      "page": 179
+    },
+    {
+      "id": "91649618dd2c",
+      "title": "Tags Table",
+      "level": 4,
+      "page": 180
+    },
+    {
+      "id": "5328555804c9",
+      "title": "Adding a Tag",
+      "level": 5,
+      "page": 181
+    },
+    {
+      "id": "fd9e9317771e",
+      "title": "Removing a Tag",
+      "level": 5,
+      "page": 181
+    },
+    {
+      "id": "9f0282e53326",
+      "title": "Channels Table",
+      "level": 4,
+      "page": 181
+    },
+    {
+      "id": "0045040b889a",
+      "title": "Indeterminate Check Boxes",
+      "level": 5,
+      "page": 182
+    },
+    {
+      "id": "5f74a6e2db0b",
+      "title": "Configuration Map Settings Tab",
+      "level": 3,
+      "page": 182
+    },
+    {
+      "id": "863eb71118e8",
+      "title": "Table Columns",
+      "level": 4,
+      "page": 183
+    },
+    {
+      "id": "da0ed40e9c3c",
+      "title": "Tasks",
+      "level": 4,
+      "page": 183
+    },
+    {
+      "id": "2915220ce311",
+      "title": "Database Tasks Settings Tab",
+      "level": 3,
+      "page": 184
+    },
+    {
+      "id": "c60c07155911",
+      "title": "Database Tasks Table Columns",
+      "level": 4,
+      "page": 185
+    },
+    {
+      "id": "419dad49a5c5",
+      "title": "Affected Channels Table",
+      "level": 4,
+      "page": 185
+    },
+    {
+      "id": "437130dd4712",
+      "title": "Running a Database Task",
+      "level": 4,
+      "page": 185
+    },
+    {
+      "id": "7c3b0e9798cc",
+      "title": "Resources Settings Tab",
+      "level": 3,
+      "page": 186
+    },
+    {
+      "id": "38188bc2fd91",
+      "title": "Resources Table Columns",
+      "level": 4,
+      "page": 187
+    },
+    {
+      "id": "65546f8a6976",
+      "title": "Tasks",
+      "level": 4,
+      "page": 188
+    },
+    {
+      "id": "c6a91d33b5f7",
+      "title": "Reload Resource",
+      "level": 4,
+      "page": 188
+    },
+    {
+      "id": "114fe630f930",
+      "title": "Directory Resource",
+      "level": 4,
+      "page": 188
+    },
+    {
+      "id": "15e464f091e7",
+      "title": "Using Resources in Channels/Connectors",
+      "level": 4,
+      "page": 190
+    },
+    {
+      "id": "73f764f17b3a",
+      "title": "Data Pruner Settings Tab",
+      "level": 3,
+      "page": 190
+    },
+    {
+      "id": "454a3bba349f",
+      "title": "Status",
+      "level": 4,
+      "page": 191
+    },
+    {
+      "id": "ce1459f6a563",
+      "title": "Schedule",
+      "level": 4,
+      "page": 192
+    },
+    {
+      "id": "45e19e372f55",
+      "title": "Prune Settings",
+      "level": 4,
+      "page": 193
+    },
+    {
+      "id": "204d09872d15",
+      "title": "Archive Settings",
+      "level": 4,
+      "page": 194
+    },
+    {
+      "id": "fe8575daf1c2",
+      "title": "Tasks",
+      "level": 4,
+      "page": 195
+    },
+    {
+      "id": "cd574fcd4eeb",
+      "title": "Settings Tasks",
+      "level": 3,
+      "page": 196
+    },
+    {
+      "id": "6cfd552610ac",
+      "title": "Extensions View",
+      "level": 2,
+      "page": 196
+    },
+    {
+      "id": "cbc318055076",
+      "title": "Navigation",
+      "level": 3,
+      "page": 197
+    },
+    {
+      "id": "9fd5fe5dca41",
+      "title": "Installed Connectors Table",
+      "level": 3,
+      "page": 198
+    },
+    {
+      "id": "c8291e0afbfc",
+      "title": "Installed Connectors Table Columns",
+      "level": 4,
+      "page": 199
+    },
+    {
+      "id": "25aba066d842",
+      "title": "Installed Plugins Table",
+      "level": 3,
+      "page": 199
+    },
+    {
+      "id": "22d21e7bc6be",
+      "title": "Installed Plugins Table Columns",
+      "level": 4,
+      "page": 200
+    },
+    {
+      "id": "2ce4287ef560",
+      "title": "Install a New Extension",
+      "level": 3,
+      "page": 200
+    },
+    {
+      "id": "a597ea89d0aa",
+      "title": "Extension Tasks",
+      "level": 3,
+      "page": 201
+    },
+    {
+      "id": "474b188a9bfa",
+      "title": "Show Properties",
+      "level": 4,
+      "page": 202
+    },
+    {
+      "id": "17476e92cc69",
+      "title": "Edit Views",
+      "level": 1,
+      "page": 203
+    },
+    {
+      "id": "deec6e3040ac",
+      "title": "Edit Channel View",
+      "level": 2,
+      "page": 203
+    },
+    {
+      "id": "da2de6bcaf1a",
+      "title": "Navigation",
+      "level": 3,
+      "page": 203
+    },
+    {
+      "id": "652204eae947",
+      "title": "Summary Tab",
+      "level": 3,
+      "page": 204
+    },
+    {
+      "id": "e0da3acf9003",
+      "title": "Channel Properties",
+      "level": 4,
+      "page": 205
+    },
+    {
+      "id": "8f718abc6e1a",
+      "title": "Set Data Types Window",
+      "level": 5,
+      "page": 207
+    },
+    {
+      "id": "9c8fdd1a42b2",
+      "title": "Select Data Types",
+      "level": 6,
+      "page": 208
+    },
+    {
+      "id": "be800b5fefa4",
+      "title": "Change Data Type Properties",
+      "level": 6,
+      "page": 209
+    },
+    {
+      "id": "9f38760fef9c",
+      "title": "Bulk Edit Mode",
+      "level": 6,
+      "page": 210
+    },
+    {
+      "id": "b61fdc42dced",
+      "title": "Set Dependencies Window",
+      "level": 5,
+      "page": 212
+    },
+    {
+      "id": "a7ce739b4d7d",
+      "title": "Code Template Libraries",
+      "level": 6,
+      "page": 213
+    },
+    {
+      "id": "163cabfed67c",
+      "title": "Link Code Template Libraries",
+      "level": 7,
+      "page": 213
+    },
+    {
+      "id": "81ce8b48b3c0",
+      "title": "Library Resources",
+      "level": 6,
+      "page": 214
+    },
+    {
+      "id": "dafb0378562f",
+      "title": "Deploy/Start Dependencies",
+      "level": 6,
+      "page": 215
+    },
+    {
+      "id": "f9c758dcae77",
+      "title": "Deploy/Start Channels",
+      "level": 7,
+      "page": 217
+    },
+    {
+      "id": "30444d1d023e",
+      "title": "Pause/Stop/Undeploy Channels",
+      "level": 7,
+      "page": 218
+    },
+    {
+      "id": "454721e1f823",
+      "title": "Attachment Handlers",
+      "level": 5,
+      "page": 219
+    },
+    {
+      "id": "01cabaf05923",
+      "title": "Extraction",
+      "level": 6,
+      "page": 220
+    },
+    {
+      "id": "e0d1b0c489f4",
+      "title": "Reattachment",
+      "level": 6,
+      "page": 220
+    },
+    {
+      "id": "097189137806",
+      "title": "Expanded Replacement Tokens",
+      "level": 6,
+      "page": 220
+    },
+    {
+      "id": "16d136564ce4",
+      "title": "Attachment MIME Types",
+      "level": 6,
+      "page": 221
+    },
+    {
+      "id": "4890e76d7fcf",
+      "title": "Attachment Handler Properties",
+      "level": 6,
+      "page": 221
+    },
+    {
+      "id": "b32b8acf3e75",
+      "title": "Entire Message Attachment Handler Properties",
+      "level": 7,
+      "page": 221
+    },
+    {
+      "id": "34b2ca8103b1",
+      "title": "Regex Attachment Handler Properties",
+      "level": 7,
+      "page": 222
+    },
+    {
+      "id": "029122e7bc93",
+      "title": "Regular Expressions Table",
+      "level": 8,
+      "page": 223
+    },
+    {
+      "id": "d0a9a749d003",
+      "title": "String Replacement Tables",
+      "level": 8,
+      "page": 224
+    },
+    {
+      "id": "bbaea87685b5",
+      "title": "DICOM Attachment Handler Properties",
+      "level": 7,
+      "page": 224
+    },
+    {
+      "id": "41352218137a",
+      "title": "JavaScript Attachment Handler Properties",
+      "level": 7,
+      "page": 224
+    },
+    {
+      "id": "c2cec78b3533",
+      "title": "Scope Variables",
+      "level": 8,
+      "page": 225
+    },
+    {
+      "id": "9e58f5372f2d",
+      "title": "Extract Attachments",
+      "level": 9,
+      "page": 225
+    },
+    {
+      "id": "eac4fcd31629",
+      "title": "addAttachment(data, type)",
+      "level": 1,
+      "page": 226
+    },
+    {
+      "id": "9adfacb7123e",
+      "title": "Custom Attachment Handler Properties",
+      "level": 2,
+      "page": 226
+    },
+    {
+      "id": "c35c736a202c",
+      "title": "Properties",
+      "level": 3,
+      "page": 227
+    },
+    {
+      "id": "34fe901b32b2",
+      "title": "Message Storage Settings",
+      "level": 2,
+      "page": 227
+    },
+    {
+      "id": "bae1ecd854c3",
+      "title": "Message Pruning Settings",
+      "level": 2,
+      "page": 229
+    },
+    {
+      "id": "d49d8048b497",
+      "title": "Custom Metadata Columns",
+      "level": 2,
+      "page": 230
+    },
+    {
+      "id": "e8163150f4bb",
+      "title": "Modifying Custom Metadata Columns",
+      "level": 3,
+      "page": 231
+    },
+    {
+      "id": "f3b484537db6",
+      "title": "Channel Description",
+      "level": 2,
+      "page": 231
+    },
+    {
+      "id": "b0657b73534e",
+      "title": "Source Tab",
+      "level": 2,
+      "page": 232
+    },
+    {
+      "id": "2ff06d05acdf",
+      "title": "Choose a Source Connector",
+      "level": 3,
+      "page": 233
+    },
+    {
+      "id": "05f49cb52519",
+      "title": "Listener Settings",
+      "level": 3,
+      "page": 233
+    },
+    {
+      "id": "9c0f28631402",
+      "title": "Polling Settings",
+      "level": 3,
+      "page": 234
+    },
+    {
+      "id": "109fe06b21e3",
+      "title": "Interval Schedule Settings",
+      "level": 4,
+      "page": 235
+    },
+    {
+      "id": "56955c34b244",
+      "title": "Time Schedule Settings",
+      "level": 4,
+      "page": 236
+    },
+    {
+      "id": "0b6bcd03be1a",
+      "title": "Cron Schedule Settings",
+      "level": 4,
+      "page": 236
+    },
+    {
+      "id": "073aa9db064d",
+      "title": "Advanced Settings",
+      "level": 4,
+      "page": 237
+    },
+    {
+      "id": "96c4d761f215",
+      "title": "Source Settings",
+      "level": 3,
+      "page": 238
+    },
+    {
+      "id": "cbad119904fa",
+      "title": "HTTP Authentication Settings",
+      "level": 3,
+      "page": 239
+    },
+    {
+      "id": "40357d5af6f6",
+      "title": "Choose an Authentication Type",
+      "level": 4,
+      "page": 240
+    },
+    {
+      "id": "8ca8bf077d45",
+      "title": "Basic HTTP Authentication",
+      "level": 4,
+      "page": 240
+    },
+    {
+      "id": "6a42ce4d791b",
+      "title": "Digest HTTP Authentication",
+      "level": 4,
+      "page": 241
+    },
+    {
+      "id": "e6886c44f30c",
+      "title": "JavaScript HTTP Authentication",
+      "level": 4,
+      "page": 243
+    },
+    {
+      "id": "443e8c6c31e3",
+      "title": "Custom Java Class HTTP Authentication",
+      "level": 4,
+      "page": 244
+    },
+    {
+      "id": "1a89aa729221",
+      "title": "OAuth 2.0 Token Verification",
+      "level": 4,
+      "page": 245
+    },
+    {
+      "id": "eb51dc5af4aa",
+      "title": "Source Connector Properties",
+      "level": 3,
+      "page": 245
+    },
+    {
+      "id": "42d9c9b636e0",
+      "title": "Destinations Tab",
+      "level": 2,
+      "page": 246
+    },
+    {
+      "id": "9ed6ad71ae21",
+      "title": "Destination Table",
+      "level": 3,
+      "page": 247
+    },
+    {
+      "id": "0110805ec26b",
+      "title": "Destination Tasks",
+      "level": 3,
+      "page": 248
+    },
+    {
+      "id": "701d10fc4cf4",
+      "title": "Destination Settings",
+      "level": 3,
+      "page": 249
+    },
+    {
+      "id": "02eb96bc6a08",
+      "title": "Advanced Queue Settings",
+      "level": 4,
+      "page": 251
+    },
+    {
+      "id": "fbfaaf461730",
+      "title": "Destination Connector Properties",
+      "level": 3,
+      "page": 252
+    },
+    {
+      "id": "03af45160d82",
+      "title": "Destination Mappings",
+      "level": 3,
+      "page": 253
+    },
+    {
+      "id": "dc0dc437a07e",
+      "title": "Standard Variables/Templates",
+      "level": 4,
+      "page": 253
+    },
+    {
+      "id": "9cd7666923ab",
+      "title": "Scripts Tab",
+      "level": 2,
+      "page": 255
+    },
+    {
+      "id": "7c7e0b552132",
+      "title": "Edit Channel Tasks",
+      "level": 2,
+      "page": 256
+    },
+    {
+      "id": "4437d3b0eb59",
+      "title": "Edit Filter / Transformer Views",
+      "level": 2,
+      "page": 257
+    },
+    {
+      "id": "05fadd448ad3",
+      "title": "Navigation",
+      "level": 3,
+      "page": 258
+    },
+    {
+      "id": "18ece9d87a35",
+      "title": "Message Templates Tab",
+      "level": 3,
+      "page": 260
+    },
+    {
+      "id": "342393f59ba5",
+      "title": "Edit Data Types",
+      "level": 4,
+      "page": 262
+    },
+    {
+      "id": "b1d9164d5bde",
+      "title": "Specify a Template",
+      "level": 4,
+      "page": 264
+    },
+    {
+      "id": "1b4a00ba981d",
+      "title": "Message Trees Tab",
+      "level": 3,
+      "page": 265
+    },
+    {
+      "id": "b150dd58710b",
+      "title": "Filter By Node Name/Description",
+      "level": 4,
+      "page": 267
+    },
+    {
+      "id": "c634b1e29a74",
+      "title": "Create a Rule Builder Rule or Mapper Step",
+      "level": 4,
+      "page": 268
+    },
+    {
+      "id": "32f400d67cf1",
+      "title": "Method 1",
+      "level": 1,
+      "page": 268
+    },
+    {
+      "id": "79d20f508317",
+      "title": "Method 2",
+      "level": 1,
+      "page": 269
+    },
+    {
+      "id": "b405e9a43037",
+      "title": "Create a Message Builder Step",
+      "level": 2,
+      "page": 270
+    },
+    {
+      "id": "44c57af0d1a5",
+      "title": "Method 1:",
+      "level": 1,
+      "page": 270
+    },
+    {
+      "id": "dfda15817082",
+      "title": "Method 2",
+      "level": 1,
+      "page": 271
+    },
+    {
+      "id": "5f555807a325",
+      "title": "Drag-and-Drop Field Values",
+      "level": 2,
+      "page": 272
+    },
+    {
+      "id": "2f5299539d79",
+      "title": "Reference Tab",
+      "level": 2,
+      "page": 273
+    },
+    {
+      "id": "9cd4435eeac3",
+      "title": "Reference List",
+      "level": 3,
+      "page": 274
+    },
+    {
+      "id": "e1b1ce2e2fcf",
+      "title": "Available Variables",
+      "level": 3,
+      "page": 275
+    },
+    {
+      "id": "5b05e951280d",
+      "title": "Create New Rules/Steps",
+      "level": 2,
+      "page": 276
+    },
+    {
+      "id": "8403b1d5c9ec",
+      "title": "Rule/Step Table",
+      "level": 2,
+      "page": 277
+    },
+    {
+      "id": "815e62d9f133",
+      "title": "Filter Rule Properties",
+      "level": 2,
+      "page": 278
+    },
+    {
+      "id": "1e06cb7ebde1",
+      "title": "Rule Builder Filter Rule",
+      "level": 3,
+      "page": 278
+    },
+    {
+      "id": "2a345bb9af56",
+      "title": "JavaScript Filter Rule",
+      "level": 3,
+      "page": 279
+    },
+    {
+      "id": "85f102539778",
+      "title": "External Script Filter Rule",
+      "level": 3,
+      "page": 279
+    },
+    {
+      "id": "1052c34c408d",
+      "title": "Iterator Filter Rule",
+      "level": 3,
+      "page": 280
+    },
+    {
+      "id": "43b7b891c3b1",
+      "title": "Transformer Step Properties",
+      "level": 2,
+      "page": 281
+    },
+    {
+      "id": "2958d82dc5f6",
+      "title": "Mapper Transformer Step",
+      "level": 3,
+      "page": 281
+    },
+    {
+      "id": "7138654d5a99",
+      "title": "Message Builder Transformer Step",
+      "level": 3,
+      "page": 282
+    },
+    {
+      "id": "75e73d330f1a",
+      "title": "JavaScript Transformer Step",
+      "level": 3,
+      "page": 283
+    },
+    {
+      "id": "bbf2966bbe5f",
+      "title": "External Script Transformer Step",
+      "level": 3,
+      "page": 283
+    },
+    {
+      "id": "5d8d7df14348",
+      "title": "XSLT Transformer Step",
+      "level": 3,
+      "page": 283
+    },
+    {
+      "id": "7c8e4785a731",
+      "title": "Destination Set Filter Transformer Step",
+      "level": 3,
+      "page": 284
+    },
+    {
+      "id": "121bd3845f7d",
+      "title": "Iterator Transformer Step",
+      "level": 3,
+      "page": 286
+    },
+    {
+      "id": "d9edaa4d4de8",
+      "title": "Response Transformers",
+      "level": 2,
+      "page": 286
+    },
+    {
+      "id": "6e0704439eda",
+      "title": "Modifying the Response",
+      "level": 3,
+      "page": 287
+    },
+    {
+      "id": "e6df3c9fba0e",
+      "title": "Common Scenarios",
+      "level": 3,
+      "page": 287
+    },
+    {
+      "id": "8b8e13cf98bb",
+      "title": "Re-queue a message if the HL7 ACK has an AE code",
+      "level": 1,
+      "page": 287
+    },
+    {
+      "id": "7d8754af2903",
+      "title": "Force a queuing message to error if the number of send attempts exceeds some threshold",
+      "level": 1,
+      "page": 288
+    },
+    {
+      "id": "d75a3391beea",
+      "title": "Route the response data to a downstream channel",
+      "level": 1,
+      "page": 288
+    },
+    {
+      "id": "203b41701989",
+      "title": "Working With Iterators",
+      "level": 2,
+      "page": 288
+    },
+    {
+      "id": "f49aa4f25d9b",
+      "title": "Creating Iterators From Drag-and-Drop",
+      "level": 3,
+      "page": 289
+    },
+    {
+      "id": "90a10bc93515",
+      "title": "The Assign To Iterator Task",
+      "level": 3,
+      "page": 291
+    },
+    {
+      "id": "8a5d6f5134bb",
+      "title": "Remove From Iterators",
+      "level": 3,
+      "page": 294
+    },
+    {
+      "id": "a8a5552e4d94",
+      "title": "View Generated Script",
+      "level": 2,
+      "page": 294
+    },
+    {
+      "id": "790c7a7e4ed7",
+      "title": "Filter Tasks",
+      "level": 2,
+      "page": 295
+    },
+    {
+      "id": "eeef1df1250f",
+      "title": "Import Filter",
+      "level": 3,
+      "page": 296
+    },
+    {
+      "id": "7f0f51f77a77",
+      "title": "Transformer Tasks",
+      "level": 2,
+      "page": 297
+    },
+    {
+      "id": "725a20d1c18f",
+      "title": "Import Transformer",
+      "level": 3,
+      "page": 298
+    },
+    {
+      "id": "76703336aa90",
+      "title": "Edit Global Scripts View",
+      "level": 2,
+      "page": 299
+    },
+    {
+      "id": "fa56c9df18f0",
+      "title": "Navigation",
+      "level": 3,
+      "page": 299
+    },
+    {
+      "id": "6f7ef9e54c60",
+      "title": "Edit Global Scripts",
+      "level": 3,
+      "page": 300
+    },
+    {
+      "id": "ecd6372388ab",
+      "title": "Tasks",
+      "level": 3,
+      "page": 301
+    },
+    {
+      "id": "7cb9a8890739",
+      "title": "Edit Code Templates View",
+      "level": 2,
+      "page": 301
+    },
+    {
+      "id": "d1a013d4b76b",
+      "title": "Navigation",
+      "level": 3,
+      "page": 302
+    },
+    {
+      "id": "bd08744ff76d",
+      "title": "Code Template Library Table",
+      "level": 3,
+      "page": 303
+    },
+    {
+      "id": "1b419734c6fa",
+      "title": "Edit Library Panel",
+      "level": 3,
+      "page": 304
+    },
+    {
+      "id": "e56460f67110",
+      "title": "Link Libraries to Channels",
+      "level": 4,
+      "page": 305
+    },
+    {
+      "id": "af35697d05d5",
+      "title": "Edit Code Template Panel",
+      "level": 3,
+      "page": 305
+    },
+    {
+      "id": "38b667d9e077",
+      "title": "Code Template Contexts",
+      "level": 4,
+      "page": 307
+    },
+    {
+      "id": "02b976218fe6",
+      "title": "Use JSDoc in Code Templates",
+      "level": 4,
+      "page": 308
+    },
+    {
+      "id": "fd99234d2268",
+      "title": "Code Template Tasks",
+      "level": 3,
+      "page": 310
+    },
+    {
+      "id": "21fe3d03e7ea",
+      "title": "Import Code Templates/Libraries",
+      "level": 4,
+      "page": 311
+    },
+    {
+      "id": "185f2e590ff8",
+      "title": "Edit Alert View",
+      "level": 2,
+      "page": 313
+    },
+    {
+      "id": "01102b17f33c",
+      "title": "Navigation",
+      "level": 3,
+      "page": 314
+    },
+    {
+      "id": "466338502386",
+      "title": "Alert Error Types and Regex",
+      "level": 3,
+      "page": 315
+    },
+    {
+      "id": "f3a78fd55445",
+      "title": "Alert Error Categories",
+      "level": 4,
+      "page": 316
+    },
+    {
+      "id": "a87ebd1c499d",
+      "title": "Alert Enabled Channels",
+      "level": 3,
+      "page": 317
+    },
+    {
+      "id": "f4f375b709a1",
+      "title": "Alert Actions",
+      "level": 3,
+      "page": 318
+    },
+    {
+      "id": "962f93f812af",
+      "title": "Protocols",
+      "level": 1,
+      "page": 318
+    },
+    {
+      "id": "95e570028c91",
+      "title": "Alert Variables",
+      "level": 2,
+      "page": 319
+    },
+    {
+      "id": "893b2bc5f810",
+      "title": "Edit Alert Tasks",
+      "level": 2,
+      "page": 319
+    },
+    {
+      "id": "e659be27bf19",
+      "title": "Other Tasks",
+      "level": 1,
+      "page": 320
+    },
+    {
+      "id": "7de79d021822",
+      "title": "Notifications",
+      "level": 2,
+      "page": 321
+    },
+    {
+      "id": "4957754333ae",
+      "title": "Data Types",
+      "level": 0,
+      "page": 323
+    },
+    {
+      "id": "1da7292df029",
+      "title": "Inbound Properties",
+      "level": 1,
+      "page": 323
+    },
+    {
+      "id": "3582017332ba",
+      "title": "Outbound Properties",
+      "level": 1,
+      "page": 323
+    },
+    {
+      "id": "97f595a57c72",
+      "title": "Delimited Text Data Type",
+      "level": 1,
+      "page": 324
+    },
+    {
+      "id": "d7cda74ac759",
+      "title": "DICOM Data Type",
+      "level": 1,
+      "page": 327
+    },
+    {
+      "id": "f2a2c4aa064d",
+      "title": "Example XML snippet:",
+      "level": 1,
+      "page": 327
+    },
+    {
+      "id": "2d28fa4883d2",
+      "title": "EDI / X12 Data Type",
+      "level": 1,
+      "page": 328
+    },
+    {
+      "id": "3e4d341b19e6",
+      "title": "HL7 v2.x Data Type",
+      "level": 1,
+      "page": 329
+    },
+    {
+      "id": "5ad4fcb40c11",
+      "title": "HL7 v3.x Data Type",
+      "level": 1,
+      "page": 332
+    },
+    {
+      "id": "39dfc1c57987",
+      "title": "JSON Data Type",
+      "level": 1,
+      "page": 333
+    },
+    {
+      "id": "470fdb353236",
+      "title": "NCPDP Data Type",
+      "level": 1,
+      "page": 334
+    },
+    {
+      "id": "53b493eef0a0",
+      "title": "Raw Data Type",
+      "level": 1,
+      "page": 335
+    },
+    {
+      "id": "fcbc2850c3c6",
+      "title": "XML Data Type",
+      "level": 1,
+      "page": 336
+    },
+    {
+      "id": "e17335a4fb83",
+      "title": "Batch Processing",
+      "level": 1,
+      "page": 337
+    },
+    {
+      "id": "0b734799ad47",
+      "title": "JavaScript Batch Script",
+      "level": 1,
+      "page": 338
+    },
+    {
+      "id": "12a2b7f4dfbc",
+      "title": "Source Connectors",
+      "level": 0,
+      "page": 340
+    },
+    {
+      "id": "abea0d6bb89e",
+      "title": "Channel Reader",
+      "level": 1,
+      "page": 340
+    },
+    {
+      "id": "933ef4ca2258",
+      "title": "Source Map Variables",
+      "level": 2,
+      "page": 341
+    },
+    {
+      "id": "67d61933dcf2",
+      "title": "DICOM Listener",
+      "level": 1,
+      "page": 341
+    },
+    {
+      "id": "a10513ed9df1",
+      "title": "Source Map Variables",
+      "level": 2,
+      "page": 344
+    },
+    {
+      "id": "ee6dd2c1e477",
+      "title": "Database Reader",
+      "level": 1,
+      "page": 346
+    },
+    {
+      "id": "bb60791d2158",
+      "title": "Editing Database Drivers",
+      "level": 2,
+      "page": 350
+    },
+    {
+      "id": "cabdef066e91",
+      "title": "File Reader",
+      "level": 1,
+      "page": 351
+    },
+    {
+      "id": "1c0f86389fc6",
+      "title": "Advanced FTP Options",
+      "level": 2,
+      "page": 357
+    },
+    {
+      "id": "25d2d65030ce",
+      "title": "Advanced SFTP Options",
+      "level": 2,
+      "page": 357
+    },
+    {
+      "id": "98dc69797b66",
+      "title": "Advanced SMB Options",
+      "level": 2,
+      "page": 359
+    },
+    {
+      "id": "14ba60978325",
+      "title": "Advanced Amazon S3 Options",
+      "level": 2,
+      "page": 359
+    },
+    {
+      "id": "e24813c8155e",
+      "title": "Source Map Variables",
+      "level": 2,
+      "page": 361
+    },
+    {
+      "id": "001a54fbd3e2",
+      "title": "HTTP Listener",
+      "level": 1,
+      "page": 362
+    },
+    {
+      "id": "99f63d49dff3",
+      "title": "JMS Listener",
+      "level": 1,
+      "page": 366
+    },
+    {
+      "id": "ee05a8041a69",
+      "title": "JMS Connection Templates",
+      "level": 2,
+      "page": 369
+    },
+    {
+      "id": "d19fabfe08df",
+      "title": "Loading Templates",
+      "level": 1,
+      "page": 369
+    },
+    {
+      "id": "4a0d97315103",
+      "title": "Creating New Templates",
+      "level": 1,
+      "page": 369
+    },
+    {
+      "id": "c582b3d4e532",
+      "title": "Updating Templates",
+      "level": 1,
+      "page": 370
+    },
+    {
+      "id": "26cc04200cb7",
+      "title": "Deleting Templates",
+      "level": 1,
+      "page": 370
+    },
+    {
+      "id": "6c09f0e130ae",
+      "title": "JavaScript Reader",
+      "level": 1,
+      "page": 371
+    },
+    {
+      "id": "9acc74d3387e",
+      "title": "JavaScript Reader Return Values",
+      "level": 2,
+      "page": 371
+    },
+    {
+      "id": "de7638b26b86",
+      "title": "TCP Listener",
+      "level": 1,
+      "page": 372
+    },
+    {
+      "id": "d2df0999352d",
+      "title": "Source Map Variables",
+      "level": 2,
+      "page": 376
+    },
+    {
+      "id": "f84c6390b80b",
+      "title": "TCP Transmission Modes",
+      "level": 2,
+      "page": 376
+    },
+    {
+      "id": "0f464f24cd13",
+      "title": "Basic TCP Transmission Mode",
+      "level": 2,
+      "page": 377
+    },
+    {
+      "id": "acca89ea2413",
+      "title": "Byte Abbreviations",
+      "level": 3,
+      "page": 377
+    },
+    {
+      "id": "519ffc586eec",
+      "title": "MLLP Transmission Mode",
+      "level": 2,
+      "page": 378
+    },
+    {
+      "id": "0704561e0c73",
+      "title": "Byte Abbreviations",
+      "level": 3,
+      "page": 380
+    },
+    {
+      "id": "673d3d69227d",
+      "title": "Web Service Listener",
+      "level": 1,
+      "page": 381
+    },
+    {
+      "id": "c27980f69bbf",
+      "title": "Destination Connectors",
+      "level": 0,
+      "page": 384
+    },
+    {
+      "id": "9bb0daf8d64a",
+      "title": "Channel Writer",
+      "level": 1,
+      "page": 384
+    },
+    {
+      "id": "ecd047bb8c78",
+      "title": "Source Map Variables",
+      "level": 2,
+      "page": 386
+    },
+    {
+      "id": "72ee90d0e889",
+      "title": "DICOM Sender",
+      "level": 1,
+      "page": 386
+    },
+    {
+      "id": "1e52b8d7a0d1",
+      "title": "Database Writer",
+      "level": 1,
+      "page": 390
+    },
+    {
+      "id": "628eff9187e0",
+      "title": "Document Writer",
+      "level": 1,
+      "page": 393
+    },
+    {
+      "id": "a9149b98297c",
+      "title": "File Writer",
+      "level": 1,
+      "page": 395
+    },
+    {
+      "id": "b0420a814a90",
+      "title": "Connector Map Variables",
+      "level": 2,
+      "page": 400
+    },
+    {
+      "id": "1e802e478244",
+      "title": "HTTP Sender",
+      "level": 1,
+      "page": 400
+    },
+    {
+      "id": "1355b11537ce",
+      "title": "Connector Map Variables",
+      "level": 2,
+      "page": 407
+    },
+    {
+      "id": "31adda5c3122",
+      "title": "JMS Sender",
+      "level": 1,
+      "page": 407
+    },
+    {
+      "id": "a38b458b9e80",
+      "title": "JavaScript Writer",
+      "level": 1,
+      "page": 410
+    },
+    {
+      "id": "b78a1ad07466",
+      "title": "JavaScript Writer Return Values",
+      "level": 2,
+      "page": 411
+    },
+    {
+      "id": "b0e26e4772e5",
+      "title": "SMTP Sender",
+      "level": 1,
+      "page": 411
+    },
+    {
+      "id": "a74f2026837f",
+      "title": "TCP Sender",
+      "level": 1,
+      "page": 416
+    },
+    {
+      "id": "4f3bdc6f1747",
+      "title": "Web Service Sender",
+      "level": 1,
+      "page": 422
+    },
+    {
+      "id": "693f111fbb39",
+      "title": "Mirth Connect and JavaScript",
+      "level": 0,
+      "page": 428
+    },
+    {
+      "id": "90e44e3af4d1",
+      "title": "About JavaScript",
+      "level": 1,
+      "page": 428
+    },
+    {
+      "id": "6d01c49f1da3",
+      "title": "Variables",
+      "level": 2,
+      "page": 428
+    },
+    {
+      "id": "65de032656c5",
+      "title": "Comments",
+      "level": 2,
+      "page": 429
+    },
+    {
+      "id": "f1a5d4a9ba1f",
+      "title": "Arrays",
+      "level": 2,
+      "page": 429
+    },
+    {
+      "id": "f5a45b8c605d",
+      "title": "Operators",
+      "level": 2,
+      "page": 430
+    },
+    {
+      "id": "c13364030142",
+      "title": "Arithmetic Operators",
+      "level": 3,
+      "page": 430
+    },
+    {
+      "id": "107b83613c04",
+      "title": "Assignment Operators",
+      "level": 3,
+      "page": 431
+    },
+    {
+      "id": "6ceeb6314e87",
+      "title": "Comparison Operators",
+      "level": 3,
+      "page": 431
+    },
+    {
+      "id": "250e9b59eb95",
+      "title": "Logical Operators",
+      "level": 3,
+      "page": 432
+    },
+    {
+      "id": "cfdfc6cfa37a",
+      "title": "Conditional Statements",
+      "level": 2,
+      "page": 432
+    },
+    {
+      "id": "97d055c53958",
+      "title": "Functions",
+      "level": 2,
+      "page": 432
+    },
+    {
+      "id": "cc8193dcbf70",
+      "title": "Loops and Iterations",
+      "level": 2,
+      "page": 433
+    },
+    {
+      "id": "12354654582e",
+      "title": "for loops",
+      "level": 3,
+      "page": 433
+    },
+    {
+      "id": "8f98e579a924",
+      "title": "for each…in loops",
+      "level": 3,
+      "page": 433
+    },
+    {
+      "id": "2123d39c6241",
+      "title": "while loops",
+      "level": 3,
+      "page": 434
+    },
+    {
+      "id": "299ff31cb480",
+      "title": "do…while loops",
+      "level": 3,
+      "page": 434
+    },
+    {
+      "id": "c9d4b380a1ee",
+      "title": "Exception Handling",
+      "level": 2,
+      "page": 435
+    },
+    {
+      "id": "ef5bacf63c10",
+      "title": "Using JavaScript in Mirth Connect",
+      "level": 1,
+      "page": 435
+    },
+    {
+      "id": "00ee0ad6d3d7",
+      "title": "About E4X",
+      "level": 2,
+      "page": 435
+    },
+    {
+      "id": "f77e7c95e156",
+      "title": "Accessing Message Data with E4X",
+      "level": 2,
+      "page": 436
+    },
+    {
+      "id": "11ec186acf42",
+      "title": "Adding Segments to a Message",
+      "level": 2,
+      "page": 437
+    },
+    {
+      "id": "25ce372541ba",
+      "title": "Deleting a Segment",
+      "level": 2,
+      "page": 439
+    },
+    {
+      "id": "af130ee6329e",
+      "title": "Iterating Over Message Segments",
+      "level": 2,
+      "page": 439
+    },
+    {
+      "id": "d895fcc580ad",
+      "title": "Iterating Over Repeating Fields",
+      "level": 2,
+      "page": 440
+    },
+    {
+      "id": "9f3ad6ebc16c",
+      "title": "Adding a New Repeating Field",
+      "level": 2,
+      "page": 440
+    },
+    {
+      "id": "dffca0a5fa52",
+      "title": "Message Variables",
+      "level": 2,
+      "page": 440
+    },
+    {
+      "id": "22cab570408f",
+      "title": "Built-In Code Templates",
+      "level": 2,
+      "page": 441
+    },
+    {
+      "id": "f9ebb111c329",
+      "title": "Using Java Classes",
+      "level": 2,
+      "page": 441
+    },
+    {
+      "id": "991bd87b77cd",
+      "title": "Regular Expressions",
+      "level": 2,
+      "page": 441
+    },
+    {
+      "id": "367e9f547583",
+      "title": "Logging with JavaScript",
+      "level": 2,
+      "page": 443
+    },
+    {
+      "id": "3115d770d469",
+      "title": "Generating a Hash with JavaScript",
+      "level": 2,
+      "page": 443
+    },
+    {
+      "id": "9826cfb0c241",
+      "title": "Using the JavaScript Editor",
+      "level": 1,
+      "page": 445
+    },
+    {
+      "id": "6dcc8bd816c4",
+      "title": "Using the Context Menu in the JavaScript Editor",
+      "level": 2,
+      "page": 445
+    },
+    {
+      "id": "19efe521a02b",
+      "title": "Finding/Replacing Code in the JavaScript Editor",
+      "level": 3,
+      "page": 446
+    },
+    {
+      "id": "7483ca585581",
+      "title": "Folding in the JavaScript Editor",
+      "level": 3,
+      "page": 447
+    },
+    {
+      "id": "395163e7d5cc",
+      "title": "Using the Auto-Completion Popup in the JavaScript Editor",
+      "level": 2,
+      "page": 448
+    },
+    {
+      "id": "988caebe1b59",
+      "title": "Remapping Editor Shortcut Keys",
+      "level": 2,
+      "page": 449
+    },
+    {
+      "id": "9e0a1a681980",
+      "title": "Variable Maps",
+      "level": 1,
+      "page": 449
+    },
+    {
+      "id": "7005e791f922",
+      "title": "Connector Map",
+      "level": 2,
+      "page": 450
+    },
+    {
+      "id": "85183e12a370",
+      "title": "Channel Map",
+      "level": 2,
+      "page": 451
+    },
+    {
+      "id": "95e469fce0de",
+      "title": "Source Map",
+      "level": 2,
+      "page": 451
+    },
+    {
+      "id": "c8d4405adeff",
+      "title": "Response Map",
+      "level": 2,
+      "page": 452
+    },
+    {
+      "id": "b839f4a9582a",
+      "title": "Global Channel Map",
+      "level": 2,
+      "page": 452
+    },
+    {
+      "id": "91920d9ae4e3",
+      "title": "Global Map",
+      "level": 2,
+      "page": 453
+    },
+    {
+      "id": "5f43f543600d",
+      "title": "Configuration Map",
+      "level": 2,
+      "page": 453
+    },
+    {
+      "id": "d58569767feb",
+      "title": "The Variable Map Lookup Sequence",
+      "level": 2,
+      "page": 454
+    },
+    {
+      "id": "f4a5161dbf5a",
+      "title": "Attachment JavaScript Functions",
+      "level": 1,
+      "page": 455
+    },
+    {
+      "id": "291676e917c2",
+      "title": "Built-In Attachment Functions",
+      "level": 2,
+      "page": 455
+    },
+    {
+      "id": "26a30223c229",
+      "title": "The AttachmentUtil Class",
+      "level": 2,
+      "page": 457
+    },
+    {
+      "id": "e772bb6f0df4",
+      "title": "The Attachment Object",
+      "level": 2,
+      "page": 458
+    },
+    {
+      "id": "d811d53890ac",
+      "title": "Examples",
+      "level": 2,
+      "page": 459
+    },
+    {
+      "id": "f935cb95d8fa",
+      "title": "The User API (Javadoc)",
+      "level": 1,
+      "page": 459
+    },
+    {
+      "id": "c260d67414a3",
+      "title": "Mirth Connect Debugger",
+      "level": 1,
+      "page": 461
+    },
+    {
+      "id": "c1b08a11e681",
+      "title": "Before You Begin",
+      "level": 1,
+      "page": 462
+    },
+    {
+      "id": "ade9e3a1104d",
+      "title": "To Edit the mcserver.vmoptions file",
+      "level": 2,
+      "page": 462
+    },
+    {
+      "id": "2dd16b9ab7e4",
+      "title": "Use the Debugger",
+      "level": 2,
+      "page": 463
+    },
+    {
+      "id": "27151831795d",
+      "title": "Debugger Window",
+      "level": 2,
+      "page": 464
+    },
+    {
+      "id": "61dbac19ee37",
+      "title": "Debugger Menus",
+      "level": 2,
+      "page": 465
+    },
+    {
+      "id": "454571958af0",
+      "title": "File Menu",
+      "level": 3,
+      "page": 465
+    },
+    {
+      "id": "a050f78878a5",
+      "title": "Edit Menu",
+      "level": 3,
+      "page": 466
+    },
+    {
+      "id": "58010e400b1f",
+      "title": "Debug Menu",
+      "level": 3,
+      "page": 467
+    },
+    {
+      "id": "924465691f98",
+      "title": "Window Menu",
+      "level": 3,
+      "page": 467
+    },
+    {
+      "id": "98f84b9ca18b",
+      "title": "Coding Area",
+      "level": 3,
+      "page": 468
+    },
+    {
+      "id": "fb2bd68085ba",
+      "title": "Velocity Variable Replacement",
+      "level": 0,
+      "page": 469
+    },
+    {
+      "id": "dbd3139b0d38",
+      "title": "Basic Syntax",
+      "level": 1,
+      "page": 469
+    },
+    {
+      "id": "0da94159ff5b",
+      "title": "Conditional Statements",
+      "level": 1,
+      "page": 470
+    },
+    {
+      "id": "35c5f20bfd21",
+      "title": "For Loops",
+      "level": 1,
+      "page": 470
+    },
+    {
+      "id": "1e8466dc5a69",
+      "title": "Mirth Connect Command Line Interface",
+      "level": 0,
+      "page": 471
+    },
+    {
+      "id": "77b068248a31",
+      "title": "Running the Command Line Interface",
+      "level": 1,
+      "page": 471
+    },
+    {
+      "id": "1e4c3c953b6d",
+      "title": "Using Non-interactive Scripting",
+      "level": 1,
+      "page": 472
+    },
+    {
+      "id": "1048ab38243e",
+      "title": "Mirth Connect REST API",
+      "level": 0,
+      "page": 473
+    },
+    {
+      "id": "a5e288ce0b6e",
+      "title": "Authentication",
+      "level": 1,
+      "page": 476
+    },
+    {
+      "id": "f6e04f09424c",
+      "title": "Installation Directory",
+      "level": 0,
+      "page": 478
+    },
+    {
+      "id": "849efb2b04ed",
+      "title": "Application Data Directory",
+      "level": 1,
+      "page": 478
+    },
+    {
+      "id": "8754f4f0dcae",
+      "title": "configuration.properties",
+      "level": 2,
+      "page": 478
+    },
+    {
+      "id": "be2e793b8e43",
+      "title": "extension.properties",
+      "level": 2,
+      "page": 479
+    },
+    {
+      "id": "5e4fc55e03b5",
+      "title": "keystore.jks",
+      "level": 2,
+      "page": 479
+    },
+    {
+      "id": "f583b3155102",
+      "title": "server.id",
+      "level": 2,
+      "page": 480
+    },
+    {
+      "id": "0d5235049dc8",
+      "title": "temp",
+      "level": 2,
+      "page": 480
+    },
+    {
+      "id": "ac93193a3787",
+      "title": "Configuration Directory",
+      "level": 1,
+      "page": 480
+    },
+    {
+      "id": "e2620aacea13",
+      "title": "dbdrivers.xml File",
+      "level": 2,
+      "page": 480
+    },
+    {
+      "id": "2e6fa1798fbc",
+      "title": "Adding a new entry to dbdrivers.xml",
+      "level": 3,
+      "page": 481
+    },
+    {
+      "id": "23bc034a650b",
+      "title": "log4j2.properties File",
+      "level": 2,
+      "page": 482
+    },
+    {
+      "id": "9f1cee054676",
+      "title": "log4j2-cli.properties File",
+      "level": 2,
+      "page": 484
+    },
+    {
+      "id": "bd1a0295bd9c",
+      "title": "mirth.properties File",
+      "level": 2,
+      "page": 485
+    },
+    {
+      "id": "4ce218df8f34",
+      "title": "Split Database Connection Pools",
+      "level": 3,
+      "page": 497
+    },
+    {
+      "id": "ea29d20b9bef",
+      "title": "Default Supported Cipher Suites",
+      "level": 3,
+      "page": 498
+    },
+    {
+      "id": "799c01292d28",
+      "title": "New Default Digest Algorithm in Mirth Connect 4.4",
+      "level": 3,
+      "page": 499
+    },
+    {
+      "id": "e47daed2d9eb",
+      "title": "Update the Digest Algorithm",
+      "level": 3,
+      "page": 499
+    },
+    {
+      "id": "8c47d8633e6b",
+      "title": "mirth-cli-config.properties File",
+      "level": 2,
+      "page": 500
+    },
+    {
+      "id": "bf197be3beea",
+      "title": "Other Files and Folders",
+      "level": 1,
+      "page": 500
+    },
+    {
+      "id": "6170f9dd3db6",
+      "title": "Frequently Asked Questions",
+      "level": 0,
+      "page": 502
+    },
+    {
+      "id": "83f69eeff687",
+      "title": "Is Mirth® Connect the same as \"Mirth\"?",
+      "level": 1,
+      "page": 502
+    },
+    {
+      "id": "2b418ce59ec1",
+      "title": "Who develops Mirth® Connect?",
+      "level": 1,
+      "page": 502
+    },
+    {
+      "id": "87cc84363b05",
+      "title": "What is the Mirth® Connect license, and how much does it cost?",
+      "level": 1,
+      "page": 502
+    },
+    {
+      "id": "6b23ae622805",
+      "title": "How can Mirth® Connect be free and open-source?",
+      "level": 1,
+      "page": 502
+    },
+    {
+      "id": "e74343451827",
+      "title": "Is there a difference between the free, open-source Mirth® Connect download and the supported version of Mirth® Connect?",
+      "level": 1,
+      "page": 503
+    },
+    {
+      "id": "a8ced0d763d9",
+      "title": "How does Mirth® Connect compare to commercial integration engines?",
+      "level": 1,
+      "page": 503
+    },
+    {
+      "id": "cc21702b2373",
+      "title": "How many production installations of Mirth® Connect are there?",
+      "level": 1,
+      "page": 503
+    },
+    {
+      "id": "e10cfff4e5ad",
+      "title": "What can I expect next from Mirth® Connect?",
+      "level": 1,
+      "page": 503
+    },
+    {
+      "id": "491b9237878d",
+      "title": "How fast does Mirth® Connect operate?",
+      "level": 1,
+      "page": 503
+    },
+    {
+      "id": "faa04df6d9c2",
+      "title": "Is Mirth® Connect hard to install and configure?",
+      "level": 1,
+      "page": 504
+    },
+    {
+      "id": "3f2ed5558177",
+      "title": "Do I need Mirth Appliance to run Mirth® Connect?",
+      "level": 1,
+      "page": 504
+    },
+    {
+      "id": "bdc107b18d23",
+      "title": "As a member of the Mirth Solutions community, how can I get more help?",
+      "level": 1,
+      "page": 504
+    },
+    {
+      "id": "ca9cbec5f443",
+      "title": "How do I become a Mirth® Connect expert?",
+      "level": 1,
+      "page": 504
+    },
+    {
+      "id": "9510524b9c84",
+      "title": "What are the system requirements for Mirth® Connect?",
+      "level": 1,
+      "page": 504
+    },
+    {
+      "id": "67e5e1804d95",
+      "title": "Which databases does Mirth® Connect support for its data store?",
+      "level": 1,
+      "page": 505
+    },
+    {
+      "id": "54471df947ba",
+      "title": "Does Mirth® Connect use the Mule ESB?",
+      "level": 1,
+      "page": 505
+    },
+    {
+      "id": "bd59b5fb6202",
+      "title": "Do I need an application server to run Mirth® Connect?",
+      "level": 1,
+      "page": 505
+    },
+    {
+      "id": "76432cb8a21c",
+      "title": "Can Mirth® Connect send data to __ or transform data from __ to __?",
+      "level": 1,
+      "page": 505
+    },
+    {
+      "id": "56cdafbfd0fb",
+      "title": "What message standards does Mirth® Connect support?",
+      "level": 1,
+      "page": 505
+    },
+    {
+      "id": "664dfebc2935",
+      "title": "What transfer protocols does Mirth® Connect support?",
+      "level": 1,
+      "page": 506
+    },
+    {
+      "id": "8f4ef3c94e5d",
+      "title": "How do I transform a data segment?",
+      "level": 1,
+      "page": 507
+    },
+    {
+      "id": "40a482aa9156",
+      "title": "How can I increase the text size when using the Mirth® Connect Administrator on a high DPI monitor and the text is small and difficult to read?",
+      "level": 1,
+      "page": 507
+    },
+    {
+      "id": "9774ce82a593",
+      "title": "Channel Development Best Practices and Tips",
+      "level": 0,
+      "page": 509
+    },
+    {
+      "id": "73c83a8392d8",
+      "title": "Channel Performance",
+      "level": 1,
+      "page": 509
+    },
+    {
+      "id": "365672498056",
+      "title": "Adjust the Message Storage slider so that the channel only retains the message data that you will actually need.",
+      "level": 2,
+      "page": 510
+    },
+    {
+      "id": "0d0bd1e3ef0d",
+      "title": "If large messages are expected, use an Attachment Handler to improve throughput and reduce memory and disk usage.",
+      "level": 2,
+      "page": 510
+    },
+    {
+      "id": "26ee0f069b26",
+      "title": "Enable source queuing if an auto-generated acknowledgement is sufficient for the upstream system.",
+      "level": 2,
+      "page": 511
+    },
+    {
+      "id": "f3f7a10928e0",
+      "title": "Enable destination queuing if you do not need to respond to the originating system from your destination.",
+      "level": 2,
+      "page": 511
+    },
+    {
+      "id": "8a895429d36f",
+      "title": "Increase the Max Processing Threads value if message order is not important and you may receive a large number of messages in a short time",
+      "level": 2,
+      "page": 511
+    },
+    {
+      "id": "e9e718eb9ba0",
+      "title": "Increase the Queue Threads value if the downstream system can accept multiple concurrent connections.",
+      "level": 2,
+      "page": 512
+    },
+    {
+      "id": "3801c4e05c4d",
+      "title": "Clear the \"Wait for previous destination\" checkbox, unless you need destinations to process messages one after another.",
+      "level": 2,
+      "page": 512
+    },
+    {
+      "id": "b796346b0b79",
+      "title": "Use the \"Destination Set Filter\" feature in your source transformer when you need to route messages to only one (or a subset) of destinations in your channel.",
+      "level": 2,
+      "page": 512
+    },
+    {
+      "id": "c6e23cd56f51",
+      "title": "Channel Configuration",
+      "level": 1,
+      "page": 513
+    },
+    {
+      "id": "01e5fd3ba54f",
+      "title": "Use tags to categorize your channels.",
+      "level": 2,
+      "page": 514
+    },
+    {
+      "id": "aba1897961b6",
+      "title": "Place any reusable JavaScript code into Code Template functions and organize them into Code Template Libraries.",
+      "level": 2,
+      "page": 514
+    },
+    {
+      "id": "d88b8fd04af8",
+      "title": "Use Custom Meta Data Columns to increase the performance of searching the message history on a particular message field.",
+      "level": 2,
+      "page": 514
+    },
+    {
+      "id": "02239180acb6",
+      "title": "Use Deploy/Start Dependencies if one channel depends on another to operate correctly.",
+      "level": 2,
+      "page": 515
+    },
+    {
+      "id": "ed2e97661a35",
+      "title": "Use multiple resource folders for your Java libraries if you need to limit library usage to specific channels or if you have many Java libraries.",
+      "level": 2,
+      "page": 516
+    },
+    {
+      "id": "a2c1fd3d9e92",
+      "title": "Message Integrity",
+      "level": 1,
+      "page": 516
+    },
+    {
+      "id": "3ed955eacb8c",
+      "title": "Use hashing to ensure message integrity",
+      "level": 2,
+      "page": 517
+    },
+    {
+      "id": "d260837c46cf",
+      "title": "Other Tips",
+      "level": 1,
+      "page": 517
+    },
+    {
+      "id": "861d177986f3",
+      "title": "Do not reference Mirth Connect internal Java classes in your JavaScript code.",
+      "level": 2,
+      "page": 518
+    },
+    {
+      "id": "05d0b5a15f64",
+      "title": "Security Best Practices",
+      "level": 0,
+      "page": 519
+    },
+    {
+      "id": "429075ea7c11",
+      "title": "Secure Installation and Deployment",
+      "level": 1,
+      "page": 519
+    },
+    {
+      "id": "daa7ca6cee48",
+      "title": "Installation Directory",
+      "level": 2,
+      "page": 519
+    },
+    {
+      "id": "985bfc3e8674",
+      "title": "Networking",
+      "level": 2,
+      "page": 520
+    },
+    {
+      "id": "a928c555c02e",
+      "title": "Web Server Certificate",
+      "level": 2,
+      "page": 521
+    },
+    {
+      "id": "5a7bdc521719",
+      "title": "Connect to Database using SSL/TLS",
+      "level": 2,
+      "page": 522
+    },
+    {
+      "id": "f68531a49349",
+      "title": "Importing the Database Server Certificate",
+      "level": 3,
+      "page": 522
+    },
+    {
+      "id": "bfbf88582cdc",
+      "title": "PostgreSQL",
+      "level": 3,
+      "page": 523
+    },
+    {
+      "id": "aadb36f016e1",
+      "title": "MySQL",
+      "level": 3,
+      "page": 523
+    },
+    {
+      "id": "a7f0ec2ba2ef",
+      "title": "Oracle",
+      "level": 3,
+      "page": 524
+    },
+    {
+      "id": "fc75b93eaaeb",
+      "title": "SQL Server",
+      "level": 3,
+      "page": 524
+    },
+    {
+      "id": "d96517c6f899",
+      "title": "Secure Configuration",
+      "level": 1,
+      "page": 525
+    },
+    {
+      "id": "b18ea5f70802",
+      "title": "Encryption Settings",
+      "level": 2,
+      "page": 525
+    },
+    {
+      "id": "ab634c646084",
+      "title": "Encrypt Database Password",
+      "level": 2,
+      "page": 527
+    },
+    {
+      "id": "8b126975e608",
+      "title": "Plain HTTP Main Web Server",
+      "level": 2,
+      "page": 527
+    },
+    {
+      "id": "e014126fb6b9",
+      "title": "Default TLS/SSL Settings",
+      "level": 2,
+      "page": 527
+    },
+    {
+      "id": "c2547e34b82f",
+      "title": "Default Supported Cipher Suites",
+      "level": 2,
+      "page": 528
+    },
+    {
+      "id": "4e8e77e561a7",
+      "title": "Cipher Suites Removed From Earlier Versions",
+      "level": 2,
+      "page": 529
+    },
+    {
+      "id": "a251877a724e",
+      "title": "New Protocol/Cipher Suite Support in Java 11",
+      "level": 2,
+      "page": 531
+    },
+    {
+      "id": "9251fe63c07d",
+      "title": "Password Requirements",
+      "level": 2,
+      "page": 532
+    },
+    {
+      "id": "a8211fb9cf73",
+      "title": "SSL Manager Extension",
+      "level": 2,
+      "page": 533
+    },
+    {
+      "id": "09d6533cdcc8",
+      "title": "Source Connector Settings",
+      "level": 1,
+      "page": 533
+    },
+    {
+      "id": "e9c1fee6c59a",
+      "title": "Destination Connector Settings",
+      "level": 1,
+      "page": 534
+    },
+    {
+      "id": "99141bc26b75",
+      "title": "Advanced Alerting - SSL Manager Trigger",
+      "level": 1,
+      "page": 535
+    },
+    {
+      "id": "7e39e01376f3",
+      "title": "Operational Procedures",
+      "level": 1,
+      "page": 536
+    },
+    {
+      "id": "5fad94d14978",
+      "title": "Users/Permissions",
+      "level": 2,
+      "page": 536
+    },
+    {
+      "id": "16ae05e6d92a",
+      "title": "Auditing",
+      "level": 2,
+      "page": 537
+    },
+    {
+      "id": "3395e24827ab",
+      "title": "Environmental Upkeep",
+      "level": 1,
+      "page": 538
+    },
+    {
+      "id": "91a18e0081f6",
+      "title": "Mirth Connect Software",
+      "level": 2,
+      "page": 538
+    },
+    {
+      "id": "11c3bb8b4a14",
+      "title": "Operating System",
+      "level": 2,
+      "page": 539
+    },
+    {
+      "id": "15501dacb612",
+      "title": "Java",
+      "level": 2,
+      "page": 539
+    },
+    {
+      "id": "9a72c9e0684c",
+      "title": "Troubleshooting",
+      "level": 0,
+      "page": 540
+    },
+    {
+      "id": "d3cbd329c8ae",
+      "title": "Logs",
+      "level": 1,
+      "page": 540
+    },
+    {
+      "id": "4217df4216a3",
+      "title": "Configuration",
+      "level": 1,
+      "page": 540
+    },
+    {
+      "id": "ef4f04f2c292",
+      "title": "Mirth Connect Engine fails to start up",
+      "level": 1,
+      "page": 540
+    },
+    {
+      "id": "f0001315e10f",
+      "title": "Unable to Launch Mirth Connect Administrator",
+      "level": 1,
+      "page": 542
+    },
+    {
+      "id": "544943379c0b",
+      "title": "Clearing your Java Cache",
+      "level": 1,
+      "page": 543
+    },
+    {
+      "id": "102bf80a894e",
+      "title": "Using the Java Control Panel",
+      "level": 1,
+      "page": 543
+    },
+    {
+      "id": "458aa783b2ec",
+      "title": "Using the Command Line",
+      "level": 1,
+      "page": 545
+    },
+    {
+      "id": "eb8b1315acef",
+      "title": "Opening the Java Client Console",
+      "level": 1,
+      "page": 546
+    },
+    {
+      "id": "24275f64d4af",
+      "title": "Out of Memory Errors",
+      "level": 1,
+      "page": 549
+    },
+    {
+      "id": "f24ca75860a9",
+      "title": "Manually reset a password in the database",
+      "level": 1,
+      "page": 551
+    },
+    {
+      "id": "db8e077c1348",
+      "title": "Upgrade Guide",
+      "level": 0,
+      "page": 553
+    },
+    {
+      "id": "2813d5cc3e3f",
+      "title": "Before You Upgrade",
+      "level": 1,
+      "page": 553
+    },
+    {
+      "id": "b42b0b77ee47",
+      "title": "Upgrade Mirth Connect",
+      "level": 1,
+      "page": 554
+    },
+    {
+      "id": "0e22fb8644b9",
+      "title": "After the Upgrade",
+      "level": 1,
+      "page": 554
+    },
+    {
+      "id": "4a16a883be3a",
+      "title": "Version-Specific Upgrade Instructions",
+      "level": 1,
+      "page": 555
+    },
+    {
+      "id": "22e00d0a5268",
+      "title": "4.5.0 Upgrade Notes",
+      "level": 1,
+      "page": 555
+    },
+    {
+      "id": "bd6fd013e268",
+      "title": "Updated DUO Authentication to use the Universal Prompt",
+      "level": 1,
+      "page": 555
+    },
+    {
+      "id": "b266af7e2a18",
+      "title": "Removed Libraries",
+      "level": 1,
+      "page": 555
+    },
+    {
+      "id": "65e5f06cdf17",
+      "title": "Change of Functionality of \"Generate Envelope\" in the Web Service Sender",
+      "level": 1,
+      "page": 556
+    },
+    {
+      "id": "f6e26e7a286d",
+      "title": "Health Data Hub Plugin",
+      "level": 1,
+      "page": 557
+    },
+    {
+      "id": "1d1889921d4d",
+      "title": "4.4.2 Upgrade Notes",
+      "level": 1,
+      "page": 557
+    },
+    {
+      "id": "c1c1010a902d",
+      "title": "Added a Readme File to Show Valid XML Type Message Export Information",
+      "level": 1,
+      "page": 557
+    },
+    {
+      "id": "024845b529ab",
+      "title": "4.4.1 Upgrade Notes",
+      "level": 1,
+      "page": 557
+    },
+    {
+      "id": "3634a58a6a13",
+      "title": "XStream Now Uses an Allowlist Instead of a Denylist",
+      "level": 1,
+      "page": 557
+    },
+    {
+      "id": "a7320a63873f",
+      "title": "4.4.0 Upgrade Notes",
+      "level": 1,
+      "page": 558
+    },
+    {
+      "id": "429827297f27",
+      "title": "Added New Functionality to the Mirth® Connect Setup Wizard (Installation Process)",
+      "level": 1,
+      "page": 558
+    },
+    {
+      "id": "5d88c00ecea0",
+      "title": "Default Digest Algorithm Changed",
+      "level": 1,
+      "page": 558
+    },
+    {
+      "id": "65780dac54aa",
+      "title": "Updating the Digest Algorithm",
+      "level": 1,
+      "page": 559
+    },
+    {
+      "id": "4443cb5f49e0",
+      "title": "4.3.0 Upgrade Notes",
+      "level": 1,
+      "page": 559
+    },
+    {
+      "id": "19c10c4f0022",
+      "title": "New Functionality for the Mirth® Connect Setup Wizard",
+      "level": 1,
+      "page": 559
+    },
+    {
+      "id": "4d673e2820e8",
+      "title": "Resource Classloaders Load Classes Child-First By Default",
+      "level": 1,
+      "page": 560
+    },
+    {
+      "id": "d99c6c28b00d",
+      "title": "Updated Deprecated Docker Base Images",
+      "level": 1,
+      "page": 560
+    },
+    {
+      "id": "416df2618ad5",
+      "title": "Updated Encryption Settings",
+      "level": 1,
+      "page": 560
+    },
+    {
+      "id": "808adc18011e",
+      "title": "Disabled TLS Cipher Suites",
+      "level": 1,
+      "page": 561
+    },
+    {
+      "id": "869e631d1fc2",
+      "title": "Removed the View User Guide Option",
+      "level": 1,
+      "page": 562
+    },
+    {
+      "id": "06bbb66b9019",
+      "title": "Administrator Launcher",
+      "level": 1,
+      "page": 562
+    },
+    {
+      "id": "471d4d898c29",
+      "title": "4.2.0 Upgrade Notes",
+      "level": 1,
+      "page": 563
+    },
+    {
+      "id": "fcc2ab28c8f4",
+      "title": "Removed the Remove All Events Button",
+      "level": 1,
+      "page": 563
+    },
+    {
+      "id": "3ab717ec029e",
+      "title": "Changed the patient_id Query Parameter Naming Scheme for the Remove Message API Request",
+      "level": 1,
+      "page": 563
+    },
+    {
+      "id": "b005e18a50f5",
+      "title": "Renamed the User Authorization Extension to Role-Based Access Control",
+      "level": 1,
+      "page": 563
+    },
+    {
+      "id": "22339b2c9f89",
+      "title": "Moving Java Home Preference Checks",
+      "level": 1,
+      "page": 563
+    },
+    {
+      "id": "2d09ea0ceab9",
+      "title": "4.1.0 Upgrade Notes",
+      "level": 1,
+      "page": 564
+    },
+    {
+      "id": "4b651810fd69",
+      "title": "Warning: Open issue with SMB File Reader/Writer",
+      "level": 1,
+      "page": 564
+    },
+    {
+      "id": "5171600cef33",
+      "title": "Update log4j Library",
+      "level": 1,
+      "page": 564
+    },
+    {
+      "id": "3b20cb81bd4c",
+      "title": "4.0.0 Upgrade Notes",
+      "level": 1,
+      "page": 564
+    },
+    {
+      "id": "526a709011db",
+      "title": "Database Reader XML Casing",
+      "level": 1,
+      "page": 564
+    },
+    {
+      "id": "f655f3e644c3",
+      "title": "TLS Protocols and Cipher Suites",
+      "level": 1,
+      "page": 565
+    },
+    {
+      "id": "47942deb5773",
+      "title": "TLS Protocols",
+      "level": 1,
+      "page": 565
+    },
+    {
+      "id": "0c6bfe57523b",
+      "title": "Cipher Suites",
+      "level": 1,
+      "page": 565
+    },
+    {
+      "id": "fcfd93ab30a7",
+      "title": "Impact",
+      "level": 1,
+      "page": 566
+    },
+    {
+      "id": "2b998b66a8f3",
+      "title": "Resolution",
+      "level": 1,
+      "page": 566
+    },
+    {
+      "id": "66f9803491f3",
+      "title": "SSL Manager Options",
+      "level": 1,
+      "page": 566
+    },
+    {
+      "id": "fbc9f571cccd",
+      "title": "Server Wide Options",
+      "level": 1,
+      "page": 566
+    },
+    {
+      "id": "8b3d8434ffe7",
+      "title": "HTTP User Agent",
+      "level": 1,
+      "page": 566
+    },
+    {
+      "id": "f0dbd8864611",
+      "title": "HTTP Server Header",
+      "level": 1,
+      "page": 567
+    },
+    {
+      "id": "e5bb08dc82c9",
+      "title": "FHIR Extension",
+      "level": 1,
+      "page": 567
+    },
+    {
+      "id": "f36c092134d8",
+      "title": "3.12.0 Upgrade Notes",
+      "level": 1,
+      "page": 567
+    },
+    {
+      "id": "1d21d604eeb4",
+      "title": "Preventing XML External Entity Vulnerabilities",
+      "level": 1,
+      "page": 567
+    },
+    {
+      "id": "497f4a324af6",
+      "title": "How this can affect you",
+      "level": 1,
+      "page": 567
+    },
+    {
+      "id": "38e025a35a2c",
+      "title": "PDF Generation Updates",
+      "level": 1,
+      "page": 567
+    },
+    {
+      "id": "56b5f595e9d8",
+      "title": "Using PDFBox Classes",
+      "level": 1,
+      "page": 568
+    },
+    {
+      "id": "155ddf3e34f9",
+      "title": "PDF Generation and Images",
+      "level": 1,
+      "page": 568
+    },
+    {
+      "id": "8aed8bc5f47d",
+      "title": "3.11.0 Upgrade Notes",
+      "level": 1,
+      "page": 568
+    },
+    {
+      "id": "fb4c9a119839",
+      "title": "Database Connection Retries on Server Startup",
+      "level": 1,
+      "page": 568
+    },
+    {
+      "id": "63ca8bcb3706",
+      "title": "Interoperability Connector Suite",
+      "level": 1,
+      "page": 569
+    },
+    {
+      "id": "2fde9791dd9f",
+      "title": "Logging Raw SOAP Payloads and WS-Security Details",
+      "level": 1,
+      "page": 569
+    },
+    {
+      "id": "c6a6bb7e2d3b",
+      "title": "Toggling Automatic Conversion to JSON",
+      "level": 1,
+      "page": 569
+    },
+    {
+      "id": "5ace9dd04500",
+      "title": "3.10.0 Upgrade Notes",
+      "level": 1,
+      "page": 570
+    },
+    {
+      "id": "279545f2881f",
+      "title": "Advanced Clustering Sync Intervals",
+      "level": 1,
+      "page": 570
+    },
+    {
+      "id": "8c9aba4d25af",
+      "title": "3.9.0 Upgrade Notes",
+      "level": 1,
+      "page": 571
+    },
+    {
+      "id": "742b9ccf3595",
+      "title": "SMB Versions in a File Reader/Writer",
+      "level": 1,
+      "page": 571
+    },
+    {
+      "id": "70e2e929c0f9",
+      "title": "DICOM Sender Storage Commitment",
+      "level": 1,
+      "page": 571
+    },
+    {
+      "id": "f27e70d5854f",
+      "title": "3.8.0 Upgrade Notes",
+      "level": 1,
+      "page": 571
+    },
+    {
+      "id": "23976638e4c8",
+      "title": "Connecting via a Database Reader/Writer or in JavaScript",
+      "level": 1,
+      "page": 571
+    },
+    {
+      "id": "3c45d5cbf3e8",
+      "title": "Using an Old Version of MySQL for Your Connect Backend Database",
+      "level": 1,
+      "page": 572
+    },
+    {
+      "id": "13aa0812a805",
+      "title": "3.7.0 Upgrade Notes",
+      "level": 1,
+      "page": 572
+    },
+    {
+      "id": "3404e9056439",
+      "title": "Commercial License Key",
+      "level": 1,
+      "page": 572
+    },
+    {
+      "id": "469e8a922ec0",
+      "title": "Using Mirth Appliance",
+      "level": 1,
+      "page": 572
+    },
+    {
+      "id": "cb47d401996a",
+      "title": "Standalone Installation",
+      "level": 1,
+      "page": 573
+    },
+    {
+      "id": "388f8023bf37",
+      "title": "Database Connection Pools",
+      "level": 1,
+      "page": 573
+    },
+    {
+      "id": "3b3821c2b6d7",
+      "title": "Option 1: Use two pools, one read/write and one read-only",
+      "level": 1,
+      "page": 574
+    },
+    {
+      "id": "e23eec479d93",
+      "title": "Option 2: Use one connection pool for everything",
+      "level": 1,
+      "page": 574
+    },
+    {
+      "id": "cb66d8d8674e",
+      "title": "Keystore Passwords",
+      "level": 1,
+      "page": 575
+    },
+    {
+      "id": "3b6861a67fca",
+      "title": "3.5.0 Upgrade Notes",
+      "level": 1,
+      "page": 575
+    },
+    {
+      "id": "7b35c51bae06",
+      "title": "3.4.0 Upgrade Notes",
+      "level": 1,
+      "page": 576
+    },
+    {
+      "id": "1173bb9b2cfa",
+      "title": "3.2.0 Upgrade Notes",
+      "level": 1,
+      "page": 577
+    },
+    {
+      "id": "bd010aed7117",
+      "title": "3.1.1 Upgrade Notes",
+      "level": 1,
+      "page": 578
+    },
+    {
+      "id": "f0b5911c310a",
+      "title": "3.1.0 Upgrade Notes",
+      "level": 1,
+      "page": 578
+    },
+    {
+      "id": "0fd1f78d0f0a",
+      "title": "3.0.2 Upgrade Notes",
+      "level": 1,
+      "page": 579
+    },
+    {
+      "id": "299a0154645c",
+      "title": "Channel Updates",
+      "level": 1,
+      "page": 579
+    },
+    {
+      "id": "678388f330ad",
+      "title": "3.0.0 Upgrade Notes",
+      "level": 1,
+      "page": 579
+    },
+    {
+      "id": "878d947c78c3",
+      "title": "Message Migration",
+      "level": 1,
+      "page": 579
+    },
+    {
+      "id": "6b480dc9d2bb",
+      "title": "For Non-Polling Channels",
+      "level": 1,
+      "page": 580
+    },
+    {
+      "id": "51d64b8819d3",
+      "title": "For Polling Channels",
+      "level": 1,
+      "page": 580
+    },
+    {
+      "id": "ca2619506849",
+      "title": "Channel Updates",
+      "level": 1,
+      "page": 580
+    },
+    {
+      "id": "799a49bda76d",
+      "title": "Commercial Support/Extensions",
+      "level": 0,
+      "page": 582
+    },
+    {
+      "id": "8c24dedf8572",
+      "title": "Advanced Alerting",
+      "level": 1,
+      "page": 583
+    },
+    {
+      "id": "7453863f9f44",
+      "title": "Advanced Clustering",
+      "level": 1,
+      "page": 584
+    },
+    {
+      "id": "d19f2efda9df",
+      "title": "ASTM E1381 Transmission Mode",
+      "level": 1,
+      "page": 585
+    },
+    {
+      "id": "8bdffc727247",
+      "title": "ASTM E1394 Data Type",
+      "level": 1,
+      "page": 586
+    },
+    {
+      "id": "c7ca9d757744",
+      "title": "Channel History",
+      "level": 1,
+      "page": 587
+    },
+    {
+      "id": "a1cb41039be9",
+      "title": "Cures Certification Support",
+      "level": 1,
+      "page": 588
+    },
+    {
+      "id": "94c3be236d8a",
+      "title": "Email Reader",
+      "level": 1,
+      "page": 588
+    },
+    {
+      "id": "4d7068ec34d9",
+      "title": "Enhancement Bundle",
+      "level": 1,
+      "page": 589
+    },
+    {
+      "id": "5aceef4e86ba",
+      "title": "FHIR Connector",
+      "level": 1,
+      "page": 590
+    },
+    {
+      "id": "0d35ad441457",
+      "title": "Interoperability Connector Suite",
+      "level": 1,
+      "page": 592
+    },
+    {
+      "id": "2adddd589355",
+      "title": "LDAP Authorization",
+      "level": 1,
+      "page": 594
+    },
+    {
+      "id": "968b1ad9d9ed",
+      "title": "Message Generator",
+      "level": 1,
+      "page": 595
+    },
+    {
+      "id": "5711b375af90",
+      "title": "Multi-Factor Authentication",
+      "level": 1,
+      "page": 596
+    },
+    {
+      "id": "ced80a6f5489",
+      "title": "Serial Connector",
+      "level": 1,
+      "page": 597
+    },
+    {
+      "id": "45bddecf8523",
+      "title": "SSL Manager",
+      "level": 1,
+      "page": 598
+    },
+    {
+      "id": "6b42a915721a",
+      "title": "Role-Based Access Control",
+      "level": 1,
+      "page": 599
+    },
+    {
+      "id": "ccce3ca312f3",
+      "title": "NextGen Results CDR Connector",
+      "level": 1,
+      "page": 600
+    },
+    {
+      "id": "38b645cc5b7b",
+      "title": "Training",
+      "level": 0,
+      "page": 602
+    },
+    {
+      "id": "c1c2e605a9ae",
+      "title": "Cures Certification",
+      "level": 0,
+      "page": 603
+    },
+    {
+      "id": "8117ba92ed20",
+      "title": "Summary",
+      "level": 1,
+      "page": 604
+    },
+    {
+      "id": "94c7b0366be0",
+      "title": "§170.315(b)(10) Electronic Health Information (EHI) Export",
+      "level": 1,
+      "page": 605
+    },
+    {
+      "id": "fa0bb554c046",
+      "title": "Required Extensions:",
+      "level": 1,
+      "page": 605
+    },
+    {
+      "id": "923f471a5bdf",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 605
+    },
+    {
+      "id": "fd06eab9ce92",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 606
+    },
+    {
+      "id": "9ff3f6fa99d9",
+      "title": "Single Patient Export",
+      "level": 1,
+      "page": 606
+    },
+    {
+      "id": "2f3a0d7c63b5",
+      "title": "Multi-Patient Export",
+      "level": 1,
+      "page": 606
+    },
+    {
+      "id": "c5de3c63318a",
+      "title": "Viewing Exported Attachments",
+      "level": 2,
+      "page": 606
+    },
+    {
+      "id": "865840ed47b0",
+      "title": "§170.315(d)(1) Authentication, Access Control, Authorization",
+      "level": 1,
+      "page": 607
+    },
+    {
+      "id": "2fee2b113006",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 607
+    },
+    {
+      "id": "44e72512ab64",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 607
+    },
+    {
+      "id": "8db0a7c43270",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 607
+    },
+    {
+      "id": "5ad5b9956070",
+      "title": "§170.315(d)(2) Auditable Events and Tamper-Resistance, §170.315(d)(3) Audit Report(s), and §170.315(d)(10) Auditing Actions on Health Information",
+      "level": 1,
+      "page": 607
+    },
+    {
+      "id": "39ee26d5031b",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 608
+    },
+    {
+      "id": "231eb3985709",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 608
+    },
+    {
+      "id": "2c057f56be50",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 609
+    },
+    {
+      "id": "9e2900e11e26",
+      "title": "§170.315(d)(5) Automatic Access Time-out",
+      "level": 1,
+      "page": 609
+    },
+    {
+      "id": "e7809839e541",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 609
+    },
+    {
+      "id": "21450768fd6a",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 609
+    },
+    {
+      "id": "2c057f56be50",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 609
+    },
+    {
+      "id": "ba3aa6ccc73f",
+      "title": "§170.315(d)(6) Emergency Access",
+      "level": 1,
+      "page": 609
+    },
+    {
+      "id": "8e206c9f802c",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 610
+    },
+    {
+      "id": "95b4e01c9e26",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 610
+    },
+    {
+      "id": "290159c8194e",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 610
+    },
+    {
+      "id": "1d51124eac25",
+      "title": "§170.315(d)(7) End-User Device Encryption",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "e15e39991af5",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "efc2de89d9ef",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "88a2feb6de9b",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "b94db87ac8ae",
+      "title": "§170.315(d)(8) Integrity",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "e15e39991af5",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "efc2de89d9ef",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 616
+    },
+    {
+      "id": "e6ad57dc1169",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 617
+    },
+    {
+      "id": "afb899319a24",
+      "title": "§170.315(d)(9) Trusted Connection",
+      "level": 1,
+      "page": 617
+    },
+    {
+      "id": "d871138dbe01",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 617
+    },
+    {
+      "id": "dc33e7401238",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 617
+    },
+    {
+      "id": "e6ad57dc1169",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 617
+    },
+    {
+      "id": "84a8ab57ffa2",
+      "title": "§170.315(d)(12) Encrypt Authentication Credentials",
+      "level": 1,
+      "page": 617
+    },
+    {
+      "id": "659b4f586fdc",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "418d1b69f183",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "7b0197c613b2",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "249db375a76d",
+      "title": "§170.315(d)(13) Multi-Factor Authentication",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "659b4f586fdc",
+      "title": "Required Extensions",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "418d1b69f183",
+      "title": "Features that Support the Certification",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "7b0197c613b2",
+      "title": "Required Actions",
+      "level": 1,
+      "page": 618
+    },
+    {
+      "id": "ad5275427813",
+      "title": "§170.315(g)(4) Quality Management System",
+      "level": 1,
+      "page": 619
+    },
+    {
+      "id": "0985d957e195",
+      "title": "§170.315(g)(5) Accessibility-Centered Design",
+      "level": 1,
+      "page": 619
+    }
+  ]
+}

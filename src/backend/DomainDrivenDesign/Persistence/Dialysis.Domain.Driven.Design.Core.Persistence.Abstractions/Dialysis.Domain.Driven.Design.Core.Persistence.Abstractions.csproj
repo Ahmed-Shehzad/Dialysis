@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.DomainDrivenDesign.Persistence</RootNamespace>
+    <AssemblyName>Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions</AssemblyName>
+    <Description>Persistence-oriented contracts for DDD aggregates (unit of work, stores).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>

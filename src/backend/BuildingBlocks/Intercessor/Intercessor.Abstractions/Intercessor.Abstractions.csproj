@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Intercessor</RootNamespace>
+    <AssemblyName>Intercessor.Abstractions</AssemblyName>
+    <Description>Contracts for Intercessor (requests, handlers, pipeline behaviors, mediator facade).</Description>
+  </PropertyGroup>
+
+</Project>

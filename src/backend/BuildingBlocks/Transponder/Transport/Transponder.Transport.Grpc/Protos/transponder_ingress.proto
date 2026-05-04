@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package transponder.ingress.v1;
+
+option csharp_namespace = "Dialysis.BuildingBlocks.Transponder.Transport.Grpc";
+
+// Wire contract between Transponder gRPC clients and the ingress relay host.
+
+message TransportEnvelope {
+  string routing_key = 1;
+  bytes payload = 2;
+  string correlation_id = 3;
+  string deduplication_id = 4;
+  string content_type = 5;
+  map<string, string> headers = 6;
+}
+
+message SubscribeRequest {
+  // Optional label for logs (host name, pod, etc.).
+  string client_name = 1;
+}
+
+message PublishResponse {}
+
+service TransponderIngress {
+  rpc Publish(TransportEnvelope) returns (PublishResponse);
+  rpc Subscribe(SubscribeRequest) returns (stream TransportEnvelope);
+}

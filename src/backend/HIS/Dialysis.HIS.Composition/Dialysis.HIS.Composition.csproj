@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.HIS.Composition</RootNamespace>
+    <Description>HIS modular monolith composition root: CQRS, Transponder, persistence, bounded contexts.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Security/Dialysis.HIS.Security.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.PatientFlow/Dialysis.HIS.PatientFlow.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Scheduling/Dialysis.HIS.Scheduling.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Operations/Dialysis.HIS.Operations.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.DataServices/Dialysis.HIS.DataServices.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.RaCapabilities/Dialysis.HIS.RaCapabilities.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+</Project>

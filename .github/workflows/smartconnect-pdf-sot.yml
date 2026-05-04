@@ -1,0 +1,32 @@
+# Requires docs/book/mirth-connect-user-guide.pdf (Git LFS materialized). Fails until that file is committed.
+name: SmartConnect PDF source of truth
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pdf-toc-traceability:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with Git LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PDF tooling dependencies
+        run: python3 -m pip install -r tools/smartconnect/requirements.txt
+
+      - name: Verify committed TOC matches PDF
+        run: python3 tools/smartconnect/verify_toc_committed.py
+
+      - name: Verify traceability markdown is generated
+        run: python3 tools/smartconnect/generate_traceability_md.py --check
+
+      - name: Validate traceability vs TOC
+        run: python3 tools/smartconnect/validate_traceability.py

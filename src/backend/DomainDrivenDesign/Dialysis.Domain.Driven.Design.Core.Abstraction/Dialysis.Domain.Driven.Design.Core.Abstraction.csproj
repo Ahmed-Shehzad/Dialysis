@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.DomainDrivenDesign</RootNamespace>
+    <AssemblyName>Dialysis.Domain.Driven.Design.Core.Abstraction</AssemblyName>
+    <Description>Domain building blocks: entities, aggregates, value objects, domain and integration events, domain services, specifications, repository ports.</Description>
+  </PropertyGroup>
+
+</Project>
