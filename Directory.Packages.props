@@ -57,6 +57,10 @@
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.2" />
     <PackageVersion Include="NodaTime.Serialization.Protobuf" Version="2.0.2" />
     <PackageVersion Include="NodaTime.Serialization.SystemTextJson" Version="1.3.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
     <PackageVersion Include="Polly" Version="8.6.6" />
     <PackageVersion Include="Polly.Caching.Distributed" Version="3.0.1" />
     <PackageVersion Include="Polly.Extensions" Version="8.6.6" />
