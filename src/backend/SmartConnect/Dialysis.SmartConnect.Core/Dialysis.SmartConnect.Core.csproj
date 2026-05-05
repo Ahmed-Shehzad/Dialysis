@@ -9,13 +9,19 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
+    <ProjectReference Include="../Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <ProjectReference Include="../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Jint" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Npgsql" />
   </ItemGroup>
 
 </Project>

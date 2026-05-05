@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
   </ItemGroup>
 

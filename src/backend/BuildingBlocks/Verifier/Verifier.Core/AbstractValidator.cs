@@ -25,7 +25,7 @@ public abstract class AbstractValidator<T> : IValidator<T>
     public virtual ValidationResult<T> Validate(T instance) =>
         ValidateAsync(instance, CancellationToken.None).GetAwaiter().GetResult();
 
-    public virtual async Task<ValidationResult<T>> ValidateAsync(T instance, CancellationToken cancellationToken = default)
+    public async virtual Task<ValidationResult<T>> ValidateAsync(T instance, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(instance);
 

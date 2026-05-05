@@ -16,7 +16,7 @@ public sealed class TransponderOutboxRelayHostedService<TContext>(
     ILogger<TransponderOutboxRelayHostedService<TContext>> logger) : BackgroundService
     where TContext : TransponderPersistenceDbContextBase
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var opts = options.Value;
         while (!stoppingToken.IsCancellationRequested)

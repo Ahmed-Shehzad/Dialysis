@@ -30,6 +30,14 @@ public static class PipelineValidation
                     throw new InvalidOperationException($"Transform stage kind '{stage.Kind}' is not registered.");
                 }
             }
+
+            foreach (var stage in route.ResponseTransformStages)
+            {
+                if (registry.TryResolveTransformStage(stage.Kind) is null)
+                {
+                    throw new InvalidOperationException($"Response transform stage kind '{stage.Kind}' is not registered.");
+                }
+            }
         }
     }
 }

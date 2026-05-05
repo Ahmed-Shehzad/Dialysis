@@ -14,7 +14,7 @@ public sealed class SmartConnectInboundQueueConsumer(
     IInboundTransport inboundTransport,
     ILogger<SmartConnectInboundQueueConsumer> logger) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {

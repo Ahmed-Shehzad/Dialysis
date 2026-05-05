@@ -12,6 +12,16 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSmartConnectPersistenceInMemory(databaseName: "SmartConnectApi");
 builder.Services.AddSmartConnectCore();
+builder.Services.AddSmartConnectDataPruner(
+    o =>
+    {
+        var hours = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:IntervalHours");
+        if (hours is > 0)
+            o.Interval = TimeSpan.FromHours(hours.Value);
+        var days = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:RetentionDays");
+        if (days is > 0)
+            o.RetentionPeriod = TimeSpan.FromDays(days.Value);
+    });
 builder.Services.AddDefaultInboundMessageFactory();
 builder.Services.AddSmartConnectInboundTransport();
 builder.Services.AddSmartConnectInboundHttpOptions();
@@ -47,6 +57,9 @@ app.MapGet("/", () => Results.Redirect("/smartconnect/index.html", permanent: fa
 app.MapSmartConnectInboundRoutes();
 app.MapSmartConnectManagementRoutes();
 app.MapSmartConnectLedgerRoutes();
+app.MapSmartConnectConfigurationMapRoutes();
+app.MapSmartConnectEventsRoutes();
+app.MapSmartConnectPrunerRoutes();
 
 app.Run();
 

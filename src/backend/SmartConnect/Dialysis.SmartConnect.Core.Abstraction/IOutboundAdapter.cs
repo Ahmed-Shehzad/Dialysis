@@ -13,4 +13,4 @@ public interface IOutboundAdapter
         CancellationToken cancellationToken);
 }
 
-public readonly record struct OutboundSendResult(bool Succeeded, string? ErrorDetail);
+public readonly record struct OutboundSendResult(bool Succeeded, string? ErrorDetail, byte[]? ResponsePayload = null);

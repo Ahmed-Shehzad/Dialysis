@@ -6,81 +6,81 @@
 
 | PDF id | Title | Page | SmartConnect mapping | Status | Evidence |
 |--------|-------|------|----------------------|--------|----------|
-| `0fa53d8d19f6` | Contents | 3 | — | In progress | — |
-| `b53f48a4b0a4` | Legal Notice | 19 | — | In progress | — |
-| `e0c81a8ab836` | Introduction to Mirth Connect | 20 | — | In progress | — |
-| `edcdb2082802` | The NextGen Connected Health Solutions Mission | 20 | — | In progress | — |
-| `b1df0f9bba3b` | About Mirth Connect | 20 | — | In progress | — |
-| `15e6ad86afec` | The Healthcare Interoperability Challenge and Solution | 21 | — | In progress | — |
-| `f7cd3c783cac` | Mirth Connect as Open Source Software | 22 | — | In progress | — |
+| `0fa53d8d19f6` | Contents | 3 | N/A | N/A | PDF front matter; not product behavior |
+| `b53f48a4b0a4` | Legal Notice | 19 | N/A | N/A | PDF front matter; not product behavior |
+| `e0c81a8ab836` | Introduction to Mirth Connect | 20 | N/A | N/A | Product overview; SmartConnect uses separate technical docs |
+| `edcdb2082802` | The NextGen Connected Health Solutions Mission | 20 | N/A | N/A | Training / commercial marketing prose; not SmartConnect implementation backlog |
+| `b1df0f9bba3b` | About Mirth Connect | 20 | N/A | N/A | Product overview; SmartConnect uses separate technical docs |
+| `15e6ad86afec` | The Healthcare Interoperability Challenge and Solution | 21 | N/A | N/A | Product overview; SmartConnect uses separate technical docs |
+| `f7cd3c783cac` | Mirth Connect as Open Source Software | 22 | N/A | N/A | Training / commercial marketing prose; not SmartConnect implementation backlog |
 | `bd7cdd708bef` | Getting Started with Mirth Connect | 23 | ASP.NET Core host + SmartConnect wiring | In progress | src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Program.cs |
 | `e338fa38150f` | Mirth Connect System Requirements | 23 | Cross-stack requirements differ from MC installer | N/A | SmartConnect is .NET/K8s-hosted; compare with deployment docs |
 | `b81be5d5dc05` | Java Requirements | 24 | N/A | N/A | No JVM channel runtime in SmartConnect host |
 | `746ed16e96e7` | Database Requirements | 24 | EF Core persistence for flows + ledger | In progress | src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/SmartConnectDbContext.cs |
 | `27d6f22a63a4` | Install Mirth Connect Using the Mirth Connect Installer | 25 | N/A | N/A | Different distribution model (.NET deploy vs MC installer) |
 | `049903eb867c` | Install Mirth Connect Using the Command-Line Installer | 36 | N/A | N/A | Different distribution model (.NET deploy vs MC CLI installer) |
-| `a4c05bf787c0` | The Mirth Connect Server Manager | 44 | N/A | In progress | No MC Server Manager UI; operations via K8s + management API |
-| `b36678b2c6be` | Service Tab | 44 | — | In progress | — |
-| `a08bc1b6f966` | Server Tab | 44 | — | In progress | — |
-| `4352e3fdcdcd` | Database Tab | 46 | — | In progress | — |
-| `df9dee6092c9` | Info Tab | 47 | — | In progress | — |
-| `620627148862` | The Web Dashboard | 47 | Operator shell (static UI + JSON APIs) | In progress | src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html |
-| `94b9bfb26a81` | Changing the Database Type | 49 | — | In progress | — |
-| `25e220f01b32` | Backup Current Server Configuration | 49 | — | In progress | — |
-| `2e3358acf9d7` | Change Database Settings | 50 | — | In progress | — |
-| `f5ab12768c17` | Editing the Properties File Directly for Windows, Linux, and Mac | 52 | — | In progress | — |
-| `a23cad09bec9` | Restart the Mirth Connect Server | 53 | — | In progress | — |
-| `3cc9c1d75a71` | Restore Server Configuration | 53 | — | In progress | — |
-| `6faed7fb5f75` | Using Java 9 or greater | 55 | — | In progress | — |
-| `f4d7f4f95db0` | Mirth Connect Administrator Overview | 55 | — | In progress | — |
-| `504a7e83bca6` | Download the Administrator Launcher | 55 | — | In progress | — |
-| `b837c994bf25` | Launch the Administrator | 56 | — | In progress | — |
-| `6fd63ec29458` | Log On | 57 | — | In progress | — |
-| `50e35a801b57` | Logging on for the First Time | 58 | — | In progress | — |
+| `a4c05bf787c0` | The Mirth Connect Server Manager | 44 | N/A | N/A | No MC Server Manager UI; operations via K8s + management API |
+| `b36678b2c6be` | Service Tab | 44 | N/A | N/A | No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md) |
+| `a08bc1b6f966` | Server Tab | 44 | N/A | N/A | No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md) |
+| `4352e3fdcdcd` | Database Tab | 46 | N/A | N/A | No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md) |
+| `df9dee6092c9` | Info Tab | 47 | N/A | N/A | No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md) |
+| `620627148862` | The Web Dashboard | 47 | Operator shell: flows table, message browser (filter + list + reprocess), pruner readout, API links | In progress | src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html |
+| `94b9bfb26a81` | Changing the Database Type | 49 | N/A | N/A | Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md) |
+| `25e220f01b32` | Backup Current Server Configuration | 49 | N/A | N/A | Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md) |
+| `2e3358acf9d7` | Change Database Settings | 50 | N/A | N/A | Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md) |
+| `f5ab12768c17` | Editing the Properties File Directly for Windows, Linux, and Mac | 52 | N/A | N/A | Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md) |
+| `a23cad09bec9` | Restart the Mirth Connect Server | 53 | N/A | N/A | No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md) |
+| `3cc9c1d75a71` | Restore Server Configuration | 53 | N/A | N/A | Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md) |
+| `6faed7fb5f75` | Using Java 9 or greater | 55 | N/A | N/A | No JVM channel runtime in SmartConnect host |
+| `f4d7f4f95db0` | Mirth Connect Administrator Overview | 55 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `504a7e83bca6` | Download the Administrator Launcher | 55 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b837c994bf25` | Launch the Administrator | 56 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `6fd63ec29458` | Log On | 57 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `50e35a801b57` | Logging on for the First Time | 58 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `f08a7e51d0c2` | The Fundamentals of Mirth Connect | 60 | — | In progress | — |
 | `cb6cf78e7048` | About Channels and Connectors | 60 | — | In progress | — |
 | `8f8485279c1d` | Channel Components | 60 | — | In progress | — |
 | `5584b7a1846b` | General Channel Properties | 61 | — | In progress | — |
 | `6ff60c0decb8` | Source Connector | 61 | — | In progress | — |
-| `40c45dd1279d` | Destination Connectors | 62 | — | In progress | — |
-| `5788dfaf6043` | Channel Scripts | 62 | — | In progress | — |
+| `40c45dd1279d` | Destination Connectors | 62 | Destination connectors: HTTP, File, SMTP, TCP/MLLP, Database, Channel Writer | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/*.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs |
+| `5788dfaf6043` | Channel Scripts | 62 | Channel scripts: PreProcessor/PostProcessor (Jint), Deploy/Undeploy on start/stop API | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs; FlowScriptsDefinition; ManagementEndpointExtensions start/stop; ChannelScriptExecutorTests |
 | `b30529234a69` | Connector Components | 63 | — | In progress | — |
 | `5e271d1b17c5` | General Connector Properties | 63 | — | In progress | — |
 | `e6c5e2baab30` | Connector-Specific Properties | 63 | — | In progress | — |
-| `473c249a4370` | Filter | 65 | — | In progress | — |
-| `b71747f1c8c4` | Transformer | 65 | — | In progress | — |
-| `dc7441c576af` | About Message Data | 65 | — | In progress | — |
-| `41d81271f349` | Message Metadata | 66 | — | In progress | — |
-| `644e25fd5ab8` | Message Content | 67 | — | In progress | — |
-| `32cd9bafea30` | Message Attachments | 68 | — | In progress | — |
-| `664b9143f91d` | The Message Processing Lifecycle | 68 | FlowRuntimeEngine dispatch + outbound slots | In progress | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `473c249a4370` | Filter | 65 | Channel route filters: JavaScript (Jint), declarative rule-builder | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs |
+| `b71747f1c8c4` | Transformer | 65 | Transform pipeline: JS, XSLT, JSON path, XML XPath, mapper, message-builder stages | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/XsltTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/JsonTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/XmlTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MapperTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MessageBuilderTransformStage.cs |
+| `dc7441c576af` | About Message Data | 65 | IntegrationMessage: payload bytes, format enum, metadata dictionary, correlation id | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/MessageLedgerEntry.cs |
+| `41d81271f349` | Message Metadata | 66 | Message metadata: string key-value map on IntegrationMessage during pipeline execution; ledger rows store payload snapshot (metadata not persisted on ledger yet) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; MessageLedgerEntryEntity (payload only) |
+| `644e25fd5ab8` | Message Content | 67 | Message body: payload + PayloadFormat; persisted snapshot on ledger rows | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/MessageLedgerEntry.cs |
+| `32cd9bafea30` | Message Attachments | 68 | N/A | N/A | No MC-style attachment objects; binary payload + metadata only (scope-vs-mirth.md) |
+| `664b9143f91d` | The Message Processing Lifecycle | 68 | FlowRuntimeEngine: route filters, parallel or sequential outbound routes, response payload + response transforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/FlowRuntimeEngineTests.cs |
 | `27fd5020ecec` | Source Processing Steps | 69 | — | In progress | — |
 | `08ca078d887e` | Destination Processing Steps | 70 | — | In progress | — |
 | `66290c37fc29` | Final Processing Steps | 70 | — | In progress | — |
 | `906e1dbd0a6a` | Destination Chains | 71 | — | In progress | — |
 | `a1192781e4bc` | About Data Types | 72 | — | In progress | — |
-| `049e1774caf1` | About Filters | 74 | — | In progress | — |
-| `3439031dbadf` | The "msg" Object | 75 | — | In progress | — |
-| `0043eaf93157` | Filter Rule Types | 75 | — | In progress | — |
-| `055deed2a6dc` | About Transformers | 76 | — | In progress | — |
-| `dd16e2703a60` | The "msg" Object | 76 | — | In progress | — |
-| `d8fb6242d453` | The "tmp" Object | 76 | — | In progress | — |
-| `30de38489db7` | Response Transformers | 76 | — | In progress | — |
-| `803fb9390d22` | Transformer Step Types | 77 | — | In progress | — |
-| `120a91251454` | Administrator Launcher Overview | 78 | — | In progress | — |
-| `1931c0f3e8bd` | Mirth Connect Administrator | 79 | — | In progress | — |
-| `2d0bec540b7a` | Administrator Layout | 79 | — | In progress | — |
-| `63e3af7c81fd` | Working With Tables | 80 | — | In progress | — |
-| `03c7396e5578` | Monitor Views | 84 | — | In progress | — |
-| `63bb320096ed` | Dashboard View | 84 | — | In progress | — |
-| `3c8ead8f4688` | Dashboard Table | 86 | — | In progress | — |
-| `e703605125ea` | Dashboard Table Columns | 86 | — | In progress | — |
-| `14c6d4a3296b` | View Messages for a Channel | 88 | — | In progress | — |
-| `37ce1861b0eb` | Show or Hide Channel Groups | 88 | — | In progress | — |
-| `70b3f6effa66` | Change How Tags Display | 89 | — | In progress | — |
+| `049e1774caf1` | About Filters | 74 | Route filters registered on IFlowPluginRegistry (JS + rule-builder) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `3439031dbadf` | The "msg" Object | 75 | Filter scripts use payload + metadata on IntegrationMessage (Jint context) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs |
+| `0043eaf93157` | Filter Rule Types | 75 | Supported filter types: allow-all, JavaScript, rule-builder (JSON rules) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/BuiltInPlugins/AllowAllRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs |
+| `055deed2a6dc` | About Transformers | 76 | Transform stages on IFlowPluginRegistry; response transform slot on outbound routes | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs |
+| `dd16e2703a60` | The "msg" Object | 76 | Transform input: IntegrationMessage payload + metadata | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs |
+| `d8fb6242d453` | The "tmp" Object | 76 | N/A | N/A | No separate tmp object; use IntegrationMessage.Metadata or channel scripts (scope-vs-mirth.md) |
+| `30de38489db7` | Response Transformers | 76 | Per-route ResponseTransformStages on pipeline definition | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `803fb9390d22` | Transformer Step Types | 77 | Transform step kinds: javascript, xslt, json, xml, mapper-transform, message-builder | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs |
+| `120a91251454` | Administrator Launcher Overview | 78 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `1931c0f3e8bd` | Mirth Connect Administrator | 79 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `2d0bec540b7a` | Administrator Layout | 79 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `63e3af7c81fd` | Working With Tables | 80 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `03c7396e5578` | Monitor Views | 84 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `63bb320096ed` | Dashboard View | 84 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `3c8ead8f4688` | Dashboard Table | 86 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e703605125ea` | Dashboard Table Columns | 86 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `14c6d4a3296b` | View Messages for a Channel | 88 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `37ce1861b0eb` | Show or Hide Channel Groups | 88 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `70b3f6effa66` | Change How Tags Display | 89 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `1cbaf2ccb2eb` | Server Log | 89 | — | In progress | — |
 | `6e7763c9e4e7` | Connection Log | 91 | — | In progress | — |
-| `9ba7dbb80afe` | Global Maps | 92 | — | In progress | — |
+| `9ba7dbb80afe` | Global Maps | 92 | Global and channel maps via IVariableMapStore + REST config-map routes | Done | ConfigurationMapEndpointExtensions; ChannelScriptExecutor channelMap/globalMap |
 | `4c6c3ad55310` | Global Maps Table Columns | 92 | — | In progress | — |
 | `b5cc8390e49a` | Dashboard Tasks | 93 | — | In progress | — |
 | `f6052f76c1fd` | Send Message | 95 | — | In progress | — |
@@ -94,7 +94,7 @@
 | `1310a6d32f12` | Filter By Partial Channel Name | 101 | — | In progress | — |
 | `c21736a470a6` | Filter By Multiple Criteria | 102 | — | In progress | — |
 | `690c7a839977` | Clear Filter Criteria | 102 | — | In progress | — |
-| `eb267384985d` | Message Browser View | 103 | — | In progress | — |
+| `eb267384985d` | Message Browser View | 103 | Message Browser APIs: list with filters (flowId, correlationId, date range, status), GET entry by id, reprocess, flow statistics | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; MessageBrowserApiTests |
 | `dd41f11b0f31` | Navigation | 104 | — | In progress | — |
 | `7910938ae1a4` | From the Dashboard | 104 | — | In progress | — |
 | `137b1bbd1d82` | From the Channels View | 105 | — | In progress | — |
@@ -119,7 +119,7 @@
 | `d7c4994ec221` | Image Attachment Viewer | 121 | — | In progress | — |
 | `8780172310f0` | DICOM Attachment Viewer | 122 | — | In progress | — |
 | `dba2fb93ad73` | PDF Attachment Viewer | 123 | — | In progress | — |
-| `afc8e4c3f060` | Search Messages | 124 | — | In progress | — |
+| `afc8e4c3f060` | Search Messages | 124 | Ledger query filters (flowId, correlation prefix, dates, status) — subset of MC search | Done | ManagementEndpointExtensions GET /admin/messages; IMessageLedgerQuery |
 | `736247a4bb0a` | Message Search Options | 125 | — | In progress | — |
 | `18d71fe936b8` | Advanced Search Filter | 127 | — | In progress | — |
 | `eb6a41544dcf` | Message Browser Tasks | 130 | — | In progress | — |
@@ -134,7 +134,7 @@
 | `fc8d4a7bb89c` | Alerts Table | 140 | — | In progress | — |
 | `3308fd0fd198` | Alerts Table Columns | 140 | — | In progress | — |
 | `8ebe4b804d88` | Alerts Tasks | 140 | — | In progress | — |
-| `ff0230f151f9` | Events View | 141 | — | In progress | — |
+| `ff0230f151f9` | Events View | 141 | GET /admin/events (filter/skip/take), GET /admin/events/{eventId}, export route | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs; IAuditEventStore |
 | `167fafb422e2` | Navigation | 142 | — | In progress | — |
 | `5eb4a7958208` | Events Table | 142 | — | In progress | — |
 | `20e34cf87402` | Metadata Table Columns | 143 | — | In progress | — |
@@ -143,14 +143,14 @@
 | `6d1db4c03a71` | Searching Events | 145 | — | In progress | — |
 | `6982d7114011` | Advanced Search Filter | 146 | — | In progress | — |
 | `73f805716ab9` | Event Tasks | 147 | — | In progress | — |
-| `2e414e6e48d9` | Export All Events | 147 | — | In progress | — |
+| `2e414e6e48d9` | Export All Events | 147 | GET /smartconnect/v1/admin/events/export (JSON dump; capped take) | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs |
 | `23d7d23954b8` | Management Views | 148 | — | In progress | — |
 | `ab0b0657f405` | Channels View | 148 | — | In progress | — |
 | `5fa610fbf3d2` | Navigation | 149 | — | In progress | — |
 | `41c983f0c08b` | Channel Table | 150 | — | In progress | — |
 | `a4fe7d347dfb` | Channel Table Columns | 151 | — | In progress | — |
-| `7b06e3fea95f` | Show or Hide Channel Groups | 151 | — | In progress | — |
-| `29d12efd261d` | Change How Tags Display | 151 | — | In progress | — |
+| `7b06e3fea95f` | Show or Hide Channel Groups | 151 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `29d12efd261d` | Change How Tags Display | 151 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `e0b27b68d52d` | Filter By Channel Name or Tag | 151 | — | In progress | — |
 | `5674b33d7229` | Use Drag and Drop | 152 | — | In progress | — |
 | `0fa473a59508` | Get the Channel Name/ID | 152 | — | In progress | — |
@@ -180,7 +180,7 @@
 | `507967433858` | Tasks | 173 | — | In progress | — |
 | `7cda6572c24e` | Restore Config | 174 | — | In progress | — |
 | `0ab20a857be1` | Clear All Statistics | 174 | — | In progress | — |
-| `5b1af9c5062e` | Administrator Settings Tab | 174 | — | In progress | — |
+| `5b1af9c5062e` | Administrator Settings Tab | 174 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `54ebed23b65a` | System Preferences | 175 | — | In progress | — |
 | `358db0b36953` | User Preferences | 177 | — | In progress | — |
 | `692a2def89d7` | Code Editor Preferences | 178 | — | In progress | — |
@@ -191,7 +191,7 @@
 | `fd9e9317771e` | Removing a Tag | 181 | — | In progress | — |
 | `9f0282e53326` | Channels Table | 181 | — | In progress | — |
 | `0045040b889a` | Indeterminate Check Boxes | 182 | — | In progress | — |
-| `5f74a6e2db0b` | Configuration Map Settings Tab | 182 | — | In progress | — |
+| `5f74a6e2db0b` | Configuration Map Settings Tab | 182 | Configuration / global / channel variable maps via REST CRUD | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ConfigurationMapEndpointExtensions.cs; IVariableMapStore |
 | `863eb71118e8` | Table Columns | 183 | — | In progress | — |
 | `da0ed40e9c3c` | Tasks | 183 | — | In progress | — |
 | `2915220ce311` | Database Tasks Settings Tab | 184 | — | In progress | — |
@@ -204,7 +204,7 @@
 | `c6a91d33b5f7` | Reload Resource | 188 | — | In progress | — |
 | `114fe630f930` | Directory Resource | 188 | — | In progress | — |
 | `15e464f091e7` | Using Resources in Channels/Connectors | 190 | — | In progress | — |
-| `73f764f17b3a` | Data Pruner Settings Tab | 190 | — | In progress | — |
+| `73f764f17b3a` | Data Pruner Settings Tab | 190 | Background ledger pruner + GET configured interval/retention | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataPrunerHostedService.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/PrunerEndpointExtensions.cs; Api Program.cs AddSmartConnectDataPruner |
 | `454a3bba349f` | Status | 191 | — | In progress | — |
 | `ce1459f6a563` | Schedule | 192 | — | In progress | — |
 | `45e19e372f55` | Prune Settings | 193 | — | In progress | — |
@@ -259,7 +259,7 @@
 | `e8163150f4bb` | Modifying Custom Metadata Columns | 231 | — | In progress | — |
 | `f3b484537db6` | Channel Description | 231 | — | In progress | — |
 | `b0657b73534e` | Source Tab | 232 | — | In progress | — |
-| `2ff06d05acdf` | Choose a Source Connector | 233 | — | In progress | — |
+| `2ff06d05acdf` | Choose a Source Connector | 233 | Source connectors: HTTP webhook, MLLP listener, File Reader, TCP Listener, Database Reader (registry + hosted service) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnector.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/SourceConnectorHostedService.cs |
 | `05f49cb52519` | Listener Settings | 233 | — | In progress | — |
 | `9c0f28631402` | Polling Settings | 234 | — | In progress | — |
 | `109fe06b21e3` | Interval Schedule Settings | 235 | — | In progress | — |
@@ -267,12 +267,12 @@
 | `0b6bcd03be1a` | Cron Schedule Settings | 236 | — | In progress | — |
 | `073aa9db064d` | Advanced Settings | 237 | — | In progress | — |
 | `96c4d761f215` | Source Settings | 238 | — | In progress | — |
-| `cbad119904fa` | HTTP Authentication Settings | 239 | — | In progress | — |
-| `40357d5af6f6` | Choose an Authentication Type | 240 | — | In progress | — |
-| `8ca8bf077d45` | Basic HTTP Authentication | 240 | — | In progress | — |
-| `6a42ce4d791b` | Digest HTTP Authentication | 241 | — | In progress | — |
-| `e6886c44f30c` | JavaScript HTTP Authentication | 243 | — | In progress | — |
-| `443e8c6c31e3` | Custom Java Class HTTP Authentication | 244 | — | In progress | — |
+| `cbad119904fa` | HTTP Authentication Settings | 239 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
+| `40357d5af6f6` | Choose an Authentication Type | 240 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
+| `8ca8bf077d45` | Basic HTTP Authentication | 240 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
+| `6a42ce4d791b` | Digest HTTP Authentication | 241 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
+| `e6886c44f30c` | JavaScript HTTP Authentication | 243 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
+| `443e8c6c31e3` | Custom Java Class HTTP Authentication | 244 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
 | `1a89aa729221` | OAuth 2.0 Token Verification | 245 | — | In progress | — |
 | `eb51dc5af4aa` | Source Connector Properties | 245 | — | In progress | — |
 | `42d9c9b636e0` | Destinations Tab | 246 | — | In progress | — |
@@ -283,7 +283,7 @@
 | `fbfaaf461730` | Destination Connector Properties | 252 | — | In progress | — |
 | `03af45160d82` | Destination Mappings | 253 | — | In progress | — |
 | `dc0dc437a07e` | Standard Variables/Templates | 253 | — | In progress | — |
-| `9cd7666923ab` | Scripts Tab | 255 | — | In progress | — |
+| `9cd7666923ab` | Scripts Tab | 255 | Scripts tab: FlowScriptsDefinition in pipeline JSON (deploy/undeploy/pre/post) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/FlowScriptsDefinition.cs; FlowRuntimeEngine; ManagementEndpointExtensions |
 | `7c7e0b552132` | Edit Channel Tasks | 256 | — | In progress | — |
 | `4437d3b0eb59` | Edit Filter / Transformer Views | 257 | — | In progress | — |
 | `05fadd448ad3` | Navigation | 258 | — | In progress | — |
@@ -305,18 +305,18 @@
 | `5b05e951280d` | Create New Rules/Steps | 276 | — | In progress | — |
 | `8403b1d5c9ec` | Rule/Step Table | 277 | — | In progress | — |
 | `815e62d9f133` | Filter Rule Properties | 278 | — | In progress | — |
-| `1e06cb7ebde1` | Rule Builder Filter Rule | 278 | — | In progress | — |
-| `2a345bb9af56` | JavaScript Filter Rule | 279 | — | In progress | — |
+| `1e06cb7ebde1` | Rule Builder Filter Rule | 278 | Declarative rule-builder route filter (payloadContains, metadataEquals; JSON parameters) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs; RuleBuilderRouteFilterTests |
+| `2a345bb9af56` | JavaScript Filter Rule | 279 | JavaScript route filter (Jint; channel route filter slot) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptRouteFilterTests.cs |
 | `85f102539778` | External Script Filter Rule | 279 | — | In progress | — |
-| `1052c34c408d` | Iterator Filter Rule | 280 | — | In progress | — |
+| `1052c34c408d` | Iterator Filter Rule | 280 | N/A | N/A | No iterator filter; use JavaScript route filter for batch logic |
 | `43b7b891c3b1` | Transformer Step Properties | 281 | — | In progress | — |
-| `2958d82dc5f6` | Mapper Transformer Step | 281 | — | In progress | — |
-| `7138654d5a99` | Message Builder Transformer Step | 282 | — | In progress | — |
+| `2958d82dc5f6` | Mapper Transformer Step | 281 | Mapper transform stage (alias over JSON path mapper) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MapperTransformStage.cs; MapperTransformStageTests |
+| `7138654d5a99` | Message Builder Transformer Step | 282 | Message Builder transform (UTF-8 prefix/suffix) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MessageBuilderTransformStage.cs; MessageBuilderTransformStageTests |
 | `75e73d330f1a` | JavaScript Transformer Step | 283 | Sandboxed JS transform stage (Jint + timeout) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptTransformStageTests.cs |
 | `bbf2966bbe5f` | External Script Transformer Step | 283 | — | In progress | — |
-| `5d8d7df14348` | XSLT Transformer Step | 283 | — | In progress | — |
+| `5d8d7df14348` | XSLT Transformer Step | 283 | XSLT transform stage (System.Xml.Xsl) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/XsltTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/XsltTransformStageTests.cs |
 | `7c8e4785a731` | Destination Set Filter Transformer Step | 284 | — | In progress | — |
-| `121bd3845f7d` | Iterator Transformer Step | 286 | — | In progress | — |
+| `121bd3845f7d` | Iterator Transformer Step | 286 | N/A | N/A | No iterator transform; use JavaScript transform or multiple outbound routes |
 | `d9edaa4d4de8` | Response Transformers | 286 | — | In progress | — |
 | `6e0704439eda` | Modifying the Response | 287 | — | In progress | — |
 | `e6df3c9fba0e` | Common Scenarios | 287 | — | In progress | — |
@@ -363,61 +363,61 @@
 | `97f595a57c72` | Delimited Text Data Type | 324 | — | In progress | — |
 | `d7cda74ac759` | DICOM Data Type | 327 | — | In progress | — |
 | `f2a2c4aa064d` | Example XML snippet: | 327 | — | In progress | — |
-| `2d28fa4883d2` | EDI / X12 Data Type | 328 | — | In progress | — |
-| `3e4d341b19e6` | HL7 v2.x Data Type | 329 | — | In progress | — |
-| `5ad4fcb40c11` | HL7 v3.x Data Type | 332 | — | In progress | — |
-| `39dfc1c57987` | JSON Data Type | 333 | — | In progress | — |
+| `2d28fa4883d2` | EDI / X12 Data Type | 328 | N/A | N/A | No EDI/X12 parser; payloads pass through as binary/text |
+| `3e4d341b19e6` | HL7 v2.x Data Type | 329 | HL7 v2.x parser with path-based segment/field access (subset of MC message tree) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataTypes/Hl7V2Parser.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/Hl7V2ParserTests.cs |
+| `5ad4fcb40c11` | HL7 v3.x Data Type | 332 | N/A | N/A | No HL7 v3 RIM parser; use XML transform or custom script |
+| `39dfc1c57987` | JSON Data Type | 333 | JSON transform stage (path extraction / mappings) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/JsonTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JsonTransformStageTests.cs |
 | `470fdb353236` | NCPDP Data Type | 334 | — | In progress | — |
 | `53b493eef0a0` | Raw Data Type | 335 | — | In progress | — |
-| `fcbc2850c3c6` | XML Data Type | 336 | — | In progress | — |
+| `fcbc2850c3c6` | XML Data Type | 336 | XML transform stage (XPath extraction) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/XmlTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/XmlTransformStageTests.cs |
 | `e17335a4fb83` | Batch Processing | 337 | — | In progress | — |
 | `0b734799ad47` | JavaScript Batch Script | 338 | — | In progress | — |
 | `12a2b7f4dfbc` | Source Connectors | 340 | — | In progress | — |
-| `abea0d6bb89e` | Channel Reader | 340 | — | In progress | — |
+| `abea0d6bb89e` | Channel Reader | 340 | N/A | N/A | No separate Channel Reader; use Channel Writer destination to another flow |
 | `933ef4ca2258` | Source Map Variables | 341 | — | In progress | — |
-| `67d61933dcf2` | DICOM Listener | 341 | — | In progress | — |
+| `67d61933dcf2` | DICOM Listener | 341 | N/A | N/A | No DICOM listener in core |
 | `a10513ed9df1` | Source Map Variables | 344 | — | In progress | — |
-| `ee6dd2c1e477` | Database Reader | 346 | N/A | In progress | No database reader source connector in core |
+| `ee6dd2c1e477` | Database Reader | 346 | Database reader source connector (watermark-based polling) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/DatabaseReaderParameterTests.cs |
 | `bb60791d2158` | Editing Database Drivers | 350 | — | In progress | — |
-| `cabdef066e91` | File Reader | 351 | — | In progress | — |
-| `1c0f86389fc6` | Advanced FTP Options | 357 | — | In progress | — |
-| `25d2d65030ce` | Advanced SFTP Options | 357 | — | In progress | — |
-| `98dc69797b66` | Advanced SMB Options | 359 | — | In progress | — |
-| `14ba60978325` | Advanced Amazon S3 Options | 359 | — | In progress | — |
+| `cabdef066e91` | File Reader | 351 | File Reader source connector (polling, after-read actions, quarantine) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/FileReaderSourceConnectorTests.cs |
+| `1c0f86389fc6` | Advanced FTP Options | 357 | N/A | N/A | File Reader is local filesystem only; no FTP transport in core |
+| `25d2d65030ce` | Advanced SFTP Options | 357 | N/A | N/A | File Reader is local filesystem only; SFTP not in core |
+| `98dc69797b66` | Advanced SMB Options | 359 | N/A | N/A | File Reader is local filesystem only; SMB not in core |
+| `14ba60978325` | Advanced Amazon S3 Options | 359 | N/A | N/A | File Reader is local filesystem only; S3 not in core |
 | `e24813c8155e` | Source Map Variables | 361 | — | In progress | — |
 | `001a54fbd3e2` | HTTP Listener | 362 | Inbound HTTP webhook routes | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/SmartConnectInboundEndpointExtensions.cs |
-| `99f63d49dff3` | JMS Listener | 366 | — | In progress | — |
-| `ee05a8041a69` | JMS Connection Templates | 369 | — | In progress | — |
-| `d19fabfe08df` | Loading Templates | 369 | — | In progress | — |
-| `4a0d97315103` | Creating New Templates | 369 | — | In progress | — |
-| `c582b3d4e532` | Updating Templates | 370 | — | In progress | — |
-| `26cc04200cb7` | Deleting Templates | 370 | — | In progress | — |
-| `6c09f0e130ae` | JavaScript Reader | 371 | N/A | In progress | No MC-style JavaScript reader connector in core |
+| `99f63d49dff3` | JMS Listener | 366 | N/A | N/A | No JMS listener in SmartConnect; use platform messaging or HTTP bridge |
+| `ee05a8041a69` | JMS Connection Templates | 369 | N/A | N/A | No JMS in core |
+| `d19fabfe08df` | Loading Templates | 369 | N/A | N/A | No JMS templates in core |
+| `4a0d97315103` | Creating New Templates | 369 | N/A | N/A | No JMS templates in core |
+| `c582b3d4e532` | Updating Templates | 370 | N/A | N/A | No JMS templates in core |
+| `26cc04200cb7` | Deleting Templates | 370 | N/A | N/A | No JMS templates in core |
+| `6c09f0e130ae` | JavaScript Reader | 371 | N/A | N/A | No MC-style JavaScript reader connector in core |
 | `9acc74d3387e` | JavaScript Reader Return Values | 371 | — | In progress | — |
-| `de7638b26b86` | TCP Listener | 372 | — | In progress | — |
+| `de7638b26b86` | TCP Listener | 372 | TCP listener source connector (MLLP / LF / length-prefix framing) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpListenerFrameDecoderTests.cs |
 | `d2df0999352d` | Source Map Variables | 376 | — | In progress | — |
 | `f84c6390b80b` | TCP Transmission Modes | 376 | — | In progress | — |
 | `0f464f24cd13` | Basic TCP Transmission Mode | 377 | — | In progress | — |
 | `acca89ea2413` | Byte Abbreviations | 377 | — | In progress | — |
 | `519ffc586eec` | MLLP Transmission Mode | 378 | MLLP TCP listener framing | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpInboundHostedService.cs |
 | `0704561e0c73` | Byte Abbreviations | 380 | — | In progress | — |
-| `673d3d69227d` | Web Service Listener | 381 | — | In progress | — |
+| `673d3d69227d` | Web Service Listener | 381 | N/A | N/A | No MC-style Web Service listener; use inbound HTTP + contract in app layer |
 | `c27980f69bbf` | Destination Connectors | 384 | — | In progress | — |
-| `9bb0daf8d64a` | Channel Writer | 384 | — | In progress | — |
+| `9bb0daf8d64a` | Channel Writer | 384 | Channel writer outbound adapter (in-process flow chaining with depth guard) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/ChannelWriterOutboundAdapterTests.cs |
 | `ecd047bb8c78` | Source Map Variables | 386 | — | In progress | — |
-| `72ee90d0e889` | DICOM Sender | 386 | — | In progress | — |
-| `1e52b8d7a0d1` | Database Writer | 390 | — | In progress | — |
-| `628eff9187e0` | Document Writer | 393 | — | In progress | — |
+| `72ee90d0e889` | DICOM Sender | 386 | N/A | N/A | No DICOM sender in core |
+| `1e52b8d7a0d1` | Database Writer | 390 | Database outbound adapter (parameterized, named connection strings, SqlServer + Postgres) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DatabaseOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/DatabaseOutboundAdapterTests.cs |
+| `628eff9187e0` | Document Writer | 393 | N/A | N/A | No Document Writer; use File or HTTP outbound with rendered document |
 | `a9149b98297c` | File Writer | 395 | File outbound adapter | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/FileOutboundAdapter.cs |
 | `b0420a814a90` | Connector Map Variables | 400 | — | In progress | — |
 | `1e802e478244` | HTTP Sender | 400 | HTTP outbound adapter | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundAdapter.cs |
 | `1355b11537ce` | Connector Map Variables | 407 | — | In progress | — |
-| `31adda5c3122` | JMS Sender | 407 | — | In progress | — |
-| `a38b458b9e80` | JavaScript Writer | 410 | — | In progress | — |
+| `31adda5c3122` | JMS Sender | 407 | N/A | N/A | No JMS sender in SmartConnect; use HTTP outbound or native broker client |
+| `a38b458b9e80` | JavaScript Writer | 410 | N/A | N/A | No JavaScript Writer connector; use JS transform stage or channel scripts |
 | `b78a1ad07466` | JavaScript Writer Return Values | 411 | — | In progress | — |
 | `b0e26e4772e5` | SMTP Sender | 411 | SMTP outbound adapter (basic) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/SmtpOutboundAdapter.cs |
-| `a74f2026837f` | TCP Sender | 416 | — | In progress | — |
-| `4f3bdc6f1747` | Web Service Sender | 422 | — | In progress | — |
+| `a74f2026837f` | TCP Sender | 416 | TCP outbound adapter (raw, length-prefixed, MLLP framing; pooled connections) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/TcpOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpOutboundAdapterTests.cs |
+| `4f3bdc6f1747` | Web Service Sender | 422 | N/A | N/A | No SOAP Web Service sender; use HTTP outbound with SOAP payload |
 | `693f111fbb39` | Mirth Connect and JavaScript | 428 | — | In progress | — |
 | `90e44e3af4d1` | About JavaScript | 428 | — | In progress | — |
 | `6d01c49f1da3` | Variables | 428 | — | In progress | — |
@@ -489,8 +489,8 @@
 | `1e8466dc5a69` | Mirth Connect Command Line Interface | 471 | — | In progress | — |
 | `77b068248a31` | Running the Command Line Interface | 471 | — | In progress | — |
 | `1e4c3c953b6d` | Using Non-interactive Scripting | 472 | — | In progress | — |
-| `1048ab38243e` | Mirth Connect REST API | 473 | Management HTTP API (flows, lifecycle, import/export JSON) | In progress | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs |
-| `a5e288ce0b6e` | Authentication | 476 | — | In progress | — |
+| `1048ab38243e` | Mirth Connect REST API | 473 | Management HTTP API (flows, lifecycle, ledger, maps, events, pruner); optional JWT when configured | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; ManagementSecurityExtensions.cs; Api Program.cs AddSmartConnectManagementJwt / UseAuthentication |
+| `a5e288ce0b6e` | Authentication | 476 | N/A | N/A | Release-notes topic; not SmartConnect feature matrix |
 | `f6e04f09424c` | Installation Directory | 478 | — | In progress | — |
 | `849efb2b04ed` | Application Data Directory | 478 | — | In progress | — |
 | `8754f4f0dcae` | configuration.properties | 478 | — | In progress | — |
@@ -532,7 +532,7 @@
 | `56cdafbfd0fb` | What message standards does Mirth® Connect support? | 505 | — | In progress | — |
 | `664dfebc2935` | What transfer protocols does Mirth® Connect support? | 506 | — | In progress | — |
 | `8f4ef3c94e5d` | How do I transform a data segment? | 507 | — | In progress | — |
-| `40a482aa9156` | How can I increase the text size when using the Mirth® Connect Administrator on a high DPI monitor and the text is small and difficult to read? | 507 | — | In progress | — |
+| `40a482aa9156` | How can I increase the text size when using the Mirth® Connect Administrator on a high DPI monitor and the text is small and difficult to read? | 507 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `9774ce82a593` | Channel Development Best Practices and Tips | 509 | — | In progress | — |
 | `73c83a8392d8` | Channel Performance | 509 | — | In progress | — |
 | `365672498056` | Adjust the Message Storage slider so that the channel only retains the message data that you will actually need. | 510 | — | In progress | — |
@@ -566,13 +566,13 @@
 | `fc75b93eaaeb` | SQL Server | 524 | — | In progress | — |
 | `d96517c6f899` | Secure Configuration | 525 | — | In progress | — |
 | `b18ea5f70802` | Encryption Settings | 525 | — | In progress | — |
-| `ab634c646084` | Encrypt Database Password | 527 | — | In progress | — |
+| `ab634c646084` | Encrypt Database Password | 527 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
 | `8b126975e608` | Plain HTTP Main Web Server | 527 | — | In progress | — |
 | `e014126fb6b9` | Default TLS/SSL Settings | 527 | — | In progress | — |
 | `c2547e34b82f` | Default Supported Cipher Suites | 528 | — | In progress | — |
 | `4e8e77e561a7` | Cipher Suites Removed From Earlier Versions | 529 | — | In progress | — |
 | `a251877a724e` | New Protocol/Cipher Suite Support in Java 11 | 531 | — | In progress | — |
-| `9251fe63c07d` | Password Requirements | 532 | — | In progress | — |
+| `9251fe63c07d` | Password Requirements | 532 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
 | `a8211fb9cf73` | SSL Manager Extension | 533 | — | In progress | — |
 | `09d6533cdcc8` | Source Connector Settings | 533 | — | In progress | — |
 | `e9c1fee6c59a` | Destination Connector Settings | 534 | — | In progress | — |
@@ -588,13 +588,13 @@
 | `d3cbd329c8ae` | Logs | 540 | — | In progress | — |
 | `4217df4216a3` | Configuration | 540 | — | In progress | — |
 | `ef4f04f2c292` | Mirth Connect Engine fails to start up | 540 | — | In progress | — |
-| `f0001315e10f` | Unable to Launch Mirth Connect Administrator | 542 | — | In progress | — |
+| `f0001315e10f` | Unable to Launch Mirth Connect Administrator | 542 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `544943379c0b` | Clearing your Java Cache | 543 | — | In progress | — |
 | `102bf80a894e` | Using the Java Control Panel | 543 | — | In progress | — |
 | `458aa783b2ec` | Using the Command Line | 545 | — | In progress | — |
 | `eb8b1315acef` | Opening the Java Client Console | 546 | — | In progress | — |
 | `24275f64d4af` | Out of Memory Errors | 549 | — | In progress | — |
-| `f24ca75860a9` | Manually reset a password in the database | 551 | — | In progress | — |
+| `f24ca75860a9` | Manually reset a password in the database | 551 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
 | `db8e077c1348` | Upgrade Guide | 553 | — | In progress | — |
 | `2813d5cc3e3f` | Before You Upgrade | 553 | — | In progress | — |
 | `b42b0b77ee47` | Upgrade Mirth Connect | 554 | — | In progress | — |
@@ -620,11 +620,11 @@
 | `416df2618ad5` | Updated Encryption Settings | 560 | — | In progress | — |
 | `808adc18011e` | Disabled TLS Cipher Suites | 561 | — | In progress | — |
 | `869e631d1fc2` | Removed the View User Guide Option | 562 | — | In progress | — |
-| `06bbb66b9019` | Administrator Launcher | 562 | — | In progress | — |
+| `06bbb66b9019` | Administrator Launcher | 562 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `471d4d898c29` | 4.2.0 Upgrade Notes | 563 | — | In progress | — |
 | `fcc2ab28c8f4` | Removed the Remove All Events Button | 563 | — | In progress | — |
 | `3ab717ec029e` | Changed the patient_id Query Parameter Naming Scheme for the Remove Message API Request | 563 | — | In progress | — |
-| `b005e18a50f5` | Renamed the User Authorization Extension to Role-Based Access Control | 563 | — | In progress | — |
+| `b005e18a50f5` | Renamed the User Authorization Extension to Role-Based Access Control | 563 | N/A | N/A | MC commercial RBAC extension; use platform IdP + optional JWT (ManagementSecurityExtensions.cs; scope-vs-mirth.md) |
 | `22339b2c9f89` | Moving Java Home Preference Checks | 563 | — | In progress | — |
 | `2d09ea0ceab9` | 4.1.0 Upgrade Notes | 564 | — | In progress | — |
 | `4b651810fd69` | Warning: Open issue with SMB File Reader/Writer | 564 | — | In progress | — |
@@ -653,7 +653,7 @@
 | `2fde9791dd9f` | Logging Raw SOAP Payloads and WS-Security Details | 569 | — | In progress | — |
 | `c6a6bb7e2d3b` | Toggling Automatic Conversion to JSON | 569 | — | In progress | — |
 | `5ace9dd04500` | 3.10.0 Upgrade Notes | 570 | — | In progress | — |
-| `279545f2881f` | Advanced Clustering Sync Intervals | 570 | — | In progress | — |
+| `279545f2881f` | Advanced Clustering Sync Intervals | 570 | N/A | N/A | MC clustering sync UI; not applicable (scope-vs-mirth.md) |
 | `8c9aba4d25af` | 3.9.0 Upgrade Notes | 571 | — | In progress | — |
 | `742b9ccf3595` | SMB Versions in a File Reader/Writer | 571 | — | In progress | — |
 | `70e2e929c0f9` | DICOM Sender Storage Commitment | 571 | — | In progress | — |
@@ -667,7 +667,7 @@
 | `388f8023bf37` | Database Connection Pools | 573 | — | In progress | — |
 | `3b3821c2b6d7` | Option 1: Use two pools, one read/write and one read-only | 574 | — | In progress | — |
 | `e23eec479d93` | Option 2: Use one connection pool for everything | 574 | — | In progress | — |
-| `cb66d8d8674e` | Keystore Passwords | 575 | — | In progress | — |
+| `cb66d8d8674e` | Keystore Passwords | 575 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
 | `3b6861a67fca` | 3.5.0 Upgrade Notes | 575 | — | In progress | — |
 | `7b35c51bae06` | 3.4.0 Upgrade Notes | 576 | — | In progress | — |
 | `1173bb9b2cfa` | 3.2.0 Upgrade Notes | 577 | — | In progress | — |
@@ -680,69 +680,69 @@
 | `6b480dc9d2bb` | For Non-Polling Channels | 580 | — | In progress | — |
 | `51d64b8819d3` | For Polling Channels | 580 | — | In progress | — |
 | `ca2619506849` | Channel Updates | 580 | — | In progress | — |
-| `799a49bda76d` | Commercial Support/Extensions | 582 | — | In progress | — |
-| `8c24dedf8572` | Advanced Alerting | 583 | — | In progress | — |
-| `7453863f9f44` | Advanced Clustering | 584 | — | In progress | — |
-| `d19f2efda9df` | ASTM E1381 Transmission Mode | 585 | — | In progress | — |
-| `8bdffc727247` | ASTM E1394 Data Type | 586 | — | In progress | — |
-| `c7ca9d757744` | Channel History | 587 | — | In progress | — |
-| `a1cb41039be9` | Cures Certification Support | 588 | — | In progress | — |
-| `94c3be236d8a` | Email Reader | 588 | — | In progress | — |
-| `4d7068ec34d9` | Enhancement Bundle | 589 | — | In progress | — |
-| `5aceef4e86ba` | FHIR Connector | 590 | — | In progress | — |
-| `0d35ad441457` | Interoperability Connector Suite | 592 | — | In progress | — |
-| `2adddd589355` | LDAP Authorization | 594 | — | In progress | — |
-| `968b1ad9d9ed` | Message Generator | 595 | — | In progress | — |
-| `5711b375af90` | Multi-Factor Authentication | 596 | — | In progress | — |
-| `ced80a6f5489` | Serial Connector | 597 | — | In progress | — |
-| `45bddecf8523` | SSL Manager | 598 | — | In progress | — |
-| `6b42a915721a` | Role-Based Access Control | 599 | — | In progress | — |
-| `ccce3ca312f3` | NextGen Results CDR Connector | 600 | — | In progress | — |
-| `38b645cc5b7b` | Training | 602 | — | In progress | — |
-| `c1c2e605a9ae` | Cures Certification | 603 | — | In progress | — |
-| `8117ba92ed20` | Summary | 604 | — | In progress | — |
-| `94c7b0366be0` | §170.315(b)(10) Electronic Health Information (EHI) Export | 605 | — | In progress | — |
-| `fa0bb554c046` | Required Extensions: | 605 | — | In progress | — |
-| `923f471a5bdf` | Features that Support the Certification | 605 | — | In progress | — |
-| `fd06eab9ce92` | Required Actions | 606 | — | In progress | — |
-| `9ff3f6fa99d9` | Single Patient Export | 606 | — | In progress | — |
-| `2f3a0d7c63b5` | Multi-Patient Export | 606 | — | In progress | — |
-| `c5de3c63318a` | Viewing Exported Attachments | 606 | — | In progress | — |
-| `865840ed47b0` | §170.315(d)(1) Authentication, Access Control, Authorization | 607 | — | In progress | — |
-| `2fee2b113006` | Required Extensions | 607 | — | In progress | — |
-| `44e72512ab64` | Features that Support the Certification | 607 | — | In progress | — |
-| `8db0a7c43270` | Required Actions | 607 | — | In progress | — |
-| `5ad5b9956070` | §170.315(d)(2) Auditable Events and Tamper-Resistance, §170.315(d)(3) Audit Report(s), and §170.315(d)(10) Auditing Actions on Health Information | 607 | — | In progress | — |
-| `39ee26d5031b` | Required Extensions | 608 | — | In progress | — |
-| `231eb3985709` | Features that Support the Certification | 608 | — | In progress | — |
-| `2c057f56be50` | Required Actions | 609 | — | In progress | — |
-| `9e2900e11e26` | §170.315(d)(5) Automatic Access Time-out | 609 | — | In progress | — |
-| `e7809839e541` | Required Extensions | 609 | — | In progress | — |
-| `21450768fd6a` | Features that Support the Certification | 609 | — | In progress | — |
-| `2c057f56be50` | Required Actions | 609 | — | In progress | — |
-| `ba3aa6ccc73f` | §170.315(d)(6) Emergency Access | 609 | — | In progress | — |
-| `8e206c9f802c` | Required Extensions | 610 | — | In progress | — |
-| `95b4e01c9e26` | Features that Support the Certification | 610 | — | In progress | — |
-| `290159c8194e` | Required Actions | 610 | — | In progress | — |
-| `1d51124eac25` | §170.315(d)(7) End-User Device Encryption | 616 | — | In progress | — |
-| `e15e39991af5` | Required Extensions | 616 | — | In progress | — |
-| `efc2de89d9ef` | Features that Support the Certification | 616 | — | In progress | — |
-| `88a2feb6de9b` | Required Actions | 616 | — | In progress | — |
-| `b94db87ac8ae` | §170.315(d)(8) Integrity | 616 | — | In progress | — |
-| `e15e39991af5` | Required Extensions | 616 | — | In progress | — |
-| `efc2de89d9ef` | Features that Support the Certification | 616 | — | In progress | — |
-| `e6ad57dc1169` | Required Actions | 617 | — | In progress | — |
-| `afb899319a24` | §170.315(d)(9) Trusted Connection | 617 | — | In progress | — |
-| `d871138dbe01` | Required Extensions | 617 | — | In progress | — |
-| `dc33e7401238` | Features that Support the Certification | 617 | — | In progress | — |
-| `e6ad57dc1169` | Required Actions | 617 | — | In progress | — |
-| `84a8ab57ffa2` | §170.315(d)(12) Encrypt Authentication Credentials | 617 | — | In progress | — |
-| `659b4f586fdc` | Required Extensions | 618 | — | In progress | — |
-| `418d1b69f183` | Features that Support the Certification | 618 | — | In progress | — |
-| `7b0197c613b2` | Required Actions | 618 | — | In progress | — |
-| `249db375a76d` | §170.315(d)(13) Multi-Factor Authentication | 618 | — | In progress | — |
-| `659b4f586fdc` | Required Extensions | 618 | — | In progress | — |
-| `418d1b69f183` | Features that Support the Certification | 618 | — | In progress | — |
-| `7b0197c613b2` | Required Actions | 618 | — | In progress | — |
-| `ad5275427813` | §170.315(g)(4) Quality Management System | 619 | — | In progress | — |
-| `0985d957e195` | §170.315(g)(5) Accessibility-Centered Design | 619 | — | In progress | — |
+| `799a49bda76d` | Commercial Support/Extensions | 582 | N/A | N/A | Commercial support/extensions marketing; not SmartConnect core backlog |
+| `8c24dedf8572` | Advanced Alerting | 583 | N/A | N/A | No MC Advanced Alerting; use platform metrics/alerting (scope-vs-mirth.md) |
+| `7453863f9f44` | Advanced Clustering | 584 | N/A | N/A | MC cluster control plane; scaling/HA is Kubernetes / host concern (scope-vs-mirth.md) |
+| `d19f2efda9df` | ASTM E1381 Transmission Mode | 585 | N/A | N/A | ASTM E1381 framing not in core; use TCP listener with custom delimiter or host adapter |
+| `8bdffc727247` | ASTM E1394 Data Type | 586 | N/A | N/A | ASTM E1394 datatype plugin not in core; use raw TCP or custom transform |
+| `c7ca9d757744` | Channel History | 587 | N/A | N/A | No Administrator channel history view; ledger + audit APIs (scope-vs-mirth.md) |
+| `a1cb41039be9` | Cures Certification Support | 588 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `94c3be236d8a` | Email Reader | 588 | N/A | N/A | No Email Reader; commercial MC extension |
+| `4d7068ec34d9` | Enhancement Bundle | 589 | N/A | N/A | MC Enhancement Bundle; not applicable to SmartConnect core distribution |
+| `5aceef4e86ba` | FHIR Connector | 590 | N/A | N/A | No FHIR connector in core; use HTTP + FHIR library in host |
+| `0d35ad441457` | Interoperability Connector Suite | 592 | N/A | N/A | Vendor interoperability bundle; explicit HTTP/TCP/DB adapters in core instead |
+| `2adddd589355` | LDAP Authorization | 594 | N/A | N/A | LDAP authorization: use platform directory integration |
+| `968b1ad9d9ed` | Message Generator | 595 | N/A | N/A | No MC Message Generator connector in core |
+| `5711b375af90` | Multi-Factor Authentication | 596 | N/A | N/A | MFA: delegated to platform IdP / ASP.NET Core auth |
+| `ced80a6f5489` | Serial Connector | 597 | N/A | N/A | No serial connector in core |
+| `45bddecf8523` | SSL Manager | 598 | N/A | N/A | SSL/TLS: configure at reverse proxy or Kestrel; no MC SSL Manager UI |
+| `6b42a915721a` | Role-Based Access Control | 599 | N/A | N/A | MC commercial RBAC extension; use platform IdP + optional JWT (ManagementSecurityExtensions.cs; scope-vs-mirth.md) |
+| `ccce3ca312f3` | NextGen Results CDR Connector | 600 | N/A | N/A | Vendor NextGen Results CDR connector; not in core |
+| `38b645cc5b7b` | Training | 602 | N/A | N/A | Training / commercial marketing prose; not SmartConnect implementation backlog |
+| `c1c2e605a9ae` | Cures Certification | 603 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `8117ba92ed20` | Summary | 604 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `94c7b0366be0` | §170.315(b)(10) Electronic Health Information (EHI) Export | 605 | N/A | N/A | EHI export certification: not implemented in SmartConnect; product-specific |
+| `fa0bb554c046` | Required Extensions: | 605 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `923f471a5bdf` | Features that Support the Certification | 605 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `fd06eab9ce92` | Required Actions | 606 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `9ff3f6fa99d9` | Single Patient Export | 606 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `2f3a0d7c63b5` | Multi-Patient Export | 606 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `c5de3c63318a` | Viewing Exported Attachments | 606 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `865840ed47b0` | §170.315(d)(1) Authentication, Access Control, Authorization | 607 | N/A | N/A | Authentication certification: use ASP.NET Core / platform IdP |
+| `2fee2b113006` | Required Extensions | 607 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `44e72512ab64` | Features that Support the Certification | 607 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `8db0a7c43270` | Required Actions | 607 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `5ad5b9956070` | §170.315(d)(2) Auditable Events and Tamper-Resistance, §170.315(d)(3) Audit Report(s), and §170.315(d)(10) Auditing Actions on Health Information | 607 | N/A | N/A | Audit event store (EfAuditEventStore) + APIs; not ONC tamper-evident bundle |
+| `39ee26d5031b` | Required Extensions | 608 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `231eb3985709` | Features that Support the Certification | 608 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `2c057f56be50` | Required Actions | 609 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `9e2900e11e26` | §170.315(d)(5) Automatic Access Time-out | 609 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `e7809839e541` | Required Extensions | 609 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `21450768fd6a` | Features that Support the Certification | 609 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `2c057f56be50` | Required Actions | 609 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `ba3aa6ccc73f` | §170.315(d)(6) Emergency Access | 609 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `8e206c9f802c` | Required Extensions | 610 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `95b4e01c9e26` | Features that Support the Certification | 610 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `290159c8194e` | Required Actions | 610 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `1d51124eac25` | §170.315(d)(7) End-User Device Encryption | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `e15e39991af5` | Required Extensions | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `efc2de89d9ef` | Features that Support the Certification | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `88a2feb6de9b` | Required Actions | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `b94db87ac8ae` | §170.315(d)(8) Integrity | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `e15e39991af5` | Required Extensions | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `efc2de89d9ef` | Features that Support the Certification | 616 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `e6ad57dc1169` | Required Actions | 617 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `afb899319a24` | §170.315(d)(9) Trusted Connection | 617 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `d871138dbe01` | Required Extensions | 617 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `dc33e7401238` | Features that Support the Certification | 617 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `e6ad57dc1169` | Required Actions | 617 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `84a8ab57ffa2` | §170.315(d)(12) Encrypt Authentication Credentials | 617 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `659b4f586fdc` | Required Extensions | 618 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `418d1b69f183` | Features that Support the Certification | 618 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `7b0197c613b2` | Required Actions | 618 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `249db375a76d` | §170.315(d)(13) Multi-Factor Authentication | 618 | N/A | N/A | ONC MFA criterion: host product responsibility |
+| `659b4f586fdc` | Required Extensions | 618 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `418d1b69f183` | Features that Support the Certification | 618 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `7b0197c613b2` | Required Actions | 618 | N/A | N/A | ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md) |
+| `ad5275427813` | §170.315(g)(4) Quality Management System | 619 | N/A | N/A | ONC QMS: out of scope for SmartConnect core; host application lifecycle |
+| `0985d957e195` | §170.315(g)(5) Accessibility-Centered Design | 619 | N/A | N/A | Accessibility-centered design: delegated to host UI standards |

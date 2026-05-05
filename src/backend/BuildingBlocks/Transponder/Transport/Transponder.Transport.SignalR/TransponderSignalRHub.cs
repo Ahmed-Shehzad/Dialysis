@@ -38,7 +38,7 @@ public sealed class TransponderSignalRHub(ILogger<TransponderSignalRHub> logger,
             Context.ConnectionId);
     }
 
-    public override async Task OnConnectedAsync()
+    public async override Task OnConnectedAsync()
     {
         if (services.GetService<ITransponderSignalRAuthorizer>() is { } authorizer)
             await authorizer.AuthorizeSubscribeAsync(Context, Context.ConnectionAborted).ConfigureAwait(false);

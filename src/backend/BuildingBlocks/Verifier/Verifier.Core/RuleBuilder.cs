@@ -403,7 +403,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
         return list.Count == 0 ? Array.Empty<ValidationFailure>() : list;
     }
 
-    private static async ValueTask<IReadOnlyList<ValidationFailure>> CollectAsync(
+    private async static ValueTask<IReadOnlyList<ValidationFailure>> CollectAsync(
         IAsyncPropertyValidator<T, TProperty> validator,
         ValidationContext<T> context,
         TProperty value,

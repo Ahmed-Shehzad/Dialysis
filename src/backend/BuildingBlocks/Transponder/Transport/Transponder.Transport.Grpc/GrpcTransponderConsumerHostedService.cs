@@ -12,7 +12,7 @@ public sealed class GrpcTransponderConsumerHostedService(
     ITransponderBus bus,
     ILogger<GrpcTransponderConsumerHostedService> logger) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {

@@ -18,7 +18,7 @@ public sealed class MllpInboundHostedService(
     IServiceScopeFactory scopeFactory,
     ILogger<MllpInboundHostedService> logger) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var opt = options.CurrentValue;
         if (opt.DefaultFlowId == Guid.Empty)

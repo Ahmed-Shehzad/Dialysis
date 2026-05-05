@@ -12,4 +12,13 @@ public sealed class IntegrationFlow
     public FlowRuntimeState RuntimeState { get; init; }
 
     public required IntegrationFlowPipelineDefinition Pipeline { get; init; }
+
+    /// <summary>User-defined labels for categorization and filtering.</summary>
+    public List<string> Tags { get; init; } = [];
+
+    /// <summary>Optional group assignment for organizational grouping.</summary>
+    public Guid? GroupId { get; init; }
+
+    /// <summary>Free-text description of the flow's purpose.</summary>
+    public string? Description { get; init; }
 }

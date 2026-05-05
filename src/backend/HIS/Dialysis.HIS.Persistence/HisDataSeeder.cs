@@ -7,7 +7,7 @@ namespace Dialysis.HIS.Persistence;
 
 internal static class HisDataSeeder
 {
-    public static async Task EnsureSchedulingResourcesAsync(HisDbContext db, ILogger logger, CancellationToken cancellationToken)
+    public async static Task EnsureSchedulingResourcesAsync(HisDbContext db, ILogger logger, CancellationToken cancellationToken)
     {
         if (await db.SchedulingResources.AnyAsync(cancellationToken).ConfigureAwait(false))
             return;
@@ -39,7 +39,7 @@ internal static class HisDataSeeder
         logger.LogInformation("Seeded default {Count} scheduling resources.", 3);
     }
 
-    public static async Task EnsureRaCapabilitySamplesAsync(HisDbContext db, ILogger logger, CancellationToken cancellationToken)
+    public async static Task EnsureRaCapabilitySamplesAsync(HisDbContext db, ILogger logger, CancellationToken cancellationToken)
     {
         if (await db.RaOrgCommunications.AnyAsync(cancellationToken).ConfigureAwait(false))
             return;

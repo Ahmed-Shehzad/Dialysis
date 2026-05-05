@@ -12,7 +12,7 @@ public sealed class SignalRTransponderConsumerHostedService(
     ITransponderBus bus,
     ILogger<SignalRTransponderConsumerHostedService> logger) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {

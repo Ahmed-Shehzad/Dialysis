@@ -8,12 +8,15 @@ public sealed class CapturingOutboundAdapter : IOutboundAdapter
 
     public List<(int Ordinal, ReadOnlyMemory<byte> Payload)> Sent { get; } = [];
 
+    /// <summary>When non-null, returned as <see cref="OutboundSendResult.ResponsePayload"/> on success.</summary>
+    public byte[]? ResponseBytes { get; set; }
+
     public Task<OutboundSendResult> SendAsync(
         IntegrationMessage message,
         int outboundRouteOrdinal,
         CancellationToken cancellationToken)
     {
         Sent.Add((outboundRouteOrdinal, message.Payload));
-        return Task.FromResult(new OutboundSendResult(true, null));
+        return Task.FromResult(new OutboundSendResult(true, null, ResponseBytes));
     }
 }

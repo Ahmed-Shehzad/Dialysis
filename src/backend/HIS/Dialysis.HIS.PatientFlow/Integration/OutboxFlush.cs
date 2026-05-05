@@ -6,7 +6,7 @@ namespace Dialysis.HIS.PatientFlow.Integration;
 
 internal static class OutboxFlush
 {
-    public static async Task ForAggregateAsync<TId>(
+    public async static Task ForAggregateAsync<TId>(
         AggregateRoot<TId> aggregate,
         ITransponderOutbox outbox,
         CancellationToken cancellationToken)

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.SmartConnect.Inbound.DatabaseReader</RootNamespace>
+    <AssemblyName>Dialysis.SmartConnect.Inbound.DatabaseReader</AssemblyName>
+    <Description>Database polling source connector for SmartConnect. Uses parameterized SELECT with watermark-based tracking.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
+    <ProjectReference Include="../Dialysis.SmartConnect.Inbound.Hosting/Dialysis.SmartConnect.Inbound.Hosting.csproj" />
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Dialysis.SmartConnect.Tests" />
+  </ItemGroup>
+
+</Project>

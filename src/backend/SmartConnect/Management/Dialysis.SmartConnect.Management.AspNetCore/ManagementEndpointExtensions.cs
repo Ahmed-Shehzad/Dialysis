@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Scripts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -105,8 +107,19 @@ public static class ManagementEndpointExtensions
 
         admin.MapPost(
                 "/flows/{flowId:guid}/start",
-                async (Guid flowId, IIntegrationFlowRepository repo, CancellationToken ct) =>
+                async (Guid flowId, IIntegrationFlowRepository repo, ChannelScriptExecutor scripts, CancellationToken ct) =>
                 {
+                    var flow = await repo.GetByIdAsync(flowId, ct).ConfigureAwait(false);
+                    if (flow is null)
+                    {
+                        return Results.NotFound();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.DeployScript))
+                    {
+                        scripts.RunLifecycleScript(flow.Pipeline.Scripts.DeployScript!, flowId);
+                    }
+
                     var ok = await repo.SetRuntimeStateAsync(flowId, FlowRuntimeState.Started, ct)
                         .ConfigureAwait(false);
                     return ok ? Results.NoContent() : Results.NotFound();
@@ -115,8 +128,19 @@ public static class ManagementEndpointExtensions
 
         admin.MapPost(
                 "/flows/{flowId:guid}/stop",
-                async (Guid flowId, IIntegrationFlowRepository repo, CancellationToken ct) =>
+                async (Guid flowId, IIntegrationFlowRepository repo, ChannelScriptExecutor scripts, CancellationToken ct) =>
                 {
+                    var flow = await repo.GetByIdAsync(flowId, ct).ConfigureAwait(false);
+                    if (flow is null)
+                    {
+                        return Results.NotFound();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.UndeployScript))
+                    {
+                        scripts.RunLifecycleScript(flow.Pipeline.Scripts.UndeployScript!, flowId);
+                    }
+
                     var ok = await repo.SetRuntimeStateAsync(flowId, FlowRuntimeState.Stopped, ct)
                         .ConfigureAwait(false);
                     return ok ? Results.NoContent() : Results.NotFound();
@@ -194,6 +218,92 @@ public static class ManagementEndpointExtensions
                     return Results.Text(json, "application/json");
                 })
             .WithName("SmartConnect_ExportFlow");
+
+        // --- Message Browser & Statistics ---
+
+        admin.MapGet(
+                "/messages/{ledgerEntryId:guid}",
+                async (Guid ledgerEntryId, IMessageLedgerQuery ledgerQuery, CancellationToken ct) =>
+                {
+                    var entry = await ledgerQuery.GetByIdAsync(ledgerEntryId, ct).ConfigureAwait(false);
+                    return entry is null ? Results.NotFound() : Results.Ok(entry);
+                })
+            .WithName("SmartConnect_GetMessage");
+
+        admin.MapGet(
+                "/messages",
+                async (
+                    IMessageLedgerQuery ledgerQuery,
+                    Guid? flowId,
+                    string? correlationIdPrefix,
+                    DateTimeOffset? from,
+                    DateTimeOffset? to,
+                    int? status,
+                    int? skip,
+                    int? take,
+                    CancellationToken ct) =>
+                {
+                    MessageLedgerStatus? st = status is >= 0 ? (MessageLedgerStatus)status.Value : null;
+                    var criteria = new MessageLedgerQueryCriteria
+                    {
+                        FlowId = flowId,
+                        CorrelationIdPrefix = correlationIdPrefix,
+                        CreatedFromUtc = from,
+                        CreatedToUtc = to,
+                        Status = st,
+                        Skip = skip ?? 0,
+                        Take = take ?? 50,
+                    };
+                    var (items, total) = await ledgerQuery.QueryAsync(criteria, ct).ConfigureAwait(false);
+                    return Results.Ok(new { items, totalCount = total });
+                })
+            .WithName("SmartConnect_ListMessages");
+
+        admin.MapGet(
+                "/flows/{flowId:guid}/statistics",
+                async (Guid flowId, IMessageLedgerStatistics stats, CancellationToken ct) =>
+                {
+                    var result = await stats.GetFlowStatisticsAsync(flowId, ct).ConfigureAwait(false);
+                    return Results.Ok(result);
+                })
+            .WithName("SmartConnect_FlowStatistics");
+
+        admin.MapPost(
+                "/messages/{ledgerEntryId:guid}/reprocess",
+                async (
+                    Guid ledgerEntryId,
+                    IMessageLedgerQuery ledgerQuery,
+                    IFlowRuntime runtime,
+                    CancellationToken ct) =>
+                {
+                    var entry = await ledgerQuery.GetByIdAsync(ledgerEntryId, ct).ConfigureAwait(false);
+
+                    if (entry is null)
+                    {
+                        return Results.NotFound(new { error = "Ledger entry not found." });
+                    }
+
+                    if (entry.PayloadSnapshot is null || entry.PayloadSnapshot.Length == 0)
+                    {
+                        return Results.BadRequest(new { error = "Ledger entry has no payload snapshot to reprocess." });
+                    }
+
+                    var message = new IntegrationMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        FlowId = entry.FlowId,
+                        CorrelationId = entry.CorrelationId,
+                        Payload = entry.PayloadSnapshot,
+                        PayloadFormat = PayloadFormat.Utf8Text,
+                        ReceivedAtUtc = DateTimeOffset.UtcNow,
+                    };
+
+                    var result = await runtime.DispatchAsync(message, ct).ConfigureAwait(false);
+                    return result.Succeeded
+                        ? Results.Ok(new { reprocessedMessageId = message.Id })
+                        : Results.UnprocessableEntity(new { error = result.Error });
+                })
+            .WithName("SmartConnect_ReprocessMessage");
 
         return endpoints;
     }

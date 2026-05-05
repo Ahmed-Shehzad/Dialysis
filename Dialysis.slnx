@@ -5,6 +5,7 @@
     <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Abstractions/Verifier.Abstractions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />
   </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/" />
   <Folder Name="/src/backend/BuildingBlocks/Intercessor/">
     <Project Path="src/backend/BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Intercessor/Intercessor.Core/Intercessor.Core.csproj" />
@@ -33,25 +34,9 @@
     <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Quartz/Transponder.Scheduling.Quartz.csproj" />
     <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.TickerQ/Transponder.Scheduling.TickerQ.csproj" />
   </Folder>
-  <Folder Name="/src/backend/Core/">
-    <Project Path="src/backend/Core/Dialysis.Core.Abstraction/Dialysis.Core.Abstraction.csproj" />
-    <Project Path="src/backend/Core/Dialysis.Core/Dialysis.Core.csproj" />
-  </Folder>
-  <Folder Name="/src/backend/Core/Persistence/">
-    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.Abstractions/Dialysis.Core.Persistence.Abstractions.csproj" />
-    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.InMemory/Dialysis.Core.Persistence.InMemory.csproj" />
-    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.Postgresql/Dialysis.Core.Persistence.Postgresql.csproj" />
-    <Project Path="src/backend/Core/Persistence/Dialysis.Core.Persistence.SqlServer/Dialysis.Core.Persistence.SqlServer.csproj" />
-  </Folder>
   <Folder Name="/src/backend/CQRS/">
     <Project Path="src/backend/CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <Project Path="src/backend/CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
-  </Folder>
-  <Folder Name="/src/backend/CQRS/Persistence/">
-    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.Abstractions/Dialysis.CQRS.Core.Persistence.Abstractions.csproj" />
-    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.InMemory/Dialysis.CQRS.Core.Persistence.InMemory.csproj" />
-    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.Postgresql/Dialysis.CQRS.Core.Persistence.Postgresql.csproj" />
-    <Project Path="src/backend/CQRS/Persistence/Dialysis.CQRS.Core.Persistence.SqlServer/Dialysis.CQRS.Core.Persistence.SqlServer.csproj" />
   </Folder>
   <Folder Name="/src/backend/DomainDrivenDesign/">
     <Project Path="src/backend/DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
@@ -59,9 +44,6 @@
   </Folder>
   <Folder Name="/src/backend/DomainDrivenDesign/Persistence/">
     <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
-    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.InMemory/Dialysis.Domain.Driven.Design.Core.Persistence.InMemory.csproj" />
-    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Postgresql/Dialysis.Domain.Driven.Design.Core.Persistence.Postgresql.csproj" />
-    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.SqlServer/Dialysis.Domain.Driven.Design.Core.Persistence.SqlServer.csproj" />
   </Folder>
   <Folder Name="/src/backend/EHR/">
     <Project Path="src/backend/EHR/Dialysis.EHR.Core.Abstraction/Dialysis.EHR.Core.Abstraction.csproj" />
@@ -109,8 +91,11 @@
   <Folder Name="/src/backend/SmartConnect/Inbound/">
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/Dialysis.SmartConnect.Inbound.AspNetCore.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/Dialysis.SmartConnect.Inbound.DatabaseReader.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/Dialysis.SmartConnect.Inbound.FileReader.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/Dialysis.SmartConnect.Inbound.Hosting.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/Dialysis.SmartConnect.Inbound.Mllp.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/Dialysis.SmartConnect.Inbound.TcpListener.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Api/">
     <Project Path="src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
@@ -123,5 +108,8 @@
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Tests/">
     <Project Path="src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/Dialysis.SmartConnect.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/Management/">
+    <Project Path="src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
   </Folder>
 </Solution>

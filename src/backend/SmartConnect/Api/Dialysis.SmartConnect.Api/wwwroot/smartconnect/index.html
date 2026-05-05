@@ -5,18 +5,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SmartConnect operator</title>
     <style>
-        body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 48rem; }
-        a { color: #0b5; }
-        code { background: #f4f4f4; padding: 0.1rem 0.3rem; }
+        body { font-family: system-ui, sans-serif; margin: 1.5rem; max-width: 56rem; line-height: 1.45; }
+        a { color: #0a7; }
+        code { background: #f0f0f0; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.9em; }
+        table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; font-size: 0.9rem; }
+        th, td { border: 1px solid #ccc; padding: 0.35rem 0.5rem; text-align: left; }
+        th { background: #f7f7f7; }
+        .muted { color: #555; font-size: 0.9rem; }
+        .err { color: #a00; }
+        section { margin-top: 1.75rem; }
+        h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
     </style>
 </head>
 <body>
 <h1>SmartConnect</h1>
-<p>Operator shell: use the management and ledger JSON APIs (add a SPA or Blazor host if you need a full visual designer).</p>
-<ul>
-    <li><a href="/smartconnect/v1/admin/flows"><code>GET /smartconnect/v1/admin/flows</code></a> — integration flows</li>
-    <li><a href="/smartconnect/v1/ledger/entries"><code>GET /smartconnect/v1/ledger/entries</code></a> — recent ledger rows</li>
-    <li><a href="/health"><code>GET /health</code></a> — liveness</li>
-</ul>
+<p class="muted">Thin operator shell over JSON APIs. Product scope vs. the Mirth user guide is documented in repository file <code>docs/smartconnect/scope-vs-mirth.md</code>.</p>
+
+<section>
+    <h2>Flows</h2>
+    <p><a href="/smartconnect/v1/admin/flows"><code>GET /smartconnect/v1/admin/flows</code></a></p>
+    <div id="flows-status" class="muted">Loading…</div>
+    <table id="flows-table" hidden>
+        <thead><tr><th>Name</th><th>Id</th><th>State</th><th>Statistics</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Message browser & ledger</h2>
+    <p class="muted">Query parameters: <code>flowId</code>, <code>correlationIdPrefix</code>, <code>from</code>, <code>to</code>, <code>status</code> (numeric <code>MessageLedgerStatus</code>), <code>take</code>, <code>skip</code>.</p>
+    <p>
+        <label>flowId <input id="mb-flow" type="text" size="40" placeholder="optional guid" /></label>
+        <label>status <input id="mb-status" type="number" size="4" placeholder="e.g. 0" /></label>
+        <button type="button" id="mb-load">Load messages</button>
+    </p>
+    <div id="mb-err" class="err"></div>
+    <table id="mb-table" hidden>
+        <thead><tr><th>Created</th><th>Status</th><th>Correlation</th><th>Detail</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+    </table>
+    <ul class="muted">
+        <li><a href="/smartconnect/v1/admin/messages?take=20"><code>GET /smartconnect/v1/admin/messages</code></a></li>
+        <li><a href="/smartconnect/v1/ledger/entries?take=20"><code>GET /smartconnect/v1/ledger/entries</code></a></li>
+    </ul>
+</section>
+
+<section>
+    <h2>Configuration maps & audit</h2>
+    <ul>
+        <li><a href="/smartconnect/v1/admin/config-map/Global"><code>GET /smartconnect/v1/admin/config-map/Global</code></a> — global map (scopes: <code>Channel</code>, <code>GlobalChannel</code>, <code>Global</code>, <code>Configuration</code>)</li>
+        <li><a href="/smartconnect/v1/admin/events?take=20"><code>GET /smartconnect/v1/admin/events</code></a> — audit events</li>
+        <li><a href="/smartconnect/v1/admin/events/export?take=500"><code>GET /smartconnect/v1/admin/events/export</code></a> — JSON export (capped)</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Data pruner</h2>
+    <p><a href="/smartconnect/v1/admin/pruner/options"><code>GET /smartconnect/v1/admin/pruner/options</code></a> — configured interval and retention</p>
+    <pre id="pruner-out" class="muted"></pre>
+</section>
+
+<section>
+    <h2>Health</h2>
+    <p><a href="/health"><code>GET /health</code></a></p>
+</section>
+
+<script>
+(async function () {
+    const st = document.getElementById('flows-status');
+    const tbl = document.getElementById('flows-table');
+    const tbody = tbl.querySelector('tbody');
+    try {
+        const res = await fetch('/smartconnect/v1/admin/flows');
+        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+        const flows = await res.json();
+        if (!Array.isArray(flows) || flows.length === 0) {
+            st.textContent = 'No flows yet. POST a flow to /smartconnect/v1/admin/flows or use import.';
+            return;
+        }
+        st.remove();
+        tbl.hidden = false;
+        for (const f of flows) {
+            const tr = document.createElement('tr');
+            const statLink = '<a href="/smartconnect/v1/admin/flows/' + f.id + '/statistics">stats</a>';
+            tr.innerHTML = '<td>' + (f.name || '—') + '</td><td><code>' + f.id + '</code></td><td>' + (f.runtimeState ?? '—') + '</td><td>' + statLink + '</td>';
+            tbody.appendChild(tr);
+        }
+    } catch (e) {
+        st.textContent = '';
+        st.className = 'err';
+        st.appendChild(document.createTextNode('Could not load flows: ' + e.message));
+    }
+
+    try {
+        const pr = await fetch('/smartconnect/v1/admin/pruner/options');
+        const el = document.getElementById('pruner-out');
+        if (pr.ok) el.textContent = JSON.stringify(await pr.json(), null, 2);
+        else el.textContent = 'Pruner options unavailable (' + pr.status + ').';
+    } catch (e) {
+        document.getElementById('pruner-out').textContent = String(e);
+    }
+
+    document.getElementById('mb-load').addEventListener('click', async function () {
+        const err = document.getElementById('mb-err');
+        const tbl = document.getElementById('mb-table');
+        const tbody = tbl.querySelector('tbody');
+        err.textContent = '';
+        tbody.innerHTML = '';
+        const flow = document.getElementById('mb-flow').value.trim();
+        const st = document.getElementById('mb-status').value.trim();
+        let url = '/smartconnect/v1/admin/messages?take=30';
+        if (flow) url += '&flowId=' + encodeURIComponent(flow);
+        if (st !== '') url += '&status=' + encodeURIComponent(st);
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+            const data = await res.json();
+            const items = data.items || [];
+            if (items.length === 0) {
+                err.textContent = 'No messages match.';
+                tbl.hidden = true;
+                return;
+            }
+            tbl.hidden = false;
+            for (const m of items) {
+                const tr = document.createElement('tr');
+                const id = m.id;
+                const detail = '<a href="/smartconnect/v1/admin/messages/' + id + '" target="_blank" rel="noopener">raw</a>';
+                const reprocess = '<button type="button" class="mb-repro" data-id="' + id + '">Reprocess</button>';
+                tr.innerHTML = '<td>' + (m.createdAtUtc || '—') + '</td><td>' + (m.status ?? '—') + '</td><td><code>' + (m.correlationId || '') + '</code></td><td>' + (m.detail || '—') + '</td><td>' + detail + ' ' + reprocess + '</td>';
+                tbody.appendChild(tr);
+            }
+            tbody.querySelectorAll('.mb-repro').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                    const rid = btn.getAttribute('data-id');
+                    const r = await fetch('/smartconnect/v1/admin/messages/' + rid + '/reprocess', { method: 'POST' });
+                    alert(r.ok ? 'Reprocess started.' : 'Reprocess failed: ' + r.status);
+                });
+            });
+        } catch (e) {
+            err.textContent = String(e.message || e);
+            tbl.hidden = true;
+        }
+    });
+})();
+</script>
 </body>
 </html>

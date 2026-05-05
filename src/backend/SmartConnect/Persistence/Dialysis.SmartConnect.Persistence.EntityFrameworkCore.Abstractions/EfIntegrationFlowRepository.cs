@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.Persistence;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
@@ -34,6 +35,9 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
                 Name = flow.Name,
                 RuntimeState = (int)flow.RuntimeState,
                 PipelineJson = PipelineJsonSerializer.Serialize(flow.Pipeline),
+                TagsJson = flow.Tags.Count > 0 ? JsonSerializer.Serialize(flow.Tags) : null,
+                GroupId = flow.GroupId,
+                Description = flow.Description,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -50,6 +54,9 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
         row.Name = flow.Name;
         row.RuntimeState = (int)flow.RuntimeState;
         row.PipelineJson = PipelineJsonSerializer.Serialize(flow.Pipeline);
+        row.TagsJson = flow.Tags.Count > 0 ? JsonSerializer.Serialize(flow.Tags) : null;
+        row.GroupId = flow.GroupId;
+        row.Description = flow.Description;
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
@@ -88,12 +95,18 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
     private static IntegrationFlow Map(IntegrationFlowEntity row)
     {
         var pipeline = PipelineJsonSerializer.Deserialize(row.PipelineJson);
+        var tags = string.IsNullOrWhiteSpace(row.TagsJson)
+            ? []
+            : JsonSerializer.Deserialize<List<string>>(row.TagsJson) ?? [];
         return new IntegrationFlow
         {
             Id = row.Id,
             Name = row.Name,
             RuntimeState = (FlowRuntimeState)row.RuntimeState,
             Pipeline = pipeline,
+            Tags = tags,
+            GroupId = row.GroupId,
+            Description = row.Description,
         };
     }
 }

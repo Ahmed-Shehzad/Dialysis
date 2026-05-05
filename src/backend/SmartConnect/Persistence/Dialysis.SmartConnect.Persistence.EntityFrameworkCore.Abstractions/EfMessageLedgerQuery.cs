@@ -32,6 +32,12 @@ public sealed class EfMessageLedgerQuery(SmartConnectDbContext db) : IMessageLed
             q = q.Where(e => e.CreatedAtUtc <= to);
         }
 
+        if (criteria.Status is { } st)
+        {
+            var si = (int)st;
+            q = q.Where(e => e.Status == si);
+        }
+
         var total = await q.CountAsync(cancellationToken).ConfigureAwait(false);
         var take = Math.Clamp(criteria.Take, 1, 500);
         var skip = Math.Max(0, criteria.Skip);
@@ -44,6 +50,14 @@ public sealed class EfMessageLedgerQuery(SmartConnectDbContext db) : IMessageLed
 
         var items = rows.Select(Map).ToList();
         return (items, total);
+    }
+
+    public async Task<MessageLedgerEntry?> GetByIdAsync(Guid ledgerEntryId, CancellationToken cancellationToken)
+    {
+        var e = await db.MessageLedgerEntries.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == ledgerEntryId, cancellationToken)
+            .ConfigureAwait(false);
+        return e is null ? null : Map(e);
     }
 
     private static MessageLedgerEntry Map(MessageLedgerEntryEntity e) =>

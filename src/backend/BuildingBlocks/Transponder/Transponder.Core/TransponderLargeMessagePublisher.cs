@@ -7,7 +7,7 @@ namespace Dialysis.BuildingBlocks.Transponder;
 /// </summary>
 public static class TransponderLargeMessagePublisher
 {
-    public static async Task PublishAsync<TMessage>(
+    public async static Task PublishAsync<TMessage>(
         ITransponderBus bus,
         IMessageSerializer serializer,
         TMessage message,

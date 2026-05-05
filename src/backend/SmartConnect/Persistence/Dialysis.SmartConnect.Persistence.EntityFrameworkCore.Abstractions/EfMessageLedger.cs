@@ -24,4 +24,15 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    public async Task<int> PruneAsync(DateTimeOffset olderThan, Guid? flowId = null, CancellationToken cancellationToken = default)
+    {
+        var query = db.MessageLedgerEntries.Where(e => e.CreatedAtUtc < olderThan);
+        if (flowId.HasValue)
+        {
+            query = query.Where(e => e.FlowId == flowId.Value);
+        }
+
+        return await query.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

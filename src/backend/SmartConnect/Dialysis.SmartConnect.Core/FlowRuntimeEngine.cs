@@ -1,4 +1,5 @@
 using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Scripts;
 
 namespace Dialysis.SmartConnect;
 
@@ -9,7 +10,8 @@ public sealed class FlowRuntimeEngine(
     IIntegrationFlowRepository flows,
     IMessageLedger ledger,
     IFlowPluginRegistry plugins,
-    TimeProvider time) : IFlowRuntime
+    TimeProvider time,
+    ChannelScriptExecutor? scriptExecutor = null) : IFlowRuntime
 {
     public async Task<FlowDispatchResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
@@ -35,7 +37,25 @@ public sealed class FlowRuntimeEngine(
                     : "Integration flow is not started.");
         }
 
-        var filterOutcome = await RunRouteFiltersAsync(flow, message, cancellationToken).ConfigureAwait(false);
+        // PreProcessor script
+        var workingMessage = message;
+        if (scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PreProcessorScript))
+        {
+            var preResult = await scriptExecutor.RunPreProcessorAsync(
+                flow.Pipeline.Scripts!.PreProcessorScript!, workingMessage, cancellationToken).ConfigureAwait(false);
+            if (preResult.Dropped)
+            {
+                await AppendLedgerAsync(workingMessage, MessageLedgerStatus.RouteFilterDropped, null, "PreProcessor", null, cancellationToken).ConfigureAwait(false);
+                return new FlowDispatchResult { Succeeded = true, Error = null, OutboundRoutesAttempted = [] };
+            }
+
+            if (preResult.NewPayload is not null)
+            {
+                workingMessage = workingMessage.CloneWithPayload(preResult.NewPayload);
+            }
+        }
+
+        var filterOutcome = await RunRouteFiltersAsync(flow, workingMessage, cancellationToken).ConfigureAwait(false);
         if (filterOutcome is not null)
         {
             return filterOutcome;
@@ -43,6 +63,8 @@ public sealed class FlowRuntimeEngine(
 
         var attempted = new List<int>();
         var anyOutboundFailed = false;
+        byte[]? responsePayload = null;
+        var sequential = flow.Pipeline.OutboundRoutesSequential;
         for (var i = 0; i < flow.Pipeline.OutboundRoutes.Count; i++)
         {
             var route = flow.Pipeline.OutboundRoutes[i];
@@ -52,26 +74,36 @@ public sealed class FlowRuntimeEngine(
             {
                 anyOutboundFailed = true;
                 await WriteOutboundLedgerAsync(
-                    message,
+                    workingMessage,
                     i,
                     MessageLedgerStatus.OutboundFailed,
                     $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.",
                     null,
                     cancellationToken).ConfigureAwait(false);
+                if (sequential)
+                {
+                    break;
+                }
+
                 continue;
             }
 
-            var transformed = await TryTransformForRouteAsync(message, route, cancellationToken).ConfigureAwait(false);
+            var transformed = await TryTransformForRouteAsync(workingMessage, route, cancellationToken).ConfigureAwait(false);
             if (transformed.ErrorDetail is not null)
             {
                 anyOutboundFailed = true;
                 await WriteOutboundLedgerAsync(
-                    message,
+                    workingMessage,
                     i,
                     MessageLedgerStatus.OutboundFailed,
                     transformed.ErrorDetail,
                     null,
                     cancellationToken).ConfigureAwait(false);
+                if (sequential)
+                {
+                    break;
+                }
+
                 continue;
             }
 
@@ -84,16 +116,17 @@ public sealed class FlowRuntimeEngine(
             var maxAttempts = route.MaxAttempts < 1 ? 1 : route.MaxAttempts;
             var sendSucceeded = false;
             string? sendError = null;
+            OutboundSendResult lastSendResult = default;
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                var send = await outbound.SendAsync(toSend, i, cancellationToken).ConfigureAwait(false);
-                if (send.Succeeded)
+                lastSendResult = await outbound.SendAsync(toSend, i, cancellationToken).ConfigureAwait(false);
+                if (lastSendResult.Succeeded)
                 {
                     sendSucceeded = true;
                     break;
                 }
 
-                sendError = send.ErrorDetail ?? "Outbound send failed.";
+                sendError = lastSendResult.ErrorDetail ?? "Outbound send failed.";
                 if (attempt < maxAttempts)
                 {
                     var delayMs = 100 * Math.Pow(2, attempt - 1);
@@ -105,38 +138,72 @@ public sealed class FlowRuntimeEngine(
             {
                 anyOutboundFailed = true;
                 await WriteOutboundLedgerAsync(
-                    message,
+                    workingMessage,
                     i,
                     MessageLedgerStatus.OutboundFailed,
                     sendError,
                     toSend.Payload.ToArray(),
                     cancellationToken).ConfigureAwait(false);
+                if (sequential)
+                {
+                    break;
+                }
             }
             else
             {
                 await WriteOutboundLedgerAsync(
-                    message,
+                    workingMessage,
                     i,
                     MessageLedgerStatus.OutboundSent,
                     null,
                     toSend.Payload.ToArray(),
                     cancellationToken).ConfigureAwait(false);
+
+                // Response transform: apply ResponseTransformStages if present
+                if (lastSendResult.ResponsePayload is { Length: > 0 } rawResp && route.ResponseTransformStages.Count > 0)
+                {
+                    var respMsg = workingMessage.CloneWithPayload(rawResp);
+                    foreach (var stage in route.ResponseTransformStages)
+                    {
+                        var transformer = plugins.TryResolveTransformStage(stage.Kind);
+                        if (transformer is null) continue;
+                        var tMsg = !string.IsNullOrWhiteSpace(stage.ParametersJson)
+                            ? respMsg.WithMetadata("smartconnect.transform.parameters", stage.ParametersJson!)
+                            : respMsg;
+                        respMsg = await transformer.TransformAsync(tMsg, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    responsePayload ??= respMsg.Payload.ToArray();
+                }
+                else if (lastSendResult.ResponsePayload is { Length: > 0 } directResp)
+                {
+                    responsePayload ??= directResp;
+                }
             }
         }
 
         await AppendLedgerAsync(
-            message,
+            workingMessage,
             MessageLedgerStatus.Completed,
             null,
             null,
             null,
             cancellationToken).ConfigureAwait(false);
 
+        // PostProcessor script
+        var overallSuccess = !anyOutboundFailed;
+        if (scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PostProcessorScript))
+        {
+            await scriptExecutor.RunPostProcessorAsync(
+                flow.Pipeline.Scripts!.PostProcessorScript!, workingMessage, overallSuccess, cancellationToken).ConfigureAwait(false);
+        }
+
         return new FlowDispatchResult
         {
-            Succeeded = !anyOutboundFailed,
+            Succeeded = overallSuccess,
             Error = anyOutboundFailed ? "One or more outbound routes failed." : null,
             OutboundRoutesAttempted = attempted,
+            ResponsePayload = responsePayload,
         };
     }
 
@@ -153,7 +220,11 @@ public sealed class FlowRuntimeEngine(
                 return Failure($"Route filter kind '{slot.Kind}' is not registered.");
             }
 
-            var result = await filter.EvaluateAsync(message, cancellationToken).ConfigureAwait(false);
+            var messageForFilter = string.IsNullOrWhiteSpace(slot.ParametersJson)
+                ? message
+                : message.WithMetadata("smartconnect.filter.parameters", slot.ParametersJson!);
+
+            var result = await filter.EvaluateAsync(messageForFilter, cancellationToken).ConfigureAwait(false);
             if (result.Disposition != RouteFilterDisposition.Drop)
             {
                 continue;

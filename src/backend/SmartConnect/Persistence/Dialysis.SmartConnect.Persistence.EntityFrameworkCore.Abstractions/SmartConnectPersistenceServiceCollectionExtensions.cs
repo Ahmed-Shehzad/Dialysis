@@ -20,7 +20,10 @@ public static class SmartConnectPersistenceServiceCollectionExtensions
         services.TryAddScoped<IIntegrationFlowRepository, EfIntegrationFlowRepository>();
         services.TryAddScoped<IMessageLedger, EfMessageLedger>();
         services.TryAddScoped<IMessageLedgerQuery, EfMessageLedgerQuery>();
+        services.TryAddScoped<IMessageLedgerStatistics, EfMessageLedgerStatistics>();
         services.TryAddScoped<IUnitOfWork>(sp => sp.GetRequiredService<SmartConnectDbContext>());
+        services.TryAddScoped<IVariableMapStore, EfVariableMapStore>();
+        services.TryAddScoped<IAuditEventStore, EfAuditEventStore>();
         return services;
     }
 }

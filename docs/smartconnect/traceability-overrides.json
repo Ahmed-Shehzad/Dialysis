@@ -32,13 +32,13 @@
     },
     "a4c05bf787c0": {
       "mapping": "N/A",
-      "status": "In progress",
+      "status": "N/A",
       "evidence": "No MC Server Manager UI; operations via K8s + management API"
     },
     "664b9143f91d": {
-      "mapping": "FlowRuntimeEngine dispatch + outbound slots",
-      "status": "In progress",
-      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+      "mapping": "FlowRuntimeEngine: route filters, parallel or sequential outbound routes, response payload + response transforms",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/FlowRuntimeEngineTests.cs"
     },
     "001a54fbd3e2": {
       "mapping": "Inbound HTTP webhook routes",
@@ -70,20 +70,55 @@
       "status": "Done",
       "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptTransformStageTests.cs"
     },
+    "5d8d7df14348": {
+      "mapping": "XSLT transform stage (System.Xml.Xsl)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/XsltTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/XsltTransformStageTests.cs"
+    },
+    "2a345bb9af56": {
+      "mapping": "JavaScript route filter (Jint; channel route filter slot)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptRouteFilterTests.cs"
+    },
+    "3e4d341b19e6": {
+      "mapping": "HL7 v2.x parser with path-based segment/field access (subset of MC message tree)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataTypes/Hl7V2Parser.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/Hl7V2ParserTests.cs"
+    },
+    "39dfc1c57987": {
+      "mapping": "JSON transform stage (path extraction / mappings)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/JsonTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JsonTransformStageTests.cs"
+    },
+    "fcbc2850c3c6": {
+      "mapping": "XML transform stage (XPath extraction)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/XmlTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/XmlTransformStageTests.cs"
+    },
+    "eb267384985d": {
+      "mapping": "Message Browser APIs: list with filters (flowId, correlationId, date range, status), GET entry by id, reprocess, flow statistics",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; MessageBrowserApiTests"
+    },
     "6c09f0e130ae": {
       "mapping": "N/A",
-      "status": "In progress",
+      "status": "N/A",
       "evidence": "No MC-style JavaScript reader connector in core"
     },
     "ee6dd2c1e477": {
-      "mapping": "N/A",
-      "status": "In progress",
-      "evidence": "No database reader source connector in core"
+      "mapping": "Database reader source connector (watermark-based polling)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/DatabaseReaderParameterTests.cs"
+    },
+    "de7638b26b86": {
+      "mapping": "TCP listener source connector (MLLP / LF / length-prefix framing)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpListenerFrameDecoderTests.cs"
     },
     "1048ab38243e": {
-      "mapping": "Management HTTP API (flows, lifecycle, import/export JSON)",
-      "status": "In progress",
-      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs"
+      "mapping": "Management HTTP API (flows, lifecycle, ledger, maps, events, pruner); optional JWT when configured",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; ManagementSecurityExtensions.cs; Api Program.cs AddSmartConnectManagementJwt / UseAuthentication"
     },
     "c304f38f491b": {
       "mapping": "Flow/channel definition import (subset of Administrator import)",
@@ -91,9 +126,834 @@
       "evidence": "Management routes (flow import); parity with MC UI import is partial"
     },
     "620627148862": {
-      "mapping": "Operator shell (static UI + JSON APIs)",
+      "mapping": "Operator shell: flows table, message browser (filter + list + reprocess), pruner readout, API links",
       "status": "In progress",
       "evidence": "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html"
+    },
+    "cabdef066e91": {
+      "mapping": "File Reader source connector (polling, after-read actions, quarantine)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/FileReaderSourceConnectorTests.cs"
+    },
+    "a74f2026837f": {
+      "mapping": "TCP outbound adapter (raw, length-prefixed, MLLP framing; pooled connections)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/TcpOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpOutboundAdapterTests.cs"
+    },
+    "1e52b8d7a0d1": {
+      "mapping": "Database outbound adapter (parameterized, named connection strings, SqlServer + Postgres)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DatabaseOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/DatabaseOutboundAdapterTests.cs"
+    },
+    "9bb0daf8d64a": {
+      "mapping": "Channel writer outbound adapter (in-process flow chaining with depth guard)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/ChannelWriterOutboundAdapterTests.cs"
+    },
+    "40c45dd1279d": {
+      "mapping": "Destination connectors: HTTP, File, SMTP, TCP/MLLP, Database, Channel Writer",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/*.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs"
+    },
+    "2ff06d05acdf": {
+      "mapping": "Source connectors: HTTP webhook, MLLP listener, File Reader, TCP Listener, Database Reader (registry + hosted service)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnector.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/SourceConnectorHostedService.cs"
+    },
+    "99f63d49dff3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS listener in SmartConnect; use platform messaging or HTTP bridge"
+    },
+    "31adda5c3122": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS sender in SmartConnect; use HTTP outbound or native broker client"
+    },
+    "4f3bdc6f1747": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No SOAP Web Service sender; use HTTP outbound with SOAP payload"
+    },
+    "673d3d69227d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC-style Web Service listener; use inbound HTTP + contract in app layer"
+    },
+    "1c0f86389fc6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "File Reader is local filesystem only; no FTP transport in core"
+    },
+    "25d2d65030ce": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "File Reader is local filesystem only; SFTP not in core"
+    },
+    "98dc69797b66": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "File Reader is local filesystem only; SMB not in core"
+    },
+    "14ba60978325": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "File Reader is local filesystem only; S3 not in core"
+    },
+    "ad5275427813": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC QMS: out of scope for SmartConnect core; host application lifecycle"
+    },
+    "0985d957e195": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Accessibility-centered design: delegated to host UI standards"
+    },
+    "94c7b0366be0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "EHI export certification: not implemented in SmartConnect; product-specific"
+    },
+    "865840ed47b0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Authentication certification: use ASP.NET Core / platform IdP"
+    },
+    "5ad5b9956070": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Audit event store (EfAuditEventStore) + APIs; not ONC tamper-evident bundle"
+    },
+    "2d28fa4883d2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No EDI/X12 parser; payloads pass through as binary/text"
+    },
+    "5ad4fcb40c11": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No HL7 v3 RIM parser; use XML transform or custom script"
+    },
+    "5f74a6e2db0b": {
+      "mapping": "Configuration / global / channel variable maps via REST CRUD",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ConfigurationMapEndpointExtensions.cs; IVariableMapStore"
+    },
+    "73f764f17b3a": {
+      "mapping": "Background ledger pruner + GET configured interval/retention",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataPrunerHostedService.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/PrunerEndpointExtensions.cs; Api Program.cs AddSmartConnectDataPruner"
+    },
+    "ff0230f151f9": {
+      "mapping": "GET /admin/events (filter/skip/take), GET /admin/events/{eventId}, export route",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs; IAuditEventStore"
+    },
+    "2e414e6e48d9": {
+      "mapping": "GET /smartconnect/v1/admin/events/export (JSON dump; capped take)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs"
+    },
+    "5788dfaf6043": {
+      "mapping": "Channel scripts: PreProcessor/PostProcessor (Jint), Deploy/Undeploy on start/stop API",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs; FlowScriptsDefinition; ManagementEndpointExtensions start/stop; ChannelScriptExecutorTests"
+    },
+    "9cd7666923ab": {
+      "mapping": "Scripts tab: FlowScriptsDefinition in pipeline JSON (deploy/undeploy/pre/post)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/FlowScriptsDefinition.cs; FlowRuntimeEngine; ManagementEndpointExtensions"
+    },
+    "9ba7dbb80afe": {
+      "mapping": "Global and channel maps via IVariableMapStore + REST config-map routes",
+      "status": "Done",
+      "evidence": "ConfigurationMapEndpointExtensions; ChannelScriptExecutor channelMap/globalMap"
+    },
+    "1e06cb7ebde1": {
+      "mapping": "Declarative rule-builder route filter (payloadContains, metadataEquals; JSON parameters)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs; RuleBuilderRouteFilterTests"
+    },
+    "2958d82dc5f6": {
+      "mapping": "Mapper transform stage (alias over JSON path mapper)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MapperTransformStage.cs; MapperTransformStageTests"
+    },
+    "7138654d5a99": {
+      "mapping": "Message Builder transform (UTF-8 prefix/suffix)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MessageBuilderTransformStage.cs; MessageBuilderTransformStageTests"
+    },
+    "afc8e4c3f060": {
+      "mapping": "Ledger query filters (flowId, correlation prefix, dates, status) — subset of MC search",
+      "status": "Done",
+      "evidence": "ManagementEndpointExtensions GET /admin/messages; IMessageLedgerQuery"
+    },
+    "abea0d6bb89e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No separate Channel Reader; use Channel Writer destination to another flow"
+    },
+    "67d61933dcf2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No DICOM listener in core"
+    },
+    "72ee90d0e889": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No DICOM sender in core"
+    },
+    "628eff9187e0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Document Writer; use File or HTTP outbound with rendered document"
+    },
+    "a38b458b9e80": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JavaScript Writer connector; use JS transform stage or channel scripts"
+    },
+    "94c3be236d8a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Email Reader; commercial MC extension"
+    },
+    "ee05a8041a69": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS in core"
+    },
+    "d19fabfe08df": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS templates in core"
+    },
+    "4a0d97315103": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS templates in core"
+    },
+    "c582b3d4e532": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS templates in core"
+    },
+    "26cc04200cb7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JMS templates in core"
+    },
+    "5aceef4e86ba": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No FHIR connector in core; use HTTP + FHIR library in host"
+    },
+    "5711b375af90": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MFA: delegated to platform IdP / ASP.NET Core auth"
+    },
+    "249db375a76d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC MFA criterion: host product responsibility"
+    },
+    "2adddd589355": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "LDAP authorization: use platform directory integration"
+    },
+    "ced80a6f5489": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No serial connector in core"
+    },
+    "45bddecf8523": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "SSL/TLS: configure at reverse proxy or Kestrel; no MC SSL Manager UI"
+    },
+    "1052c34c408d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No iterator filter; use JavaScript route filter for batch logic"
+    },
+    "121bd3845f7d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No iterator transform; use JavaScript transform or multiple outbound routes"
+    },
+    "0fa53d8d19f6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "PDF front matter; not product behavior"
+    },
+    "b53f48a4b0a4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "PDF front matter; not product behavior"
+    },
+    "e0c81a8ab836": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Product overview; SmartConnect uses separate technical docs"
+    },
+    "edcdb2082802": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Training / commercial marketing prose; not SmartConnect implementation backlog"
+    },
+    "b1df0f9bba3b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Product overview; SmartConnect uses separate technical docs"
+    },
+    "15e6ad86afec": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Product overview; SmartConnect uses separate technical docs"
+    },
+    "f7cd3c783cac": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Training / commercial marketing prose; not SmartConnect implementation backlog"
+    },
+    "b36678b2c6be": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md)"
+    },
+    "a08bc1b6f966": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md)"
+    },
+    "4352e3fdcdcd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md)"
+    },
+    "df9dee6092c9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md)"
+    },
+    "94b9bfb26a81": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md)"
+    },
+    "25e220f01b32": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md)"
+    },
+    "2e3358acf9d7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md)"
+    },
+    "f5ab12768c17": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md)"
+    },
+    "a23cad09bec9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Server Manager UI; Kubernetes + config + management API (scope-vs-mirth.md)"
+    },
+    "3cc9c1d75a71": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md)"
+    },
+    "6faed7fb5f75": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No JVM channel runtime in SmartConnect host"
+    },
+    "f4d7f4f95db0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "504a7e83bca6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b837c994bf25": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "6fd63ec29458": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "50e35a801b57": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "473c249a4370": {
+      "mapping": "Channel route filters: JavaScript (Jint), declarative rule-builder",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs"
+    },
+    "b71747f1c8c4": {
+      "mapping": "Transform pipeline: JS, XSLT, JSON path, XML XPath, mapper, message-builder stages",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/XsltTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/JsonTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/XmlTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MapperTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MessageBuilderTransformStage.cs"
+    },
+    "dc7441c576af": {
+      "mapping": "IntegrationMessage: payload bytes, format enum, metadata dictionary, correlation id",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/MessageLedgerEntry.cs"
+    },
+    "41d81271f349": {
+      "mapping": "Message metadata: string key-value map on IntegrationMessage during pipeline execution; ledger rows store payload snapshot (metadata not persisted on ledger yet)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; MessageLedgerEntryEntity (payload only)"
+    },
+    "644e25fd5ab8": {
+      "mapping": "Message body: payload + PayloadFormat; persisted snapshot on ledger rows",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/MessageLedgerEntry.cs"
+    },
+    "32cd9bafea30": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC-style attachment objects; binary payload + metadata only (scope-vs-mirth.md)"
+    },
+    "049e1774caf1": {
+      "mapping": "Route filters registered on IFlowPluginRegistry (JS + rule-builder)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "3439031dbadf": {
+      "mapping": "Filter scripts use payload + metadata on IntegrationMessage (Jint context)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs"
+    },
+    "0043eaf93157": {
+      "mapping": "Supported filter types: allow-all, JavaScript, rule-builder (JSON rules)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/BuiltInPlugins/AllowAllRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs"
+    },
+    "055deed2a6dc": {
+      "mapping": "Transform stages on IFlowPluginRegistry; response transform slot on outbound routes",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs"
+    },
+    "dd16e2703a60": {
+      "mapping": "Transform input: IntegrationMessage payload + metadata",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs"
+    },
+    "d8fb6242d453": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No separate tmp object; use IntegrationMessage.Metadata or channel scripts (scope-vs-mirth.md)"
+    },
+    "30de38489db7": {
+      "mapping": "Per-route ResponseTransformStages on pipeline definition",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "803fb9390d22": {
+      "mapping": "Transform step kinds: javascript, xslt, json, xml, mapper-transform, message-builder",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs"
+    },
+    "120a91251454": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "1931c0f3e8bd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "2d0bec540b7a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "63e3af7c81fd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "03c7396e5578": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "63bb320096ed": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "3c8ead8f4688": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e703605125ea": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "14c6d4a3296b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "37ce1861b0eb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "70b3f6effa66": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7b06e3fea95f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "29d12efd261d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5b1af9c5062e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "cbad119904fa": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md)"
+    },
+    "40357d5af6f6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md)"
+    },
+    "8ca8bf077d45": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md)"
+    },
+    "6a42ce4d791b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md)"
+    },
+    "e6886c44f30c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md)"
+    },
+    "443e8c6c31e3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md)"
+    },
+    "a5e288ce0b6e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Release-notes topic; not SmartConnect feature matrix"
+    },
+    "40a482aa9156": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f0001315e10f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "06bbb66b9019": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b005e18a50f5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC commercial RBAC extension; use platform IdP + optional JWT (ManagementSecurityExtensions.cs; scope-vs-mirth.md)"
+    },
+    "d19f2efda9df": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ASTM E1381 framing not in core; use TCP listener with custom delimiter or host adapter"
+    },
+    "8bdffc727247": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ASTM E1394 datatype plugin not in core; use raw TCP or custom transform"
+    },
+    "a1cb41039be9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "6b42a915721a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC commercial RBAC extension; use platform IdP + optional JWT (ManagementSecurityExtensions.cs; scope-vs-mirth.md)"
+    },
+    "38b645cc5b7b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Training / commercial marketing prose; not SmartConnect implementation backlog"
+    },
+    "c1c2e605a9ae": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "8117ba92ed20": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "fa0bb554c046": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "923f471a5bdf": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "fd06eab9ce92": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "9ff3f6fa99d9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "2f3a0d7c63b5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "c5de3c63318a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "2fee2b113006": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "44e72512ab64": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "8db0a7c43270": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "39ee26d5031b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "231eb3985709": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "2c057f56be50": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "9e2900e11e26": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "e7809839e541": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "21450768fd6a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "ba3aa6ccc73f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "8e206c9f802c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "95b4e01c9e26": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "290159c8194e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "1d51124eac25": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "e15e39991af5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "efc2de89d9ef": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "88a2feb6de9b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "b94db87ac8ae": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "e6ad57dc1169": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "afb899319a24": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "d871138dbe01": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "dc33e7401238": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "84a8ab57ffa2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "659b4f586fdc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "418d1b69f183": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "7b0197c613b2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "ONC / certification appendix: not a SmartConnect deliverable; host product scope (docs/smartconnect/scope-vs-mirth.md)"
+    },
+    "279545f2881f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC clustering sync UI; not applicable (scope-vs-mirth.md)"
+    },
+    "799a49bda76d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Commercial support/extensions marketing; not SmartConnect core backlog"
+    },
+    "8c24dedf8572": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Advanced Alerting; use platform metrics/alerting (scope-vs-mirth.md)"
+    },
+    "7453863f9f44": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC cluster control plane; scaling/HA is Kubernetes / host concern (scope-vs-mirth.md)"
+    },
+    "c7ca9d757744": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Administrator channel history view; ledger + audit APIs (scope-vs-mirth.md)"
+    },
+    "4d7068ec34d9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC Enhancement Bundle; not applicable to SmartConnect core distribution"
+    },
+    "0d35ad441457": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Vendor interoperability bundle; explicit HTTP/TCP/DB adapters in core instead"
+    },
+    "968b1ad9d9ed": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Message Generator connector in core"
+    },
+    "ccce3ca312f3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Vendor NextGen Results CDR connector; not in core"
+    },
+    "ab634c646084": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md)"
+    },
+    "9251fe63c07d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md)"
+    },
+    "f24ca75860a9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md)"
+    },
+    "cb66d8d8674e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md)"
     }
   }
 }
