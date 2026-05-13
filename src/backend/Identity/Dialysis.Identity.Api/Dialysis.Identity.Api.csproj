@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Identity.Api</RootNamespace>
+    <Description>Identity module HTTP host. Composes Module.Hosting (cross-cutting) + Identity.Composition (domain).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Identity.Contracts/Dialysis.Identity.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Identity.Composition/Dialysis.Identity.Composition.csproj" />
+    <ProjectReference Include="../Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

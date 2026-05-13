@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="../Dialysis.EHR.Api/Dialysis.EHR.Api.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Persistence/Dialysis.EHR.Persistence.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

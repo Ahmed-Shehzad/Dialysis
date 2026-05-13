@@ -31,6 +31,11 @@
     <ProjectReference Include="../../src/backend/PDMS/Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
     <ProjectReference Include="../../src/backend/PDMS/Dialysis.PDMS.Composition/Dialysis.PDMS.Composition.csproj" />
     <ProjectReference Include="../../src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
+    <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Api/Dialysis.Identity.Api.csproj" />
+    <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Contracts/Dialysis.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
+    <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
+    <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Composition/Dialysis.Identity.Composition.csproj" />
   </ItemGroup>
 
   <ItemGroup>

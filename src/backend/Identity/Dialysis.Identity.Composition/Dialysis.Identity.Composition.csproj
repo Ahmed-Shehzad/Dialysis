@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Identity.Composition</RootNamespace>
+    <Description>Identity composition root: wires persistence, CQRS, authorization pipeline, Transponder.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Identity.Contracts/Dialysis.Identity.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
+    <ProjectReference Include="../Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+</Project>

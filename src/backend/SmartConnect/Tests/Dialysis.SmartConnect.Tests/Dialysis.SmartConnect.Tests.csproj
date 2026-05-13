@@ -33,7 +33,6 @@
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
-    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.SqlServer/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>

@@ -25,13 +25,11 @@ public sealed class DeviceIngestionFlowTests(HisApiWebApplicationFactory factory
             ExternalMessageId: "msg-1");
 
         var id = await gateway
-            .SendCommandAsync<IngestDeviceReadingCommand, Guid>(cmd, CancellationToken.None)
-            .ConfigureAwait(false);
+            .SendCommandAsync<IngestDeviceReadingCommand, Guid>(cmd, CancellationToken.None) ;
 
         var row = await db.DeviceReadings
             .AsNoTracking()
-            .FirstOrDefaultAsync(d => d.Id == id, CancellationToken.None)
-            .ConfigureAwait(false);
+            .FirstOrDefaultAsync(d => d.Id == id, CancellationToken.None) ;
 
         row.ShouldNotBeNull();
         row.DeviceId.ShouldBe("machine-42");
@@ -51,11 +49,9 @@ public sealed class DeviceIngestionFlowTests(HisApiWebApplicationFactory factory
             ExternalMessageId: "dedupe-key-1");
 
         var first = await gateway
-            .SendCommandAsync<IngestDeviceReadingCommand, Guid>(cmd, CancellationToken.None)
-            .ConfigureAwait(false);
+            .SendCommandAsync<IngestDeviceReadingCommand, Guid>(cmd, CancellationToken.None) ;
         var second = await gateway
-            .SendCommandAsync<IngestDeviceReadingCommand, Guid>(cmd, CancellationToken.None)
-            .ConfigureAwait(false);
+            .SendCommandAsync<IngestDeviceReadingCommand, Guid>(cmd, CancellationToken.None) ;
 
         second.ShouldBe(first);
     }

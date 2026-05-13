@@ -46,6 +46,9 @@ orleans.codegen.cs
 !.vscode/launch.json
 !.vscode/extensions.json
 
+## Claude Code (local agent state)
+.claude/
+
 ## Test & coverage
 TestResults/
 [Tt]est[Rr]esult*/

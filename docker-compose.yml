@@ -112,6 +112,18 @@ services:
     ports:
       - "8081:8080"
 
+  # OTLP collector for module spans + metrics. Each module's
+  # `<Module>:Telemetry:OtlpEndpoint` should point at http://localhost:4317
+  # (or http://otel-collector:4317 if the module hosts run inside this compose).
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
 volumes:
   postgres-his-data:
   postgres-smartconnect-data:

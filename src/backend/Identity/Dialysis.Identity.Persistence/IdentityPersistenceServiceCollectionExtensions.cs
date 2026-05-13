@@ -1,0 +1,36 @@
+using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.Identity.Persistence.Stores;
+using Dialysis.Identity.Provisioning.Ports;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Dialysis.Identity.Persistence;
+
+public static class IdentityPersistenceServiceCollectionExtensions
+{
+    public static IServiceCollection AddIdentityPersistence(
+        this IServiceCollection services,
+        Action<DbContextOptionsBuilder>? configure = null)
+    {
+        services.AddOptions<TransponderPersistenceOptions>()
+            .Configure(o => o.Schema = "identity");
+
+        services.AddDbContext<IdentityDbContext>((sp, options) =>
+        {
+            configure?.Invoke(options);
+            var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
+            if (interceptor is not null)
+                options.AddInterceptors(interceptor);
+        });
+
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<IdentityDbContext>());
+        services.AddTransponderEfOutboxAndInbox<IdentityDbContext>();
+
+        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+        services.AddScoped<IRoleDefinitionRepository, RoleDefinitionRepository>();
+        services.AddScoped<IRoleAssignmentRepository, RoleAssignmentRepository>();
+
+        return services;
+    }
+}

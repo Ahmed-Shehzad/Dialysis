@@ -99,6 +99,33 @@ public sealed class ModuleBoundaryTests
     }
 
     /// <summary>
+    /// Identity internals must not depend on EHR, PDMS, or HIS internals (only their Contracts are allowed).
+    /// </summary>
+    [Fact]
+    public void Identity_assemblies_must_not_depend_on_other_modules_internals()
+    {
+        var identityAssemblies = LoadByPrefix("Dialysis.Identity.");
+        foreach (var asm in identityAssemblies)
+        {
+            var referenced = asm.GetReferencedAssemblies();
+            var violations = referenced
+                .Where(r =>
+                {
+                    if (r.Name is null) return false;
+                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal)) return true;
+                    return false;
+                })
+                .Select(r => $"{asm.GetName().Name} -> {r.Name}")
+                .ToList();
+
+            violations.ShouldBeEmpty(
+                $"Identity assembly {asm.GetName().Name} must not reference non-Contracts assemblies of other modules. Violations: {string.Join(", ", violations)}");
+        }
+    }
+
+    /// <summary>
     /// Module Contracts assemblies must be pure: no <c>Microsoft.EntityFrameworkCore</c>,
     /// no <c>Microsoft.AspNetCore</c>, no transport-specific Transponder packages.
     /// Contracts are consumed across module boundaries, so leaking infra dependencies poisons everyone.
@@ -106,6 +133,7 @@ public sealed class ModuleBoundaryTests
     [Theory]
     [InlineData("Dialysis.EHR.Contracts")]
     [InlineData("Dialysis.PDMS.Contracts")]
+    [InlineData("Dialysis.Identity.Contracts")]
     public void Contracts_assemblies_must_be_infrastructure_free(string contractsAssemblyName)
     {
         var asm = LoadByName(contractsAssemblyName);

@@ -27,6 +27,7 @@
     <ProjectReference Include="../Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </ItemGroup>
 
 </Project>

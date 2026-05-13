@@ -76,7 +76,20 @@ public static class ModuleHostingServiceCollectionExtensions
         var assemblies = options.HandlerAssemblies?.ToArray() ?? new[] { Assembly.GetCallingAssembly() };
         builder.Services.AddCqrs(c => c.AddFromAssemblies(assemblies));
 
-        builder.Services.AddModuleTelemetry(options.ModuleSlug, options.ConfigureTelemetry);
+        var telemetrySection = builder.Configuration.GetSection($"{options.ModuleSlug}:Telemetry");
+        builder.Services.AddModuleTelemetry(options.ModuleSlug, telemetry =>
+        {
+            var configured = telemetrySection.Get<ModuleTelemetryOptions>();
+            if (configured is not null)
+            {
+                if (!string.IsNullOrWhiteSpace(configured.ServiceName)) telemetry.ServiceName = configured.ServiceName;
+                if (!string.IsNullOrWhiteSpace(configured.ServiceVersion)) telemetry.ServiceVersion = configured.ServiceVersion;
+                if (!string.IsNullOrWhiteSpace(configured.OtlpEndpoint)) telemetry.OtlpEndpoint = configured.OtlpEndpoint;
+                telemetry.AdditionalActivitySources.AddRange(configured.AdditionalActivitySources);
+                telemetry.AdditionalMeters.AddRange(configured.AdditionalMeters);
+            }
+            options.ConfigureTelemetry?.Invoke(telemetry);
+        });
 
         builder.Services.AddExceptionHandler<ModulePermissionDeniedExceptionHandler>();
         builder.Services.AddProblemDetails();

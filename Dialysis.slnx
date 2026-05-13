@@ -27,7 +27,6 @@
   <Folder Name="/src/backend/BuildingBlocks/Transponder/Persistence/">
     <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
     <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Postgresql/Transponder.Persistence.EntityFrameworkCore.Postgresql.csproj" />
-    <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.SqlServer/Transponder.Persistence.EntityFrameworkCore.SqlServer.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Transponder/Scheduling/">
     <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Hangfire/Transponder.Scheduling.Hangfire.csproj" />
@@ -66,7 +65,6 @@
     <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Abstractions/Dialysis.EHR.Core.Persistence.Abstractions.csproj" />
     <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.InMemory/Dialysis.EHR.Core.Persistence.InMemory.csproj" />
     <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Postgresql/Dialysis.EHR.Core.Persistence.Postgresql.csproj" />
-    <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.SqlServer/Dialysis.EHR.Core.Persistence.SqlServer.csproj" />
   </Folder>
   <Folder Name="/src/backend/PDMS/">
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Core.Abstraction/Dialysis.PDMS.Core.Abstraction.csproj" />
@@ -81,11 +79,12 @@
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Abstractions/Dialysis.PDMS.Core.Persistence.Abstractions.csproj" />
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.InMemory/Dialysis.PDMS.Core.Persistence.InMemory.csproj" />
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Postgresql/Dialysis.PDMS.Core.Persistence.Postgresql.csproj" />
-    <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.SqlServer/Dialysis.PDMS.Core.Persistence.SqlServer.csproj" />
   </Folder>
   <Folder Name="/src/backend/Shared/">
     <Project Path="src/backend/Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </Folder>
   <Folder Name="/src/backend/HIS/">
     <Project Path="src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
@@ -100,6 +99,12 @@
   </Folder>
   <Folder Name="/src/backend/Identity/">
     <Project Path="src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Identity.Contracts/Dialysis.Identity.Contracts.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Identity.Composition/Dialysis.Identity.Composition.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Identity.Api/Dialysis.Identity.Api.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Identity.Tests/Dialysis.Identity.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/">
     <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
@@ -121,7 +126,6 @@
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
-    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.SqlServer/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.SqlServer.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Tests/">
     <Project Path="src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/Dialysis.SmartConnect.Tests.csproj" />
