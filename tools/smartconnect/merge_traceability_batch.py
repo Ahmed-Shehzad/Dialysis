@@ -29,6 +29,123 @@ EV_SERVER_MGR = "No MC Server Manager UI; Kubernetes + config + management API (
 EV_INSTALLER = "Mirth installer / backup-restore UI N/A; .NET deployment model (scope-vs-mirth.md)"
 EV_TRAINING = "Training / commercial marketing prose; not SmartConnect implementation backlog"
 EV_LEGAL = "PDF front matter; not product behavior"
+EV_MGMT = "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs"
+EV_EVENTS = "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs"
+EV_UI = "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html"
+
+
+def swing_admin_ui_na(title: str, page: int | None) -> str | None:
+    """MC Administrator chapters with table/view/column/task UI (no Swing parity)."""
+    if page is None or not (80 <= page <= 260):
+        return None
+    tl = title.lower()
+    # Do not N/A rows that are covered by Done elsewhere (exact titles).
+    if title in ("Events View",):
+        return None
+    patterns = (
+        "alerts view",
+        "alerts table",
+        "alerts table columns",
+        "alerts tasks",
+        "channels view",
+        "channel table",
+        "channel table columns",
+        "users view",
+        "users table",
+        "users table columns",
+        "users tasks",
+        "add/update a user account",
+        "settings view",
+        "server settings tab",
+        "general settings",
+        "channel settings",
+        "email settings",
+        "notification settings",
+        "resources settings",
+        "code template libraries",
+        "management views",
+        "group tasks",
+        "edit group details",
+        "import group",
+        "export group",
+        "channel tasks",
+        "debug channel",
+        "filter by channel name or tag",
+        "use drag and drop",
+        "get the channel name",
+        "assign channels to a group",
+        "import channels/groups using drag-and-drop",
+        "from the dashboard",
+        "from the channels view",
+        "server log",
+        "connection log",
+        "global maps table columns",
+        "dashboard tasks",
+        "send message",
+        "remove all messages",
+        "clear statistics",
+        "metadata table",
+        "add a column to the metadata",
+        "metadata table columns",
+        "custom metadata columns",
+        "message content tab",
+        "view message content",
+        "message content types",
+        "formatting messages",
+        "mappings tab",
+        "view mappings",
+        "mappings table columns",
+        "errors tab",
+        "view message errors",
+        "error content types",
+        "attachments tab",
+        "attachment table columns",
+        "view attachments",
+        "text attachment viewer",
+        "image attachment viewer",
+        "dicom attachment viewer",
+        "pdf attachment viewer",
+        "message browser tasks",
+        "import messages",
+        "export results",
+        "remove results",
+        "export attachment",
+        "events table",
+        "phi events",
+        "event attributes table",
+        "event tasks",
+        "view all available tags",
+        "auto-complete tags",
+        "filter by channel tags",
+        "filter by channel",
+        "filter by partial channel name",
+        "filter by multiple criteria",
+        "clear filter criteria",
+        "system preferences",
+        "user preferences",
+        "code editor preferences",
+        "tags settings tab",
+        "tags table",
+        "adding a tag",
+        "removing a tag",
+        "channels table",
+        "indeterminate check boxes",
+        "database tasks settings tab",
+        "database tasks table columns",
+        "affected channels table",
+        "running a database task",
+        "resources table columns",
+        "reload resource",
+        "directory resource",
+        "using resources in channels",
+        "restore config",
+        "clear all statistics",
+    )
+    if tl == "navigation" and 95 <= page <= 175:
+        return EV_ADMIN
+    if any(x in tl for x in patterns):
+        return EV_ADMIN
+    return None
 
 
 def classify_na(title: str, page: int | None) -> str | None:
@@ -144,6 +261,28 @@ def classify_na(title: str, page: int | None) -> str | None:
     ):
         return "MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md)"
 
+    # Swing Administrator: message browser / dashboard / management views (subset).
+    sw = swing_admin_ui_na(t, page)
+    if sw:
+        return sw
+
+    # Remaining connector / protocol names (core SmartConnect does not ship these).
+    if any(
+        x in tl
+        for x in (
+            "soap web service",
+            "web service listener",
+            "web service sender",
+            "wsdl",
+            "llp listener",
+            "socket connector",
+            "vm connector",
+            "jvm",
+            "channel reader",
+        )
+    ):
+        return "Not in core SmartConnect; use HTTP/TCP adapters or host integration (scope-vs-mirth.md)"
+
     p = page
     if p is not None and 603 <= p <= 619:
         return EV_ONC
@@ -151,11 +290,13 @@ def classify_na(title: str, page: int | None) -> str | None:
     return None
 
 
-# Explicit Done rows for Phase 2 (filter/transform cluster) — evidence paths.
 EV_CORE = "src/backend/SmartConnect/Dialysis.SmartConnect.Core"
 EV_EXT = f"{EV_CORE}/ExtendedPlugins"
 EV_TRANS = f"{EV_CORE}/Transforms"
 EV_ABS = "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction"
+EV_IN = "src/backend/SmartConnect/Inbound"
+EV_IN_ABS = f"{EV_IN}/Dialysis.SmartConnect.Inbound.Abstractions"
+EV_IN_HOST = f"{EV_IN}/Dialysis.SmartConnect.Inbound.Hosting"
 
 DONE_BATCH: dict[str, tuple[str, str]] = {
     "473c249a4370": (
@@ -199,16 +340,113 @@ DONE_BATCH: dict[str, tuple[str, str]] = {
         f"{EV_ABS}/IntegrationMessage.cs; {EV_ABS}/MessageLedgerEntry.cs",
     ),
     "41d81271f349": (
-        "Message metadata: string key-value on IntegrationMessage; surfaced in ledger/API as applicable",
-        f"{EV_ABS}/IntegrationMessage.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs",
+        "Message metadata on IntegrationMessage at runtime; ledger stores payload snapshot only",
+        f"{EV_ABS}/IntegrationMessage.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/MessageLedgerEntryEntity.cs",
     ),
     "644e25fd5ab8": (
         "Message body: payload + PayloadFormat; persisted snapshot on ledger rows",
         f"{EV_ABS}/IntegrationMessage.cs; {EV_ABS}/MessageLedgerEntry.cs",
     ),
+    # Phase B — conceptual channel / lifecycle rows
+    "f08a7e51d0c2": (
+        "Channel-style integration flows: IntegrationFlow + pipeline JSON",
+        f"{EV_ABS}/IntegrationFlow.cs; {EV_ABS}/IntegrationFlowPipelineDefinition.cs",
+    ),
+    "cb6cf78e7048": (
+        "Flows: source ingress + route filters + outbound routes (Mirth channel analogue)",
+        f"{EV_IN_ABS}/ISourceConnector.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "8f8485279c1d": (
+        "Pipeline components: RouteFilters, OutboundRoutes, Scripts, ResponseTransforms",
+        f"{EV_ABS}/IntegrationFlowPipelineDefinition.cs",
+    ),
+    "5584b7a1846b": (
+        "Flow properties: Id, Name, RuntimeState, Pipeline definition",
+        f"{EV_ABS}/IntegrationFlow.cs",
+    ),
+    "6ff60c0decb8": (
+        "Source connectors: HTTP, MLLP, FileReader, TcpListener, DatabaseReader + registry",
+        f"{EV_IN_HOST}/SourceConnectorHostedService.cs; {EV_IN_ABS}/ISourceConnectorRegistry.cs",
+    ),
+    "b30529234a69": (
+        "Connector model: outbound adapter kinds + per-route parameters JSON",
+        f"{EV_ABS}/IntegrationFlowPipelineDefinition.cs; {EV_EXT}/*OutboundAdapter.cs",
+    ),
+    "5e271d1b17c5": (
+        "General outbound route: adapter kind, transform stages, retries, response transforms",
+        f"{EV_ABS}/IntegrationFlowPipelineDefinition.cs",
+    ),
+    "e6c5e2baab30": (
+        "Connector-specific settings: OutboundParametersJson + metadata keys",
+        f"{EV_ABS}/IntegrationFlowPipelineDefinition.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "27fd5020ecec": (
+        "Source-side: PreProcessor script, ledger Received, route filters before destinations",
+        f"{EV_CORE}/FlowRuntimeEngine.cs; {EV_CORE}/Scripts/ChannelScriptExecutor.cs",
+    ),
+    "08ca078d887e": (
+        "Destination-side: per-route transforms, SendAsync, optional response transforms",
+        f"{EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "66290c37fc29": (
+        "Final steps: ledger Completed, PostProcessor script, aggregate success",
+        f"{EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "906e1dbd0a6a": (
+        "Destination chains: OutboundRoutesSequential + Channel Writer in-process chaining",
+        f"{EV_ABS}/IntegrationFlowPipelineDefinition.cs; {EV_EXT}/ChannelWriterOutboundAdapter.cs",
+    ),
+    "a1192781e4bc": (
+        "Payload formats + HL7/JSON/XML/datatype helpers and transform stages",
+        f"{EV_ABS}/PayloadFormat.cs; {EV_CORE}/DataTypes/Hl7V2Parser.cs; {EV_TRANS}/*.cs",
+    ),
+    # Phase C — message browser / events API parity (subset)
+    "e0f496104a04": (
+        "Reprocess single ledger entry: POST /admin/messages/{ledgerEntryId}/reprocess",
+        f"{EV_MGMT}; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/MessageBrowserApiTests.cs",
+    ),
+    "341763e159ff": (
+        "Reprocess one entry at a time via API; MC multi-select batch UI N/A",
+        f"{EV_MGMT}",
+    ),
+    "6d1db4c03a71": (
+        "Search audit events: GET /admin/events with category, level, flowId, date range, skip/take",
+        EV_EVENTS,
+    ),
+    "6982d7114011": (
+        "Event query filters (same query endpoint); no Swing advanced filter UI",
+        EV_EVENTS,
+    ),
+    "18d71fe936b8": (
+        "Ledger query filters: flowId, correlationId, dates, status on GET /admin/messages",
+        f"{EV_MGMT}; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/IMessageLedgerQuery.cs",
+    ),
+    "736247a4bb0a": (
+        "Message list query parameters (subset of MC search options)",
+        f"{EV_MGMT}",
+    ),
+    "eb6a41544dcf": (
+        "Operator shell: message list, reprocess, flow links (subset of MC Message Browser tasks)",
+        EV_UI,
+    ),
+    "89e43ed350c9": (
+        "Export channel definition: GET /admin/flows/{flowId}/export (JSON)",
+        f"{EV_MGMT}",
+    ),
+    "65722f321eb3": (
+        "Export flow group JSON: GET /admin/groups/{groupId}/export",
+        "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/GroupEndpointExtensions.cs",
+    ),
+    "9897d4a86607": (
+        "Create group: POST /admin/groups (JSON body)",
+        "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/GroupEndpointExtensions.cs",
+    ),
+    "45e19e372f55": (
+        "Pruner interval/retention configuration + GET readout (subset of MC Prune Settings)",
+        "src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataPrunerHostedService.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/PrunerEndpointExtensions.cs",
+    ),
 }
 
-# Phase 3–4 N/A
 EXTRA_NA: dict[str, tuple[str, str]] = {
     "32cd9bafea30": (
         "N/A",
@@ -262,6 +500,30 @@ EXTRA_NA: dict[str, tuple[str, str]] = {
         "N/A",
         "Vendor NextGen Results CDR connector; not in core",
     ),
+    "857ba44219fd": (
+        "N/A",
+        "No MC Administrator debug runner; test flows via HTTP dispatch + ledger (scope-vs-mirth.md)",
+    ),
+    "f1ab76555544": (
+        "N/A",
+        f"No bulk message import UI; ingest via connectors or POST /flows/{{id}}/messages ({EV_ADMIN})",
+    ),
+    "eddf45bc29b4": (
+        "N/A",
+        f"No MC message-browser export-results file; use ledger JSON APIs or custom export ({EV_ADMIN})",
+    ),
+    "0858c2e885b0": (
+        "N/A",
+        f"No MC remove-results UI; retention via DataPruner + admin configuration ({EV_ADMIN})",
+    ),
+    "27e26a88f711": (
+        "N/A",
+        "No attachment export; attachments out of scope (scope-vs-mirth.md)",
+    ),
+    "204d09872d15": (
+        "N/A",
+        "No MC message archive settings UI; retention/pruning only (scope-vs-mirth.md)",
+    ),
 }
 
 
@@ -278,7 +540,6 @@ def main() -> int:
         print("bad byId", file=sys.stderr)
         return 1
 
-    # Fixes
     if "a4c05bf787c0" in by_id:
         by_id["a4c05bf787c0"]["status"] = "N/A"
     if "6c09f0e130ae" in by_id:
@@ -311,7 +572,7 @@ def main() -> int:
                     "status": "Done",
                     "evidence": evid
                     if evid.startswith("src/")
-                    else f"src/backend/SmartConnect/Dialysis.SmartConnect.Core/{evid}",
+                    else f"{EV_CORE}/{evid}",
                 }
                 added_done += 1
             continue
@@ -329,7 +590,6 @@ def main() -> int:
         elif cur.get("status") == "N/A":
             continue
         elif cur.get("status") == "In progress":
-            # Upgrade ambiguous N/A mappings
             if cur.get("mapping") == "N/A" or "N/A" in str(cur.get("mapping", "")):
                 by_id[eid] = {"mapping": "N/A", "status": "N/A", "evidence": reason}
                 updated_na += 1
@@ -337,7 +597,6 @@ def main() -> int:
                 by_id[eid] = {"mapping": "N/A", "status": "N/A", "evidence": reason}
                 updated_na += 1
             else:
-                # leave specific In progress with real mapping text
                 pass
 
     OVR.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

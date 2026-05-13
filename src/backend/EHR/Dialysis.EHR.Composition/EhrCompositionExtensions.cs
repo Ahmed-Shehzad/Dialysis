@@ -1,0 +1,63 @@
+using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Dialysis.CQRS;
+using Dialysis.EHR.ClinicalNotes;
+using Dialysis.EHR.Contracts.Integration;
+using Dialysis.EHR.Billing;
+using Dialysis.EHR.Integration;
+using Dialysis.EHR.Integration.Consumers;
+using Dialysis.EHR.PatientChart;
+using Dialysis.EHR.PatientPortal;
+using Dialysis.EHR.Persistence;
+using Dialysis.EHR.Registration;
+using Dialysis.EHR.Scheduling;
+using Dialysis.Module.Hosting.Pipeline;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Dialysis.EHR.Composition;
+
+public static class EhrCompositionExtensions
+{
+    /// <summary>
+    /// Wires the EHR module's domain services, persistence, CQRS, and Transponder consumers.
+    /// Cross-cutting (auth, telemetry, OpenAPI, etc.) is added separately via <c>AddModuleHost</c>.
+    /// </summary>
+    public static IServiceCollection AddElectronicHealthRecord(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<DbContextOptionsBuilder>? configurePersistence = null,
+        bool enableOutboxRelay = false,
+        Action<IServiceCollection>? configureTransponderTransport = null)
+    {
+        services.AddEhrPersistence(configurePersistence);
+
+        services.AddTransponder(t =>
+        {
+            t.AddConsumer<PrescriptionOrderedIntegrationEvent, PrescriptionOrderedConsumer>();
+            t.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
+            t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
+        });
+        configureTransponderTransport?.Invoke(services);
+
+        services.AddCqrs(c =>
+        {
+            c.AddFromAssembliesOf(
+                typeof(EhrRegistrationMarker),
+                typeof(EhrPatientChartMarker),
+                typeof(EhrSchedulingMarker),
+                typeof(EhrPatientPortalMarker),
+                typeof(EhrClinicalNotesMarker),
+                typeof(EhrBillingMarker),
+                typeof(EhrIntegrationMarker));
+
+            EhrCommandRegistrations.RegisterAuthorizationBehaviors(c);
+        });
+
+        if (enableOutboxRelay)
+            services.AddTransponderOutboxRelay<EhrDbContext>();
+
+        return services;
+    }
+}

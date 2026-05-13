@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.PDMS.Api</RootNamespace>
+    <Description>PDMS module HTTP host.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.Composition/Dialysis.PDMS.Composition.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

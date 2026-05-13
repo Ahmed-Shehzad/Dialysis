@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Module.Contracts</RootNamespace>
+    <AssemblyName>Dialysis.Module.Contracts</AssemblyName>
+    <Description>Cross-module abstractions: current user, permissioned command marker, module permission catalog, common exceptions.</Description>
+  </PropertyGroup>
+
+</Project>

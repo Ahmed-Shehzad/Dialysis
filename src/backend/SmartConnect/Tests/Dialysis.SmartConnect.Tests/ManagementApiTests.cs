@@ -63,6 +63,24 @@ public sealed class ManagementApiTests
     }
 
     [Fact]
+    public async Task Export_group_returns_json()
+    {
+        await using var factory = new WebApplicationFactory<Program>();
+        var client = factory.CreateClient();
+        var groupId = Guid.NewGuid();
+        var create = await client.PostAsJsonAsync(
+            "/smartconnect/v1/admin/groups",
+            new FlowGroup { Id = groupId, Name = "g1", Description = "d1" });
+        create.EnsureSuccessStatusCode();
+
+        var export = await client.GetAsync($"/smartconnect/v1/admin/groups/{groupId}/export");
+        export.EnsureSuccessStatusCode();
+        var json = await export.Content.ReadAsStringAsync();
+        Assert.Contains(groupId.ToString("D"), json, StringComparison.Ordinal);
+        Assert.Contains("g1", json, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Ledger_query_returns_entries_after_dispatch()
     {
         await using var factory = new WebApplicationFactory<Program>();

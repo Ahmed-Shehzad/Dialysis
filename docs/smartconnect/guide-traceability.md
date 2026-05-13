@@ -37,16 +37,16 @@
 | `b837c994bf25` | Launch the Administrator | 56 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `6fd63ec29458` | Log On | 57 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `50e35a801b57` | Logging on for the First Time | 58 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `f08a7e51d0c2` | The Fundamentals of Mirth Connect | 60 | — | In progress | — |
-| `cb6cf78e7048` | About Channels and Connectors | 60 | — | In progress | — |
-| `8f8485279c1d` | Channel Components | 60 | — | In progress | — |
-| `5584b7a1846b` | General Channel Properties | 61 | — | In progress | — |
-| `6ff60c0decb8` | Source Connector | 61 | — | In progress | — |
+| `f08a7e51d0c2` | The Fundamentals of Mirth Connect | 60 | Channel-style integration flows: IntegrationFlow + pipeline JSON | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlow.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs |
+| `cb6cf78e7048` | About Channels and Connectors | 60 | Flows: source ingress + route filters + outbound routes (Mirth channel analogue) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnector.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `8f8485279c1d` | Channel Components | 60 | Pipeline components: RouteFilters, OutboundRoutes, Scripts, ResponseTransforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs |
+| `5584b7a1846b` | General Channel Properties | 61 | Flow properties: Id, Name, RuntimeState, Pipeline definition | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlow.cs |
+| `6ff60c0decb8` | Source Connector | 61 | Source connectors: HTTP, MLLP, FileReader, TcpListener, DatabaseReader + registry | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/SourceConnectorHostedService.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnectorRegistry.cs |
 | `40c45dd1279d` | Destination Connectors | 62 | Destination connectors: HTTP, File, SMTP, TCP/MLLP, Database, Channel Writer | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/*.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs |
 | `5788dfaf6043` | Channel Scripts | 62 | Channel scripts: PreProcessor/PostProcessor (Jint), Deploy/Undeploy on start/stop API | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs; FlowScriptsDefinition; ManagementEndpointExtensions start/stop; ChannelScriptExecutorTests |
-| `b30529234a69` | Connector Components | 63 | — | In progress | — |
-| `5e271d1b17c5` | General Connector Properties | 63 | — | In progress | — |
-| `e6c5e2baab30` | Connector-Specific Properties | 63 | — | In progress | — |
+| `b30529234a69` | Connector Components | 63 | Connector model: outbound adapter kinds + per-route parameters JSON | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/*OutboundAdapter.cs |
+| `5e271d1b17c5` | General Connector Properties | 63 | General outbound route: adapter kind, transform stages, retries, response transforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs |
+| `e6c5e2baab30` | Connector-Specific Properties | 63 | Connector-specific settings: OutboundParametersJson + metadata keys | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
 | `473c249a4370` | Filter | 65 | Channel route filters: JavaScript (Jint), declarative rule-builder | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs |
 | `b71747f1c8c4` | Transformer | 65 | Transform pipeline: JS, XSLT, JSON path, XML XPath, mapper, message-builder stages | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/XsltTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/JsonTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/XmlTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MapperTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MessageBuilderTransformStage.cs |
 | `dc7441c576af` | About Message Data | 65 | IntegrationMessage: payload bytes, format enum, metadata dictionary, correlation id | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/MessageLedgerEntry.cs |
@@ -54,11 +54,11 @@
 | `644e25fd5ab8` | Message Content | 67 | Message body: payload + PayloadFormat; persisted snapshot on ledger rows | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/MessageLedgerEntry.cs |
 | `32cd9bafea30` | Message Attachments | 68 | N/A | N/A | No MC-style attachment objects; binary payload + metadata only (scope-vs-mirth.md) |
 | `664b9143f91d` | The Message Processing Lifecycle | 68 | FlowRuntimeEngine: route filters, parallel or sequential outbound routes, response payload + response transforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/FlowRuntimeEngineTests.cs |
-| `27fd5020ecec` | Source Processing Steps | 69 | — | In progress | — |
-| `08ca078d887e` | Destination Processing Steps | 70 | — | In progress | — |
-| `66290c37fc29` | Final Processing Steps | 70 | — | In progress | — |
-| `906e1dbd0a6a` | Destination Chains | 71 | — | In progress | — |
-| `a1192781e4bc` | About Data Types | 72 | — | In progress | — |
+| `27fd5020ecec` | Source Processing Steps | 69 | Source-side: PreProcessor script, ledger Received, route filters before destinations | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs |
+| `08ca078d887e` | Destination Processing Steps | 70 | Destination-side: per-route transforms, SendAsync, optional response transforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `66290c37fc29` | Final Processing Steps | 70 | Final steps: ledger Completed, PostProcessor script, aggregate success | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `906e1dbd0a6a` | Destination Chains | 71 | Destination chains: OutboundRoutesSequential + Channel Writer in-process chaining | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs |
+| `a1192781e4bc` | About Data Types | 72 | Payload formats + HL7/JSON/XML/datatype helpers and transform stages | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/PayloadFormat.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataTypes/Hl7V2Parser.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/*.cs |
 | `049e1774caf1` | About Filters | 74 | Route filters registered on IFlowPluginRegistry (JS + rule-builder) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/SmartConnectServiceCollectionExtensions.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
 | `3439031dbadf` | The "msg" Object | 75 | Filter scripts use payload + metadata on IntegrationMessage (Jint context) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationMessage.cs |
 | `0043eaf93157` | Filter Rule Types | 75 | Supported filter types: allow-all, JavaScript, rule-builder (JSON rules) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/BuiltInPlugins/AllowAllRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs |
@@ -78,15 +78,15 @@
 | `14c6d4a3296b` | View Messages for a Channel | 88 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `37ce1861b0eb` | Show or Hide Channel Groups | 88 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `70b3f6effa66` | Change How Tags Display | 89 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `1cbaf2ccb2eb` | Server Log | 89 | — | In progress | — |
-| `6e7763c9e4e7` | Connection Log | 91 | — | In progress | — |
+| `1cbaf2ccb2eb` | Server Log | 89 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `6e7763c9e4e7` | Connection Log | 91 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `9ba7dbb80afe` | Global Maps | 92 | Global and channel maps via IVariableMapStore + REST config-map routes | Done | ConfigurationMapEndpointExtensions; ChannelScriptExecutor channelMap/globalMap |
-| `4c6c3ad55310` | Global Maps Table Columns | 92 | — | In progress | — |
-| `b5cc8390e49a` | Dashboard Tasks | 93 | — | In progress | — |
-| `f6052f76c1fd` | Send Message | 95 | — | In progress | — |
-| `e4542d05530f` | Remove All Messages | 96 | — | In progress | — |
-| `e37510af8771` | Clear Statistics | 97 | — | In progress | — |
-| `99097a44b22e` | Filter By Channel Name or Tag | 98 | — | In progress | — |
+| `4c6c3ad55310` | Global Maps Table Columns | 92 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b5cc8390e49a` | Dashboard Tasks | 93 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `f6052f76c1fd` | Send Message | 95 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e4542d05530f` | Remove All Messages | 96 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e37510af8771` | Clear Statistics | 97 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `99097a44b22e` | Filter By Channel Name or Tag | 98 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `b765115cf57d` | View All Available Tags/Names | 98 | — | In progress | — |
 | `61c13f92df62` | Auto-Complete Tags/Names | 99 | — | In progress | — |
 | `790cf22b8dc7` | Filter By Channel Tags | 99 | — | In progress | — |
@@ -95,88 +95,88 @@
 | `c21736a470a6` | Filter By Multiple Criteria | 102 | — | In progress | — |
 | `690c7a839977` | Clear Filter Criteria | 102 | — | In progress | — |
 | `eb267384985d` | Message Browser View | 103 | Message Browser APIs: list with filters (flowId, correlationId, date range, status), GET entry by id, reprocess, flow statistics | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; MessageBrowserApiTests |
-| `dd41f11b0f31` | Navigation | 104 | — | In progress | — |
-| `7910938ae1a4` | From the Dashboard | 104 | — | In progress | — |
-| `137b1bbd1d82` | From the Channels View | 105 | — | In progress | — |
-| `d57cc0f98c28` | Metadata Table | 106 | — | In progress | — |
-| `e32d40cb052d` | Add a Column to the Metadata Table | 107 | — | In progress | — |
-| `58b454bd41c2` | Metadata Table Columns | 108 | — | In progress | — |
-| `7ad5ec970f92` | Custom Metadata Columns | 111 | — | In progress | — |
-| `e97a4e12318c` | Message Content Tab | 111 | — | In progress | — |
-| `fd87fb2f2635` | View Message Content | 112 | — | In progress | — |
-| `4c79a22b8705` | Message Content Types | 113 | — | In progress | — |
-| `2efc1e95967b` | Formatting Messages | 114 | — | In progress | — |
-| `5d229b40aa2d` | Mappings Tab | 115 | — | In progress | — |
-| `14fd187586ca` | View Mappings | 116 | — | In progress | — |
-| `341366726e2f` | Mappings Table Columns | 116 | — | In progress | — |
-| `5a5903d10960` | Errors Tab | 116 | — | In progress | — |
-| `ff479e0920d1` | View Message Errors | 117 | — | In progress | — |
-| `6c32dd2aa4e1` | Error Content Types | 118 | — | In progress | — |
-| `a23e8bb2a424` | Attachments Tab | 118 | — | In progress | — |
-| `5888c5a3e6f6` | Attachment Table Columns | 119 | — | In progress | — |
-| `b275dfced60b` | View Attachments | 119 | — | In progress | — |
-| `2a64eb396355` | Text Attachment Viewer | 120 | — | In progress | — |
-| `d7c4994ec221` | Image Attachment Viewer | 121 | — | In progress | — |
-| `8780172310f0` | DICOM Attachment Viewer | 122 | — | In progress | — |
-| `dba2fb93ad73` | PDF Attachment Viewer | 123 | — | In progress | — |
+| `dd41f11b0f31` | Navigation | 104 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `7910938ae1a4` | From the Dashboard | 104 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `137b1bbd1d82` | From the Channels View | 105 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `d57cc0f98c28` | Metadata Table | 106 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e32d40cb052d` | Add a Column to the Metadata Table | 107 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `58b454bd41c2` | Metadata Table Columns | 108 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `7ad5ec970f92` | Custom Metadata Columns | 111 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e97a4e12318c` | Message Content Tab | 111 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `fd87fb2f2635` | View Message Content | 112 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `4c79a22b8705` | Message Content Types | 113 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `2efc1e95967b` | Formatting Messages | 114 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5d229b40aa2d` | Mappings Tab | 115 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `14fd187586ca` | View Mappings | 116 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `341366726e2f` | Mappings Table Columns | 116 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5a5903d10960` | Errors Tab | 116 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `ff479e0920d1` | View Message Errors | 117 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `6c32dd2aa4e1` | Error Content Types | 118 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `a23e8bb2a424` | Attachments Tab | 118 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5888c5a3e6f6` | Attachment Table Columns | 119 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b275dfced60b` | View Attachments | 119 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `2a64eb396355` | Text Attachment Viewer | 120 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `d7c4994ec221` | Image Attachment Viewer | 121 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `8780172310f0` | DICOM Attachment Viewer | 122 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `dba2fb93ad73` | PDF Attachment Viewer | 123 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `afc8e4c3f060` | Search Messages | 124 | Ledger query filters (flowId, correlation prefix, dates, status) — subset of MC search | Done | ManagementEndpointExtensions GET /admin/messages; IMessageLedgerQuery |
-| `736247a4bb0a` | Message Search Options | 125 | — | In progress | — |
-| `18d71fe936b8` | Advanced Search Filter | 127 | — | In progress | — |
-| `eb6a41544dcf` | Message Browser Tasks | 130 | — | In progress | — |
-| `f1ab76555544` | Import Messages | 131 | — | In progress | — |
-| `eddf45bc29b4` | Export Results | 133 | — | In progress | — |
-| `0858c2e885b0` | Remove Results | 135 | — | In progress | — |
-| `341763e159ff` | Reprocess Results | 136 | — | In progress | — |
-| `e0f496104a04` | Reprocess Message | 137 | — | In progress | — |
-| `27e26a88f711` | Export Attachment | 138 | — | In progress | — |
-| `44b685818f8f` | Alerts View | 139 | — | In progress | — |
-| `a719fded8b65` | Navigation | 139 | — | In progress | — |
-| `fc8d4a7bb89c` | Alerts Table | 140 | — | In progress | — |
-| `3308fd0fd198` | Alerts Table Columns | 140 | — | In progress | — |
-| `8ebe4b804d88` | Alerts Tasks | 140 | — | In progress | — |
+| `736247a4bb0a` | Message Search Options | 125 | Message list query parameters (subset of MC search options) | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs |
+| `18d71fe936b8` | Advanced Search Filter | 127 | Ledger query filters: flowId, correlationId, dates, status on GET /admin/messages | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/IMessageLedgerQuery.cs |
+| `eb6a41544dcf` | Message Browser Tasks | 130 | Operator shell: message list, reprocess, flow links (subset of MC Message Browser tasks) | Done | src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html |
+| `f1ab76555544` | Import Messages | 131 | N/A | N/A | No bulk message import UI; ingest via connectors or POST /flows/{id}/messages (No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)) |
+| `eddf45bc29b4` | Export Results | 133 | N/A | N/A | No MC message-browser export-results file; use ledger JSON APIs or custom export (No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)) |
+| `0858c2e885b0` | Remove Results | 135 | N/A | N/A | No MC remove-results UI; retention via DataPruner + admin configuration (No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)) |
+| `341763e159ff` | Reprocess Results | 136 | Reprocess one entry at a time via API; MC multi-select batch UI N/A | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs |
+| `e0f496104a04` | Reprocess Message | 137 | Reprocess single ledger entry: POST /admin/messages/{ledgerEntryId}/reprocess | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/MessageBrowserApiTests.cs |
+| `27e26a88f711` | Export Attachment | 138 | N/A | N/A | No attachment export; attachments out of scope (scope-vs-mirth.md) |
+| `44b685818f8f` | Alerts View | 139 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `a719fded8b65` | Navigation | 139 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `fc8d4a7bb89c` | Alerts Table | 140 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `3308fd0fd198` | Alerts Table Columns | 140 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `8ebe4b804d88` | Alerts Tasks | 140 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `ff0230f151f9` | Events View | 141 | GET /admin/events (filter/skip/take), GET /admin/events/{eventId}, export route | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs; IAuditEventStore |
-| `167fafb422e2` | Navigation | 142 | — | In progress | — |
-| `5eb4a7958208` | Events Table | 142 | — | In progress | — |
-| `20e34cf87402` | Metadata Table Columns | 143 | — | In progress | — |
-| `e198e9ef5eb4` | PHI Events | 144 | — | In progress | — |
-| `cb4b8503ad35` | Event Attributes Table | 145 | — | In progress | — |
-| `6d1db4c03a71` | Searching Events | 145 | — | In progress | — |
-| `6982d7114011` | Advanced Search Filter | 146 | — | In progress | — |
-| `73f805716ab9` | Event Tasks | 147 | — | In progress | — |
+| `167fafb422e2` | Navigation | 142 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5eb4a7958208` | Events Table | 142 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `20e34cf87402` | Metadata Table Columns | 143 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e198e9ef5eb4` | PHI Events | 144 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `cb4b8503ad35` | Event Attributes Table | 145 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `6d1db4c03a71` | Searching Events | 145 | Search audit events: GET /admin/events with category, level, flowId, date range, skip/take | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs |
+| `6982d7114011` | Advanced Search Filter | 146 | Event query filters (same query endpoint); no Swing advanced filter UI | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs |
+| `73f805716ab9` | Event Tasks | 147 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `2e414e6e48d9` | Export All Events | 147 | GET /smartconnect/v1/admin/events/export (JSON dump; capped take) | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs |
-| `23d7d23954b8` | Management Views | 148 | — | In progress | — |
-| `ab0b0657f405` | Channels View | 148 | — | In progress | — |
-| `5fa610fbf3d2` | Navigation | 149 | — | In progress | — |
-| `41c983f0c08b` | Channel Table | 150 | — | In progress | — |
-| `a4fe7d347dfb` | Channel Table Columns | 151 | — | In progress | — |
+| `23d7d23954b8` | Management Views | 148 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `ab0b0657f405` | Channels View | 148 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5fa610fbf3d2` | Navigation | 149 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `41c983f0c08b` | Channel Table | 150 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `a4fe7d347dfb` | Channel Table Columns | 151 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `7b06e3fea95f` | Show or Hide Channel Groups | 151 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `29d12efd261d` | Change How Tags Display | 151 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `e0b27b68d52d` | Filter By Channel Name or Tag | 151 | — | In progress | — |
-| `5674b33d7229` | Use Drag and Drop | 152 | — | In progress | — |
-| `0fa473a59508` | Get the Channel Name/ID | 152 | — | In progress | — |
-| `09def024b34a` | Assign Channels to a Group | 152 | — | In progress | — |
-| `de57382c2001` | Import Channels/Groups Using Drag-and-Drop | 153 | — | In progress | — |
-| `14cd1a3e9d34` | Channel Tasks | 154 | — | In progress | — |
+| `e0b27b68d52d` | Filter By Channel Name or Tag | 151 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5674b33d7229` | Use Drag and Drop | 152 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `0fa473a59508` | Get the Channel Name/ID | 152 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `09def024b34a` | Assign Channels to a Group | 152 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `de57382c2001` | Import Channels/Groups Using Drag-and-Drop | 153 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `14cd1a3e9d34` | Channel Tasks | 154 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `c304f38f491b` | Import Channel | 156 | Flow/channel definition import (subset of Administrator import) | In progress | Management routes (flow import); parity with MC UI import is partial |
-| `857ba44219fd` | Debug Channel | 157 | — | In progress | — |
-| `89e43ed350c9` | Export Channel | 157 | — | In progress | — |
-| `dd60e165bbd5` | Group Tasks | 158 | — | In progress | — |
-| `e82ee17dce99` | Edit Group Details | 159 | — | In progress | — |
-| `9897d4a86607` | Import Group | 160 | — | In progress | — |
-| `65722f321eb3` | Export Group | 160 | — | In progress | — |
-| `88db8bc2a8b4` | Users View | 160 | — | In progress | — |
-| `880dddf2e789` | Navigation | 161 | — | In progress | — |
-| `25d9946b5ffb` | Users Table | 161 | — | In progress | — |
-| `c0716e3d6056` | Users Table Columns | 162 | — | In progress | — |
-| `ee6b616f2d66` | Users Tasks | 163 | — | In progress | — |
-| `92158c65ee21` | Add/Update a User Account | 163 | — | In progress | — |
-| `f8ed507bf36c` | Settings View | 166 | — | In progress | — |
-| `cb67b19541a6` | Navigation | 166 | — | In progress | — |
-| `8ed243f3ce44` | Server Settings Tab | 167 | — | In progress | — |
-| `b4435df52a24` | General Settings | 169 | — | In progress | — |
-| `8252a73ec326` | Channel Settings | 170 | — | In progress | — |
-| `48f754affefe` | Email Settings | 171 | — | In progress | — |
-| `610ce7ba36bc` | Notification Settings | 172 | — | In progress | — |
+| `857ba44219fd` | Debug Channel | 157 | N/A | N/A | No MC Administrator debug runner; test flows via HTTP dispatch + ledger (scope-vs-mirth.md) |
+| `89e43ed350c9` | Export Channel | 157 | Export channel definition: GET /admin/flows/{flowId}/export (JSON) | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs |
+| `dd60e165bbd5` | Group Tasks | 158 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e82ee17dce99` | Edit Group Details | 159 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `9897d4a86607` | Import Group | 160 | Create group: POST /admin/groups (JSON body) | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/GroupEndpointExtensions.cs |
+| `65722f321eb3` | Export Group | 160 | Export flow group JSON: GET /admin/groups/{groupId}/export | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/GroupEndpointExtensions.cs |
+| `88db8bc2a8b4` | Users View | 160 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `880dddf2e789` | Navigation | 161 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `25d9946b5ffb` | Users Table | 161 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c0716e3d6056` | Users Table Columns | 162 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `ee6b616f2d66` | Users Tasks | 163 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `92158c65ee21` | Add/Update a User Account | 163 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `f8ed507bf36c` | Settings View | 166 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `cb67b19541a6` | Navigation | 166 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `8ed243f3ce44` | Server Settings Tab | 167 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b4435df52a24` | General Settings | 169 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `8252a73ec326` | Channel Settings | 170 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `48f754affefe` | Email Settings | 171 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `610ce7ba36bc` | Notification Settings | 172 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `507967433858` | Tasks | 173 | — | In progress | — |
 | `7cda6572c24e` | Restore Config | 174 | — | In progress | — |
 | `0ab20a857be1` | Clear All Statistics | 174 | — | In progress | — |
@@ -198,7 +198,7 @@
 | `c60c07155911` | Database Tasks Table Columns | 185 | — | In progress | — |
 | `419dad49a5c5` | Affected Channels Table | 185 | — | In progress | — |
 | `437130dd4712` | Running a Database Task | 185 | — | In progress | — |
-| `7c3b0e9798cc` | Resources Settings Tab | 186 | — | In progress | — |
+| `7c3b0e9798cc` | Resources Settings Tab | 186 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `38188bc2fd91` | Resources Table Columns | 187 | — | In progress | — |
 | `65546f8a6976` | Tasks | 188 | — | In progress | — |
 | `c6a91d33b5f7` | Reload Resource | 188 | — | In progress | — |
@@ -230,8 +230,8 @@
 | `be800b5fefa4` | Change Data Type Properties | 209 | — | In progress | — |
 | `9f38760fef9c` | Bulk Edit Mode | 210 | — | In progress | — |
 | `b61fdc42dced` | Set Dependencies Window | 212 | — | In progress | — |
-| `a7ce739b4d7d` | Code Template Libraries | 213 | — | In progress | — |
-| `163cabfed67c` | Link Code Template Libraries | 213 | — | In progress | — |
+| `a7ce739b4d7d` | Code Template Libraries | 213 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `163cabfed67c` | Link Code Template Libraries | 213 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `81ce8b48b3c0` | Library Resources | 214 | — | In progress | — |
 | `dafb0378562f` | Deploy/Start Dependencies | 215 | — | In progress | — |
 | `f9c758dcae77` | Deploy/Start Channels | 217 | — | In progress | — |
@@ -603,7 +603,7 @@
 | `22e00d0a5268` | 4.5.0 Upgrade Notes | 555 | — | In progress | — |
 | `bd6fd013e268` | Updated DUO Authentication to use the Universal Prompt | 555 | — | In progress | — |
 | `b266af7e2a18` | Removed Libraries | 555 | — | In progress | — |
-| `65e5f06cdf17` | Change of Functionality of "Generate Envelope" in the Web Service Sender | 556 | — | In progress | — |
+| `65e5f06cdf17` | Change of Functionality of "Generate Envelope" in the Web Service Sender | 556 | N/A | N/A | Not in core SmartConnect; use HTTP/TCP adapters or host integration (scope-vs-mirth.md) |
 | `f6e26e7a286d` | Health Data Hub Plugin | 557 | — | In progress | — |
 | `1d1889921d4d` | 4.4.2 Upgrade Notes | 557 | — | In progress | — |
 | `c1c1010a902d` | Added a Readme File to Show Valid XML Type Message Export Information | 557 | — | In progress | — |

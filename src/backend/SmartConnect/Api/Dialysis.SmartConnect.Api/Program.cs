@@ -56,6 +56,7 @@ app.MapHealthChecks("/health");
 app.MapGet("/", () => Results.Redirect("/smartconnect/index.html", permanent: false));
 app.MapSmartConnectInboundRoutes();
 app.MapSmartConnectManagementRoutes();
+app.MapSmartConnectGroupRoutes();
 app.MapSmartConnectLedgerRoutes();
 app.MapSmartConnectConfigurationMapRoutes();
 app.MapSmartConnectEventsRoutes();

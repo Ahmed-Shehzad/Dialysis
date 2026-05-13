@@ -5,29 +5,25 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dialysis.HIS.Api</RootNamespace>
-    <Description>ASP.NET host for the HIS modular monolith — versioned MVC API (Tummers et al. 2021 RA-aligned routes).</Description>
+    <Description>ASP.NET host for the HIS modular monolith — facility-operations API (Operations, DataServices, Integration, RaCapabilities).</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.HIS.Composition/Dialysis.HIS.Composition.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
-    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../Dialysis.HIS.DataServices/Dialysis.HIS.DataServices.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Operations/Dialysis.HIS.Operations.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.PatientFlow/Dialysis.HIS.PatientFlow.csproj" />
     <ProjectReference Include="../Dialysis.HIS.RaCapabilities/Dialysis.HIS.RaCapabilities.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.Scheduling/Dialysis.HIS.Scheduling.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.Security/Dialysis.HIS.Security.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

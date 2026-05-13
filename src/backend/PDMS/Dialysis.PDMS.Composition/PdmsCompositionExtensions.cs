@@ -1,0 +1,49 @@
+using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Dialysis.CQRS;
+using Dialysis.CQRS.Commands;
+using Dialysis.Module.Hosting.Pipeline;
+using Dialysis.PDMS.Persistence;
+using Dialysis.PDMS.TreatmentSessions;
+using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
+using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
+using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
+using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
+using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Dialysis.PDMS.Composition;
+
+public static class PdmsCompositionExtensions
+{
+    public static IServiceCollection AddPatientDataManagementSystem(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<DbContextOptionsBuilder>? configurePersistence = null,
+        bool enableOutboxRelay = false,
+        Action<IServiceCollection>? configureTransponderTransport = null)
+    {
+        services.AddPdmsPersistence(configurePersistence);
+
+        services.AddTransponder(_ => { });
+        configureTransponderTransport?.Invoke(services);
+
+        services.AddCqrs(c =>
+        {
+            c.AddFromAssembliesOf(typeof(PdmsTreatmentSessionsMarker));
+
+            c.AddCommandBehavior<ScheduleSessionCommand, Guid, AuthorizationPipelineBehavior<ScheduleSessionCommand, Guid>>();
+            c.AddCommandBehavior<StartSessionCommand, Unit, AuthorizationPipelineBehavior<StartSessionCommand, Unit>>();
+            c.AddCommandBehavior<RecordReadingCommand, Guid, AuthorizationPipelineBehavior<RecordReadingCommand, Guid>>();
+            c.AddCommandBehavior<CompleteSessionCommand, Unit, AuthorizationPipelineBehavior<CompleteSessionCommand, Unit>>();
+            c.AddCommandBehavior<AbortSessionCommand, Unit, AuthorizationPipelineBehavior<AbortSessionCommand, Unit>>();
+        });
+
+        if (enableOutboxRelay)
+            services.AddTransponderOutboxRelay<PdmsDbContext>();
+
+        return services;
+    }
+}

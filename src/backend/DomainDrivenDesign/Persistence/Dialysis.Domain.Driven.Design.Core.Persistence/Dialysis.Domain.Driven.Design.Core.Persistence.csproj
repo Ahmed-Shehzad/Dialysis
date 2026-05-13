@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.DomainDrivenDesign.Persistence</RootNamespace>
+    <AssemblyName>Dialysis.Domain.Driven.Design.Core.Persistence</AssemblyName>
+    <Description>Shared EF Core module persistence: ModuleDbContextBase, audit interceptor, and conventions stacked on top of Transponder outbox/inbox.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+    <ProjectReference Include="../../Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+</Project>

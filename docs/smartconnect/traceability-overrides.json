@@ -954,6 +954,511 @@
       "mapping": "N/A",
       "status": "N/A",
       "evidence": "MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md)"
+    },
+    "f08a7e51d0c2": {
+      "mapping": "Channel-style integration flows: IntegrationFlow + pipeline JSON",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlow.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs"
+    },
+    "cb6cf78e7048": {
+      "mapping": "Flows: source ingress + route filters + outbound routes (Mirth channel analogue)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnector.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "8f8485279c1d": {
+      "mapping": "Pipeline components: RouteFilters, OutboundRoutes, Scripts, ResponseTransforms",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs"
+    },
+    "5584b7a1846b": {
+      "mapping": "Flow properties: Id, Name, RuntimeState, Pipeline definition",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlow.cs"
+    },
+    "6ff60c0decb8": {
+      "mapping": "Source connectors: HTTP, MLLP, FileReader, TcpListener, DatabaseReader + registry",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/SourceConnectorHostedService.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnectorRegistry.cs"
+    },
+    "b30529234a69": {
+      "mapping": "Connector model: outbound adapter kinds + per-route parameters JSON",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/*OutboundAdapter.cs"
+    },
+    "5e271d1b17c5": {
+      "mapping": "General outbound route: adapter kind, transform stages, retries, response transforms",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs"
+    },
+    "e6c5e2baab30": {
+      "mapping": "Connector-specific settings: OutboundParametersJson + metadata keys",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "27fd5020ecec": {
+      "mapping": "Source-side: PreProcessor script, ledger Received, route filters before destinations",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs"
+    },
+    "08ca078d887e": {
+      "mapping": "Destination-side: per-route transforms, SendAsync, optional response transforms",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "66290c37fc29": {
+      "mapping": "Final steps: ledger Completed, PostProcessor script, aggregate success",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "906e1dbd0a6a": {
+      "mapping": "Destination chains: OutboundRoutesSequential + Channel Writer in-process chaining",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs"
+    },
+    "a1192781e4bc": {
+      "mapping": "Payload formats + HL7/JSON/XML/datatype helpers and transform stages",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/PayloadFormat.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataTypes/Hl7V2Parser.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/*.cs"
+    },
+    "1cbaf2ccb2eb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "6e7763c9e4e7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "4c6c3ad55310": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b5cc8390e49a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f6052f76c1fd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e4542d05530f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e37510af8771": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "99097a44b22e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "dd41f11b0f31": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7910938ae1a4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "137b1bbd1d82": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "d57cc0f98c28": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e32d40cb052d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "58b454bd41c2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7ad5ec970f92": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e97a4e12318c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "fd87fb2f2635": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "4c79a22b8705": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "2efc1e95967b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5d229b40aa2d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "14fd187586ca": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "341366726e2f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5a5903d10960": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "ff479e0920d1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "6c32dd2aa4e1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "a23e8bb2a424": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5888c5a3e6f6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b275dfced60b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "2a64eb396355": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "d7c4994ec221": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "8780172310f0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "dba2fb93ad73": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "736247a4bb0a": {
+      "mapping": "Message list query parameters (subset of MC search options)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs"
+    },
+    "18d71fe936b8": {
+      "mapping": "Ledger query filters: flowId, correlationId, dates, status on GET /admin/messages",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/IMessageLedgerQuery.cs"
+    },
+    "eb6a41544dcf": {
+      "mapping": "Operator shell: message list, reprocess, flow links (subset of MC Message Browser tasks)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html"
+    },
+    "f1ab76555544": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No bulk message import UI; ingest via connectors or POST /flows/{id}/messages (No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md))"
+    },
+    "eddf45bc29b4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC message-browser export-results file; use ledger JSON APIs or custom export (No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md))"
+    },
+    "0858c2e885b0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC remove-results UI; retention via DataPruner + admin configuration (No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md))"
+    },
+    "341763e159ff": {
+      "mapping": "Reprocess one entry at a time via API; MC multi-select batch UI N/A",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs"
+    },
+    "e0f496104a04": {
+      "mapping": "Reprocess single ledger entry: POST /admin/messages/{ledgerEntryId}/reprocess",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/MessageBrowserApiTests.cs"
+    },
+    "27e26a88f711": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No attachment export; attachments out of scope (scope-vs-mirth.md)"
+    },
+    "44b685818f8f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "a719fded8b65": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "fc8d4a7bb89c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "3308fd0fd198": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "8ebe4b804d88": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "167fafb422e2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5eb4a7958208": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "20e34cf87402": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e198e9ef5eb4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "cb4b8503ad35": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "6d1db4c03a71": {
+      "mapping": "Search audit events: GET /admin/events with category, level, flowId, date range, skip/take",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs"
+    },
+    "6982d7114011": {
+      "mapping": "Event query filters (same query endpoint); no Swing advanced filter UI",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/EventsEndpointExtensions.cs"
+    },
+    "73f805716ab9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "23d7d23954b8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "ab0b0657f405": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5fa610fbf3d2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "41c983f0c08b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "a4fe7d347dfb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e0b27b68d52d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5674b33d7229": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "0fa473a59508": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "09def024b34a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "de57382c2001": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "14cd1a3e9d34": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "857ba44219fd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator debug runner; test flows via HTTP dispatch + ledger (scope-vs-mirth.md)"
+    },
+    "89e43ed350c9": {
+      "mapping": "Export channel definition: GET /admin/flows/{flowId}/export (JSON)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs"
+    },
+    "dd60e165bbd5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e82ee17dce99": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9897d4a86607": {
+      "mapping": "Create group: POST /admin/groups (JSON body)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/GroupEndpointExtensions.cs"
+    },
+    "65722f321eb3": {
+      "mapping": "Export flow group JSON: GET /admin/groups/{groupId}/export",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/GroupEndpointExtensions.cs"
+    },
+    "88db8bc2a8b4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "880dddf2e789": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "25d9946b5ffb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c0716e3d6056": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "ee6b616f2d66": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "92158c65ee21": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f8ed507bf36c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "cb67b19541a6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "8ed243f3ce44": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b4435df52a24": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "8252a73ec326": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "48f754affefe": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "610ce7ba36bc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7c3b0e9798cc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "a7ce739b4d7d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "163cabfed67c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "65e5f06cdf17": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Not in core SmartConnect; use HTTP/TCP adapters or host integration (scope-vs-mirth.md)"
     }
   }
 }

@@ -1,15 +1,7 @@
-using Dialysis.HIS.DataServices;
-using Dialysis.HIS.Integration;
-using Dialysis.HIS.Medication;
-using Dialysis.HIS.Operations;
-using Dialysis.HIS.PatientAccess;
-using Dialysis.HIS.PatientFlow;
-using Dialysis.HIS.Persistence;
-using Dialysis.HIS.Scheduling;
-using Dialysis.HIS.Security;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
+using Dialysis.HIS.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,38 +11,34 @@ namespace Dialysis.HIS.Composition;
 public static class HospitalInformationSystemExtensions
 {
     /// <summary>
-    /// Registers all HIS bounded contexts, EF persistence (in-memory by default), CQRS (<see cref="HisCqrsServiceCollectionExtensions.AddHisCqrs"/>),
-    /// authorization pipeline for permissioned requests, Transponder bus, and integration stubs.
+    /// Registers HIS facility-operations bounded contexts (Operations, DataServices, Integration, RaCapabilities),
+    /// EF persistence against PostgreSQL, CQRS via <see cref="HisCqrsServiceCollectionExtensions.AddHisCqrs"/>,
+    /// authorization pipeline behaviors, Transponder bus, and optional outbox relay.
+    /// Clinical concerns (Registration/Scheduling/PatientChart/Portal/ClinicalNotes/Billing) have moved to the EHR module.
     /// </summary>
-    /// <param name="configurePersistence">SQL Server (or other) provider when a connection string is supplied by the host.</param>
-    /// <param name="enableOutboxDispatcher">When true, registers <c>AddTransponderOutboxRelay&lt;HisDbContext&gt;</c> so queued outbox rows publish to <see cref="ITransponderBus"/>.</param>
-    /// <param name="configureTransponderTransport">Optional: e.g. <see cref="RabbitMqTransponderServiceCollectionExtensions.AddTransponderRabbitMq"/> when broker URI is configured.</param>
     public static IServiceCollection AddHospitalInformationSystem(
         this IServiceCollection services,
         IConfiguration configuration,
         Action<DbContextOptionsBuilder>? configurePersistence = null,
-        bool enableOutboxDispatcher = false,
+        bool enableOutboxRelay = false,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
-        services.AddHisSecurityCore(configuration);
-        services.Configure<PatientPortalOptions>(configuration.GetSection("His:PatientAccess"));
-        services.AddHisPersistence(configurePersistence);
-        services.AddHisIntegrationStubs(configuration);
+        _ = configuration;
 
-        services.AddTransponder(t => t.AddHisIntegrationConsumers());
+        services.AddHisPersistence(configurePersistence);
+
+        services.AddTransponder(_ => { });
         configureTransponderTransport?.Invoke(services);
 
         services.AddHisCqrs();
 
-        if (enableOutboxDispatcher)
+        if (enableOutboxRelay)
             services.AddTransponderOutboxRelay<HisDbContext>();
 
         return services;
     }
 
-    /// <summary>
-    /// Applies RabbitMQ as <see cref="ITransponderBus"/> when <paramref name="rabbitConnectionUri"/> is non-empty; configures HIS integration subscriptions.
-    /// </summary>
+    /// <summary>Applies RabbitMQ as <see cref="ITransponderBus"/> when <paramref name="rabbitConnectionUri"/> is non-empty.</summary>
     public static void AddHisTransponderRabbitMqIfConfigured(
         this IServiceCollection services,
         string? rabbitConnectionUri,
@@ -68,7 +56,6 @@ public static class HospitalInformationSystemExtensions
                     o.QueueName = queueName;
                 if (!string.IsNullOrWhiteSpace(exchangeName))
                     o.ExchangeName = exchangeName;
-            },
-            b => b.AddHisIntegrationMessageSubscriptions());
+            });
     }
 }

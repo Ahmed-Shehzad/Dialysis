@@ -1,7 +1,10 @@
 namespace Dialysis.HIS.Contracts.Security;
 
-/// <summary>Commands that require an authorization check before the handler runs.</summary>
-public interface IPermissionedCommand
+/// <summary>
+/// Legacy HIS-local marker preserved for backwards-source-compatibility with handlers/commands written before
+/// the shared <see cref="Dialysis.Module.Contracts.Authorization.IPermissionedCommand"/> existed. Inherits from the
+/// shared abstraction so <c>Dialysis.Module.Hosting</c>'s authorization pipeline behavior recognises it.
+/// </summary>
+public interface IPermissionedCommand : Dialysis.Module.Contracts.Authorization.IPermissionedCommand
 {
-    string RequiredPermission { get; }
 }

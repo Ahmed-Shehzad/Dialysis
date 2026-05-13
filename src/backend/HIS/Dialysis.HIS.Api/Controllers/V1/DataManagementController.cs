@@ -4,32 +4,18 @@ using Dialysis.HIS.Api.Controllers;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.DataServices.Features.GetDataImportJobById;
 using Dialysis.HIS.DataServices.Features.ListIntegrationOutboxRecent;
-using Dialysis.HIS.DataServices.Features.ManagerDashboard;
-using Dialysis.HIS.DataServices.Features.SearchPatients;
 using Dialysis.HIS.DataServices.Features.SubmitDataImportJob;
 using Dialysis.HIS.DataServices.Ports;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.HIS.Api.Controllers.V1;
 
-/// <summary>RA: <em>Data management</em> — import, search, analytics (Tummers et al., 2021).</summary>
+/// <summary>RA: <em>Data management</em> — import jobs and outbox metadata. Patient search / manager dashboard moved to EHR.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/data-management")]
 public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasControllerBase
 {
-    [HttpGet("patients/search")]
-    [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<PatientSearchResultDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SearchPatients([FromQuery] string? q, CancellationToken cancellationToken)
-    {
-        var results = await gateway
-            .SendQueryAsync<SearchPatientsQuery, IReadOnlyList<PatientSearchResultDto>>(
-                new SearchPatientsQuery(string.IsNullOrWhiteSpace(q) ? null : q),
-                cancellationToken)
-            .ConfigureAwait(false);
-        return OkResource(results, LinkCapabilitiesIndex());
-    }
-
     [HttpPost("import-jobs")]
     [ProducesResponseType(typeof(ResourceEnvelope<SubmitDataImportJobResponse>), StatusCodes.Status201Created)]
     public async Task<IActionResult> SubmitImportJob([FromBody] SubmitDataImportJobCommand command, CancellationToken cancellationToken)
@@ -47,16 +33,6 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
             .SendQueryAsync<GetDataImportJobByIdQuery, DataImportJobStatusDto?>(new GetDataImportJobByIdQuery(id), cancellationToken)
             .ConfigureAwait(false);
         return dto is null ? NotFound() : OkResource(dto, LinkCapabilitiesIndex());
-    }
-
-    [HttpGet("manager-dashboard")]
-    [ProducesResponseType(typeof(ResourceEnvelope<ManagerDashboardDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetManagerDashboard([FromQuery] string? reportFocus, CancellationToken cancellationToken)
-    {
-        var dto = await gateway
-            .SendQueryAsync<ManagerDashboardQuery, ManagerDashboardDto>(new ManagerDashboardQuery(reportFocus), cancellationToken)
-            .ConfigureAwait(false);
-        return OkResource(dto, LinkCapabilitiesIndex());
     }
 
     /// <summary>Metadata-only view of recent Transponder transactional outbox rows (no payload body).</summary>

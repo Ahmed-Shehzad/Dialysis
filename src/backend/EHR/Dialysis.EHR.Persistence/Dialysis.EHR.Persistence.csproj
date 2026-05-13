@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.EHR.Persistence</RootNamespace>
+    <Description>EHR persistence: PostgreSQL EhrDbContext (stacked on ModuleDbContextBase), entity configurations, repository implementations, design-time factory.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.Registration/Dialysis.EHR.Registration.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.PatientChart/Dialysis.EHR.PatientChart.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.Scheduling/Dialysis.EHR.Scheduling.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.PatientPortal/Dialysis.EHR.PatientPortal.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.ClinicalNotes/Dialysis.EHR.ClinicalNotes.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.Billing/Dialysis.EHR.Billing.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.Integration/Dialysis.EHR.Integration.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Postgresql/Transponder.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

@@ -6,29 +6,27 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dialysis.HIS.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="Xunit.SkippableFact" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.Scheduling/Dialysis.HIS.Scheduling.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
-    <ProjectReference Include="../Dialysis.HIS.RaCapabilities/Dialysis.HIS.RaCapabilities.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
   </ItemGroup>
 
 </Project>

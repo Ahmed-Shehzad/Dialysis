@@ -1,0 +1,67 @@
+using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.EHR.Billing.Domain;
+using Dialysis.EHR.ClinicalNotes.Domain;
+using Dialysis.EHR.Integration.Domain;
+using Dialysis.EHR.PatientChart.Domain;
+using Dialysis.EHR.PatientPortal.Domain;
+using Dialysis.EHR.Registration.Domain;
+using Dialysis.EHR.Scheduling.Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
+namespace Dialysis.EHR.Persistence;
+
+public sealed class EhrDbContext(
+    DbContextOptions<EhrDbContext> options,
+    IOptions<TransponderPersistenceOptions> persistenceOptions)
+    : ModuleDbContextBase(options, persistenceOptions)
+{
+    protected override string ModuleSchema => "ehr";
+
+    // Registration
+    public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<Provider> Providers => Set<Provider>();
+
+    // PatientChart
+    public DbSet<Allergy> Allergies => Set<Allergy>();
+    public DbSet<ProblemListItem> ProblemListItems => Set<ProblemListItem>();
+    public DbSet<VitalSignReading> VitalSignReadings => Set<VitalSignReading>();
+    public DbSet<Immunization> Immunizations => Set<Immunization>();
+    public DbSet<MedicationStatement> MedicationStatements => Set<MedicationStatement>();
+
+    // Scheduling
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<ProviderAvailabilityWindow> ProviderAvailabilityWindows => Set<ProviderAvailabilityWindow>();
+
+    // Portal
+    public DbSet<PortalAppointmentRequest> PortalAppointmentRequests => Set<PortalAppointmentRequest>();
+    public DbSet<SecureMessage> SecureMessages => Set<SecureMessage>();
+
+    // ClinicalNotes
+    public DbSet<Encounter> Encounters => Set<Encounter>();
+    public DbSet<Diagnosis> Diagnoses => Set<Diagnosis>();
+    public DbSet<PerformedProcedure> PerformedProcedures => Set<PerformedProcedure>();
+    public DbSet<ClinicalNote> ClinicalNotes => Set<ClinicalNote>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
+    public DbSet<LabOrder> LabOrders => Set<LabOrder>();
+    public DbSet<LabResult> LabResults => Set<LabResult>();
+
+    // Billing
+    public DbSet<Payer> Payers => Set<Payer>();
+    public DbSet<Charge> Charges => Set<Charge>();
+    public DbSet<Claim> Claims => Set<Claim>();
+    public DbSet<Remittance> Remittances => Set<Remittance>();
+    public DbSet<Payment> Payments => Set<Payment>();
+
+    // Integration
+    public DbSet<PharmacyTransmission> PharmacyTransmissions => Set<PharmacyTransmission>();
+    public DbSet<LabTransmission> LabTransmissions => Set<LabTransmission>();
+    public DbSet<InsurerTransmission> InsurerTransmissions => Set<InsurerTransmission>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        Configurations.EhrModelConfiguration.Configure(modelBuilder);
+    }
+}

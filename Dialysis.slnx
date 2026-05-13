@@ -44,10 +44,23 @@
   </Folder>
   <Folder Name="/src/backend/DomainDrivenDesign/Persistence/">
     <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+    <Project Path="src/backend/DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.csproj" />
   </Folder>
   <Folder Name="/src/backend/EHR/">
     <Project Path="src/backend/EHR/Dialysis.EHR.Core.Abstraction/Dialysis.EHR.Core.Abstraction.csproj" />
     <Project Path="src/backend/EHR/Dialysis.EHR.Core/Dialysis.EHR.Core.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Registration/Dialysis.EHR.Registration.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.PatientChart/Dialysis.EHR.PatientChart.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Scheduling/Dialysis.EHR.Scheduling.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.PatientPortal/Dialysis.EHR.PatientPortal.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.ClinicalNotes/Dialysis.EHR.ClinicalNotes.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Billing/Dialysis.EHR.Billing.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Integration/Dialysis.EHR.Integration.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Persistence/Dialysis.EHR.Persistence.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Composition/Dialysis.EHR.Composition.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Tests/Dialysis.EHR.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/EHR/Persistence/">
     <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Abstractions/Dialysis.EHR.Core.Persistence.Abstractions.csproj" />
@@ -58,6 +71,11 @@
   <Folder Name="/src/backend/PDMS/">
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Core.Abstraction/Dialysis.PDMS.Core.Abstraction.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Core/Dialysis.PDMS.Core.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Composition/Dialysis.PDMS.Composition.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
   </Folder>
   <Folder Name="/src/backend/PDMS/Persistence/">
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Abstractions/Dialysis.PDMS.Core.Persistence.Abstractions.csproj" />
@@ -65,20 +83,19 @@
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Postgresql/Dialysis.PDMS.Core.Persistence.Postgresql.csproj" />
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.SqlServer/Dialysis.PDMS.Core.Persistence.SqlServer.csproj" />
   </Folder>
+  <Folder Name="/src/backend/Shared/">
+    <Project Path="src/backend/Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+  </Folder>
   <Folder Name="/src/backend/HIS/">
     <Project Path="src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Composition/Dialysis.HIS.Composition.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.DataServices/Dialysis.HIS.DataServices.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
-    <Project Path="src/backend/HIS/Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Operations/Dialysis.HIS.Operations.csproj" />
-    <Project Path="src/backend/HIS/Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
-    <Project Path="src/backend/HIS/Dialysis.HIS.PatientFlow/Dialysis.HIS.PatientFlow.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.RaCapabilities/Dialysis.HIS.RaCapabilities.csproj" />
-    <Project Path="src/backend/HIS/Dialysis.HIS.Scheduling/Dialysis.HIS.Scheduling.csproj" />
-    <Project Path="src/backend/HIS/Dialysis.HIS.Security/Dialysis.HIS.Security.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Tests/Dialysis.HIS.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/Identity/">
@@ -111,5 +128,8 @@
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Management/">
     <Project Path="src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dialysis.ArchitectureTests/Dialysis.ArchitectureTests.csproj" />
   </Folder>
 </Solution>

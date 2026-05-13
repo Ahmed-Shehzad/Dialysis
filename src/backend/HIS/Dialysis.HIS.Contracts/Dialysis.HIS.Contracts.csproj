@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
     <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

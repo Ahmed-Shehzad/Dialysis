@@ -1,0 +1,120 @@
+name: dialysis
+
+# Per-module Postgres databases (one container per module — locks in the modular-monolith
+# "each module owns its own DB" invariant) + RabbitMQ for cross-module Transponder traffic +
+# Keycloak as the OIDC IdP. Module hosts are not in this compose; run them with
+# `dotnet run --project src/backend/<Module>/Dialysis.<Module>.Api` against this infra.
+
+services:
+  postgres-his:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_his
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres-his-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_his"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-smartconnect:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_smartconnect
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres-smartconnect-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_smartconnect"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-ehr:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_ehr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres-ehr-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_ehr"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-pdms:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_pdms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres-pdms-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_pdms"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-identity:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_identity
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5444:5432"
+    volumes:
+      - postgres-identity-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: dialysis
+      RABBITMQ_DEFAULT_PASS: dialysis
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8081:8080"
+
+volumes:
+  postgres-his-data:
+  postgres-smartconnect-data:
+  postgres-ehr-data:
+  postgres-pdms-data:
+  postgres-identity-data:

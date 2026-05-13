@@ -1,15 +1,19 @@
+using System.Text.Json;
+using Dialysis.SmartConnect;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
 /// <summary>Maps <c>/smartconnect/v1/admin/groups/*</c> CRUD routes.</summary>
 public static class GroupEndpointExtensions
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
     public static IEndpointRouteBuilder MapSmartConnectGroupRoutes(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/smartconnect/v1/admin/groups").WithTags("SmartConnect Admin");
@@ -25,6 +29,28 @@ public static class GroupEndpointExtensions
                     }));
                 })
             .WithName("SmartConnect_ListGroups");
+
+        group.MapGet(
+                "/{groupId:guid}/export",
+                async (Guid groupId, SmartConnectDbContext db, CancellationToken ct) =>
+                {
+                    var entity = await db.FlowGroups.AsNoTracking()
+                        .FirstOrDefaultAsync(g => g.Id == groupId, ct).ConfigureAwait(false);
+                    if (entity is null)
+                    {
+                        return Results.NotFound();
+                    }
+
+                    var dto = new FlowGroup
+                    {
+                        Id = entity.Id,
+                        Name = entity.Name,
+                        Description = entity.Description,
+                    };
+                    var json = JsonSerializer.Serialize(dto, JsonOptions);
+                    return Results.Text(json, "application/json");
+                })
+            .WithName("SmartConnect_ExportGroup");
 
         group.MapPost(
                 "/",

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.PDMS.Contracts</RootNamespace>
+    <AssemblyName>Dialysis.PDMS.Contracts</AssemblyName>
+    <Description>PDMS public contracts: permission catalog, integration events for dialysis-treatment lifecycle.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>
