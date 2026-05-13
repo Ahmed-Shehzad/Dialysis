@@ -6,22 +6,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Dialysis.SmartConnect.Api</RootNamespace>
     <AssemblyName>Dialysis.SmartConnect.Api</AssemblyName>
+    <Description>ASP.NET host for the SmartConnect integration runtime (flows, inbound connectors, management API).</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
     <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/Dialysis.SmartConnect.Inbound.AspNetCore.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Mllp/Dialysis.SmartConnect.Inbound.Mllp.csproj" />
     <ProjectReference Include="../../Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Exporter.Console" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <ProjectReference Include="../../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

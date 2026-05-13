@@ -1,3 +1,4 @@
+using Dialysis.SmartConnect.Scheduling;
 using Microsoft.Extensions.Logging;
 
 namespace Dialysis.SmartConnect.Inbound.FileReader;
@@ -58,21 +59,47 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             Directory.CreateDirectory(parameters.QuarantineDirectory);
         }
 
+        ISchedule schedule;
+        try
+        {
+            schedule = ScheduleFactory.FromParameters(context.Parameters, parameters.PollIntervalSeconds);
+        }
+        catch (ArgumentException ex)
+        {
+            context.Logger.LogError(ex, "FileReader '{Name}' has invalid schedule; not starting.", context.InstanceName);
+            return;
+        }
+
         context.Logger.LogInformation(
-            "FileReader '{Name}' polling '{Directory}' (pattern '{Pattern}', interval {Interval}s, afterRead {AfterRead}).",
+            "FileReader '{Name}' polling '{Directory}' (pattern '{Pattern}', schedule {Schedule}, afterRead {AfterRead}).",
             context.InstanceName,
             parameters.Directory,
             parameters.FilePattern,
-            parameters.PollIntervalSeconds,
+            schedule.GetType().Name,
             parameters.AfterRead);
 
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(parameters.PollIntervalSeconds));
-        // Run an initial pass immediately, then on each tick.
+        // Run an initial pass immediately, then follow the schedule.
         await PollOnceAsync(context, parameters, cancellationToken).ConfigureAwait(false);
         try
         {
-            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            while (!cancellationToken.IsCancellationRequested)
             {
+                var now = DateTimeOffset.UtcNow;
+                var next = schedule.NextOccurrence(now);
+                if (next is null)
+                {
+                    context.Logger.LogInformation(
+                        "FileReader '{Name}' schedule has no future occurrence; stopping.",
+                        context.InstanceName);
+                    break;
+                }
+
+                var delay = next.Value - now;
+                if (delay > TimeSpan.Zero)
+                {
+                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                }
+
                 await PollOnceAsync(context, parameters, cancellationToken).ConfigureAwait(false);
             }
         }

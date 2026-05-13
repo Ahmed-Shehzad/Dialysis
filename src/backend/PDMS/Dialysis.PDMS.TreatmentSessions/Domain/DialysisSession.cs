@@ -10,6 +10,7 @@ public enum DialysisSessionStatus
     Completed = 3,
     Aborted = 4,
     Cancelled = 5,
+    Paused = 6,
 }
 
 public sealed class DialysisSession : AggregateRoot<Guid>
@@ -41,6 +42,9 @@ public sealed class DialysisSession : AggregateRoot<Guid>
     public decimal? AchievedUfVolumeLiters { get; private set; }
 
     public string? AbortReasonCode { get; private set; }
+
+    /// <summary>The dialysis machine currently bound to this session. Set via <see cref="BindMachine"/> at start time; remains for the lifetime of the session.</summary>
+    public Guid? MachineId { get; private set; }
 
     public IReadOnlyCollection<IntradialyticReading> Readings => _readings;
 
@@ -151,5 +155,66 @@ public sealed class DialysisSession : AggregateRoot<Guid>
             PatientId: PatientId,
             AbortedAtUtc: abortedAtUtc,
             ReasonCode: AbortReasonCode));
+    }
+
+    /// <summary>
+    /// Associates a physical machine with this session. Idempotent when the same machine is re-bound; rejects
+    /// a different machine on an in-progress session to prevent telemetry cross-contamination.
+    /// </summary>
+    public void BindMachine(Guid machineId)
+    {
+        if (machineId == Guid.Empty) throw new ArgumentException("Machine required.", nameof(machineId));
+        if (MachineId.HasValue && MachineId.Value != machineId)
+            throw new InvalidOperationException("Session is already bound to a different machine.");
+        MachineId = machineId;
+    }
+
+    /// <summary>
+    /// Records that the bound machine emitted a treatment observation. PDMS persists the <see cref="TreatmentObservation"/>
+    /// row in its own table (high-volume child of the session). Domain-level invariant: session must be in progress and
+    /// the machine must match.
+    /// </summary>
+    public void ReceiveObservation(Guid machineId, DateTime observedAtUtc)
+    {
+        if (Status != DialysisSessionStatus.InProgress)
+            throw new InvalidOperationException($"Cannot ingest observation on session in status {Status}.");
+        if (MachineId is null)
+            throw new InvalidOperationException("Session has no bound machine.");
+        if (MachineId.Value != machineId)
+            throw new InvalidOperationException("Observation came from a different machine than the one bound to this session.");
+        if (observedAtUtc < ActualStartUtc)
+            throw new ArgumentException("Observation predates session start.", nameof(observedAtUtc));
+    }
+
+    /// <summary>
+    /// Records that the bound machine raised an alarm. Domain method is invariant-checking only; the
+    /// <see cref="TreatmentAlarm"/> aggregate owns the alarm-state lifecycle.
+    /// </summary>
+    public void RecordAlarm(Guid machineId, DateTime observedAtUtc)
+    {
+        if (Status is DialysisSessionStatus.Completed or DialysisSessionStatus.Cancelled)
+            throw new InvalidOperationException($"Cannot record alarm on session in status {Status}.");
+        if (MachineId is null)
+            throw new InvalidOperationException("Session has no bound machine.");
+        if (MachineId.Value != machineId)
+            throw new InvalidOperationException("Alarm came from a different machine than the one bound to this session.");
+        if (observedAtUtc < ActualStartUtc)
+            throw new ArgumentException("Alarm predates session start.", nameof(observedAtUtc));
+    }
+
+    /// <summary>Transitions an in-progress session to paused (e.g. machine entered standby).</summary>
+    public void Pause()
+    {
+        if (Status != DialysisSessionStatus.InProgress)
+            throw new InvalidOperationException($"Cannot pause a session in status {Status}.");
+        Status = DialysisSessionStatus.Paused;
+    }
+
+    /// <summary>Resumes a paused session.</summary>
+    public void Resume()
+    {
+        if (Status != DialysisSessionStatus.Paused)
+            throw new InvalidOperationException($"Cannot resume a session in status {Status}.");
+        Status = DialysisSessionStatus.InProgress;
     }
 }

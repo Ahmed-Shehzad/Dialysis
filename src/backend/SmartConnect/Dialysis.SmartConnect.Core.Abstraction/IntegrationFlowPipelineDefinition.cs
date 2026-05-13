@@ -8,6 +8,13 @@ public sealed class IntegrationFlowPipelineDefinition
     public List<RouteFilterSlot> RouteFilters { get; set; } = [];
 
     /// <summary>
+    /// Source-side transform stages run once after RouteFilters and before the outbound-route loop. Mirth-equivalent
+    /// of source-connector transformer steps. Used most often for Destination Set Filter (which computes per-message
+    /// outbound routing). Output metadata (including <c>smartconnect.destinationSet</c>) propagates into the route loop.
+    /// </summary>
+    public List<TransformStageSlot> SourceTransformStages { get; set; } = [];
+
+    /// <summary>
     /// When false (default), all outbound routes are attempted (Mirth-style parallel destinations).
     /// When true, routes run in list order; the first failure or missing adapter stops later routes (destination chain).
     /// </summary>

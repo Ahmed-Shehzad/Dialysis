@@ -87,13 +87,13 @@
 | `e4542d05530f` | Remove All Messages | 96 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `e37510af8771` | Clear Statistics | 97 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `99097a44b22e` | Filter By Channel Name or Tag | 98 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `b765115cf57d` | View All Available Tags/Names | 98 | — | In progress | — |
-| `61c13f92df62` | Auto-Complete Tags/Names | 99 | — | In progress | — |
-| `790cf22b8dc7` | Filter By Channel Tags | 99 | — | In progress | — |
-| `c76458c0dab9` | Filter By Channel | 101 | — | In progress | — |
-| `1310a6d32f12` | Filter By Partial Channel Name | 101 | — | In progress | — |
-| `c21736a470a6` | Filter By Multiple Criteria | 102 | — | In progress | — |
-| `690c7a839977` | Clear Filter Criteria | 102 | — | In progress | — |
+| `b765115cf57d` | View All Available Tags/Names | 98 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `61c13f92df62` | Auto-Complete Tags/Names | 99 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `790cf22b8dc7` | Filter By Channel Tags | 99 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c76458c0dab9` | Filter By Channel | 101 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `1310a6d32f12` | Filter By Partial Channel Name | 101 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c21736a470a6` | Filter By Multiple Criteria | 102 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `690c7a839977` | Clear Filter Criteria | 102 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `eb267384985d` | Message Browser View | 103 | Message Browser APIs: list with filters (flowId, correlationId, date range, status), GET entry by id, reprocess, flow statistics | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; MessageBrowserApiTests |
 | `dd41f11b0f31` | Navigation | 104 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `7910938ae1a4` | From the Dashboard | 104 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
@@ -177,65 +177,65 @@
 | `8252a73ec326` | Channel Settings | 170 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `48f754affefe` | Email Settings | 171 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `610ce7ba36bc` | Notification Settings | 172 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `507967433858` | Tasks | 173 | — | In progress | — |
-| `7cda6572c24e` | Restore Config | 174 | — | In progress | — |
-| `0ab20a857be1` | Clear All Statistics | 174 | — | In progress | — |
+| `507967433858` | Tasks | 173 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `7cda6572c24e` | Restore Config | 174 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `0ab20a857be1` | Clear All Statistics | 174 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `5b1af9c5062e` | Administrator Settings Tab | 174 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `54ebed23b65a` | System Preferences | 175 | — | In progress | — |
-| `358db0b36953` | User Preferences | 177 | — | In progress | — |
-| `692a2def89d7` | Code Editor Preferences | 178 | — | In progress | — |
-| `1d139d57ee8e` | Tasks | 179 | — | In progress | — |
-| `d28d92e49252` | Tags Settings Tab | 179 | — | In progress | — |
-| `91649618dd2c` | Tags Table | 180 | — | In progress | — |
-| `5328555804c9` | Adding a Tag | 181 | — | In progress | — |
-| `fd9e9317771e` | Removing a Tag | 181 | — | In progress | — |
-| `9f0282e53326` | Channels Table | 181 | — | In progress | — |
-| `0045040b889a` | Indeterminate Check Boxes | 182 | — | In progress | — |
+| `54ebed23b65a` | System Preferences | 175 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `358db0b36953` | User Preferences | 177 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `692a2def89d7` | Code Editor Preferences | 178 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `1d139d57ee8e` | Tasks | 179 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `d28d92e49252` | Tags Settings Tab | 179 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `91649618dd2c` | Tags Table | 180 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5328555804c9` | Adding a Tag | 181 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `fd9e9317771e` | Removing a Tag | 181 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `9f0282e53326` | Channels Table | 181 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `0045040b889a` | Indeterminate Check Boxes | 182 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `5f74a6e2db0b` | Configuration Map Settings Tab | 182 | Configuration / global / channel variable maps via REST CRUD | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ConfigurationMapEndpointExtensions.cs; IVariableMapStore |
-| `863eb71118e8` | Table Columns | 183 | — | In progress | — |
-| `da0ed40e9c3c` | Tasks | 183 | — | In progress | — |
-| `2915220ce311` | Database Tasks Settings Tab | 184 | — | In progress | — |
-| `c60c07155911` | Database Tasks Table Columns | 185 | — | In progress | — |
-| `419dad49a5c5` | Affected Channels Table | 185 | — | In progress | — |
-| `437130dd4712` | Running a Database Task | 185 | — | In progress | — |
+| `863eb71118e8` | Table Columns | 183 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `da0ed40e9c3c` | Tasks | 183 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `2915220ce311` | Database Tasks Settings Tab | 184 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c60c07155911` | Database Tasks Table Columns | 185 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `419dad49a5c5` | Affected Channels Table | 185 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `437130dd4712` | Running a Database Task | 185 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `7c3b0e9798cc` | Resources Settings Tab | 186 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `38188bc2fd91` | Resources Table Columns | 187 | — | In progress | — |
-| `65546f8a6976` | Tasks | 188 | — | In progress | — |
-| `c6a91d33b5f7` | Reload Resource | 188 | — | In progress | — |
-| `114fe630f930` | Directory Resource | 188 | — | In progress | — |
-| `15e464f091e7` | Using Resources in Channels/Connectors | 190 | — | In progress | — |
+| `38188bc2fd91` | Resources Table Columns | 187 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `65546f8a6976` | Tasks | 188 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c6a91d33b5f7` | Reload Resource | 188 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `114fe630f930` | Directory Resource | 188 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `15e464f091e7` | Using Resources in Channels/Connectors | 190 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `73f764f17b3a` | Data Pruner Settings Tab | 190 | Background ledger pruner + GET configured interval/retention | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataPrunerHostedService.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/PrunerEndpointExtensions.cs; Api Program.cs AddSmartConnectDataPruner |
-| `454a3bba349f` | Status | 191 | — | In progress | — |
-| `ce1459f6a563` | Schedule | 192 | — | In progress | — |
-| `45e19e372f55` | Prune Settings | 193 | — | In progress | — |
-| `204d09872d15` | Archive Settings | 194 | — | In progress | — |
-| `fe8575daf1c2` | Tasks | 195 | — | In progress | — |
-| `cd574fcd4eeb` | Settings Tasks | 196 | — | In progress | — |
-| `6cfd552610ac` | Extensions View | 196 | — | In progress | — |
-| `cbc318055076` | Navigation | 197 | — | In progress | — |
-| `9fd5fe5dca41` | Installed Connectors Table | 198 | — | In progress | — |
-| `c8291e0afbfc` | Installed Connectors Table Columns | 199 | — | In progress | — |
-| `25aba066d842` | Installed Plugins Table | 199 | — | In progress | — |
-| `22d21e7bc6be` | Installed Plugins Table Columns | 200 | — | In progress | — |
-| `2ce4287ef560` | Install a New Extension | 200 | — | In progress | — |
-| `a597ea89d0aa` | Extension Tasks | 201 | — | In progress | — |
-| `474b188a9bfa` | Show Properties | 202 | — | In progress | — |
-| `17476e92cc69` | Edit Views | 203 | — | In progress | — |
-| `deec6e3040ac` | Edit Channel View | 203 | — | In progress | — |
-| `da2de6bcaf1a` | Navigation | 203 | — | In progress | — |
-| `652204eae947` | Summary Tab | 204 | — | In progress | — |
-| `e0da3acf9003` | Channel Properties | 205 | — | In progress | — |
-| `8f718abc6e1a` | Set Data Types Window | 207 | — | In progress | — |
-| `9c8fdd1a42b2` | Select Data Types | 208 | — | In progress | — |
-| `be800b5fefa4` | Change Data Type Properties | 209 | — | In progress | — |
-| `9f38760fef9c` | Bulk Edit Mode | 210 | — | In progress | — |
-| `b61fdc42dced` | Set Dependencies Window | 212 | — | In progress | — |
+| `454a3bba349f` | Status | 191 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `ce1459f6a563` | Schedule | 192 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `45e19e372f55` | Prune Settings | 193 | Pruner interval/retention configuration + GET readout (subset of MC Prune Settings) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataPrunerHostedService.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/PrunerEndpointExtensions.cs |
+| `204d09872d15` | Archive Settings | 194 | N/A | N/A | No MC message archive settings UI; retention/pruning only (scope-vs-mirth.md) |
+| `fe8575daf1c2` | Tasks | 195 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `cd574fcd4eeb` | Settings Tasks | 196 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `6cfd552610ac` | Extensions View | 196 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `cbc318055076` | Navigation | 197 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `9fd5fe5dca41` | Installed Connectors Table | 198 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c8291e0afbfc` | Installed Connectors Table Columns | 199 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `25aba066d842` | Installed Plugins Table | 199 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `22d21e7bc6be` | Installed Plugins Table Columns | 200 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `2ce4287ef560` | Install a New Extension | 200 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `a597ea89d0aa` | Extension Tasks | 201 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `474b188a9bfa` | Show Properties | 202 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `17476e92cc69` | Edit Views | 203 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `deec6e3040ac` | Edit Channel View | 203 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `da2de6bcaf1a` | Navigation | 203 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `652204eae947` | Summary Tab | 204 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e0da3acf9003` | Channel Properties | 205 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `8f718abc6e1a` | Set Data Types Window | 207 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `9c8fdd1a42b2` | Select Data Types | 208 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `be800b5fefa4` | Change Data Type Properties | 209 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `9f38760fef9c` | Bulk Edit Mode | 210 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b61fdc42dced` | Set Dependencies Window | 212 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `a7ce739b4d7d` | Code Template Libraries | 213 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `163cabfed67c` | Link Code Template Libraries | 213 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `81ce8b48b3c0` | Library Resources | 214 | — | In progress | — |
-| `dafb0378562f` | Deploy/Start Dependencies | 215 | — | In progress | — |
-| `f9c758dcae77` | Deploy/Start Channels | 217 | — | In progress | — |
-| `30444d1d023e` | Pause/Stop/Undeploy Channels | 218 | — | In progress | — |
+| `dafb0378562f` | Deploy/Start Dependencies | 215 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `f9c758dcae77` | Deploy/Start Channels | 217 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `30444d1d023e` | Pause/Stop/Undeploy Channels | 218 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `454721e1f823` | Attachment Handlers | 219 | — | In progress | — |
 | `01cabaf05923` | Extraction | 220 | — | In progress | — |
 | `e0d1b0c489f4` | Reattachment | 220 | — | In progress | — |
@@ -255,16 +255,16 @@
 | `c35c736a202c` | Properties | 227 | — | In progress | — |
 | `34fe901b32b2` | Message Storage Settings | 227 | — | In progress | — |
 | `bae1ecd854c3` | Message Pruning Settings | 229 | — | In progress | — |
-| `d49d8048b497` | Custom Metadata Columns | 230 | — | In progress | — |
-| `e8163150f4bb` | Modifying Custom Metadata Columns | 231 | — | In progress | — |
-| `f3b484537db6` | Channel Description | 231 | — | In progress | — |
-| `b0657b73534e` | Source Tab | 232 | — | In progress | — |
+| `d49d8048b497` | Custom Metadata Columns | 230 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e8163150f4bb` | Modifying Custom Metadata Columns | 231 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `f3b484537db6` | Channel Description | 231 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b0657b73534e` | Source Tab | 232 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `2ff06d05acdf` | Choose a Source Connector | 233 | Source connectors: HTTP webhook, MLLP listener, File Reader, TCP Listener, Database Reader (registry + hosted service) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Abstractions/ISourceConnector.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/SourceConnectorHostedService.cs |
 | `05f49cb52519` | Listener Settings | 233 | — | In progress | — |
-| `9c0f28631402` | Polling Settings | 234 | — | In progress | — |
-| `109fe06b21e3` | Interval Schedule Settings | 235 | — | In progress | — |
-| `56955c34b244` | Time Schedule Settings | 236 | — | In progress | — |
-| `0b6bcd03be1a` | Cron Schedule Settings | 236 | — | In progress | — |
+| `9c0f28631402` | Polling Settings | 234 | Polling settings: ScheduleSettings (Mode=Interval/Cron/Time) honored by File Reader + Database Reader | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scheduling/ScheduleSettings.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs |
+| `109fe06b21e3` | Interval Schedule Settings | 235 | Interval schedule (fixed period + optional initial delay) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/IntervalSchedule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/ScheduleFactory.cs |
+| `56955c34b244` | Time Schedule Settings | 236 | Time schedule (one or more wall-clock times per day, timezone-aware) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/TimeSchedule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/ScheduleFactory.cs |
+| `0b6bcd03be1a` | Cron Schedule Settings | 236 | Cron schedule (5- or 6-field expression, timezone-aware) via Cronos | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/CronSchedule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/ScheduleFactory.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scheduling/ScheduleSettings.cs |
 | `073aa9db064d` | Advanced Settings | 237 | — | In progress | — |
 | `96c4d761f215` | Source Settings | 238 | — | In progress | — |
 | `cbad119904fa` | HTTP Authentication Settings | 239 | N/A | N/A | MC channel HTTP authentication UI; configure auth at reverse proxy or in host HTTP client (scope-vs-mirth.md) |
@@ -276,68 +276,68 @@
 | `1a89aa729221` | OAuth 2.0 Token Verification | 245 | — | In progress | — |
 | `eb51dc5af4aa` | Source Connector Properties | 245 | — | In progress | — |
 | `42d9c9b636e0` | Destinations Tab | 246 | — | In progress | — |
-| `9ed6ad71ae21` | Destination Table | 247 | — | In progress | — |
-| `0110805ec26b` | Destination Tasks | 248 | — | In progress | — |
+| `9ed6ad71ae21` | Destination Table | 247 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `0110805ec26b` | Destination Tasks | 248 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `701d10fc4cf4` | Destination Settings | 249 | — | In progress | — |
 | `02eb96bc6a08` | Advanced Queue Settings | 251 | — | In progress | — |
 | `fbfaaf461730` | Destination Connector Properties | 252 | — | In progress | — |
 | `03af45160d82` | Destination Mappings | 253 | — | In progress | — |
 | `dc0dc437a07e` | Standard Variables/Templates | 253 | — | In progress | — |
 | `9cd7666923ab` | Scripts Tab | 255 | Scripts tab: FlowScriptsDefinition in pipeline JSON (deploy/undeploy/pre/post) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/FlowScriptsDefinition.cs; FlowRuntimeEngine; ManagementEndpointExtensions |
-| `7c7e0b552132` | Edit Channel Tasks | 256 | — | In progress | — |
-| `4437d3b0eb59` | Edit Filter / Transformer Views | 257 | — | In progress | — |
-| `05fadd448ad3` | Navigation | 258 | — | In progress | — |
-| `18ece9d87a35` | Message Templates Tab | 260 | — | In progress | — |
-| `342393f59ba5` | Edit Data Types | 262 | — | In progress | — |
-| `b1d9164d5bde` | Specify a Template | 264 | — | In progress | — |
-| `1b4a00ba981d` | Message Trees Tab | 265 | — | In progress | — |
-| `b150dd58710b` | Filter By Node Name/Description | 267 | — | In progress | — |
-| `c634b1e29a74` | Create a Rule Builder Rule or Mapper Step | 268 | — | In progress | — |
-| `32f400d67cf1` | Method 1 | 268 | — | In progress | — |
-| `79d20f508317` | Method 2 | 269 | — | In progress | — |
-| `b405e9a43037` | Create a Message Builder Step | 270 | — | In progress | — |
-| `44c57af0d1a5` | Method 1: | 270 | — | In progress | — |
-| `dfda15817082` | Method 2 | 271 | — | In progress | — |
-| `5f555807a325` | Drag-and-Drop Field Values | 272 | — | In progress | — |
-| `2f5299539d79` | Reference Tab | 273 | — | In progress | — |
-| `9cd4435eeac3` | Reference List | 274 | — | In progress | — |
-| `e1b1ce2e2fcf` | Available Variables | 275 | — | In progress | — |
-| `5b05e951280d` | Create New Rules/Steps | 276 | — | In progress | — |
-| `8403b1d5c9ec` | Rule/Step Table | 277 | — | In progress | — |
-| `815e62d9f133` | Filter Rule Properties | 278 | — | In progress | — |
+| `7c7e0b552132` | Edit Channel Tasks | 256 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `4437d3b0eb59` | Edit Filter / Transformer Views | 257 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `05fadd448ad3` | Navigation | 258 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `18ece9d87a35` | Message Templates Tab | 260 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `342393f59ba5` | Edit Data Types | 262 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b1d9164d5bde` | Specify a Template | 264 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `1b4a00ba981d` | Message Trees Tab | 265 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b150dd58710b` | Filter By Node Name/Description | 267 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `c634b1e29a74` | Create a Rule Builder Rule or Mapper Step | 268 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `32f400d67cf1` | Method 1 | 268 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `79d20f508317` | Method 2 | 269 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `b405e9a43037` | Create a Message Builder Step | 270 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `44c57af0d1a5` | Method 1: | 270 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `dfda15817082` | Method 2 | 271 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5f555807a325` | Drag-and-Drop Field Values | 272 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `2f5299539d79` | Reference Tab | 273 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `9cd4435eeac3` | Reference List | 274 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e1b1ce2e2fcf` | Available Variables | 275 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `5b05e951280d` | Create New Rules/Steps | 276 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `8403b1d5c9ec` | Rule/Step Table | 277 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `815e62d9f133` | Filter Rule Properties | 278 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `1e06cb7ebde1` | Rule Builder Filter Rule | 278 | Declarative rule-builder route filter (payloadContains, metadataEquals; JSON parameters) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/RuleBuilderRouteFilter.cs; RuleBuilderRouteFilterTests |
 | `2a345bb9af56` | JavaScript Filter Rule | 279 | JavaScript route filter (Jint; channel route filter slot) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptRouteFilterTests.cs |
 | `85f102539778` | External Script Filter Rule | 279 | — | In progress | — |
-| `1052c34c408d` | Iterator Filter Rule | 280 | N/A | N/A | No iterator filter; use JavaScript route filter for batch logic |
-| `43b7b891c3b1` | Transformer Step Properties | 281 | — | In progress | — |
+| `1052c34c408d` | Iterator Filter Rule | 280 | Iterator filter rule: wraps a child route filter and evaluates it per element (HL7/JSON/XML iterable) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Iteration/IterableResolver.cs |
+| `43b7b891c3b1` | Transformer Step Properties | 281 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `2958d82dc5f6` | Mapper Transformer Step | 281 | Mapper transform stage (alias over JSON path mapper) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MapperTransformStage.cs; MapperTransformStageTests |
 | `7138654d5a99` | Message Builder Transformer Step | 282 | Message Builder transform (UTF-8 prefix/suffix) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/MessageBuilderTransformStage.cs; MessageBuilderTransformStageTests |
 | `75e73d330f1a` | JavaScript Transformer Step | 283 | Sandboxed JS transform stage (Jint + timeout) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/JavascriptTransformStageTests.cs |
 | `bbf2966bbe5f` | External Script Transformer Step | 283 | — | In progress | — |
 | `5d8d7df14348` | XSLT Transformer Step | 283 | XSLT transform stage (System.Xml.Xsl) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/XsltTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/XsltTransformStageTests.cs |
-| `7c8e4785a731` | Destination Set Filter Transformer Step | 284 | — | In progress | — |
-| `121bd3845f7d` | Iterator Transformer Step | 286 | N/A | N/A | No iterator transform; use JavaScript transform or multiple outbound routes |
+| `7c8e4785a731` | Destination Set Filter Transformer Step | 284 | Destination Set Filter transformer step (Jint script with destinationSet.removeAllExcept/remove/removeAll) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DestinationSetFilterTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `121bd3845f7d` | Iterator Transformer Step | 286 | Iterator transformer step: wraps a child transform stage and runs it per element | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Iteration/IterableResolver.cs |
 | `d9edaa4d4de8` | Response Transformers | 286 | — | In progress | — |
 | `6e0704439eda` | Modifying the Response | 287 | — | In progress | — |
 | `e6df3c9fba0e` | Common Scenarios | 287 | — | In progress | — |
 | `8b8e13cf98bb` | Re-queue a message if the HL7 ACK has an AE code | 287 | — | In progress | — |
 | `7d8754af2903` | Force a queuing message to error if the number of send attempts exceeds some threshold | 288 | — | In progress | — |
 | `d75a3391beea` | Route the response data to a downstream channel | 288 | — | In progress | — |
-| `203b41701989` | Working With Iterators | 288 | — | In progress | — |
+| `203b41701989` | Working With Iterators | 288 | Iterator pipeline support: filter rule + transformer step share an IterableResolver | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs |
 | `f49aa4f25d9b` | Creating Iterators From Drag-and-Drop | 289 | — | In progress | — |
-| `90a10bc93515` | The Assign To Iterator Task | 291 | — | In progress | — |
+| `90a10bc93515` | The Assign To Iterator Task | 291 | Engine support for iterating message parts; the Mirth 'Assign To Iterator' UI task is replaced by the script-form iterator | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs |
 | `8a5d6f5134bb` | Remove From Iterators | 294 | — | In progress | — |
-| `a8a5552e4d94` | View Generated Script | 294 | — | In progress | — |
-| `790c7a7e4ed7` | Filter Tasks | 295 | — | In progress | — |
-| `eeef1df1250f` | Import Filter | 296 | — | In progress | — |
-| `7f0f51f77a77` | Transformer Tasks | 297 | — | In progress | — |
-| `725a20d1c18f` | Import Transformer | 298 | — | In progress | — |
-| `76703336aa90` | Edit Global Scripts View | 299 | — | In progress | — |
-| `fa56c9df18f0` | Navigation | 299 | — | In progress | — |
-| `6f7ef9e54c60` | Edit Global Scripts | 300 | — | In progress | — |
-| `ecd6372388ab` | Tasks | 301 | — | In progress | — |
+| `a8a5552e4d94` | View Generated Script | 294 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `790c7a7e4ed7` | Filter Tasks | 295 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `eeef1df1250f` | Import Filter | 296 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `7f0f51f77a77` | Transformer Tasks | 297 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `725a20d1c18f` | Import Transformer | 298 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `76703336aa90` | Edit Global Scripts View | 299 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `fa56c9df18f0` | Navigation | 299 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `6f7ef9e54c60` | Edit Global Scripts | 300 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `ecd6372388ab` | Tasks | 301 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `7cb9a8890739` | Edit Code Templates View | 301 | — | In progress | — |
-| `d1a013d4b76b` | Navigation | 302 | — | In progress | — |
+| `d1a013d4b76b` | Navigation | 302 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `bd08744ff76d` | Code Template Library Table | 303 | — | In progress | — |
 | `1b419734c6fa` | Edit Library Panel | 304 | — | In progress | — |
 | `e56460f67110` | Link Libraries to Channels | 305 | — | In progress | — |
@@ -347,16 +347,16 @@
 | `fd99234d2268` | Code Template Tasks | 310 | — | In progress | — |
 | `21fe3d03e7ea` | Import Code Templates/Libraries | 311 | — | In progress | — |
 | `185f2e590ff8` | Edit Alert View | 313 | — | In progress | — |
-| `01102b17f33c` | Navigation | 314 | — | In progress | — |
-| `466338502386` | Alert Error Types and Regex | 315 | — | In progress | — |
-| `f3a78fd55445` | Alert Error Categories | 316 | — | In progress | — |
-| `a87ebd1c499d` | Alert Enabled Channels | 317 | — | In progress | — |
-| `f4f375b709a1` | Alert Actions | 318 | — | In progress | — |
-| `962f93f812af` | Protocols | 318 | — | In progress | — |
-| `95e570028c91` | Alert Variables | 319 | — | In progress | — |
-| `893b2bc5f810` | Edit Alert Tasks | 319 | — | In progress | — |
-| `e659be27bf19` | Other Tasks | 320 | — | In progress | — |
-| `7de79d021822` | Notifications | 321 | — | In progress | — |
+| `01102b17f33c` | Navigation | 314 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `466338502386` | Alert Error Types and Regex | 315 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `f3a78fd55445` | Alert Error Categories | 316 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `a87ebd1c499d` | Alert Enabled Channels | 317 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `f4f375b709a1` | Alert Actions | 318 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `962f93f812af` | Protocols | 318 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `95e570028c91` | Alert Variables | 319 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `893b2bc5f810` | Edit Alert Tasks | 319 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `e659be27bf19` | Other Tasks | 320 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
+| `7de79d021822` | Notifications | 321 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `4957754333ae` | Data Types | 323 | — | In progress | — |
 | `1da7292df029` | Inbound Properties | 323 | — | In progress | — |
 | `3582017332ba` | Outbound Properties | 323 | — | In progress | — |
@@ -372,7 +372,7 @@
 | `fcbc2850c3c6` | XML Data Type | 336 | XML transform stage (XPath extraction) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Transforms/XmlTransformStage.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/XmlTransformStageTests.cs |
 | `e17335a4fb83` | Batch Processing | 337 | — | In progress | — |
 | `0b734799ad47` | JavaScript Batch Script | 338 | — | In progress | — |
-| `12a2b7f4dfbc` | Source Connectors | 340 | — | In progress | — |
+| `12a2b7f4dfbc` | Source Connectors | 340 | Source Connectors catalog: HTTP webhook, MLLP, TCP listener, File Reader, Database Reader | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader |
 | `abea0d6bb89e` | Channel Reader | 340 | N/A | N/A | No separate Channel Reader; use Channel Writer destination to another flow |
 | `933ef4ca2258` | Source Map Variables | 341 | — | In progress | — |
 | `67d61933dcf2` | DICOM Listener | 341 | N/A | N/A | No DICOM listener in core |
@@ -393,16 +393,16 @@
 | `c582b3d4e532` | Updating Templates | 370 | N/A | N/A | No JMS templates in core |
 | `26cc04200cb7` | Deleting Templates | 370 | N/A | N/A | No JMS templates in core |
 | `6c09f0e130ae` | JavaScript Reader | 371 | N/A | N/A | No MC-style JavaScript reader connector in core |
-| `9acc74d3387e` | JavaScript Reader Return Values | 371 | — | In progress | — |
+| `9acc74d3387e` | JavaScript Reader Return Values | 371 | N/A | N/A | Mirth JavaScript Reader/Writer return-value protocol; SmartConnect inbound + outbound connectors are typed .NET interfaces |
 | `de7638b26b86` | TCP Listener | 372 | TCP listener source connector (MLLP / LF / length-prefix framing) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpListenerFrameDecoderTests.cs |
 | `d2df0999352d` | Source Map Variables | 376 | — | In progress | — |
-| `f84c6390b80b` | TCP Transmission Modes | 376 | — | In progress | — |
-| `0f464f24cd13` | Basic TCP Transmission Mode | 377 | — | In progress | — |
+| `f84c6390b80b` | TCP Transmission Modes | 376 | TCP transmission modes: MLLP / LF-terminated / length-prefixed framing | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerFrameDecoder.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpFrameDecoder.cs |
+| `0f464f24cd13` | Basic TCP Transmission Mode | 377 | Basic TCP transmission mode (LF / length-prefix framing) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerFrameDecoder.cs |
 | `acca89ea2413` | Byte Abbreviations | 377 | — | In progress | — |
 | `519ffc586eec` | MLLP Transmission Mode | 378 | MLLP TCP listener framing | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpInboundHostedService.cs |
 | `0704561e0c73` | Byte Abbreviations | 380 | — | In progress | — |
 | `673d3d69227d` | Web Service Listener | 381 | N/A | N/A | No MC-style Web Service listener; use inbound HTTP + contract in app layer |
-| `c27980f69bbf` | Destination Connectors | 384 | — | In progress | — |
+| `c27980f69bbf` | Destination Connectors | 384 | Destination Connectors catalog: HTTP, File, SMTP, TCP/MLLP, Database, Channel Writer outbound adapters | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/FileOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/SmtpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/TcpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DatabaseOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs |
 | `9bb0daf8d64a` | Channel Writer | 384 | Channel writer outbound adapter (in-process flow chaining with depth guard) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/ChannelWriterOutboundAdapterTests.cs |
 | `ecd047bb8c78` | Source Map Variables | 386 | — | In progress | — |
 | `72ee90d0e889` | DICOM Sender | 386 | N/A | N/A | No DICOM sender in core |
@@ -414,48 +414,48 @@
 | `1355b11537ce` | Connector Map Variables | 407 | — | In progress | — |
 | `31adda5c3122` | JMS Sender | 407 | N/A | N/A | No JMS sender in SmartConnect; use HTTP outbound or native broker client |
 | `a38b458b9e80` | JavaScript Writer | 410 | N/A | N/A | No JavaScript Writer connector; use JS transform stage or channel scripts |
-| `b78a1ad07466` | JavaScript Writer Return Values | 411 | — | In progress | — |
+| `b78a1ad07466` | JavaScript Writer Return Values | 411 | N/A | N/A | Mirth JavaScript Reader/Writer return-value protocol; SmartConnect inbound + outbound connectors are typed .NET interfaces |
 | `b0e26e4772e5` | SMTP Sender | 411 | SMTP outbound adapter (basic) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/SmtpOutboundAdapter.cs |
 | `a74f2026837f` | TCP Sender | 416 | TCP outbound adapter (raw, length-prefixed, MLLP framing; pooled connections) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/TcpOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpOutboundAdapterTests.cs |
 | `4f3bdc6f1747` | Web Service Sender | 422 | N/A | N/A | No SOAP Web Service sender; use HTTP outbound with SOAP payload |
-| `693f111fbb39` | Mirth Connect and JavaScript | 428 | — | In progress | — |
-| `90e44e3af4d1` | About JavaScript | 428 | — | In progress | — |
-| `6d01c49f1da3` | Variables | 428 | — | In progress | — |
-| `65de032656c5` | Comments | 429 | — | In progress | — |
-| `f1a5d4a9ba1f` | Arrays | 429 | — | In progress | — |
-| `f5a45b8c605d` | Operators | 430 | — | In progress | — |
-| `c13364030142` | Arithmetic Operators | 430 | — | In progress | — |
-| `107b83613c04` | Assignment Operators | 431 | — | In progress | — |
-| `6ceeb6314e87` | Comparison Operators | 431 | — | In progress | — |
-| `250e9b59eb95` | Logical Operators | 432 | — | In progress | — |
-| `cfdfc6cfa37a` | Conditional Statements | 432 | — | In progress | — |
-| `97d055c53958` | Functions | 432 | — | In progress | — |
-| `cc8193dcbf70` | Loops and Iterations | 433 | — | In progress | — |
-| `12354654582e` | for loops | 433 | — | In progress | — |
-| `8f98e579a924` | for each…in loops | 433 | — | In progress | — |
-| `2123d39c6241` | while loops | 434 | — | In progress | — |
-| `299ff31cb480` | do…while loops | 434 | — | In progress | — |
-| `c9d4b380a1ee` | Exception Handling | 435 | — | In progress | — |
-| `ef5bacf63c10` | Using JavaScript in Mirth Connect | 435 | — | In progress | — |
-| `00ee0ad6d3d7` | About E4X | 435 | — | In progress | — |
-| `f77e7c95e156` | Accessing Message Data with E4X | 436 | — | In progress | — |
-| `11ec186acf42` | Adding Segments to a Message | 437 | — | In progress | — |
-| `25ce372541ba` | Deleting a Segment | 439 | — | In progress | — |
-| `af130ee6329e` | Iterating Over Message Segments | 439 | — | In progress | — |
-| `d895fcc580ad` | Iterating Over Repeating Fields | 440 | — | In progress | — |
-| `9f3ad6ebc16c` | Adding a New Repeating Field | 440 | — | In progress | — |
-| `dffca0a5fa52` | Message Variables | 440 | — | In progress | — |
+| `693f111fbb39` | Mirth Connect and JavaScript | 428 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `90e44e3af4d1` | About JavaScript | 428 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `6d01c49f1da3` | Variables | 428 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `65de032656c5` | Comments | 429 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `f1a5d4a9ba1f` | Arrays | 429 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `f5a45b8c605d` | Operators | 430 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `c13364030142` | Arithmetic Operators | 430 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `107b83613c04` | Assignment Operators | 431 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `6ceeb6314e87` | Comparison Operators | 431 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `250e9b59eb95` | Logical Operators | 432 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `cfdfc6cfa37a` | Conditional Statements | 432 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `97d055c53958` | Functions | 432 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `cc8193dcbf70` | Loops and Iterations | 433 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `12354654582e` | for loops | 433 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `8f98e579a924` | for each…in loops | 433 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `2123d39c6241` | while loops | 434 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `299ff31cb480` | do…while loops | 434 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `c9d4b380a1ee` | Exception Handling | 435 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `ef5bacf63c10` | Using JavaScript in Mirth Connect | 435 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `00ee0ad6d3d7` | About E4X | 435 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `f77e7c95e156` | Accessing Message Data with E4X | 436 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `11ec186acf42` | Adding Segments to a Message | 437 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `25ce372541ba` | Deleting a Segment | 439 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `af130ee6329e` | Iterating Over Message Segments | 439 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `d895fcc580ad` | Iterating Over Repeating Fields | 440 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `9f3ad6ebc16c` | Adding a New Repeating Field | 440 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `dffca0a5fa52` | Message Variables | 440 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
 | `22cab570408f` | Built-In Code Templates | 441 | — | In progress | — |
-| `f9ebb111c329` | Using Java Classes | 441 | — | In progress | — |
-| `991bd87b77cd` | Regular Expressions | 441 | — | In progress | — |
-| `367e9f547583` | Logging with JavaScript | 443 | — | In progress | — |
-| `3115d770d469` | Generating a Hash with JavaScript | 443 | — | In progress | — |
-| `9826cfb0c241` | Using the JavaScript Editor | 445 | — | In progress | — |
-| `6dcc8bd816c4` | Using the Context Menu in the JavaScript Editor | 445 | — | In progress | — |
-| `19efe521a02b` | Finding/Replacing Code in the JavaScript Editor | 446 | — | In progress | — |
-| `7483ca585581` | Folding in the JavaScript Editor | 447 | — | In progress | — |
-| `395163e7d5cc` | Using the Auto-Completion Popup in the JavaScript Editor | 448 | — | In progress | — |
-| `988caebe1b59` | Remapping Editor Shortcut Keys | 449 | — | In progress | — |
+| `f9ebb111c329` | Using Java Classes | 441 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `991bd87b77cd` | Regular Expressions | 441 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `367e9f547583` | Logging with JavaScript | 443 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `3115d770d469` | Generating a Hash with JavaScript | 443 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
+| `9826cfb0c241` | Using the JavaScript Editor | 445 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
+| `6dcc8bd816c4` | Using the Context Menu in the JavaScript Editor | 445 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
+| `19efe521a02b` | Finding/Replacing Code in the JavaScript Editor | 446 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
+| `7483ca585581` | Folding in the JavaScript Editor | 447 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
+| `395163e7d5cc` | Using the Auto-Completion Popup in the JavaScript Editor | 448 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
+| `988caebe1b59` | Remapping Editor Shortcut Keys | 449 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
 | `9e0a1a681980` | Variable Maps | 449 | — | In progress | — |
 | `7005e791f922` | Connector Map | 450 | — | In progress | — |
 | `85183e12a370` | Channel Map | 451 | — | In progress | — |
@@ -465,221 +465,221 @@
 | `91920d9ae4e3` | Global Map | 453 | — | In progress | — |
 | `5f43f543600d` | Configuration Map | 453 | — | In progress | — |
 | `d58569767feb` | The Variable Map Lookup Sequence | 454 | — | In progress | — |
-| `f4a5161dbf5a` | Attachment JavaScript Functions | 455 | — | In progress | — |
-| `291676e917c2` | Built-In Attachment Functions | 455 | — | In progress | — |
-| `26a30223c229` | The AttachmentUtil Class | 457 | — | In progress | — |
-| `e772bb6f0df4` | The Attachment Object | 458 | — | In progress | — |
-| `d811d53890ac` | Examples | 459 | — | In progress | — |
-| `f935cb95d8fa` | The User API (Javadoc) | 459 | — | In progress | — |
-| `c260d67414a3` | Mirth Connect Debugger | 461 | — | In progress | — |
-| `c1b08a11e681` | Before You Begin | 462 | — | In progress | — |
-| `ade9e3a1104d` | To Edit the mcserver.vmoptions file | 462 | — | In progress | — |
-| `2dd16b9ab7e4` | Use the Debugger | 463 | — | In progress | — |
-| `27151831795d` | Debugger Window | 464 | — | In progress | — |
-| `61dbac19ee37` | Debugger Menus | 465 | — | In progress | — |
-| `454571958af0` | File Menu | 465 | — | In progress | — |
-| `a050f78878a5` | Edit Menu | 466 | — | In progress | — |
-| `58010e400b1f` | Debug Menu | 467 | — | In progress | — |
-| `924465691f98` | Window Menu | 467 | — | In progress | — |
-| `98f84b9ca18b` | Coding Area | 468 | — | In progress | — |
-| `fb2bd68085ba` | Velocity Variable Replacement | 469 | — | In progress | — |
-| `dbd3139b0d38` | Basic Syntax | 469 | — | In progress | — |
-| `0da94159ff5b` | Conditional Statements | 470 | — | In progress | — |
-| `35c5f20bfd21` | For Loops | 470 | — | In progress | — |
-| `1e8466dc5a69` | Mirth Connect Command Line Interface | 471 | — | In progress | — |
-| `77b068248a31` | Running the Command Line Interface | 471 | — | In progress | — |
-| `1e4c3c953b6d` | Using Non-interactive Scripting | 472 | — | In progress | — |
+| `f4a5161dbf5a` | Attachment JavaScript Functions | 455 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
+| `291676e917c2` | Built-In Attachment Functions | 455 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
+| `26a30223c229` | The AttachmentUtil Class | 457 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
+| `e772bb6f0df4` | The Attachment Object | 458 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
+| `d811d53890ac` | Examples | 459 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
+| `f935cb95d8fa` | The User API (Javadoc) | 459 | N/A | N/A | Mirth Java Server User API (Javadoc); SmartConnect has no Java plugin SPI |
+| `c260d67414a3` | Mirth Connect Debugger | 461 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `c1b08a11e681` | Before You Begin | 462 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `ade9e3a1104d` | To Edit the mcserver.vmoptions file | 462 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `2dd16b9ab7e4` | Use the Debugger | 463 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `27151831795d` | Debugger Window | 464 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `61dbac19ee37` | Debugger Menus | 465 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `454571958af0` | File Menu | 465 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `a050f78878a5` | Edit Menu | 466 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `58010e400b1f` | Debug Menu | 467 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `924465691f98` | Window Menu | 467 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `98f84b9ca18b` | Coding Area | 468 | N/A | N/A | No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md) |
+| `fb2bd68085ba` | Velocity Variable Replacement | 469 | N/A | N/A | Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly |
+| `dbd3139b0d38` | Basic Syntax | 469 | N/A | N/A | Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly |
+| `0da94159ff5b` | Conditional Statements | 470 | N/A | N/A | Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly |
+| `35c5f20bfd21` | For Loops | 470 | N/A | N/A | Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly |
+| `1e8466dc5a69` | Mirth Connect Command Line Interface | 471 | N/A | N/A | No Mirth CLI; SmartConnect host CLI + REST API replace it (scope-vs-mirth.md) |
+| `77b068248a31` | Running the Command Line Interface | 471 | N/A | N/A | No Mirth CLI; SmartConnect host CLI + REST API replace it (scope-vs-mirth.md) |
+| `1e4c3c953b6d` | Using Non-interactive Scripting | 472 | N/A | N/A | No Mirth CLI; SmartConnect host CLI + REST API replace it (scope-vs-mirth.md) |
 | `1048ab38243e` | Mirth Connect REST API | 473 | Management HTTP API (flows, lifecycle, ledger, maps, events, pruner); optional JWT when configured | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/ManagementEndpointExtensions.cs; ManagementSecurityExtensions.cs; Api Program.cs AddSmartConnectManagementJwt / UseAuthentication |
 | `a5e288ce0b6e` | Authentication | 476 | N/A | N/A | Release-notes topic; not SmartConnect feature matrix |
-| `f6e04f09424c` | Installation Directory | 478 | — | In progress | — |
-| `849efb2b04ed` | Application Data Directory | 478 | — | In progress | — |
-| `8754f4f0dcae` | configuration.properties | 478 | — | In progress | — |
-| `be2e793b8e43` | extension.properties | 479 | — | In progress | — |
-| `5e4fc55e03b5` | keystore.jks | 479 | — | In progress | — |
-| `f583b3155102` | server.id | 480 | — | In progress | — |
-| `0d5235049dc8` | temp | 480 | — | In progress | — |
-| `ac93193a3787` | Configuration Directory | 480 | — | In progress | — |
-| `e2620aacea13` | dbdrivers.xml File | 480 | — | In progress | — |
-| `2e6fa1798fbc` | Adding a new entry to dbdrivers.xml | 481 | — | In progress | — |
-| `23bc034a650b` | log4j2.properties File | 482 | — | In progress | — |
-| `9f1cee054676` | log4j2-cli.properties File | 484 | — | In progress | — |
-| `bd1a0295bd9c` | mirth.properties File | 485 | — | In progress | — |
-| `4ce218df8f34` | Split Database Connection Pools | 497 | — | In progress | — |
-| `ea29d20b9bef` | Default Supported Cipher Suites | 498 | — | In progress | — |
-| `799c01292d28` | New Default Digest Algorithm in Mirth Connect 4.4 | 499 | — | In progress | — |
-| `e47daed2d9eb` | Update the Digest Algorithm | 499 | — | In progress | — |
-| `8c47d8633e6b` | mirth-cli-config.properties File | 500 | — | In progress | — |
-| `bf197be3beea` | Other Files and Folders | 500 | — | In progress | — |
-| `6170f9dd3db6` | Frequently Asked Questions | 502 | — | In progress | — |
-| `83f69eeff687` | Is Mirth® Connect the same as "Mirth"? | 502 | — | In progress | — |
-| `2b418ce59ec1` | Who develops Mirth® Connect? | 502 | — | In progress | — |
-| `87cc84363b05` | What is the Mirth® Connect license, and how much does it cost? | 502 | — | In progress | — |
-| `6b23ae622805` | How can Mirth® Connect be free and open-source? | 502 | — | In progress | — |
-| `e74343451827` | Is there a difference between the free, open-source Mirth® Connect download and the supported version of Mirth® Connect? | 503 | — | In progress | — |
-| `a8ced0d763d9` | How does Mirth® Connect compare to commercial integration engines? | 503 | — | In progress | — |
-| `cc21702b2373` | How many production installations of Mirth® Connect are there? | 503 | — | In progress | — |
-| `e10cfff4e5ad` | What can I expect next from Mirth® Connect? | 503 | — | In progress | — |
-| `491b9237878d` | How fast does Mirth® Connect operate? | 503 | — | In progress | — |
-| `faa04df6d9c2` | Is Mirth® Connect hard to install and configure? | 504 | — | In progress | — |
-| `3f2ed5558177` | Do I need Mirth Appliance to run Mirth® Connect? | 504 | — | In progress | — |
-| `bdc107b18d23` | As a member of the Mirth Solutions community, how can I get more help? | 504 | — | In progress | — |
-| `ca9cbec5f443` | How do I become a Mirth® Connect expert? | 504 | — | In progress | — |
-| `9510524b9c84` | What are the system requirements for Mirth® Connect? | 504 | — | In progress | — |
-| `67e5e1804d95` | Which databases does Mirth® Connect support for its data store? | 505 | — | In progress | — |
-| `54471df947ba` | Does Mirth® Connect use the Mule ESB? | 505 | — | In progress | — |
-| `bd59b5fb6202` | Do I need an application server to run Mirth® Connect? | 505 | — | In progress | — |
-| `76432cb8a21c` | Can Mirth® Connect send data to __ or transform data from __ to __? | 505 | — | In progress | — |
-| `56cdafbfd0fb` | What message standards does Mirth® Connect support? | 505 | — | In progress | — |
-| `664dfebc2935` | What transfer protocols does Mirth® Connect support? | 506 | — | In progress | — |
-| `8f4ef3c94e5d` | How do I transform a data segment? | 507 | — | In progress | — |
+| `f6e04f09424c` | Installation Directory | 478 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `849efb2b04ed` | Application Data Directory | 478 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `8754f4f0dcae` | configuration.properties | 478 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `be2e793b8e43` | extension.properties | 479 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `5e4fc55e03b5` | keystore.jks | 479 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `f583b3155102` | server.id | 480 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `0d5235049dc8` | temp | 480 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `ac93193a3787` | Configuration Directory | 480 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `e2620aacea13` | dbdrivers.xml File | 480 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `2e6fa1798fbc` | Adding a new entry to dbdrivers.xml | 481 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `23bc034a650b` | log4j2.properties File | 482 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `9f1cee054676` | log4j2-cli.properties File | 484 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `bd1a0295bd9c` | mirth.properties File | 485 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `4ce218df8f34` | Split Database Connection Pools | 497 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `ea29d20b9bef` | Default Supported Cipher Suites | 498 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `799c01292d28` | New Default Digest Algorithm in Mirth Connect 4.4 | 499 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `e47daed2d9eb` | Update the Digest Algorithm | 499 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `8c47d8633e6b` | mirth-cli-config.properties File | 500 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `bf197be3beea` | Other Files and Folders | 500 | N/A | N/A | Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md) |
+| `6170f9dd3db6` | Frequently Asked Questions | 502 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `83f69eeff687` | Is Mirth® Connect the same as "Mirth"? | 502 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `2b418ce59ec1` | Who develops Mirth® Connect? | 502 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `87cc84363b05` | What is the Mirth® Connect license, and how much does it cost? | 502 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `6b23ae622805` | How can Mirth® Connect be free and open-source? | 502 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `e74343451827` | Is there a difference between the free, open-source Mirth® Connect download and the supported version of Mirth® Connect? | 503 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `a8ced0d763d9` | How does Mirth® Connect compare to commercial integration engines? | 503 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `cc21702b2373` | How many production installations of Mirth® Connect are there? | 503 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `e10cfff4e5ad` | What can I expect next from Mirth® Connect? | 503 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `491b9237878d` | How fast does Mirth® Connect operate? | 503 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `faa04df6d9c2` | Is Mirth® Connect hard to install and configure? | 504 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `3f2ed5558177` | Do I need Mirth Appliance to run Mirth® Connect? | 504 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `bdc107b18d23` | As a member of the Mirth Solutions community, how can I get more help? | 504 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `ca9cbec5f443` | How do I become a Mirth® Connect expert? | 504 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `9510524b9c84` | What are the system requirements for Mirth® Connect? | 504 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `67e5e1804d95` | Which databases does Mirth® Connect support for its data store? | 505 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `54471df947ba` | Does Mirth® Connect use the Mule ESB? | 505 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `bd59b5fb6202` | Do I need an application server to run Mirth® Connect? | 505 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `76432cb8a21c` | Can Mirth® Connect send data to __ or transform data from __ to __? | 505 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `56cdafbfd0fb` | What message standards does Mirth® Connect support? | 505 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `664dfebc2935` | What transfer protocols does Mirth® Connect support? | 506 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
+| `8f4ef3c94e5d` | How do I transform a data segment? | 507 | N/A | N/A | Mirth product FAQ chapter; not a SmartConnect implementation surface |
 | `40a482aa9156` | How can I increase the text size when using the Mirth® Connect Administrator on a high DPI monitor and the text is small and difficult to read? | 507 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `9774ce82a593` | Channel Development Best Practices and Tips | 509 | — | In progress | — |
-| `73c83a8392d8` | Channel Performance | 509 | — | In progress | — |
-| `365672498056` | Adjust the Message Storage slider so that the channel only retains the message data that you will actually need. | 510 | — | In progress | — |
-| `0d0bd1e3ef0d` | If large messages are expected, use an Attachment Handler to improve throughput and reduce memory and disk usage. | 510 | — | In progress | — |
-| `26ee0f069b26` | Enable source queuing if an auto-generated acknowledgement is sufficient for the upstream system. | 511 | — | In progress | — |
-| `f3f7a10928e0` | Enable destination queuing if you do not need to respond to the originating system from your destination. | 511 | — | In progress | — |
-| `8a895429d36f` | Increase the Max Processing Threads value if message order is not important and you may receive a large number of messages in a short time | 511 | — | In progress | — |
-| `e9e718eb9ba0` | Increase the Queue Threads value if the downstream system can accept multiple concurrent connections. | 512 | — | In progress | — |
-| `3801c4e05c4d` | Clear the "Wait for previous destination" checkbox, unless you need destinations to process messages one after another. | 512 | — | In progress | — |
-| `b796346b0b79` | Use the "Destination Set Filter" feature in your source transformer when you need to route messages to only one (or a subset) of destinations in your channel. | 512 | — | In progress | — |
-| `c6e23cd56f51` | Channel Configuration | 513 | — | In progress | — |
-| `01e5fd3ba54f` | Use tags to categorize your channels. | 514 | — | In progress | — |
-| `aba1897961b6` | Place any reusable JavaScript code into Code Template functions and organize them into Code Template Libraries. | 514 | — | In progress | — |
-| `d88b8fd04af8` | Use Custom Meta Data Columns to increase the performance of searching the message history on a particular message field. | 514 | — | In progress | — |
-| `02239180acb6` | Use Deploy/Start Dependencies if one channel depends on another to operate correctly. | 515 | — | In progress | — |
-| `ed2e97661a35` | Use multiple resource folders for your Java libraries if you need to limit library usage to specific channels or if you have many Java libraries. | 516 | — | In progress | — |
-| `a2c1fd3d9e92` | Message Integrity | 516 | — | In progress | — |
-| `3ed955eacb8c` | Use hashing to ensure message integrity | 517 | — | In progress | — |
-| `d260837c46cf` | Other Tips | 517 | — | In progress | — |
-| `861d177986f3` | Do not reference Mirth Connect internal Java classes in your JavaScript code. | 518 | — | In progress | — |
-| `05d0b5a15f64` | Security Best Practices | 519 | — | In progress | — |
-| `429075ea7c11` | Secure Installation and Deployment | 519 | — | In progress | — |
-| `daa7ca6cee48` | Installation Directory | 519 | — | In progress | — |
-| `985bfc3e8674` | Networking | 520 | — | In progress | — |
-| `a928c555c02e` | Web Server Certificate | 521 | — | In progress | — |
-| `5a7bdc521719` | Connect to Database using SSL/TLS | 522 | — | In progress | — |
-| `f68531a49349` | Importing the Database Server Certificate | 522 | — | In progress | — |
-| `bfbf88582cdc` | PostgreSQL | 523 | — | In progress | — |
-| `aadb36f016e1` | MySQL | 523 | — | In progress | — |
-| `a7f0ec2ba2ef` | Oracle | 524 | — | In progress | — |
-| `fc75b93eaaeb` | SQL Server | 524 | — | In progress | — |
-| `d96517c6f899` | Secure Configuration | 525 | — | In progress | — |
-| `b18ea5f70802` | Encryption Settings | 525 | — | In progress | — |
+| `9774ce82a593` | Channel Development Best Practices and Tips | 509 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `73c83a8392d8` | Channel Performance | 509 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `365672498056` | Adjust the Message Storage slider so that the channel only retains the message data that you will actually need. | 510 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `0d0bd1e3ef0d` | If large messages are expected, use an Attachment Handler to improve throughput and reduce memory and disk usage. | 510 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `26ee0f069b26` | Enable source queuing if an auto-generated acknowledgement is sufficient for the upstream system. | 511 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `f3f7a10928e0` | Enable destination queuing if you do not need to respond to the originating system from your destination. | 511 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `8a895429d36f` | Increase the Max Processing Threads value if message order is not important and you may receive a large number of messages in a short time | 511 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `e9e718eb9ba0` | Increase the Queue Threads value if the downstream system can accept multiple concurrent connections. | 512 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `3801c4e05c4d` | Clear the "Wait for previous destination" checkbox, unless you need destinations to process messages one after another. | 512 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `b796346b0b79` | Use the "Destination Set Filter" feature in your source transformer when you need to route messages to only one (or a subset) of destinations in your channel. | 512 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `c6e23cd56f51` | Channel Configuration | 513 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `01e5fd3ba54f` | Use tags to categorize your channels. | 514 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `aba1897961b6` | Place any reusable JavaScript code into Code Template functions and organize them into Code Template Libraries. | 514 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `d88b8fd04af8` | Use Custom Meta Data Columns to increase the performance of searching the message history on a particular message field. | 514 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `02239180acb6` | Use Deploy/Start Dependencies if one channel depends on another to operate correctly. | 515 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `ed2e97661a35` | Use multiple resource folders for your Java libraries if you need to limit library usage to specific channels or if you have many Java libraries. | 516 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `a2c1fd3d9e92` | Message Integrity | 516 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `3ed955eacb8c` | Use hashing to ensure message integrity | 517 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `d260837c46cf` | Other Tips | 517 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `861d177986f3` | Do not reference Mirth Connect internal Java classes in your JavaScript code. | 518 | N/A | N/A | Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md |
+| `05d0b5a15f64` | Security Best Practices | 519 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `429075ea7c11` | Secure Installation and Deployment | 519 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `daa7ca6cee48` | Installation Directory | 519 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `985bfc3e8674` | Networking | 520 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `a928c555c02e` | Web Server Certificate | 521 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `5a7bdc521719` | Connect to Database using SSL/TLS | 522 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `f68531a49349` | Importing the Database Server Certificate | 522 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `bfbf88582cdc` | PostgreSQL | 523 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `aadb36f016e1` | MySQL | 523 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `a7f0ec2ba2ef` | Oracle | 524 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `fc75b93eaaeb` | SQL Server | 524 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `d96517c6f899` | Secure Configuration | 525 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `b18ea5f70802` | Encryption Settings | 525 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
 | `ab634c646084` | Encrypt Database Password | 527 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
-| `8b126975e608` | Plain HTTP Main Web Server | 527 | — | In progress | — |
-| `e014126fb6b9` | Default TLS/SSL Settings | 527 | — | In progress | — |
-| `c2547e34b82f` | Default Supported Cipher Suites | 528 | — | In progress | — |
-| `4e8e77e561a7` | Cipher Suites Removed From Earlier Versions | 529 | — | In progress | — |
-| `a251877a724e` | New Protocol/Cipher Suite Support in Java 11 | 531 | — | In progress | — |
+| `8b126975e608` | Plain HTTP Main Web Server | 527 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `e014126fb6b9` | Default TLS/SSL Settings | 527 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `c2547e34b82f` | Default Supported Cipher Suites | 528 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `4e8e77e561a7` | Cipher Suites Removed From Earlier Versions | 529 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `a251877a724e` | New Protocol/Cipher Suite Support in Java 11 | 531 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
 | `9251fe63c07d` | Password Requirements | 532 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
-| `a8211fb9cf73` | SSL Manager Extension | 533 | — | In progress | — |
-| `09d6533cdcc8` | Source Connector Settings | 533 | — | In progress | — |
-| `e9c1fee6c59a` | Destination Connector Settings | 534 | — | In progress | — |
-| `99141bc26b75` | Advanced Alerting - SSL Manager Trigger | 535 | — | In progress | — |
-| `7e39e01376f3` | Operational Procedures | 536 | — | In progress | — |
-| `5fad94d14978` | Users/Permissions | 536 | — | In progress | — |
-| `16ae05e6d92a` | Auditing | 537 | — | In progress | — |
-| `3395e24827ab` | Environmental Upkeep | 538 | — | In progress | — |
-| `91a18e0081f6` | Mirth Connect Software | 538 | — | In progress | — |
-| `11c3bb8b4a14` | Operating System | 539 | — | In progress | — |
-| `15501dacb612` | Java | 539 | — | In progress | — |
-| `9a72c9e0684c` | Troubleshooting | 540 | — | In progress | — |
-| `d3cbd329c8ae` | Logs | 540 | — | In progress | — |
-| `4217df4216a3` | Configuration | 540 | — | In progress | — |
-| `ef4f04f2c292` | Mirth Connect Engine fails to start up | 540 | — | In progress | — |
+| `a8211fb9cf73` | SSL Manager Extension | 533 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `09d6533cdcc8` | Source Connector Settings | 533 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `e9c1fee6c59a` | Destination Connector Settings | 534 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `99141bc26b75` | Advanced Alerting - SSL Manager Trigger | 535 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `7e39e01376f3` | Operational Procedures | 536 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `5fad94d14978` | Users/Permissions | 536 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `16ae05e6d92a` | Auditing | 537 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `3395e24827ab` | Environmental Upkeep | 538 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `91a18e0081f6` | Mirth Connect Software | 538 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `11c3bb8b4a14` | Operating System | 539 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `15501dacb612` | Java | 539 | N/A | N/A | Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets) |
+| `9a72c9e0684c` | Troubleshooting | 540 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `d3cbd329c8ae` | Logs | 540 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `4217df4216a3` | Configuration | 540 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `ef4f04f2c292` | Mirth Connect Engine fails to start up | 540 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
 | `f0001315e10f` | Unable to Launch Mirth Connect Administrator | 542 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `544943379c0b` | Clearing your Java Cache | 543 | — | In progress | — |
-| `102bf80a894e` | Using the Java Control Panel | 543 | — | In progress | — |
-| `458aa783b2ec` | Using the Command Line | 545 | — | In progress | — |
-| `eb8b1315acef` | Opening the Java Client Console | 546 | — | In progress | — |
-| `24275f64d4af` | Out of Memory Errors | 549 | — | In progress | — |
+| `544943379c0b` | Clearing your Java Cache | 543 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `102bf80a894e` | Using the Java Control Panel | 543 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `458aa783b2ec` | Using the Command Line | 545 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `eb8b1315acef` | Opening the Java Client Console | 546 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
+| `24275f64d4af` | Out of Memory Errors | 549 | N/A | N/A | Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry |
 | `f24ca75860a9` | Manually reset a password in the database | 551 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
-| `db8e077c1348` | Upgrade Guide | 553 | — | In progress | — |
-| `2813d5cc3e3f` | Before You Upgrade | 553 | — | In progress | — |
-| `b42b0b77ee47` | Upgrade Mirth Connect | 554 | — | In progress | — |
-| `0e22fb8644b9` | After the Upgrade | 554 | — | In progress | — |
-| `4a16a883be3a` | Version-Specific Upgrade Instructions | 555 | — | In progress | — |
-| `22e00d0a5268` | 4.5.0 Upgrade Notes | 555 | — | In progress | — |
-| `bd6fd013e268` | Updated DUO Authentication to use the Universal Prompt | 555 | — | In progress | — |
-| `b266af7e2a18` | Removed Libraries | 555 | — | In progress | — |
+| `db8e077c1348` | Upgrade Guide | 553 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `2813d5cc3e3f` | Before You Upgrade | 553 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `b42b0b77ee47` | Upgrade Mirth Connect | 554 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `0e22fb8644b9` | After the Upgrade | 554 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `4a16a883be3a` | Version-Specific Upgrade Instructions | 555 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `22e00d0a5268` | 4.5.0 Upgrade Notes | 555 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `bd6fd013e268` | Updated DUO Authentication to use the Universal Prompt | 555 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `b266af7e2a18` | Removed Libraries | 555 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
 | `65e5f06cdf17` | Change of Functionality of "Generate Envelope" in the Web Service Sender | 556 | N/A | N/A | Not in core SmartConnect; use HTTP/TCP adapters or host integration (scope-vs-mirth.md) |
-| `f6e26e7a286d` | Health Data Hub Plugin | 557 | — | In progress | — |
-| `1d1889921d4d` | 4.4.2 Upgrade Notes | 557 | — | In progress | — |
-| `c1c1010a902d` | Added a Readme File to Show Valid XML Type Message Export Information | 557 | — | In progress | — |
-| `024845b529ab` | 4.4.1 Upgrade Notes | 557 | — | In progress | — |
-| `3634a58a6a13` | XStream Now Uses an Allowlist Instead of a Denylist | 557 | — | In progress | — |
-| `a7320a63873f` | 4.4.0 Upgrade Notes | 558 | — | In progress | — |
-| `429827297f27` | Added New Functionality to the Mirth® Connect Setup Wizard (Installation Process) | 558 | — | In progress | — |
-| `5d88c00ecea0` | Default Digest Algorithm Changed | 558 | — | In progress | — |
-| `65780dac54aa` | Updating the Digest Algorithm | 559 | — | In progress | — |
-| `4443cb5f49e0` | 4.3.0 Upgrade Notes | 559 | — | In progress | — |
-| `19c10c4f0022` | New Functionality for the Mirth® Connect Setup Wizard | 559 | — | In progress | — |
-| `4d673e2820e8` | Resource Classloaders Load Classes Child-First By Default | 560 | — | In progress | — |
-| `d99c6c28b00d` | Updated Deprecated Docker Base Images | 560 | — | In progress | — |
-| `416df2618ad5` | Updated Encryption Settings | 560 | — | In progress | — |
-| `808adc18011e` | Disabled TLS Cipher Suites | 561 | — | In progress | — |
-| `869e631d1fc2` | Removed the View User Guide Option | 562 | — | In progress | — |
+| `f6e26e7a286d` | Health Data Hub Plugin | 557 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `1d1889921d4d` | 4.4.2 Upgrade Notes | 557 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `c1c1010a902d` | Added a Readme File to Show Valid XML Type Message Export Information | 557 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `024845b529ab` | 4.4.1 Upgrade Notes | 557 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `3634a58a6a13` | XStream Now Uses an Allowlist Instead of a Denylist | 557 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `a7320a63873f` | 4.4.0 Upgrade Notes | 558 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `429827297f27` | Added New Functionality to the Mirth® Connect Setup Wizard (Installation Process) | 558 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `5d88c00ecea0` | Default Digest Algorithm Changed | 558 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `65780dac54aa` | Updating the Digest Algorithm | 559 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `4443cb5f49e0` | 4.3.0 Upgrade Notes | 559 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `19c10c4f0022` | New Functionality for the Mirth® Connect Setup Wizard | 559 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `4d673e2820e8` | Resource Classloaders Load Classes Child-First By Default | 560 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `d99c6c28b00d` | Updated Deprecated Docker Base Images | 560 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `416df2618ad5` | Updated Encryption Settings | 560 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `808adc18011e` | Disabled TLS Cipher Suites | 561 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `869e631d1fc2` | Removed the View User Guide Option | 562 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
 | `06bbb66b9019` | Administrator Launcher | 562 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `471d4d898c29` | 4.2.0 Upgrade Notes | 563 | — | In progress | — |
-| `fcc2ab28c8f4` | Removed the Remove All Events Button | 563 | — | In progress | — |
-| `3ab717ec029e` | Changed the patient_id Query Parameter Naming Scheme for the Remove Message API Request | 563 | — | In progress | — |
+| `471d4d898c29` | 4.2.0 Upgrade Notes | 563 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `fcc2ab28c8f4` | Removed the Remove All Events Button | 563 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `3ab717ec029e` | Changed the patient_id Query Parameter Naming Scheme for the Remove Message API Request | 563 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
 | `b005e18a50f5` | Renamed the User Authorization Extension to Role-Based Access Control | 563 | N/A | N/A | MC commercial RBAC extension; use platform IdP + optional JWT (ManagementSecurityExtensions.cs; scope-vs-mirth.md) |
-| `22339b2c9f89` | Moving Java Home Preference Checks | 563 | — | In progress | — |
-| `2d09ea0ceab9` | 4.1.0 Upgrade Notes | 564 | — | In progress | — |
-| `4b651810fd69` | Warning: Open issue with SMB File Reader/Writer | 564 | — | In progress | — |
-| `5171600cef33` | Update log4j Library | 564 | — | In progress | — |
-| `3b20cb81bd4c` | 4.0.0 Upgrade Notes | 564 | — | In progress | — |
-| `526a709011db` | Database Reader XML Casing | 564 | — | In progress | — |
-| `f655f3e644c3` | TLS Protocols and Cipher Suites | 565 | — | In progress | — |
-| `47942deb5773` | TLS Protocols | 565 | — | In progress | — |
-| `0c6bfe57523b` | Cipher Suites | 565 | — | In progress | — |
-| `fcfd93ab30a7` | Impact | 566 | — | In progress | — |
-| `2b998b66a8f3` | Resolution | 566 | — | In progress | — |
-| `66f9803491f3` | SSL Manager Options | 566 | — | In progress | — |
-| `fbc9f571cccd` | Server Wide Options | 566 | — | In progress | — |
-| `8b3d8434ffe7` | HTTP User Agent | 566 | — | In progress | — |
-| `f0dbd8864611` | HTTP Server Header | 567 | — | In progress | — |
-| `e5bb08dc82c9` | FHIR Extension | 567 | — | In progress | — |
-| `f36c092134d8` | 3.12.0 Upgrade Notes | 567 | — | In progress | — |
-| `1d21d604eeb4` | Preventing XML External Entity Vulnerabilities | 567 | — | In progress | — |
-| `497f4a324af6` | How this can affect you | 567 | — | In progress | — |
-| `38e025a35a2c` | PDF Generation Updates | 567 | — | In progress | — |
-| `56b5f595e9d8` | Using PDFBox Classes | 568 | — | In progress | — |
-| `155ddf3e34f9` | PDF Generation and Images | 568 | — | In progress | — |
-| `8aed8bc5f47d` | 3.11.0 Upgrade Notes | 568 | — | In progress | — |
-| `fb4c9a119839` | Database Connection Retries on Server Startup | 568 | — | In progress | — |
-| `63ca8bcb3706` | Interoperability Connector Suite | 569 | — | In progress | — |
-| `2fde9791dd9f` | Logging Raw SOAP Payloads and WS-Security Details | 569 | — | In progress | — |
-| `c6a6bb7e2d3b` | Toggling Automatic Conversion to JSON | 569 | — | In progress | — |
-| `5ace9dd04500` | 3.10.0 Upgrade Notes | 570 | — | In progress | — |
+| `22339b2c9f89` | Moving Java Home Preference Checks | 563 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `2d09ea0ceab9` | 4.1.0 Upgrade Notes | 564 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `4b651810fd69` | Warning: Open issue with SMB File Reader/Writer | 564 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `5171600cef33` | Update log4j Library | 564 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `3b20cb81bd4c` | 4.0.0 Upgrade Notes | 564 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `526a709011db` | Database Reader XML Casing | 564 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `f655f3e644c3` | TLS Protocols and Cipher Suites | 565 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `47942deb5773` | TLS Protocols | 565 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `0c6bfe57523b` | Cipher Suites | 565 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `fcfd93ab30a7` | Impact | 566 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `2b998b66a8f3` | Resolution | 566 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `66f9803491f3` | SSL Manager Options | 566 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `fbc9f571cccd` | Server Wide Options | 566 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `8b3d8434ffe7` | HTTP User Agent | 566 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `f0dbd8864611` | HTTP Server Header | 567 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `e5bb08dc82c9` | FHIR Extension | 567 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `f36c092134d8` | 3.12.0 Upgrade Notes | 567 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `1d21d604eeb4` | Preventing XML External Entity Vulnerabilities | 567 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `497f4a324af6` | How this can affect you | 567 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `38e025a35a2c` | PDF Generation Updates | 567 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `56b5f595e9d8` | Using PDFBox Classes | 568 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `155ddf3e34f9` | PDF Generation and Images | 568 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `8aed8bc5f47d` | 3.11.0 Upgrade Notes | 568 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `fb4c9a119839` | Database Connection Retries on Server Startup | 568 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `63ca8bcb3706` | Interoperability Connector Suite | 569 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `2fde9791dd9f` | Logging Raw SOAP Payloads and WS-Security Details | 569 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `c6a6bb7e2d3b` | Toggling Automatic Conversion to JSON | 569 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `5ace9dd04500` | 3.10.0 Upgrade Notes | 570 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
 | `279545f2881f` | Advanced Clustering Sync Intervals | 570 | N/A | N/A | MC clustering sync UI; not applicable (scope-vs-mirth.md) |
-| `8c9aba4d25af` | 3.9.0 Upgrade Notes | 571 | — | In progress | — |
-| `742b9ccf3595` | SMB Versions in a File Reader/Writer | 571 | — | In progress | — |
-| `70e2e929c0f9` | DICOM Sender Storage Commitment | 571 | — | In progress | — |
-| `f27e70d5854f` | 3.8.0 Upgrade Notes | 571 | — | In progress | — |
-| `23976638e4c8` | Connecting via a Database Reader/Writer or in JavaScript | 571 | — | In progress | — |
-| `3c45d5cbf3e8` | Using an Old Version of MySQL for Your Connect Backend Database | 572 | — | In progress | — |
-| `13aa0812a805` | 3.7.0 Upgrade Notes | 572 | — | In progress | — |
-| `3404e9056439` | Commercial License Key | 572 | — | In progress | — |
-| `469e8a922ec0` | Using Mirth Appliance | 572 | — | In progress | — |
-| `cb47d401996a` | Standalone Installation | 573 | — | In progress | — |
-| `388f8023bf37` | Database Connection Pools | 573 | — | In progress | — |
-| `3b3821c2b6d7` | Option 1: Use two pools, one read/write and one read-only | 574 | — | In progress | — |
-| `e23eec479d93` | Option 2: Use one connection pool for everything | 574 | — | In progress | — |
+| `8c9aba4d25af` | 3.9.0 Upgrade Notes | 571 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `742b9ccf3595` | SMB Versions in a File Reader/Writer | 571 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `70e2e929c0f9` | DICOM Sender Storage Commitment | 571 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `f27e70d5854f` | 3.8.0 Upgrade Notes | 571 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `23976638e4c8` | Connecting via a Database Reader/Writer or in JavaScript | 571 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `3c45d5cbf3e8` | Using an Old Version of MySQL for Your Connect Backend Database | 572 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `13aa0812a805` | 3.7.0 Upgrade Notes | 572 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `3404e9056439` | Commercial License Key | 572 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `469e8a922ec0` | Using Mirth Appliance | 572 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `cb47d401996a` | Standalone Installation | 573 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `388f8023bf37` | Database Connection Pools | 573 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `3b3821c2b6d7` | Option 1: Use two pools, one read/write and one read-only | 574 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `e23eec479d93` | Option 2: Use one connection pool for everything | 574 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
 | `cb66d8d8674e` | Keystore Passwords | 575 | N/A | N/A | MC server/keystore password UI; use Kubernetes secrets / ASP.NET configuration (scope-vs-mirth.md) |
-| `3b6861a67fca` | 3.5.0 Upgrade Notes | 575 | — | In progress | — |
-| `7b35c51bae06` | 3.4.0 Upgrade Notes | 576 | — | In progress | — |
-| `1173bb9b2cfa` | 3.2.0 Upgrade Notes | 577 | — | In progress | — |
-| `bd010aed7117` | 3.1.1 Upgrade Notes | 578 | — | In progress | — |
-| `f0b5911c310a` | 3.1.0 Upgrade Notes | 578 | — | In progress | — |
-| `0fd1f78d0f0a` | 3.0.2 Upgrade Notes | 579 | — | In progress | — |
-| `299a0154645c` | Channel Updates | 579 | — | In progress | — |
-| `678388f330ad` | 3.0.0 Upgrade Notes | 579 | — | In progress | — |
-| `878d947c78c3` | Message Migration | 579 | — | In progress | — |
-| `6b480dc9d2bb` | For Non-Polling Channels | 580 | — | In progress | — |
-| `51d64b8819d3` | For Polling Channels | 580 | — | In progress | — |
-| `ca2619506849` | Channel Updates | 580 | — | In progress | — |
+| `3b6861a67fca` | 3.5.0 Upgrade Notes | 575 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `7b35c51bae06` | 3.4.0 Upgrade Notes | 576 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `1173bb9b2cfa` | 3.2.0 Upgrade Notes | 577 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `bd010aed7117` | 3.1.1 Upgrade Notes | 578 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `f0b5911c310a` | 3.1.0 Upgrade Notes | 578 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `0fd1f78d0f0a` | 3.0.2 Upgrade Notes | 579 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `299a0154645c` | Channel Updates | 579 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `678388f330ad` | 3.0.0 Upgrade Notes | 579 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `878d947c78c3` | Message Migration | 579 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `6b480dc9d2bb` | For Non-Polling Channels | 580 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `51d64b8819d3` | For Polling Channels | 580 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
+| `ca2619506849` | Channel Updates | 580 | N/A | N/A | Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix |
 | `799a49bda76d` | Commercial Support/Extensions | 582 | N/A | N/A | Commercial support/extensions marketing; not SmartConnect core backlog |
 | `8c24dedf8572` | Advanced Alerting | 583 | N/A | N/A | No MC Advanced Alerting; use platform metrics/alerting (scope-vs-mirth.md) |
 | `7453863f9f44` | Advanced Clustering | 584 | N/A | N/A | MC cluster control plane; scaling/HA is Kubernetes / host concern (scope-vs-mirth.md) |

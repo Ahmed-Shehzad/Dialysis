@@ -376,14 +376,14 @@
       "evidence": "SSL/TLS: configure at reverse proxy or Kestrel; no MC SSL Manager UI"
     },
     "1052c34c408d": {
-      "mapping": "N/A",
-      "status": "N/A",
-      "evidence": "No iterator filter; use JavaScript route filter for batch logic"
+      "mapping": "Iterator filter rule: wraps a child route filter and evaluates it per element (HL7/JSON/XML iterable)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Iteration/IterableResolver.cs"
     },
     "121bd3845f7d": {
-      "mapping": "N/A",
-      "status": "N/A",
-      "evidence": "No iterator transform; use JavaScript transform or multiple outbound routes"
+      "mapping": "Iterator transformer step: wraps a child transform stage and runs it per element",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Iteration/IterableResolver.cs"
     },
     "0fa53d8d19f6": {
       "mapping": "N/A",
@@ -1459,6 +1459,1806 @@
       "mapping": "N/A",
       "status": "N/A",
       "evidence": "Not in core SmartConnect; use HTTP/TCP adapters or host integration (scope-vs-mirth.md)"
+    },
+    "b765115cf57d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "61c13f92df62": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "790cf22b8dc7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c76458c0dab9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "1310a6d32f12": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c21736a470a6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "690c7a839977": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7cda6572c24e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "0ab20a857be1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "54ebed23b65a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "358db0b36953": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "692a2def89d7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "d28d92e49252": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "91649618dd2c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5328555804c9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "fd9e9317771e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9f0282e53326": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "0045040b889a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "2915220ce311": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c60c07155911": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "419dad49a5c5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "437130dd4712": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "38188bc2fd91": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c6a91d33b5f7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "114fe630f930": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "15e464f091e7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "45e19e372f55": {
+      "mapping": "Pruner interval/retention configuration + GET readout (subset of MC Prune Settings)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/DataPrunerHostedService.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/PrunerEndpointExtensions.cs"
+    },
+    "204d09872d15": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC message archive settings UI; retention/pruning only (scope-vs-mirth.md)"
+    },
+    "d49d8048b497": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e8163150f4bb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7c7e0b552132": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "507967433858": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "1d139d57ee8e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "863eb71118e8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "da0ed40e9c3c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "65546f8a6976": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "454a3bba349f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "ce1459f6a563": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "fe8575daf1c2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "cd574fcd4eeb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "6cfd552610ac": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "cbc318055076": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9fd5fe5dca41": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c8291e0afbfc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "25aba066d842": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "22d21e7bc6be": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "2ce4287ef560": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "a597ea89d0aa": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "474b188a9bfa": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "17476e92cc69": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "deec6e3040ac": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "da2de6bcaf1a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "652204eae947": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e0da3acf9003": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "8f718abc6e1a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9c8fdd1a42b2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "be800b5fefa4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9f38760fef9c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b61fdc42dced": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "dafb0378562f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f9c758dcae77": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "30444d1d023e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f3b484537db6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b0657b73534e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9ed6ad71ae21": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "0110805ec26b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "4437d3b0eb59": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "05fadd448ad3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "18ece9d87a35": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "342393f59ba5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b1d9164d5bde": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "1b4a00ba981d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b150dd58710b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "c634b1e29a74": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "32f400d67cf1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "79d20f508317": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "b405e9a43037": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "44c57af0d1a5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "dfda15817082": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5f555807a325": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "2f5299539d79": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9cd4435eeac3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e1b1ce2e2fcf": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "5b05e951280d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "8403b1d5c9ec": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "815e62d9f133": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "43b7b891c3b1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "790c7a7e4ed7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "eeef1df1250f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7f0f51f77a77": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "725a20d1c18f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "76703336aa90": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "fa56c9df18f0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "6f7ef9e54c60": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "ecd6372388ab": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "d1a013d4b76b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "01102b17f33c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "466338502386": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f3a78fd55445": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "a87ebd1c499d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "f4f375b709a1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "962f93f812af": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "95e570028c91": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "893b2bc5f810": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "e659be27bf19": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "7de79d021822": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "9acc74d3387e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth JavaScript Reader/Writer return-value protocol; SmartConnect inbound + outbound connectors are typed .NET interfaces"
+    },
+    "b78a1ad07466": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth JavaScript Reader/Writer return-value protocol; SmartConnect inbound + outbound connectors are typed .NET interfaces"
+    },
+    "693f111fbb39": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "90e44e3af4d1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "6d01c49f1da3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "65de032656c5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "f1a5d4a9ba1f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "f5a45b8c605d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "c13364030142": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "107b83613c04": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "6ceeb6314e87": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "250e9b59eb95": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "cfdfc6cfa37a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "97d055c53958": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "cc8193dcbf70": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "12354654582e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "8f98e579a924": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "2123d39c6241": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "299ff31cb480": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "c9d4b380a1ee": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "ef5bacf63c10": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "00ee0ad6d3d7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "f77e7c95e156": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "11ec186acf42": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "25ce372541ba": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "af130ee6329e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "d895fcc580ad": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "9f3ad6ebc16c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "dffca0a5fa52": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "f9ebb111c329": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "991bd87b77cd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "367e9f547583": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "3115d770d469": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature"
+    },
+    "9826cfb0c241": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST"
+    },
+    "6dcc8bd816c4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST"
+    },
+    "19efe521a02b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST"
+    },
+    "7483ca585581": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST"
+    },
+    "395163e7d5cc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST"
+    },
+    "988caebe1b59": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST"
+    },
+    "f4a5161dbf5a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md)"
+    },
+    "291676e917c2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md)"
+    },
+    "26a30223c229": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md)"
+    },
+    "e772bb6f0df4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md)"
+    },
+    "d811d53890ac": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md)"
+    },
+    "f935cb95d8fa": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth Java Server User API (Javadoc); SmartConnect has no Java plugin SPI"
+    },
+    "c260d67414a3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "c1b08a11e681": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "ade9e3a1104d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "2dd16b9ab7e4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "27151831795d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "61dbac19ee37": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "454571958af0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "a050f78878a5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "58010e400b1f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "924465691f98": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "98f84b9ca18b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No MC Administrator Debugger; test flows via HTTP dispatch + ledger + script unit tests (scope-vs-mirth.md)"
+    },
+    "fb2bd68085ba": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly"
+    },
+    "dbd3139b0d38": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly"
+    },
+    "0da94159ff5b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly"
+    },
+    "35c5f20bfd21": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth Velocity-template substitution chapter; SmartConnect transform stages cover the substitution use cases directly"
+    },
+    "1e8466dc5a69": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Mirth CLI; SmartConnect host CLI + REST API replace it (scope-vs-mirth.md)"
+    },
+    "77b068248a31": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Mirth CLI; SmartConnect host CLI + REST API replace it (scope-vs-mirth.md)"
+    },
+    "1e4c3c953b6d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Mirth CLI; SmartConnect host CLI + REST API replace it (scope-vs-mirth.md)"
+    },
+    "f6e04f09424c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "849efb2b04ed": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "8754f4f0dcae": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "be2e793b8e43": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "5e4fc55e03b5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "f583b3155102": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "0d5235049dc8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "ac93193a3787": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "e2620aacea13": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "2e6fa1798fbc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "23bc034a650b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "9f1cee054676": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "bd1a0295bd9c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "4ce218df8f34": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "ea29d20b9bef": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "799c01292d28": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "e47daed2d9eb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "8c47d8633e6b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "bf197be3beea": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth-server configuration / log4j / properties files; SmartConnect uses ASP.NET configuration + Serilog (scope-vs-mirth.md)"
+    },
+    "6170f9dd3db6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "83f69eeff687": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "2b418ce59ec1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "87cc84363b05": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "6b23ae622805": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "e74343451827": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "a8ced0d763d9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "cc21702b2373": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "e10cfff4e5ad": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "491b9237878d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "faa04df6d9c2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "3f2ed5558177": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "bdc107b18d23": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "ca9cbec5f443": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "9510524b9c84": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "67e5e1804d95": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "54471df947ba": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "bd59b5fb6202": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "76432cb8a21c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "56cdafbfd0fb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "664dfebc2935": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "8f4ef3c94e5d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth product FAQ chapter; not a SmartConnect implementation surface"
+    },
+    "9774ce82a593": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "73c83a8392d8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "365672498056": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "0d0bd1e3ef0d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "26ee0f069b26": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "f3f7a10928e0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "8a895429d36f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "e9e718eb9ba0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "3801c4e05c4d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "b796346b0b79": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "c6e23cd56f51": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "01e5fd3ba54f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "aba1897961b6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "d88b8fd04af8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "02239180acb6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "ed2e97661a35": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "a2c1fd3d9e92": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "3ed955eacb8c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "d260837c46cf": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "861d177986f3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth channel-development guidance chapter; SmartConnect equivalents are documented in scope-vs-mirth.md + architecture-flowcharts.md"
+    },
+    "05d0b5a15f64": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "429075ea7c11": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "daa7ca6cee48": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "985bfc3e8674": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "a928c555c02e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "5a7bdc521719": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "f68531a49349": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "bfbf88582cdc": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "aadb36f016e1": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "a7f0ec2ba2ef": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "fc75b93eaaeb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "d96517c6f899": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "b18ea5f70802": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "8b126975e608": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "e014126fb6b9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "c2547e34b82f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "4e8e77e561a7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "a251877a724e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "a8211fb9cf73": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "09d6533cdcc8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "e9c1fee6c59a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "99141bc26b75": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "7e39e01376f3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "5fad94d14978": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "16ae05e6d92a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "3395e24827ab": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "91a18e0081f6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "11c3bb8b4a14": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "15501dacb612": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth security best-practices chapter; SmartConnect security is platform-driven (TLS at gateway, ASP.NET auth, K8s secrets)"
+    },
+    "9a72c9e0684c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "d3cbd329c8ae": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "4217df4216a3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "ef4f04f2c292": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "544943379c0b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "102bf80a894e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "458aa783b2ec": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "eb8b1315acef": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "24275f64d4af": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth troubleshooting chapter (JVM, Java cache, client console); SmartConnect runs on .NET — operator concerns are handled via host logs + telemetry"
+    },
+    "db8e077c1348": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "2813d5cc3e3f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "b42b0b77ee47": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "0e22fb8644b9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "4a16a883be3a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "22e00d0a5268": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "bd6fd013e268": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "b266af7e2a18": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "f6e26e7a286d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "1d1889921d4d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "c1c1010a902d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "024845b529ab": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3634a58a6a13": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "a7320a63873f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "429827297f27": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "5d88c00ecea0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "65780dac54aa": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "4443cb5f49e0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "19c10c4f0022": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "4d673e2820e8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "d99c6c28b00d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "416df2618ad5": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "808adc18011e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "869e631d1fc2": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "471d4d898c29": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "fcc2ab28c8f4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3ab717ec029e": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "22339b2c9f89": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "2d09ea0ceab9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "4b651810fd69": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "5171600cef33": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3b20cb81bd4c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "526a709011db": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "f655f3e644c3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "47942deb5773": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "0c6bfe57523b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "fcfd93ab30a7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "2b998b66a8f3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "66f9803491f3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "fbc9f571cccd": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "8b3d8434ffe7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "f0dbd8864611": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "e5bb08dc82c9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "f36c092134d8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "1d21d604eeb4": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "497f4a324af6": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "38e025a35a2c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "56b5f595e9d8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "155ddf3e34f9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "8aed8bc5f47d": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "fb4c9a119839": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "63ca8bcb3706": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "2fde9791dd9f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "c6a6bb7e2d3b": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "5ace9dd04500": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "8c9aba4d25af": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "742b9ccf3595": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "70e2e929c0f9": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "f27e70d5854f": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "23976638e4c8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3c45d5cbf3e8": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "13aa0812a805": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3404e9056439": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "469e8a922ec0": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "cb47d401996a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "388f8023bf37": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3b3821c2b6d7": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "e23eec479d93": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "3b6861a67fca": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "7b35c51bae06": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "1173bb9b2cfa": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "bd010aed7117": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "f0b5911c310a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "0fd1f78d0f0a": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "299a0154645c": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "678388f330ad": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "878d947c78c3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "6b480dc9d2bb": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "51d64b8819d3": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "ca2619506849": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "Mirth upgrade-notes chapter; SmartConnect has no equivalent versioned upgrade matrix"
+    },
+    "a8a5552e4d94": {
+      "mapping": "N/A",
+      "status": "N/A",
+      "evidence": "No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md)"
+    },
+    "12a2b7f4dfbc": {
+      "mapping": "Source Connectors catalog: HTTP webhook, MLLP, TCP listener, File Reader, Database Reader",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader"
+    },
+    "f84c6390b80b": {
+      "mapping": "TCP transmission modes: MLLP / LF-terminated / length-prefixed framing",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerFrameDecoder.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpFrameDecoder.cs"
+    },
+    "0f464f24cd13": {
+      "mapping": "Basic TCP transmission mode (LF / length-prefix framing)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerFrameDecoder.cs"
+    },
+    "c27980f69bbf": {
+      "mapping": "Destination Connectors catalog: HTTP, File, SMTP, TCP/MLLP, Database, Channel Writer outbound adapters",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/FileOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/SmtpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/TcpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DatabaseOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs"
+    },
+    "9c0f28631402": {
+      "mapping": "Polling settings: ScheduleSettings (Mode=Interval/Cron/Time) honored by File Reader + Database Reader",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scheduling/ScheduleSettings.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs"
+    },
+    "109fe06b21e3": {
+      "mapping": "Interval schedule (fixed period + optional initial delay)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/IntervalSchedule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/ScheduleFactory.cs"
+    },
+    "56955c34b244": {
+      "mapping": "Time schedule (one or more wall-clock times per day, timezone-aware)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/TimeSchedule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/ScheduleFactory.cs"
+    },
+    "0b6bcd03be1a": {
+      "mapping": "Cron schedule (5- or 6-field expression, timezone-aware) via Cronos",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/CronSchedule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scheduling/ScheduleFactory.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scheduling/ScheduleSettings.cs"
+    },
+    "7c8e4785a731": {
+      "mapping": "Destination Set Filter transformer step (Jint script with destinationSet.removeAllExcept/remove/removeAll)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DestinationSetFilterTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "203b41701989": {
+      "mapping": "Iterator pipeline support: filter rule + transformer step share an IterableResolver",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs"
+    },
+    "90a10bc93515": {
+      "mapping": "Engine support for iterating message parts; the Mirth 'Assign To Iterator' UI task is replaced by the script-form iterator",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs"
     }
   }
 }

@@ -13,8 +13,16 @@ public sealed class PdmsDbContext(
 {
     protected override string ModuleSchema => "pdms";
 
+    private const string SessionsSchema = "pdms_sessions";
+    private const string TelemetrySchema = "pdms_telemetry";
+
     public DbSet<DialysisSession> Sessions => Set<DialysisSession>();
     public DbSet<IntradialyticReading> Readings => Set<IntradialyticReading>();
+    public DbSet<DialysisMachine> Machines => Set<DialysisMachine>();
+    public DbSet<TreatmentObservation> TreatmentObservations => Set<TreatmentObservation>();
+    public DbSet<TreatmentAlarm> TreatmentAlarms => Set<TreatmentAlarm>();
+    public DbSet<MdcCodeCatalogEntry> MdcCodes => Set<MdcCodeCatalogEntry>();
+    public DbSet<RawHl7Message> RawHl7Messages => Set<RawHl7Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,11 +30,12 @@ public sealed class PdmsDbContext(
 
         modelBuilder.Entity<DialysisSession>(b =>
         {
-            b.ToTable("DialysisSessions", "pdms_sessions");
+            b.ToTable("DialysisSessions", SessionsSchema);
             b.HasKey(s => s.Id);
             b.Property(s => s.PatientId).IsRequired();
             b.HasIndex(s => s.PatientId);
             b.HasIndex(s => s.ScheduledStartUtc);
+            b.HasIndex(s => s.MachineId);
             b.Property(s => s.Status).HasConversion<int>().IsRequired();
             b.Property(s => s.AbortReasonCode).HasMaxLength(64);
             b.Property(s => s.AchievedUfVolumeLiters).HasPrecision(8, 3);
@@ -59,7 +68,7 @@ public sealed class PdmsDbContext(
 
         modelBuilder.Entity<IntradialyticReading>(b =>
         {
-            b.ToTable("IntradialyticReadings", "pdms_sessions");
+            b.ToTable("IntradialyticReadings", SessionsSchema);
             b.HasKey(r => r.Id);
             b.Property(r => r.SessionId).IsRequired();
             b.HasIndex(r => new { r.SessionId, r.ObservedAtUtc });
@@ -69,6 +78,72 @@ public sealed class PdmsDbContext(
             b.Property(r => r.ConductivityMsPerCm).HasPrecision(6, 3);
             b.Property(r => r.Notes).HasMaxLength(2000);
             ModuleDbContextBase.MapAuditShadow(b);
+        });
+
+        modelBuilder.Entity<DialysisMachine>(b =>
+        {
+            b.ToTable("Machines", TelemetrySchema);
+            b.HasKey(m => m.Id);
+            b.Property(m => m.SerialNumber).IsRequired().HasMaxLength(64);
+            b.HasIndex(m => m.SerialNumber).IsUnique();
+            b.Property(m => m.VendorCode).HasMaxLength(32);
+            b.Property(m => m.ModelCode).HasMaxLength(64);
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
+        modelBuilder.Entity<TreatmentObservation>(b =>
+        {
+            b.ToTable("TreatmentObservations", TelemetrySchema);
+            b.HasKey(o => o.Id);
+            b.Property(o => o.SessionId).IsRequired();
+            b.Property(o => o.MachineId).IsRequired();
+            b.Property(o => o.MdcCode).IsRequired();
+            b.Property(o => o.ContainmentPath).IsRequired().HasMaxLength(64);
+            b.Property(o => o.ValueNumeric).HasPrecision(18, 6);
+            b.Property(o => o.ValueString).HasMaxLength(256);
+            b.Property(o => o.Units).HasMaxLength(32);
+            b.Property(o => o.SourceMessageId).IsRequired();
+            b.HasIndex(o => new { o.SessionId, o.ObservedAtUtc });
+            b.HasIndex(o => new { o.MachineId, o.ObservedAtUtc });
+            b.HasIndex(o => o.MdcCode);
+        });
+
+        modelBuilder.Entity<TreatmentAlarm>(b =>
+        {
+            b.ToTable("TreatmentAlarms", TelemetrySchema);
+            b.HasKey(a => a.Id);
+            b.Property(a => a.MachineId).IsRequired();
+            b.Property(a => a.AlarmCode).IsRequired();
+            b.Property(a => a.AlarmSource).HasMaxLength(128);
+            b.Property(a => a.AlarmPhase).HasMaxLength(64);
+            b.Property(a => a.State).HasConversion<int>().IsRequired();
+            b.Property(a => a.AcknowledgedBy).HasMaxLength(128);
+            b.HasIndex(a => new { a.MachineId, a.State });
+            b.HasIndex(a => new { a.SessionId, a.FirstObservedUtc });
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
+        modelBuilder.Entity<MdcCodeCatalogEntry>(b =>
+        {
+            b.ToTable("ObservationCodes", TelemetrySchema);
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Id).ValueGeneratedNever();
+            b.Property(c => c.DisplayName).IsRequired().HasMaxLength(128);
+            b.Property(c => c.Category).HasConversion<int>().IsRequired();
+            b.Property(c => c.Units).HasMaxLength(32);
+        });
+
+        modelBuilder.Entity<RawHl7Message>(b =>
+        {
+            b.ToTable("RawHl7Messages", TelemetrySchema);
+            b.HasKey(m => m.Id);
+            b.Property(m => m.MessageType).IsRequired().HasMaxLength(16);
+            b.Property(m => m.MessageControlId).IsRequired().HasMaxLength(50);
+            b.Property(m => m.Direction).HasConversion<int>().IsRequired();
+            b.Property(m => m.ProcessingStatus).HasConversion<int>().IsRequired();
+            b.Property(m => m.Payload).IsRequired();
+            b.HasIndex(m => new { m.MachineId, m.ReceivedAtUtc });
+            b.HasIndex(m => m.MessageControlId);
         });
     }
 }

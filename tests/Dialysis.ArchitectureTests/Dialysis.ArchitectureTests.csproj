@@ -36,6 +36,8 @@
     <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
     <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
     <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Composition/Dialysis.Identity.Composition.csproj" />
+    <ProjectReference Include="../../src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
+    <ProjectReference Include="../../src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

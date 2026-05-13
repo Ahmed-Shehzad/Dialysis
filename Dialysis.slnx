@@ -122,6 +122,9 @@
   <Folder Name="/src/backend/SmartConnect/Api/">
     <Project Path="src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
   </Folder>
+  <Folder Name="/src/backend/SmartConnect/Contracts/">
+    <Project Path="src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
+  </Folder>
   <Folder Name="/src/backend/SmartConnect/Persistence/">
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
@@ -135,5 +138,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Dialysis.ArchitectureTests/Dialysis.ArchitectureTests.csproj" />
+    <Project Path="tests/Dialysis.PDMS.TreatmentSessions.Tests/Dialysis.PDMS.TreatmentSessions.Tests.csproj" />
   </Folder>
 </Solution>

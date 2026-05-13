@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence;
 using Dialysis.SmartConnect.Scripts;
 
@@ -61,6 +63,22 @@ public sealed class FlowRuntimeEngine(
             return filterOutcome;
         }
 
+        // Source-side transform stages (Mirth source-connector transformer steps; used for Destination Set Filter).
+        foreach (var stageSlot in flow.Pipeline.SourceTransformStages)
+        {
+            var stage = plugins.TryResolveTransformStage(stageSlot.Kind);
+            if (stage is null)
+            {
+                return Failure($"Source transform stage kind '{stageSlot.Kind}' is not registered.");
+            }
+
+            var workingForStage = string.IsNullOrWhiteSpace(stageSlot.ParametersJson)
+                ? workingMessage
+                : workingMessage.WithMetadata("smartconnect.transform.parameters", stageSlot.ParametersJson!);
+            workingMessage = await stage.TransformAsync(workingForStage, cancellationToken).ConfigureAwait(false);
+        }
+
+        var allowedRouteNames = ParseDestinationSet(workingMessage);
         var attempted = new List<int>();
         var anyOutboundFailed = false;
         byte[]? responsePayload = null;
@@ -68,6 +86,24 @@ public sealed class FlowRuntimeEngine(
         for (var i = 0; i < flow.Pipeline.OutboundRoutes.Count; i++)
         {
             var route = flow.Pipeline.OutboundRoutes[i];
+
+            // Destination Set Filter — skip routes the source transform excluded.
+            if (allowedRouteNames is not null)
+            {
+                var routeName = ResolveRouteName(route, i);
+                if (!allowedRouteNames.Contains(routeName))
+                {
+                    await WriteOutboundLedgerAsync(
+                        workingMessage,
+                        i,
+                        MessageLedgerStatus.RouteFilterDropped,
+                        $"Skipped by destination set filter (route '{routeName}' not in allowed set).",
+                        null,
+                        cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+            }
+
             attempted.Add(i);
             var outbound = plugins.TryResolveOutboundAdapter(route.OutboundAdapterKind);
             if (outbound is null)
@@ -300,4 +336,42 @@ public sealed class FlowRuntimeEngine(
 
     private static FlowDispatchResult Failure(string error) =>
         new() { Succeeded = false, Error = error, OutboundRoutesAttempted = [] };
+
+    private static HashSet<string>? ParseDestinationSet(IntegrationMessage message)
+    {
+        if (!message.Metadata.TryGetValue(DestinationSetFilterTransformStage.DestinationSetMetadataKey, out var csv))
+            return null;
+        if (string.IsNullOrEmpty(csv))
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var name in csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            result.Add(name);
+        return result;
+    }
+
+    private static string ResolveRouteName(OutboundRouteSlot route, int index)
+    {
+        if (!string.IsNullOrWhiteSpace(route.OutboundParametersJson))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(route.OutboundParametersJson!);
+                if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                    doc.RootElement.TryGetProperty("routeName", out var nameEl) &&
+                    nameEl.ValueKind == JsonValueKind.String)
+                {
+                    var named = nameEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(named))
+                        return named;
+                }
+            }
+            catch (JsonException)
+            {
+                // Fall through to the index-based fallback.
+            }
+        }
+
+        return $"route-{index}";
+    }
 }

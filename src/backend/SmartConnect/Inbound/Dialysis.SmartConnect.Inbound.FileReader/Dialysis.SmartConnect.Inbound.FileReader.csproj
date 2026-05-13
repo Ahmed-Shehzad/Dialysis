@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="../Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <ProjectReference Include="../Dialysis.SmartConnect.Inbound.Hosting/Dialysis.SmartConnect.Inbound.Hosting.csproj" />
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

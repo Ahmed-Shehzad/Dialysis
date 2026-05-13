@@ -34,6 +34,9 @@ public static class SmartConnectServiceCollectionExtensions
         services.AddSingleton<XmlTransformStage>();
         services.AddSingleton<MessageBuilderTransformStage>();
         services.AddSingleton<MapperTransformStage>(sp => new MapperTransformStage(sp.GetRequiredService<JsonTransformStage>()));
+        services.AddSingleton<IteratorRouteFilter>(sp => new IteratorRouteFilter(sp));
+        services.AddSingleton<IteratorTransformStage>(sp => new IteratorTransformStage(sp));
+        services.AddSingleton<DestinationSetFilterTransformStage>();
         services.TryAddSingleton<IDatabaseOutboundConnectionFactory, ConfigurationDatabaseOutboundConnectionFactory>();
         services.AddSingleton<DatabaseOutboundAdapter>();
         services.TryAddSingleton<IVariableMapStore, InMemoryVariableMapStore>();
@@ -44,6 +47,7 @@ public static class SmartConnectServiceCollectionExtensions
             registry.RegisterRouteFilter(sp.GetRequiredService<AllowAllRouteFilter>());
             registry.RegisterRouteFilter(sp.GetRequiredService<JavascriptRouteFilter>());
             registry.RegisterRouteFilter(sp.GetRequiredService<RuleBuilderRouteFilter>());
+            registry.RegisterRouteFilter(sp.GetRequiredService<IteratorRouteFilter>());
             registry.RegisterOutboundAdapter(sp.GetRequiredService<PassThroughOutboundAdapter>());
             registry.RegisterOutboundAdapter(sp.GetRequiredService<HttpOutboundAdapter>());
             registry.RegisterOutboundAdapter(sp.GetRequiredService<FileOutboundAdapter>());
@@ -57,6 +61,8 @@ public static class SmartConnectServiceCollectionExtensions
             registry.RegisterTransformStage(sp.GetRequiredService<XmlTransformStage>());
             registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
             registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
+            registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());
+            registry.RegisterTransformStage(sp.GetRequiredService<DestinationSetFilterTransformStage>());
             return registry;
         });
         services.AddSingleton<IFlowPluginRegistry>(sp => sp.GetRequiredService<MutableFlowPluginRegistry>());

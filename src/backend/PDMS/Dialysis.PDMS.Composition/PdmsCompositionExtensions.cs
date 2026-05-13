@@ -7,9 +7,11 @@ using Dialysis.PDMS.Persistence;
 using Dialysis.PDMS.TreatmentSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
 using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
+using Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
+using Dialysis.SmartConnect.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +29,11 @@ public static class PdmsCompositionExtensions
     {
         services.AddPdmsPersistence(configurePersistence);
 
-        services.AddTransponder(_ => { });
+        services.AddTransponder(t =>
+        {
+            t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
+            t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
+        });
         configureTransponderTransport?.Invoke(services);
 
         services.AddCqrs(c =>
