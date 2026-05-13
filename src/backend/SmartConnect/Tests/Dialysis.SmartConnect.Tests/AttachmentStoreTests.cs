@@ -1,0 +1,129 @@
+using System.Text;
+using Dialysis.SmartConnect.Attachments;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+
+namespace Dialysis.SmartConnect.Tests;
+
+public sealed class AttachmentStoreTests
+{
+    [Fact]
+    public async Task Add_then_get_round_trips_bytes_and_metadata()
+    {
+        await using var sp = BuildServices();
+        var store = sp.GetRequiredService<IAttachmentStore>();
+
+        var bytes = Encoding.UTF8.GetBytes("hello");
+        var added = await store.AddAsync(new Attachment
+        {
+            Id = Guid.CreateVersion7(),
+            MessageId = Guid.CreateVersion7(),
+            FlowId = Guid.CreateVersion7(),
+            MimeType = "text/plain",
+            Data = bytes,
+            SizeBytes = bytes.Length,
+            CreatedUtc = DateTimeOffset.UtcNow,
+        }, CancellationToken.None);
+
+        var fetched = await store.GetAsync(added.Id, CancellationToken.None);
+        Assert.NotNull(fetched);
+        Assert.Equal("text/plain", fetched!.MimeType);
+        Assert.Equal("hello", Encoding.UTF8.GetString(fetched.Data.Span));
+    }
+
+    [Fact]
+    public async Task GetForMessage_returns_all_for_that_message()
+    {
+        await using var sp = BuildServices();
+        var store = sp.GetRequiredService<IAttachmentStore>();
+        var messageId = Guid.CreateVersion7();
+
+        for (var i = 0; i < 3; i++)
+        {
+            await store.AddAsync(new Attachment
+            {
+                Id = Guid.CreateVersion7(),
+                MessageId = messageId,
+                FlowId = Guid.CreateVersion7(),
+                MimeType = "text/plain",
+                Data = Encoding.UTF8.GetBytes($"row-{i}"),
+                SizeBytes = 5,
+                CreatedUtc = DateTimeOffset.UtcNow,
+            }, CancellationToken.None);
+        }
+        await store.AddAsync(new Attachment
+        {
+            Id = Guid.CreateVersion7(),
+            MessageId = Guid.CreateVersion7(),
+            FlowId = Guid.CreateVersion7(),
+            MimeType = "text/plain",
+            Data = Encoding.UTF8.GetBytes("other"),
+            SizeBytes = 5,
+            CreatedUtc = DateTimeOffset.UtcNow,
+        }, CancellationToken.None);
+
+        var list = await store.GetForMessageAsync(messageId, CancellationToken.None);
+        Assert.Equal(3, list.Count);
+    }
+
+    [Fact]
+    public async Task DeleteForMessage_cascades()
+    {
+        await using var sp = BuildServices();
+        var store = sp.GetRequiredService<IAttachmentStore>();
+        var messageId = Guid.CreateVersion7();
+        var added = await store.AddAsync(new Attachment
+        {
+            Id = Guid.CreateVersion7(),
+            MessageId = messageId,
+            FlowId = Guid.CreateVersion7(),
+            MimeType = "text/plain",
+            Data = Encoding.UTF8.GetBytes("x"),
+            SizeBytes = 1,
+            CreatedUtc = DateTimeOffset.UtcNow,
+        }, CancellationToken.None);
+
+        await store.DeleteForMessageAsync(messageId, CancellationToken.None);
+        Assert.Null(await store.GetAsync(added.Id, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task DeleteOlderThan_removes_only_old_rows()
+    {
+        await using var sp = BuildServices();
+        var store = sp.GetRequiredService<IAttachmentStore>();
+        var older = await store.AddAsync(new Attachment
+        {
+            Id = Guid.CreateVersion7(),
+            MessageId = Guid.CreateVersion7(),
+            FlowId = Guid.CreateVersion7(),
+            MimeType = "text/plain",
+            Data = Encoding.UTF8.GetBytes("old"),
+            SizeBytes = 3,
+            CreatedUtc = DateTimeOffset.UtcNow.AddDays(-30),
+        }, CancellationToken.None);
+        var newer = await store.AddAsync(new Attachment
+        {
+            Id = Guid.CreateVersion7(),
+            MessageId = Guid.CreateVersion7(),
+            FlowId = Guid.CreateVersion7(),
+            MimeType = "text/plain",
+            Data = Encoding.UTF8.GetBytes("new"),
+            SizeBytes = 3,
+            CreatedUtc = DateTimeOffset.UtcNow,
+        }, CancellationToken.None);
+
+        var removed = await store.DeleteOlderThanAsync(DateTimeOffset.UtcNow.AddDays(-7), CancellationToken.None);
+        Assert.Equal(1, removed);
+        Assert.Null(await store.GetAsync(older.Id, CancellationToken.None));
+        Assert.NotNull(await store.GetAsync(newer.Id, CancellationToken.None));
+    }
+
+    private static ServiceProvider BuildServices()
+    {
+        var services = new ServiceCollection();
+        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_attach_{Guid.NewGuid():N}");
+        return services.BuildServiceProvider();
+    }
+}

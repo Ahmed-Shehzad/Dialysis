@@ -1,7 +1,14 @@
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
+using Dialysis.SmartConnect.Alerts;
+using Dialysis.SmartConnect.Attachments;
+using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence;
 using Dialysis.SmartConnect.Scripts;
+using Dialysis.SmartConnect.VariableMaps;
 
 namespace Dialysis.SmartConnect;
 
@@ -13,8 +20,18 @@ public sealed class FlowRuntimeEngine(
     IMessageLedger ledger,
     IFlowPluginRegistry plugins,
     TimeProvider time,
-    ChannelScriptExecutor? scriptExecutor = null) : IFlowRuntime
+    IFlowExecutionContextAccessor? contextAccessor = null,
+    ChannelScriptExecutor? scriptExecutor = null,
+    AttachmentExtractionPipeline? attachmentExtraction = null,
+    AttachmentReattachmentService? attachmentReattachment = null,
+    IAlertSink? alertSink = null) : IFlowRuntime
 {
+    /// <summary>
+    /// Optional metadata key. Source connectors may set this to a JSON object of typed values that the
+    /// engine will hydrate into <see cref="FlowExecutionContext.SourceMap"/> (read-only from scripts).
+    /// </summary>
+    public const string SourceMapMetadataKey = "smartconnect.sourcemap.json";
+
     public async Task<FlowDispatchResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
         await AppendLedgerAsync(
@@ -39,6 +56,34 @@ public sealed class FlowRuntimeEngine(
                     : "Integration flow is not started.");
         }
 
+        // Build per-dispatch variable-map context (Mirth Source/Channel/Connector/Response scopes).
+        var ctx = BuildFlowExecutionContext(message, flow);
+        var previousCtx = contextAccessor?.Current;
+        if (contextAccessor is not null)
+        {
+            contextAccessor.Current = ctx;
+        }
+
+        try
+        {
+            return await DispatchCoreAsync(message, flow, ctx, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (contextAccessor is not null)
+            {
+                contextAccessor.Current = previousCtx;
+            }
+        }
+    }
+
+    private async Task<FlowDispatchResult> DispatchCoreAsync(
+        IntegrationMessage message,
+        IntegrationFlow flow,
+        FlowExecutionContext ctx,
+        CancellationToken cancellationToken)
+    {
+
         // PreProcessor script
         var workingMessage = message;
         if (scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PreProcessorScript))
@@ -57,6 +102,19 @@ public sealed class FlowRuntimeEngine(
             }
         }
 
+        // Attachment Handler — runs once between PreProcessor and route filters. Extracts inline bulky
+        // content into the attachment store and rewrites the payload with ${ATTACH:<id>} tokens.
+        if (attachmentExtraction is not null && flow.Pipeline.AttachmentHandler is not null)
+        {
+            var rewritten = await attachmentExtraction
+                .RunAsync(workingMessage, flow.Pipeline.AttachmentHandler, cancellationToken).ConfigureAwait(false);
+            if (!rewritten.Equals(workingMessage.Payload))
+            {
+                workingMessage = workingMessage.CloneWithPayload(rewritten);
+            }
+        }
+
+        ctx.SetCurrentStageContext(CodeTemplateContext.SourceFilter);
         var filterOutcome = await RunRouteFiltersAsync(flow, workingMessage, cancellationToken).ConfigureAwait(false);
         if (filterOutcome is not null)
         {
@@ -64,6 +122,7 @@ public sealed class FlowRuntimeEngine(
         }
 
         // Source-side transform stages (Mirth source-connector transformer steps; used for Destination Set Filter).
+        ctx.SetCurrentStageContext(CodeTemplateContext.SourceTransformer);
         foreach (var stageSlot in flow.Pipeline.SourceTransformStages)
         {
             var stage = plugins.TryResolveTransformStage(stageSlot.Kind);
@@ -85,12 +144,14 @@ public sealed class FlowRuntimeEngine(
         var sequential = flow.Pipeline.OutboundRoutesSequential;
         for (var i = 0; i < flow.Pipeline.OutboundRoutes.Count; i++)
         {
+            ctx.SetCurrentRouteOrdinal(i);
             var route = flow.Pipeline.OutboundRoutes[i];
+            var resolvedRouteName = ResolveRouteName(route, i);
 
             // Destination Set Filter — skip routes the source transform excluded.
             if (allowedRouteNames is not null)
             {
-                var routeName = ResolveRouteName(route, i);
+                var routeName = resolvedRouteName;
                 if (!allowedRouteNames.Contains(routeName))
                 {
                     await WriteOutboundLedgerAsync(
@@ -109,13 +170,15 @@ public sealed class FlowRuntimeEngine(
             if (outbound is null)
             {
                 anyOutboundFailed = true;
+                var detail = $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.";
                 await WriteOutboundLedgerAsync(
                     workingMessage,
                     i,
                     MessageLedgerStatus.OutboundFailed,
-                    $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.",
+                    detail,
                     null,
                     cancellationToken).ConfigureAwait(false);
+                PublishAlert(workingMessage, AlertErrorType.OutboundFailure, detail, cancellationToken);
                 if (sequential)
                 {
                     break;
@@ -124,6 +187,7 @@ public sealed class FlowRuntimeEngine(
                 continue;
             }
 
+            ctx.SetCurrentStageContext(CodeTemplateContext.DestinationTransformer);
             var transformed = await TryTransformForRouteAsync(workingMessage, route, cancellationToken).ConfigureAwait(false);
             if (transformed.ErrorDetail is not null)
             {
@@ -135,6 +199,7 @@ public sealed class FlowRuntimeEngine(
                     transformed.ErrorDetail,
                     null,
                     cancellationToken).ConfigureAwait(false);
+                PublishAlert(workingMessage, AlertErrorType.TransformError, transformed.ErrorDetail, cancellationToken);
                 if (sequential)
                 {
                     break;
@@ -147,6 +212,17 @@ public sealed class FlowRuntimeEngine(
             if (!string.IsNullOrWhiteSpace(route.OutboundParametersJson))
             {
                 toSend = toSend.WithMetadata("smartconnect.outbound.parameters", route.OutboundParametersJson!);
+            }
+
+            // Reattach Attachments — inflate ${ATTACH:<id>} tokens back to raw bytes if the route opted in.
+            if (route.ReattachAttachments && attachmentReattachment is not null)
+            {
+                var inflated = await attachmentReattachment
+                    .InflateAsync(toSend.Payload, workingMessage.Id, cancellationToken).ConfigureAwait(false);
+                if (!inflated.Equals(toSend.Payload))
+                {
+                    toSend = toSend.CloneWithPayload(inflated);
+                }
             }
 
             var maxAttempts = route.MaxAttempts < 1 ? 1 : route.MaxAttempts;
@@ -173,6 +249,11 @@ public sealed class FlowRuntimeEngine(
             if (!sendSucceeded)
             {
                 anyOutboundFailed = true;
+                ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
+                {
+                    ["status"] = "failure",
+                    ["error"] = sendError,
+                };
                 await WriteOutboundLedgerAsync(
                     workingMessage,
                     i,
@@ -180,6 +261,7 @@ public sealed class FlowRuntimeEngine(
                     sendError,
                     toSend.Payload.ToArray(),
                     cancellationToken).ConfigureAwait(false);
+                PublishAlert(workingMessage, AlertErrorType.OutboundFailure, sendError, cancellationToken);
                 if (sequential)
                 {
                     break;
@@ -187,6 +269,13 @@ public sealed class FlowRuntimeEngine(
             }
             else
             {
+                ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
+                {
+                    ["status"] = "success",
+                    ["payload"] = lastSendResult.ResponsePayload is { Length: > 0 } bytes
+                        ? Encoding.UTF8.GetString(bytes)
+                        : null,
+                };
                 await WriteOutboundLedgerAsync(
                     workingMessage,
                     i,
@@ -198,6 +287,7 @@ public sealed class FlowRuntimeEngine(
                 // Response transform: apply ResponseTransformStages if present
                 if (lastSendResult.ResponsePayload is { Length: > 0 } rawResp && route.ResponseTransformStages.Count > 0)
                 {
+                    ctx.SetCurrentStageContext(CodeTemplateContext.DestinationResponseTransformer);
                     var respMsg = workingMessage.CloneWithPayload(rawResp);
                     foreach (var stage in route.ResponseTransformStages)
                     {
@@ -217,6 +307,8 @@ public sealed class FlowRuntimeEngine(
                 }
             }
         }
+
+        ctx.SetCurrentRouteOrdinal(-1);
 
         await AppendLedgerAsync(
             workingMessage,
@@ -337,6 +429,26 @@ public sealed class FlowRuntimeEngine(
     private static FlowDispatchResult Failure(string error) =>
         new() { Succeeded = false, Error = error, OutboundRoutesAttempted = [] };
 
+    private void PublishAlert(IntegrationMessage message, AlertErrorType errorType, string? errorDetail, CancellationToken cancellationToken)
+    {
+        if (alertSink is null) return;
+        var trigger = new AlertTrigger
+        {
+            FlowId = message.FlowId,
+            MessageId = message.Id,
+            CorrelationId = message.CorrelationId,
+            ErrorType = errorType,
+            ErrorDetail = errorDetail,
+            OccurredAtUtc = time.GetUtcNow(),
+        };
+        // Fire-and-forget: alerts must never block the dispatch path.
+        _ = Task.Run(async () =>
+        {
+            try { await alertSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false); }
+            catch { /* swallowed: alert engine logs internally */ }
+        }, cancellationToken);
+    }
+
     private static HashSet<string>? ParseDestinationSet(IntegrationMessage message)
     {
         if (!message.Metadata.TryGetValue(DestinationSetFilterTransformStage.DestinationSetMetadataKey, out var csv))
@@ -373,5 +485,90 @@ public sealed class FlowRuntimeEngine(
         }
 
         return $"route-{index}";
+    }
+
+    private static FlowExecutionContext BuildFlowExecutionContext(IntegrationMessage message, IntegrationFlow flow)
+    {
+        var sourceMap = ParseSourceMap(message);
+        var connectorMaps = new ConcurrentDictionary<string, object?>[flow.Pipeline.OutboundRoutes.Count];
+        for (var i = 0; i < connectorMaps.Length; i++)
+        {
+            connectorMaps[i] = new ConcurrentDictionary<string, object?>(StringComparer.Ordinal);
+        }
+
+        return new FlowExecutionContext
+        {
+            MessageId = message.Id,
+            FlowId = message.FlowId,
+            SourceMap = sourceMap,
+            ConnectorMaps = connectorMaps,
+        };
+    }
+
+    private static IReadOnlyDictionary<string, object?> ParseSourceMap(IntegrationMessage message)
+    {
+        if (!message.Metadata.TryGetValue(SourceMapMetadataKey, out var json) || string.IsNullOrWhiteSpace(json))
+        {
+            return ImmutableDictionary<string, object?>.Empty;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return ImmutableDictionary<string, object?>.Empty;
+            }
+
+            var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                dict[prop.Name] = JsonElementToObject(prop.Value);
+            }
+
+            return dict;
+        }
+        catch (JsonException)
+        {
+            return ImmutableDictionary<string, object?>.Empty;
+        }
+    }
+
+    private static object? JsonElementToObject(JsonElement el)
+    {
+        switch (el.ValueKind)
+        {
+            case JsonValueKind.String:
+                return el.GetString();
+            case JsonValueKind.Number:
+                return el.TryGetInt64(out var l) ? (object)l : el.GetDouble();
+            case JsonValueKind.True:
+                return true;
+            case JsonValueKind.False:
+                return false;
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return null;
+            case JsonValueKind.Object:
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
+                foreach (var p in el.EnumerateObject())
+                {
+                    dict[p.Name] = JsonElementToObject(p.Value);
+                }
+                return dict;
+            }
+            case JsonValueKind.Array:
+            {
+                var list = new List<object?>();
+                foreach (var item in el.EnumerateArray())
+                {
+                    list.Add(JsonElementToObject(item));
+                }
+                return list;
+            }
+            default:
+                return null;
+        }
     }
 }

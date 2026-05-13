@@ -1,6 +1,7 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="Cronos" Version="0.10.0" />
+    <PackageVersion Include="fo-dicom" Version="5.2.6" />
     <PackageVersion Include="Jint" Version="4.4.1" />
     <PackageVersion Include="Asp.Versioning.Mvc" Version="10.0.0" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />

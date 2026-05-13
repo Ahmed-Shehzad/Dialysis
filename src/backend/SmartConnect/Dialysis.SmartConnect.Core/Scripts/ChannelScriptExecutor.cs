@@ -1,6 +1,8 @@
 using System.Text;
+using Dialysis.SmartConnect.Attachments;
+using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.VariableMaps;
 using Jint;
-using Jint.Runtime;
 using Microsoft.Extensions.Logging;
 
 namespace Dialysis.SmartConnect.Scripts;
@@ -8,7 +10,12 @@ namespace Dialysis.SmartConnect.Scripts;
 /// <summary>
 /// Executes channel lifecycle JavaScript scripts in a sandboxed Jint engine.
 /// </summary>
-public sealed class ChannelScriptExecutor(IVariableMapStore variableMapStore, ILogger<ChannelScriptExecutor> logger)
+public sealed class ChannelScriptExecutor(
+    IVariableMapStore variableMapStore,
+    ILogger<ChannelScriptExecutor> logger,
+    IFlowExecutionContextAccessor? contextAccessor = null,
+    ICodeTemplateLibraryRepository? codeTemplateRepository = null,
+    IAttachmentStore? attachmentStore = null)
 {
     private static readonly TimeSpan ScriptTimeout = TimeSpan.FromSeconds(3);
     private const int MaxRecursionDepth = 64;
@@ -23,47 +30,33 @@ public sealed class ChannelScriptExecutor(IVariableMapStore variableMapStore, IL
     {
         var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
 
-        var channelMap = await variableMapStore
+        var globalChannel = await variableMapStore
             .GetAllAsync(VariableMapScope.GlobalChannel, message.FlowId, cancellationToken)
             .ConfigureAwait(false);
-        var globalMap = await variableMapStore
+        var global = await variableMapStore
             .GetAllAsync(VariableMapScope.Global, null, cancellationToken)
             .ConfigureAwait(false);
-        var configMap = await variableMapStore
+        var configuration = await variableMapStore
             .GetAllAsync(VariableMapScope.Configuration, null, cancellationToken)
             .ConfigureAwait(false);
 
-        var channelMapDict = channelMap.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
-        var globalMapDict = globalMap.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
+        var ctx = contextAccessor?.Current ?? new FlowExecutionContext();
 
         try
         {
             var engine = CreateEngine();
             engine.SetValue("msg", payloadText);
-            engine.SetValue("channelMap", new ScriptMap(channelMapDict));
-            engine.SetValue("globalMap", new ScriptMap(globalMapDict));
-            engine.SetValue("configurationMap", new ReadOnlyScriptMap(configMap));
             engine.SetValue("logger", new ScriptLogger(logger));
             engine.SetValue("flowId", message.FlowId.ToString());
             engine.SetValue("correlationId", message.CorrelationId);
 
+            var bound = VariableMapsJsBinder.BindAll(engine, ctx, globalChannel, global, configuration);
+            await BindCodeTemplatesAsync(engine, message.FlowId, CodeTemplateContext.ChannelPreprocessor, cancellationToken).ConfigureAwait(false);
+            AttachmentJsBinder.Bind(engine, attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
+
             var result = engine.Evaluate(script);
 
-            // Persist channelMap changes back
-            foreach (var kvp in channelMapDict)
-            {
-                await variableMapStore.SetAsync(
-                    VariableMapScope.GlobalChannel, message.FlowId, kvp.Key, kvp.Value?.ToString() ?? "", cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            // Persist globalMap changes back
-            foreach (var kvp in globalMapDict)
-            {
-                await variableMapStore.SetAsync(
-                    VariableMapScope.Global, null, kvp.Key, kvp.Value?.ToString() ?? "", cancellationToken)
-                    .ConfigureAwait(false);
-            }
+            await PersistBackAsync(bound, message.FlowId, cancellationToken).ConfigureAwait(false);
 
             // If script returns false explicitly, drop the message
             if (result.IsBoolean() && !result.AsBoolean())
@@ -78,7 +71,6 @@ public sealed class ChannelScriptExecutor(IVariableMapStore variableMapStore, IL
                 return PreProcessorResult.Mutated(newPayload);
             }
 
-            // Otherwise, pass through original payload
             return PreProcessorResult.PassThrough();
         }
         catch (TimeoutException)
@@ -103,28 +95,35 @@ public sealed class ChannelScriptExecutor(IVariableMapStore variableMapStore, IL
         CancellationToken cancellationToken)
     {
         var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
-        var globalMap = await variableMapStore
+
+        var globalChannel = await variableMapStore
+            .GetAllAsync(VariableMapScope.GlobalChannel, message.FlowId, cancellationToken)
+            .ConfigureAwait(false);
+        var global = await variableMapStore
             .GetAllAsync(VariableMapScope.Global, null, cancellationToken)
             .ConfigureAwait(false);
-        var globalMapDict = globalMap.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
+        var configuration = await variableMapStore
+            .GetAllAsync(VariableMapScope.Configuration, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        var ctx = contextAccessor?.Current ?? new FlowExecutionContext();
 
         try
         {
             var engine = CreateEngine();
             engine.SetValue("msg", payloadText);
-            engine.SetValue("globalMap", new ScriptMap(globalMapDict));
             engine.SetValue("logger", new ScriptLogger(logger));
             engine.SetValue("flowId", message.FlowId.ToString());
             engine.SetValue("correlationId", message.CorrelationId);
             engine.SetValue("succeeded", succeeded);
+
+            var bound = VariableMapsJsBinder.BindAll(engine, ctx, globalChannel, global, configuration);
+            await BindCodeTemplatesAsync(engine, message.FlowId, CodeTemplateContext.ChannelPostprocessor, cancellationToken).ConfigureAwait(false);
+            AttachmentJsBinder.Bind(engine, attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
+
             engine.Execute(script);
 
-            foreach (var kvp in globalMapDict)
-            {
-                await variableMapStore.SetAsync(
-                    VariableMapScope.Global, null, kvp.Key, kvp.Value?.ToString() ?? "", cancellationToken)
-                    .ConfigureAwait(false);
-            }
+            await PersistBackAsync(bound, message.FlowId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -154,15 +153,36 @@ public sealed class ChannelScriptExecutor(IVariableMapStore variableMapStore, IL
             .LimitRecursion(MaxRecursionDepth)
             .Strict(false));
 
-    public sealed class ScriptMap(Dictionary<string, object?> store)
+    private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CodeTemplateContext context, CancellationToken ct)
     {
-        public object? get(string key) => store.TryGetValue(key, out var v) ? v : null;
-        public void put(string key, object? value) => store[key] = value?.ToString();
+        if (codeTemplateRepository is null) return;
+        await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, codeTemplateRepository, flowId, context, ct).ConfigureAwait(false);
     }
 
-    public sealed class ReadOnlyScriptMap(IReadOnlyDictionary<string, string> store)
+    private async Task PersistBackAsync(
+        VariableMapsJsBinder.BoundMaps bound,
+        Guid flowId,
+        CancellationToken cancellationToken)
     {
-        public string? get(string key) => store.TryGetValue(key, out var v) ? v : null;
+        foreach (var kvp in bound.GlobalChannel)
+        {
+            await variableMapStore.SetAsync(
+                VariableMapScope.GlobalChannel,
+                flowId,
+                kvp.Key,
+                kvp.Value?.ToString() ?? "",
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (var kvp in bound.Global)
+        {
+            await variableMapStore.SetAsync(
+                VariableMapScope.Global,
+                null,
+                kvp.Key,
+                kvp.Value?.ToString() ?? "",
+                cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public sealed class ScriptLogger(ILogger logger)

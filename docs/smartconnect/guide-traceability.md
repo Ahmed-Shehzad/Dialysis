@@ -232,26 +232,26 @@
 | `b61fdc42dced` | Set Dependencies Window | 212 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `a7ce739b4d7d` | Code Template Libraries | 213 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `163cabfed67c` | Link Code Template Libraries | 213 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `81ce8b48b3c0` | Library Resources | 214 | — | In progress | — |
+| `81ce8b48b3c0` | Library Resources | 214 | Library Resources: CodeTemplateLibrary entity + EF persistence (separate from channel storage) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplateLibrary.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/CodeTemplateLibraryEntity.cs |
 | `dafb0378562f` | Deploy/Start Dependencies | 215 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `f9c758dcae77` | Deploy/Start Channels | 217 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `30444d1d023e` | Pause/Stop/Undeploy Channels | 218 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `454721e1f823` | Attachment Handlers | 219 | — | In progress | — |
+| `454721e1f823` | Attachment Handlers | 219 | Attachment Handlers: AttachmentExtractionPipeline runs between PreProcessor and route filters; resolves IAttachmentHandler from IFlowPluginRegistry by AttachmentHandlerSlot.Kind | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/AttachmentExtractionPipeline.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/IAttachmentHandler.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/AttachmentHandlerSlot.cs |
 | `01cabaf05923` | Extraction | 220 | — | In progress | — |
-| `e0d1b0c489f4` | Reattachment | 220 | — | In progress | — |
+| `e0d1b0c489f4` | Reattachment | 220 | Reattachment: AttachmentReattachmentService inflates ${ATTACH:<id>} tokens to bytes on routes with ReattachAttachments=true (off by default per Mirth UG p220) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/AttachmentReattachmentService.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs |
 | `097189137806` | Expanded Replacement Tokens | 220 | — | In progress | — |
-| `16d136564ce4` | Attachment MIME Types | 221 | — | In progress | — |
-| `4890e76d7fcf` | Attachment Handler Properties | 221 | — | In progress | — |
-| `b32b8acf3e75` | Entire Message Attachment Handler Properties | 221 | — | In progress | — |
-| `34b2ca8103b1` | Regex Attachment Handler Properties | 222 | — | In progress | — |
+| `16d136564ce4` | Attachment MIME Types | 221 | Attachment MIME Types: AttachmentEntity.MimeType (default application/octet-stream) round-trips per attachment; bytes endpoint serves Content-Type from this column | Done | src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/AttachmentEntity.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AttachmentEndpointExtensions.cs |
+| `4890e76d7fcf` | Attachment Handler Properties | 221 | Attachment Handler Properties: AttachmentHandlerSlot.PropertiesJson holds handler-specific JSON; each handler parses its own keys (pattern/script/extractTags/customKind/mimeType) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/AttachmentHandlerSlot.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/AttachmentHandlerContext.cs |
+| `b32b8acf3e75` | Entire Message Attachment Handler Properties | 221 | Entire Message Attachment Handler: kind=entire-message; whole payload becomes one attachment, replaced inline with a single ${ATTACH:<id>} token | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/EntireMessageAttachmentHandler.cs |
+| `34b2ca8103b1` | Regex Attachment Handler Properties | 222 | Regex Attachment Handler: kind=regex; extracts capture group 1 of each match into a separate attachment; pattern + regexOptions configurable via properties JSON | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/RegexAttachmentHandler.cs |
 | `029122e7bc93` | Regular Expressions Table | 223 | — | In progress | — |
 | `d0a9a749d003` | String Replacement Tables | 224 | — | In progress | — |
-| `bbaea87685b5` | DICOM Attachment Handler Properties | 224 | — | In progress | — |
-| `41352218137a` | JavaScript Attachment Handler Properties | 224 | — | In progress | — |
+| `bbaea87685b5` | DICOM Attachment Handler Properties | 224 | DICOM Attachment Handler: kind=dicom; parses payload via fo-dicom, extracts PixelData (and configurable tags) as attachments; placeholder reference written back into the dataset | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/DicomAttachmentHandler.cs |
+| `41352218137a` | JavaScript Attachment Handler Properties | 224 | JavaScript Attachment Handler: kind=javascript; user script runs in Jint with msg + addAttachment(data,type) global; variable maps + code templates (context=AttachmentHandler) bound alongside | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/JavaScriptAttachmentHandler.cs |
 | `c2cec78b3533` | Scope Variables | 225 | — | In progress | — |
-| `9e58f5372f2d` | Extract Attachments | 225 | — | In progress | — |
-| `eac4fcd31629` | addAttachment(data, type) | 226 | — | In progress | — |
-| `9adfacb7123e` | Custom Attachment Handler Properties | 226 | — | In progress | — |
+| `9e58f5372f2d` | Extract Attachments | 225 | Extract Attachments: opt-in by configuring AttachmentHandlerSlot.Kind != none; pipeline returns rewritten payload + IAttachmentStore.AddAsync persists each attachment | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/AttachmentExtractionPipeline.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/IAttachmentStore.cs |
+| `eac4fcd31629` | addAttachment(data, type) | 226 | addAttachment(data, type) JS API: AttachmentJsBinder.Bind exposes a global function on every JS plugin engine (filter/transform/preprocessor/postprocessor + JS handler); returns ${ATTACH:<id>} token | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/AttachmentJsBinder.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs |
+| `9adfacb7123e` | Custom Attachment Handler Properties | 226 | Custom Attachment Handler: kind=custom; CustomAttachmentHandlerHost looks up properties.customKind in IFlowPluginRegistry under custom:<suffix>; plugin authors register their own IAttachmentHandler | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/CustomAttachmentHandlerHost.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/MutableFlowPluginRegistry.cs |
 | `c35c736a202c` | Properties | 227 | — | In progress | — |
 | `34fe901b32b2` | Message Storage Settings | 227 | — | In progress | — |
 | `bae1ecd854c3` | Message Pruning Settings | 229 | — | In progress | — |
@@ -336,17 +336,17 @@
 | `fa56c9df18f0` | Navigation | 299 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `6f7ef9e54c60` | Edit Global Scripts | 300 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `ecd6372388ab` | Tasks | 301 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `7cb9a8890739` | Edit Code Templates View | 301 | — | In progress | — |
+| `7cb9a8890739` | Edit Code Templates View | 301 | Edit Code Templates View: headless equivalent via REST admin API at /smartconnect/v1/admin/code-template-libraries | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs |
 | `d1a013d4b76b` | Navigation | 302 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
-| `bd08744ff76d` | Code Template Library Table | 303 | — | In progress | — |
-| `1b419734c6fa` | Edit Library Panel | 304 | — | In progress | — |
-| `e56460f67110` | Link Libraries to Channels | 305 | — | In progress | — |
-| `af35697d05d5` | Edit Code Template Panel | 305 | — | In progress | — |
-| `38b667d9e077` | Code Template Contexts | 307 | — | In progress | — |
-| `02b976218fe6` | Use JSDoc in Code Templates | 308 | — | In progress | — |
-| `fd99234d2268` | Code Template Tasks | 310 | — | In progress | — |
-| `21fe3d03e7ea` | Import Code Templates/Libraries | 311 | — | In progress | — |
-| `185f2e590ff8` | Edit Alert View | 313 | — | In progress | — |
+| `bd08744ff76d` | Code Template Library Table | 303 | Code Template Library Table: GET /smartconnect/v1/admin/code-template-libraries returns the library list (REST-equivalent of MC table view) | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs |
+| `1b419734c6fa` | Edit Library Panel | 304 | Edit Library Panel: PUT/POST library aggregate via REST; library fields are Name/Description/LinkedFlowIds/AutoLinkNewFlows/Templates | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplateLibrary.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs |
+| `e56460f67110` | Link Libraries to Channels | 305 | Link Libraries to Channels: bidirectional reconciliation (library.LinkedFlowIds + pipeline.LinkedLibraryIds) with AutoLinkNewFlows seeding | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/CodeTemplates/CodeTemplateLinkageService.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs |
+| `af35697d05d5` | Edit Code Template Panel | 305 | Edit Code Template Panel: template fields are Name/Code/Type/Contexts/JsDoc, persisted in CodeTemplateEntity | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplate.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/CodeTemplateEntity.cs |
+| `38b667d9e077` | Code Template Contexts | 307 | Code Template Contexts: 17-value CodeTemplateContext enum; CodeTemplateJsBinder injects matching templates per FlowExecutionContext.CurrentStageContext | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplateContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/CodeTemplateJsBinder.cs |
+| `02b976218fe6` | Use JSDoc in Code Templates | 308 | Use JSDoc in Code Templates: JsDoc string preserved on CodeTemplate entity; Jint ignores it at runtime (Mirth-compatible behavior) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplate.cs |
+| `fd99234d2268` | Code Template Tasks | 310 | Code Template Tasks: full REST CRUD (POST/GET/PUT/DELETE) + import endpoints replace the Mirth UI task menu | Done | src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs |
+| `21fe3d03e7ea` | Import Code Templates/Libraries | 311 | Import Code Templates / Libraries: POST /import (JSON array) + POST /import-mirth-xml (Mirth XStream-format XML) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/CodeTemplates/MirthXmlCodeTemplateImporter.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs |
+| `185f2e590ff8` | Edit Alert View | 313 | Edit Alert View: headless equivalent via REST admin API at /smartconnect/v1/admin/alert-rules/{id} (full CRUD + /test endpoint); AlertEngine fires matching rules from FlowRuntimeEngine failure path with 3 action providers (email, webhook, channel-redispatch) and throttled per-process firing | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Alerts/AlertRule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/AlertEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/EmailAlertActionProvider.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/WebhookAlertActionProvider.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/ChannelRedispatchAlertActionProvider.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AlertEndpointExtensions.cs |
 | `01102b17f33c` | Navigation | 314 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `466338502386` | Alert Error Types and Regex | 315 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
 | `f3a78fd55445` | Alert Error Categories | 316 | N/A | N/A | No Java Swing Administrator; REST management API + static operator shell (scope-vs-mirth.md) |
@@ -374,9 +374,9 @@
 | `0b734799ad47` | JavaScript Batch Script | 338 | — | In progress | — |
 | `12a2b7f4dfbc` | Source Connectors | 340 | Source Connectors catalog: HTTP webhook, MLLP, TCP listener, File Reader, Database Reader | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader |
 | `abea0d6bb89e` | Channel Reader | 340 | N/A | N/A | No separate Channel Reader; use Channel Writer destination to another flow |
-| `933ef4ca2258` | Source Map Variables | 341 | — | In progress | — |
+| `933ef4ca2258` | Source Map Variables | 341 | Database Reader source map: ScheduleSettings + dispatched message metadata; source-map seeding deferred (operator can populate via PreProcessor) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs |
 | `67d61933dcf2` | DICOM Listener | 341 | N/A | N/A | No DICOM listener in core |
-| `a10513ed9df1` | Source Map Variables | 344 | — | In progress | — |
+| `a10513ed9df1` | Source Map Variables | 344 | File Reader source-map keys: originalFilename, fileDirectory, fileSize, fileLastModified seeded via smartconnect.sourcemap.json | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs |
 | `ee6dd2c1e477` | Database Reader | 346 | Database reader source connector (watermark-based polling) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/DatabaseReaderParameterTests.cs |
 | `bb60791d2158` | Editing Database Drivers | 350 | — | In progress | — |
 | `cabdef066e91` | File Reader | 351 | File Reader source connector (polling, after-read actions, quarantine) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/FileReaderSourceConnectorTests.cs |
@@ -384,7 +384,7 @@
 | `25d2d65030ce` | Advanced SFTP Options | 357 | N/A | N/A | File Reader is local filesystem only; SFTP not in core |
 | `98dc69797b66` | Advanced SMB Options | 359 | N/A | N/A | File Reader is local filesystem only; SMB not in core |
 | `14ba60978325` | Advanced Amazon S3 Options | 359 | N/A | N/A | File Reader is local filesystem only; S3 not in core |
-| `e24813c8155e` | Source Map Variables | 361 | — | In progress | — |
+| `e24813c8155e` | Source Map Variables | 361 | HTTP Listener source-map keys: httpMethod, httpPath, httpContentType, httpHeaders, httpQuery seeded by AspNetCore inbound | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/SmartConnectInboundEndpointExtensions.cs |
 | `001a54fbd3e2` | HTTP Listener | 362 | Inbound HTTP webhook routes | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/SmartConnectInboundEndpointExtensions.cs |
 | `99f63d49dff3` | JMS Listener | 366 | N/A | N/A | No JMS listener in SmartConnect; use platform messaging or HTTP bridge |
 | `ee05a8041a69` | JMS Connection Templates | 369 | N/A | N/A | No JMS in core |
@@ -395,7 +395,7 @@
 | `6c09f0e130ae` | JavaScript Reader | 371 | N/A | N/A | No MC-style JavaScript reader connector in core |
 | `9acc74d3387e` | JavaScript Reader Return Values | 371 | N/A | N/A | Mirth JavaScript Reader/Writer return-value protocol; SmartConnect inbound + outbound connectors are typed .NET interfaces |
 | `de7638b26b86` | TCP Listener | 372 | TCP listener source connector (MLLP / LF / length-prefix framing) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerSourceConnector.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/TcpListenerFrameDecoderTests.cs |
-| `d2df0999352d` | Source Map Variables | 376 | — | In progress | — |
+| `d2df0999352d` | Source Map Variables | 376 | TCP/MLLP Listener source-map keys: hl7.sendingApplication/sendingFacility/messageType/controlId/timestamp parsed from MSH | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpInboundHostedService.cs |
 | `f84c6390b80b` | TCP Transmission Modes | 376 | TCP transmission modes: MLLP / LF-terminated / length-prefixed framing | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerFrameDecoder.cs; src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpFrameDecoder.cs |
 | `0f464f24cd13` | Basic TCP Transmission Mode | 377 | Basic TCP transmission mode (LF / length-prefix framing) | Done | src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/TcpListenerFrameDecoder.cs |
 | `acca89ea2413` | Byte Abbreviations | 377 | — | In progress | — |
@@ -404,14 +404,14 @@
 | `673d3d69227d` | Web Service Listener | 381 | N/A | N/A | No MC-style Web Service listener; use inbound HTTP + contract in app layer |
 | `c27980f69bbf` | Destination Connectors | 384 | Destination Connectors catalog: HTTP, File, SMTP, TCP/MLLP, Database, Channel Writer outbound adapters | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/FileOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/SmtpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/TcpOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DatabaseOutboundAdapter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs |
 | `9bb0daf8d64a` | Channel Writer | 384 | Channel writer outbound adapter (in-process flow chaining with depth guard) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/ChannelWriterOutboundAdapterTests.cs |
-| `ecd047bb8c78` | Source Map Variables | 386 | — | In progress | — |
+| `ecd047bb8c78` | Source Map Variables | 386 | Channel Writer in-process source-map propagation via metadata pass-through | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs |
 | `72ee90d0e889` | DICOM Sender | 386 | N/A | N/A | No DICOM sender in core |
 | `1e52b8d7a0d1` | Database Writer | 390 | Database outbound adapter (parameterized, named connection strings, SqlServer + Postgres) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/DatabaseOutboundAdapter.cs; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/DatabaseOutboundAdapterTests.cs |
 | `628eff9187e0` | Document Writer | 393 | N/A | N/A | No Document Writer; use File or HTTP outbound with rendered document |
 | `a9149b98297c` | File Writer | 395 | File outbound adapter | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/FileOutboundAdapter.cs |
-| `b0420a814a90` | Connector Map Variables | 400 | — | In progress | — |
+| `b0420a814a90` | Connector Map Variables | 400 | File Writer connector map: per-route connector bag isolated by ordinal; available as connectorMap.put/get in transforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
 | `1e802e478244` | HTTP Sender | 400 | HTTP outbound adapter | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundAdapter.cs |
-| `1355b11537ce` | Connector Map Variables | 407 | — | In progress | — |
+| `1355b11537ce` | Connector Map Variables | 407 | HTTP Sender connector map: per-route connector bag isolated by ordinal; available as connectorMap.put/get in transforms | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
 | `31adda5c3122` | JMS Sender | 407 | N/A | N/A | No JMS sender in SmartConnect; use HTTP outbound or native broker client |
 | `a38b458b9e80` | JavaScript Writer | 410 | N/A | N/A | No JavaScript Writer connector; use JS transform stage or channel scripts |
 | `b78a1ad07466` | JavaScript Writer Return Values | 411 | N/A | N/A | Mirth JavaScript Reader/Writer return-value protocol; SmartConnect inbound + outbound connectors are typed .NET interfaces |
@@ -445,7 +445,7 @@
 | `d895fcc580ad` | Iterating Over Repeating Fields | 440 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
 | `9f3ad6ebc16c` | Adding a New Repeating Field | 440 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
 | `dffca0a5fa52` | Message Variables | 440 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
-| `22cab570408f` | Built-In Code Templates | 441 | — | In progress | — |
+| `22cab570408f` | Built-In Code Templates | 441 | Built-In Code Templates: BuiltInCodeTemplatesSeeder writes 6 starter templates (formatHl7Date/parseHl7Date/escapeXml/escapeHl7/makeAck/generateGuid) under a well-known library Id | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/CodeTemplates/BuiltInCodeTemplatesSeeder.cs |
 | `f9ebb111c329` | Using Java Classes | 441 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
 | `991bd87b77cd` | Regular Expressions | 441 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
 | `367e9f547583` | Logging with JavaScript | 443 | N/A | N/A | Mirth's embedded JavaScript / E4X reference chapter; SmartConnect scripts use Jint with standard JS — generic JS tutorial content is not a SmartConnect feature |
@@ -456,15 +456,15 @@
 | `7483ca585581` | Folding in the JavaScript Editor | 447 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
 | `395163e7d5cc` | Using the Auto-Completion Popup in the JavaScript Editor | 448 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
 | `988caebe1b59` | Remapping Editor Shortcut Keys | 449 | N/A | N/A | Java Swing JavaScript editor UI (auto-complete, folding, shortcuts); SmartConnect submits scripts via REST |
-| `9e0a1a681980` | Variable Maps | 449 | — | In progress | — |
-| `7005e791f922` | Connector Map | 450 | — | In progress | — |
-| `85183e12a370` | Channel Map | 451 | — | In progress | — |
-| `95e469fce0de` | Source Map | 451 | — | In progress | — |
-| `c8d4405adeff` | Response Map | 452 | — | In progress | — |
-| `b839f4a9582a` | Global Channel Map | 452 | — | In progress | — |
-| `91920d9ae4e3` | Global Map | 453 | — | In progress | — |
+| `9e0a1a681980` | Variable Maps | 449 | Variable maps: 7-scope binding (sourceMap, channelMap, connectorMap, responseMap, globalChannelMap, globalMap, configurationMap) exposed to JS plus $() walker | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `7005e791f922` | Connector Map | 450 | Connector Map: per-route, per-message ConnectorMaps bag (isolated between destinations) on FlowExecutionContext | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `85183e12a370` | Channel Map | 451 | Channel Map: per-message in-memory ChannelMap on FlowExecutionContext (mutable across all stages of one dispatch) | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs |
+| `95e469fce0de` | Source Map | 451 | Source Map: read-only per-message dictionary on FlowExecutionContext; hydrated from smartconnect.sourcemap.json metadata | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `c8d4405adeff` | Response Map | 452 | Response Map: engine auto-populates ResponseMap[routeName] = { status, payload \| error } after each outbound SendAsync | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs |
+| `b839f4a9582a` | Global Channel Map | 452 | Global Channel Map: persisted per-flow scope (existing IVariableMapStore.GlobalChannel) bound as globalChannelMap | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IVariableMapStore.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs |
+| `91920d9ae4e3` | Global Map | 453 | Global Map: persisted server-wide scope (existing IVariableMapStore.Global) bound as globalMap | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IVariableMapStore.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs |
 | `5f43f543600d` | Configuration Map | 453 | — | In progress | — |
-| `d58569767feb` | The Variable Map Lookup Sequence | 454 | — | In progress | — |
+| `d58569767feb` | The Variable Map Lookup Sequence | 454 | Variable Map Lookup Sequence: $(key) walks Response→Connector→Channel→Source→GlobalChannel→Global→Configuration; missing key → JS undefined | Done | src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs |
 | `f4a5161dbf5a` | Attachment JavaScript Functions | 455 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
 | `291676e917c2` | Built-In Attachment Functions | 455 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |
 | `26a30223c229` | The AttachmentUtil Class | 457 | N/A | N/A | Attachment system out of scope (no MC-style attachment objects; binary payload + metadata only — scope-vs-mirth.md) |

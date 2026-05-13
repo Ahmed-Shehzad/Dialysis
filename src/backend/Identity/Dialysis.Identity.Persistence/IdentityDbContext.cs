@@ -32,7 +32,6 @@ public sealed class IdentityDbContext(
             b.Property(u => u.DisplayName).HasMaxLength(256).IsRequired();
             b.Property(u => u.Email).HasMaxLength(320);
             b.Property(u => u.Status).HasConversion<int>().IsRequired();
-            ModuleDbContextBase.MapAuditShadow(b);
         });
 
         modelBuilder.Entity<RoleDefinition>(b =>
@@ -45,7 +44,6 @@ public sealed class IdentityDbContext(
             b.Property(r => r.Permissions)
                 .HasColumnType("text[]")
                 .IsRequired();
-            ModuleDbContextBase.MapAuditShadow(b);
         });
 
         modelBuilder.Entity<RoleAssignment>(b =>
@@ -54,7 +52,6 @@ public sealed class IdentityDbContext(
             b.HasKey(a => a.Id);
             b.HasIndex(a => new { a.UserId, a.RoleId }).IsUnique();
             b.Property(a => a.AssignedAtUtc).IsRequired();
-            ModuleDbContextBase.MapAuditShadow(b);
         });
     }
 }

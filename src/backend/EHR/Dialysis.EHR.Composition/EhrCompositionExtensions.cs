@@ -5,7 +5,9 @@ using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.Integration;
+using Dialysis.EHR.Integration.Adapters;
 using Dialysis.EHR.Integration.Consumers;
+using Dialysis.EHR.Integration.Ports;
 using Dialysis.EHR.PatientChart;
 using Dialysis.EHR.PatientPortal;
 using Dialysis.EHR.Persistence;
@@ -15,6 +17,7 @@ using Dialysis.Module.Hosting.Pipeline;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Dialysis.EHR.Composition;
 
@@ -32,6 +35,10 @@ public static class EhrCompositionExtensions
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
         services.AddEhrPersistence(configurePersistence);
+
+        services.TryAddScoped<IPharmacyGateway, NoopPharmacyGateway>();
+        services.TryAddScoped<ILabGateway, NoopLabGateway>();
+        services.TryAddScoped<IInsurerGateway, NoopInsurerGateway>();
 
         services.AddTransponder(t =>
         {

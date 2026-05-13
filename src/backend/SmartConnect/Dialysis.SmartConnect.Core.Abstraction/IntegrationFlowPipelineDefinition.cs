@@ -1,3 +1,5 @@
+using Dialysis.SmartConnect.Attachments;
+
 namespace Dialysis.SmartConnect;
 
 /// <summary>
@@ -6,6 +8,13 @@ namespace Dialysis.SmartConnect;
 public sealed class IntegrationFlowPipelineDefinition
 {
     public List<RouteFilterSlot> RouteFilters { get; set; } = [];
+
+    /// <summary>
+    /// Channel-level attachment handler invoked once per inbound message between the PreProcessor and the
+    /// route-filter loop. When null, the runtime treats the message as "no extraction" (Mirth's <c>None</c>
+    /// handler).
+    /// </summary>
+    public AttachmentHandlerSlot? AttachmentHandler { get; set; }
 
     /// <summary>
     /// Source-side transform stages run once after RouteFilters and before the outbound-route loop. Mirth-equivalent
@@ -24,6 +33,13 @@ public sealed class IntegrationFlowPipelineDefinition
 
     /// <summary>Optional channel-level lifecycle scripts.</summary>
     public FlowScriptsDefinition? Scripts { get; set; }
+
+    /// <summary>
+    /// Code Template Library Ids linked to this flow. Templates from these libraries are injected
+    /// (alongside libraries whose own <c>LinkedFlowIds</c> include this flow) into every JS plugin
+    /// whose stage context matches the template's contexts. See <c>CodeTemplateLinkageService</c>.
+    /// </summary>
+    public List<Guid> LinkedLibraryIds { get; set; } = [];
 }
 
 public sealed class RouteFilterSlot
@@ -47,6 +63,12 @@ public sealed class OutboundRouteSlot
 
     /// <summary>Optional transform stages applied to the outbound response payload.</summary>
     public List<TransformStageSlot> ResponseTransformStages { get; set; } = [];
+
+    /// <summary>
+    /// When true, inline <c>${ATTACH:&lt;id&gt;}</c> tokens are inflated to their stored bytes immediately
+    /// before this route's outbound <c>SendAsync</c>. Default false (matches Mirth UG p220 per-destination toggle).
+    /// </summary>
+    public bool ReattachAttachments { get; set; }
 }
 
 public sealed class TransformStageSlot

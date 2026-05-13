@@ -20,36 +20,9 @@ PROTECT_IN_PROGRESS = frozenset(
         "1048ab38243e",  # Management HTTP API
         "c304f38f491b",  # Import channel
         "620627148862",  # Web dashboard / operator shell
-        # Variable maps — real backlog (pages 449-454)
-        "9e0a1a681980",  # Variable Maps
-        "7005e791f922",  # Connector Map
-        "85183e12a370",  # Channel Map
-        "95e469fce0de",  # Source Map
-        "c8d4405adeff",  # Response Map
-        "b839f4a9582a",  # Global Channel Map
-        "91920d9ae4e3",  # Global Map
-        "d58569767feb",  # The Variable Map Lookup Sequence
-        # Source/connector map variables surfaced by source connectors — real concept
-        "933ef4ca2258",  # Source Map Variables (Database Reader)
-        "a10513ed9df1",  # Source Map Variables (File Reader)
-        "e24813c8155e",  # Source Map Variables (HTTP Listener)
-        "d2df0999352d",  # Source Map Variables (TCP Listener)
-        "ecd047bb8c78",  # Source Map Variables (Channel Writer)
-        "b0420a814a90",  # Connector Map Variables (File Writer)
-        "1355b11537ce",  # Connector Map Variables (HTTP Sender)
-        # Code Template Libraries — real backlog
-        "7cb9a8890739",  # Edit Code Templates View
-        "bd08744ff76d",  # Code Template Library Table
-        "1b419734c6fa",  # Edit Library Panel
-        "e56460f67110",  # Link Libraries to Channels
-        "af35697d05d5",  # Edit Code Template Panel
-        "38b667d9e077",  # Code Template Contexts
-        "02b976218fe6",  # Use JSDoc in Code Templates
-        "fd99234d2268",  # Code Template Tasks
-        "21fe3d03e7ea",  # Import Code Templates/Libraries
-        "22cab570408f",  # Built-In Code Templates
-        # Alerts — real backlog
-        "185f2e590ff8",  # Edit Alert View
+        # Variable maps — closed in the Variable Maps batch; entries are in DONE_BATCH now.
+        # Code Template Libraries — closed in the Code Template Libraries batch; entries are in DONE_BATCH now.
+        # Alerts — closed in the Channel Alerts batch; entry is in DONE_BATCH now.
         # Phase 1 (scheduling + iterator + DSF) IDs were here during Phase 0; now they live in DONE_BATCH.
         # "Remove From Iterators" stays — UI-task wording; iterator engine itself is Done elsewhere.
         "8a5d6f5134bb",  # Remove From Iterators
@@ -844,6 +817,162 @@ DONE_BATCH: dict[str, tuple[str, str]] = {
     "90a10bc93515": (
         "Engine support for iterating message parts; the Mirth 'Assign To Iterator' UI task is replaced by the script-form iterator",
         f"{EV_EXT}/IteratorTransformStage.cs",
+    ),
+    # Variable Maps batch — Source/Connector/Response maps + $() walker (Mirth UG pp 449-454).
+    "9e0a1a681980": (
+        "Variable maps: 7-scope binding (sourceMap, channelMap, connectorMap, responseMap, globalChannelMap, globalMap, configurationMap) exposed to JS plus $() walker",
+        f"{EV_ABS}/VariableMaps/FlowExecutionContext.cs; {EV_CORE}/Scripts/VariableMapsJsBinder.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "7005e791f922": (
+        "Connector Map: per-route, per-message ConnectorMaps bag (isolated between destinations) on FlowExecutionContext",
+        f"{EV_ABS}/VariableMaps/FlowExecutionContext.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "85183e12a370": (
+        "Channel Map: per-message in-memory ChannelMap on FlowExecutionContext (mutable across all stages of one dispatch)",
+        f"{EV_ABS}/VariableMaps/FlowExecutionContext.cs; {EV_CORE}/Scripts/VariableMapsJsBinder.cs",
+    ),
+    "95e469fce0de": (
+        "Source Map: read-only per-message dictionary on FlowExecutionContext; hydrated from smartconnect.sourcemap.json metadata",
+        f"{EV_ABS}/VariableMaps/FlowExecutionContext.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "c8d4405adeff": (
+        "Response Map: engine auto-populates ResponseMap[routeName] = { status, payload | error } after each outbound SendAsync",
+        f"{EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "b839f4a9582a": (
+        "Global Channel Map: persisted per-flow scope (existing IVariableMapStore.GlobalChannel) bound as globalChannelMap",
+        f"{EV_ABS}/IVariableMapStore.cs; {EV_CORE}/Scripts/VariableMapsJsBinder.cs",
+    ),
+    "91920d9ae4e3": (
+        "Global Map: persisted server-wide scope (existing IVariableMapStore.Global) bound as globalMap",
+        f"{EV_ABS}/IVariableMapStore.cs; {EV_CORE}/Scripts/VariableMapsJsBinder.cs",
+    ),
+    "d58569767feb": (
+        "Variable Map Lookup Sequence: $(key) walks Response→Connector→Channel→Source→GlobalChannel→Global→Configuration; missing key → JS undefined",
+        f"{EV_CORE}/Scripts/VariableMapsJsBinder.cs",
+    ),
+    "a10513ed9df1": (
+        "File Reader source-map keys: originalFilename, fileDirectory, fileSize, fileLastModified seeded via smartconnect.sourcemap.json",
+        f"{EV_IN}/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs",
+    ),
+    "e24813c8155e": (
+        "HTTP Listener source-map keys: httpMethod, httpPath, httpContentType, httpHeaders, httpQuery seeded by AspNetCore inbound",
+        f"{EV_IN}/Dialysis.SmartConnect.Inbound.AspNetCore/SmartConnectInboundEndpointExtensions.cs",
+    ),
+    "d2df0999352d": (
+        "TCP/MLLP Listener source-map keys: hl7.sendingApplication/sendingFacility/messageType/controlId/timestamp parsed from MSH",
+        f"{EV_IN}/Dialysis.SmartConnect.Inbound.Mllp/MllpInboundHostedService.cs",
+    ),
+    "933ef4ca2258": (
+        "Database Reader source map: ScheduleSettings + dispatched message metadata; source-map seeding deferred (operator can populate via PreProcessor)",
+        f"{EV_IN}/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs",
+    ),
+    "ecd047bb8c78": (
+        "Channel Writer in-process source-map propagation via metadata pass-through",
+        f"{EV_EXT}/ChannelWriterOutboundAdapter.cs",
+    ),
+    "b0420a814a90": (
+        "File Writer connector map: per-route connector bag isolated by ordinal; available as connectorMap.put/get in transforms",
+        f"{EV_ABS}/VariableMaps/FlowExecutionContext.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    "1355b11537ce": (
+        "HTTP Sender connector map: per-route connector bag isolated by ordinal; available as connectorMap.put/get in transforms",
+        f"{EV_ABS}/VariableMaps/FlowExecutionContext.cs; {EV_CORE}/FlowRuntimeEngine.cs",
+    ),
+    # Code Template Libraries batch — persisted JS libraries + context-aware injection + Mirth XML import (Mirth UG pp 213-214, 301-312, 441).
+    "81ce8b48b3c0": (
+        "Library Resources: CodeTemplateLibrary entity + EF persistence (separate from channel storage)",
+        f"{EV_ABS}/CodeTemplates/CodeTemplateLibrary.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/CodeTemplateLibraryEntity.cs",
+    ),
+    "7cb9a8890739": (
+        "Edit Code Templates View: headless equivalent via REST admin API at /smartconnect/v1/admin/code-template-libraries",
+        "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs",
+    ),
+    "bd08744ff76d": (
+        "Code Template Library Table: GET /smartconnect/v1/admin/code-template-libraries returns the library list (REST-equivalent of MC table view)",
+        "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs",
+    ),
+    "1b419734c6fa": (
+        "Edit Library Panel: PUT/POST library aggregate via REST; library fields are Name/Description/LinkedFlowIds/AutoLinkNewFlows/Templates",
+        f"{EV_ABS}/CodeTemplates/CodeTemplateLibrary.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs",
+    ),
+    "e56460f67110": (
+        "Link Libraries to Channels: bidirectional reconciliation (library.LinkedFlowIds + pipeline.LinkedLibraryIds) with AutoLinkNewFlows seeding",
+        f"{EV_CORE}/CodeTemplates/CodeTemplateLinkageService.cs; {EV_ABS}/IntegrationFlowPipelineDefinition.cs",
+    ),
+    "af35697d05d5": (
+        "Edit Code Template Panel: template fields are Name/Code/Type/Contexts/JsDoc, persisted in CodeTemplateEntity",
+        f"{EV_ABS}/CodeTemplates/CodeTemplate.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/CodeTemplateEntity.cs",
+    ),
+    "38b667d9e077": (
+        "Code Template Contexts: 17-value CodeTemplateContext enum; CodeTemplateJsBinder injects matching templates per FlowExecutionContext.CurrentStageContext",
+        f"{EV_ABS}/CodeTemplates/CodeTemplateContext.cs; {EV_CORE}/Scripts/CodeTemplateJsBinder.cs",
+    ),
+    "02b976218fe6": (
+        "Use JSDoc in Code Templates: JsDoc string preserved on CodeTemplate entity; Jint ignores it at runtime (Mirth-compatible behavior)",
+        f"{EV_ABS}/CodeTemplates/CodeTemplate.cs",
+    ),
+    "fd99234d2268": (
+        "Code Template Tasks: full REST CRUD (POST/GET/PUT/DELETE) + import endpoints replace the Mirth UI task menu",
+        "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs",
+    ),
+    "21fe3d03e7ea": (
+        "Import Code Templates / Libraries: POST /import (JSON array) + POST /import-mirth-xml (Mirth XStream-format XML)",
+        f"{EV_CORE}/CodeTemplates/MirthXmlCodeTemplateImporter.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs",
+    ),
+    "22cab570408f": (
+        "Built-In Code Templates: BuiltInCodeTemplatesSeeder writes 6 starter templates (formatHl7Date/parseHl7Date/escapeXml/escapeHl7/makeAck/generateGuid) under a well-known library Id",
+        f"{EV_CORE}/CodeTemplates/BuiltInCodeTemplatesSeeder.cs",
+    ),
+    # Attachments batch — Attachment Handler subsystem with 6 handler types (None/Entire/Regex/JS/DICOM/Custom) + extract/reattach + JS addAttachment API (Mirth UG pp 219-226).
+    "454721e1f823": (
+        "Attachment Handlers: AttachmentExtractionPipeline runs between PreProcessor and route filters; resolves IAttachmentHandler from IFlowPluginRegistry by AttachmentHandlerSlot.Kind",
+        f"{EV_CORE}/Attachments/AttachmentExtractionPipeline.cs; {EV_ABS}/Attachments/IAttachmentHandler.cs; {EV_ABS}/Attachments/AttachmentHandlerSlot.cs",
+    ),
+    "e0d1b0c489f4": (
+        "Reattachment: AttachmentReattachmentService inflates ${ATTACH:<id>} tokens to bytes on routes with ReattachAttachments=true (off by default per Mirth UG p220)",
+        f"{EV_CORE}/Attachments/AttachmentReattachmentService.cs; {EV_ABS}/IntegrationFlowPipelineDefinition.cs",
+    ),
+    "16d136564ce4": (
+        "Attachment MIME Types: AttachmentEntity.MimeType (default application/octet-stream) round-trips per attachment; bytes endpoint serves Content-Type from this column",
+        "src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/AttachmentEntity.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AttachmentEndpointExtensions.cs",
+    ),
+    "4890e76d7fcf": (
+        "Attachment Handler Properties: AttachmentHandlerSlot.PropertiesJson holds handler-specific JSON; each handler parses its own keys (pattern/script/extractTags/customKind/mimeType)",
+        f"{EV_ABS}/Attachments/AttachmentHandlerSlot.cs; {EV_ABS}/Attachments/AttachmentHandlerContext.cs",
+    ),
+    "b32b8acf3e75": (
+        "Entire Message Attachment Handler: kind=entire-message; whole payload becomes one attachment, replaced inline with a single ${ATTACH:<id>} token",
+        f"{EV_CORE}/Attachments/Handlers/EntireMessageAttachmentHandler.cs",
+    ),
+    "34b2ca8103b1": (
+        "Regex Attachment Handler: kind=regex; extracts capture group 1 of each match into a separate attachment; pattern + regexOptions configurable via properties JSON",
+        f"{EV_CORE}/Attachments/Handlers/RegexAttachmentHandler.cs",
+    ),
+    "bbaea87685b5": (
+        "DICOM Attachment Handler: kind=dicom; parses payload via fo-dicom, extracts PixelData (and configurable tags) as attachments; placeholder reference written back into the dataset",
+        f"{EV_CORE}/Attachments/Handlers/DicomAttachmentHandler.cs",
+    ),
+    "41352218137a": (
+        "JavaScript Attachment Handler: kind=javascript; user script runs in Jint with msg + addAttachment(data,type) global; variable maps + code templates (context=AttachmentHandler) bound alongside",
+        f"{EV_CORE}/Attachments/Handlers/JavaScriptAttachmentHandler.cs",
+    ),
+    "9e58f5372f2d": (
+        "Extract Attachments: opt-in by configuring AttachmentHandlerSlot.Kind != none; pipeline returns rewritten payload + IAttachmentStore.AddAsync persists each attachment",
+        f"{EV_CORE}/Attachments/AttachmentExtractionPipeline.cs; {EV_ABS}/Attachments/IAttachmentStore.cs",
+    ),
+    "eac4fcd31629": (
+        "addAttachment(data, type) JS API: AttachmentJsBinder.Bind exposes a global function on every JS plugin engine (filter/transform/preprocessor/postprocessor + JS handler); returns ${ATTACH:<id>} token",
+        f"{EV_CORE}/Scripts/AttachmentJsBinder.cs; {EV_EXT}/JavascriptTransformStage.cs; {EV_EXT}/JavascriptRouteFilter.cs; {EV_CORE}/Scripts/ChannelScriptExecutor.cs",
+    ),
+    "9adfacb7123e": (
+        "Custom Attachment Handler: kind=custom; CustomAttachmentHandlerHost looks up properties.customKind in IFlowPluginRegistry under custom:<suffix>; plugin authors register their own IAttachmentHandler",
+        f"{EV_CORE}/Attachments/Handlers/CustomAttachmentHandlerHost.cs; {EV_CORE}/MutableFlowPluginRegistry.cs",
+    ),
+    # Channel Alerts batch — rules engine + 3 action providers (email, webhook, channel-redispatch) + REST CRUD + history (Mirth UG pp 313-319).
+    "185f2e590ff8": (
+        "Edit Alert View: headless equivalent via REST admin API at /smartconnect/v1/admin/alert-rules/{id} (full CRUD + /test endpoint); AlertEngine fires matching rules from FlowRuntimeEngine failure path with 3 action providers (email, webhook, channel-redispatch) and throttled per-process firing",
+        f"{EV_ABS}/Alerts/AlertRule.cs; {EV_CORE}/Alerts/AlertEngine.cs; {EV_CORE}/Alerts/Actions/EmailAlertActionProvider.cs; {EV_CORE}/Alerts/Actions/WebhookAlertActionProvider.cs; {EV_CORE}/Alerts/Actions/ChannelRedispatchAlertActionProvider.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AlertEndpointExtensions.cs",
     ),
 }
 

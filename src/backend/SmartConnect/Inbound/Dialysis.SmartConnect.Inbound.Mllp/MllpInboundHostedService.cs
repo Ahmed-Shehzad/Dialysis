@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.Inbound;
 using Microsoft.Extensions.DependencyInjection;
@@ -123,12 +125,22 @@ public sealed class MllpInboundHostedService(
     private async Task DispatchOneAsync(byte[] payload, CancellationToken ct)
     {
         var opt = options.CurrentValue;
+        var sourceMap = ParseHl7Msh(payload);
+        IReadOnlyDictionary<string, string>? metadata = null;
+        if (sourceMap.Count > 0)
+        {
+            metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["smartconnect.sourcemap.json"] = JsonSerializer.Serialize(sourceMap),
+            };
+        }
+
         var message = messageFactory.Create(
             opt.DefaultFlowId,
             payload,
             PayloadFormat.Utf8Text,
             correlationId: null,
-            metadata: null);
+            metadata: metadata);
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var transport = scope.ServiceProvider.GetRequiredService<IInboundTransport>();
@@ -140,5 +152,35 @@ public sealed class MllpInboundHostedService(
                 result.Error,
                 result.SuggestedHttpStatus);
         }
+    }
+
+    private static Dictionary<string, object?> ParseHl7Msh(byte[] payload)
+    {
+        var map = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (payload.Length < 4) return map;
+
+        var text = Encoding.UTF8.GetString(payload);
+        if (!text.StartsWith("MSH", StringComparison.Ordinal)) return map;
+
+        var segEnd = text.IndexOfAny(['\r', '\n']);
+        var mshSegment = segEnd > 0 ? text[..segEnd] : text;
+        // Field separator is the 4th char (after "MSH"), conventionally '|'.
+        var sep = mshSegment.Length >= 4 ? mshSegment[3] : '|';
+        var fields = mshSegment.Split(sep);
+
+        // HL7 field indexing in MSH: fields[0]="MSH", fields[1] is encoding chars, then 1-based MSH-2..
+        // MSH-3 sending app, MSH-4 sending facility, MSH-9 message type, MSH-10 control id, MSH-7 timestamp.
+        if (fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]))
+            map["hl7.sendingApplication"] = fields[2];
+        if (fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]))
+            map["hl7.sendingFacility"] = fields[3];
+        if (fields.Length > 6 && !string.IsNullOrWhiteSpace(fields[6]))
+            map["hl7.timestamp"] = fields[6];
+        if (fields.Length > 8 && !string.IsNullOrWhiteSpace(fields[8]))
+            map["hl7.messageType"] = fields[8];
+        if (fields.Length > 9 && !string.IsNullOrWhiteSpace(fields[9]))
+            map["hl7.controlId"] = fields[9];
+
+        return map;
     }
 }

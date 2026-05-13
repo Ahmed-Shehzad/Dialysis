@@ -17,6 +17,16 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
 
     public DbSet<VariableMapEntry> VariableMapEntries => Set<VariableMapEntry>();
 
+    public DbSet<CodeTemplateLibraryEntity> CodeTemplateLibraries => Set<CodeTemplateLibraryEntity>();
+
+    public DbSet<CodeTemplateEntity> CodeTemplates => Set<CodeTemplateEntity>();
+
+    public DbSet<AttachmentEntity> Attachments => Set<AttachmentEntity>();
+
+    public DbSet<AlertRuleEntity> AlertRules => Set<AlertRuleEntity>();
+
+    public DbSet<AlertEventEntity> AlertEvents => Set<AlertEventEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<IntegrationFlowEntity>(b =>
@@ -64,6 +74,63 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.Property(e => e.Key).HasMaxLength(512).IsRequired();
             b.Property(e => e.Value).IsRequired();
             b.HasIndex(e => new { e.Scope, e.FlowId, e.Key }).IsUnique();
+        });
+
+        modelBuilder.Entity<CodeTemplateLibraryEntity>(b =>
+        {
+            b.ToTable("CodeTemplateLibraries", "smartconnect");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            b.Property(e => e.Description).HasMaxLength(2000);
+            b.Property(e => e.LinkedFlowIdsJson).IsRequired();
+        });
+
+        modelBuilder.Entity<CodeTemplateEntity>(b =>
+        {
+            b.ToTable("CodeTemplates", "smartconnect");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            b.Property(e => e.Code).IsRequired();
+            b.Property(e => e.ContextsJson).IsRequired();
+            b.HasIndex(e => e.LibraryId);
+            b.HasOne<CodeTemplateLibraryEntity>()
+                .WithMany()
+                .HasForeignKey(e => e.LibraryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AttachmentEntity>(b =>
+        {
+            b.ToTable("Attachments", "smartconnect");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.MimeType).HasMaxLength(256).IsRequired();
+            b.HasIndex(e => e.MessageId);
+            b.HasIndex(e => e.FlowId);
+            b.HasIndex(e => e.CreatedUtc);
+        });
+
+        modelBuilder.Entity<AlertRuleEntity>(b =>
+        {
+            b.ToTable("AlertRules", "smartconnect");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            b.Property(e => e.Description).HasMaxLength(2000);
+            b.Property(e => e.EnabledFlowIdsJson).IsRequired();
+            b.Property(e => e.ErrorPatternsJson).IsRequired();
+            b.Property(e => e.ActionsJson).IsRequired();
+            b.HasIndex(e => e.Enabled);
+        });
+
+        modelBuilder.Entity<AlertEventEntity>(b =>
+        {
+            b.ToTable("AlertEvents", "smartconnect");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.CorrelationId).HasMaxLength(256);
+            b.Property(e => e.ErrorDetail).HasMaxLength(2000);
+            b.Property(e => e.ActionOutcomesJson).IsRequired();
+            b.HasIndex(e => e.RuleId);
+            b.HasIndex(e => e.FlowId);
+            b.HasIndex(e => e.OccurredAtUtc);
         });
     }
 }

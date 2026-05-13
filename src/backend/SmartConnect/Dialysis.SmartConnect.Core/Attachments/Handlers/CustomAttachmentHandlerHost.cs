@@ -1,0 +1,52 @@
+namespace Dialysis.SmartConnect.Attachments.Handlers;
+
+/// <summary>
+/// Routes <c>custom</c>-kind slots to a plug-in author's registered handler. The slot's
+/// <see cref="AttachmentHandlerContext.PropertiesJson"/> must include <c>"customKind": "&lt;suffix&gt;"</c>;
+/// the host looks up <c>custom:&lt;suffix&gt;</c> in <see cref="IFlowPluginRegistry"/>. Mirth UG p226
+/// "Custom Attachment Handler".
+/// </summary>
+public sealed class CustomAttachmentHandlerHost(Func<IFlowPluginRegistry> registryAccessor) : IAttachmentHandler
+{
+    public const string KindValue = "custom";
+    public const string CustomKindPrefix = "custom:";
+
+    public string Kind => KindValue;
+
+    public async Task<AttachmentHandlerResult> ExtractAsync(
+        IntegrationMessage message,
+        AttachmentHandlerContext context,
+        CancellationToken cancellationToken)
+    {
+        var suffix = ExtractCustomKindSuffix(context.PropertiesJson);
+        if (string.IsNullOrWhiteSpace(suffix))
+        {
+            return AttachmentHandlerResult.Unchanged(message.Payload);
+        }
+
+        var fullKind = $"{CustomKindPrefix}{suffix}";
+        var handler = registryAccessor().TryResolveAttachmentHandler(fullKind);
+        if (handler is null)
+        {
+            return AttachmentHandlerResult.Unchanged(message.Payload);
+        }
+
+        return await handler.ExtractAsync(message, context, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string? ExtractCustomKindSuffix(string? propertiesJson)
+    {
+        if (string.IsNullOrWhiteSpace(propertiesJson)) return null;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(propertiesJson);
+            if (doc.RootElement.TryGetProperty("customKind", out var el)
+                && el.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return el.GetString();
+            }
+        }
+        catch (System.Text.Json.JsonException) { }
+        return null;
+    }
+}

@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
+using Dialysis.HIS.Integration.DeviceIngestion;
 using Dialysis.HIS.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +27,8 @@ public static class HospitalInformationSystemExtensions
         _ = configuration;
 
         services.AddHisPersistence(configurePersistence);
+
+        services.AddSingleton(new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)));
 
         services.AddTransponder(_ => { });
         configureTransponderTransport?.Invoke(services);

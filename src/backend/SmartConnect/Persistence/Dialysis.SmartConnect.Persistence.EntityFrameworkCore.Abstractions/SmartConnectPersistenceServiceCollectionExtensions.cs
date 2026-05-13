@@ -1,4 +1,7 @@
 using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.SmartConnect.Alerts;
+using Dialysis.SmartConnect.Attachments;
+using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +27,11 @@ public static class SmartConnectPersistenceServiceCollectionExtensions
         services.TryAddScoped<IUnitOfWork>(sp => sp.GetRequiredService<SmartConnectDbContext>());
         services.TryAddScoped<IVariableMapStore, EfVariableMapStore>();
         services.TryAddScoped<IAuditEventStore, EfAuditEventStore>();
+        services.TryAddScoped<ICodeTemplateLibraryRepository, EfCodeTemplateLibraryRepository>();
+        services.TryAddScoped<IAttachmentBlobStore, EfBytesAttachmentBlobStore>();
+        services.TryAddScoped<IAttachmentStore, EfAttachmentStore>();
+        services.TryAddScoped<IAlertRuleRepository, EfAlertRuleRepository>();
+        services.TryAddScoped<IAlertEventStore, EfAlertEventStore>();
         return services;
     }
 }

@@ -9,7 +9,8 @@ namespace Dialysis.Identity.Provisioning.Features.ProvisionUser;
 
 public sealed class ProvisionUserCommandHandler(
     IUserAccountRepository users,
-    ITransponderBus bus,
+    ITransponderOutbox outbox,
+    IMessageSerializer serializer,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider)
     : ICommandHandler<ProvisionUserCommand, Guid>
@@ -30,14 +31,19 @@ public sealed class ProvisionUserCommandHandler(
         };
         users.Add(user);
 
-        await bus.PublishAsync(
-            new UserRegisteredIntegrationEvent(
-                EventId: Guid.CreateVersion7(),
-                OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
-                UserId: id,
-                Subject: request.Subject,
-                DisplayName: request.DisplayName,
-                Email: request.Email),
+        var @event = new UserRegisteredIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+            UserId: id,
+            Subject: request.Subject,
+            DisplayName: request.DisplayName,
+            Email: request.Email);
+
+        var payload = serializer.Serialize(@event);
+        await outbox.EnqueueAsync(new TransponderOutboxEnvelope(
+            AssemblyQualifiedEventType: typeof(UserRegisteredIntegrationEvent).AssemblyQualifiedName!,
+            PayloadJson: System.Text.Encoding.UTF8.GetString(payload.Span),
+            Id: @event.EventId),
             cancellationToken).ConfigureAwait(false);
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

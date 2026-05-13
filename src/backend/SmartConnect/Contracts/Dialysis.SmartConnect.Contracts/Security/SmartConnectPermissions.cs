@@ -18,6 +18,13 @@ public static class SmartConnectPermissions
     public const string ConfigurationMapWrite = "smartconnect.configuration-map.write";
     public const string EventsRead = "smartconnect.events.read";
     public const string PrunerRead = "smartconnect.pruner.read";
+    public const string CodeTemplateLibrariesRead = "smartconnect.code-template-libraries.read";
+    public const string CodeTemplateLibrariesWrite = "smartconnect.code-template-libraries.write";
+    public const string AttachmentsRead = "smartconnect.attachments.read";
+    public const string AttachmentsWrite = "smartconnect.attachments.write";
+    public const string AlertRulesRead = "smartconnect.alert-rules.read";
+    public const string AlertRulesWrite = "smartconnect.alert-rules.write";
+    public const string AlertEventsRead = "smartconnect.alert-events.read";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -30,6 +37,13 @@ public static class SmartConnectPermissions
         ConfigurationMapWrite,
         EventsRead,
         PrunerRead,
+        CodeTemplateLibrariesRead,
+        CodeTemplateLibrariesWrite,
+        AttachmentsRead,
+        AttachmentsWrite,
+        AlertRulesRead,
+        AlertRulesWrite,
+        AlertEventsRead,
     ];
 }
 

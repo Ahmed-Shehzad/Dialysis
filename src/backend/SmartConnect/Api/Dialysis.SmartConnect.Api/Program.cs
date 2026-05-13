@@ -1,5 +1,6 @@
 using Dialysis.Module.Hosting;
 using Dialysis.SmartConnect;
+using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Contracts.Security;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.AspNetCore;
@@ -30,6 +31,7 @@ builder.Services.AddDefaultInboundMessageFactory();
 builder.Services.AddSmartConnectInboundTransport();
 builder.Services.AddSmartConnectInboundHttpOptions();
 builder.Services.AddSmartConnectMllpInbound();
+builder.Services.AddHostedService<BuiltInCodeTemplatesSeeder>();
 
 var app = builder.Build();
 
@@ -42,6 +44,9 @@ app.MapSmartConnectManagementRoutes();
 app.MapSmartConnectGroupRoutes();
 app.MapSmartConnectLedgerRoutes();
 app.MapSmartConnectConfigurationMapRoutes();
+app.MapSmartConnectCodeTemplateLibraryRoutes();
+app.MapSmartConnectAttachmentRoutes();
+app.MapSmartConnectAlertRoutes();
 app.MapSmartConnectEventsRoutes();
 app.MapSmartConnectPrunerRoutes();
 

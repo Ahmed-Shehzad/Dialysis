@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Registration.Domain;
@@ -7,6 +9,7 @@ namespace Dialysis.EHR.Registration.Features.RegisterPatient;
 
 public sealed class RegisterPatientCommandHandler(
     IPatientRepository patients,
+    ITransponderOutbox outbox,
     IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterPatientCommand, Guid>
 {
@@ -26,6 +29,19 @@ public sealed class RegisterPatientCommandHandler(
             request.PreferredLanguageCode);
 
         patients.Add(patient);
+
+        foreach (var @event in patient.IntegrationEvents)
+        {
+            var eventType = @event.GetType();
+            var json = JsonSerializer.Serialize(@event, eventType);
+            await outbox.EnqueueAsync(new TransponderOutboxEnvelope(
+                AssemblyQualifiedEventType: eventType.AssemblyQualifiedName ?? eventType.FullName!,
+                PayloadJson: json,
+                Id: @event.EventId),
+                cancellationToken).ConfigureAwait(false);
+        }
+        patient.ClearIntegrationEvents();
+
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }

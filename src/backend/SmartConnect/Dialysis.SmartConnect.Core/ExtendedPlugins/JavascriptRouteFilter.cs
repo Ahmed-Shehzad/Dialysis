@@ -1,37 +1,44 @@
 using System.Text;
 using System.Text.Json;
+using Dialysis.SmartConnect.Attachments;
+using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.Scripts;
+using Dialysis.SmartConnect.VariableMaps;
 using Jint;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.SmartConnect.ExtendedPlugins;
 
 /// <summary>
 /// Sandboxed JavaScript route filter via Jint. Parameters JSON must include <c>script</c>.
-/// Exposes <c>payloadText</c>, <c>metadata</c> (object), <c>correlationId</c>, and <c>flowId</c>.
+/// Exposes <c>payloadText</c>, <c>metadata</c> (object), <c>correlationId</c>, <c>flowId</c>, plus the
+/// full Mirth-style variable map binding (sourceMap, channelMap, connectorMap, responseMap,
+/// globalChannelMap, globalMap, configurationMap) and the <c>$(key)</c> walker.
 /// Truthy return → Allow; falsy → Drop.
 /// </summary>
-public sealed class JavascriptRouteFilter : IRouteFilter
+public sealed class JavascriptRouteFilter(IServiceProvider? services = null) : IRouteFilter
 {
     public const string ParametersMetadataKey = "smartconnect.filter.parameters";
 
     public string Kind => "javascript";
 
-    public Task<RouteFilterResult> EvaluateAsync(IntegrationMessage message, CancellationToken cancellationToken)
+    public async Task<RouteFilterResult> EvaluateAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
         if (!message.Metadata.TryGetValue(ParametersMetadataKey, out var json) || string.IsNullOrWhiteSpace(json))
         {
-            return Task.FromResult(RouteFilterResult.Allow());
+            return RouteFilterResult.Allow();
         }
 
         using var doc = JsonDocument.Parse(json);
         if (!doc.RootElement.TryGetProperty("script", out var scriptEl))
         {
-            return Task.FromResult(RouteFilterResult.Allow());
+            return RouteFilterResult.Allow();
         }
 
         var script = scriptEl.GetString();
         if (string.IsNullOrWhiteSpace(script))
         {
-            return Task.FromResult(RouteFilterResult.Allow());
+            return RouteFilterResult.Allow();
         }
 
         var payloadText = message.PayloadFormat is PayloadFormat.Utf8Text or PayloadFormat.PlainText or PayloadFormat.Json
@@ -50,7 +57,6 @@ public sealed class JavascriptRouteFilter : IRouteFilter
         engine.SetValue("correlationId", message.CorrelationId);
         engine.SetValue("flowId", message.FlowId.ToString());
 
-        // Expose metadata as a plain JS object
         var metaDict = new Dictionary<string, string>(message.Metadata.Count);
         foreach (var kvp in message.Metadata)
         {
@@ -58,6 +64,10 @@ public sealed class JavascriptRouteFilter : IRouteFilter
         }
 
         engine.SetValue("metadata", metaDict);
+
+        await BindVariableMapsAsync(engine, message, cancellationToken).ConfigureAwait(false);
+        await BindCodeTemplatesAsync(engine, message.FlowId, cancellationToken).ConfigureAwait(false);
+        BindAddAttachment(engine, message, cancellationToken);
 
         var result = engine.Evaluate(script!).ToObject();
         var truthy = result switch
@@ -71,6 +81,48 @@ public sealed class JavascriptRouteFilter : IRouteFilter
             _ => true,
         };
 
-        return Task.FromResult(truthy ? RouteFilterResult.Allow() : RouteFilterResult.Drop());
+        return truthy ? RouteFilterResult.Allow() : RouteFilterResult.Drop();
+    }
+
+    private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
+    {
+        if (services is null) return;
+
+        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var ctx = accessor?.Current ?? new FlowExecutionContext();
+
+        var store = services.GetService<IVariableMapStore>();
+        IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
+        IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
+        IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
+        if (store is not null)
+        {
+            globalChannel = await store.GetAllAsync(VariableMapScope.GlobalChannel, message.FlowId, ct).ConfigureAwait(false);
+            global = await store.GetAllAsync(VariableMapScope.Global, null, ct).ConfigureAwait(false);
+            configuration = await store.GetAllAsync(VariableMapScope.Configuration, null, ct).ConfigureAwait(false);
+        }
+
+        VariableMapsJsBinder.BindAll(engine, ctx, globalChannel, global, configuration);
+    }
+
+    private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
+    {
+        if (services is null) return;
+        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        if (repo is null) return;
+        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        // RouteFilters in SmartConnect's model are pipeline-level pre-route gates → map to SourceFilter.
+        // If a route-scoped filter context is set on the accessor (e.g. DestinationFilter), prefer it.
+        var current = accessor?.Current?.CurrentStageContext;
+        var context = current == CodeTemplateContext.DestinationFilter
+            ? CodeTemplateContext.DestinationFilter
+            : CodeTemplateContext.SourceFilter;
+        await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, context, ct).ConfigureAwait(false);
+    }
+
+    private void BindAddAttachment(Engine engine, IntegrationMessage message, CancellationToken ct)
+    {
+        var store = services?.GetService<IAttachmentStore>();
+        AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
     }
 }

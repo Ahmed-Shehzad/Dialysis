@@ -3259,6 +3259,196 @@
       "mapping": "Engine support for iterating message parts; the Mirth 'Assign To Iterator' UI task is replaced by the script-form iterator",
       "status": "Done",
       "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/IteratorTransformStage.cs"
+    },
+    "933ef4ca2258": {
+      "mapping": "Database Reader source map: ScheduleSettings + dispatched message metadata; source-map seeding deferred (operator can populate via PreProcessor)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.DatabaseReader/DatabaseReaderSourceConnector.cs"
+    },
+    "a10513ed9df1": {
+      "mapping": "File Reader source-map keys: originalFilename, fileDirectory, fileSize, fileLastModified seeded via smartconnect.sourcemap.json",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/FileReaderSourceConnector.cs"
+    },
+    "e24813c8155e": {
+      "mapping": "HTTP Listener source-map keys: httpMethod, httpPath, httpContentType, httpHeaders, httpQuery seeded by AspNetCore inbound",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/SmartConnectInboundEndpointExtensions.cs"
+    },
+    "d2df0999352d": {
+      "mapping": "TCP/MLLP Listener source-map keys: hl7.sendingApplication/sendingFacility/messageType/controlId/timestamp parsed from MSH",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/MllpInboundHostedService.cs"
+    },
+    "ecd047bb8c78": {
+      "mapping": "Channel Writer in-process source-map propagation via metadata pass-through",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs"
+    },
+    "b0420a814a90": {
+      "mapping": "File Writer connector map: per-route connector bag isolated by ordinal; available as connectorMap.put/get in transforms",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "1355b11537ce": {
+      "mapping": "HTTP Sender connector map: per-route connector bag isolated by ordinal; available as connectorMap.put/get in transforms",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "9e0a1a681980": {
+      "mapping": "Variable maps: 7-scope binding (sourceMap, channelMap, connectorMap, responseMap, globalChannelMap, globalMap, configurationMap) exposed to JS plus $() walker",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "7005e791f922": {
+      "mapping": "Connector Map: per-route, per-message ConnectorMaps bag (isolated between destinations) on FlowExecutionContext",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "85183e12a370": {
+      "mapping": "Channel Map: per-message in-memory ChannelMap on FlowExecutionContext (mutable across all stages of one dispatch)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs"
+    },
+    "95e469fce0de": {
+      "mapping": "Source Map: read-only per-message dictionary on FlowExecutionContext; hydrated from smartconnect.sourcemap.json metadata",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/VariableMaps/FlowExecutionContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "c8d4405adeff": {
+      "mapping": "Response Map: engine auto-populates ResponseMap[routeName] = { status, payload | error } after each outbound SendAsync",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs"
+    },
+    "b839f4a9582a": {
+      "mapping": "Global Channel Map: persisted per-flow scope (existing IVariableMapStore.GlobalChannel) bound as globalChannelMap",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IVariableMapStore.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs"
+    },
+    "91920d9ae4e3": {
+      "mapping": "Global Map: persisted server-wide scope (existing IVariableMapStore.Global) bound as globalMap",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IVariableMapStore.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs"
+    },
+    "d58569767feb": {
+      "mapping": "Variable Map Lookup Sequence: $(key) walks Response→Connector→Channel→Source→GlobalChannel→Global→Configuration; missing key → JS undefined",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/VariableMapsJsBinder.cs"
+    },
+    "81ce8b48b3c0": {
+      "mapping": "Library Resources: CodeTemplateLibrary entity + EF persistence (separate from channel storage)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplateLibrary.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/CodeTemplateLibraryEntity.cs"
+    },
+    "7cb9a8890739": {
+      "mapping": "Edit Code Templates View: headless equivalent via REST admin API at /smartconnect/v1/admin/code-template-libraries",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs"
+    },
+    "bd08744ff76d": {
+      "mapping": "Code Template Library Table: GET /smartconnect/v1/admin/code-template-libraries returns the library list (REST-equivalent of MC table view)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs"
+    },
+    "1b419734c6fa": {
+      "mapping": "Edit Library Panel: PUT/POST library aggregate via REST; library fields are Name/Description/LinkedFlowIds/AutoLinkNewFlows/Templates",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplateLibrary.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs"
+    },
+    "e56460f67110": {
+      "mapping": "Link Libraries to Channels: bidirectional reconciliation (library.LinkedFlowIds + pipeline.LinkedLibraryIds) with AutoLinkNewFlows seeding",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/CodeTemplates/CodeTemplateLinkageService.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs"
+    },
+    "af35697d05d5": {
+      "mapping": "Edit Code Template Panel: template fields are Name/Code/Type/Contexts/JsDoc, persisted in CodeTemplateEntity",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplate.cs; src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/CodeTemplateEntity.cs"
+    },
+    "38b667d9e077": {
+      "mapping": "Code Template Contexts: 17-value CodeTemplateContext enum; CodeTemplateJsBinder injects matching templates per FlowExecutionContext.CurrentStageContext",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplateContext.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/CodeTemplateJsBinder.cs"
+    },
+    "02b976218fe6": {
+      "mapping": "Use JSDoc in Code Templates: JsDoc string preserved on CodeTemplate entity; Jint ignores it at runtime (Mirth-compatible behavior)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/CodeTemplates/CodeTemplate.cs"
+    },
+    "fd99234d2268": {
+      "mapping": "Code Template Tasks: full REST CRUD (POST/GET/PUT/DELETE) + import endpoints replace the Mirth UI task menu",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs"
+    },
+    "21fe3d03e7ea": {
+      "mapping": "Import Code Templates / Libraries: POST /import (JSON array) + POST /import-mirth-xml (Mirth XStream-format XML)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/CodeTemplates/MirthXmlCodeTemplateImporter.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/CodeTemplateLibraryEndpointExtensions.cs"
+    },
+    "22cab570408f": {
+      "mapping": "Built-In Code Templates: BuiltInCodeTemplatesSeeder writes 6 starter templates (formatHl7Date/parseHl7Date/escapeXml/escapeHl7/makeAck/generateGuid) under a well-known library Id",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/CodeTemplates/BuiltInCodeTemplatesSeeder.cs"
+    },
+    "454721e1f823": {
+      "mapping": "Attachment Handlers: AttachmentExtractionPipeline runs between PreProcessor and route filters; resolves IAttachmentHandler from IFlowPluginRegistry by AttachmentHandlerSlot.Kind",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/AttachmentExtractionPipeline.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/IAttachmentHandler.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/AttachmentHandlerSlot.cs"
+    },
+    "e0d1b0c489f4": {
+      "mapping": "Reattachment: AttachmentReattachmentService inflates ${ATTACH:<id>} tokens to bytes on routes with ReattachAttachments=true (off by default per Mirth UG p220)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/AttachmentReattachmentService.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs"
+    },
+    "16d136564ce4": {
+      "mapping": "Attachment MIME Types: AttachmentEntity.MimeType (default application/octet-stream) round-trips per attachment; bytes endpoint serves Content-Type from this column",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Entities/AttachmentEntity.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AttachmentEndpointExtensions.cs"
+    },
+    "4890e76d7fcf": {
+      "mapping": "Attachment Handler Properties: AttachmentHandlerSlot.PropertiesJson holds handler-specific JSON; each handler parses its own keys (pattern/script/extractTags/customKind/mimeType)",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/AttachmentHandlerSlot.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/AttachmentHandlerContext.cs"
+    },
+    "b32b8acf3e75": {
+      "mapping": "Entire Message Attachment Handler: kind=entire-message; whole payload becomes one attachment, replaced inline with a single ${ATTACH:<id>} token",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/EntireMessageAttachmentHandler.cs"
+    },
+    "34b2ca8103b1": {
+      "mapping": "Regex Attachment Handler: kind=regex; extracts capture group 1 of each match into a separate attachment; pattern + regexOptions configurable via properties JSON",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/RegexAttachmentHandler.cs"
+    },
+    "bbaea87685b5": {
+      "mapping": "DICOM Attachment Handler: kind=dicom; parses payload via fo-dicom, extracts PixelData (and configurable tags) as attachments; placeholder reference written back into the dataset",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/DicomAttachmentHandler.cs"
+    },
+    "41352218137a": {
+      "mapping": "JavaScript Attachment Handler: kind=javascript; user script runs in Jint with msg + addAttachment(data,type) global; variable maps + code templates (context=AttachmentHandler) bound alongside",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/JavaScriptAttachmentHandler.cs"
+    },
+    "9e58f5372f2d": {
+      "mapping": "Extract Attachments: opt-in by configuring AttachmentHandlerSlot.Kind != none; pipeline returns rewritten payload + IAttachmentStore.AddAsync persists each attachment",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/AttachmentExtractionPipeline.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Attachments/IAttachmentStore.cs"
+    },
+    "eac4fcd31629": {
+      "mapping": "addAttachment(data, type) JS API: AttachmentJsBinder.Bind exposes a global function on every JS plugin engine (filter/transform/preprocessor/postprocessor + JS handler); returns ${ATTACH:<id>} token",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/AttachmentJsBinder.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/JavascriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/ChannelScriptExecutor.cs"
+    },
+    "9adfacb7123e": {
+      "mapping": "Custom Attachment Handler: kind=custom; CustomAttachmentHandlerHost looks up properties.customKind in IFlowPluginRegistry under custom:<suffix>; plugin authors register their own IAttachmentHandler",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/Attachments/Handlers/CustomAttachmentHandlerHost.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/MutableFlowPluginRegistry.cs"
+    },
+    "185f2e590ff8": {
+      "mapping": "Edit Alert View: headless equivalent via REST admin API at /smartconnect/v1/admin/alert-rules/{id} (full CRUD + /test endpoint); AlertEngine fires matching rules from FlowRuntimeEngine failure path with 3 action providers (email, webhook, channel-redispatch) and throttled per-process firing",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Alerts/AlertRule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/AlertEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/EmailAlertActionProvider.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/WebhookAlertActionProvider.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/ChannelRedispatchAlertActionProvider.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AlertEndpointExtensions.cs"
     }
   }
 }

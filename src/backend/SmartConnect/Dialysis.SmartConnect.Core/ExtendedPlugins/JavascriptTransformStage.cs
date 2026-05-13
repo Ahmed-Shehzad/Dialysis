@@ -1,36 +1,43 @@
 using System.Text;
 using System.Text.Json;
+using Dialysis.SmartConnect.Attachments;
+using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.Scripts;
+using Dialysis.SmartConnect.VariableMaps;
 using Jint;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.SmartConnect.ExtendedPlugins;
 
 /// <summary>
 /// Sandboxed JavaScript via Jint; parameters JSON must include <c>script</c> returning a string (new UTF-8 payload).
-/// Exposes <c>payloadText</c> for UTF-8/PlainText/Json payloads, or Base64 for binary.
+/// Exposes <c>payloadText</c> for UTF-8/PlainText/Json payloads, or Base64 for binary, plus the full Mirth-style
+/// variable map binding (sourceMap, channelMap, connectorMap, responseMap, globalChannelMap, globalMap,
+/// configurationMap) and the <c>$(key)</c> walker.
 /// </summary>
-public sealed class JavascriptTransformStage : ITransformStage
+public sealed class JavascriptTransformStage(IServiceProvider? services = null) : ITransformStage
 {
     public const string ParametersMetadataKey = "smartconnect.transform.parameters";
 
     public string Kind => "javascript";
 
-    public Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
+    public async Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
         if (!message.Metadata.TryGetValue(ParametersMetadataKey, out var json) || string.IsNullOrWhiteSpace(json))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         using var doc = JsonDocument.Parse(json);
         if (!doc.RootElement.TryGetProperty("script", out var scriptEl))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         var script = scriptEl.GetString();
         if (string.IsNullOrWhiteSpace(script))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         var payloadText = message.PayloadFormat is PayloadFormat.Utf8Text or PayloadFormat.PlainText or PayloadFormat.Json
@@ -44,8 +51,61 @@ public sealed class JavascriptTransformStage : ITransformStage
             options.TimeoutInterval(TimeSpan.FromSeconds(3));
         });
         engine.SetValue("payloadText", payloadText);
+        engine.SetValue("correlationId", message.CorrelationId);
+        engine.SetValue("flowId", message.FlowId.ToString());
+
+        await BindVariableMapsAsync(engine, message, cancellationToken).ConfigureAwait(false);
+        await BindCodeTemplatesAsync(engine, message.FlowId, cancellationToken).ConfigureAwait(false);
+        BindAddAttachment(engine, message, cancellationToken);
+
         var result = engine.Evaluate(script).ToObject();
         var str = result?.ToString() ?? "";
-        return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(str), PayloadFormat.Utf8Text));
+        return message.CloneWithPayload(Encoding.UTF8.GetBytes(str), PayloadFormat.Utf8Text);
+    }
+
+    private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
+    {
+        if (services is null) return;
+
+        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var ctx = accessor?.Current ?? new FlowExecutionContext();
+
+        var store = services.GetService<IVariableMapStore>();
+        IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
+        IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
+        IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
+        if (store is not null)
+        {
+            globalChannel = await store.GetAllAsync(VariableMapScope.GlobalChannel, message.FlowId, ct).ConfigureAwait(false);
+            global = await store.GetAllAsync(VariableMapScope.Global, null, ct).ConfigureAwait(false);
+            configuration = await store.GetAllAsync(VariableMapScope.Configuration, null, ct).ConfigureAwait(false);
+        }
+
+        var bound = VariableMapsJsBinder.BindAll(engine, ctx, globalChannel, global, configuration);
+
+        // Note: write-back of globalChannel/global mutations happens in ChannelScriptExecutor, not here.
+        // Per-stage transformer scripts touching globalMap.put/globalChannelMap.put do not persist.
+        _ = bound;
+    }
+
+    private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
+    {
+        if (services is null) return;
+        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        if (repo is null) return;
+        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var context = accessor?.Current?.CurrentStageContext ?? CodeTemplateContext.SourceTransformer;
+        await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, context, ct).ConfigureAwait(false);
+    }
+
+    private void BindAddAttachment(Engine engine, IntegrationMessage message, CancellationToken ct)
+    {
+        if (services is null)
+        {
+            AttachmentJsBinder.Bind(engine, store: null, message.FlowId, message.Id, "application/octet-stream", ct);
+            return;
+        }
+        var store = services.GetService<IAttachmentStore>();
+        AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
     }
 }

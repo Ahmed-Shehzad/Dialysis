@@ -22,10 +22,190 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migra
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.AttachmentEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("Data")
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("FlowId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedUtc");
+
+                    b.HasIndex("FlowId");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("Attachments", "smartconnect");
+                });
+
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.AuditEventEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AttributesJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("FlowId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowId");
+
+                    b.HasIndex("Category", "Timestamp");
+
+                    b.ToTable("AuditEvents", "smartconnect");
+                });
+
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.CodeTemplateEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContextsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JsDoc")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LibraryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LibraryId");
+
+                    b.ToTable("CodeTemplates", "smartconnect");
+                });
+
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.CodeTemplateLibraryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AutoLinkNewFlows")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("LastModifiedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LinkedFlowIdsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CodeTemplateLibraries", "smartconnect");
+                });
+
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.FlowGroupEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FlowGroups", "smartconnect");
+                });
+
             modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.IntegrationFlowEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("GroupId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")
@@ -40,7 +220,13 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migra
                     b.Property<int>("RuntimeState")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TagsJson")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
 
                     b.ToTable("IntegrationFlows", "smartconnect");
                 });
@@ -83,6 +269,44 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migra
                     b.HasIndex("FlowId", "CreatedAtUtc");
 
                     b.ToTable("MessageLedgerEntries", "smartconnect");
+                });
+
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.VariableMapEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FlowId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Scope", "FlowId", "Key")
+                        .IsUnique();
+
+                    b.ToTable("VariableMapEntries", "smartconnect");
+                });
+
+            modelBuilder.Entity("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.CodeTemplateEntity", b =>
+                {
+                    b.HasOne("Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.CodeTemplateLibraryEntity", null)
+                        .WithMany()
+                        .HasForeignKey("LibraryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

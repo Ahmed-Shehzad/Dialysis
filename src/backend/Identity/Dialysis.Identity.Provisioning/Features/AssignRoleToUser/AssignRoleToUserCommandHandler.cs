@@ -12,7 +12,8 @@ public sealed class AssignRoleToUserCommandHandler(
     IUserAccountRepository users,
     IRoleDefinitionRepository roles,
     IRoleAssignmentRepository assignments,
-    ITransponderBus bus,
+    ITransponderOutbox outbox,
+    IMessageSerializer serializer,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider)
     : ICommandHandler<AssignRoleToUserCommand>
@@ -39,14 +40,19 @@ public sealed class AssignRoleToUserCommandHandler(
             AssignedAtUtc = now,
         });
 
-        await bus.PublishAsync(
-            new RoleAssignedIntegrationEvent(
-                EventId: Guid.CreateVersion7(),
-                OccurredOn: now,
-                UserId: user.Id,
-                Subject: user.Subject,
-                RoleCode: role.Code,
-                Permissions: role.Permissions.ToArray()),
+        var @event = new RoleAssignedIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: now,
+            UserId: user.Id,
+            Subject: user.Subject,
+            RoleCode: role.Code,
+            Permissions: role.Permissions.ToArray());
+
+        var payload = serializer.Serialize(@event);
+        await outbox.EnqueueAsync(new TransponderOutboxEnvelope(
+            AssemblyQualifiedEventType: typeof(RoleAssignedIntegrationEvent).AssemblyQualifiedName!,
+            PayloadJson: System.Text.Encoding.UTF8.GetString(payload.Span),
+            Id: @event.EventId),
             cancellationToken).ConfigureAwait(false);
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

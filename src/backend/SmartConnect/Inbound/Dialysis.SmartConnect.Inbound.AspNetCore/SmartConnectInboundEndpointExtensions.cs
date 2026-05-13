@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.Inbound;
 using Microsoft.AspNetCore.Builder;
@@ -86,6 +87,28 @@ public static class SmartConnectInboundEndpointExtensions
                 metadata = metadata.SetItem(header.Key, header.Value.ToString());
             }
         }
+
+        var headerMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var header in http.Request.Headers)
+        {
+            headerMap[header.Key] = header.Value.ToString();
+        }
+
+        var queryMap = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var q in http.Request.Query)
+        {
+            queryMap[q.Key] = q.Value.ToString();
+        }
+
+        var sourceMap = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["httpMethod"] = http.Request.Method,
+            ["httpPath"] = http.Request.Path.Value ?? string.Empty,
+            ["httpContentType"] = contentType ?? string.Empty,
+            ["httpHeaders"] = headerMap,
+            ["httpQuery"] = queryMap,
+        };
+        metadata = metadata.SetItem("smartconnect.sourcemap.json", JsonSerializer.Serialize(sourceMap));
 
         var message = messageFactory.Create(
             flowId,

@@ -1,3 +1,5 @@
+using Dialysis.SmartConnect.Alerts;
+using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -28,6 +30,26 @@ public sealed class DataPrunerHostedService(
                 if (pruned > 0)
                 {
                     logger.LogInformation("Data pruner removed {Count} ledger entries older than {Threshold}.", pruned, threshold);
+                }
+
+                var attachments = scope.ServiceProvider.GetService<IAttachmentStore>();
+                if (attachments is not null)
+                {
+                    var attRemoved = await attachments.DeleteOlderThanAsync(threshold, stoppingToken).ConfigureAwait(false);
+                    if (attRemoved > 0)
+                    {
+                        logger.LogInformation("Data pruner removed {Count} attachments older than {Threshold}.", attRemoved, threshold);
+                    }
+                }
+
+                var alertEvents = scope.ServiceProvider.GetService<IAlertEventStore>();
+                if (alertEvents is not null)
+                {
+                    var alertRemoved = await alertEvents.DeleteOlderThanAsync(threshold, stoppingToken).ConfigureAwait(false);
+                    if (alertRemoved > 0)
+                    {
+                        logger.LogInformation("Data pruner removed {Count} alert events older than {Threshold}.", alertRemoved, threshold);
+                    }
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

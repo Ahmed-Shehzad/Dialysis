@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dialysis.SmartConnect.Scheduling;
 using Microsoft.Extensions.Logging;
 
@@ -234,12 +235,24 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             return;
         }
 
+        var sizeBytes = info.Length.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lastWriteUtc = info.LastWriteTimeUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+
+        var sourceMap = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["originalFilename"] = info.Name,
+            ["fileDirectory"] = Path.GetDirectoryName(fullPath) ?? string.Empty,
+            ["fileSize"] = info.Length,
+            ["fileLastModified"] = lastWriteUtc,
+        };
+
         var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [MetadataPrefix + "path"] = fullPath,
             [MetadataPrefix + "name"] = info.Name,
-            [MetadataPrefix + "sizeBytes"] = info.Length.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            [MetadataPrefix + "lastWriteUtc"] = info.LastWriteTimeUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+            [MetadataPrefix + "sizeBytes"] = sizeBytes,
+            [MetadataPrefix + "lastWriteUtc"] = lastWriteUtc,
+            ["smartconnect.sourcemap.json"] = JsonSerializer.Serialize(sourceMap),
         };
 
         var message = context.MessageFactory.Create(

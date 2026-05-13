@@ -51,9 +51,30 @@ public sealed class ChannelScriptExecutorTests
     }
 
     [Fact]
-    public async Task PreProcessor_persists_channelMap_put()
+    public async Task PreProcessor_persists_globalChannelMap_put()
     {
+        // After the variable-maps refactor, the per-channel persisted scope is named globalChannelMap.
+        // channelMap is now message-scoped (in-memory, not persisted), per Mirth semantics.
         var flowId = Guid.Parse("00000000-0000-4000-8000-0000000000a3");
+        var msg = new IntegrationMessage
+        {
+            Id = Guid.CreateVersion7(),
+            FlowId = flowId,
+            CorrelationId = "c",
+            Payload = "x"u8.ToArray(),
+            PayloadFormat = PayloadFormat.Binary,
+            ReceivedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        await _executor.RunPreProcessorAsync("globalChannelMap.put('k','v'); true;", msg, CancellationToken.None);
+        var v = await _maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
+        Assert.Equal("v", v);
+    }
+
+    [Fact]
+    public async Task PreProcessor_channelMap_is_message_scoped_not_persisted()
+    {
+        var flowId = Guid.Parse("00000000-0000-4000-8000-0000000000a4");
         var msg = new IntegrationMessage
         {
             Id = Guid.CreateVersion7(),
@@ -66,6 +87,6 @@ public sealed class ChannelScriptExecutorTests
 
         await _executor.RunPreProcessorAsync("channelMap.put('k','v'); true;", msg, CancellationToken.None);
         var v = await _maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
-        Assert.Equal("v", v);
+        Assert.Null(v);
     }
 }
