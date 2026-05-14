@@ -140,7 +140,7 @@ public sealed class FlowRuntimeEngineDsfRoutingTests
         Assert.Equal(1, capture.Sent[0].Ordinal);
     }
 
-    private static async Task SeedStartedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private async static Task SeedStartedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

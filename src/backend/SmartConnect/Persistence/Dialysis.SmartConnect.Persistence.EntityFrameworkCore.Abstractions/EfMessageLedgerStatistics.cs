@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect;
-using Dialysis.SmartConnect.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;

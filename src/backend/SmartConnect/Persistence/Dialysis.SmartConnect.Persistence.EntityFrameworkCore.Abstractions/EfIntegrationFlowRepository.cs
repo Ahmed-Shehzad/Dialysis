@@ -1,6 +1,4 @@
 using System.Text.Json;
-using Dialysis.SmartConnect;
-using Dialysis.SmartConnect.Persistence;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Microsoft.EntityFrameworkCore;

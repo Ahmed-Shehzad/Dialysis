@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NATS.Client.Core;

@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.BuiltInPlugins;
-using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;

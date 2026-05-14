@@ -1,4 +1,3 @@
-using System.Numerics;
 using Dialysis.DomainDrivenDesign.DomainEvents;
 using Dialysis.DomainDrivenDesign.IntegrationEvents;
 
@@ -8,7 +7,7 @@ namespace Dialysis.DomainDrivenDesign.Primitives;
 /// Consistency boundary that can raise <see cref="IDomainEvent"/> and <see cref="IIntegrationEvent"/> instances
 /// for in-process handling and cross-context publication (respectively), after the aggregate’s invariants hold.
 /// </summary>
-public abstract class AggregateRoot<TId> : Entity<TId>, IEqualityOperators<AggregateRoot<TId>, AggregateRoot<TId>, bool>
+public abstract class AggregateRoot<TId> : Entity<TId>
     where TId : notnull
 {
     private readonly List<IDomainEvent> _domainEvents = [];

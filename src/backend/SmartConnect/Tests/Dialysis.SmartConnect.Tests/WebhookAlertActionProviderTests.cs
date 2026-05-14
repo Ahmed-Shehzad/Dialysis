@@ -64,7 +64,7 @@ public sealed class WebhookAlertActionProviderTests
         public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
         public string Reason { get; set; } = "OK";
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastRequest = request;
             if (request.Content is not null)

@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect;
-
 namespace Dialysis.SmartConnect.Persistence;
 
 /// <summary>Paged read access to the append-only message ledger.</summary>

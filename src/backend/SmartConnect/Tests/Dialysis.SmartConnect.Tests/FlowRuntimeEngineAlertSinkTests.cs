@@ -1,7 +1,6 @@
 using System.Text;
 using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.BuiltInPlugins;
-using Dialysis.SmartConnect.Persistence;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
@@ -83,7 +82,7 @@ public sealed class FlowRuntimeEngineAlertSinkTests
         return sp;
     }
 
-    private static async Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private async static Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

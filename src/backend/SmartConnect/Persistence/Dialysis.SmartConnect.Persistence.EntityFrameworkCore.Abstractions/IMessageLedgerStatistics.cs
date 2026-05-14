@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect;
-
 namespace Dialysis.SmartConnect.Persistence;
 
 /// <summary>Per-flow message statistics (grouped by <see cref="MessageLedgerStatus"/>).</summary>

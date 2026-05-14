@@ -1,6 +1,4 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Dialysis.BuildingBlocks.Transponder.Transport.AwsSqsSns;
 

@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.BuiltInPlugins;
-using Dialysis.SmartConnect.Persistence;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
@@ -71,7 +70,7 @@ public sealed class AddAttachmentJsApiTests
         Assert.Equal("text/plain", stored[0].MimeType);
     }
 
-    private static async Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> BuildAsync()
+    private async static Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> BuildAsync()
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
@@ -85,7 +84,7 @@ public sealed class AddAttachmentJsApiTests
         return (sp, capture);
     }
 
-    private static async Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private async static Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

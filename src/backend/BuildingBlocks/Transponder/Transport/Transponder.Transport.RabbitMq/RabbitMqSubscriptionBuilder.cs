@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;

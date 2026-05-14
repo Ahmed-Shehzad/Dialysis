@@ -7,7 +7,6 @@ using Dialysis.EHR.Contracts.Security;
 using Dialysis.EHR.Integration;
 using Dialysis.EHR.PatientChart;
 using Dialysis.EHR.PatientPortal;
-using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration;
 using Dialysis.EHR.Scheduling;
 using Dialysis.Module.Hosting;

@@ -13,7 +13,6 @@ using Dialysis.EHR.PatientPortal;
 using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration;
 using Dialysis.EHR.Scheduling;
-using Dialysis.Module.Hosting.Pipeline;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

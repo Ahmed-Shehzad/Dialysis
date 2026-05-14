@@ -39,9 +39,12 @@ public static class PersistenceServiceCollectionExtensions
 
         services.AddScoped<IStaffRepository, EfStaffRepository>();
         services.AddScoped<IInventoryRepository, EfInventoryRepository>();
+        services.AddScoped<IBillingExportJobRepository, EfBillingExportJobRepository>();
         services.AddScoped<IDataImportJobRepository, EfDataImportJobRepository>();
         services.AddScoped<IDeviceReadingRepository, EfDeviceReadingRepository>();
         services.AddScoped<IIntegrationOutboxMetadataReadModel, EfIntegrationOutboxMetadataReadModel>();
+        services.AddScoped<IPatientSearchReadModel, EfPatientSearchReadModel>();
+        services.AddScoped<IManagerDashboardReadModel, EfManagerDashboardReadModel>();
         services.AddScoped<IRaCapabilitiesReadStore, EfRaCapabilitiesReadStore>();
         services.AddScoped<IRaCapabilityCommandStore, EfRaCapabilityCommandStore>();
         return services;

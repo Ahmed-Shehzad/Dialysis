@@ -25,8 +25,7 @@ public abstract class ModuleWebApplicationFactory<TEntryPoint, TDbContext>
 
     protected ModuleWebApplicationFactory()
     {
-        _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:17-alpine")
+        _postgres = new PostgreSqlBuilder("postgres:17-alpine")
             .WithDatabase($"dialysis_{ModuleSlug}_test")
             .WithUsername("postgres")
             .WithPassword("postgres")

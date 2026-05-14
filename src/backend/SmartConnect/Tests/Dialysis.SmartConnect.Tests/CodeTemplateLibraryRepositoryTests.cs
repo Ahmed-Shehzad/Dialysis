@@ -127,7 +127,7 @@ public sealed class CodeTemplateLibraryRepositoryTests
         return services.BuildServiceProvider();
     }
 
-    private static async Task SeedFlowAsync(IServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private async static Task SeedFlowAsync(IServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         var db = sp.GetRequiredService<SmartConnectDbContext>();
         db.IntegrationFlows.Add(new IntegrationFlowEntity

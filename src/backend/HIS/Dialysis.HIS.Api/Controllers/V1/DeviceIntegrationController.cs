@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
-using Dialysis.HIS.Api.Controllers;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
 using Microsoft.AspNetCore.Mvc;

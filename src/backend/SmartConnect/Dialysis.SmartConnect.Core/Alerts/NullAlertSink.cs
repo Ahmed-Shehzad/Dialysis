@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect.Alerts;
-
 namespace Dialysis.SmartConnect.Alerts;
 
 /// <summary>

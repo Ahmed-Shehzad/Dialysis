@@ -1,5 +1,4 @@
 using Dialysis.CQRS;
-using Dialysis.CQRS.Commands;
 using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Features.RegisterPatient;

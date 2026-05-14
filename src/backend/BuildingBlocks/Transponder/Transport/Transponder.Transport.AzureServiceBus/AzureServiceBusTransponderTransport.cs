@@ -1,6 +1,5 @@
 using System.Text;
 using Azure.Messaging.ServiceBus;
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

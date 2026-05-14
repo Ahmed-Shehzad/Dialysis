@@ -109,13 +109,13 @@ Legend: **[x]** first vertical slice in code · **[ ]** still to do or harden fo
 
 ### Phase F — Operations (generic MIS)
 
-- [x] **F1**–**F3**: Staff role, inventory movement, billing export job **stubs**
-- [x] **F***: **Partial** — RA **coordination** write: `POST …/capabilities/generic-mis/organizational-communications` (`his.ra.commands.write`); billing job **`StatusCode`** / **`PayerCode`** + **`GET …/operations/billing/export-jobs/{id}`**; RA **EHR document register**, **quality task status**, **security assessment** POSTs under capabilities
+- [x] **F1**–**F3**: Staff role, inventory movement; **`SubmitBillingExportJobCommand`** + `GetBillingExportJobByIdQuery` (`his_operations.BillingExportJobs` table) — vertical slice that publishes **`BillingExportJobQueuedIntegrationEvent`** on the HIS outbox so EHR billing executes the actual claim filing
+- [x] **F***: **Partial** — RA **coordination** write: `POST …/capabilities/generic-mis/organizational-communications` (`his.ra.commands.write`); billing job **`StatusCode`** / **`PayerCode`** + **`GET …/operations/billing/export-jobs/{id}`**; RA **EHR document register**, **quality task status**, **security assessment**, **financial-erp link register**, **medication-dispensing record** POSTs under capabilities
 
 ### Phase G — Data services
 
-- [x] **G1**–**G3**: Import job command, search query, dashboard query (stubs / thin read models)
-- [x] **G***: **Partial** — import job **validation** + **`GET …/data-management/import-jobs/{id}`**; full-text list **optional `q` filter**; **request analytics export** command + RA rows; **manager-dashboard** optional **`reportFocus`** + queued billing / open quality counts; **`GET …/data-management/integration/outbox-metadata`** (outbox metadata index, `his.data.share.read`)
+- [x] **G1**–**G3**: `SubmitDataImportJobCommand` + `GetDataImportJobByIdQuery`; **`SearchPatientsQuery`** over `IPatientSearchReadModel` (reads `RaFullTextSearchEntries` `patients` corpus); **`ManagerDashboardQuery`** over `IManagerDashboardReadModel` (queued billing / open quality / recent-import counts + `reportFocus` echo)
+- [x] **G***: **Partial** — import job **validation** + **`GET …/data-management/import-jobs/{id}`**; full-text list **optional `q` filter**; **request analytics export** command + RA rows; **`GET …/data-management/patients/search`**; **`GET …/data-management/manager-dashboard`**; **`GET …/data-management/integration/outbox-metadata`** (outbox metadata index, `his.data.share.read`)
 
 ### Phase H — Integration
 

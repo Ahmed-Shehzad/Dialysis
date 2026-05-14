@@ -1,5 +1,4 @@
 using System.Reflection;
-using NetArchTest.Rules;
 using Shouldly;
 using Xunit;
 

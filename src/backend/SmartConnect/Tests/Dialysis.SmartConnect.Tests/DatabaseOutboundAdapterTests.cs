@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Xunit;
 
@@ -169,6 +170,7 @@ public sealed class DatabaseOutboundAdapterTests
 
         public int OpenedTimes;
 
+        [AllowNull]
         public override string ConnectionString { get; set; } = "fake";
 
         public override string Database => "fake";
@@ -199,6 +201,7 @@ public sealed class DatabaseOutboundAdapterTests
     {
         public Dictionary<string, object?> BoundParameters { get; } = new(StringComparer.Ordinal);
 
+        [AllowNull]
         public override string CommandText { get; set; } = string.Empty;
 
         public override int CommandTimeout { get; set; }
@@ -254,10 +257,12 @@ public sealed class DatabaseOutboundAdapterTests
 
         public override bool IsNullable { get; set; }
 
+        [AllowNull]
         public override string ParameterName { get; set; } = string.Empty;
 
         public override int Size { get; set; }
 
+        [AllowNull]
         public override string SourceColumn { get; set; } = string.Empty;
 
         public override bool SourceColumnNullMapping { get; set; }

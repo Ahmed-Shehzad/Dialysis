@@ -1,7 +1,6 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
-using Dialysis.CQRS.Commands;
 using Dialysis.Module.Hosting.Pipeline;
 using Dialysis.PDMS.Persistence;
 using Dialysis.PDMS.TreatmentSessions;

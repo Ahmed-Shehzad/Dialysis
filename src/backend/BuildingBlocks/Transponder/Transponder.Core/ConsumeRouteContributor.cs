@@ -1,4 +1,3 @@
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.BuildingBlocks.Transponder;

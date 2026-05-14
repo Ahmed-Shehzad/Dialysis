@@ -1,4 +1,3 @@
-using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.Hosting;

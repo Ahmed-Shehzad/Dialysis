@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.Extensions.Logging;
 
 namespace Dialysis.BuildingBlocks.Transponder.Transport.ServerSentEvents;

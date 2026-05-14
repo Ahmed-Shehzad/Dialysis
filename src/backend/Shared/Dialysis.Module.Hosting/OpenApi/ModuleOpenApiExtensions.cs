@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.Module.Hosting.OpenApi;

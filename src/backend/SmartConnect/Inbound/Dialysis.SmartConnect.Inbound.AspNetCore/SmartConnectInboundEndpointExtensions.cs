@@ -1,11 +1,8 @@
 using System.Collections.Immutable;
 using System.Text.Json;
-using Dialysis.SmartConnect;
-using Dialysis.SmartConnect.Inbound;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Dialysis.SmartConnect.Inbound.AspNetCore;

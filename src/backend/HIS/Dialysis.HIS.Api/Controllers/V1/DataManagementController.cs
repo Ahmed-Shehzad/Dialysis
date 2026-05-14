@@ -1,16 +1,17 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
-using Dialysis.HIS.Api.Controllers;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.DataServices.Features.GetDataImportJobById;
 using Dialysis.HIS.DataServices.Features.ListIntegrationOutboxRecent;
+using Dialysis.HIS.DataServices.Features.ManagerDashboard;
+using Dialysis.HIS.DataServices.Features.SearchPatients;
 using Dialysis.HIS.DataServices.Features.SubmitDataImportJob;
 using Dialysis.HIS.DataServices.Ports;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.HIS.Api.Controllers.V1;
 
-/// <summary>RA: <em>Data management</em> — import jobs and outbox metadata. Patient search / manager dashboard moved to EHR.</summary>
+/// <summary>RA: <em>Data management</em> — import jobs, outbox metadata, patient search (full-text corpus), manager dashboard.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/data-management")]
@@ -46,6 +47,38 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
                 cancellationToken)
             .ConfigureAwait(false);
         return OkResource(rows, LinkCapabilitiesIndex());
+    }
+
+    /// <summary>RA Fig. 6 — Data management → Search. Reads the <c>patients</c> corpus of the full-text index.</summary>
+    [HttpGet("patients/search")]
+    [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<PatientSearchRow>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SearchPatients(
+        [FromQuery] string? q,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await gateway
+            .SendQueryAsync<SearchPatientsQuery, IReadOnlyList<PatientSearchRow>>(
+                new SearchPatientsQuery(q, skip, take),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return OkResource(rows, LinkCapabilitiesIndex());
+    }
+
+    /// <summary>RA Fig. 6 — Generic MIS → Reporting. Operations workload snapshot (no PHI).</summary>
+    [HttpGet("manager-dashboard")]
+    [ProducesResponseType(typeof(ResourceEnvelope<ManagerDashboardSnapshotDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ManagerDashboard(
+        [FromQuery] string? reportFocus,
+        CancellationToken cancellationToken)
+    {
+        var snapshot = await gateway
+            .SendQueryAsync<ManagerDashboardQuery, ManagerDashboardSnapshotDto>(
+                new ManagerDashboardQuery(reportFocus),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return OkResource(snapshot, LinkCapabilitiesIndex());
     }
 
     public sealed record SubmitDataImportJobResponse(Guid Id);

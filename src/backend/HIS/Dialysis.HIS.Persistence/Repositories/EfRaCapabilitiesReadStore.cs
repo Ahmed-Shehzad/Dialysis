@@ -1,4 +1,3 @@
-using Dialysis.HIS.RaCapabilities.Domain;
 using Dialysis.HIS.RaCapabilities.Ports;
 using Microsoft.EntityFrameworkCore;
 

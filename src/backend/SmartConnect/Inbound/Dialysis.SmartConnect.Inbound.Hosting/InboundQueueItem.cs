@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using Dialysis.SmartConnect;
 
 namespace Dialysis.SmartConnect.Inbound.Hosting;
 

@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect.Attachments;
-
 namespace Dialysis.SmartConnect.Attachments.Handlers;
 
 /// <summary>

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Dialysis.SmartConnect;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 

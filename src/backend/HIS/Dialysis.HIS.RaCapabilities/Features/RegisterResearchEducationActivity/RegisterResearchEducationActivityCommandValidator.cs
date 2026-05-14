@@ -1,4 +1,3 @@
-using System.Linq;
 using Dialysis.BuildingBlocks.Verifier;
 
 namespace Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity;

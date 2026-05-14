@@ -1,5 +1,3 @@
-using Dialysis.BuildingBlocks.Transponder;
-
 namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 
 /// <summary>

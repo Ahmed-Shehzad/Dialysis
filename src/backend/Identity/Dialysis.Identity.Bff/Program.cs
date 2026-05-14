@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Security.Claims;
 using Dialysis.Identity.Bff.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Dialysis.Identity.Bff.Services;

@@ -1,13 +1,14 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
-using Dialysis.HIS.Api.Controllers;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.RaCapabilities.Features;
 using Dialysis.HIS.RaCapabilities.Features.ClearPatientAlert;
 using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 using Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 using Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEvaluation;
+using Dialysis.HIS.RaCapabilities.Features.RecordMedicationDispensing;
 using Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment;
+using Dialysis.HIS.RaCapabilities.Features.RegisterFinancialErpLink;
 using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
 using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
@@ -109,6 +110,26 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
         var data = await gateway.SendQueryAsync<ListFinancialErpLinksQuery, IReadOnlyList<RaFinancialErpLinkRow>>(new ListFinancialErpLinksQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
     }
+
+    [HttpPost("generic-mis/financial-erp-depth/records")]
+    [ProducesResponseType(typeof(ResourceEnvelope<RegisterFinancialErpLinkResponse>), StatusCodes.Status201Created)]
+    public async Task<IActionResult> RegisterFinancialErpLink(
+        [FromBody] RegisterFinancialErpLinkCommand command,
+        CancellationToken cancellationToken)
+    {
+        var id = await gateway
+            .SendCommandAsync<RegisterFinancialErpLinkCommand, Guid>(command, cancellationToken)
+            .ConfigureAwait(false);
+        return CreatedResource(
+            $"{Request.Path}/{id}",
+            new RegisterFinancialErpLinkResponse(id),
+            LinkTo(
+                "ra:financial-erp",
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/financial-erp-depth",
+                "GET"));
+    }
+
+    public sealed record RegisterFinancialErpLinkResponse(Guid Id);
 
     [HttpGet("generic-mis/research-education")]
     public async Task<IActionResult> ResearchEducationActivities(CancellationToken cancellationToken)
@@ -242,6 +263,26 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
         var data = await gateway.SendQueryAsync<ListMedicationDispensingRecordsQuery, IReadOnlyList<RaMedicationDispensingRow>>(new ListMedicationDispensingRecordsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:medication-orders", $"/api/v{ApiVersionSegment}/medication/orders", "POST"));
     }
+
+    [HttpPost("medication-management/dispensing-and-barcode/records")]
+    [ProducesResponseType(typeof(ResourceEnvelope<RecordMedicationDispensingResponse>), StatusCodes.Status201Created)]
+    public async Task<IActionResult> RecordMedicationDispensing(
+        [FromBody] RecordMedicationDispensingCommand command,
+        CancellationToken cancellationToken)
+    {
+        var id = await gateway
+            .SendCommandAsync<RecordMedicationDispensingCommand, Guid>(command, cancellationToken)
+            .ConfigureAwait(false);
+        return CreatedResource(
+            $"{Request.Path}/{id}",
+            new RecordMedicationDispensingResponse(id),
+            LinkTo(
+                "ra:dispensing",
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/medication-management/dispensing-and-barcode",
+                "GET"));
+    }
+
+    public sealed record RecordMedicationDispensingResponse(Guid Id);
 
     [HttpGet("medication-management/clinical-decision-support")]
     public async Task<IActionResult> ClinicalDecisionSupport(CancellationToken cancellationToken)

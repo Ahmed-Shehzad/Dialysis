@@ -23,4 +23,8 @@ public interface IRaCapabilityCommandStore
     void AddSpecialistEncounterRecord(RaSpecialistEncounterRecord record);
 
     void AddResearchEducationActivity(RaResearchEducationActivity activity);
+
+    void AddFinancialErpLink(RaFinancialErpLink link);
+
+    void AddMedicationDispensingRecord(RaMedicationDispensingRecord record);
 }

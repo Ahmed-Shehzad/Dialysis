@@ -50,10 +50,10 @@ public sealed class HisAccessTokenProvider(
             ["audience"] = _options.HisAudienceClientId,
         };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
-        {
-            Content = new FormUrlEncodedContent(form),
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint);
+
+        request.Content = new FormUrlEncodedContent(form);
+
         var basic = Convert.ToBase64String(
             Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);

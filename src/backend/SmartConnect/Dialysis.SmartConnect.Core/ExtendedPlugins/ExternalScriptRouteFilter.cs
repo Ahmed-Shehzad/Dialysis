@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Scripts;

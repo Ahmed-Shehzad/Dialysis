@@ -2,7 +2,6 @@ using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.CodeTemplates;
-using Dialysis.SmartConnect.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

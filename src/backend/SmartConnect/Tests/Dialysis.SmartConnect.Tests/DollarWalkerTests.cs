@@ -67,7 +67,7 @@ public sealed class DollarWalkerTests
         Assert.Equal("undef", Encoding.UTF8.GetString(result.Payload.Span));
     }
 
-    private static async Task AssertWalkerResolves(
+    private async static Task AssertWalkerResolves(
         Action<FlowExecutionContext> populate,
         string expected,
         IReadOnlyDictionary<string, object?>? sourceMap = null)

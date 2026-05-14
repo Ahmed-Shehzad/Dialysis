@@ -1,4 +1,4 @@
-using Dialysis.SmartConnect.Inbound;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +11,7 @@ namespace Dialysis.SmartConnect.Inbound.Hosting;
 public sealed class SmartConnectInboundQueueConsumer(
     IInboundQueueSubscription queue,
     IInboundMessageFactory messageFactory,
-    IInboundTransport inboundTransport,
+    IServiceScopeFactory scopeFactory,
     ILogger<SmartConnectInboundQueueConsumer> logger) : BackgroundService
 {
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -40,6 +40,8 @@ public sealed class SmartConnectInboundQueueConsumer(
                     item.CorrelationId,
                     item.Metadata.IsEmpty ? null : item.Metadata);
 
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var inboundTransport = scope.ServiceProvider.GetRequiredService<IInboundTransport>();
                 await inboundTransport.DispatchAsync(msg, stoppingToken).ConfigureAwait(false);
             }
             catch (Exception ex)

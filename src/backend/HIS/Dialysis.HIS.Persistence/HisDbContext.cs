@@ -26,6 +26,7 @@ public sealed class HisDbContext(
 
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<BillingExportJob> BillingExportJobs => Set<BillingExportJob>();
     public DbSet<DataImportJob> DataImportJobs => Set<DataImportJob>();
     public DbSet<DeviceReadingRecord> DeviceReadings => Set<DeviceReadingRecord>();
 
@@ -69,6 +70,19 @@ public sealed class HisDbContext(
             e.Property(d => d.SourceDescription).HasMaxLength(512).IsRequired();
             e.Property(d => d.StatusCode).HasMaxLength(32).IsRequired();
             e.Property(d => d.ValidationSummary).HasMaxLength(2000);
+        });
+
+        modelBuilder.Entity<BillingExportJob>(e =>
+        {
+            e.ToTable("BillingExportJobs", "his_operations");
+            e.HasKey(b => b.Id);
+            e.Property(b => b.PayerCode).HasMaxLength(16).IsRequired();
+            e.Property(b => b.StatusCode).HasMaxLength(32).IsRequired();
+            e.Property(b => b.PeriodStart).IsRequired();
+            e.Property(b => b.PeriodEnd).IsRequired();
+            e.Property(b => b.SubmittedAtUtc).IsRequired();
+            e.Property(b => b.Notes).HasMaxLength(500);
+            e.HasIndex(b => b.StatusCode);
         });
 
         modelBuilder.Entity<DeviceReadingRecord>(e =>

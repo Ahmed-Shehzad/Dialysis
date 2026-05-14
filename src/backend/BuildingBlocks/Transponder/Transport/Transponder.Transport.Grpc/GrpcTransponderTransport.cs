@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using Dialysis.BuildingBlocks.Transponder;
 using Google.Protobuf;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;

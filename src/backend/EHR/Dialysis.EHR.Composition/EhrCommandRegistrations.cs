@@ -1,5 +1,4 @@
 using Dialysis.CQRS;
-using Dialysis.CQRS.Commands;
 using Dialysis.EHR.Billing.Features.CaptureCharge;
 using Dialysis.EHR.Billing.Features.PostPayment;
 using Dialysis.EHR.Billing.Features.RecordRemittance;

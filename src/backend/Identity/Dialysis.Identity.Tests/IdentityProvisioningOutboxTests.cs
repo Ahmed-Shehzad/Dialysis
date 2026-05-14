@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
 using Dialysis.Identity.Contracts.Integration;
 using Dialysis.Identity.Persistence;

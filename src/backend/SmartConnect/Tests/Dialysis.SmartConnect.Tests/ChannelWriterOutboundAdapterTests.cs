@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Globalization;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Inbound;
 using Microsoft.Extensions.DependencyInjection;

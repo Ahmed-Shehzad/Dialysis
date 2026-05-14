@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect;
-
 namespace Dialysis.SmartConnect.Persistence;
 
 public interface IMessageLedger

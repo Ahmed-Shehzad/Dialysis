@@ -2,23 +2,29 @@ using Dialysis.CQRS;
 using Dialysis.HIS.DataServices;
 using Dialysis.HIS.DataServices.Features.GetDataImportJobById;
 using Dialysis.HIS.DataServices.Features.ListIntegrationOutboxRecent;
+using Dialysis.HIS.DataServices.Features.ManagerDashboard;
+using Dialysis.HIS.DataServices.Features.SearchPatients;
 using Dialysis.HIS.DataServices.Features.SubmitDataImportJob;
 using Dialysis.HIS.DataServices.Ports;
 using Dialysis.HIS.Integration;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
 using Dialysis.HIS.Operations;
 using Dialysis.HIS.Operations.Features.AssignStaffRole;
+using Dialysis.HIS.Operations.Features.GetBillingExportJobById;
 using Dialysis.HIS.Operations.Features.RecordInventoryMovement;
+using Dialysis.HIS.Operations.Features.SubmitBillingExportJob;
 using Dialysis.HIS.RaCapabilities;
 using Dialysis.HIS.RaCapabilities.Features;
 using Dialysis.HIS.RaCapabilities.Features.ClearPatientAlert;
 using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 using Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 using Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEvaluation;
+using Dialysis.HIS.RaCapabilities.Features.RecordMedicationDispensing;
 using Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment;
 using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
 using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
+using Dialysis.HIS.RaCapabilities.Features.RegisterFinancialErpLink;
 using Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity;
 using Dialysis.HIS.RaCapabilities.Features.RegisterSpecialistEncounter;
 using Dialysis.HIS.RaCapabilities.Features.RequestAnalyticsExportJob;
@@ -47,9 +53,12 @@ public static class HisCqrsServiceCollectionExtensions
 
             cqrs.AddCommandBehavior<AssignStaffPrimaryRoleCommand, Unit, AuthorizationPipelineBehavior<AssignStaffPrimaryRoleCommand, Unit>>();
             cqrs.AddCommandBehavior<RecordInventoryMovementCommand, Unit, AuthorizationPipelineBehavior<RecordInventoryMovementCommand, Unit>>();
+            cqrs.AddCommandBehavior<SubmitBillingExportJobCommand, Guid, AuthorizationPipelineBehavior<SubmitBillingExportJobCommand, Guid>>();
             cqrs.AddCommandBehavior<SubmitDataImportJobCommand, Guid, AuthorizationPipelineBehavior<SubmitDataImportJobCommand, Guid>>();
             cqrs.AddQueryBehavior<GetDataImportJobByIdQuery, DataImportJobStatusDto?, AuthorizationPipelineBehavior<GetDataImportJobByIdQuery, DataImportJobStatusDto?>>();
             cqrs.AddQueryBehavior<ListIntegrationOutboxRecentQuery, IReadOnlyList<IntegrationOutboxMetadataRow>, AuthorizationPipelineBehavior<ListIntegrationOutboxRecentQuery, IReadOnlyList<IntegrationOutboxMetadataRow>>>();
+            cqrs.AddQueryBehavior<SearchPatientsQuery, IReadOnlyList<PatientSearchRow>, AuthorizationPipelineBehavior<SearchPatientsQuery, IReadOnlyList<PatientSearchRow>>>();
+            cqrs.AddQueryBehavior<ManagerDashboardQuery, ManagerDashboardSnapshotDto, AuthorizationPipelineBehavior<ManagerDashboardQuery, ManagerDashboardSnapshotDto>>();
             cqrs.AddCommandBehavior<IngestDeviceReadingCommand, Guid, AuthorizationPipelineBehavior<IngestDeviceReadingCommand, Guid>>();
 
             cqrs.AddQueryBehavior<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>, AuthorizationPipelineBehavior<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>>();
@@ -75,5 +84,7 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<RecordSecurityMechanismAssessmentCommand, Guid, AuthorizationPipelineBehavior<RecordSecurityMechanismAssessmentCommand, Guid>>();
             cqrs.AddCommandBehavior<RegisterSpecialistEncounterCommand, Guid, AuthorizationPipelineBehavior<RegisterSpecialistEncounterCommand, Guid>>();
             cqrs.AddCommandBehavior<RegisterResearchEducationActivityCommand, Guid, AuthorizationPipelineBehavior<RegisterResearchEducationActivityCommand, Guid>>();
+            cqrs.AddCommandBehavior<RegisterFinancialErpLinkCommand, Guid, AuthorizationPipelineBehavior<RegisterFinancialErpLinkCommand, Guid>>();
+            cqrs.AddCommandBehavior<RecordMedicationDispensingCommand, Guid, AuthorizationPipelineBehavior<RecordMedicationDispensingCommand, Guid>>();
         });
 }

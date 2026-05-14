@@ -1,4 +1,3 @@
-using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.Persistence;
 
 namespace Dialysis.SmartConnect.Inbound;

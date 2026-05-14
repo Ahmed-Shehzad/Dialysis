@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using System.Threading.Channels;
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.AspNetCore.Http.Connections.Client;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;

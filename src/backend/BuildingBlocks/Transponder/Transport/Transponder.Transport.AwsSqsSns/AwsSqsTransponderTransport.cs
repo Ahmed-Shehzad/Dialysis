@@ -2,7 +2,6 @@ using System.Text;
 using Amazon;
 using Amazon.SQS;
 using Amazon.SQS.Model;
-using Dialysis.BuildingBlocks.Transponder;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

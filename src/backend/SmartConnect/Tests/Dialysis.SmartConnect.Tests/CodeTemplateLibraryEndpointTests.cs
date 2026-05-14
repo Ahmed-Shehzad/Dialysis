@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
 using Dialysis.SmartConnect.CodeTemplates;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;

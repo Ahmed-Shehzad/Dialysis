@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Dialysis.SmartConnect.Attachments;
 
 /// <summary>

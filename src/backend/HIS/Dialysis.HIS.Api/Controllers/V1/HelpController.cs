@@ -1,5 +1,4 @@
 using Asp.Versioning;
-using Dialysis.HIS.Api.Controllers;
 using Dialysis.HIS.Api.Hateoas;
 using Microsoft.AspNetCore.Mvc;
 

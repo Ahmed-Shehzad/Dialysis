@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

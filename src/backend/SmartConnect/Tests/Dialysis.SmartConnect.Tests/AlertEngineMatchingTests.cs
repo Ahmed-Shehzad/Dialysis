@@ -106,7 +106,7 @@ public sealed class AlertEngineMatchingTests
         Assert.Single(recordedKinds);
     }
 
-    private static async Task<(ServiceProvider sp, List<string> recordedKinds)> BuildAsync()
+    private async static Task<(ServiceProvider sp, List<string> recordedKinds)> BuildAsync()
     {
         var (sp, recorded, _) = await BuildWithTimeAsync();
         return (sp, recorded);

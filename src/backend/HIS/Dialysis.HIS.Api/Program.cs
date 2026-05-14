@@ -9,7 +9,6 @@ using Dialysis.HIS.Persistence;
 using Dialysis.HIS.RaCapabilities;
 using Dialysis.Module.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

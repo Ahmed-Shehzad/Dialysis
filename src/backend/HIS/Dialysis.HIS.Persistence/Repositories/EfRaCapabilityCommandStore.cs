@@ -1,4 +1,3 @@
-using Dialysis.HIS.Persistence;
 using Dialysis.HIS.RaCapabilities.Domain;
 using Dialysis.HIS.RaCapabilities.Ports;
 using Microsoft.EntityFrameworkCore;
@@ -47,4 +46,8 @@ public sealed class EfRaCapabilityCommandStore(HisDbContext db) : IRaCapabilityC
     public void AddSpecialistEncounterRecord(RaSpecialistEncounterRecord record) => db.RaSpecialistEncounterRecords.Add(record);
 
     public void AddResearchEducationActivity(RaResearchEducationActivity activity) => db.RaResearchEducationActivities.Add(activity);
+
+    public void AddFinancialErpLink(RaFinancialErpLink link) => db.RaFinancialErpLinks.Add(link);
+
+    public void AddMedicationDispensingRecord(RaMedicationDispensingRecord record) => db.RaMedicationDispensingRecords.Add(record);
 }

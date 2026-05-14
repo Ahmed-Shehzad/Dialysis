@@ -1,5 +1,3 @@
-using Dialysis.SmartConnect;
-
 namespace Dialysis.SmartConnect.Inbound.AspNetCore;
 
 internal static class InboundPayloadFormatResolver

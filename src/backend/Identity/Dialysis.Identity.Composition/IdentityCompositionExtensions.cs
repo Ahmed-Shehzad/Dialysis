@@ -1,8 +1,6 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
-using Dialysis.CQRS.Commands;
-using Dialysis.CQRS.Queries;
 using Dialysis.Identity.Persistence;
 using Dialysis.Identity.Provisioning;
 using Dialysis.Identity.Provisioning.Features.AssignRoleToUser;
