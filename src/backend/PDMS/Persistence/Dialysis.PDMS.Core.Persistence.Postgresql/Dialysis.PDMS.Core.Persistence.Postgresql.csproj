@@ -1,9 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.PDMS.Core.Persistence.Postgresql</RootNamespace>
+    <AssemblyName>Dialysis.PDMS.Core.Persistence.Postgresql</AssemblyName>
+    <Description>PostgreSQL-backed PDMS repository base implementation.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.PDMS.Core.Persistence.Abstractions/Dialysis.PDMS.Core.Persistence.Abstractions.csproj" />
+    <ProjectReference Include="../../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core/Dialysis.Domain.Driven.Design.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
 
 </Project>

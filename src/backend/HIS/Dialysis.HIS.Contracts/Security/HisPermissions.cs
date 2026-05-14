@@ -25,6 +25,12 @@ public static class HisPermissions
     /// <summary>Write RA-aligned capability rows (waitlists, alerts, CDS, coordination, analytics export requests).</summary>
     public const string RaCommandsWrite = "his.ra.commands.write";
 
+    public const string SecurityManage = "his.security.manage";
+    public const string SchedulingBook = "his.scheduling.book";
+    public const string PatientFlowAdmit = "his.patientflow.admit";
+    public const string PatientPortalRead = "his.patientaccess.portal.read";
+    public const string MedicationOrderPlace = "his.medication.order.place";
+
     public static IReadOnlyList<string> All { get; } =
     [
         StaffAssign,
@@ -36,6 +42,11 @@ public static class HisPermissions
         DeviceIngest,
         RaCapabilitiesRead,
         RaCommandsWrite,
+        SecurityManage,
+        SchedulingBook,
+        PatientFlowAdmit,
+        PatientPortalRead,
+        MedicationOrderPlace,
     ];
 }
 

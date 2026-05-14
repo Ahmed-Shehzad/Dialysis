@@ -1,10 +1,20 @@
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Dialysis.DomainDrivenDesign.CompositionRoot;
+using Dialysis.DomainDrivenDesign.DomainEvents;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.DataServices.Ports;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.Medication.Ports;
+using Dialysis.HIS.Operations.Domain.Events;
+using Dialysis.HIS.Operations.Domain.Events.Handlers;
+using Dialysis.HIS.Operations.Domain.Services;
 using Dialysis.HIS.Operations.Ports;
+using Dialysis.HIS.PatientAccess.Ports;
+using Dialysis.HIS.PatientFlow.Ports;
 using Dialysis.HIS.Persistence.Repositories;
 using Dialysis.HIS.RaCapabilities.Ports;
+using Dialysis.HIS.Scheduling.Ports;
+using Dialysis.HIS.Security.Ports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,13 +35,20 @@ public static class PersistenceServiceCollectionExtensions
         services.AddOptions<TransponderPersistenceOptions>()
             .Configure(o => o.Schema = "transponder");
 
+        services.AddDomainEventDispatch();
+        services.AddScoped<IDomainEventHandler<BillingExportJobQueuedDomainEvent>, BillingExportJobQueuedDomainEventHandler>();
+
         services.AddDbContext<HisDbContext>((sp, options) =>
         {
             configure?.Invoke(options);
 
-            var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
-            if (interceptor is not null)
-                options.AddInterceptors(interceptor);
+            var audit = sp.GetService<AuditSaveChangesInterceptor>();
+            if (audit is not null)
+                options.AddInterceptors(audit);
+
+            var domainEvents = sp.GetService<DomainEventSaveChangesInterceptor>();
+            if (domainEvents is not null)
+                options.AddInterceptors(domainEvents);
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<HisDbContext>());
@@ -40,6 +57,8 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IStaffRepository, EfStaffRepository>();
         services.AddScoped<IInventoryRepository, EfInventoryRepository>();
         services.AddScoped<IBillingExportJobRepository, EfBillingExportJobRepository>();
+        services.AddScoped<IBillingExportJobAuditRepository, EfBillingExportJobAuditRepository>();
+        services.AddScoped<BillingExportEligibilityService>();
         services.AddScoped<IDataImportJobRepository, EfDataImportJobRepository>();
         services.AddScoped<IDeviceReadingRepository, EfDeviceReadingRepository>();
         services.AddScoped<IIntegrationOutboxMetadataReadModel, EfIntegrationOutboxMetadataReadModel>();
@@ -47,6 +66,12 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IManagerDashboardReadModel, EfManagerDashboardReadModel>();
         services.AddScoped<IRaCapabilitiesReadStore, EfRaCapabilitiesReadStore>();
         services.AddScoped<IRaCapabilityCommandStore, EfRaCapabilityCommandStore>();
+
+        services.AddScoped<ILocalUserRepository, EfLocalUserRepository>();
+        services.AddScoped<IAppointmentRepository, EfAppointmentRepository>();
+        services.AddScoped<IAdmissionRepository, EfAdmissionRepository>();
+        services.AddScoped<IMedicationOrderRepository, EfMedicationOrderRepository>();
+        services.AddScoped<IPatientPortalReadModel, EfPatientPortalReadModel>();
         return services;
     }
 }

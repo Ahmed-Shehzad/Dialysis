@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
 using Dialysis.Module.Hosting.Pipeline;
+using Dialysis.PDMS.Core;
 using Dialysis.PDMS.Persistence;
 using Dialysis.PDMS.TreatmentSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
@@ -26,6 +27,7 @@ public static class PdmsCompositionExtensions
         bool enableOutboxRelay = false,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
+        services.AddPdmsCore();
         services.AddPdmsPersistence(configurePersistence);
 
         services.AddTransponder(t =>

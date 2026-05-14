@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/backend/PDMS/Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
+    <ProjectReference Include="../../src/backend/PDMS/Dialysis.PDMS.Core/Dialysis.PDMS.Core.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
   </ItemGroup>
 

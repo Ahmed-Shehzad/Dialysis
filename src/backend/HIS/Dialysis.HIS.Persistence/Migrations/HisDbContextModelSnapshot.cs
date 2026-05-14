@@ -196,6 +196,62 @@ namespace Dialysis.HIS.Persistence.Migrations
                     b.ToTable("DeviceReadings", "his_integration");
                 });
 
+            modelBuilder.Entity("Dialysis.HIS.Medication.Domain.MedicationOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Dosage")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("DrugCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PlacedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StatusCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("IX_MedicationOrders_PatientId");
+
+                    b.ToTable("MedicationOrders", "his_medication");
+                });
+
             modelBuilder.Entity("Dialysis.HIS.Operations.Domain.BillingExportJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -250,6 +306,40 @@ namespace Dialysis.HIS.Persistence.Migrations
                         .HasDatabaseName("IX_BillingExportJobs_StatusCode");
 
                     b.ToTable("BillingExportJobs", "his_operations");
+                });
+
+            modelBuilder.Entity("Dialysis.HIS.Operations.Domain.BillingExportJobAudit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PayerCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("QueuedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RecordedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId")
+                        .HasDatabaseName("IX_BillingExportJobAudits_JobId");
+
+                    b.ToTable("BillingExportJobAudits", "his_operations");
                 });
 
             modelBuilder.Entity("Dialysis.HIS.Operations.Domain.InventoryItem", b =>
@@ -331,6 +421,56 @@ namespace Dialysis.HIS.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("StaffMembers", "his_operations");
+                });
+
+            modelBuilder.Entity("Dialysis.HIS.PatientFlow.Domain.Admission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AdmittedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DischargedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Ward")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("WardCode");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("IX_Admissions_PatientId");
+
+                    b.ToTable("Admissions", "his_patientflow");
                 });
 
             modelBuilder.Entity("Dialysis.HIS.RaCapabilities.Domain.RaAnalyticsExportJob", b =>
@@ -705,6 +845,107 @@ namespace Dialysis.HIS.Persistence.Migrations
                     b.ToTable("RaWaitlistEntries", "his_ra");
                 });
 
+            modelBuilder.Entity("Dialysis.HIS.Scheduling.Domain.Appointment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BookedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProviderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StatusCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("IX_Appointments_PatientId");
+
+                    b.ToTable("Appointments", "his_scheduling");
+                });
+
+            modelBuilder.Entity("Dialysis.HIS.Security.Domain.LocalUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LoginName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("RegisteredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoginName")
+                        .IsUnique()
+                        .HasDatabaseName("IX_LocalUsers_LoginName");
+
+                    b.ToTable("LocalUsers", "his_security");
+                });
+
             modelBuilder.Entity("Dialysis.HIS.Operations.Domain.BillingExportJob", b =>
                 {
                     b.OwnsOne("Dialysis.HIS.Operations.Domain.ValueObjects.BillingPeriod", "Period", b1 =>
@@ -729,6 +970,33 @@ namespace Dialysis.HIS.Persistence.Migrations
                         });
 
                     b.Navigation("Period")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Dialysis.HIS.Scheduling.Domain.Appointment", b =>
+                {
+                    b.OwnsOne("Dialysis.HIS.Scheduling.Domain.ValueObjects.AppointmentSlot", "Slot", b1 =>
+                        {
+                            b1.Property<Guid>("AppointmentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("EndUtc")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("SlotEndUtc");
+
+                            b1.Property<DateTime>("StartUtc")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("SlotStartUtc");
+
+                            b1.HasKey("AppointmentId");
+
+                            b1.ToTable("Appointments", "his_scheduling");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AppointmentId");
+                        });
+
+                    b.Navigation("Slot")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

@@ -9,4 +9,8 @@
     <Description>Domain building blocks: entities, aggregates, value objects, domain and integration events, domain services, specifications, repository ports.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

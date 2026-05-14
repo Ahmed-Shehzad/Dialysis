@@ -8,12 +8,22 @@ using Dialysis.HIS.DataServices.Features.SubmitDataImportJob;
 using Dialysis.HIS.DataServices.Ports;
 using Dialysis.HIS.Integration;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
+using Dialysis.HIS.Medication;
+using Dialysis.HIS.Medication.Features.PlaceMedicationOrder;
 using Dialysis.HIS.Operations;
 using Dialysis.HIS.Operations.Features.AssignStaffRole;
 using Dialysis.HIS.Operations.Features.GetBillingExportJobById;
 using Dialysis.HIS.Operations.Features.RecordInventoryMovement;
 using Dialysis.HIS.Operations.Features.SubmitBillingExportJob;
+using Dialysis.HIS.PatientAccess;
+using Dialysis.HIS.PatientAccess.Features.GetPatientPortalSummary;
+using Dialysis.HIS.PatientFlow;
+using Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 using Dialysis.HIS.RaCapabilities;
+using Dialysis.HIS.Scheduling;
+using Dialysis.HIS.Scheduling.Features.BookAppointment;
+using Dialysis.HIS.Security;
+using Dialysis.HIS.Security.Features.RegisterLocalUser;
 using Dialysis.HIS.RaCapabilities.Features;
 using Dialysis.HIS.RaCapabilities.Features.ClearPatientAlert;
 using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
@@ -49,7 +59,12 @@ public static class HisCqrsServiceCollectionExtensions
                 typeof(HisOperationsMarker),
                 typeof(HisDataServicesMarker),
                 typeof(HisIntegrationMarker),
-                typeof(RaCapabilitiesMarker));
+                typeof(RaCapabilitiesMarker),
+                typeof(HisSecurityMarker),
+                typeof(HisSchedulingMarker),
+                typeof(HisPatientFlowMarker),
+                typeof(HisPatientAccessMarker),
+                typeof(HisMedicationMarker));
 
             cqrs.AddCommandBehavior<AssignStaffPrimaryRoleCommand, Unit, AuthorizationPipelineBehavior<AssignStaffPrimaryRoleCommand, Unit>>();
             cqrs.AddCommandBehavior<RecordInventoryMovementCommand, Unit, AuthorizationPipelineBehavior<RecordInventoryMovementCommand, Unit>>();
@@ -86,5 +101,11 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<RegisterResearchEducationActivityCommand, Guid, AuthorizationPipelineBehavior<RegisterResearchEducationActivityCommand, Guid>>();
             cqrs.AddCommandBehavior<RegisterFinancialErpLinkCommand, Guid, AuthorizationPipelineBehavior<RegisterFinancialErpLinkCommand, Guid>>();
             cqrs.AddCommandBehavior<RecordMedicationDispensingCommand, Guid, AuthorizationPipelineBehavior<RecordMedicationDispensingCommand, Guid>>();
+
+            cqrs.AddCommandBehavior<RegisterLocalUserCommand, Guid, AuthorizationPipelineBehavior<RegisterLocalUserCommand, Guid>>();
+            cqrs.AddCommandBehavior<BookAppointmentCommand, Guid, AuthorizationPipelineBehavior<BookAppointmentCommand, Guid>>();
+            cqrs.AddCommandBehavior<AdmitPatientCommand, Guid, AuthorizationPipelineBehavior<AdmitPatientCommand, Guid>>();
+            cqrs.AddCommandBehavior<PlaceMedicationOrderCommand, Guid, AuthorizationPipelineBehavior<PlaceMedicationOrderCommand, Guid>>();
+            cqrs.AddQueryBehavior<GetPatientPortalSummaryQuery, PatientPortalSummaryDto, AuthorizationPipelineBehavior<GetPatientPortalSummaryQuery, PatientPortalSummaryDto>>();
         });
 }

@@ -25,6 +25,11 @@
     <ProjectReference Include="../Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Persistence/Dialysis.HIS.Persistence.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Integration/Dialysis.HIS.Integration.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Security/Dialysis.HIS.Security.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Scheduling/Dialysis.HIS.Scheduling.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.PatientFlow/Dialysis.HIS.PatientFlow.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
+    <ProjectReference Include="../Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />

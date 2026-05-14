@@ -28,6 +28,7 @@
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Hosting/Dialysis.SmartConnect.Inbound.Hosting.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Mllp/Dialysis.SmartConnect.Inbound.Mllp.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.TcpListener/Dialysis.SmartConnect.Inbound.TcpListener.csproj" />
+    <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Transponder/Dialysis.SmartConnect.Inbound.Transponder.csproj" />
     <ProjectReference Include="../../Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
     <ProjectReference Include="../../Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
     <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />

@@ -2,6 +2,7 @@ using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Primitives;
 using Dialysis.HIS.Contracts.IntegrationEvents.Billing;
 using Dialysis.HIS.Operations.Domain.Enumerations;
+using Dialysis.HIS.Operations.Domain.Events;
 using Dialysis.HIS.Operations.Domain.ValueObjects;
 
 namespace Dialysis.HIS.Operations.Domain;
@@ -53,6 +54,13 @@ public sealed class BillingExportJob : AggregateRoot<Guid>
             PeriodStart: period.Start,
             PeriodEnd: period.End,
             Notes: job.Notes));
+
+        job.RaiseDomainEvent(new BillingExportJobQueuedDomainEvent(
+            JobId: job.Id,
+            PayerCode: payer.Value,
+            PeriodStart: period.Start,
+            PeriodEnd: period.End,
+            QueuedAtUtc: nowUtc));
 
         return job;
     }

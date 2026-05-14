@@ -1,3 +1,5 @@
+using Dialysis.BuildingBlocks.Transponder;
+
 namespace Dialysis.DomainDrivenDesign.IntegrationEvents;
 
 /// <summary>
@@ -5,12 +7,12 @@ namespace Dialysis.DomainDrivenDesign.IntegrationEvents;
 /// after the local domain transaction commits. Distinct from in-bounded-context <see cref="Dialysis.DomainDrivenDesign.DomainEvents.IDomainEvent"/>.
 /// </summary>
 /// <remarks>
-/// Per Evans pp. 263–264 (Open Host Service / Published Language) each integration event is a versioned,
-/// stable contract for cross-context consumers. Breaking changes increment <see cref="SchemaVersion"/> and
-/// rename the type with a <c>V&lt;n&gt;</c> suffix; consumers re-subscribe to the new type. See each module's
-/// <c>Contracts/Integration*/Versioning.md</c> for the policy.
+/// Extends Transponder's <see cref="IEvent"/> so the messaging fabric can route integration events through
+/// the bus without each module redeclaring the marker. Per Evans pp. 263–264 (Open Host Service /
+/// Published Language) each integration event is a versioned, stable contract; breaking changes increment
+/// <see cref="SchemaVersion"/> and rename the type with a <c>V&lt;n&gt;</c> suffix.
 /// </remarks>
-public interface IIntegrationEvent
+public interface IIntegrationEvent : IEvent
 {
     /// <summary>Stable id for deduplication and tracing.</summary>
     Guid EventId { get; }

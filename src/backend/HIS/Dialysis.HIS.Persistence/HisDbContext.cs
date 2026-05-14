@@ -2,10 +2,17 @@ using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.DataServices.Domain;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.Medication.Domain;
+using Dialysis.HIS.Medication.Domain.ValueObjects;
 using Dialysis.HIS.Operations.Domain;
 using Dialysis.HIS.Operations.Domain.Enumerations;
 using Dialysis.HIS.Operations.Domain.ValueObjects;
+using Dialysis.HIS.PatientFlow.Domain;
+using Dialysis.HIS.PatientFlow.Domain.ValueObjects;
 using Dialysis.HIS.RaCapabilities.Domain;
+using Dialysis.HIS.Scheduling.Domain;
+using Dialysis.HIS.Security.Domain;
+using Dialysis.HIS.Security.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -31,6 +38,12 @@ public sealed class HisDbContext(
     public DbSet<BillingExportJob> BillingExportJobs => Set<BillingExportJob>();
     public DbSet<DataImportJob> DataImportJobs => Set<DataImportJob>();
     public DbSet<DeviceReadingRecord> DeviceReadings => Set<DeviceReadingRecord>();
+
+    public DbSet<LocalUser> LocalUsers => Set<LocalUser>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<Admission> Admissions => Set<Admission>();
+    public DbSet<MedicationOrder> MedicationOrders => Set<MedicationOrder>();
+    public DbSet<BillingExportJobAudit> BillingExportJobAudits => Set<BillingExportJobAudit>();
 
     public DbSet<RaOrgCommunication> RaOrgCommunications => Set<RaOrgCommunication>();
     public DbSet<RaQualityWorkflowTask> RaQualityWorkflowTasks => Set<RaQualityWorkflowTask>();
@@ -234,6 +247,82 @@ public sealed class HisDbContext(
             e.Property(x => x.Title).HasMaxLength(256).IsRequired();
             e.Property(x => x.ExternalReference).HasMaxLength(512).IsRequired();
             e.Property(x => x.RecordedAtUtc).IsRequired();
+        });
+
+        modelBuilder.Entity<LocalUser>(e =>
+        {
+            e.ToTable("LocalUsers", "his_security");
+            e.HasKey(u => u.Id);
+            e.Property(u => u.LoginName)
+                .HasConversion(l => l.Value, s => new LoginName(s))
+                .HasMaxLength(64)
+                .IsRequired();
+            e.Property(u => u.DisplayName).HasMaxLength(256).IsRequired();
+            e.Property(u => u.RegisteredAtUtc).IsRequired();
+            e.Property(u => u.IsActive).IsRequired();
+            e.HasIndex(u => u.LoginName).IsUnique().HasDatabaseName("IX_LocalUsers_LoginName");
+        });
+
+        modelBuilder.Entity<Appointment>(e =>
+        {
+            e.ToTable("Appointments", "his_scheduling");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.PatientId).IsRequired();
+            e.Property(a => a.ProviderId).IsRequired();
+            e.OwnsOne(a => a.Slot, s =>
+            {
+                s.Property(x => x.StartUtc).HasColumnName("SlotStartUtc").IsRequired();
+                s.Property(x => x.EndUtc).HasColumnName("SlotEndUtc").IsRequired();
+            });
+            e.Property(a => a.StatusCode).HasMaxLength(32).IsRequired();
+            e.Property(a => a.BookedAtUtc).IsRequired();
+            e.HasIndex(a => a.PatientId).HasDatabaseName("IX_Appointments_PatientId");
+        });
+
+        modelBuilder.Entity<Admission>(e =>
+        {
+            e.ToTable("Admissions", "his_patientflow");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.PatientId).IsRequired();
+            e.Property(a => a.Ward)
+                .HasConversion(w => w.Value, s => new WardCode(s))
+                .HasColumnName("WardCode")
+                .HasMaxLength(16)
+                .IsRequired();
+            e.Property(a => a.AdmittedAtUtc).IsRequired();
+            e.Property(a => a.DischargedAtUtc);
+            e.HasIndex(a => a.PatientId).HasDatabaseName("IX_Admissions_PatientId");
+        });
+
+        modelBuilder.Entity<MedicationOrder>(e =>
+        {
+            e.ToTable("MedicationOrders", "his_medication");
+            e.HasKey(o => o.Id);
+            e.Property(o => o.PatientId).IsRequired();
+            e.Property(o => o.DrugCode)
+                .HasConversion(d => d.Value, s => new DrugCode(s))
+                .HasMaxLength(32)
+                .IsRequired();
+            e.Property(o => o.Dosage)
+                .HasConversion(d => d.Value, s => new Dosage(s))
+                .HasMaxLength(64)
+                .IsRequired();
+            e.Property(o => o.PlacedAtUtc).IsRequired();
+            e.Property(o => o.StatusCode).HasMaxLength(32).IsRequired();
+            e.HasIndex(o => o.PatientId).HasDatabaseName("IX_MedicationOrders_PatientId");
+        });
+
+        modelBuilder.Entity<BillingExportJobAudit>(e =>
+        {
+            e.ToTable("BillingExportJobAudits", "his_operations");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.JobId).IsRequired();
+            e.Property(a => a.PayerCode).HasMaxLength(16).IsRequired();
+            e.Property(a => a.PeriodStart).HasColumnType("date").IsRequired();
+            e.Property(a => a.PeriodEnd).HasColumnType("date").IsRequired();
+            e.Property(a => a.QueuedAtUtc).IsRequired();
+            e.Property(a => a.RecordedAtUtc).IsRequired();
+            e.HasIndex(a => a.JobId).HasDatabaseName("IX_BillingExportJobAudits_JobId");
         });
     }
 }

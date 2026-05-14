@@ -4,6 +4,7 @@ using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.EHR.Billing;
+using Dialysis.EHR.Core;
 using Dialysis.EHR.Integration;
 using Dialysis.EHR.Integration.Adapters;
 using Dialysis.EHR.Integration.Consumers;
@@ -33,6 +34,7 @@ public static class EhrCompositionExtensions
         bool enableOutboxRelay = false,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
+        services.AddEhrCore();
         services.AddEhrPersistence(configurePersistence);
 
         services.TryAddScoped<IPharmacyGateway, NoopPharmacyGateway>();

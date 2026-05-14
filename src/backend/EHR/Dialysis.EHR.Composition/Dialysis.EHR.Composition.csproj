@@ -17,6 +17,7 @@
     <ProjectReference Include="../Dialysis.EHR.ClinicalNotes/Dialysis.EHR.ClinicalNotes.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Billing/Dialysis.EHR.Billing.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Integration/Dialysis.EHR.Integration.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.Core/Dialysis.EHR.Core.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Persistence/Dialysis.EHR.Persistence.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
