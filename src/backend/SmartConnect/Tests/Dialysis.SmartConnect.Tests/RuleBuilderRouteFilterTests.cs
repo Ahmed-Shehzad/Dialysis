@@ -5,7 +5,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class RuleBuilderRouteFilterTests
 {
-    private readonly RuleBuilderRouteFilter _Filter = new();
+    private readonly RuleBuilderRouteFilter _filter = new();
 
     [Fact]
     public async Task Payloadcontains_All_Match_Allows_Async()
@@ -22,7 +22,7 @@ public sealed class RuleBuilderRouteFilterTests
             "smartconnect.filter.parameters",
             """{"match":"all","rules":[{"type":"payloadContains","value":"HL7"}]}""");
 
-        var r = await _Filter.EvaluateAsync(msg, CancellationToken.None);
+        var r = await _filter.EvaluateAsync(msg, CancellationToken.None);
         Assert.Equal(RouteFilterDisposition.Allow, r.Disposition);
     }
 
@@ -41,7 +41,7 @@ public sealed class RuleBuilderRouteFilterTests
             "smartconnect.filter.parameters",
             """{"match":"all","rules":[{"type":"payloadContains","value":"HL7"}]}""");
 
-        var r = await _Filter.EvaluateAsync(msg, CancellationToken.None);
+        var r = await _filter.EvaluateAsync(msg, CancellationToken.None);
         Assert.Equal(RouteFilterDisposition.Drop, r.Disposition);
     }
 }

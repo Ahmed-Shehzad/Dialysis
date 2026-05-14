@@ -6,14 +6,14 @@ namespace Dialysis.HIS.Tests;
 
 public sealed class SubmitBillingExportJobValidatorTests
 {
-    private readonly SubmitBillingExportJobCommandValidator _Sut = new();
+    private readonly SubmitBillingExportJobCommandValidator _sut = new();
 
     [Fact]
     public async Task Accepts_Valid_Command_Async()
     {
         var cmd = new SubmitBillingExportJobCommand("AETNA-01", new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Notes: null);
 
-        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
     }
@@ -27,7 +27,7 @@ public sealed class SubmitBillingExportJobValidatorTests
     {
         var cmd = new SubmitBillingExportJobCommand(payerCode, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31));
 
-        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }
@@ -37,7 +37,7 @@ public sealed class SubmitBillingExportJobValidatorTests
     {
         var cmd = new SubmitBillingExportJobCommand("AETNA", new DateOnly(2026, 5, 31), new DateOnly(2026, 5, 1));
 
-        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }
@@ -51,7 +51,7 @@ public sealed class SubmitBillingExportJobValidatorTests
             new DateOnly(2026, 5, 31),
             Notes: new string('x', 501));
 
-        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }

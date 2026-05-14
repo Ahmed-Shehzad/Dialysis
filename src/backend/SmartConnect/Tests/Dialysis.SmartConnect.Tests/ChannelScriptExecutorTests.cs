@@ -7,12 +7,12 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class ChannelScriptExecutorTests
 {
-    private readonly InMemoryVariableMapStore _Maps = new();
-    private readonly ChannelScriptExecutor _Executor ;
+    private readonly InMemoryVariableMapStore _maps = new();
+    private readonly ChannelScriptExecutor _executor ;
 
     public ChannelScriptExecutorTests()
     {
-        _Executor = new ChannelScriptExecutor(_Maps, NullLogger<ChannelScriptExecutor>.Instance);
+        _executor = new ChannelScriptExecutor(_maps, NullLogger<ChannelScriptExecutor>.Instance);
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        var r = await _Executor.RunPreProcessorAsync("false;", msg, CancellationToken.None);
+        var r = await _executor.RunPreProcessorAsync("false;", msg, CancellationToken.None);
         Assert.True(r.Dropped);
     }
 
@@ -45,7 +45,7 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        var r = await _Executor.RunPreProcessorAsync("'next';", msg, CancellationToken.None);
+        var r = await _executor.RunPreProcessorAsync("'next';", msg, CancellationToken.None);
         Assert.False(r.Dropped);
         Assert.Equal("next", Encoding.UTF8.GetString(r.NewPayload!));
     }
@@ -66,8 +66,8 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        await _Executor.RunPreProcessorAsync("globalChannelMap.put('k','v'); true;", msg, CancellationToken.None);
-        var v = await _Maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
+        await _executor.RunPreProcessorAsync("globalChannelMap.put('k','v'); true;", msg, CancellationToken.None);
+        var v = await _maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
         Assert.Equal("v", v);
     }
 
@@ -85,8 +85,8 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        await _Executor.RunPreProcessorAsync("channelMap.put('k','v'); true;", msg, CancellationToken.None);
-        var v = await _Maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
+        await _executor.RunPreProcessorAsync("channelMap.put('k','v'); true;", msg, CancellationToken.None);
+        var v = await _maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
         Assert.Null(v);
     }
 }

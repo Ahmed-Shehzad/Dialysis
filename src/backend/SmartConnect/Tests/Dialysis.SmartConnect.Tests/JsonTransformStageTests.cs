@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class JsonTransformStageTests
 {
-    private readonly JsonTransformStage _Stage = new();
+    private readonly JsonTransformStage _stage = new();
 
     [Fact]
     public async Task Expression_Mode_Extracts_Nested_Value_Async()
@@ -21,7 +21,7 @@ public sealed class JsonTransformStageTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         }.WithMetadata("smartconnect.transform.parameters", """{"expression":"$.a.b"}""");
 
-        var result = await _Stage.TransformAsync(msg, CancellationToken.None);
+        var result = await _stage.TransformAsync(msg, CancellationToken.None);
         Assert.Equal("42", Encoding.UTF8.GetString(result.Payload.Span).Trim('"'));
     }
 
@@ -40,7 +40,7 @@ public sealed class JsonTransformStageTests
             "smartconnect.transform.parameters",
             """{"mappings":{"out":"$.x.y"}}""");
 
-        var result = await _Stage.TransformAsync(msg, CancellationToken.None);
+        var result = await _stage.TransformAsync(msg, CancellationToken.None);
         Assert.Contains("\"out\":\"hello\"", Encoding.UTF8.GetString(result.Payload.Span));
     }
 }
