@@ -11,7 +11,7 @@ namespace Dialysis.SmartConnect.Management.AspNetCore;
 /// <summary>Maps <c>/smartconnect/v1/admin/groups/*</c> CRUD routes.</summary>
 public static class GroupEndpointExtensions
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
     public static IEndpointRouteBuilder MapSmartConnectGroupRoutes(this IEndpointRouteBuilder endpoints)
     {
@@ -46,7 +46,7 @@ public static class GroupEndpointExtensions
                         Name = entity.Name,
                         Description = entity.Description,
                     };
-                    var json = JsonSerializer.Serialize(dto, JsonOptions);
+                    var json = JsonSerializer.Serialize(dto, _jsonOptions);
                     return Results.Text(json, "application/json");
                 })
             .WithName("SmartConnect_ExportGroup");

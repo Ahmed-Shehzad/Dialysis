@@ -10,7 +10,7 @@ public sealed class CaptureChargeCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<CaptureChargeCommand, Guid>
 {
-    public async Task<Guid> Handle(CaptureChargeCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(CaptureChargeCommand request, CancellationToken cancellationToken)
     {
         var amount = new Money(request.BilledAmount, request.CurrencyCode);
         var id = Guid.CreateVersion7();

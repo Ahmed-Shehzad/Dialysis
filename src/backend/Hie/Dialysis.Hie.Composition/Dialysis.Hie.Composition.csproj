@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Hie.Composition</RootNamespace>
+    <Description>HIE modular monolith composition root: persistence, Transponder, consumers, outbound dispatcher.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Core.Abstraction/Dialysis.Hie.Core.Abstraction.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Core/Dialysis.Hie.Core.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Consent/Dialysis.Hie.Consent.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.OpenEhr/Dialysis.Hie.OpenEhr.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Outbound/Dialysis.Hie.Outbound.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Inbound/Dialysis.Hie.Inbound.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Persistence/Dialysis.Hie.Persistence.csproj" />
+    <ProjectReference Include="../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <ProjectReference Include="../../PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+  </ItemGroup>
+
+</Project>

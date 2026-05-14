@@ -13,7 +13,7 @@ public sealed class LabOrderPlacedConsumer(
     TimeProvider timeProvider)
     : IConsumer<LabOrderPlacedIntegrationEvent>
 {
-    public async Task Handle(ConsumeContext<LabOrderPlacedIntegrationEvent> context)
+    public async Task HandleAsync(ConsumeContext<LabOrderPlacedIntegrationEvent> context)
     {
         var message = context.Message;
         var id = Guid.CreateVersion7();

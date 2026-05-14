@@ -49,13 +49,13 @@ internal static class VariableMapsJsBinder
 
         engine.SetValue("$", new Func<string, JsValue>(key =>
         {
-            var found = responseMap.get(key)
-                ?? connectorMap.get(key)
-                ?? channelMap.get(key)
-                ?? sourceMap.get(key)
-                ?? globalChannelMap.get(key)
-                ?? globalMap.get(key)
-                ?? configurationMap.get(key);
+            var found = responseMap.Get(key)
+                ?? connectorMap.Get(key)
+                ?? channelMap.Get(key)
+                ?? sourceMap.Get(key)
+                ?? globalChannelMap.Get(key)
+                ?? globalMap.Get(key)
+                ?? configurationMap.Get(key);
             return found is null
                 ? JsValue.Undefined
                 : JsValue.FromObject(engine, found);
@@ -70,15 +70,15 @@ internal static class VariableMapsJsBinder
 
     public sealed class ReadOnlyMap(IReadOnlyDictionary<string, object?> store)
     {
-        public object? get(string key) => store.TryGetValue(key, out var v) ? v : null;
-        public bool containsKey(string key) => store.ContainsKey(key);
+        public object? Get(string key) => store.TryGetValue(key, out var v) ? v : null;
+        public bool ContainsKey(string key) => store.ContainsKey(key);
     }
 
     public sealed class MutableMap(IDictionary<string, object?> store)
     {
-        public object? get(string key) => store.TryGetValue(key, out var v) ? v : null;
-        public void put(string key, object? value) => store[key] = value;
-        public bool containsKey(string key) => store.ContainsKey(key);
-        public void remove(string key) => store.Remove(key);
+        public object? Get(string key) => store.TryGetValue(key, out var v) ? v : null;
+        public void Put(string key, object? value) => store[key] = value;
+        public bool ContainsKey(string key) => store.ContainsKey(key);
+        public void Remove(string key) => store.Remove(key);
     }
 }

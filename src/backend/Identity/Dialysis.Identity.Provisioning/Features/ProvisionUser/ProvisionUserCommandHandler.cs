@@ -15,7 +15,7 @@ public sealed class ProvisionUserCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<ProvisionUserCommand, Guid>
 {
-    public async Task<Guid> Handle(ProvisionUserCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(ProvisionUserCommand request, CancellationToken cancellationToken)
     {
         if (await users.FindBySubjectAsync(request.Subject, cancellationToken).ConfigureAwait(false) is { } existing)
             return existing.Id;

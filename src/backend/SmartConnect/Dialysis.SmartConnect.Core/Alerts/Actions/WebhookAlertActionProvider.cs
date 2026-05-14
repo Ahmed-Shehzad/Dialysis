@@ -13,7 +13,7 @@ public sealed class WebhookAlertActionProvider(IHttpClientFactory httpClientFact
     public const string KindValue = "webhook";
     public const string HttpClientName = "smartconnect-outbound";
 
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
 
     public string Kind => KindValue;
 
@@ -28,7 +28,7 @@ public sealed class WebhookAlertActionProvider(IHttpClientFactory httpClientFact
         {
             props = string.IsNullOrWhiteSpace(slot.PropertiesJson)
                 ? null
-                : JsonSerializer.Deserialize<WebhookProperties>(slot.PropertiesJson, JsonOpts);
+                : JsonSerializer.Deserialize<WebhookProperties>(slot.PropertiesJson, _jsonOpts);
         }
         catch (JsonException ex)
         {

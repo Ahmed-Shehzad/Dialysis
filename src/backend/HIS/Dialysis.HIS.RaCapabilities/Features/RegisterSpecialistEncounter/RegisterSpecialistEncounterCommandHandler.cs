@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RegisterSpecialistEncounter;
 public sealed class RegisterSpecialistEncounterCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterSpecialistEncounterCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterSpecialistEncounterCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterSpecialistEncounterCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var at = request.RecordedAtUtc ?? DateTime.UtcNow;

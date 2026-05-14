@@ -10,13 +10,13 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class JavascriptRouteFilterMapsTests
 {
     [Fact]
-    public async Task Allows_when_dollar_walker_finds_key_in_source_map()
+    public async Task Allows_When_Dollar_Walker_Finds_Key_In_Source_Map_Async()
     {
         var (sp, ctx) = Build(sourceMap: new Dictionary<string, object?> { ["originalFilename"] = "ok.txt" });
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
         var paramsJson = Params("$('originalFilename') === 'ok.txt'");
-        var msg = WrapMessage().WithMetadata(JavascriptRouteFilter.ParametersMetadataKey, paramsJson);
+        var msg = Wrap_Message().WithMetadata(JavascriptRouteFilter.ParametersMetadataKey, paramsJson);
 
         var result = await new JavascriptRouteFilter(sp).EvaluateAsync(msg, CancellationToken.None);
 
@@ -24,12 +24,12 @@ public sealed class JavascriptRouteFilterMapsTests
     }
 
     [Fact]
-    public async Task Drops_when_dollar_walker_key_missing()
+    public async Task Drops_When_Dollar_Walker_Key_Missing_Async()
     {
         var (sp, ctx) = Build();
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
-        var msg = WrapMessage().WithMetadata(
+        var msg = Wrap_Message().WithMetadata(
             JavascriptRouteFilter.ParametersMetadataKey,
             Params("typeof $('not-set') !== 'undefined'"));
 
@@ -39,13 +39,13 @@ public sealed class JavascriptRouteFilterMapsTests
     }
 
     [Fact]
-    public async Task Channel_overrides_source_when_walker_runs()
+    public async Task Channel_Overrides_Source_When_Walker_Runs_Async()
     {
         var (sp, ctx) = Build(sourceMap: new Dictionary<string, object?> { ["k"] = "lose" });
         ctx.ChannelMap["k"] = "win";
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
-        var msg = WrapMessage().WithMetadata(
+        var msg = Wrap_Message().WithMetadata(
             JavascriptRouteFilter.ParametersMetadataKey,
             Params("$('k') === 'win'"));
 
@@ -73,7 +73,7 @@ public sealed class JavascriptRouteFilterMapsTests
     private static string Params(string script) =>
         $$$"""{"script": {{{System.Text.Json.JsonSerializer.Serialize(script)}}} }""";
 
-    private static IntegrationMessage WrapMessage() =>
+    private static IntegrationMessage Wrap_Message() =>
         new()
         {
             Id = Guid.NewGuid(),

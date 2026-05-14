@@ -16,7 +16,7 @@ public sealed class RevokeRoleFromUserCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<RevokeRoleFromUserCommand>
 {
-    public async Task<Unit> Handle(RevokeRoleFromUserCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(RevokeRoleFromUserCommand request, CancellationToken cancellationToken)
     {
         var user = await users.GetAsync(request.UserId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"User '{request.UserId}' not found.");

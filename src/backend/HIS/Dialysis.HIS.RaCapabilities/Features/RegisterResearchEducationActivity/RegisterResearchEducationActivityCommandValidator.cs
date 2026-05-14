@@ -4,12 +4,12 @@ namespace Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity
 
 public sealed class RegisterResearchEducationActivityCommandValidator : AbstractValidator<RegisterResearchEducationActivityCommand>
 {
-    private static readonly string[] AllowedKinds = ["education", "research"];
+    private static readonly string[] _allowedKinds = ["education", "research"];
 
     public RegisterResearchEducationActivityCommandValidator()
     {
         RuleFor(static c => c.ActivityKindCode, nameof(RegisterResearchEducationActivityCommand.ActivityKindCode))
-            .Must(static (_, k) => !string.IsNullOrWhiteSpace(k) && AllowedKinds.Any(a => string.Equals(a, k.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .Must(static (_, k) => !string.IsNullOrWhiteSpace(k) && _allowedKinds.Any(a => string.Equals(a, k.Trim(), StringComparison.OrdinalIgnoreCase)))
             .WithMessage("ActivityKindCode must be education or research.");
 
         RuleFor(static c => c.Title, nameof(RegisterResearchEducationActivityCommand.Title))

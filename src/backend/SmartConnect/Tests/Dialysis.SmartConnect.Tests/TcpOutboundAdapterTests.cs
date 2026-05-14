@@ -21,14 +21,14 @@ public sealed class TcpOutboundAdapterTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-    private static (TcpListener listener, int port) StartListener()
+    private static (TcpListener listener, int port) Start_Listener()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         return (listener, ((IPEndPoint)listener.LocalEndpoint).Port);
     }
 
-    private async static Task<byte[]> AcceptOneAsync(TcpListener listener, int expectedBytes, CancellationToken ct)
+    private static async Task<byte[]> Acceptone_Async(TcpListener listener, int expectedBytes, CancellationToken ct)
     {
         using var client = await listener.AcceptTcpClientAsync(ct);
         await using var stream = client.GetStream();
@@ -46,12 +46,12 @@ public sealed class TcpOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Sends_raw_bytes_when_framing_none()
+    public async Task Sends_Raw_Bytes_When_Framing_None_Async()
     {
-        var (listener, port) = StartListener();
+        var (listener, port) = Start_Listener();
         try
         {
-            var receivedTask = AcceptOneAsync(listener, 5, CancellationToken.None);
+            var receivedTask = Acceptone_Async(listener, 5, CancellationToken.None);
             using var adapter = new TcpOutboundAdapter();
             var msg = Build($$"""{"Host":"127.0.0.1","Port":{{port}},"Framing":0}""", "hello"u8.ToArray());
             var result = await adapter.SendAsync(msg, 0, CancellationToken.None);
@@ -66,12 +66,12 @@ public sealed class TcpOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Sends_mllp_framed_payload_by_default()
+    public async Task Sends_Mllp_Framed_Payload_By_Default_Async()
     {
-        var (listener, port) = StartListener();
+        var (listener, port) = Start_Listener();
         try
         {
-            var receivedTask = AcceptOneAsync(listener, 5, CancellationToken.None);
+            var receivedTask = Acceptone_Async(listener, 5, CancellationToken.None);
             using var adapter = new TcpOutboundAdapter();
             var msg = Build($$"""{"Host":"127.0.0.1","Port":{{port}}}""", "AB"u8.ToArray());
             var result = await adapter.SendAsync(msg, 0, CancellationToken.None);
@@ -86,12 +86,12 @@ public sealed class TcpOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Length_prefix_uses_big_endian_int32()
+    public async Task Length_Prefix_Uses_Big_Endian_Int32_Async()
     {
-        var (listener, port) = StartListener();
+        var (listener, port) = Start_Listener();
         try
         {
-            var receivedTask = AcceptOneAsync(listener, 7, CancellationToken.None);
+            var receivedTask = Acceptone_Async(listener, 7, CancellationToken.None);
             using var adapter = new TcpOutboundAdapter();
             var msg = Build($$"""{"Host":"127.0.0.1","Port":{{port}},"Framing":1}""", "abc"u8.ToArray());
             var result = await adapter.SendAsync(msg, 0, CancellationToken.None);
@@ -106,7 +106,7 @@ public sealed class TcpOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Missing_parameters_returns_error()
+    public async Task Missing_Parameters_Returns_Error_Async()
     {
         using var adapter = new TcpOutboundAdapter();
         var msg = new IntegrationMessage

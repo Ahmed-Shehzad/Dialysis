@@ -10,7 +10,7 @@ public sealed class CancelAppointmentCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<CancelAppointmentCommand, Unit>
 {
-    public async Task<Unit> Handle(CancelAppointmentCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(CancelAppointmentCommand request, CancellationToken cancellationToken)
     {
         var appointment = await appointments.GetAsync(request.AppointmentId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Appointment '{request.AppointmentId}' not found.");

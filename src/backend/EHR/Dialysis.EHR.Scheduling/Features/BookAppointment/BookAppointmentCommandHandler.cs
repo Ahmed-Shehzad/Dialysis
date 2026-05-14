@@ -10,7 +10,7 @@ public sealed class BookAppointmentCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<BookAppointmentCommand, Guid>
 {
-    public async Task<Guid> Handle(BookAppointmentCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(BookAppointmentCommand request, CancellationToken cancellationToken)
     {
         if (await appointments.HasOverlapAsync(request.ProviderId, request.StartUtc, request.EndUtc, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Provider has an overlapping appointment in this window.");

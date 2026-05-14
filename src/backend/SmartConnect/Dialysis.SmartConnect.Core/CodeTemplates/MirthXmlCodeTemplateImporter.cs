@@ -10,7 +10,7 @@ namespace Dialysis.SmartConnect.CodeTemplates;
 public sealed class MirthXmlCodeTemplateImporter
 {
     /// <summary>Maps Mirth's ContextType enum ordinal (UG p307 order) to SmartConnect contexts.</summary>
-    private static readonly Dictionary<int, CodeTemplateContext> MirthContextMap = new()
+    private static readonly Dictionary<int, CodeTemplateContext> _mirthContextMap = new()
     {
         // The Mirth enum ordinals roughly correspond to our enum but in a different order.
         // We accept both Mirth integers and our integers (importer is permissive).
@@ -34,7 +34,7 @@ public sealed class MirthXmlCodeTemplateImporter
     };
 
     /// <summary>Maps Mirth's named ContextType values (UG p307) to SmartConnect contexts.</summary>
-    private static readonly Dictionary<string, CodeTemplateContext> MirthContextNameMap = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, CodeTemplateContext> _mirthContextNameMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["GLOBAL_DEPLOY"] = CodeTemplateContext.GlobalDeploy,
         ["GLOBAL_UNDEPLOY"] = CodeTemplateContext.GlobalUndeploy,
@@ -157,11 +157,11 @@ public sealed class MirthXmlCodeTemplateImporter
             {
                 var value = child.Value?.Trim();
                 if (string.IsNullOrWhiteSpace(value)) continue;
-                if (MirthContextNameMap.TryGetValue(value, out var mappedByName))
+                if (_mirthContextNameMap.TryGetValue(value, out var mappedByName))
                 {
                     contexts.Add(mappedByName);
                 }
-                else if (int.TryParse(value, out var ordinal) && MirthContextMap.TryGetValue(ordinal, out var mappedByOrdinal))
+                else if (int.TryParse(value, out var ordinal) && _mirthContextMap.TryGetValue(ordinal, out var mappedByOrdinal))
                 {
                     contexts.Add(mappedByOrdinal);
                 }

@@ -10,28 +10,28 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class JavascriptTransformStageMapsTests
 {
     [Fact]
-    public async Task Reads_sourceMap_via_script()
+    public async Task Reads_Sourcemap_Via_Script_Async()
     {
         var (sp, ctx) = Build(sourceMap: new Dictionary<string, object?> { ["originalFilename"] = "patient-42.txt" });
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
         var paramsJson = Params("sourceMap.get('originalFilename')");
         var result = await new JavascriptTransformStage(sp).TransformAsync(
-            WrapMessage().WithMetadata(JavascriptTransformStage.ParametersMetadataKey, paramsJson),
+            Wrap_Message().WithMetadata(JavascriptTransformStage.ParametersMetadataKey, paramsJson),
             CancellationToken.None);
 
         Assert.Equal("patient-42.txt", Encoding.UTF8.GetString(result.Payload.Span));
     }
 
     [Fact]
-    public async Task ChannelMap_put_then_get_in_same_dispatch()
+    public async Task Channelmap_Put_Then_Get_In_Same_Dispatch_Async()
     {
         var (sp, ctx) = Build();
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
         var paramsJson = Params("channelMap.put('mrn', 'M-001'); channelMap.get('mrn')");
         var result = await new JavascriptTransformStage(sp).TransformAsync(
-            WrapMessage().WithMetadata(JavascriptTransformStage.ParametersMetadataKey, paramsJson),
+            Wrap_Message().WithMetadata(JavascriptTransformStage.ParametersMetadataKey, paramsJson),
             CancellationToken.None);
 
         Assert.Equal("M-001", Encoding.UTF8.GetString(result.Payload.Span));
@@ -39,7 +39,7 @@ public sealed class JavascriptTransformStageMapsTests
     }
 
     [Fact]
-    public async Task ConnectorMap_is_isolated_per_route_ordinal()
+    public async Task Connectormap_Is_Isolated_Per_Route_Ordinal_Async()
     {
         var (sp, ctx) = Build(routeCount: 2);
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
@@ -47,7 +47,7 @@ public sealed class JavascriptTransformStageMapsTests
         // Route 0 writes to its own connector map.
         ctx.SetCurrentRouteOrdinal(0);
         await new JavascriptTransformStage(sp).TransformAsync(
-            WrapMessage().WithMetadata(
+            Wrap_Message().WithMetadata(
                 JavascriptTransformStage.ParametersMetadataKey,
                 Params("connectorMap.put('shared-key', 'route0-value'); 'ok'")),
             CancellationToken.None);
@@ -55,7 +55,7 @@ public sealed class JavascriptTransformStageMapsTests
         // Route 1 reads its own connector map (which is empty).
         ctx.SetCurrentRouteOrdinal(1);
         var r1 = await new JavascriptTransformStage(sp).TransformAsync(
-            WrapMessage().WithMetadata(
+            Wrap_Message().WithMetadata(
                 JavascriptTransformStage.ParametersMetadataKey,
                 Params("var v = connectorMap.get('shared-key'); (v === null || typeof v === 'undefined') ? 'NIL' : String(v)")),
             CancellationToken.None);
@@ -66,7 +66,7 @@ public sealed class JavascriptTransformStageMapsTests
     }
 
     [Fact]
-    public async Task ResponseMap_read_after_engine_populates_it()
+    public async Task Responsemap_Read_After_Engine_Populates_It_Async()
     {
         var (sp, ctx) = Build();
         ctx.ResponseMap["route-0"] = new Dictionary<string, object?>
@@ -77,7 +77,7 @@ public sealed class JavascriptTransformStageMapsTests
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
         var result = await new JavascriptTransformStage(sp).TransformAsync(
-            WrapMessage().WithMetadata(
+            Wrap_Message().WithMetadata(
                 JavascriptTransformStage.ParametersMetadataKey,
                 Params("responseMap.get('route-0').status")),
             CancellationToken.None);
@@ -107,7 +107,7 @@ public sealed class JavascriptTransformStageMapsTests
     private static string Params(string script) =>
         $$$"""{"script": {{{System.Text.Json.JsonSerializer.Serialize(script)}}} }""";
 
-    private static IntegrationMessage WrapMessage() =>
+    private static IntegrationMessage Wrap_Message() =>
         new()
         {
             Id = Guid.NewGuid(),

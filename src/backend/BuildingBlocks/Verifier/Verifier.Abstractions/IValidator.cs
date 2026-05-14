@@ -10,6 +10,5 @@ public interface IValidator<T>
     /// <summary>
     /// Runs validation including async rules (for example remote checks). The default implementation delegates to <see cref="Validate"/>.
     /// </summary>
-    Task<ValidationResult<T>> ValidateAsync(T instance, CancellationToken cancellationToken = default) =>
-        Task.FromResult(Validate(instance));
+    Task<ValidationResult<T>> ValidateAsync(T instance, CancellationToken cancellationToken = default);
 }

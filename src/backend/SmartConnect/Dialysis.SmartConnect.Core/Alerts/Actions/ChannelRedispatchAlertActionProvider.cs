@@ -15,7 +15,7 @@ public sealed class ChannelRedispatchAlertActionProvider(Func<IFlowRuntime> runt
 {
     public const string KindValue = "channel-redispatch";
 
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
 
     public string Kind => KindValue;
 
@@ -30,7 +30,7 @@ public sealed class ChannelRedispatchAlertActionProvider(Func<IFlowRuntime> runt
         {
             props = string.IsNullOrWhiteSpace(slot.PropertiesJson)
                 ? null
-                : JsonSerializer.Deserialize<RedispatchProperties>(slot.PropertiesJson, JsonOpts);
+                : JsonSerializer.Deserialize<RedispatchProperties>(slot.PropertiesJson, _jsonOpts);
         }
         catch (JsonException ex)
         {

@@ -10,7 +10,7 @@ public sealed class RecordReadingCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<RecordReadingCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordReadingCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordReadingCommand request, CancellationToken cancellationToken)
     {
         var session = await sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Session '{request.SessionId}' not found.");

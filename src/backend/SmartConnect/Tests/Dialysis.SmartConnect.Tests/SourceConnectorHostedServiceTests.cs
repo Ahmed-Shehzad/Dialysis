@@ -49,7 +49,7 @@ public sealed class SourceConnectorHostedServiceTests
             };
     }
 
-    private static IHostBuilder BuildHost(CapturingConnector connector, params (string key, string? value)[] config)
+    private static IHostBuilder Build_Host(CapturingConnector connector, params (string key, string? value)[] config)
     {
         return Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration(cb => cb.AddInMemoryCollection(config.ToDictionary(c => c.key, c => c.value)))
@@ -69,11 +69,11 @@ public sealed class SourceConnectorHostedServiceTests
     }
 
     [Fact]
-    public async Task Configured_instance_is_started_with_parameters()
+    public async Task Configured_Instance_Is_Started_With_Parameters_Async()
     {
         var connector = new CapturingConnector();
         var flowId = Guid.NewGuid();
-        using var host = BuildHost(
+        using var host = Build_Host(
             connector,
             ("SmartConnect:SourceConnectors:Instances:0:Name", "alpha"),
             ("SmartConnect:SourceConnectors:Instances:0:Kind", "test-capture"),
@@ -96,11 +96,11 @@ public sealed class SourceConnectorHostedServiceTests
     }
 
     [Fact]
-    public async Task Disabled_instance_is_skipped()
+    public async Task Disabled_Instance_Is_Skipped_Async()
     {
         var connector = new CapturingConnector();
         var flowId = Guid.NewGuid();
-        using var host = BuildHost(
+        using var host = Build_Host(
             connector,
             ("SmartConnect:SourceConnectors:Instances:0:Name", "alpha"),
             ("SmartConnect:SourceConnectors:Instances:0:Kind", "test-capture"),
@@ -120,11 +120,11 @@ public sealed class SourceConnectorHostedServiceTests
     }
 
     [Fact]
-    public async Task Unknown_kind_is_skipped_without_throwing()
+    public async Task Unknown_Kind_Is_Skipped_Without_Throwing_Async()
     {
         var connector = new CapturingConnector();
         var flowId = Guid.NewGuid();
-        using var host = BuildHost(
+        using var host = Build_Host(
             connector,
             ("SmartConnect:SourceConnectors:Instances:0:Name", "ghost"),
             ("SmartConnect:SourceConnectors:Instances:0:Kind", "no-such-kind"),

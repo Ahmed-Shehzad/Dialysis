@@ -11,7 +11,7 @@ public sealed class RecordImmunizationCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RecordImmunizationCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordImmunizationCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordImmunizationCommand request, CancellationToken cancellationToken)
     {
         var vaccine = new Coding(EhrCodeSystems.Cvx, request.CvxCode, request.CvxDisplay);
         var id = Guid.CreateVersion7();

@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 public sealed class PostOrganizationalCommunicationCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<PostOrganizationalCommunicationCommand, Guid>
 {
-    public async Task<Guid> Handle(PostOrganizationalCommunicationCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(PostOrganizationalCommunicationCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddOrganizationalCommunication(

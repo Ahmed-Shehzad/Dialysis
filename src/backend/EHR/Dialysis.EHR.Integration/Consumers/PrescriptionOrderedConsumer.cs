@@ -20,7 +20,7 @@ public sealed class PrescriptionOrderedConsumer(
     TimeProvider timeProvider)
     : IConsumer<PrescriptionOrderedIntegrationEvent>
 {
-    public async Task Handle(ConsumeContext<PrescriptionOrderedIntegrationEvent> context)
+    public async Task HandleAsync(ConsumeContext<PrescriptionOrderedIntegrationEvent> context)
     {
         var translated = PrescriptionOrderedTranslator.Translate(context.Message);
         var id = Guid.CreateVersion7();

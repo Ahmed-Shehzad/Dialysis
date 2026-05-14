@@ -11,7 +11,7 @@ public sealed class ServerSentEventsTransponderConsumerHostedService(
     ITransponderBus bus,
     ILogger<ServerSentEventsTransponderConsumerHostedService> logger) : BackgroundService
 {
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {

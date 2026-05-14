@@ -234,6 +234,18 @@ dotnet_naming_symbols.locals_and_parameters.applicable_kinds = local,parameter
 dotnet_naming_symbols.local_functions.applicable_kinds = local_function
 
 # Rules
+# IMPORTANT: rules are matched in declaration order; the first rule whose
+# symbol spec applies "wins". The async-suffix rule MUST appear before
+# public_members_pascal_case so async methods are caught before being
+# matched by the broader "any public method" rule.
+
+# Naming rule for async methods — critical: enforced as build error.
+# EnforceCodeStyleInBuild=true (Directory.Build.props) is what makes naming
+# rules actually run at compile time; the per-rule severity decides the level.
+dotnet_naming_rule.suffix_async_should_be_asyncsuffix.severity = error
+dotnet_naming_rule.suffix_async_should_be_asyncsuffix.symbols = suffix_async
+dotnet_naming_rule.suffix_async_should_be_asyncsuffix.style = asyncsuffix
+
 dotnet_naming_rule.interfaces_prefixed_with_i.severity = warning
 dotnet_naming_rule.interfaces_prefixed_with_i.symbols = interfaces
 dotnet_naming_rule.interfaces_prefixed_with_i.style = interface_style
@@ -270,6 +282,17 @@ dotnet_naming_rule.local_functions_pascal_case.severity = suggestion
 dotnet_naming_rule.local_functions_pascal_case.symbols = local_functions
 dotnet_naming_rule.local_functions_pascal_case.style = pascal_case
 
+# Symbol definition for async methods (rule declared above the broader
+# public_members rule; symbol+style definitions can live anywhere).
+dotnet_naming_symbols.suffix_async.applicable_kinds = method
+dotnet_naming_symbols.suffix_async.applicable_accessibilities = *
+dotnet_naming_symbols.suffix_async.required_modifiers = async
+
+# Naming style for async methods
+dotnet_naming_style.asyncsuffix.required_suffix = Async
+dotnet_naming_style.asyncsuffix.word_separator =
+dotnet_naming_style.asyncsuffix.capitalization = pascal_case
+
 ###############################
 # Analyzer diagnostic tuning
 ###############################
@@ -288,7 +311,7 @@ dotnet_diagnostic.IDE0290.severity = suggestion    # Use primary constructor
 # Async / threading correctness — keep loud
 dotnet_diagnostic.CA2008.severity = warning        # Do not create tasks without passing a TaskScheduler
 dotnet_diagnostic.CA2016.severity = warning        # Forward CancellationToken
-dotnet_diagnostic.VSTHRD200.severity = warning     # Async method names must end with "Async" — enforced everywhere, including tests
+dotnet_diagnostic.VSTHRD200.severity = error       # Async method names must end with "Async" — enforced everywhere, including tests (CRITICAL)
 
 # Style cleanliness — enforce
 dotnet_diagnostic.IDE0005.severity = warning       # Remove unnecessary usings
@@ -305,7 +328,51 @@ dotnet_diagnostic.CA1707.severity = none           # underscores in test method 
 dotnet_diagnostic.CA1822.severity = none           # member can be static — fine in tests
 dotnet_diagnostic.CA1812.severity = none           # internal class never instantiated — xUnit handles it
 dotnet_diagnostic.CA2007.severity = none           # ConfigureAwait not needed in test code
-dotnet_diagnostic.VSTHRD200.severity = warning     # Async suffix is enforced even for [Fact]/[Theory] methods — do NOT relax
+dotnet_diagnostic.VSTHRD200.severity = error       # Async suffix is enforced even for [Fact]/[Theory] methods — do NOT relax (CRITICAL)
+
+# Naming rules for test members — TEST OVERRIDE (CRITICAL).
+#
+# Every member declared inside a test project (methods, properties, fields,
+# constants, events) uses PascalCase tokens separated by underscores. Async
+# methods carry a trailing "_Async" suffix; non-async members do not.
+#   async test method:      RegisterPatient_Persists_To_Postgres_And_Raises_Integration_Event_Async
+#   non-async test method:  BindMachine_Rejects_A_Different_Machine
+#   public property/const:  Connection_String_Name
+#   private field:          _Repository_Field   (leading "_" preserved as a visual marker for private state)
+# Numeric tokens (HTTP status codes such as 200, 404, 2xx) are also accepted —
+# see TestNamingConventionTests for the authoritative regexes.
+#
+# Build-time enforcement lives in tests/Dialysis.ArchitectureTests
+# (TestNamingConventionTests + AsyncTestNamingConventionTests) so violations
+# fail the test suite. Editorconfig severities below govern IDE feedback
+# (Rider / VS) for the same rules.
+
+# 1. Async methods → "_Async" suffix.
+dotnet_naming_rule.suffix_async_should_be_asyncsuffix.severity = error
+dotnet_naming_rule.suffix_async_should_be_asyncsuffix.style = underscore_asyncsuffix
+dotnet_naming_style.underscore_asyncsuffix.required_suffix = _Async
+dotnet_naming_style.underscore_asyncsuffix.word_separator = _
+dotnet_naming_style.underscore_asyncsuffix.capitalization = pascal_case
+
+# 2. Public-ish members (methods, properties, fields, events) → Token_Token shape, no suffix.
+#    Overrides the global `public_members_pascal_case` style for test files.
+dotnet_naming_rule.public_members_pascal_case.severity = error
+dotnet_naming_rule.public_members_pascal_case.style = test_pascal_underscore
+dotnet_naming_style.test_pascal_underscore.word_separator = _
+dotnet_naming_style.test_pascal_underscore.capitalization = pascal_case
+
+# 3. Constants → same Token_Token shape (no underscore prefix).
+dotnet_naming_rule.constants_pascal_case.severity = error
+dotnet_naming_rule.constants_pascal_case.style = test_pascal_underscore
+
+# 4. Private fields → "_" prefix + Token_Token. Static and instance both.
+dotnet_naming_rule.private_fields_underscore.severity = error
+dotnet_naming_rule.private_fields_underscore.style = test_private_pascal_underscore
+dotnet_naming_rule.private_static_fields_s_underscore.severity = error
+dotnet_naming_rule.private_static_fields_s_underscore.style = test_private_pascal_underscore
+dotnet_naming_style.test_private_pascal_underscore.required_prefix = _
+dotnet_naming_style.test_private_pascal_underscore.word_separator = _
+dotnet_naming_style.test_private_pascal_underscore.capitalization = pascal_case
 
 ###############################
 # SonarAnalyzer.CSharp rules

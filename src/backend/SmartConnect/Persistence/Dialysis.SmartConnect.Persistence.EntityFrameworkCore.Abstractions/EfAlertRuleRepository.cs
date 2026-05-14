@@ -11,7 +11,7 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 /// </summary>
 public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRuleRepository
 {
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNamingPolicy = null };
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = null };
 
     public async Task<IReadOnlyList<AlertRule>> GetAllAsync(CancellationToken cancellationToken = default)
     {
@@ -39,9 +39,9 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
         ArgumentNullException.ThrowIfNull(rule);
 
         var existing = await db.AlertRules.FirstOrDefaultAsync(r => r.Id == rule.Id, cancellationToken).ConfigureAwait(false);
-        var enabledFlowIdsJson = JsonSerializer.Serialize(rule.EnabledFlowIds ?? (IReadOnlyList<Guid>)[], JsonOpts);
-        var patternsJson = JsonSerializer.Serialize(rule.ErrorPatterns, JsonOpts);
-        var actionsJson = JsonSerializer.Serialize(rule.Actions, JsonOpts);
+        var enabledFlowIdsJson = JsonSerializer.Serialize(rule.EnabledFlowIds ?? (IReadOnlyList<Guid>)[], _jsonOpts);
+        var patternsJson = JsonSerializer.Serialize(rule.ErrorPatterns, _jsonOpts);
+        var actionsJson = JsonSerializer.Serialize(rule.Actions, _jsonOpts);
         var throttleSeconds = (int)(rule.ThrottleWindow?.TotalSeconds ?? 0);
         var modifiedUtc = rule.LastModifiedUtc == default ? DateTimeOffset.UtcNow : rule.LastModifiedUtc;
 
@@ -86,9 +86,9 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
 
     private static AlertRule ToDomain(AlertRuleEntity entity)
     {
-        var enabledFlowIds = JsonSerializer.Deserialize<List<Guid>>(entity.EnabledFlowIdsJson, JsonOpts) ?? [];
-        var patterns = JsonSerializer.Deserialize<List<AlertErrorPattern>>(entity.ErrorPatternsJson, JsonOpts) ?? [];
-        var actions = JsonSerializer.Deserialize<List<AlertActionSlot>>(entity.ActionsJson, JsonOpts) ?? [];
+        var enabledFlowIds = JsonSerializer.Deserialize<List<Guid>>(entity.EnabledFlowIdsJson, _jsonOpts) ?? [];
+        var patterns = JsonSerializer.Deserialize<List<AlertErrorPattern>>(entity.ErrorPatternsJson, _jsonOpts) ?? [];
+        var actions = JsonSerializer.Deserialize<List<AlertActionSlot>>(entity.ActionsJson, _jsonOpts) ?? [];
 
         return new AlertRule
         {

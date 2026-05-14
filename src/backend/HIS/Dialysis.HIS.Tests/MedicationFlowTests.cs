@@ -11,7 +11,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class MedicationFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task PlaceMedicationOrder_persists_order_and_enqueues_event()
+    public async Task Placemedicationorder_Persists_Order_And_Enqueues_Event_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

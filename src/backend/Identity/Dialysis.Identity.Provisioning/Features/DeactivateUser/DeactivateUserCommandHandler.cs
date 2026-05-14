@@ -15,7 +15,7 @@ public sealed class DeactivateUserCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<DeactivateUserCommand>
 {
-    public async Task<Unit> Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(DeactivateUserCommand request, CancellationToken cancellationToken)
     {
         var user = await users.GetAsync(request.UserId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"User '{request.UserId}' not found.");

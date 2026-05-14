@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class DicomAttachmentHandlerTests
 {
     [Fact]
-    public async Task PixelData_extracted_default()
+    public async Task Pixeldata_Extracted_Default_Async()
     {
         var pixelBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
         var dataset = new DicomDataset
@@ -20,7 +20,7 @@ public sealed class DicomAttachmentHandlerTests
         dataset.Add(new DicomOtherByte(DicomTag.PixelData, pixelBytes));
         var file = new DicomFile(dataset);
         using var ms = new MemoryStream();
-        file.Save(ms);
+        await file.SaveAsync(ms);
 
         var handler = new DicomAttachmentHandler();
         var ctx = new AttachmentHandlerContext
@@ -50,7 +50,7 @@ public sealed class DicomAttachmentHandlerTests
     }
 
     [Fact]
-    public async Task Non_dicom_payload_returns_unchanged()
+    public async Task Non_Dicom_Payload_Returns_Unchanged_Async()
     {
         var handler = new DicomAttachmentHandler();
         var ctx = new AttachmentHandlerContext

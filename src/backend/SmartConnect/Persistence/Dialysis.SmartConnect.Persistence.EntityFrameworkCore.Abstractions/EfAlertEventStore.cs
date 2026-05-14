@@ -7,7 +7,7 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
 public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventStore
 {
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNamingPolicy = null };
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = null };
 
     public async Task AppendAsync(AlertEvent evt, CancellationToken cancellationToken = default)
     {
@@ -23,7 +23,7 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
             ErrorType = (int)evt.ErrorType,
             ErrorDetail = Truncate(evt.ErrorDetail, 2000),
             OccurredAtUtc = evt.OccurredAtUtc == default ? DateTimeOffset.UtcNow : evt.OccurredAtUtc,
-            ActionOutcomesJson = JsonSerializer.Serialize(evt.ActionOutcomes, JsonOpts),
+            ActionOutcomesJson = JsonSerializer.Serialize(evt.ActionOutcomes, _jsonOpts),
         });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -65,7 +65,7 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
 
     private static AlertEvent ToDomain(AlertEventEntity entity)
     {
-        var outcomes = JsonSerializer.Deserialize<List<AlertActionOutcome>>(entity.ActionOutcomesJson, JsonOpts) ?? [];
+        var outcomes = JsonSerializer.Deserialize<List<AlertActionOutcome>>(entity.ActionOutcomesJson, _jsonOpts) ?? [];
         return new AlertEvent
         {
             Id = entity.Id,

@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity
 public sealed class RegisterResearchEducationActivityCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterResearchEducationActivityCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterResearchEducationActivityCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterResearchEducationActivityCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var at = request.RecordedAtUtc ?? DateTime.UtcNow;

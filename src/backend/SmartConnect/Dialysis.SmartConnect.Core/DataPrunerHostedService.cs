@@ -16,7 +16,7 @@ public sealed class DataPrunerHostedService(
 {
     private readonly DataPrunerOptions _options = options.Value;
 
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(_options.Interval, time);
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))

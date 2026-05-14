@@ -8,9 +8,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class IterableResolverTests
 {
     [Fact]
-    public void Hl7_segment_iteration_yields_each_OBX()
+    public void Hl7_Segment_Iteration_Yields_Each_Obx()
     {
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "PID|||MRN-1\r" +
             "OBX|1|NM|1234^^MDC||145.5||mm[Hg]\r" +
@@ -26,9 +26,9 @@ public sealed class IterableResolverTests
     }
 
     [Fact]
-    public void Hl7_field_repeats_iterate_PID_3()
+    public void Hl7_Field_Repeats_Iterate_Pid_3()
     {
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "PID|||MRN-1~MRN-2~MRN-3||Doe^Jane");
 
@@ -41,9 +41,9 @@ public sealed class IterableResolverTests
     }
 
     [Fact]
-    public void Json_array_iteration()
+    public void Json_Array_Iteration()
     {
-        var msg = WrapJson("""{"observations":[{"v":1},{"v":2},{"v":3}]}""");
+        var msg = Wrap_Json("""{"observations":[{"v":1},{"v":2},{"v":3}]}""");
 
         var elements = IterableResolver.Resolve(msg, "$.observations[*]");
 
@@ -54,9 +54,9 @@ public sealed class IterableResolverTests
     }
 
     [Fact]
-    public void Xml_xpath_iteration()
+    public void Xml_Xpath_Iteration()
     {
-        var msg = WrapXml("<order><items><item>A</item><item>B</item></items></order>");
+        var msg = Wrap_Xml("<order><items><item>A</item><item>B</item></items></order>");
 
         var elements = IterableResolver.Resolve(msg, "/order/items/item");
 
@@ -66,14 +66,14 @@ public sealed class IterableResolverTests
     }
 
     [Fact]
-    public void Missing_path_yields_empty()
+    public void Missing_Path_Yields_Empty()
     {
-        var msg = WrapJson("""{"a":1}""");
+        var msg = Wrap_Json("""{"a":1}""");
         var elements = IterableResolver.Resolve(msg, "$.b[*]");
         Assert.Empty(elements);
     }
 
-    private static IntegrationMessage WrapHl7(string payload) =>
+    private static IntegrationMessage Wrap_Hl7(string payload) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -85,7 +85,7 @@ public sealed class IterableResolverTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-    private static IntegrationMessage WrapJson(string payload) =>
+    private static IntegrationMessage Wrap_Json(string payload) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -97,7 +97,7 @@ public sealed class IterableResolverTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-    private static IntegrationMessage WrapXml(string payload) =>
+    private static IntegrationMessage Wrap_Xml(string payload) =>
         new()
         {
             Id = Guid.NewGuid(),

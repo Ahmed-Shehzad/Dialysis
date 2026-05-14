@@ -6,7 +6,7 @@ namespace Dialysis.HIS.DataServices.Features.ListIntegrationOutboxRecent;
 public sealed class ListIntegrationOutboxRecentQueryHandler(IIntegrationOutboxMetadataReadModel readModel)
     : IQueryHandler<ListIntegrationOutboxRecentQuery, IReadOnlyList<IntegrationOutboxMetadataRow>>
 {
-    public Task<IReadOnlyList<IntegrationOutboxMetadataRow>> Handle(
+    public Task<IReadOnlyList<IntegrationOutboxMetadataRow>> HandleAsync(
         ListIntegrationOutboxRecentQuery request,
         CancellationToken cancellationToken) =>
         readModel.ListRecentAsync(request.Take, cancellationToken);

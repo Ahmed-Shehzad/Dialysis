@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AlertVariablesTests
 {
     [Fact]
-    public void Render_substitutes_known_tokens()
+    public void Render_Substitutes_Known_Tokens()
     {
         var rule = new AlertRule { Id = Guid.Parse("11111111-1111-4111-8111-111111111111"), Name = "MyRule" };
         var evt = new AlertEvent
@@ -29,7 +29,7 @@ public sealed class AlertVariablesTests
     }
 
     [Fact]
-    public void Unknown_tokens_stay_literal()
+    public void Unknown_Tokens_Stay_Literal()
     {
         var rule = new AlertRule { Id = Guid.CreateVersion7(), Name = "n" };
         var evt = new AlertEvent { Id = Guid.CreateVersion7(), RuleId = rule.Id };
@@ -39,7 +39,7 @@ public sealed class AlertVariablesTests
     }
 
     [Fact]
-    public void Null_fields_render_as_empty_string()
+    public void Null_Fields_Render_As_Empty_String()
     {
         var rule = new AlertRule { Id = Guid.CreateVersion7(), Name = "n" };
         var evt = new AlertEvent { Id = Guid.CreateVersion7(), RuleId = rule.Id, FlowId = null, ErrorDetail = null };
@@ -48,7 +48,7 @@ public sealed class AlertVariablesTests
     }
 
     [Fact]
-    public void Empty_template_returns_empty()
+    public void Empty_Template_Returns_Empty()
     {
         var rule = new AlertRule { Id = Guid.CreateVersion7(), Name = "n" };
         var evt = new AlertEvent { Id = Guid.CreateVersion7(), RuleId = rule.Id };

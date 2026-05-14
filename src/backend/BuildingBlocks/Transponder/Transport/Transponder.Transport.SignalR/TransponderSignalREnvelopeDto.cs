@@ -1,6 +1,6 @@
 namespace Dialysis.BuildingBlocks.Transponder.Transport.SignalR;
 
-/// <summary>Wire DTO for <see cref="TransponderSignalRHub.Publish"/> and client <c>Receive</c>.</summary>
+/// <summary>Wire DTO for <see cref="TransponderSignalRHub.PublishAsync"/> and client <c>Receive</c>.</summary>
 public sealed class TransponderSignalREnvelopeDto
 {
     public required string RoutingKey { get; init; }

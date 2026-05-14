@@ -1,5 +1,15 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
+
+  <!--
+    VS Threading analyzers are referenced solution-wide so the VSTHRD200
+    "async methods must end with Async" rule fires at build time everywhere.
+    The .editorconfig pins VSTHRD200 to error severity — keep them in sync.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

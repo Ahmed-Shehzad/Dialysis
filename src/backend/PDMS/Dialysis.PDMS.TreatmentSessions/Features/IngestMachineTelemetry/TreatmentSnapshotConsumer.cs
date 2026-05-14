@@ -15,7 +15,7 @@ namespace Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 public sealed class TreatmentSnapshotConsumer(ILogger<TreatmentSnapshotConsumer> logger)
     : IConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent>
 {
-    public Task Handle(ConsumeContext<DialysisMachineTreatmentSnapshotIntegrationEvent> context)
+    public Task HandleAsync(ConsumeContext<DialysisMachineTreatmentSnapshotIntegrationEvent> context)
     {
         var translated = SmartConnectSnapshotTranslator.Translate(context.Message);
         logger.LogInformation(

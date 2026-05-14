@@ -11,7 +11,7 @@ public sealed class RecordVitalSignCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RecordVitalSignCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordVitalSignCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordVitalSignCommand request, CancellationToken cancellationToken)
     {
         var observation = new Coding(EhrCodeSystems.Loinc, request.LoincCode, request.Display);
         var id = Guid.CreateVersion7();

@@ -10,7 +10,7 @@ public sealed class RescheduleAppointmentCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RescheduleAppointmentCommand, Unit>
 {
-    public async Task<Unit> Handle(RescheduleAppointmentCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(RescheduleAppointmentCommand request, CancellationToken cancellationToken)
     {
         var appointment = await appointments.GetAsync(request.AppointmentId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Appointment '{request.AppointmentId}' not found.");

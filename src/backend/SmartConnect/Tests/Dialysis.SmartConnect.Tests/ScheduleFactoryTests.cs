@@ -6,21 +6,21 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class ScheduleFactoryTests
 {
     [Fact]
-    public void Interval_settings_build_IntervalSchedule()
+    public void Interval_Settings_Build_Interval_Schedule()
     {
         var schedule = ScheduleFactory.Build(new ScheduleSettings { Mode = ScheduleMode.Interval, IntervalSeconds = 30 });
         Assert.IsType<IntervalSchedule>(schedule);
     }
 
     [Fact]
-    public void Cron_settings_build_CronSchedule()
+    public void Cron_Settings_Build_Cron_Schedule()
     {
         var schedule = ScheduleFactory.Build(new ScheduleSettings { Mode = ScheduleMode.Cron, CronExpression = "* * * * *" });
         Assert.IsType<CronSchedule>(schedule);
     }
 
     [Fact]
-    public void Time_settings_build_TimeSchedule()
+    public void Time_Settings_Build_Time_Schedule()
     {
         var schedule = ScheduleFactory.Build(new ScheduleSettings
         {
@@ -31,28 +31,28 @@ public sealed class ScheduleFactoryTests
     }
 
     [Fact]
-    public void Interval_without_seconds_throws()
+    public void Interval_Without_Seconds_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
             ScheduleFactory.Build(new ScheduleSettings { Mode = ScheduleMode.Interval }));
     }
 
     [Fact]
-    public void Cron_without_expression_throws()
+    public void Cron_Without_Expression_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
             ScheduleFactory.Build(new ScheduleSettings { Mode = ScheduleMode.Cron }));
     }
 
     [Fact]
-    public void Time_without_fixed_times_throws()
+    public void Time_Without_Fixed_Times_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
             ScheduleFactory.Build(new ScheduleSettings { Mode = ScheduleMode.Time }));
     }
 
     [Fact]
-    public void Unknown_timezone_throws()
+    public void Unknown_Timezone_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
             ScheduleFactory.Build(new ScheduleSettings
@@ -64,7 +64,7 @@ public sealed class ScheduleFactoryTests
     }
 
     [Fact]
-    public void FromParameters_uses_schedule_key_when_present()
+    public void From_Parameters_Uses_Schedule_Key_When_Present()
     {
         var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -77,7 +77,7 @@ public sealed class ScheduleFactoryTests
     }
 
     [Fact]
-    public void FromParameters_falls_back_to_interval_when_no_schedule_key()
+    public void From_Parameters_Falls_Back_To_Interval_When_No_Schedule_Key()
     {
         var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 

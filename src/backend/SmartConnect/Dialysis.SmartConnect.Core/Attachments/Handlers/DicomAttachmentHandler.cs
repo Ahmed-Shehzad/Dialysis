@@ -14,7 +14,7 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
 {
     public const string KindValue = "dicom";
 
-    private static readonly DicomTag DefaultPixelData = DicomTag.PixelData;
+    private static readonly DicomTag _defaultPixelData = DicomTag.PixelData;
 
     public string Kind => KindValue;
 
@@ -126,7 +126,7 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
             }
         }
 
-        if (tags.Count == 0) tags.Add(DefaultPixelData);
+        if (tags.Count == 0) tags.Add(_defaultPixelData);
         return (tags, mime);
     }
 

@@ -7,7 +7,7 @@ namespace Dialysis.BuildingBlocks.Transponder.Tests;
 public sealed class RoutingSlipTests
 {
     [Fact]
-    public void Serializer_round_trips_routing_slip_state_with_completed_entries()
+    public void Serializer_Round_Trips_Routing_Slip_State_With_Completed_Entries()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IMessageSerializer, SystemTextJsonMessageSerializer>();
@@ -30,7 +30,7 @@ public sealed class RoutingSlipTests
     }
 
     [Fact]
-    public void Serializer_round_trips_slip_state_after_first_step_with_two_itinerary_entries()
+    public void Serializer_Round_Trips_Slip_State_After_First_Step_With_Two_Itinerary_Entries()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IMessageSerializer, SystemTextJsonMessageSerializer>();
@@ -53,7 +53,7 @@ public sealed class RoutingSlipTests
     }
 
     [Fact]
-    public async Task Start_runs_activities_in_order_then_removes_saga_row()
+    public async Task Start_Runs_Activities_In_Order_Then_Removes_Saga_Row_Async()
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -88,7 +88,7 @@ public sealed class RoutingSlipTests
     }
 
     [Fact]
-    public async Task Continue_with_stale_step_index_is_ignored()
+    public async Task Continue_With_Stale_Step_Index_Is_Ignored_Async()
     {
         var services = new ServiceCollection();
         services.AddLogging();

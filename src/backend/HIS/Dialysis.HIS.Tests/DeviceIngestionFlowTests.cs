@@ -11,7 +11,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class DeviceIngestionFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task Ingesting_a_reading_persists_to_the_facility_database()
+    public async Task Ingesting_A_Reading_Persists_To_The_Facility_Database_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
@@ -36,7 +36,7 @@ public sealed class DeviceIngestionFlowTests(HisApiWebApplicationFactory factory
     }
 
     [Fact]
-    public async Task Reingesting_the_same_external_message_id_returns_the_same_row()
+    public async Task Reingesting_The_Same_External_Message_Id_Returns_The_Same_Row_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

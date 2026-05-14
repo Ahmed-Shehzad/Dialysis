@@ -8,9 +8,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AlertRuleRepositoryTests
 {
     [Fact]
-    public async Task Upsert_then_get_round_trips_all_fields()
+    public async Task Upsert_Then_Get_Round_Trips_All_Fields_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<IAlertRuleRepository>();
         var id = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
@@ -51,9 +51,9 @@ public sealed class AlertRuleRepositoryTests
     }
 
     [Fact]
-    public async Task GetEnabled_filters_disabled()
+    public async Task Getenabled_Filters_Disabled_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<IAlertRuleRepository>();
 
         await repo.UpsertAsync(new AlertRule { Id = Guid.CreateVersion7(), Name = "on", Enabled = true }, CancellationToken.None);
@@ -65,9 +65,9 @@ public sealed class AlertRuleRepositoryTests
     }
 
     [Fact]
-    public async Task Empty_enabled_flow_ids_round_trips_as_null_for_all_flows()
+    public async Task Empty_Enabled_Flow_Ids_Round_Trips_As_Null_For_All_Flows_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<IAlertRuleRepository>();
         var id = Guid.CreateVersion7();
 
@@ -78,9 +78,9 @@ public sealed class AlertRuleRepositoryTests
     }
 
     [Fact]
-    public async Task Delete_removes_the_row()
+    public async Task Delete_Removes_The_Row_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<IAlertRuleRepository>();
         var id = Guid.CreateVersion7();
         await repo.UpsertAsync(new AlertRule { Id = id, Name = "x", Enabled = true }, CancellationToken.None);
@@ -88,7 +88,7 @@ public sealed class AlertRuleRepositoryTests
         Assert.Null(await repo.GetByIdAsync(id, CancellationToken.None));
     }
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_alerts_{Guid.NewGuid():N}");

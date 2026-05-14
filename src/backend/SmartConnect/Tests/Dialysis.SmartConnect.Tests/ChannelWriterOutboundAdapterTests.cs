@@ -26,7 +26,7 @@ public sealed class ChannelWriterOutboundAdapterTests
     }
 
     private static (ChannelWriterOutboundAdapter adapter, CapturingTransport transport, ServiceProvider sp)
-        BuildAdapter()
+        Build_Adapter()
     {
         var transport = new CapturingTransport();
         var services = new ServiceCollection();
@@ -51,9 +51,9 @@ public sealed class ChannelWriterOutboundAdapterTests
         };
 
     [Fact]
-    public async Task Dispatches_to_target_flow_and_increments_depth()
+    public async Task Dispatches_To_Target_Flow_And_Increments_Depth_Async()
     {
-        var (adapter, transport, sp) = BuildAdapter();
+        var (adapter, transport, sp) = Build_Adapter();
         await using var _ = sp;
         var target = Guid.NewGuid();
         var src = Guid.NewGuid();
@@ -72,9 +72,9 @@ public sealed class ChannelWriterOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Self_loop_is_refused()
+    public async Task Self_Loop_Is_Refused_Async()
     {
-        var (adapter, _, sp) = BuildAdapter();
+        var (adapter, _, sp) = Build_Adapter();
         await using var _2 = sp;
         var same = Guid.NewGuid();
         var msg = Build($$"""{"TargetFlowId":"{{same}}"}""", same);
@@ -86,9 +86,9 @@ public sealed class ChannelWriterOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Depth_limit_aborts_chain()
+    public async Task Depth_Limit_Aborts_Chain_Async()
     {
-        var (adapter, transport, sp) = BuildAdapter();
+        var (adapter, transport, sp) = Build_Adapter();
         await using var _ = sp;
         var target = Guid.NewGuid();
         var src = Guid.NewGuid();
@@ -113,9 +113,9 @@ public sealed class ChannelWriterOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Whitelist_only_propagates_named_metadata()
+    public async Task Whitelist_Only_Propagates_Named_Metadata_Async()
     {
-        var (adapter, transport, sp) = BuildAdapter();
+        var (adapter, transport, sp) = Build_Adapter();
         await using var _ = sp;
         var target = Guid.NewGuid();
         var src = Guid.NewGuid();
@@ -132,9 +132,9 @@ public sealed class ChannelWriterOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Downstream_failure_propagates_as_send_failure()
+    public async Task Downstream_Failure_Propagates_As_Send_Failure_Async()
     {
-        var (adapter, transport, sp) = BuildAdapter();
+        var (adapter, transport, sp) = Build_Adapter();
         await using var _ = sp;
         transport.ReturnSuccess = false;
         var target = Guid.NewGuid();

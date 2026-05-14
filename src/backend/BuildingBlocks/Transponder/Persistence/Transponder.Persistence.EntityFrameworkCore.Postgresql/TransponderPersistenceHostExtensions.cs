@@ -8,7 +8,7 @@ public static class TransponderPersistenceHostExtensions
     /// <summary>
     /// Applies pending EF Core migrations for <see cref="TransponderPersistenceDbContext"/> using the configured schema.
     /// </summary>
-    public async static Task ApplyTransponderPostgreSqlPersistenceMigrationsAsync(
+    public static async Task ApplyTransponderPostgreSqlPersistenceMigrationsAsync(
         this IServiceProvider services,
         CancellationToken cancellationToken = default)
     {

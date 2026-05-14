@@ -11,7 +11,7 @@ public sealed class CloseEncounterCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<CloseEncounterCommand, Unit>
 {
-    public async Task<Unit> Handle(CloseEncounterCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(CloseEncounterCommand request, CancellationToken cancellationToken)
     {
         var encounter = await encounters.GetAsync(request.EncounterId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Encounter '{request.EncounterId}' not found.");

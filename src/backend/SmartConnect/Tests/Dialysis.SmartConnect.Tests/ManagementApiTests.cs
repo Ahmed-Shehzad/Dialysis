@@ -10,7 +10,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class ManagementApiTests
 {
     [Fact]
-    public async Task PostFlow_start_pause_resume_cycle()
+    public async Task Postflow_Start_Pause_Resume_Cycle_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
@@ -63,7 +63,7 @@ public sealed class ManagementApiTests
     }
 
     [Fact]
-    public async Task Export_group_returns_json()
+    public async Task Export_Group_Returns_Json_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
@@ -81,7 +81,7 @@ public sealed class ManagementApiTests
     }
 
     [Fact]
-    public async Task Ledger_query_returns_entries_after_dispatch()
+    public async Task Ledger_Query_Returns_Entries_After_Dispatch_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();

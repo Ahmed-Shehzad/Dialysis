@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RegisterFinancialErpLink;
 public sealed class RegisterFinancialErpLinkCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterFinancialErpLinkCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterFinancialErpLinkCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterFinancialErpLinkCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddFinancialErpLink(

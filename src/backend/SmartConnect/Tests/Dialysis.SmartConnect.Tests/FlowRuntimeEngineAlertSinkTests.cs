@@ -13,11 +13,11 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class FlowRuntimeEngineAlertSinkTests
 {
     [Fact]
-    public async Task Outbound_failure_fires_matching_rule_and_records_event()
+    public async Task Outbound_Failure_Fires_Matching_Rule_And_Records_Event_Async()
     {
-        var sp = BuildServices(out var actionInvocations);
+        var sp = Build_Services(out var actionInvocations);
         var flowId = Guid.CreateVersion7();
-        await SeedFlowAsync(sp, flowId, new IntegrationFlowPipelineDefinition
+        await Seedflow_Async(sp, flowId, new IntegrationFlowPipelineDefinition
         {
             RouteFilters = [new RouteFilterSlot { Kind = AllowAllRouteFilter.KindValue }],
             OutboundRoutes =
@@ -68,7 +68,7 @@ public sealed class FlowRuntimeEngineAlertSinkTests
         Assert.Contains("any-outbound-failure", actionInvocations);
     }
 
-    private static ServiceProvider BuildServices(out List<string> invocations)
+    private static ServiceProvider Build_Services(out List<string> invocations)
     {
         var captured = new List<string>();
         invocations = captured;
@@ -82,7 +82,7 @@ public sealed class FlowRuntimeEngineAlertSinkTests
         return sp;
     }
 
-    private async static Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private static async Task Seedflow_Async(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

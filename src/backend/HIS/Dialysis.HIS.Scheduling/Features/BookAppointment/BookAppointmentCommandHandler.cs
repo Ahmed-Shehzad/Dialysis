@@ -14,7 +14,7 @@ public sealed class BookAppointmentCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<BookAppointmentCommand, Guid>
 {
-    public async Task<Guid> Handle(BookAppointmentCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(BookAppointmentCommand request, CancellationToken cancellationToken)
     {
         var nowUtc = DateTime.UtcNow;
         var appt = Appointment.Book(

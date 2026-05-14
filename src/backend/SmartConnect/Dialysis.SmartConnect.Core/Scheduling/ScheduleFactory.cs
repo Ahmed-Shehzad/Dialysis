@@ -5,7 +5,7 @@ namespace Dialysis.SmartConnect.Scheduling;
 /// <summary>Builds <see cref="ISchedule"/> instances from <see cref="ScheduleSettings"/>.</summary>
 public static class ScheduleFactory
 {
-    private static readonly JsonSerializerOptions ScheduleJsonOptions = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions _scheduleJsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true,
         Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
@@ -25,7 +25,7 @@ public static class ScheduleFactory
         var lookup = new Dictionary<string, string>(parameters, StringComparer.OrdinalIgnoreCase);
         if (lookup.TryGetValue("schedule", out var json) && !string.IsNullOrWhiteSpace(json))
         {
-            var settings = JsonSerializer.Deserialize<ScheduleSettings>(json, ScheduleJsonOptions)
+            var settings = JsonSerializer.Deserialize<ScheduleSettings>(json, _scheduleJsonOptions)
                 ?? throw new ArgumentException("schedule parameter was empty or invalid JSON.", nameof(parameters));
             return Build(settings);
         }

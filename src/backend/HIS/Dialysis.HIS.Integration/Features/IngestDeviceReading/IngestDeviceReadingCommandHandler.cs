@@ -10,7 +10,7 @@ public sealed class IngestDeviceReadingCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<IngestDeviceReadingCommand, Guid>
 {
-    public async Task<Guid> Handle(IngestDeviceReadingCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(IngestDeviceReadingCommand request, CancellationToken cancellationToken)
     {
         rateLimiter.ThrowIfExceeded(request.DeviceId);
         if (!string.IsNullOrWhiteSpace(request.ExternalMessageId))

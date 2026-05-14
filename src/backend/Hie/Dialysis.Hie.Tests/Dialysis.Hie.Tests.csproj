@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dialysis.Hie.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Hie.Api/Dialysis.Hie.Api.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Consent/Dialysis.Hie.Consent.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Outbound/Dialysis.Hie.Outbound.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Persistence/Dialysis.Hie.Persistence.csproj" />
+    <ProjectReference Include="../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

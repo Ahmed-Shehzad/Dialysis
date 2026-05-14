@@ -8,7 +8,7 @@ namespace Dialysis.HIS.DataServices.Features.SubmitDataImportJob;
 public sealed class SubmitDataImportJobCommandHandler(IDataImportJobRepository jobs, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitDataImportJobCommand, Guid>
 {
-    public async Task<Guid> Handle(SubmitDataImportJobCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(SubmitDataImportJobCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         jobs.Add(new DataImportJob

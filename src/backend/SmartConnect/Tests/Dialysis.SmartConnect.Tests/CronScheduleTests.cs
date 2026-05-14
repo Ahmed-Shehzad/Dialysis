@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class CronScheduleTests
 {
     [Fact]
-    public void Five_field_cron_fires_at_every_minute()
+    public void Five_Field_Cron_Fires_At_Every_Minute()
     {
         var schedule = new CronSchedule("* * * * *");
         var now = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
@@ -18,7 +18,7 @@ public sealed class CronScheduleTests
     }
 
     [Fact]
-    public void Six_field_cron_fires_at_every_ten_seconds()
+    public void Six_Field_Cron_Fires_At_Every_Ten_Seconds()
     {
         var schedule = new CronSchedule("0/10 * * * * *");
         var now = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero);
@@ -30,7 +30,7 @@ public sealed class CronScheduleTests
     }
 
     [Fact]
-    public void Specific_hour_in_named_timezone()
+    public void Specific_Hour_In_Named_Timezone()
     {
         // Skip on platforms that don't have America/New_York in their tz database.
         TimeZoneInfo nyc;
@@ -58,7 +58,7 @@ public sealed class CronScheduleTests
     [InlineData("* *")]
     [InlineData("* * * *")]
     [InlineData("* * * * * * *")]
-    public void Invalid_field_count_throws(string expression)
+    public void Invalid_Field_Count_Throws(string expression)
     {
         Assert.Throws<ArgumentException>(() => new CronSchedule(expression));
     }

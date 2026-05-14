@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 /// <summary>PostgreSQL persistence plugin for SmartConnect.</summary>
 public static class SmartConnectPostgresqlPersistenceExtensions
 {
-    private static readonly string MigrationsAssemblyName =
+    private static readonly string _migrationsAssemblyName =
         typeof(SmartConnectPostgresqlPersistenceExtensions).Assembly.GetName().Name!;
 
     /// <summary>Registers SmartConnect persistence against PostgreSQL, with migrations in this plugin assembly.</summary>
@@ -18,6 +18,6 @@ public static class SmartConnectPostgresqlPersistenceExtensions
             npgsql =>
             {
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "smartconnect");
-                npgsql.MigrationsAssembly(MigrationsAssemblyName);
+                npgsql.MigrationsAssembly(_migrationsAssemblyName);
             }));
 }

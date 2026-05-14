@@ -19,7 +19,7 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
 {
     [HttpPost("import-jobs")]
     [ProducesResponseType(typeof(ResourceEnvelope<SubmitDataImportJobResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> SubmitImportJob([FromBody] SubmitDataImportJobCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> SubmitImportJobAsync([FromBody] SubmitDataImportJobCommand command, CancellationToken cancellationToken)
     {
         var id = await gateway.SendCommandAsync<SubmitDataImportJobCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return CreatedResource($"{Request.Path}/{id}", new SubmitDataImportJobResponse(id), LinkCapabilitiesIndex());
@@ -28,7 +28,7 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
     [HttpGet("import-jobs/{id:guid}")]
     [ProducesResponseType(typeof(ResourceEnvelope<DataImportJobStatusDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetImportJob(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetImportJobAsync(Guid id, CancellationToken cancellationToken)
     {
         var dto = await gateway
             .SendQueryAsync<GetDataImportJobByIdQuery, DataImportJobStatusDto?>(new GetDataImportJobByIdQuery(id), cancellationToken)
@@ -39,7 +39,7 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
     /// <summary>Metadata-only view of recent Transponder transactional outbox rows (no payload body).</summary>
     [HttpGet("integration/outbox-metadata")]
     [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<IntegrationOutboxMetadataRow>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ListIntegrationOutboxMetadata([FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListIntegrationOutboxMetadataAsync([FromQuery] int take = 50, CancellationToken cancellationToken = default)
     {
         var rows = await gateway
             .SendQueryAsync<ListIntegrationOutboxRecentQuery, IReadOnlyList<IntegrationOutboxMetadataRow>>(
@@ -52,7 +52,7 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
     /// <summary>RA Fig. 6 — Data management → Search. Reads the <c>patients</c> corpus of the full-text index.</summary>
     [HttpGet("patients/search")]
     [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<PatientSearchRow>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> SearchPatients(
+    public async Task<IActionResult> SearchPatientsAsync(
         [FromQuery] string? q,
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50,
@@ -69,7 +69,7 @@ public sealed class DataManagementController(ICqrsGateway gateway) : HisHateoasC
     /// <summary>RA Fig. 6 — Generic MIS → Reporting. Operations workload snapshot (no PHI).</summary>
     [HttpGet("manager-dashboard")]
     [ProducesResponseType(typeof(ResourceEnvelope<ManagerDashboardSnapshotDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ManagerDashboard(
+    public async Task<IActionResult> ManagerDashboardAsync(
         [FromQuery] string? reportFocus,
         CancellationToken cancellationToken)
     {

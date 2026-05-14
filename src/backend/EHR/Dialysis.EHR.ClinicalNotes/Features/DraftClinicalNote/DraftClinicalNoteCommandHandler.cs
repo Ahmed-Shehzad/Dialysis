@@ -10,7 +10,7 @@ public sealed class DraftClinicalNoteCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<DraftClinicalNoteCommand, Guid>
 {
-    public async Task<Guid> Handle(DraftClinicalNoteCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(DraftClinicalNoteCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var note = ClinicalNote.Draft(

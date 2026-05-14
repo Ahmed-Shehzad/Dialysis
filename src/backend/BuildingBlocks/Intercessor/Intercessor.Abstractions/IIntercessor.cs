@@ -8,6 +8,6 @@ public interface IIntercessor
     /// <summary>
     /// Dispatches <paramref name="request"/> through validators, pipeline behaviors, then the handler.
     /// </summary>
-    Task<TResponse> Send<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
+    Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest<TResponse>;
 }

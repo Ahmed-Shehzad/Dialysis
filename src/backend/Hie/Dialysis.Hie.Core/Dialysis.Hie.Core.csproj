@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Hie.Core</RootNamespace>
+    <Description>HIE module shared primitives: code system URIs, value objects, helpers.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Hie.Core.Abstraction/Dialysis.Hie.Core.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>

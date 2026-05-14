@@ -9,7 +9,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class TransponderInboundBridgeTests
 {
     [Fact]
-    public void Bridge_is_NOT_registered_when_config_flag_is_absent()
+    public void Bridge_Is_Not_Registered_When_Config_Flag_Is_Absent()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
@@ -20,7 +20,7 @@ public sealed class TransponderInboundBridgeTests
     }
 
     [Fact]
-    public void Bridge_is_registered_as_IHostedService_when_config_flag_is_true()
+    public void Bridge_Is_Registered_As_Ihosted_Service_When_Config_Flag_Is_True()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()

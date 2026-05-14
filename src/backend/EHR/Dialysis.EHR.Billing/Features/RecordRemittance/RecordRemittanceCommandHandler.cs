@@ -12,7 +12,7 @@ public sealed class RecordRemittanceCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<RecordRemittanceCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordRemittanceCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordRemittanceCommand request, CancellationToken cancellationToken)
     {
         var claim = await claims.GetAsync(request.ClaimId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Claim '{request.ClaimId}' not found.");

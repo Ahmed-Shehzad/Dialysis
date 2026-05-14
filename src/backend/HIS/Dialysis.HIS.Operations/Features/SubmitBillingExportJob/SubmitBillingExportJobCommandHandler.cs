@@ -16,7 +16,7 @@ public sealed class SubmitBillingExportJobCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitBillingExportJobCommand, Guid>
 {
-    public async Task<Guid> Handle(SubmitBillingExportJobCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(SubmitBillingExportJobCommand request, CancellationToken cancellationToken)
     {
         var nowUtc = DateTime.UtcNow;
         var payer = new PayerCode(request.PayerCode);

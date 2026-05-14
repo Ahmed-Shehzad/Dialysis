@@ -9,7 +9,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class FileReaderSourceMapTests
 {
     [Fact]
-    public async Task PollOnce_dispatches_message_with_originalFilename_in_sourcemap_metadata()
+    public async Task Pollonce_Dispatches_Message_With_Originalfilename_In_Sourcemap_Metadata_Async()
     {
         var dir = Path.Combine(Path.GetTempPath(), $"sc_sourcemap_{Guid.NewGuid():N}");
         Directory.CreateDirectory(dir);

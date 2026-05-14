@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class ChannelRedispatchAlertActionProviderTests
 {
     [Fact]
-    public async Task Dispatches_message_with_rendered_payload_and_alert_metadata()
+    public async Task Dispatches_Message_With_Rendered_Payload_And_Alert_Metadata_Async()
     {
         var runtime = new CapturingFlowRuntime();
         var provider = new ChannelRedispatchAlertActionProvider(() => runtime, TimeProvider.System);
@@ -47,7 +47,7 @@ public sealed class ChannelRedispatchAlertActionProviderTests
     }
 
     [Fact]
-    public async Task Missing_target_flow_id_returns_failure()
+    public async Task Missing_Target_Flow_Id_Returns_Failure_Async()
     {
         var runtime = new CapturingFlowRuntime();
         var provider = new ChannelRedispatchAlertActionProvider(() => runtime, TimeProvider.System);

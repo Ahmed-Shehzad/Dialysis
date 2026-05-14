@@ -9,9 +9,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AttachmentStoreTests
 {
     [Fact]
-    public async Task Add_then_get_round_trips_bytes_and_metadata()
+    public async Task Add_Then_Get_Round_Trips_Bytes_And_Metadata_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
 
         var bytes = Encoding.UTF8.GetBytes("hello");
@@ -33,9 +33,9 @@ public sealed class AttachmentStoreTests
     }
 
     [Fact]
-    public async Task GetForMessage_returns_all_for_that_message()
+    public async Task Getformessage_Returns_All_For_That_Message_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
         var messageId = Guid.CreateVersion7();
 
@@ -68,9 +68,9 @@ public sealed class AttachmentStoreTests
     }
 
     [Fact]
-    public async Task DeleteForMessage_cascades()
+    public async Task Deleteformessage_Cascades_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
         var messageId = Guid.CreateVersion7();
         var added = await store.AddAsync(new Attachment
@@ -89,9 +89,9 @@ public sealed class AttachmentStoreTests
     }
 
     [Fact]
-    public async Task DeleteOlderThan_removes_only_old_rows()
+    public async Task Deleteolderthan_Removes_Only_Old_Rows_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
         var older = await store.AddAsync(new Attachment
         {
@@ -120,7 +120,7 @@ public sealed class AttachmentStoreTests
         Assert.NotNull(await store.GetAsync(newer.Id, CancellationToken.None));
     }
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_attach_{Guid.NewGuid():N}");

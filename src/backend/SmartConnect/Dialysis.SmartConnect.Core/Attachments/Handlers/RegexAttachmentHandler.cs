@@ -16,7 +16,7 @@ public sealed class RegexAttachmentHandler : IAttachmentHandler
 
     public string Kind => KindValue;
 
-    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan _regexTimeout = TimeSpan.FromSeconds(3);
 
     public Task<AttachmentHandlerResult> ExtractAsync(
         IntegrationMessage message,
@@ -30,7 +30,7 @@ public sealed class RegexAttachmentHandler : IAttachmentHandler
         }
 
         var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
-        var regex = new Regex(pattern, options, RegexTimeout);
+        var regex = new Regex(pattern, options, _regexTimeout);
         var matches = regex.Matches(payloadText);
         if (matches.Count == 0)
         {

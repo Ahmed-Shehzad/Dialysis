@@ -7,7 +7,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class FlowExecutionContextTests
 {
     [Fact]
-    public void Default_context_has_empty_maps_and_no_current_route()
+    public void Default_Context_Has_Empty_Maps_And_No_Current_Route()
     {
         var ctx = new FlowExecutionContext();
 
@@ -19,7 +19,7 @@ public sealed class FlowExecutionContextTests
     }
 
     [Fact]
-    public void CurrentConnectorMap_returns_correct_bag_per_ordinal()
+    public void Current_Connector_Map_Returns_Correct_Bag_Per_Ordinal()
     {
         var route0 = new ConcurrentDictionary<string, object?>();
         var route1 = new ConcurrentDictionary<string, object?>();
@@ -38,7 +38,7 @@ public sealed class FlowExecutionContextTests
     }
 
     [Fact]
-    public void CurrentConnectorMap_returns_throwaway_when_no_route_active()
+    public void Current_Connector_Map_Returns_Throwaway_When_No_Route_Active()
     {
         var route0 = new ConcurrentDictionary<string, object?>();
         var ctx = new FlowExecutionContext { ConnectorMaps = [route0] };
@@ -50,7 +50,7 @@ public sealed class FlowExecutionContextTests
     }
 
     [Fact]
-    public async Task AsyncLocal_accessor_isolates_parallel_dispatches()
+    public async Task Asynclocal_Accessor_Isolates_Parallel_Dispatches_Async()
     {
         var accessor = new FlowExecutionContextAccessor();
         var ctxA = new FlowExecutionContext { ConnectorMaps = [new ConcurrentDictionary<string, object?>()] };

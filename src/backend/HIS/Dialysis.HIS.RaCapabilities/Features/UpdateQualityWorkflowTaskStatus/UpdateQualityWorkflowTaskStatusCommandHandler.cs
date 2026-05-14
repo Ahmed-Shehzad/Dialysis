@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.UpdateQualityWorkflowTaskStatus;
 public sealed class UpdateQualityWorkflowTaskStatusCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateQualityWorkflowTaskStatusCommand>
 {
-    public async Task<Unit> Handle(UpdateQualityWorkflowTaskStatusCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(UpdateQualityWorkflowTaskStatusCommand request, CancellationToken cancellationToken)
     {
         var ok = await store
             .TryUpdateQualityWorkflowTaskStatusAsync(request.TaskId, request.NewStatusCode.Trim(), cancellationToken)

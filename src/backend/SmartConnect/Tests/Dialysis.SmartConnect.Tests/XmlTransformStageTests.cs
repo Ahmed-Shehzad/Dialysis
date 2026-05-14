@@ -6,10 +6,10 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class XmlTransformStageTests
 {
-    private readonly XmlTransformStage _stage = new();
+    private readonly XmlTransformStage _Stage = new();
 
     [Fact]
-    public async Task Xpath_extracts_element_text()
+    public async Task Xpath_Extracts_Element_Text_Async()
     {
         var xml = "<root><code>AE</code></root>";
         var msg = new IntegrationMessage
@@ -22,7 +22,7 @@ public sealed class XmlTransformStageTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         }.WithMetadata("smartconnect.transform.parameters", """{"xpath":"/root/code/text()"}""");
 
-        var result = await _stage.TransformAsync(msg, CancellationToken.None);
+        var result = await _Stage.TransformAsync(msg, CancellationToken.None);
         Assert.Equal("AE", Encoding.UTF8.GetString(result.Payload.Span));
     }
 }

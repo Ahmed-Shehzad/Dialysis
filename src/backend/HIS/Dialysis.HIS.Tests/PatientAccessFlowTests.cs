@@ -9,7 +9,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class PatientAccessFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task GetPatientPortalSummary_returns_zero_counts_for_unknown_patient()
+    public async Task Getpatientportalsummary_Returns_Zero_Counts_For_Unknown_Patient_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

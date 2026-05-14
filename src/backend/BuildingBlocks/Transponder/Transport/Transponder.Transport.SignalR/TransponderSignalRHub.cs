@@ -5,20 +5,20 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.SignalR;
 
 /// <summary>
-/// Ingress hub: clients call <see cref="Publish"/>; all connections receive copies on <see cref="ReceiveMethod"/>.
+/// Ingress hub: clients call <see cref="PublishAsync"/>; all connections receive copies on <see cref="ReceiveMethod"/>.
 /// </summary>
 public sealed class TransponderSignalRHub(ILogger<TransponderSignalRHub> logger, IServiceProvider services) : Hub
 {
     /// <summary>Default path for <c>MapHub&lt;TransponderSignalRHub&gt;</c>.</summary>
     public const string MapPath = "/hubs/transponder";
 
-    /// <summary>Hub method name invoked by publishers.</summary>
-    public const string PublishMethod = "Publish";
+    /// <summary>Hub method name invoked by publishers. Must match the C# method name on this hub.</summary>
+    public const string PublishMethod = "PublishAsync";
 
     /// <summary>Client callback name for inbound envelopes.</summary>
     public const string ReceiveMethod = "Receive";
 
-    public async Task Publish(TransponderSignalREnvelopeDto envelope)
+    public async Task PublishAsync(TransponderSignalREnvelopeDto envelope)
     {
         if (string.IsNullOrEmpty(envelope.RoutingKey))
             throw new HubException("routing_key is required.");
@@ -38,7 +38,7 @@ public sealed class TransponderSignalRHub(ILogger<TransponderSignalRHub> logger,
             Context.ConnectionId);
     }
 
-    public async override Task OnConnectedAsync()
+    public override async Task OnConnectedAsync()
     {
         if (services.GetService<ITransponderSignalRAuthorizer>() is { } authorizer)
             await authorizer.AuthorizeSubscribeAsync(Context, Context.ConnectionAborted).ConfigureAwait(false);

@@ -110,7 +110,7 @@ public sealed class FileReaderSourceConnector : ISourceConnector
         }
     }
 
-    internal async static Task PollOnceAsync(
+    internal static async Task PollOnceAsync(
         SourceConnectorContext context,
         FileReaderParameters parameters,
         CancellationToken cancellationToken)
@@ -161,7 +161,7 @@ public sealed class FileReaderSourceConnector : ISourceConnector
         }
     }
 
-    private async static Task ProcessFileAsync(
+    private static async Task ProcessFileAsync(
         SourceConnectorContext context,
         FileReaderParameters parameters,
         string fullPath,

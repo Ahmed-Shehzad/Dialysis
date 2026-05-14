@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class TimeScheduleTests
 {
     [Fact]
-    public void Same_day_next_time()
+    public void Same_Day_Next_Time()
     {
         var schedule = new TimeSchedule([new TimeOnly(9, 0), new TimeOnly(17, 0)]);
         var now = new DateTimeOffset(2026, 1, 1, 8, 0, 0, TimeSpan.Zero);
@@ -18,7 +18,7 @@ public sealed class TimeScheduleTests
     }
 
     [Fact]
-    public void Between_two_times_picks_the_later_one()
+    public void Between_Two_Times_Picks_The_Later_One()
     {
         var schedule = new TimeSchedule([new TimeOnly(9, 0), new TimeOnly(17, 0)]);
         var now = new DateTimeOffset(2026, 1, 1, 10, 0, 0, TimeSpan.Zero);
@@ -29,7 +29,7 @@ public sealed class TimeScheduleTests
     }
 
     [Fact]
-    public void After_last_time_rolls_to_next_day()
+    public void After_Last_Time_Rolls_To_Next_Day()
     {
         var schedule = new TimeSchedule([new TimeOnly(9, 0), new TimeOnly(17, 0)]);
         var now = new DateTimeOffset(2026, 1, 1, 18, 0, 0, TimeSpan.Zero);
@@ -40,7 +40,7 @@ public sealed class TimeScheduleTests
     }
 
     [Fact]
-    public void Empty_times_throws()
+    public void Empty_Times_Throws()
     {
         Assert.Throws<ArgumentException>(() => new TimeSchedule(Array.Empty<TimeOnly>()));
     }

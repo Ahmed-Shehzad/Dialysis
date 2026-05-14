@@ -10,7 +10,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class BillingExportEligibilityServiceTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task Submitting_a_second_queued_export_for_same_payer_and_period_throws()
+    public async Task Submitting_A_Second_Queued_Export_For_Same_Payer_And_Period_Throws_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

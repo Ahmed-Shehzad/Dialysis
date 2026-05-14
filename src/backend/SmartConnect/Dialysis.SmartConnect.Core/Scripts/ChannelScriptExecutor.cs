@@ -17,7 +17,7 @@ public sealed class ChannelScriptExecutor(
     ICodeTemplateLibraryRepository? codeTemplateRepository = null,
     IAttachmentStore? attachmentStore = null)
 {
-    private static readonly TimeSpan ScriptTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan _scriptTimeout = TimeSpan.FromSeconds(3);
     private const int MaxRecursionDepth = 64;
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class ChannelScriptExecutor(
 
     private static Engine CreateEngine() =>
         new(options => options
-            .TimeoutInterval(ScriptTimeout)
+            .TimeoutInterval(_scriptTimeout)
             .LimitRecursion(MaxRecursionDepth)
             .Strict(false));
 
@@ -187,9 +187,9 @@ public sealed class ChannelScriptExecutor(
 
     public sealed class ScriptLogger(ILogger logger)
     {
-        public void info(string msg) => logger.LogInformation("[Script] {Message}", msg);
-        public void warn(string msg) => logger.LogWarning("[Script] {Message}", msg);
-        public void error(string msg) => logger.LogError("[Script] {Message}", msg);
+        public void Info(string msg) => logger.LogInformation("[Script] {Message}", msg);
+        public void Warn(string msg) => logger.LogWarning("[Script] {Message}", msg);
+        public void Error(string msg) => logger.LogError("[Script] {Message}", msg);
     }
 }
 

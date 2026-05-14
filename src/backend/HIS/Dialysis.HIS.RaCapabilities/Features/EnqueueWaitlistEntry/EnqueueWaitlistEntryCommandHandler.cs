@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 public sealed class EnqueueWaitlistEntryCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<EnqueueWaitlistEntryCommand, Guid>
 {
-    public async Task<Guid> Handle(EnqueueWaitlistEntryCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(EnqueueWaitlistEntryCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddWaitlistEntry(

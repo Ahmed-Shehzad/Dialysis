@@ -13,7 +13,7 @@ public sealed class PatientFlowController(ICqrsGateway gateway) : HisHateoasCont
 {
     [HttpPost("admissions")]
     [ProducesResponseType(typeof(ResourceEnvelope<AdmitPatientResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> AdmitPatient(
+    public async Task<IActionResult> AdmitPatientAsync(
         [FromBody] AdmitPatientCommand command,
         CancellationToken cancellationToken)
     {

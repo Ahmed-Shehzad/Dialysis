@@ -7,10 +7,10 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class JavascriptRouteFilterTests
 {
     [Fact]
-    public async Task Truthy_script_returns_Allow()
+    public async Task Truthy_Script_Returns_Allow_Async()
     {
         var filter = new JavascriptRouteFilter();
-        var msg = CreateMessage("""{"script":"true"}""");
+        var msg = Create_Message("""{"script":"true"}""");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -18,10 +18,10 @@ public sealed class JavascriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Falsy_script_returns_Drop()
+    public async Task Falsy_Script_Returns_Drop_Async()
     {
         var filter = new JavascriptRouteFilter();
-        var msg = CreateMessage("""{"script":"false"}""");
+        var msg = Create_Message("""{"script":"false"}""");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -29,10 +29,10 @@ public sealed class JavascriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Script_can_access_payloadText()
+    public async Task Script_Can_Access_Payloadtext_Async()
     {
         var filter = new JavascriptRouteFilter();
-        var msg = CreateMessage("""{"script":"payloadText.indexOf('hello') >= 0"}""", "hello world");
+        var msg = Create_Message("""{"script":"payloadText.indexOf('hello') >= 0"}""", "hello world");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -40,10 +40,10 @@ public sealed class JavascriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Script_can_access_metadata()
+    public async Task Script_Can_Access_Metadata_Async()
     {
         var filter = new JavascriptRouteFilter();
-        var msg = CreateMessage("""{"script":"metadata['x-source'] === 'test'"}""")
+        var msg = Create_Message("""{"script":"metadata['x-source'] === 'test'"}""")
             .WithMetadata("x-source", "test");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
@@ -52,7 +52,7 @@ public sealed class JavascriptRouteFilterTests
     }
 
     [Fact]
-    public async Task No_parameters_allows_through()
+    public async Task No_Parameters_Allows_Through_Async()
     {
         var filter = new JavascriptRouteFilter();
         var msg = new IntegrationMessage
@@ -71,7 +71,7 @@ public sealed class JavascriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Script_can_access_correlationId_and_flowId()
+    public async Task Script_Can_Access_Correlationid_And_Flowid_Async()
     {
         var filter = new JavascriptRouteFilter();
         var flowId = Guid.NewGuid();
@@ -93,7 +93,7 @@ public sealed class JavascriptRouteFilterTests
         Assert.Equal(RouteFilterDisposition.Allow, result.Disposition);
     }
 
-    private static IntegrationMessage CreateMessage(string parametersJson, string payload = "test")
+    private static IntegrationMessage Create_Message(string parametersJson, string payload = "test")
     {
         return new IntegrationMessage
         {

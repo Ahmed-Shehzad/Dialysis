@@ -6,12 +6,12 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class OperatorShellSmokeTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<Program> _factory ;
 
     public OperatorShellSmokeTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task IndexHtml_serves_with_expected_nav_anchors()
+    public async Task Indexhtml_Serves_With_Expected_Nav_Anchors_Async()
     {
         using var client = _factory.CreateClient();
 
@@ -33,7 +33,7 @@ public sealed class OperatorShellSmokeTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
-    public async Task AppJs_bundle_is_served()
+    public async Task Appjs_Bundle_Is_Served_Async()
     {
         using var client = _factory.CreateClient();
 
@@ -48,7 +48,7 @@ public sealed class OperatorShellSmokeTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
-    public async Task AppCss_bundle_is_served()
+    public async Task Appcss_Bundle_Is_Served_Async()
     {
         using var client = _factory.CreateClient();
 
@@ -61,7 +61,7 @@ public sealed class OperatorShellSmokeTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
-    public async Task Root_redirects_to_shell_index()
+    public async Task Root_Redirects_To_Shell_Index_Async()
     {
         var options = new WebApplicationFactoryClientOptions { AllowAutoRedirect = false };
         using var client = _factory.CreateClient(options);

@@ -9,7 +9,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class IteratorTransformStageTests
 {
     [Fact]
-    public async Task Iterates_JSON_array_and_concatenates_results()
+    public async Task Iterates_Json_Array_And_Concatenates_Results_Async()
     {
         // Child transform: uppercase the element.
         var paramsJson = """
@@ -23,10 +23,10 @@ public sealed class IteratorTransformStageTests
         }
         """;
 
-        var msg = WrapJson("""{"observations":["a","b","c"]}""");
+        var msg = Wrap_Json("""{"observations":["a","b","c"]}""");
         msg = msg.WithMetadata(IteratorTransformStage.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildStage().TransformAsync(msg, CancellationToken.None);
+        var result = await Build_Stage().TransformAsync(msg, CancellationToken.None);
 
         var text = Encoding.UTF8.GetString(result.Payload.Span);
         // Child operates on each element's JSON form ("a"), so result is each uppercased and joined by "|".
@@ -37,7 +37,7 @@ public sealed class IteratorTransformStageTests
     }
 
     [Fact]
-    public async Task Iterates_HL7_segments_and_replaces_payload()
+    public async Task Iterates_Hl7_Segments_And_Replaces_Payload_Async()
     {
         var paramsJson = """
         {
@@ -50,13 +50,13 @@ public sealed class IteratorTransformStageTests
         }
         """;
 
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "OBX|1|NM||first\r" +
             "OBX|2|NM||second");
         msg = msg.WithMetadata(IteratorTransformStage.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildStage().TransformAsync(msg, CancellationToken.None);
+        var result = await Build_Stage().TransformAsync(msg, CancellationToken.None);
         var text = Encoding.UTF8.GetString(result.Payload.Span);
 
         Assert.Contains("FIRST", text);
@@ -64,17 +64,17 @@ public sealed class IteratorTransformStageTests
     }
 
     [Fact]
-    public async Task No_parameters_returns_message_unchanged()
+    public async Task No_Parameters_Returns_Message_Unchanged_Async()
     {
-        var msg = WrapJson("""{"observations":["a"]}""");
+        var msg = Wrap_Json("""{"observations":["a"]}""");
 
-        var result = await BuildStage().TransformAsync(msg, CancellationToken.None);
+        var result = await Build_Stage().TransformAsync(msg, CancellationToken.None);
 
         Assert.Equal(msg.Payload, result.Payload);
     }
 
     [Fact]
-    public async Task Empty_iterable_returns_message_unchanged()
+    public async Task Empty_Iterable_Returns_Message_Unchanged_Async()
     {
         var paramsJson = """
         {
@@ -82,15 +82,15 @@ public sealed class IteratorTransformStageTests
           "child": { "kind": "javascript", "parametersJson": "{\"script\":\"payloadText\"}" }
         }
         """;
-        var msg = WrapJson("""{"observations":["a"]}""");
+        var msg = Wrap_Json("""{"observations":["a"]}""");
         msg = msg.WithMetadata(IteratorTransformStage.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildStage().TransformAsync(msg, CancellationToken.None);
+        var result = await Build_Stage().TransformAsync(msg, CancellationToken.None);
 
         Assert.Equal(msg.Payload, result.Payload);
     }
 
-    private static IteratorTransformStage BuildStage()
+    private static IteratorTransformStage Build_Stage()
     {
         var services = new ServiceCollection();
         var registry = new MutableFlowPluginRegistry();
@@ -100,7 +100,7 @@ public sealed class IteratorTransformStageTests
         return new IteratorTransformStage(sp);
     }
 
-    private static IntegrationMessage WrapJson(string payload) =>
+    private static IntegrationMessage Wrap_Json(string payload) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -112,7 +112,7 @@ public sealed class IteratorTransformStageTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-    private static IntegrationMessage WrapHl7(string payload) =>
+    private static IntegrationMessage Wrap_Hl7(string payload) =>
         new()
         {
             Id = Guid.NewGuid(),

@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.ClearPatientAlert;
 public sealed class ClearPatientAlertCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<ClearPatientAlertCommand>
 {
-    public async Task<Unit> Handle(ClearPatientAlertCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(ClearPatientAlertCommand request, CancellationToken cancellationToken)
     {
         var ok = await store.TryClearPatientAlertAsync(request.AlertId, DateTime.UtcNow, cancellationToken).ConfigureAwait(false);
         if (!ok)

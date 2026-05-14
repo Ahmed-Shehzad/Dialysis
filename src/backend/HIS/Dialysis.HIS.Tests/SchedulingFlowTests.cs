@@ -11,7 +11,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class SchedulingFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task BookAppointment_persists_and_enqueues_outbox_event()
+    public async Task Bookappointment_Persists_And_Enqueues_Outbox_Event_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

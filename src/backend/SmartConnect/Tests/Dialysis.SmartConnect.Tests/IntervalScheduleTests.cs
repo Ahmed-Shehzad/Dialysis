@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class IntervalScheduleTests
 {
     [Fact]
-    public void NextOccurrence_advances_by_interval_from_anchor()
+    public void Next_Occurrence_Advances_By_Interval_From_Anchor()
     {
         var anchor = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var schedule = new IntervalSchedule(TimeSpan.FromSeconds(10), referenceStart: anchor);
@@ -17,7 +17,7 @@ public sealed class IntervalScheduleTests
     }
 
     [Fact]
-    public void Initial_delay_offsets_the_first_fire()
+    public void Initial_Delay_Offsets_The_First_Fire()
     {
         var anchor = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var schedule = new IntervalSchedule(
@@ -30,7 +30,7 @@ public sealed class IntervalScheduleTests
     }
 
     [Fact]
-    public void Negative_interval_throws()
+    public void Negative_Interval_Throws()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new IntervalSchedule(TimeSpan.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => new IntervalSchedule(TimeSpan.FromSeconds(-1)));

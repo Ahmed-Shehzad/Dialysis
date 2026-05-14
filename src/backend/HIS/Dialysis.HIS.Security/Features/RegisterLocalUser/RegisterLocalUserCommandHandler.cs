@@ -12,7 +12,7 @@ public sealed class RegisterLocalUserCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterLocalUserCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterLocalUserCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterLocalUserCommand request, CancellationToken cancellationToken)
     {
         var loginName = new LoginName(request.LoginName);
 

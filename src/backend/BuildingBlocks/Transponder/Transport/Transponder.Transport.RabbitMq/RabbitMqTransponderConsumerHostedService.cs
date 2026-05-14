@@ -13,7 +13,7 @@ public sealed class RabbitMqTransponderConsumerHostedService(
     ITransponderBus bus,
     ILogger<RabbitMqTransponderConsumerHostedService> logger) : BackgroundService
 {
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {

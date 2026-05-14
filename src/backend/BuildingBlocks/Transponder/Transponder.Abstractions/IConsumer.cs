@@ -6,5 +6,5 @@ namespace Dialysis.BuildingBlocks.Transponder;
 public interface IConsumer<TMessage>
     where TMessage : class
 {
-    Task Handle(ConsumeContext<TMessage> context);
+    Task HandleAsync(ConsumeContext<TMessage> context);
 }

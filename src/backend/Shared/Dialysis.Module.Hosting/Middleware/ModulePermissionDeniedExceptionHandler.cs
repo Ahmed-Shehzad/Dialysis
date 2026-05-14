@@ -8,7 +8,7 @@ namespace Dialysis.Module.Hosting.Middleware;
 
 internal sealed class ModulePermissionDeniedExceptionHandler : IExceptionHandler
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
@@ -25,7 +25,7 @@ internal sealed class ModulePermissionDeniedExceptionHandler : IExceptionHandler
                 detail = ex.Message,
                 permission = ex.Permission,
             },
-            JsonOptions);
+            _jsonOptions);
         await httpContext.Response.WriteAsync(body, cancellationToken).ConfigureAwait(false);
         return true;
     }

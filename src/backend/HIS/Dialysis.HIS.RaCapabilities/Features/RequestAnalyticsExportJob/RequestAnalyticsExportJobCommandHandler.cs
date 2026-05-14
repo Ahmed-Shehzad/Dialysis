@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RequestAnalyticsExportJob;
 public sealed class RequestAnalyticsExportJobCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RequestAnalyticsExportJobCommand, Guid>
 {
-    public async Task<Guid> Handle(RequestAnalyticsExportJobCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RequestAnalyticsExportJobCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddAnalyticsExportJob(

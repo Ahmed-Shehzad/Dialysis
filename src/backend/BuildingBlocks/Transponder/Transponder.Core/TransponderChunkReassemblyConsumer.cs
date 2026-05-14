@@ -16,7 +16,7 @@ public sealed class TransponderChunkReassemblyConsumer(
 {
     private readonly ConcurrentDictionary<Guid, Session> _sessions = new();
 
-    public async Task Handle(ConsumeContext<TransponderMessageChunk> context)
+    public async Task HandleAsync(ConsumeContext<TransponderMessageChunk> context)
     {
         var chunk = context.Message;
         var ttl = largeOptions.Value.IncompleteSessionTimeout;

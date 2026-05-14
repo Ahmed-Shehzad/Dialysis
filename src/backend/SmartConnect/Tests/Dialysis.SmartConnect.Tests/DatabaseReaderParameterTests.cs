@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class DatabaseReaderParameterTests
 {
     [Fact]
-    public void Parse_valid_parameters()
+    public void Parse_Valid_Parameters()
     {
         var raw = new Dictionary<string, string>
         {
@@ -33,7 +33,7 @@ public sealed class DatabaseReaderParameterTests
     }
 
     [Fact]
-    public void Parse_throws_on_missing_provider()
+    public void Parse_Throws_On_Missing_Provider()
     {
         var raw = new Dictionary<string, string>
         {
@@ -45,7 +45,7 @@ public sealed class DatabaseReaderParameterTests
     }
 
     [Fact]
-    public void Parse_throws_on_missing_connection_string()
+    public void Parse_Throws_On_Missing_Connection_String()
     {
         var raw = new Dictionary<string, string>
         {
@@ -57,7 +57,7 @@ public sealed class DatabaseReaderParameterTests
     }
 
     [Fact]
-    public void Parse_throws_on_missing_poll_sql()
+    public void Parse_Throws_On_Missing_Poll_Sql()
     {
         var raw = new Dictionary<string, string>
         {
@@ -69,7 +69,7 @@ public sealed class DatabaseReaderParameterTests
     }
 
     [Fact]
-    public void Parse_defaults_interval_to_60()
+    public void Parse_Defaults_Interval_To_60()
     {
         var raw = new Dictionary<string, string>
         {

@@ -11,7 +11,7 @@ public sealed class RecordMedicationStatementCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RecordMedicationStatementCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordMedicationStatementCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordMedicationStatementCommand request, CancellationToken cancellationToken)
     {
         var medication = new Coding(EhrCodeSystems.Rxnorm, request.MedicationRxnormCode, request.MedicationDisplay);
         var id = Guid.CreateVersion7();

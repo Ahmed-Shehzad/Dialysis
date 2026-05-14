@@ -10,7 +10,7 @@ namespace Dialysis.SmartConnect.Management.AspNetCore;
 /// <summary>Maps <c>/smartconnect/v1/admin/*</c> routes for flow lifecycle and import/export.</summary>
 public static class ManagementEndpointExtensions
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
     /// <summary>Registers management endpoints (optionally protected by JWT when configured).</summary>
     public static IEndpointRouteBuilder MapSmartConnectManagementRoutes(this IEndpointRouteBuilder endpoints)
@@ -169,7 +169,7 @@ public static class ManagementEndpointExtensions
                     IntegrationFlow? flow;
                     try
                     {
-                        flow = JsonSerializer.Deserialize<IntegrationFlow>(ms.ToArray(), JsonOptions);
+                        flow = JsonSerializer.Deserialize<IntegrationFlow>(ms.ToArray(), _jsonOptions);
                     }
                     catch (JsonException ex)
                     {
@@ -213,7 +213,7 @@ public static class ManagementEndpointExtensions
                         return Results.NotFound();
                     }
 
-                    var json = JsonSerializer.Serialize(flow, JsonOptions);
+                    var json = JsonSerializer.Serialize(flow, _jsonOptions);
                     return Results.Text(json, "application/json");
                 })
             .WithName("SmartConnect_ExportFlow");

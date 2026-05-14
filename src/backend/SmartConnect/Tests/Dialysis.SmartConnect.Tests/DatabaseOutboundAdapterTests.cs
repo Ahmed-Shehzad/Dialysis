@@ -31,7 +31,7 @@ public sealed class DatabaseOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Sends_parameterized_command_and_binds_payload_string()
+    public async Task Sends_Parameterized_Command_And_Binds_Payload_String_Async()
     {
         var connection = new RecordingConnection();
         var factory = new RecordingFactory(connection);
@@ -60,7 +60,7 @@ public sealed class DatabaseOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Binds_metadata_correlation_and_message_ids()
+    public async Task Binds_Metadata_Correlation_And_Message_Ids_Async()
     {
         var connection = new RecordingConnection();
         var adapter = new DatabaseOutboundAdapter(new RecordingFactory(connection));
@@ -89,7 +89,7 @@ public sealed class DatabaseOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Missing_metadata_value_binds_dbnull()
+    public async Task Missing_Metadata_Value_Binds_Dbnull_Async()
     {
         var connection = new RecordingConnection();
         var adapter = new DatabaseOutboundAdapter(new RecordingFactory(connection));
@@ -114,7 +114,7 @@ public sealed class DatabaseOutboundAdapterTests
     /// bound parameter value — never substituted into the SQL command text.
     /// </summary>
     [Fact]
-    public async Task Sql_injection_payload_is_bound_not_concatenated()
+    public async Task Sql_Injection_Payload_Is_Bound_Not_Concatenated_Async()
     {
         var connection = new RecordingConnection();
         var adapter = new DatabaseOutboundAdapter(new RecordingFactory(connection));
@@ -139,7 +139,7 @@ public sealed class DatabaseOutboundAdapterTests
     }
 
     [Fact]
-    public async Task Missing_connection_string_or_sql_returns_failure()
+    public async Task Missing_Connection_String_Or_Sql_Returns_Failure_Async()
     {
         var adapter = new DatabaseOutboundAdapter(new RecordingFactory(new RecordingConnection()));
         var msg = Build("""{"Provider":0}""", "x"u8.ToArray());
@@ -168,7 +168,7 @@ public sealed class DatabaseOutboundAdapterTests
     {
         public List<RecordingCommand> Commands { get; } = [];
 
-        public int OpenedTimes;
+        public int OpenedTimes ;
 
         [AllowNull]
         public override string ConnectionString { get; set; } = "fake";

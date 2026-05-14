@@ -11,7 +11,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class PatientFlowFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task AdmitPatient_persists_admission_with_ward_and_no_discharge()
+    public async Task Admitpatient_Persists_Admission_With_Ward_And_No_Discharge_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

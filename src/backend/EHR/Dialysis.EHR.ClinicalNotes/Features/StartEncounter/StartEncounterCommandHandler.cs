@@ -11,7 +11,7 @@ public sealed class StartEncounterCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<StartEncounterCommand, Guid>
 {
-    public async Task<Guid> Handle(StartEncounterCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(StartEncounterCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var encounter = Encounter.Open(

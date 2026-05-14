@@ -13,7 +13,7 @@ public sealed class MedicationController(ICqrsGateway gateway) : HisHateoasContr
 {
     [HttpPost("orders")]
     [ProducesResponseType(typeof(ResourceEnvelope<PlaceMedicationOrderResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> PlaceOrder(
+    public async Task<IActionResult> PlaceOrderAsync(
         [FromBody] PlaceMedicationOrderCommand command,
         CancellationToken cancellationToken)
     {

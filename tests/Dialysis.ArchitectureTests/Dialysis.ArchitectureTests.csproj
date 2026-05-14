@@ -38,6 +38,12 @@
     <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Composition/Dialysis.Identity.Composition.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
+    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Api/Dialysis.Hie.Api.csproj" />
+    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
+    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Outbound/Dialysis.Hie.Outbound.csproj" />
+    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Inbound/Dialysis.Hie.Inbound.csproj" />
+    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Persistence/Dialysis.Hie.Persistence.csproj" />
+    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Composition/Dialysis.Hie.Composition.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +52,9 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="NetArchTest.Rules" />
+    <!-- Used by TestMemberNamingConventionTests to syntax-parse test sources
+         instead of relying on brittle regexes for property/field detection. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
 </Project>

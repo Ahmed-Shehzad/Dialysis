@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class WebhookAlertActionProviderTests
 {
     [Fact]
-    public async Task Posts_rendered_body_to_configured_url()
+    public async Task Posts_Rendered_Body_To_Configured_Url_Async()
     {
         var capture = new CapturingHandler();
         var factory = new StubFactory(capture);
@@ -45,7 +45,7 @@ public sealed class WebhookAlertActionProviderTests
     }
 
     [Fact]
-    public async Task Non_2xx_response_returns_failure()
+    public async Task Non_2xx_Response_Returns_Failure_Async()
     {
         var capture = new CapturingHandler { Status = HttpStatusCode.InternalServerError, Reason = "boom" };
         var provider = new WebhookAlertActionProvider(new StubFactory(capture));
@@ -64,7 +64,7 @@ public sealed class WebhookAlertActionProviderTests
         public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
         public string Reason { get; set; } = "OK";
 
-        protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastRequest = request;
             if (request.Content is not null)

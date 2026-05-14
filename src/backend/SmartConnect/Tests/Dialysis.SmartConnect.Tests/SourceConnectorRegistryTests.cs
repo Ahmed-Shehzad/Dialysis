@@ -14,7 +14,7 @@ public sealed class SourceConnectorRegistryTests
     }
 
     [Fact]
-    public void Register_then_resolve_by_kind_is_case_insensitive()
+    public void Register_Then_Resolve_By_Kind_Is_Case_Insensitive()
     {
         var registry = new SourceConnectorRegistry();
         var connector = new StubConnector("file-reader");
@@ -25,7 +25,7 @@ public sealed class SourceConnectorRegistryTests
     }
 
     [Fact]
-    public void TryResolve_returns_null_for_unknown_or_empty_kind()
+    public void Tryresolve_Returns_Null_For_Unknown_Or_Empty_Kind()
     {
         var registry = new SourceConnectorRegistry();
         Assert.Null(registry.TryResolve("nope"));
@@ -33,14 +33,14 @@ public sealed class SourceConnectorRegistryTests
     }
 
     [Fact]
-    public void Register_with_blank_kind_throws()
+    public void Register_With_Blank_Kind_Throws()
     {
         var registry = new SourceConnectorRegistry();
         Assert.Throws<ArgumentException>(() => registry.Register(new StubConnector("   ")));
     }
 
     [Fact]
-    public void Register_replaces_existing_kind_entry()
+    public void Register_Replaces_Existing_Kind_Entry()
     {
         var registry = new SourceConnectorRegistry();
         var first = new StubConnector("k1");
@@ -54,7 +54,7 @@ public sealed class SourceConnectorRegistryTests
     }
 
     [Fact]
-    public void All_returns_every_registered_connector()
+    public void All_Returns_Every_Registered_Connector()
     {
         var registry = new SourceConnectorRegistry();
         registry.Register(new StubConnector("a"));

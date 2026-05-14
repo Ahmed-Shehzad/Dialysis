@@ -11,7 +11,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class SecurityFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task RegisterLocalUser_persists_and_returns_id()
+    public async Task Registerlocaluser_Persists_And_Returns_Id_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

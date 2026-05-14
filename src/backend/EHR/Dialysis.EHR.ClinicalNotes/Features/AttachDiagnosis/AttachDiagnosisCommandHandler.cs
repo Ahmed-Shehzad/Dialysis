@@ -11,7 +11,7 @@ public sealed class AttachDiagnosisCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<AttachDiagnosisCommand, Unit>
 {
-    public async Task<Unit> Handle(AttachDiagnosisCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(AttachDiagnosisCommand request, CancellationToken cancellationToken)
     {
         var encounter = await encounters.GetAsync(request.EncounterId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Encounter '{request.EncounterId}' not found.");

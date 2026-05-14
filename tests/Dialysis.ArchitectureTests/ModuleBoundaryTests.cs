@@ -12,7 +12,7 @@ namespace Dialysis.ArchitectureTests;
 /// </summary>
 public sealed class ModuleBoundaryTests
 {
-    private static readonly string[] AllowedSharedNamespaceRoots =
+    private static readonly string[] _allowedSharedNamespaceRoots =
     [
         "Dialysis.DomainDrivenDesign",
         "Dialysis.BuildingBlocks",
@@ -153,6 +153,36 @@ public sealed class ModuleBoundaryTests
     }
 
     /// <summary>
+    /// HIE internals must not depend on EHR, PDMS, HIS, Identity, or SmartConnect internals
+    /// (only their Contracts assemblies are allowed).
+    /// </summary>
+    [Fact]
+    public void Hie_assemblies_must_not_depend_on_other_modules_internals()
+    {
+        var hieAssemblies = LoadByPrefix("Dialysis.Hie.");
+        foreach (var asm in hieAssemblies)
+        {
+            var referenced = asm.GetReferencedAssemblies();
+            var violations = referenced
+                .Where(r =>
+                {
+                    if (r.Name is null) return false;
+                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name.StartsWith("Dialysis.Identity.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.Identity.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name.StartsWith("Dialysis.SmartConnect.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.SmartConnect.Contracts", StringComparison.Ordinal)) return true;
+                    return false;
+                })
+                .Select(r => $"{asm.GetName().Name} -> {r.Name}")
+                .ToList();
+
+            violations.ShouldBeEmpty(
+                $"HIE assembly {asm.GetName().Name} must not reference non-Contracts assemblies of other modules. Violations: {string.Join(", ", violations)}");
+        }
+    }
+
+    /// <summary>
     /// Module Contracts assemblies must be pure: no <c>Microsoft.EntityFrameworkCore</c>,
     /// no <c>Microsoft.AspNetCore</c>, no transport-specific Transponder packages.
     /// Contracts are consumed across module boundaries, so leaking infra dependencies poisons everyone.
@@ -162,6 +192,7 @@ public sealed class ModuleBoundaryTests
     [InlineData("Dialysis.PDMS.Contracts")]
     [InlineData("Dialysis.Identity.Contracts")]
     [InlineData("Dialysis.SmartConnect.Contracts")]
+    [InlineData("Dialysis.Hie.Contracts")]
     public void Contracts_assemblies_must_be_infrastructure_free(string contractsAssemblyName)
     {
         var asm = LoadByName(contractsAssemblyName);

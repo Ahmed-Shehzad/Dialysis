@@ -6,7 +6,7 @@ namespace Dialysis.HIS.DataServices.Features.GetDataImportJobById;
 public sealed class GetDataImportJobByIdQueryHandler(IDataImportJobRepository jobs)
     : IQueryHandler<GetDataImportJobByIdQuery, DataImportJobStatusDto?>
 {
-    public async Task<DataImportJobStatusDto?> Handle(GetDataImportJobByIdQuery request, CancellationToken cancellationToken)
+    public async Task<DataImportJobStatusDto?> HandleAsync(GetDataImportJobByIdQuery request, CancellationToken cancellationToken)
     {
         var row = await jobs.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
         return row is null

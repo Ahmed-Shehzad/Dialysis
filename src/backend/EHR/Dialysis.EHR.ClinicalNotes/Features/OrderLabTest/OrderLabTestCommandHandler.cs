@@ -10,7 +10,7 @@ public sealed class OrderLabTestCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<OrderLabTestCommand, Guid>
 {
-    public async Task<Guid> Handle(OrderLabTestCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(OrderLabTestCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var order = LabOrder.Order(

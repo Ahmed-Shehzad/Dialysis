@@ -13,7 +13,7 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 /// </summary>
 public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : ICodeTemplateLibraryRepository
 {
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNamingPolicy = null };
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = null };
 
     public async Task<IReadOnlyList<CodeTemplateLibrary>> GetAllAsync(CancellationToken cancellationToken = default)
     {
@@ -43,7 +43,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
     {
         var existing = await db.CodeTemplateLibraries
             .FirstOrDefaultAsync(l => l.Id == library.Id, cancellationToken).ConfigureAwait(false);
-        var linkedFlowIdsJson = JsonSerializer.Serialize(library.LinkedFlowIds, JsonOpts);
+        var linkedFlowIdsJson = JsonSerializer.Serialize(library.LinkedFlowIds, _jsonOpts);
 
         if (existing is null)
         {
@@ -84,7 +84,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
                 Name = t.Name,
                 Code = t.Code,
                 Type = (int)t.Type,
-                ContextsJson = JsonSerializer.Serialize(t.Contexts.Select(c => (int)c), JsonOpts),
+                ContextsJson = JsonSerializer.Serialize(t.Contexts.Select(c => (int)c), _jsonOpts),
                 JsDoc = t.JsDoc,
                 Revision = t.Revision,
                 LastModifiedUtc = t.LastModifiedUtc == default ? DateTimeOffset.UtcNow : t.LastModifiedUtc,
@@ -143,7 +143,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
             {
                 try
                 {
-                    var ids = JsonSerializer.Deserialize<List<Guid>>(lib.LinkedFlowIdsJson, JsonOpts) ?? [];
+                    var ids = JsonSerializer.Deserialize<List<Guid>>(lib.LinkedFlowIdsJson, _jsonOpts) ?? [];
                     if (ids.Contains(flowId)) matchedLibraryIds.Add(lib.Id);
                 }
                 catch (JsonException)
@@ -176,7 +176,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
     {
         try
         {
-            var contexts = JsonSerializer.Deserialize<List<int>>(contextsJson, JsonOpts);
+            var contexts = JsonSerializer.Deserialize<List<int>>(contextsJson, _jsonOpts);
             return contexts is { } cs && cs.Contains(context);
         }
         catch (JsonException)
@@ -190,7 +190,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
         var linkedFlows = new List<Guid>();
         if (!string.IsNullOrWhiteSpace(lib.LinkedFlowIdsJson))
         {
-            try { linkedFlows = JsonSerializer.Deserialize<List<Guid>>(lib.LinkedFlowIdsJson, JsonOpts) ?? []; }
+            try { linkedFlows = JsonSerializer.Deserialize<List<Guid>>(lib.LinkedFlowIdsJson, _jsonOpts) ?? []; }
             catch (JsonException) { /* tolerate */ }
         }
 
@@ -214,7 +214,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
         {
             try
             {
-                var ids = JsonSerializer.Deserialize<List<int>>(t.ContextsJson, JsonOpts) ?? [];
+                var ids = JsonSerializer.Deserialize<List<int>>(t.ContextsJson, _jsonOpts) ?? [];
                 foreach (var i in ids) contexts.Add((CodeTemplateContext)i);
             }
             catch (JsonException) { /* tolerate */ }

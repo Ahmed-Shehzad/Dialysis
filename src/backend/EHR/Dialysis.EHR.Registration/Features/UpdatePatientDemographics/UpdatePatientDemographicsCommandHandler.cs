@@ -11,7 +11,7 @@ public sealed class UpdatePatientDemographicsCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<UpdatePatientDemographicsCommand, Unit>
 {
-    public async Task<Unit> Handle(UpdatePatientDemographicsCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(UpdatePatientDemographicsCommand request, CancellationToken cancellationToken)
     {
         var patient = await patients.GetAsync(request.PatientId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Patient '{request.PatientId}' not found.");

@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class MllpFrameDecoderTests
 {
     [Fact]
-    public void TryTakeMessage_SingleChunk_YieldsPayloadWithoutFraming()
+    public void Try_Take_Message_Single_Chunk_Yields_Payload_Without_Framing()
     {
         var dec = new MllpFrameDecoder(1024);
         var inner = "MSH|test"u8.ToArray();
@@ -24,7 +24,7 @@ public sealed class MllpFrameDecoderTests
     }
 
     [Fact]
-    public void TryTakeMessage_SplitChunks_YieldsOneMessage()
+    public void Try_Take_Message_Split_Chunks_Yields_One_Message()
     {
         var dec = new MllpFrameDecoder(1024);
         var msg = "ACK"u8.ToArray();
@@ -43,7 +43,7 @@ public sealed class MllpFrameDecoderTests
     }
 
     [Fact]
-    public void TryTakeMessage_TwoFrames_QueuesTwo()
+    public void Try_Take_Message_Two_Frames_Queues_Two()
     {
         var dec = new MllpFrameDecoder(1024);
         void Frame(string s)
@@ -67,11 +67,11 @@ public sealed class MllpFrameDecoderTests
     }
 
     [Fact]
-    public void Append_ExceedsMax_DiscardsAndRecovers()
+    public void Append_Exceeds_Max_Discards_And_Recovers()
     {
         const int max = 2;
         var dec = new MllpFrameDecoder(max);
-        // Start + 3 payload bytes (over max) before end — should reset on third add
+        // Start + 3 payload bytes (over Max) before end — should reset on third add
         dec.Append([0x0B, 0x41, 0x42, 0x43, 0x1C, 0x0D]);
         Assert.False(dec.TryTakeMessage(out _));
 

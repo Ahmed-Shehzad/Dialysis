@@ -6,10 +6,10 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class MessageBuilderTransformStageTests
 {
-    private readonly MessageBuilderTransformStage _stage = new();
+    private readonly MessageBuilderTransformStage _Stage = new();
 
     [Fact]
-    public async Task Prefix_suffix_wraps_payload()
+    public async Task Prefix_Suffix_Wraps_Payload_Async()
     {
         var msg = new IntegrationMessage
         {
@@ -21,7 +21,7 @@ public sealed class MessageBuilderTransformStageTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         }.WithMetadata("smartconnect.transform.parameters", """{"prefix":"A","suffix":"Z"}""");
 
-        var r = await _stage.TransformAsync(msg, CancellationToken.None);
+        var r = await _Stage.TransformAsync(msg, CancellationToken.None);
         Assert.Equal("AmidZ", Encoding.UTF8.GetString(r.Payload.Span));
     }
 }

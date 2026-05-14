@@ -18,36 +18,36 @@ internal static class TransponderRoutingSlipDiscardingEventConsumers
 
     private sealed class DiscardingActivityCompleted : IConsumer<TransponderRoutingSlipActivityCompleted>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipActivityCompleted> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityCompleted> context) => Task.CompletedTask;
     }
 
     private sealed class DiscardingActivityFaulted : IConsumer<TransponderRoutingSlipActivityFaulted>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipActivityFaulted> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityFaulted> context) => Task.CompletedTask;
     }
 
     private sealed class DiscardingActivityCompensated : IConsumer<TransponderRoutingSlipActivityCompensated>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipActivityCompensated> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityCompensated> context) => Task.CompletedTask;
     }
 
     private sealed class DiscardingActivityCompensationFailed : IConsumer<TransponderRoutingSlipActivityCompensationFailed>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipActivityCompensationFailed> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityCompensationFailed> context) => Task.CompletedTask;
     }
 
     private sealed class DiscardingSlipCompensationFailed : IConsumer<TransponderRoutingSlipCompensationFailed>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipCompensationFailed> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipCompensationFailed> context) => Task.CompletedTask;
     }
 
     private sealed class DiscardingSlipCompleted : IConsumer<TransponderRoutingSlipCompleted>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipCompleted> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipCompleted> context) => Task.CompletedTask;
     }
 
     private sealed class DiscardingSlipFaulted : IConsumer<TransponderRoutingSlipFaulted>
     {
-        public Task Handle(ConsumeContext<TransponderRoutingSlipFaulted> context) => Task.CompletedTask;
+        public Task HandleAsync(ConsumeContext<TransponderRoutingSlipFaulted> context) => Task.CompletedTask;
     }
 }

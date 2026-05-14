@@ -32,7 +32,7 @@ public sealed class GrpcTransponderTransport(
 
             var address = o.Address.Trim();
             var httpHandler = new SocketsHttpHandler { EnableMultipleHttp2Connections = true };
-            if (o.ForDevelopmentOnly_DisableCertificateValidation)
+            if (o.ForDevelopmentOnlyDisableCertificateValidation)
             {
                 httpHandler.SslOptions.RemoteCertificateValidationCallback = static (_, _, _, _) => true;
             }

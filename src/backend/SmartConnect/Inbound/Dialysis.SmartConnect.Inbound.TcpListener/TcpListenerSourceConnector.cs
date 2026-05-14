@@ -72,7 +72,7 @@ public sealed class TcpListenerSourceConnector : ISourceConnector
         }
     }
 
-    private async static Task HandleConnectionAsync(
+    private static async Task HandleConnectionAsync(
         Socket socket,
         SourceConnectorContext context,
         TcpListenerParameters parameters,

@@ -6,5 +6,5 @@ namespace Dialysis.BuildingBlocks.Intercessor;
 public interface IRequestHandler<in TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
+    Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken);
 }

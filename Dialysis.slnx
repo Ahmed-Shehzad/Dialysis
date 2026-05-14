@@ -74,6 +74,7 @@
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Composition/Dialysis.PDMS.Composition.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Tests/Dialysis.PDMS.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/PDMS/Persistence/">
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Abstractions/Dialysis.PDMS.Core.Persistence.Abstractions.csproj" />
@@ -111,6 +112,19 @@
     <Project Path="src/backend/Identity/Dialysis.Identity.Api/Dialysis.Identity.Api.csproj" />
     <Project Path="src/backend/Identity/Dialysis.Identity.Tests/Dialysis.Identity.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/Hie/">
+    <Project Path="src/backend/Hie/Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Core.Abstraction/Dialysis.Hie.Core.Abstraction.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Core/Dialysis.Hie.Core.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Consent/Dialysis.Hie.Consent.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.OpenEhr/Dialysis.Hie.OpenEhr.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Outbound/Dialysis.Hie.Outbound.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Inbound/Dialysis.Hie.Inbound.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Persistence/Dialysis.Hie.Persistence.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Composition/Dialysis.Hie.Composition.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Api/Dialysis.Hie.Api.csproj" />
+    <Project Path="src/backend/Hie/Dialysis.Hie.Tests/Dialysis.Hie.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/backend/SmartConnect/">
     <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
     <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
@@ -144,6 +158,5 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Dialysis.ArchitectureTests/Dialysis.ArchitectureTests.csproj" />
-    <Project Path="tests/Dialysis.PDMS.TreatmentSessions.Tests/Dialysis.PDMS.TreatmentSessions.Tests.csproj" />
   </Folder>
 </Solution>

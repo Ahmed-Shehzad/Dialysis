@@ -4,7 +4,7 @@ namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 
 internal static class TransponderOutboxRelayPublish
 {
-    public async static Task PublishRowAsync(
+    public static async Task PublishRowAsync(
         ITransponderBus bus,
         IMessageSerializer serializer,
         TransponderOutboxMessageEntity row,

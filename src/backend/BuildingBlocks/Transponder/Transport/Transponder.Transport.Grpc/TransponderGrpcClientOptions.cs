@@ -19,5 +19,5 @@ public sealed class TransponderGrpcClientOptions
     /// When true, accepts any server TLS certificate. **Development only** — do not use in production.
     /// Production should terminate TLS with a real certificate and validate it.
     /// </summary>
-    public bool ForDevelopmentOnly_DisableCertificateValidation { get; set; }
+    public bool ForDevelopmentOnlyDisableCertificateValidation { get; set; }
 }

@@ -403,7 +403,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
         return list.Count == 0 ? Array.Empty<ValidationFailure>() : list;
     }
 
-    private async static ValueTask<IReadOnlyList<ValidationFailure>> CollectAsync(
+    private static async ValueTask<IReadOnlyList<ValidationFailure>> CollectAsync(
         IAsyncPropertyValidator<T, TProperty> validator,
         ValidationContext<T> context,
         TProperty value,
@@ -515,10 +515,13 @@ public static class VerifierRuleExtensions
         return ruleBuilder;
     }
 
-    /// <summary>Async predicate (for example a remote uniqueness check).</summary>
+    /// <summary>Async predicate (for example a remote uniqueness check). The "Async" suffix names the
+    /// predicate's async nature, mirroring the FluentValidation API; the builder itself returns synchronously.</summary>
+#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
     public static IRuleBuilder<T, TProperty> MustAsync<T, TProperty>(
         this IRuleBuilder<T, TProperty> ruleBuilder,
         Func<T, TProperty, CancellationToken, Task<bool>> predicate)
+#pragma warning restore VSTHRD200
     {
         ArgumentNullException.ThrowIfNull(predicate);
         Unwrap(ruleBuilder).AddAsyncValidator(
@@ -528,10 +531,12 @@ public static class VerifierRuleExtensions
         return ruleBuilder;
     }
 
-    /// <summary>Async predicate (for example a remote uniqueness check).</summary>
+    /// <summary>Async predicate (for example a remote uniqueness check). See sibling overload for the suffix rationale.</summary>
+#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
     public static IRuleBuilder<T, TProperty> MustAsync<T, TProperty>(
         this IRuleBuilder<T, TProperty> ruleBuilder,
         Func<T, TProperty, CancellationToken, ValueTask<bool>> predicate)
+#pragma warning restore VSTHRD200
     {
         ArgumentNullException.ThrowIfNull(predicate);
         Unwrap(ruleBuilder).AddAsyncValidator(

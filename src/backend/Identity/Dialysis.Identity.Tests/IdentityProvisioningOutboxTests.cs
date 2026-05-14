@@ -21,7 +21,7 @@ namespace Dialysis.Identity.Tests;
 public sealed class IdentityProvisioningOutboxTests(IdentityApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task Provisioning_a_user_writes_a_UserRegistered_row_into_the_outbox()
+    public async Task Provisioning_A_User_Writes_A_Userregistered_Row_Into_The_Outbox_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
@@ -42,7 +42,7 @@ public sealed class IdentityProvisioningOutboxTests(IdentityApiWebApplicationFac
     }
 
     [Fact]
-    public async Task Assigning_a_role_writes_a_RoleAssigned_row_into_the_outbox()
+    public async Task Assigning_A_Role_Writes_A_Roleassigned_Row_Into_The_Outbox_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

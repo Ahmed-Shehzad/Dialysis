@@ -94,7 +94,7 @@ public sealed class DestinationSetFilterTransformStage : ITransformStage
             _available = available;
         }
 
-        public void removeAllExcept(JsValue keep)
+        public void RemoveAllExcept(JsValue keep)
         {
             var keepSet = ToStringSet(keep);
             _allowed.Clear();
@@ -105,13 +105,13 @@ public sealed class DestinationSetFilterTransformStage : ITransformStage
                 _allowed.Add(name);
         }
 
-        public void remove(JsValue drop)
+        public void Remove(JsValue drop)
         {
             foreach (var name in ToStringSet(drop))
                 _allowed.Remove(name);
         }
 
-        public void removeAll() => _allowed.Clear();
+        public void RemoveAll() => _allowed.Clear();
 
         private static HashSet<string> ToStringSet(JsValue value)
         {

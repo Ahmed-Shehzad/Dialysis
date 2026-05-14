@@ -28,7 +28,7 @@ public static class SmartConnectInboundEndpointExtensions
             PostInboundMessageAsync).DisableAntiforgery();
     }
 
-    private async static Task PostInboundMessageAsync(
+    private static async Task PostInboundMessageAsync(
         HttpContext http,
         Guid flowId,
         IInboundMessageFactory messageFactory,

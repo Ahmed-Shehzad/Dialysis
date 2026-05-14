@@ -7,10 +7,10 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class MapperTransformStageTests
 {
-    private readonly MapperTransformStage _stage = new(new JsonTransformStage());
+    private readonly MapperTransformStage _Stage = new(new JsonTransformStage());
 
     [Fact]
-    public async Task Uses_json_mapper_parameters()
+    public async Task Uses_Json_Mapper_Parameters_Async()
     {
         var msg = new IntegrationMessage
         {
@@ -22,7 +22,7 @@ public sealed class MapperTransformStageTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         }.WithMetadata("smartconnect.transform.parameters", """{"expression":"$.a"}""");
 
-        var r = await _stage.TransformAsync(msg, CancellationToken.None);
+        var r = await _Stage.TransformAsync(msg, CancellationToken.None);
         Assert.Equal("1", Encoding.UTF8.GetString(r.Payload.Span).Trim());
     }
 }

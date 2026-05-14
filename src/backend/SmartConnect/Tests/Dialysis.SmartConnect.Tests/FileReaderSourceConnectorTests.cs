@@ -9,7 +9,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class FileReaderSourceConnectorTests : IDisposable
 {
-    private readonly string _root;
+    private readonly string _root ;
 
     public FileReaderSourceConnectorTests()
     {
@@ -62,7 +62,7 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
             logger: NullLogger.Instance);
 
     [Fact]
-    public async Task Reads_file_dispatches_and_deletes_by_default()
+    public async Task Reads_File_Dispatches_And_Deletes_By_Default_Async()
     {
         var inputPath = Path.Combine(_root, "msg.txt");
         await File.WriteAllTextAsync(inputPath, "hello");
@@ -86,7 +86,7 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
     }
 
     [Fact]
-    public async Task MoveTo_archives_file_after_dispatch()
+    public async Task Moveto_Archives_File_After_Dispatch_Async()
     {
         var inputPath = Path.Combine(_root, "moveme.txt");
         var archive = Path.Combine(_root, "archive");
@@ -111,7 +111,7 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
     }
 
     [Fact]
-    public async Task Dispatch_failure_quarantines_when_configured()
+    public async Task Dispatch_Failure_Quarantines_When_Configured_Async()
     {
         var inputPath = Path.Combine(_root, "bad.txt");
         var quarantine = Path.Combine(_root, "q");
@@ -136,7 +136,7 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
     }
 
     [Fact]
-    public async Task Oversize_file_is_quarantined_and_not_dispatched()
+    public async Task Oversize_File_Is_Quarantined_And_Not_Dispatched_Async()
     {
         var inputPath = Path.Combine(_root, "huge.bin");
         var quarantine = Path.Combine(_root, "q2");

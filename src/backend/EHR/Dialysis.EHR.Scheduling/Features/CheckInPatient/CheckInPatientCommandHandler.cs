@@ -11,7 +11,7 @@ public sealed class CheckInPatientCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<CheckInPatientCommand, Unit>
 {
-    public async Task<Unit> Handle(CheckInPatientCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(CheckInPatientCommand request, CancellationToken cancellationToken)
     {
         var appointment = await appointments.GetAsync(request.AppointmentId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Appointment '{request.AppointmentId}' not found.");

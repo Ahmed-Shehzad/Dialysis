@@ -14,7 +14,7 @@ public sealed class ServerSentEventsTransponderTransport(
     IOptions<TransponderSseClientOptions> options,
     ILogger<ServerSentEventsTransponderTransport> logger) : ITransponderTransport
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private HttpClient? _http;
@@ -49,7 +49,7 @@ public sealed class ServerSentEventsTransponderTransport(
 
         var dto = ToDto(message);
         using var request = new HttpRequestMessage(HttpMethod.Post, o.PublishPath.TrimStart('/'));
-        request.Content = JsonContent.Create(dto, options: JsonOptions);
+        request.Content = JsonContent.Create(dto, options: _jsonOptions);
         await ApplyAuthAsync(request, cancellationToken).ConfigureAwait(false);
 
         using var response = await http.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -145,7 +145,7 @@ public sealed class ServerSentEventsTransponderTransport(
         TransponderSseEnvelopeDto? dto;
         try
         {
-            dto = JsonSerializer.Deserialize<TransponderSseEnvelopeDto>(json, JsonOptions);
+            dto = JsonSerializer.Deserialize<TransponderSseEnvelopeDto>(json, _jsonOptions);
         }
         catch (JsonException ex)
         {

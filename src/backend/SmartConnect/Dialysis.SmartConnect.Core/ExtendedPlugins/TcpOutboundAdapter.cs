@@ -73,7 +73,7 @@ public sealed class TcpOutboundAdapter : IOutboundAdapter, IDisposable
         }
     }
 
-    private async static Task<OutboundSendResult> SendOnceAsync(
+    private static async Task<OutboundSendResult> SendOnceAsync(
         TcpOutboundParameters opts,
         ReadOnlyMemory<byte> framed,
         CancellationToken cancellationToken)

@@ -11,7 +11,7 @@ public sealed class SignClinicalNoteCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<SignClinicalNoteCommand, Unit>
 {
-    public async Task<Unit> Handle(SignClinicalNoteCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(SignClinicalNoteCommand request, CancellationToken cancellationToken)
     {
         var note = await notes.GetAsync(request.NoteId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Clinical note '{request.NoteId}' not found.");

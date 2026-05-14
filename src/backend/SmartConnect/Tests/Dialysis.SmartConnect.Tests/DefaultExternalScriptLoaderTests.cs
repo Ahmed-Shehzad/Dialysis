@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class DefaultExternalScriptLoaderTests
 {
     [Fact]
-    public async Task File_uri_inside_allowed_root_returns_contents()
+    public async Task File_Uri_Inside_Allowed_Root_Returns_Contents_Async()
     {
         var dir = Path.Combine(Path.GetTempPath(), "smartconnect-ext-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
@@ -17,7 +17,7 @@ public sealed class DefaultExternalScriptLoaderTests
             var scriptPath = Path.Combine(dir, "f.js");
             await File.WriteAllTextAsync(scriptPath, "var x = 1;");
 
-            var loader = NewLoader(opts => opts.AllowedFileRoots.Add(dir));
+            var loader = New_Loader(opts => opts.AllowedFileRoots.Add(dir));
             var body = await loader.LoadAsync(new Uri(scriptPath), null, CancellationToken.None);
 
             Assert.Equal("var x = 1;", body);
@@ -29,7 +29,7 @@ public sealed class DefaultExternalScriptLoaderTests
     }
 
     [Fact]
-    public async Task File_uri_outside_allowed_root_throws()
+    public async Task File_Uri_Outside_Allowed_Root_Throws_Async()
     {
         var rootDir = Path.Combine(Path.GetTempPath(), "smartconnect-ext-" + Guid.NewGuid().ToString("N"));
         var otherDir = Path.Combine(Path.GetTempPath(), "smartconnect-other-" + Guid.NewGuid().ToString("N"));
@@ -40,7 +40,7 @@ public sealed class DefaultExternalScriptLoaderTests
             var outside = Path.Combine(otherDir, "evil.js");
             await File.WriteAllTextAsync(outside, "/* */");
 
-            var loader = NewLoader(opts => opts.AllowedFileRoots.Add(rootDir));
+            var loader = New_Loader(opts => opts.AllowedFileRoots.Add(rootDir));
 
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 loader.LoadAsync(new Uri(outside), null, CancellationToken.None));
@@ -53,23 +53,23 @@ public sealed class DefaultExternalScriptLoaderTests
     }
 
     [Fact]
-    public async Task File_uri_with_no_allowed_roots_throws()
+    public async Task File_Uri_With_No_Allowed_Roots_Throws_Async()
     {
-        var loader = NewLoader(_ => { });
+        var loader = New_Loader(_ => { });
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             loader.LoadAsync(new Uri("file:///tmp/x.js"), null, CancellationToken.None));
     }
 
     [Fact]
-    public async Task Unknown_scheme_throws()
+    public async Task Unknown_Scheme_Throws_Async()
     {
-        var loader = NewLoader(_ => { });
+        var loader = New_Loader(_ => { });
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             loader.LoadAsync(new Uri("ftp://example/x.js"), null, CancellationToken.None));
     }
 
     [Fact]
-    public async Task Cache_returns_first_body_within_ttl()
+    public async Task Cache_Returns_First_Body_Within_Ttl_Async()
     {
         var dir = Path.Combine(Path.GetTempPath(), "smartconnect-ext-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
@@ -79,7 +79,7 @@ public sealed class DefaultExternalScriptLoaderTests
             await File.WriteAllTextAsync(path, "first");
 
             var time = new FixedTimeProvider(new DateTimeOffset(2026, 5, 14, 12, 0, 0, TimeSpan.Zero));
-            var loader = NewLoader(opts => opts.AllowedFileRoots.Add(dir), time);
+            var loader = New_Loader(opts => opts.AllowedFileRoots.Add(dir), time);
 
             var first = await loader.LoadAsync(new Uri(path), TimeSpan.FromMinutes(5), CancellationToken.None);
             await File.WriteAllTextAsync(path, "second");
@@ -95,7 +95,7 @@ public sealed class DefaultExternalScriptLoaderTests
     }
 
     [Fact]
-    public async Task Cache_refreshes_after_ttl_elapses()
+    public async Task Cache_Refreshes_After_Ttl_Elapses_Async()
     {
         var dir = Path.Combine(Path.GetTempPath(), "smartconnect-ext-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
@@ -105,7 +105,7 @@ public sealed class DefaultExternalScriptLoaderTests
             await File.WriteAllTextAsync(path, "first");
 
             var time = new FixedTimeProvider(new DateTimeOffset(2026, 5, 14, 12, 0, 0, TimeSpan.Zero));
-            var loader = NewLoader(opts => opts.AllowedFileRoots.Add(dir), time);
+            var loader = New_Loader(opts => opts.AllowedFileRoots.Add(dir), time);
 
             var first = await loader.LoadAsync(new Uri(path), TimeSpan.FromSeconds(10), CancellationToken.None);
             await File.WriteAllTextAsync(path, "second");
@@ -122,15 +122,15 @@ public sealed class DefaultExternalScriptLoaderTests
     }
 
     [Fact]
-    public async Task Http_uri_to_disallowed_host_throws()
+    public async Task Http_Uri_To_Disallowed_Host_Throws_Async()
     {
-        var loader = NewLoader(opts => opts.AllowedHttpHosts.Add("good.example"));
+        var loader = New_Loader(opts => opts.AllowedHttpHosts.Add("good.example"));
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             loader.LoadAsync(new Uri("https://evil.example/x.js"), null, CancellationToken.None));
     }
 
     [Fact]
-    public async Task File_uri_exceeding_max_bytes_throws()
+    public async Task File_Uri_Exceeding_Max_Bytes_Throws_Async()
     {
         var dir = Path.Combine(Path.GetTempPath(), "smartconnect-ext-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
@@ -138,7 +138,7 @@ public sealed class DefaultExternalScriptLoaderTests
         {
             var path = Path.Combine(dir, "f.js");
             await File.WriteAllTextAsync(path, new string('x', 1024));
-            var loader = NewLoader(opts =>
+            var loader = New_Loader(opts =>
             {
                 opts.AllowedFileRoots.Add(dir);
                 opts.MaxScriptBytes = 128;
@@ -153,7 +153,7 @@ public sealed class DefaultExternalScriptLoaderTests
         }
     }
 
-    private static DefaultExternalScriptLoader NewLoader(Action<ExternalScriptOptions> configure, TimeProvider? time = null)
+    private static DefaultExternalScriptLoader New_Loader(Action<ExternalScriptOptions> configure, TimeProvider? time = null)
     {
         var opts = new ExternalScriptOptions();
         configure(opts);

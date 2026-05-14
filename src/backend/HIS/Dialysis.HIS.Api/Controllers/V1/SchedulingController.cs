@@ -13,7 +13,7 @@ public sealed class SchedulingController(ICqrsGateway gateway) : HisHateoasContr
 {
     [HttpPost("appointments")]
     [ProducesResponseType(typeof(ResourceEnvelope<BookAppointmentResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> BookAppointment(
+    public async Task<IActionResult> BookAppointmentAsync(
         [FromBody] BookAppointmentCommand command,
         CancellationToken cancellationToken)
     {

@@ -15,20 +15,20 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class CodeTemplateJsBinderTests
 {
     [Fact]
-    public async Task Matching_context_template_is_callable_from_user_script()
+    public async Task Matching_Context_Template_Is_Callable_From_User_Script_Async()
     {
         var flowId = Guid.CreateVersion7();
         var libraryId = Guid.CreateVersion7();
         var repo = new StubRepository(libraryId, [
-            NewTemplate(libraryId, "matching", "function matching(){ return 'M'; }",
+            New_Template(libraryId, "matching", "function matching(){ return 'M'; }",
                 [CodeTemplateContext.SourceTransformer]),
         ]);
-        var sp = BuildServices(repo);
+        var sp = Build_Services(repo);
         var ctx = new FlowExecutionContext();
         ctx.SetCurrentStageContext(CodeTemplateContext.SourceTransformer);
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
-        var msg = WrapMessage(flowId).WithMetadata(
+        var msg = Wrap_Message(flowId).WithMetadata(
             JavascriptTransformStage.ParametersMetadataKey,
             Params("matching()"));
 
@@ -37,20 +37,20 @@ public sealed class CodeTemplateJsBinderTests
     }
 
     [Fact]
-    public async Task Non_matching_context_template_is_not_injected()
+    public async Task Non_Matching_Context_Template_Is_Not_Injected_Async()
     {
         var flowId = Guid.CreateVersion7();
         var libraryId = Guid.CreateVersion7();
         var repo = new StubRepository(libraryId, [
-            NewTemplate(libraryId, "destOnly", "function destOnly(){ return 'D'; }",
+            New_Template(libraryId, "destOnly", "function destOnly(){ return 'D'; }",
                 [CodeTemplateContext.DestinationTransformer]),
         ]);
-        var sp = BuildServices(repo);
+        var sp = Build_Services(repo);
         var ctx = new FlowExecutionContext();
         ctx.SetCurrentStageContext(CodeTemplateContext.SourceTransformer);
         sp.GetRequiredService<IFlowExecutionContextAccessor>().Current = ctx;
 
-        var msg = WrapMessage(flowId).WithMetadata(
+        var msg = Wrap_Message(flowId).WithMetadata(
             JavascriptTransformStage.ParametersMetadataKey,
             Params("typeof destOnly === 'function' ? 'present' : 'absent'"));
 
@@ -58,7 +58,7 @@ public sealed class CodeTemplateJsBinderTests
         Assert.Equal("absent", Encoding.UTF8.GetString(result.Payload.Span));
     }
 
-    private static IServiceProvider BuildServices(ICodeTemplateLibraryRepository repo)
+    private static IServiceProvider Build_Services(ICodeTemplateLibraryRepository repo)
     {
         var services = new ServiceCollection();
         services.AddSingleton<IFlowExecutionContextAccessor, FlowExecutionContextAccessor>();
@@ -67,7 +67,7 @@ public sealed class CodeTemplateJsBinderTests
         return services.BuildServiceProvider();
     }
 
-    private static CodeTemplate NewTemplate(
+    private static CodeTemplate New_Template(
         Guid libraryId,
         string name,
         string code,
@@ -85,7 +85,7 @@ public sealed class CodeTemplateJsBinderTests
     private static string Params(string script) =>
         $$$"""{"script": {{{JsonSerializer.Serialize(script)}}} }""";
 
-    private static IntegrationMessage WrapMessage(Guid flowId) =>
+    private static IntegrationMessage Wrap_Message(Guid flowId) =>
         new()
         {
             Id = Guid.NewGuid(),

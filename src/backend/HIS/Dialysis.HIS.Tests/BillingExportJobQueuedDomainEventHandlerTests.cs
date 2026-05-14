@@ -11,7 +11,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class BillingExportJobQueuedDomainEventHandlerTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task SubmitBillingExportJob_records_audit_via_domain_event()
+    public async Task Submitbillingexportjob_Records_Audit_Via_Domain_Event_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

@@ -15,7 +15,7 @@ public sealed class TransponderSagaConsumer<TState, TMessage, THandler>(
     where TMessage : class
     where THandler : class, ITransponderSagaMessageHandler<TState, TMessage>
 {
-    public async Task Handle(ConsumeContext<TMessage> context)
+    public async Task HandleAsync(ConsumeContext<TMessage> context)
     {
         var sagaKind = TransponderSagaKind.For<TState>();
         var instanceKey = handler.GetInstanceKey(context.Message);

@@ -17,8 +17,8 @@ public sealed class AlertEngine(
     TimeProvider time,
     ILogger<AlertEngine>? logger = null) : IAlertSink
 {
-    private static readonly TimeSpan DefaultThrottleWindow = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan _defaultThrottleWindow = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan _regexTimeout = TimeSpan.FromSeconds(3);
 
     private readonly ConcurrentDictionary<(Guid RuleId, Guid FlowId, AlertErrorType ErrorType), DateTimeOffset> _lastFiredUtc = new();
 
@@ -113,7 +113,7 @@ public sealed class AlertEngine(
                 var detail = trigger.ErrorDetail ?? string.Empty;
                 try
                 {
-                    if (!Regex.IsMatch(detail, p.Regex, RegexOptions.CultureInvariant, RegexTimeout)) continue;
+                    if (!Regex.IsMatch(detail, p.Regex, RegexOptions.CultureInvariant, _regexTimeout)) continue;
                 }
                 catch (RegexMatchTimeoutException)
                 {
@@ -131,7 +131,7 @@ public sealed class AlertEngine(
 
     private bool IsThrottled(AlertRule rule, AlertTrigger trigger, DateTimeOffset nowUtc)
     {
-        var window = rule.ThrottleWindow ?? DefaultThrottleWindow;
+        var window = rule.ThrottleWindow ?? _defaultThrottleWindow;
         if (window <= TimeSpan.Zero) return false;
 
         var key = (rule.Id, trigger.FlowId, trigger.ErrorType);

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Dialysis.BuildingBlocks.Transponder.Transport.SignalR;
 
-/// <summary>Optional hook to authorize hub <see cref="TransponderSignalRHub.Publish"/> and new connections (subscribe).</summary>
+/// <summary>Optional hook to authorize hub <see cref="TransponderSignalRHub.PublishAsync"/> and new connections (subscribe).</summary>
 public interface ITransponderSignalRAuthorizer
 {
     ValueTask AuthorizePublishAsync(

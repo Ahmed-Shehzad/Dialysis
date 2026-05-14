@@ -9,9 +9,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class BuiltInCodeTemplatesSeederTests
 {
     [Fact]
-    public async Task First_run_seeds_six_templates_under_well_known_library_id()
+    public async Task First_Run_Seeds_Six_Templates_Under_Well_Known_Library_Id_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var seeder = new BuiltInCodeTemplatesSeeder(
             sp.GetRequiredService<IServiceScopeFactory>(),
             NullLogger<BuiltInCodeTemplatesSeeder>.Instance);
@@ -28,9 +28,9 @@ public sealed class BuiltInCodeTemplatesSeederTests
     }
 
     [Fact]
-    public async Task Second_run_is_idempotent()
+    public async Task Second_Run_Is_Idempotent_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var seeder = new BuiltInCodeTemplatesSeeder(
             sp.GetRequiredService<IServiceScopeFactory>(),
             NullLogger<BuiltInCodeTemplatesSeeder>.Instance);
@@ -44,7 +44,7 @@ public sealed class BuiltInCodeTemplatesSeederTests
         Assert.Equal(6, lib!.Templates.Count); // not doubled.
     }
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddLogging();

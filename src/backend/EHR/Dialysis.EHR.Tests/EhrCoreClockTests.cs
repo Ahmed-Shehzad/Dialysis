@@ -9,7 +9,7 @@ namespace Dialysis.EHR.Tests;
 public sealed class EhrCoreClockTests(EhrApiWebApplicationFactory factory)
 {
     [Fact]
-    public void IEhrClock_resolves_and_returns_utc_now_within_one_second()
+    public void Iehr_Clock_Resolves_And_Returns_Utc_Now_Within_One_Second()
     {
         using var scope = factory.Services.CreateScope();
         var clock = scope.ServiceProvider.GetRequiredService<IEhrClock>();

@@ -14,7 +14,7 @@ public sealed class PlaceMedicationOrderCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<PlaceMedicationOrderCommand, Guid>
 {
-    public async Task<Guid> Handle(PlaceMedicationOrderCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(PlaceMedicationOrderCommand request, CancellationToken cancellationToken)
     {
         var order = MedicationOrder.Place(
             request.PatientId,

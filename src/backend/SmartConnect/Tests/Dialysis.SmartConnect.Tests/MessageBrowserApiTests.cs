@@ -9,7 +9,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class MessageBrowserApiTests
 {
     [Fact]
-    public async Task Messages_endpoint_returns_paginated_results()
+    public async Task Messages_Endpoint_Returns_Paginated_Results_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
@@ -43,7 +43,7 @@ public sealed class MessageBrowserApiTests
     }
 
     [Fact]
-    public async Task Get_message_by_id_returns_entry()
+    public async Task Get_Message_By_Id_Returns_Entry_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
@@ -78,7 +78,7 @@ public sealed class MessageBrowserApiTests
     }
 
     [Fact]
-    public async Task Flow_statistics_returns_counts()
+    public async Task Flow_Statistics_Returns_Counts_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();
@@ -109,7 +109,7 @@ public sealed class MessageBrowserApiTests
     }
 
     [Fact]
-    public async Task Reprocess_nonexistent_entry_returns_404()
+    public async Task Reprocess_Nonexistent_Entry_Returns_404_Async()
     {
         await using var factory = new WebApplicationFactory<Program>();
         var client = factory.CreateClient();

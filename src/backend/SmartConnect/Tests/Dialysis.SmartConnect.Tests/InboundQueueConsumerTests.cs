@@ -15,7 +15,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class InboundQueueConsumerTests
 {
     [Fact]
-    public async Task Queue_consumer_dispatches_to_runtime_and_ledger()
+    public async Task Queue_Consumer_Dispatches_To_Runtime_And_Ledger_Async()
     {
         var flowId = Guid.Parse("00000000-0000-4000-8000-0000000000bb");
         using var host = Host.CreateDefaultBuilder()

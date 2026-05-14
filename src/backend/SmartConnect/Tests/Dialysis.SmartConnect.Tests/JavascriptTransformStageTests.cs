@@ -7,7 +7,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class JavascriptTransformStageTests
 {
     [Fact]
-    public async Task Transform_appends_via_script()
+    public async Task Transform_Appends_Via_Script_Async()
     {
         var stage = new JavascriptTransformStage();
         var msg = new IntegrationMessage

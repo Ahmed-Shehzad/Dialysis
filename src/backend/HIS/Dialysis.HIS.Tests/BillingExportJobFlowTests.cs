@@ -12,7 +12,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class BillingExportJobFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task Submitting_a_job_persists_status_queued_and_enqueues_outbox_event()
+    public async Task Submitting_A_Job_Persists_Status_Queued_And_Enqueues_Outbox_Event_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
@@ -47,7 +47,7 @@ public sealed class BillingExportJobFlowTests(HisApiWebApplicationFactory factor
     }
 
     [Fact]
-    public async Task Getting_a_missing_job_returns_null()
+    public async Task Getting_A_Missing_Job_Returns_Null_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

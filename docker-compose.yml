@@ -86,6 +86,22 @@ services:
       timeout: 3s
       retries: 10
 
+  postgres-hie:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_hie
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5445:5432"
+    volumes:
+      - postgres-hie-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_hie"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:4-management-alpine
     environment:
@@ -130,3 +146,4 @@ volumes:
   postgres-ehr-data:
   postgres-pdms-data:
   postgres-identity-data:
+  postgres-hie-data:

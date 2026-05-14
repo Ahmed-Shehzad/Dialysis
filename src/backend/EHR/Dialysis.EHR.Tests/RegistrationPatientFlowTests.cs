@@ -13,7 +13,7 @@ namespace Dialysis.EHR.Tests;
 public sealed class RegistrationPatientFlowTests(EhrApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task RegisterPatient_persists_to_postgres_and_raises_integration_event()
+    public async Task Registerpatient_Persists_To_Postgres_And_Raises_Integration_Event_Async()
     {
         await using var scope = factory.Services.CreateAsyncScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

@@ -9,12 +9,12 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<Program> _factory ;
 
     public CodeTemplateLibraryEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task Post_then_get_round_trips_library()
+    public async Task Post_Then_Get_Round_Trips_Library_Async()
     {
         using var client = _factory.CreateClient();
 
@@ -48,7 +48,7 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
     }
 
     [Fact]
-    public async Task Delete_returns_no_content_and_makes_get_404()
+    public async Task Delete_Returns_No_Content_And_Makes_Get_404_Async()
     {
         using var client = _factory.CreateClient();
 
@@ -69,7 +69,7 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
     }
 
     [Fact]
-    public async Task Mirth_xml_import_creates_library()
+    public async Task Mirth_Xml_Import_Creates_Library_Async()
     {
         using var client = _factory.CreateClient();
         const string xml = """
@@ -94,8 +94,8 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
         """;
 
         var importResp = await client.PostAsync(
-            "/smartconnect/v1/admin/code-template-libraries/import-mirth-xml",
-            new StringContent(xml, Encoding.UTF8, "application/xml"));
+            "/smartconnect/v1/admin/code-template-libraries/import-mirth-Xml",
+            new StringContent(xml, Encoding.UTF8, "application/Xml"));
         Assert.Equal(HttpStatusCode.OK, importResp.StatusCode);
 
         var getResp = await client.GetAsync("/smartconnect/v1/admin/code-template-libraries/77777777-7777-4777-8777-777777777777");

@@ -18,7 +18,7 @@ public sealed class AssignRoleToUserCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<AssignRoleToUserCommand>
 {
-    public async Task<Unit> Handle(AssignRoleToUserCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(AssignRoleToUserCommand request, CancellationToken cancellationToken)
     {
         var user = await users.GetAsync(request.UserId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"User '{request.UserId}' not found.");

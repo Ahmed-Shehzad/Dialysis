@@ -11,7 +11,7 @@ public sealed class StartSessionCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<StartSessionCommand, Unit>
 {
-    public async Task<Unit> Handle(StartSessionCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(StartSessionCommand request, CancellationToken cancellationToken)
     {
         var session = await sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Session '{request.SessionId}' not found.");

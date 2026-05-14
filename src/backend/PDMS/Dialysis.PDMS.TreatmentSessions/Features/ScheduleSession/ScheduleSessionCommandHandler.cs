@@ -10,7 +10,7 @@ public sealed class ScheduleSessionCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<ScheduleSessionCommand, Guid>
 {
-    public async Task<Guid> Handle(ScheduleSessionCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(ScheduleSessionCommand request, CancellationToken cancellationToken)
     {
         var prescription = new SessionPrescription(
             request.DialyzerModel,

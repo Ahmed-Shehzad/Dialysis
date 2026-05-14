@@ -13,7 +13,7 @@ public sealed class PatientAccessController(ICqrsGateway gateway) : HisHateoasCo
 {
     [HttpGet("patients/{patientId:guid}/portal-summary")]
     [ProducesResponseType(typeof(ResourceEnvelope<PatientPortalSummaryDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetPortalSummary(Guid patientId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPortalSummaryAsync(Guid patientId, CancellationToken cancellationToken)
     {
         var dto = await gateway
             .SendQueryAsync<GetPatientPortalSummaryQuery, PatientPortalSummaryDto>(

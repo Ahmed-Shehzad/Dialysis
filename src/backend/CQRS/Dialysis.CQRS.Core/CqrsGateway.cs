@@ -10,13 +10,13 @@ internal sealed class CqrsGateway(IIntercessor intercessor) : ICqrsGateway
         where TQuery : IQuery<TResponse>
     {
         ArgumentNullException.ThrowIfNull(query);
-        return intercessor.Send<TQuery, TResponse>(query, cancellationToken);
+        return intercessor.SendAsync<TQuery, TResponse>(query, cancellationToken);
     }
 
     public Task<TResponse> SendCommandAsync<TCommand, TResponse>(TCommand command, CancellationToken cancellationToken = default)
         where TCommand : ICommand<TResponse>
     {
         ArgumentNullException.ThrowIfNull(command);
-        return intercessor.Send<TCommand, TResponse>(command, cancellationToken);
+        return intercessor.SendAsync<TCommand, TResponse>(command, cancellationToken);
     }
 }

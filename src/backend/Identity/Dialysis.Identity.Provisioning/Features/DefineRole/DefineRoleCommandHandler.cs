@@ -10,7 +10,7 @@ public sealed class DefineRoleCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<DefineRoleCommand, Guid>
 {
-    public async Task<Guid> Handle(DefineRoleCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(DefineRoleCommand request, CancellationToken cancellationToken)
     {
         if (await roles.FindByCodeAsync(request.Code, cancellationToken).ConfigureAwait(false) is { } existing)
             return existing.Id;

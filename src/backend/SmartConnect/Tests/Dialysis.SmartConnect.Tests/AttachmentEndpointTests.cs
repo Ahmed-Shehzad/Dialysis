@@ -9,12 +9,12 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<Program> _factory ;
 
     public AttachmentEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task Get_metadata_then_bytes_round_trips()
+    public async Task Get_Metadata_Then_Bytes_Round_Trips_Async()
     {
         Attachment added;
         using (var scope = _factory.Services.CreateAsyncScope())
@@ -47,7 +47,7 @@ public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
-    public async Task Delete_removes_attachment()
+    public async Task Delete_Removes_Attachment_Async()
     {
         Attachment added;
         using (var scope = _factory.Services.CreateAsyncScope())
@@ -74,7 +74,7 @@ public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
-    public async Task List_for_message_returns_metadata_array()
+    public async Task List_For_Message_Returns_Metadata_Array_Async()
     {
         var messageId = Guid.CreateVersion7();
         using (var scope = _factory.Services.CreateAsyncScope())

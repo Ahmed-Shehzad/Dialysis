@@ -21,7 +21,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
 {
     [HttpPost("staff/{staffMemberId:guid}/primary-role")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> AssignStaffPrimaryRole(
+    public async Task<IActionResult> AssignStaffPrimaryRoleAsync(
         Guid staffMemberId,
         [FromBody] AssignStaffRoleBody body,
         CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
 
     [HttpPost("inventory/items/{inventoryItemId:guid}/movements")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> RecordInventoryMovement(
+    public async Task<IActionResult> RecordInventoryMovementAsync(
         Guid inventoryItemId,
         [FromBody] InventoryMovementBody body,
         CancellationToken cancellationToken)
@@ -52,7 +52,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
     /// <summary>RA Fig. 6 — Generic MIS → Finance/Reimbursement. Queues a payer-billing export for EHR to execute.</summary>
     [HttpPost("billing/export-jobs")]
     [ProducesResponseType(typeof(ResourceEnvelope<SubmitBillingExportJobResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> SubmitBillingExportJob(
+    public async Task<IActionResult> SubmitBillingExportJobAsync(
         [FromBody] SubmitBillingExportJobCommand command,
         CancellationToken cancellationToken)
     {
@@ -68,7 +68,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
     [HttpGet("billing/export-jobs/{id:guid}")]
     [ProducesResponseType(typeof(ResourceEnvelope<BillingExportJobStatusDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetBillingExportJob(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetBillingExportJobAsync(Guid id, CancellationToken cancellationToken)
     {
         var dto = await gateway
             .SendQueryAsync<GetBillingExportJobByIdQuery, BillingExportJobStatusDto?>(

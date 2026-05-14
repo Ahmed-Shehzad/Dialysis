@@ -11,7 +11,7 @@ namespace Dialysis.SmartConnect.Scripts;
 /// </summary>
 internal static class CodeTemplateJsBinder
 {
-    public async static Task PrependLinkedTemplatesAsync(
+    public static async Task PrependLinkedTemplatesAsync(
         Engine engine,
         ICodeTemplateLibraryRepository repository,
         Guid flowId,

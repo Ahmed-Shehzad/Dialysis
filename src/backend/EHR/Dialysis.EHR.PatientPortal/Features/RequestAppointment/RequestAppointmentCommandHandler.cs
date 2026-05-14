@@ -10,7 +10,7 @@ public sealed class RequestAppointmentCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RequestAppointmentCommand, Guid>
 {
-    public async Task<Guid> Handle(RequestAppointmentCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RequestAppointmentCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var portalRequest = PortalAppointmentRequest.Submit(

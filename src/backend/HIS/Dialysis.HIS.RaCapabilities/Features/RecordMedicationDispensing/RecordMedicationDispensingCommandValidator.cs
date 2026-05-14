@@ -5,7 +5,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RecordMedicationDispensing;
 
 public sealed class RecordMedicationDispensingCommandValidator : AbstractValidator<RecordMedicationDispensingCommand>
 {
-    private static readonly Regex BarcodePattern = new("^[A-Z0-9]{6,32}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex _barcodePattern = new("^[A-Z0-9]{6,32}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public RecordMedicationDispensingCommandValidator()
     {
@@ -14,7 +14,7 @@ public sealed class RecordMedicationDispensingCommandValidator : AbstractValidat
             .WithMessage("MedicationOrderId is required.");
 
         RuleFor(static c => c.BarcodeToken, nameof(RecordMedicationDispensingCommand.BarcodeToken))
-            .Must(static (_, v) => !string.IsNullOrWhiteSpace(v) && BarcodePattern.IsMatch(v))
+            .Must(static (_, v) => !string.IsNullOrWhiteSpace(v) && _barcodePattern.IsMatch(v))
             .WithMessage("BarcodeToken must be 6–32 uppercase alphanumeric characters.");
     }
 }

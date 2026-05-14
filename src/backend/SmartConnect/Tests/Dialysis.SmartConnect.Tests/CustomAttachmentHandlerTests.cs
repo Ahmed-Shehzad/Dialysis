@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class CustomAttachmentHandlerTests
 {
     [Fact]
-    public async Task Routes_to_registered_custom_kind()
+    public async Task Routes_To_Registered_Custom_Kind_Async()
     {
         var registry = new MutableFlowPluginRegistry();
         registry.RegisterAttachmentHandler(new EchoHandler());
@@ -38,7 +38,7 @@ public sealed class CustomAttachmentHandlerTests
     }
 
     [Fact]
-    public async Task Unknown_kind_returns_unchanged()
+    public async Task Unknown_Kind_Returns_Unchanged_Async()
     {
         var host = new CustomAttachmentHandlerHost(() => new MutableFlowPluginRegistry());
         var ctx = new AttachmentHandlerContext

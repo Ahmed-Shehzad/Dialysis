@@ -8,12 +8,12 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<Program> _factory ;
 
     public AlertEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task Post_then_get_round_trips_a_rule()
+    public async Task Post_Then_Get_Round_Trips_A_Rule_Async()
     {
         using var client = _factory.CreateClient();
         var id = Guid.CreateVersion7();
@@ -42,7 +42,7 @@ public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Fact]
-    public async Task Delete_returns_204_and_get_returns_404()
+    public async Task Delete_Returns_204_And_Get_Returns_404_Async()
     {
         using var client = _factory.CreateClient();
         var id = Guid.CreateVersion7();
@@ -61,7 +61,7 @@ public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Fact]
-    public async Task List_events_endpoint_returns_array()
+    public async Task List_Events_Endpoint_Returns_Array_Async()
     {
         using var client = _factory.CreateClient();
         var resp = await client.GetAsync("/smartconnect/v1/admin/alert-events?take=10");

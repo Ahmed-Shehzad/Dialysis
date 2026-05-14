@@ -17,12 +17,12 @@ internal sealed class RequestDispatcher<TRequest, TResponse>(
                 throw new IntercessorValidationException(result.Error);
         }
 
-        RequestHandlerDelegate<TResponse> next = () => handler.Handle(request, cancellationToken);
+        RequestHandlerDelegate<TResponse> next = () => handler.HandleAsync(request, cancellationToken);
         foreach (var behavior in behaviors.Reverse())
         {
             var captured = behavior;
             var previous = next;
-            next = () => captured.Handle(request, previous, cancellationToken);
+            next = () => captured.HandleAsync(request, previous, cancellationToken);
         }
 
         return await next().ConfigureAwait(false);

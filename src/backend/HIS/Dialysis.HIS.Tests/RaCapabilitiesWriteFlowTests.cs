@@ -12,7 +12,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task RegisterFinancialErpLink_persists_and_is_listed()
+    public async Task Registerfinancialerplink_Persists_And_Is_Listed_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
@@ -31,7 +31,7 @@ public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task RegisterFinancialErpLink_rejects_invalid_status()
+    public async Task Registerfinancialerplink_Rejects_Invalid_Status_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
@@ -43,7 +43,7 @@ public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task RecordMedicationDispensing_persists_and_is_listed()
+    public async Task Recordmedicationdispensing_Persists_And_Is_Listed_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
@@ -63,7 +63,7 @@ public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task RecordMedicationDispensing_rejects_lowercase_barcode()
+    public async Task Recordmedicationdispensing_Rejects_Lowercase_Barcode_Async()
     {
         using var scope = factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();

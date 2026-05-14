@@ -6,6 +6,6 @@ namespace Dialysis.HIS.PatientAccess.Features.GetPatientPortalSummary;
 public sealed class GetPatientPortalSummaryQueryHandler(IPatientPortalReadModel readModel)
     : IQueryHandler<GetPatientPortalSummaryQuery, PatientPortalSummaryDto>
 {
-    public Task<PatientPortalSummaryDto> Handle(GetPatientPortalSummaryQuery request, CancellationToken cancellationToken)
+    public Task<PatientPortalSummaryDto> HandleAsync(GetPatientPortalSummaryQuery request, CancellationToken cancellationToken)
         => readModel.GetSummaryAsync(request.PatientId, cancellationToken);
 }

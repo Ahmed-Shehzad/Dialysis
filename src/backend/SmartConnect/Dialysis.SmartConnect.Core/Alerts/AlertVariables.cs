@@ -8,13 +8,13 @@ namespace Dialysis.SmartConnect.Alerts;
 /// </summary>
 public static class AlertVariables
 {
-    private static readonly Regex TokenRegex = new(@"\$\{(?<name>[A-Za-z][A-Za-z0-9_]*)\}",
+    private static readonly Regex _tokenRegex = new(@"\$\{(?<name>[A-Za-z][A-Za-z0-9_]*)\}",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static string Render(string? template, AlertEvent evt, AlertRule rule)
     {
         if (string.IsNullOrEmpty(template)) return string.Empty;
-        return TokenRegex.Replace(template, m => Lookup(m.Groups["name"].Value, evt, rule) ?? m.Value);
+        return _tokenRegex.Replace(template, m => Lookup(m.Groups["name"].Value, evt, rule) ?? m.Value);
     }
 
     private static string? Lookup(string name, AlertEvent evt, AlertRule rule) => name switch

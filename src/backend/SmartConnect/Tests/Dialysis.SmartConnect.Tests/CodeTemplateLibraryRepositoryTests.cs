@@ -11,17 +11,17 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class CodeTemplateLibraryRepositoryTests
 {
     [Fact]
-    public async Task Upsert_and_get_round_trip_preserves_templates_and_link_metadata()
+    public async Task Upsert_And_Get_Round_Trip_Preserves_Templates_And_Link_Metadata_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
 
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
-        var library = NewLibrary(libraryId, linkedFlowIds: [flowId], templates:
+        var library = New_Library(libraryId, linkedFlowIds: [flowId], templates:
             [
-                NewTemplate(libraryId, "helpA", "function helpA(){ return 'A'; }", [CodeTemplateContext.SourceTransformer]),
-                NewTemplate(libraryId, "helpB", "function helpB(){ return 'B'; }", [CodeTemplateContext.DestinationTransformer]),
+                New_Template(libraryId, "helpA", "function helpA(){ return 'A'; }", [CodeTemplateContext.SourceTransformer]),
+                New_Template(libraryId, "helpB", "function helpB(){ return 'B'; }", [CodeTemplateContext.DestinationTransformer]),
             ]);
 
         await repo.UpsertAsync(library, CancellationToken.None);
@@ -36,15 +36,15 @@ public sealed class CodeTemplateLibraryRepositoryTests
     }
 
     [Fact]
-    public async Task Delete_cascades_templates()
+    public async Task Delete_Cascades_Templates_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
         var db = sp.GetRequiredService<SmartConnectDbContext>();
 
         var libraryId = Guid.CreateVersion7();
         await repo.UpsertAsync(
-            NewLibrary(libraryId, templates: [NewTemplate(libraryId, "t1", "x", [CodeTemplateContext.SourceTransformer])]),
+            New_Library(libraryId, templates: [New_Template(libraryId, "t1", "x", [CodeTemplateContext.SourceTransformer])]),
             CancellationToken.None);
         Assert.Single(db.CodeTemplates);
 
@@ -54,17 +54,17 @@ public sealed class CodeTemplateLibraryRepositoryTests
     }
 
     [Fact]
-    public async Task GetLinkedTemplatesForFlow_matches_by_library_LinkedFlowIds()
+    public async Task Getlinkedtemplatesforflow_Matches_By_Library_Linkedflowids_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
 
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
-        await SeedFlowAsync(sp, flowId, pipeline: new IntegrationFlowPipelineDefinition());
+        await Seedflow_Async(sp, flowId, pipeline: new IntegrationFlowPipelineDefinition());
         await repo.UpsertAsync(
-            NewLibrary(libraryId, linkedFlowIds: [flowId],
-                templates: [NewTemplate(libraryId, "h", "function h(){}", [CodeTemplateContext.SourceTransformer])]),
+            New_Library(libraryId, linkedFlowIds: [flowId],
+                templates: [New_Template(libraryId, "h", "function h(){}", [CodeTemplateContext.SourceTransformer])]),
             CancellationToken.None);
 
         var matched = await repo.GetLinkedTemplatesForFlowAsync(flowId, CodeTemplateContext.SourceTransformer, CancellationToken.None);
@@ -74,19 +74,19 @@ public sealed class CodeTemplateLibraryRepositoryTests
     }
 
     [Fact]
-    public async Task GetLinkedTemplatesForFlow_matches_by_pipeline_LinkedLibraryIds()
+    public async Task Getlinkedtemplatesforflow_Matches_By_Pipeline_Linkedlibraryids_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
 
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
         var pipeline = new IntegrationFlowPipelineDefinition { LinkedLibraryIds = { libraryId } };
-        await SeedFlowAsync(sp, flowId, pipeline);
+        await Seedflow_Async(sp, flowId, pipeline);
 
         await repo.UpsertAsync(
-            NewLibrary(libraryId, linkedFlowIds: [],
-                templates: [NewTemplate(libraryId, "h", "function h(){}", [CodeTemplateContext.SourceTransformer])]),
+            New_Library(libraryId, linkedFlowIds: [],
+                templates: [New_Template(libraryId, "h", "function h(){}", [CodeTemplateContext.SourceTransformer])]),
             CancellationToken.None);
 
         var matched = await repo.GetLinkedTemplatesForFlowAsync(flowId, CodeTemplateContext.SourceTransformer, CancellationToken.None);
@@ -94,19 +94,19 @@ public sealed class CodeTemplateLibraryRepositoryTests
     }
 
     [Fact]
-    public async Task GetLinkedTemplatesForFlow_filters_by_context()
+    public async Task Getlinkedtemplatesforflow_Filters_By_Context_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var repo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
 
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
-        await SeedFlowAsync(sp, flowId, new IntegrationFlowPipelineDefinition());
+        await Seedflow_Async(sp, flowId, new IntegrationFlowPipelineDefinition());
 
-        await repo.UpsertAsync(NewLibrary(libraryId, linkedFlowIds: [flowId], templates:
+        await repo.UpsertAsync(New_Library(libraryId, linkedFlowIds: [flowId], templates:
             [
-                NewTemplate(libraryId, "src", "x", [CodeTemplateContext.SourceTransformer]),
-                NewTemplate(libraryId, "dst", "x", [CodeTemplateContext.DestinationTransformer]),
+                New_Template(libraryId, "src", "x", [CodeTemplateContext.SourceTransformer]),
+                New_Template(libraryId, "dst", "x", [CodeTemplateContext.DestinationTransformer]),
             ]), CancellationToken.None);
 
         var srcMatches = await repo.GetLinkedTemplatesForFlowAsync(flowId, CodeTemplateContext.SourceTransformer, CancellationToken.None);
@@ -120,14 +120,14 @@ public sealed class CodeTemplateLibraryRepositoryTests
 
     // ---- helpers ----
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_ctlib_{Guid.NewGuid():N}");
         return services.BuildServiceProvider();
     }
 
-    private async static Task SeedFlowAsync(IServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private static async Task Seedflow_Async(IServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         var db = sp.GetRequiredService<SmartConnectDbContext>();
         db.IntegrationFlows.Add(new IntegrationFlowEntity
@@ -140,7 +140,7 @@ public sealed class CodeTemplateLibraryRepositoryTests
         await db.SaveChangesAsync();
     }
 
-    private static CodeTemplateLibrary NewLibrary(
+    private static CodeTemplateLibrary New_Library(
         Guid id,
         string name = "My lib",
         IReadOnlyList<Guid>? linkedFlowIds = null,
@@ -154,7 +154,7 @@ public sealed class CodeTemplateLibraryRepositoryTests
             LastModifiedUtc = DateTimeOffset.UtcNow,
         };
 
-    private static CodeTemplate NewTemplate(
+    private static CodeTemplate New_Template(
         Guid libraryId,
         string name,
         string code,

@@ -14,11 +14,11 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class FlowRuntimeEngineAttachmentTests
 {
     [Fact]
-    public async Task Regex_handler_extracts_and_reattach_route_inflates_outbound()
+    public async Task Regex_Handler_Extracts_And_Reattach_Route_Inflates_Outbound_Async()
     {
-        var (sp, capture) = await BuildAsync();
+        var (sp, capture) = await Build_Async();
         var flowId = Guid.CreateVersion7();
-        await SeedFlowAsync(sp, flowId, new IntegrationFlowPipelineDefinition
+        await Seedflow_Async(sp, flowId, new IntegrationFlowPipelineDefinition
         {
             AttachmentHandler = new AttachmentHandlerSlot
             {
@@ -77,11 +77,11 @@ public sealed class FlowRuntimeEngineAttachmentTests
     }
 
     [Fact]
-    public async Task No_handler_slot_passes_message_through_unchanged()
+    public async Task No_Handler_Slot_Passes_Message_Through_Unchanged_Async()
     {
-        var (sp, capture) = await BuildAsync();
+        var (sp, capture) = await Build_Async();
         var flowId = Guid.CreateVersion7();
-        await SeedFlowAsync(sp, flowId, new IntegrationFlowPipelineDefinition
+        await Seedflow_Async(sp, flowId, new IntegrationFlowPipelineDefinition
         {
             RouteFilters = [new RouteFilterSlot { Kind = AllowAllRouteFilter.KindValue }],
             OutboundRoutes =
@@ -108,7 +108,7 @@ public sealed class FlowRuntimeEngineAttachmentTests
         Assert.Equal("plain", Encoding.UTF8.GetString(capture.Sent[0].Payload.Span));
     }
 
-    private async static Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> BuildAsync()
+    private static async Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> Build_Async()
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
@@ -122,7 +122,7 @@ public sealed class FlowRuntimeEngineAttachmentTests
         return (sp, capture);
     }
 
-    private async static Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private static async Task Seedflow_Async(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

@@ -14,7 +14,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class ManagerDashboardFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task Snapshot_counts_queued_billing_and_open_quality_tasks_and_echoes_focus()
+    public async Task Snapshot_Counts_Queued_Billing_And_Open_Quality_Tasks_And_Echoes_Focus_Async()
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();

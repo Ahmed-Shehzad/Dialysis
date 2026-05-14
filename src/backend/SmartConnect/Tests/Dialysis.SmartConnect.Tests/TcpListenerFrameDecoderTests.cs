@@ -7,7 +7,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class TcpListenerFrameDecoderTests
 {
     [Fact]
-    public void LineFeed_extracts_frame_up_to_LF()
+    public void Line_Feed_Extracts_Frame_Up_To_Lf()
     {
         var data = "hello\nworld\n"u8.ToArray();
         var buffer = new ReadOnlySequence<byte>(data);
@@ -19,7 +19,7 @@ public sealed class TcpListenerFrameDecoderTests
     }
 
     [Fact]
-    public void LineFeed_returns_false_when_incomplete()
+    public void Line_Feed_Returns_False_When_Incomplete()
     {
         var data = "no newline"u8.ToArray();
         var buffer = new ReadOnlySequence<byte>(data);
@@ -30,7 +30,7 @@ public sealed class TcpListenerFrameDecoderTests
     }
 
     [Fact]
-    public void Mllp_extracts_frame_between_markers()
+    public void Mllp_Extracts_Frame_Between_Markers()
     {
         // 0x0B + payload + 0x1C + 0x0D
         var payload = "MSH|^~\\&|"u8.ToArray();
@@ -47,7 +47,7 @@ public sealed class TcpListenerFrameDecoderTests
     }
 
     [Fact]
-    public void LengthPrefixed_extracts_frame()
+    public void Length_Prefixed_Extracts_Frame()
     {
         var payload = "test data"u8.ToArray();
         var lenBytes = new byte[4];
@@ -62,7 +62,7 @@ public sealed class TcpListenerFrameDecoderTests
     }
 
     [Fact]
-    public void LengthPrefixed_rejects_oversized_message()
+    public void Length_Prefixed_Rejects_Oversized_Message()
     {
         var payload = "test data"u8.ToArray();
         var lenBytes = new byte[4];
@@ -77,7 +77,7 @@ public sealed class TcpListenerFrameDecoderTests
     }
 
     [Fact]
-    public void None_returns_entire_buffer_up_to_max()
+    public void None_Returns_Entire_Buffer_Up_To_Max()
     {
         var data = "abcdefgh"u8.ToArray();
         var buffer = new ReadOnlySequence<byte>(data);

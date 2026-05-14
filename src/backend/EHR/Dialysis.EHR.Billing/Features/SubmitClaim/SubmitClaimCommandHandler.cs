@@ -13,7 +13,7 @@ public sealed class SubmitClaimCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<SubmitClaimCommand, Guid>
 {
-    public async Task<Guid> Handle(SubmitClaimCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(SubmitClaimCommand request, CancellationToken cancellationToken)
     {
         var payer = await payers.GetAsync(request.PayerId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Payer '{request.PayerId}' not found.");

@@ -15,9 +15,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class JavascriptTransformStageCodeTemplatesTests
 {
     [Fact]
-    public async Task User_script_calls_function_defined_in_linked_library()
+    public async Task User_Script_Calls_Function_Defined_In_Linked_Library_Async()
     {
-        var (sp, capture) = await BuildAsync();
+        var (sp, capture) = await Build_Async();
 
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
@@ -43,7 +43,7 @@ public sealed class JavascriptTransformStageCodeTemplatesTests
         }, CancellationToken.None);
 
         var transformScript = JsonSerializer.Serialize(new { script = "String(double(21))" });
-        await SeedFlowAsync(sp, flowId, new IntegrationFlowPipelineDefinition
+        await Seedflow_Async(sp, flowId, new IntegrationFlowPipelineDefinition
         {
             RouteFilters = [new RouteFilterSlot { Kind = AllowAllRouteFilter.KindValue }],
             OutboundRoutes =
@@ -78,7 +78,7 @@ public sealed class JavascriptTransformStageCodeTemplatesTests
         Assert.Equal("42", Encoding.UTF8.GetString(capture.Sent[0].Payload.Span));
     }
 
-    private async static Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> BuildAsync()
+    private static async Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> Build_Async()
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
@@ -92,7 +92,7 @@ public sealed class JavascriptTransformStageCodeTemplatesTests
         return (sp, capture);
     }
 
-    private async static Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private static async Task Seedflow_Async(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

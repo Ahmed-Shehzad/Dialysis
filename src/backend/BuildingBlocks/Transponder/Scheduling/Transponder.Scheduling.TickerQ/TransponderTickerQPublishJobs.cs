@@ -15,7 +15,7 @@ public sealed class TransponderTickerQPublishJobs(
     public const string FunctionName = "Transponder.PublishScheduledMessage";
 
     [TickerFunction(FunctionName)]
-    public async Task PublishScheduledMessage(
+    public async Task PublishScheduledMessageAsync(
         TickerFunctionContext<TransponderScheduledEnvelope> context,
         CancellationToken cancellationToken)
     {

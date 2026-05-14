@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
 public sealed class RegisterEhrDocumentExchangeCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterEhrDocumentExchangeCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterEhrDocumentExchangeCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterEhrDocumentExchangeCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var at = request.ExchangedAtUtc ?? DateTime.UtcNow;

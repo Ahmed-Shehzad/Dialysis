@@ -10,7 +10,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class IteratorRouteFilterTests
 {
     [Fact]
-    public async Task Allows_when_any_OBX_segment_matches()
+    public async Task Allows_When_Any_Obx_Segment_Matches_Async()
     {
         // Child filter: javascript returning true when payloadText contains "MATCH".
         var paramsJson = """
@@ -24,19 +24,19 @@ public sealed class IteratorRouteFilterTests
         }
         """;
 
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "OBX|1|NM|1234^^MDC||no-match-here||mm[Hg]\r" +
             "OBX|2|NM|1235^^MDC||MATCH-here||mm[Hg]");
         msg = msg.WithMetadata(IteratorRouteFilter.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildFilter().EvaluateAsync(msg, CancellationToken.None);
+        var result = await Build_Filter().EvaluateAsync(msg, CancellationToken.None);
 
         Assert.Equal(RouteFilterDisposition.Allow, result.Disposition);
     }
 
     [Fact]
-    public async Task Drops_when_no_segments_match()
+    public async Task Drops_When_No_Segments_Match_Async()
     {
         var paramsJson = """
         {
@@ -49,19 +49,19 @@ public sealed class IteratorRouteFilterTests
         }
         """;
 
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "OBX|1|NM|1234^^MDC||value-a\r" +
             "OBX|2|NM|1235^^MDC||value-b");
         msg = msg.WithMetadata(IteratorRouteFilter.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildFilter().EvaluateAsync(msg, CancellationToken.None);
+        var result = await Build_Filter().EvaluateAsync(msg, CancellationToken.None);
 
         Assert.Equal(RouteFilterDisposition.Drop, result.Disposition);
     }
 
     [Fact]
-    public async Task MinMatches_requires_threshold_matches()
+    public async Task Minmatches_Requires_Threshold_Matches_Async()
     {
         // 2 matches present, threshold 3 → drop.
         var paramsJson = """
@@ -75,20 +75,20 @@ public sealed class IteratorRouteFilterTests
         }
         """;
 
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "OBX|1|NM||MATCH-a\r" +
             "OBX|2|NM||MATCH-b\r" +
             "OBX|3|NM||no-match");
         msg = msg.WithMetadata(IteratorRouteFilter.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildFilter().EvaluateAsync(msg, CancellationToken.None);
+        var result = await Build_Filter().EvaluateAsync(msg, CancellationToken.None);
 
         Assert.Equal(RouteFilterDisposition.Drop, result.Disposition);
     }
 
     [Fact]
-    public async Task Empty_iterable_drops()
+    public async Task Empty_Iterable_Drops_Async()
     {
         var paramsJson = """
         {
@@ -97,17 +97,17 @@ public sealed class IteratorRouteFilterTests
         }
         """;
 
-        var msg = WrapHl7(
+        var msg = Wrap_Hl7(
             "MSH|^~\\&|SRC|FAC|DEST|FAC|202601010000||ORU^R01|1|P|2.5\r" +
             "PID|||MRN-1");
         msg = msg.WithMetadata(IteratorRouteFilter.ParametersMetadataKey, paramsJson);
 
-        var result = await BuildFilter().EvaluateAsync(msg, CancellationToken.None);
+        var result = await Build_Filter().EvaluateAsync(msg, CancellationToken.None);
 
         Assert.Equal(RouteFilterDisposition.Drop, result.Disposition);
     }
 
-    private static IteratorRouteFilter BuildFilter()
+    private static IteratorRouteFilter Build_Filter()
     {
         var services = new ServiceCollection();
         var registry = new MutableFlowPluginRegistry();
@@ -118,7 +118,7 @@ public sealed class IteratorRouteFilterTests
         return new IteratorRouteFilter(sp);
     }
 
-    private static IntegrationMessage WrapHl7(string payload) =>
+    private static IntegrationMessage Wrap_Hl7(string payload) =>
         new()
         {
             Id = Guid.NewGuid(),

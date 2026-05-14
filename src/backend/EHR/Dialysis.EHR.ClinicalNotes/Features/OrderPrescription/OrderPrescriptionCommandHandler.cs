@@ -10,7 +10,7 @@ public sealed class OrderPrescriptionCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<OrderPrescriptionCommand, Guid>
 {
-    public async Task<Guid> Handle(OrderPrescriptionCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(OrderPrescriptionCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var prescription = Prescription.Order(

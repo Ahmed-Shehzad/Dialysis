@@ -9,18 +9,18 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class CodeTemplateLinkageServiceTests
 {
     [Fact]
-    public async Task LibraryWrite_adds_libraryId_to_each_newly_linked_flow_pipeline()
+    public async Task Librarywrite_Adds_Libraryid_To_Each_Newly_Linked_Flow_Pipeline_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var flowRepo = sp.GetRequiredService<IIntegrationFlowRepository>();
         var libRepo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
         var service = new CodeTemplateLinkageService(libRepo, flowRepo);
 
         var flowId = Guid.CreateVersion7();
-        await flowRepo.AddAsync(NewFlow(flowId), CancellationToken.None);
+        await flowRepo.AddAsync(New_Flow(flowId), CancellationToken.None);
 
         var libraryId = Guid.CreateVersion7();
-        await libRepo.UpsertAsync(NewLibrary(libraryId, linkedFlowIds: [flowId]), CancellationToken.None);
+        await libRepo.UpsertAsync(New_Library(libraryId, linkedFlowIds: [flowId]), CancellationToken.None);
 
         await service.ReconcileLibraryWriteAsync(libraryId, [], [flowId], CancellationToken.None);
 
@@ -29,9 +29,9 @@ public sealed class CodeTemplateLinkageServiceTests
     }
 
     [Fact]
-    public async Task LibraryWrite_removes_libraryId_from_dropped_flow()
+    public async Task Librarywrite_Removes_Libraryid_From_Dropped_Flow_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var flowRepo = sp.GetRequiredService<IIntegrationFlowRepository>();
         var libRepo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
         var service = new CodeTemplateLinkageService(libRepo, flowRepo);
@@ -39,8 +39,8 @@ public sealed class CodeTemplateLinkageServiceTests
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
         var pipeline = new IntegrationFlowPipelineDefinition { LinkedLibraryIds = { libraryId } };
-        await flowRepo.AddAsync(NewFlow(flowId, pipeline), CancellationToken.None);
-        await libRepo.UpsertAsync(NewLibrary(libraryId, linkedFlowIds: []), CancellationToken.None);
+        await flowRepo.AddAsync(New_Flow(flowId, pipeline), CancellationToken.None);
+        await libRepo.UpsertAsync(New_Library(libraryId, linkedFlowIds: []), CancellationToken.None);
 
         await service.ReconcileLibraryWriteAsync(libraryId, [flowId], [], CancellationToken.None);
 
@@ -49,17 +49,17 @@ public sealed class CodeTemplateLinkageServiceTests
     }
 
     [Fact]
-    public async Task FlowWrite_mirrors_link_into_each_library_LinkedFlowIds()
+    public async Task Flowwrite_Mirrors_Link_Into_Each_Library_Linkedflowids_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var flowRepo = sp.GetRequiredService<IIntegrationFlowRepository>();
         var libRepo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
         var service = new CodeTemplateLinkageService(libRepo, flowRepo);
 
         var libraryId = Guid.CreateVersion7();
         var flowId = Guid.CreateVersion7();
-        await libRepo.UpsertAsync(NewLibrary(libraryId, linkedFlowIds: []), CancellationToken.None);
-        await flowRepo.AddAsync(NewFlow(flowId), CancellationToken.None);
+        await libRepo.UpsertAsync(New_Library(libraryId, linkedFlowIds: []), CancellationToken.None);
+        await flowRepo.AddAsync(New_Flow(flowId), CancellationToken.None);
 
         await service.ReconcileFlowWriteAsync(flowId, [], [libraryId], CancellationToken.None);
 
@@ -68,20 +68,20 @@ public sealed class CodeTemplateLinkageServiceTests
     }
 
     [Fact]
-    public async Task ApplyAutoLink_links_auto_libraries_to_new_flow()
+    public async Task Applyautolink_Links_Auto_Libraries_To_New_Flow_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var flowRepo = sp.GetRequiredService<IIntegrationFlowRepository>();
         var libRepo = sp.GetRequiredService<ICodeTemplateLibraryRepository>();
         var service = new CodeTemplateLinkageService(libRepo, flowRepo);
 
         var autoLibId = Guid.CreateVersion7();
         var nonAutoLibId = Guid.CreateVersion7();
-        await libRepo.UpsertAsync(NewLibrary(autoLibId, autoLinkNewFlows: true), CancellationToken.None);
-        await libRepo.UpsertAsync(NewLibrary(nonAutoLibId, autoLinkNewFlows: false), CancellationToken.None);
+        await libRepo.UpsertAsync(New_Library(autoLibId, autoLinkNewFlows: true), CancellationToken.None);
+        await libRepo.UpsertAsync(New_Library(nonAutoLibId, autoLinkNewFlows: false), CancellationToken.None);
 
         var flowId = Guid.CreateVersion7();
-        await flowRepo.AddAsync(NewFlow(flowId), CancellationToken.None);
+        await flowRepo.AddAsync(New_Flow(flowId), CancellationToken.None);
 
         await service.ApplyAutoLinkOnFlowCreateAsync(flowId, CancellationToken.None);
 
@@ -93,14 +93,14 @@ public sealed class CodeTemplateLinkageServiceTests
         Assert.Contains(flowId, autoLib!.LinkedFlowIds);
     }
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_link_{Guid.NewGuid():N}");
         return services.BuildServiceProvider();
     }
 
-    private static IntegrationFlow NewFlow(Guid id, IntegrationFlowPipelineDefinition? pipeline = null) =>
+    private static IntegrationFlow New_Flow(Guid id, IntegrationFlowPipelineDefinition? pipeline = null) =>
         new()
         {
             Id = id,
@@ -109,7 +109,7 @@ public sealed class CodeTemplateLinkageServiceTests
             Pipeline = pipeline ?? new IntegrationFlowPipelineDefinition(),
         };
 
-    private static CodeTemplateLibrary NewLibrary(
+    private static CodeTemplateLibrary New_Library(
         Guid id,
         IReadOnlyList<Guid>? linkedFlowIds = null,
         bool autoLinkNewFlows = false) =>

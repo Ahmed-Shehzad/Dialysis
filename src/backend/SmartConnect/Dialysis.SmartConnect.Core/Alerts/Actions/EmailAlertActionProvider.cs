@@ -12,7 +12,7 @@ public sealed class EmailAlertActionProvider : IAlertActionProvider
 {
     public const string KindValue = "email";
 
-    private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
 
     public string Kind => KindValue;
 
@@ -30,7 +30,7 @@ public sealed class EmailAlertActionProvider : IAlertActionProvider
         {
             props = string.IsNullOrWhiteSpace(slot.PropertiesJson)
                 ? null
-                : JsonSerializer.Deserialize<EmailProperties>(slot.PropertiesJson, JsonOpts);
+                : JsonSerializer.Deserialize<EmailProperties>(slot.PropertiesJson, _jsonOpts);
         }
         catch (JsonException ex)
         {

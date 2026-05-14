@@ -15,15 +15,15 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AddAttachmentJsApiTests
 {
     [Fact]
-    public async Task Transform_stage_addAttachment_persists_attachment_and_returns_token()
+    public async Task Transform_Stage_Addattachment_Persists_Attachment_And_Returns_Token_Async()
     {
-        var (sp, capture) = await BuildAsync();
+        var (sp, capture) = await Build_Async();
         var flowId = Guid.CreateVersion7();
         var script = """
             var token = addAttachment('hello-bytes', 'text/plain');
             'wrapped:' + token;
         """;
-        await SeedFlowAsync(sp, flowId, new IntegrationFlowPipelineDefinition
+        await Seedflow_Async(sp, flowId, new IntegrationFlowPipelineDefinition
         {
             RouteFilters = [new RouteFilterSlot { Kind = AllowAllRouteFilter.KindValue }],
             OutboundRoutes =
@@ -70,7 +70,7 @@ public sealed class AddAttachmentJsApiTests
         Assert.Equal("text/plain", stored[0].MimeType);
     }
 
-    private async static Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> BuildAsync()
+    private static async Task<(ServiceProvider sp, CapturingOutboundAdapter capture)> Build_Async()
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
@@ -84,7 +84,7 @@ public sealed class AddAttachmentJsApiTests
         return (sp, capture);
     }
 
-    private async static Task SeedFlowAsync(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private static async Task Seedflow_Async(ServiceProvider sp, Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

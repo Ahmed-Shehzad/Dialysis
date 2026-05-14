@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AttachmentReferenceTests
 {
     [Fact]
-    public void Format_then_parse_roundtrips()
+    public void Format_Then_Parse_Roundtrips()
     {
         var id = Guid.Parse("00000000-0000-4000-8000-000000000abc");
         var token = AttachmentReference.Format(id);
@@ -16,7 +16,7 @@ public sealed class AttachmentReferenceTests
     }
 
     [Fact]
-    public void TryParse_rejects_malformed()
+    public void Try_Parse_Rejects_Malformed()
     {
         Assert.False(AttachmentReference.TryParseToken("${ATTACH:not-a-guid}", out _));
         Assert.False(AttachmentReference.TryParseToken("${ATTACH:}", out _));
@@ -24,7 +24,7 @@ public sealed class AttachmentReferenceTests
     }
 
     [Fact]
-    public void Scan_finds_multiple_tokens_in_order()
+    public void Scan_Finds_Multiple_Tokens_In_Order()
     {
         var a = AttachmentReference.Format(Guid.Parse("11111111-1111-4111-8111-111111111111"));
         var b = AttachmentReference.Format(Guid.Parse("22222222-2222-4222-8222-222222222222"));
@@ -37,7 +37,7 @@ public sealed class AttachmentReferenceTests
     }
 
     [Fact]
-    public void Scan_skips_unparseable_tokens()
+    public void Scan_Skips_Unparseable_Tokens()
     {
         var valid = AttachmentReference.Format(Guid.Parse("11111111-1111-4111-8111-111111111111"));
         var text = $"${{ATTACH:not-a-guid}} {valid}";

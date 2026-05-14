@@ -4,7 +4,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.UpdateQualityWorkflowTaskStatus;
 
 public sealed class UpdateQualityWorkflowTaskStatusCommandValidator : AbstractValidator<UpdateQualityWorkflowTaskStatusCommand>
 {
-    private static readonly string[] Allowed =
+    private static readonly string[] _allowed =
     [
         "open", "in_progress", "closed", "cancelled",
     ];
@@ -16,7 +16,7 @@ public sealed class UpdateQualityWorkflowTaskStatusCommandValidator : AbstractVa
             .WithMessage("TaskId must be set.");
 
         RuleFor(static c => c.NewStatusCode, nameof(UpdateQualityWorkflowTaskStatusCommand.NewStatusCode))
-            .Must(static (_, code) => !string.IsNullOrWhiteSpace(code) && Allowed.Any(a => string.Equals(a, code.Trim(), StringComparison.OrdinalIgnoreCase)))
-            .WithMessage($"NewStatusCode must be one of: {string.Join(", ", Allowed)}.");
+            .Must(static (_, code) => !string.IsNullOrWhiteSpace(code) && _allowed.Any(a => string.Equals(a, code.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .WithMessage($"NewStatusCode must be one of: {string.Join(", ", _allowed)}.");
     }
 }

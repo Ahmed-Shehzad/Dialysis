@@ -8,7 +8,7 @@ namespace Dialysis.HIS.Operations.Features.AssignStaffRole;
 public sealed class AssignStaffPrimaryRoleCommandHandler(IStaffRepository staff, IUnitOfWork unitOfWork)
     : ICommandHandler<AssignStaffPrimaryRoleCommand>
 {
-    public async Task<Unit> Handle(AssignStaffPrimaryRoleCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(AssignStaffPrimaryRoleCommand request, CancellationToken cancellationToken)
     {
         var member = await staff.GetAsync(request.StaffMemberId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Staff member not found.");

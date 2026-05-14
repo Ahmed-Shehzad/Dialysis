@@ -16,7 +16,7 @@ public sealed class DeviceIntegrationController(ICqrsGateway gateway) : HisHateo
     [HttpPost("device-readings")]
     [EnableRateLimiting("DeviceIngest")]
     [ProducesResponseType(typeof(ResourceEnvelope<IngestDeviceReadingResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> IngestDeviceReading([FromBody] IngestDeviceReadingCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> IngestDeviceReadingAsync([FromBody] IngestDeviceReadingCommand command, CancellationToken cancellationToken)
     {
         var id = await gateway.SendCommandAsync<IngestDeviceReadingCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return CreatedResource($"{Request.Path}/{id}", new IngestDeviceReadingResponse(id), LinkCapabilitiesIndex());

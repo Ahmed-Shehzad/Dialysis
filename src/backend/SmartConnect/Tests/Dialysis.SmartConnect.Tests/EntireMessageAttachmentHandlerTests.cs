@@ -8,11 +8,11 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class EntireMessageAttachmentHandlerTests
 {
     [Fact]
-    public async Task Entire_payload_becomes_one_attachment_with_token_payload()
+    public async Task Entire_Payload_Becomes_One_Attachment_With_Token_Payload_Async()
     {
         var handler = new EntireMessageAttachmentHandler();
         var bytes = Encoding.UTF8.GetBytes("the whole message");
-        var msg = NewMessage(bytes);
+        var msg = New_Message(bytes);
 
         var ctx = new AttachmentHandlerContext
         {
@@ -31,7 +31,7 @@ public sealed class EntireMessageAttachmentHandlerTests
     }
 
     [Fact]
-    public async Task Properties_override_mimeType()
+    public async Task Properties_Override_Mimetype_Async()
     {
         var handler = new EntireMessageAttachmentHandler();
         var ctx = new AttachmentHandlerContext
@@ -42,11 +42,11 @@ public sealed class EntireMessageAttachmentHandlerTests
             PropertiesJson = """{"mimeType":"application/pdf"}""",
             Store = new StubStore(),
         };
-        var result = await handler.ExtractAsync(NewMessage(Encoding.UTF8.GetBytes("x")), ctx, CancellationToken.None);
+        var result = await handler.ExtractAsync(New_Message(Encoding.UTF8.GetBytes("x")), ctx, CancellationToken.None);
         Assert.Equal("application/pdf", result.Attachments[0].MimeType);
     }
 
-    private static IntegrationMessage NewMessage(byte[] payload) => new()
+    private static IntegrationMessage New_Message(byte[] payload) => new()
     {
         Id = Guid.CreateVersion7(),
         FlowId = Guid.CreateVersion7(),

@@ -12,7 +12,7 @@ public sealed class AuthorizationPipelineBehavior<TRequest, TResponse>(
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>, IPermissionedCommand
 {
-    public async Task<TResponse> Handle(
+    public async Task<TResponse> HandleAsync(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)

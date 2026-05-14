@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class MirthXmlCodeTemplateImporterTests
 {
     [Fact]
-    public void Imports_one_library_with_two_templates()
+    public void Imports_One_Library_With_Two_Templates()
     {
         const string xml = """
         <list>
@@ -62,7 +62,7 @@ public sealed class MirthXmlCodeTemplateImporterTests
     }
 
     [Fact]
-    public void Imports_numeric_context_ordinals_as_fallback()
+    public void Imports_Numeric_Context_Ordinals_As_Fallback()
     {
         const string xml = """
         <list>
@@ -93,14 +93,14 @@ public sealed class MirthXmlCodeTemplateImporterTests
     }
 
     [Fact]
-    public void Malformed_xml_throws_ArgumentException()
+    public void Malformed_Xml_Throws_Argument_Exception()
     {
         var importer = new MirthXmlCodeTemplateImporter();
         Assert.Throws<ArgumentException>(() => importer.Import("<not closed"));
     }
 
     [Fact]
-    public void Empty_xml_throws_ArgumentException()
+    public void Empty_Xml_Throws_Argument_Exception()
     {
         var importer = new MirthXmlCodeTemplateImporter();
         Assert.Throws<ArgumentException>(() => importer.Import(""));

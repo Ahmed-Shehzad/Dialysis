@@ -13,7 +13,7 @@ public sealed class ClaimSubmittedConsumer(
     TimeProvider timeProvider)
     : IConsumer<ClaimSubmittedIntegrationEvent>
 {
-    public async Task Handle(ConsumeContext<ClaimSubmittedIntegrationEvent> context)
+    public async Task HandleAsync(ConsumeContext<ClaimSubmittedIntegrationEvent> context)
     {
         var message = context.Message;
         var id = Guid.CreateVersion7();

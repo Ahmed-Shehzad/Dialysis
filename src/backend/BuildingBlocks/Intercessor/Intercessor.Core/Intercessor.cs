@@ -4,7 +4,7 @@ namespace Dialysis.BuildingBlocks.Intercessor;
 
 internal sealed class Intercessor(IServiceProvider services) : IIntercessor
 {
-    public Task<TResponse> Send<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
+    public Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken cancellationToken = default)
         where TRequest : IRequest<TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);

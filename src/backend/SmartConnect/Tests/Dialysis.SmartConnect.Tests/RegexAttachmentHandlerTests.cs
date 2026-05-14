@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class RegexAttachmentHandlerTests
 {
     [Fact]
-    public async Task Extracts_each_capture_group_as_separate_attachment()
+    public async Task Extracts_Each_Capture_Group_As_Separate_Attachment_Async()
     {
         var handler = new RegexAttachmentHandler();
         var payload = Encoding.UTF8.GetBytes("PRE[AAA]MID[BBB]POST");
@@ -21,7 +21,7 @@ public sealed class RegexAttachmentHandlerTests
             Store = new StubStore(),
         };
 
-        var result = await handler.ExtractAsync(NewMessage(payload), ctx, CancellationToken.None);
+        var result = await handler.ExtractAsync(New_Message(payload), ctx, CancellationToken.None);
 
         Assert.True(result.Extracted);
         Assert.Equal(2, result.Attachments.Count);
@@ -36,7 +36,7 @@ public sealed class RegexAttachmentHandlerTests
     }
 
     [Fact]
-    public async Task No_matches_leaves_payload_untouched()
+    public async Task No_Matches_Leaves_Payload_Untouched_Async()
     {
         var handler = new RegexAttachmentHandler();
         var payload = Encoding.UTF8.GetBytes("nothing to match");
@@ -49,12 +49,12 @@ public sealed class RegexAttachmentHandlerTests
             Store = new StubStore(),
         };
 
-        var result = await handler.ExtractAsync(NewMessage(payload), ctx, CancellationToken.None);
+        var result = await handler.ExtractAsync(New_Message(payload), ctx, CancellationToken.None);
         Assert.False(result.Extracted);
     }
 
     [Fact]
-    public async Task Empty_pattern_returns_unchanged()
+    public async Task Empty_Pattern_Returns_Unchanged_Async()
     {
         var handler = new RegexAttachmentHandler();
         var ctx = new AttachmentHandlerContext
@@ -65,11 +65,11 @@ public sealed class RegexAttachmentHandlerTests
             PropertiesJson = "{}",
             Store = new StubStore(),
         };
-        var result = await handler.ExtractAsync(NewMessage(Encoding.UTF8.GetBytes("xx")), ctx, CancellationToken.None);
+        var result = await handler.ExtractAsync(New_Message(Encoding.UTF8.GetBytes("xx")), ctx, CancellationToken.None);
         Assert.False(result.Extracted);
     }
 
-    private static IntegrationMessage NewMessage(byte[] payload) => new()
+    private static IntegrationMessage New_Message(byte[] payload) => new()
     {
         Id = Guid.CreateVersion7(),
         FlowId = Guid.CreateVersion7(),

@@ -11,7 +11,7 @@ public sealed class IngestLabResultCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<IngestLabResultCommand, Guid>
 {
-    public async Task<Guid> Handle(IngestLabResultCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(IngestLabResultCommand request, CancellationToken cancellationToken)
     {
         var resultId = Guid.CreateVersion7();
         var integrationEvent = new LabResultReceivedIntegrationEvent(

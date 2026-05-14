@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class EmailAlertActionProviderTests
 {
     [Fact]
-    public async Task Sends_with_rendered_subject_body_and_recipients()
+    public async Task Sends_With_Rendered_Subject_Body_And_Recipients_Async()
     {
         var captured = new CapturingSmtpDeliverer();
         var provider = new EmailAlertActionProvider { Deliverer = captured };
@@ -45,7 +45,7 @@ public sealed class EmailAlertActionProviderTests
     }
 
     [Fact]
-    public async Task Missing_required_property_returns_failure()
+    public async Task Missing_Required_Property_Returns_Failure_Async()
     {
         var provider = new EmailAlertActionProvider { Deliverer = new CapturingSmtpDeliverer() };
         var rule = new AlertRule { Id = Guid.CreateVersion7(), Name = "r" };

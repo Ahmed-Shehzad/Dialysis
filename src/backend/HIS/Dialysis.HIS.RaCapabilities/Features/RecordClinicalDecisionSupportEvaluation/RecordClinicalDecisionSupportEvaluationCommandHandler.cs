@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEval
 public sealed class RecordClinicalDecisionSupportEvaluationCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RecordClinicalDecisionSupportEvaluationCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordClinicalDecisionSupportEvaluationCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordClinicalDecisionSupportEvaluationCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddClinicalDecisionSupportEvaluation(

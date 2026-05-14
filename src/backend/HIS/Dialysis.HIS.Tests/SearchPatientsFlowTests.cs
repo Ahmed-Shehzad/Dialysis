@@ -13,7 +13,7 @@ namespace Dialysis.HIS.Tests;
 public sealed class SearchPatientsFlowTests(HisApiWebApplicationFactory factory)
 {
     [Fact]
-    public async Task Returns_only_patients_corpus_entries_matching_q()
+    public async Task Returns_Only_Patients_Corpus_Entries_Matching_Q_Async()
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
@@ -36,7 +36,7 @@ public sealed class SearchPatientsFlowTests(HisApiWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Empty_q_returns_all_patient_rows_clamped_to_take()
+    public async Task Empty_Q_Returns_All_Patient_Rows_Clamped_To_Take_Async()
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();

@@ -11,7 +11,7 @@ public sealed class AwsSqsTransponderConsumerHostedService(
     ITransponderBus bus,
     ILogger<AwsSqsTransponderConsumerHostedService> logger) : BackgroundService
 {
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {

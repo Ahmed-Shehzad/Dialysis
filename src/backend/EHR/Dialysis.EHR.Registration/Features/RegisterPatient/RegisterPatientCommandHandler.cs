@@ -13,7 +13,7 @@ public sealed class RegisterPatientCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterPatientCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterPatientCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterPatientCommand request, CancellationToken cancellationToken)
     {
         if (await patients.FindByMedicalRecordNumberAsync(request.MedicalRecordNumber, cancellationToken).ConfigureAwait(false) is not null)
             throw new InvalidOperationException($"MRN '{request.MedicalRecordNumber}' is already in use.");

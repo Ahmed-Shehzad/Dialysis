@@ -10,7 +10,7 @@ namespace Dialysis.CQRS;
 
 internal static class CqrsAssemblyScanner
 {
-    private static readonly MethodInfo AddHandlerMethod =
+    private static readonly MethodInfo _addHandlerMethod =
         typeof(IntercessorBuilder).GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Single(static m =>
                 m.Name == nameof(IntercessorBuilder.AddHandler) &&
@@ -55,7 +55,7 @@ internal static class CqrsAssemblyScanner
             if (!registered.Add((request, response, impl)))
                 continue;
 
-            AddHandlerMethod
+            _addHandlerMethod
                 .MakeGenericMethod(request, response, impl)
                 .Invoke(inner, null);
         }

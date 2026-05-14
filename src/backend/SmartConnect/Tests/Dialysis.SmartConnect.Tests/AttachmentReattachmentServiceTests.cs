@@ -9,9 +9,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AttachmentReattachmentServiceTests
 {
     [Fact]
-    public async Task Single_token_inflates_to_bytes()
+    public async Task Single_Token_Inflates_To_Bytes_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
         var messageId = Guid.CreateVersion7();
 
@@ -34,9 +34,9 @@ public sealed class AttachmentReattachmentServiceTests
     }
 
     [Fact]
-    public async Task Missing_attachment_leaves_token_intact()
+    public async Task Missing_Attachment_Leaves_Token_Intact_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
         var service = new AttachmentReattachmentService(store);
 
@@ -47,9 +47,9 @@ public sealed class AttachmentReattachmentServiceTests
     }
 
     [Fact]
-    public async Task No_tokens_returns_payload_unchanged()
+    public async Task No_Tokens_Returns_Payload_Unchanged_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var service = new AttachmentReattachmentService(sp.GetRequiredService<IAttachmentStore>());
 
         var payload = Encoding.UTF8.GetBytes("nothing to inflate");
@@ -57,7 +57,7 @@ public sealed class AttachmentReattachmentServiceTests
         Assert.Equal("nothing to inflate", Encoding.UTF8.GetString(inflated.Span));
     }
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_reattach_{Guid.NewGuid():N}");

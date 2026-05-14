@@ -9,7 +9,7 @@ public sealed class ListUserPermissionsQueryHandler(
     IRoleAssignmentRepository assignments)
     : IQueryHandler<ListUserPermissionsQuery, UserPermissionsDto?>
 {
-    public async Task<UserPermissionsDto?> Handle(ListUserPermissionsQuery request, CancellationToken cancellationToken)
+    public async Task<UserPermissionsDto?> HandleAsync(ListUserPermissionsQuery request, CancellationToken cancellationToken)
     {
         var user = await users.GetAsync(request.UserId, cancellationToken).ConfigureAwait(false);
         if (user is null)

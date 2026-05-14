@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Hie.Inbound</RootNamespace>
+    <Description>HIE inbound slice: FHIR REST controllers, validation, idempotent storage, publishes integration events for downstream modules.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Core.Abstraction/Dialysis.Hie.Core.Abstraction.csproj" />
+    <ProjectReference Include="../Dialysis.Hie.Core/Dialysis.Hie.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+  </ItemGroup>
+
+</Project>

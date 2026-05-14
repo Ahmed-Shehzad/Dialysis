@@ -6,14 +6,14 @@ namespace Dialysis.HIS.Tests;
 
 public sealed class SubmitBillingExportJobValidatorTests
 {
-    private readonly SubmitBillingExportJobCommandValidator _sut = new();
+    private readonly SubmitBillingExportJobCommandValidator _Sut = new();
 
     [Fact]
-    public async Task Accepts_valid_command()
+    public async Task Accepts_Valid_Command_Async()
     {
         var cmd = new SubmitBillingExportJobCommand("AETNA-01", new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31), Notes: null);
 
-        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
     }
@@ -23,27 +23,27 @@ public sealed class SubmitBillingExportJobValidatorTests
     [InlineData("a")]
     [InlineData("WAY-TOO-LONG-PAYER-NAME-12345")]
     [InlineData("ACME_01")]
-    public async Task Rejects_invalid_payer_codes(string payerCode)
+    public async Task Rejects_Invalid_Payer_Codes_Async(string payerCode)
     {
         var cmd = new SubmitBillingExportJobCommand(payerCode, new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31));
 
-        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }
 
     [Fact]
-    public async Task Rejects_period_start_not_before_end()
+    public async Task Rejects_Period_Start_Not_Before_End_Async()
     {
         var cmd = new SubmitBillingExportJobCommand("AETNA", new DateOnly(2026, 5, 31), new DateOnly(2026, 5, 1));
 
-        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }
 
     [Fact]
-    public async Task Rejects_notes_over_500_chars()
+    public async Task Rejects_Notes_Over_500_Chars_Async()
     {
         var cmd = new SubmitBillingExportJobCommand(
             "AETNA",
@@ -51,7 +51,7 @@ public sealed class SubmitBillingExportJobValidatorTests
             new DateOnly(2026, 5, 31),
             Notes: new string('x', 501));
 
-        var result = await _sut.ValidateAsync(cmd, CancellationToken.None);
+        var result = await _Sut.ValidateAsync(cmd, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }

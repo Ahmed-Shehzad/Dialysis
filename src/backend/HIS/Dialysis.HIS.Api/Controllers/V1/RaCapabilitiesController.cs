@@ -59,7 +59,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     }
 
     [HttpGet("generic-mis/organizational-communications")]
-    public async Task<IActionResult> OrganizationalCommunications(CancellationToken cancellationToken)
+    public async Task<IActionResult> OrganizationalCommunicationsAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>(new ListOrganizationalCommunicationsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
@@ -67,7 +67,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("generic-mis/organizational-communications")]
     [ProducesResponseType(typeof(ResourceEnvelope<PostOrgCommunicationResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> PostOrganizationalCommunication(
+    public async Task<IActionResult> PostOrganizationalCommunicationAsync(
         [FromBody] PostOrganizationalCommunicationCommand command,
         CancellationToken cancellationToken)
     {
@@ -81,7 +81,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record PostOrgCommunicationResponse(Guid Id);
 
     [HttpGet("generic-mis/quality-workflows")]
-    public async Task<IActionResult> QualityWorkflows(CancellationToken cancellationToken)
+    public async Task<IActionResult> QualityWorkflowsAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>>(new ListQualityWorkflowTasksQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
@@ -89,7 +89,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("generic-mis/quality-workflows/{taskId:guid}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> UpdateQualityWorkflowTaskStatus(
+    public async Task<IActionResult> UpdateQualityWorkflowTaskStatusAsync(
         Guid taskId,
         [FromBody] QualityTaskStatusBody body,
         CancellationToken cancellationToken)
@@ -105,7 +105,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record QualityTaskStatusBody(string NewStatusCode);
 
     [HttpGet("generic-mis/financial-erp-depth")]
-    public async Task<IActionResult> FinancialErpDepth(CancellationToken cancellationToken)
+    public async Task<IActionResult> FinancialErpDepthAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListFinancialErpLinksQuery, IReadOnlyList<RaFinancialErpLinkRow>>(new ListFinancialErpLinksQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
@@ -113,7 +113,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("generic-mis/financial-erp-depth/records")]
     [ProducesResponseType(typeof(ResourceEnvelope<RegisterFinancialErpLinkResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RegisterFinancialErpLink(
+    public async Task<IActionResult> RegisterFinancialErpLinkAsync(
         [FromBody] RegisterFinancialErpLinkCommand command,
         CancellationToken cancellationToken)
     {
@@ -132,7 +132,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RegisterFinancialErpLinkResponse(Guid Id);
 
     [HttpGet("generic-mis/research-education")]
-    public async Task<IActionResult> ResearchEducationActivities(CancellationToken cancellationToken)
+    public async Task<IActionResult> ResearchEducationActivitiesAsync(CancellationToken cancellationToken)
     {
         var data = await gateway
             .SendQueryAsync<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>>(
@@ -144,7 +144,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("generic-mis/research-education/activities")]
     [ProducesResponseType(typeof(ResourceEnvelope<RegisterResearchEducationActivityResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RegisterResearchEducationActivity(
+    public async Task<IActionResult> RegisterResearchEducationActivityAsync(
         [FromBody] RegisterResearchEducationActivityCommand command,
         CancellationToken cancellationToken)
     {
@@ -163,7 +163,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RegisterResearchEducationActivityResponse(Guid Id);
 
     [HttpGet("planning-and-scheduling/waitlists")]
-    public async Task<IActionResult> Waitlists(CancellationToken cancellationToken)
+    public async Task<IActionResult> WaitlistsAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListWaitlistEntriesQuery, IReadOnlyList<RaWaitlistEntryRow>>(new ListWaitlistEntriesQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:scheduling", $"/api/v{ApiVersionSegment}/scheduling/resources", "GET"));
@@ -171,7 +171,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("planning-and-scheduling/waitlists")]
     [ProducesResponseType(typeof(ResourceEnvelope<EnqueueWaitlistResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> EnqueueWaitlist([FromBody] EnqueueWaitlistEntryCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> EnqueueWaitlistAsync([FromBody] EnqueueWaitlistEntryCommand command, CancellationToken cancellationToken)
     {
         var id = await gateway.SendCommandAsync<EnqueueWaitlistEntryCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return CreatedResource(
@@ -183,7 +183,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record EnqueueWaitlistResponse(Guid Id);
 
     [HttpGet("patient-monitoring/ehr-document-exchange")]
-    public async Task<IActionResult> EhrDocumentExchange(CancellationToken cancellationToken)
+    public async Task<IActionResult> EhrDocumentExchangeAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListEhrDocumentExchangesQuery, IReadOnlyList<RaEhrDocumentExchangeRow>>(new ListEhrDocumentExchangesQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
@@ -191,7 +191,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("patient-monitoring/ehr-document-exchange/records")]
     [ProducesResponseType(typeof(ResourceEnvelope<RegisterEhrDocumentResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RegisterEhrDocumentExchangeRecord(
+    public async Task<IActionResult> RegisterEhrDocumentExchangeRecordAsync(
         [FromBody] RegisterEhrDocumentExchangeCommand command,
         CancellationToken cancellationToken)
     {
@@ -210,7 +210,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RegisterEhrDocumentResponse(Guid Id);
 
     [HttpGet("patient-monitoring/specialist-encounters")]
-    public async Task<IActionResult> SpecialistEncounters(CancellationToken cancellationToken)
+    public async Task<IActionResult> SpecialistEncountersAsync(CancellationToken cancellationToken)
     {
         var data = await gateway
             .SendQueryAsync<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>>(
@@ -222,7 +222,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("patient-monitoring/specialist-encounters/records")]
     [ProducesResponseType(typeof(ResourceEnvelope<RegisterSpecialistEncounterResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RegisterSpecialistEncounterRecord(
+    public async Task<IActionResult> RegisterSpecialistEncounterRecordAsync(
         [FromBody] RegisterSpecialistEncounterCommand command,
         CancellationToken cancellationToken)
     {
@@ -241,7 +241,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RegisterSpecialistEncounterResponse(Guid Id);
 
     [HttpGet("patient-monitoring/advanced-alerting")]
-    public async Task<IActionResult> AdvancedAlerting(CancellationToken cancellationToken)
+    public async Task<IActionResult> AdvancedAlertingAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListPatientAlertsQuery, IReadOnlyList<RaPatientAlertRow>>(new ListPatientAlertsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
@@ -249,7 +249,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("patient-monitoring/advanced-alerting/{alertId:guid}/clear")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> ClearAlert(Guid alertId, CancellationToken cancellationToken)
+    public async Task<IActionResult> ClearAlertAsync(Guid alertId, CancellationToken cancellationToken)
     {
         _ = await gateway
             .SendCommandAsync<ClearPatientAlertCommand, Unit>(new ClearPatientAlertCommand(alertId), cancellationToken)
@@ -258,7 +258,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     }
 
     [HttpGet("medication-management/dispensing-and-barcode")]
-    public async Task<IActionResult> Dispensing(CancellationToken cancellationToken)
+    public async Task<IActionResult> DispensingAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListMedicationDispensingRecordsQuery, IReadOnlyList<RaMedicationDispensingRow>>(new ListMedicationDispensingRecordsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:medication-orders", $"/api/v{ApiVersionSegment}/medication/orders", "POST"));
@@ -266,7 +266,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("medication-management/dispensing-and-barcode/records")]
     [ProducesResponseType(typeof(ResourceEnvelope<RecordMedicationDispensingResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RecordMedicationDispensing(
+    public async Task<IActionResult> RecordMedicationDispensingAsync(
         [FromBody] RecordMedicationDispensingCommand command,
         CancellationToken cancellationToken)
     {
@@ -285,7 +285,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RecordMedicationDispensingResponse(Guid Id);
 
     [HttpGet("medication-management/clinical-decision-support")]
-    public async Task<IActionResult> ClinicalDecisionSupport(CancellationToken cancellationToken)
+    public async Task<IActionResult> ClinicalDecisionSupportAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListClinicalDecisionSupportEvaluationsQuery, IReadOnlyList<RaClinicalDecisionSupportRow>>(new ListClinicalDecisionSupportEvaluationsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:medication-orders", $"/api/v{ApiVersionSegment}/medication/orders", "POST"));
@@ -293,7 +293,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("medication-management/clinical-decision-support/evaluations")]
     [ProducesResponseType(typeof(ResourceEnvelope<RecordCdsResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RecordClinicalDecisionSupportEvaluation(
+    public async Task<IActionResult> RecordClinicalDecisionSupportEvaluationAsync(
         [FromBody] RecordClinicalDecisionSupportEvaluationCommand command,
         CancellationToken cancellationToken)
     {
@@ -312,7 +312,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RecordCdsResponse(Guid Id);
 
     [HttpGet("data-management/analytics-exports")]
-    public async Task<IActionResult> AnalyticsExports(CancellationToken cancellationToken)
+    public async Task<IActionResult> AnalyticsExportsAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListAnalyticsExportJobsQuery, IReadOnlyList<RaAnalyticsExportJobRow>>(new ListAnalyticsExportJobsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:data-import", $"/api/v{ApiVersionSegment}/data-management/import-jobs", "POST"));
@@ -320,7 +320,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("data-management/analytics-export-jobs")]
     [ProducesResponseType(typeof(ResourceEnvelope<RequestAnalyticsExportResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RequestAnalyticsExportJob(
+    public async Task<IActionResult> RequestAnalyticsExportJobAsync(
         [FromBody] RequestAnalyticsExportJobCommand command,
         CancellationToken cancellationToken)
     {
@@ -334,7 +334,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     public sealed record RequestAnalyticsExportResponse(Guid Id);
 
     [HttpGet("data-management/full-text-and-indexing")]
-    public async Task<IActionResult> FullTextIndexing([FromQuery] string? q, CancellationToken cancellationToken)
+    public async Task<IActionResult> FullTextIndexingAsync([FromQuery] string? q, CancellationToken cancellationToken)
     {
         var data = await gateway
             .SendQueryAsync<ListFullTextSearchEntriesQuery, IReadOnlyList<RaFullTextSearchEntryRow>>(
@@ -345,7 +345,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
     }
 
     [HttpGet("security/mechanisms-hardening")]
-    public async Task<IActionResult> SecurityMechanisms(CancellationToken cancellationToken)
+    public async Task<IActionResult> SecurityMechanismsAsync(CancellationToken cancellationToken)
     {
         var data = await gateway.SendQueryAsync<ListSecurityMechanismHardeningsQuery, IReadOnlyList<RaSecurityMechanismRow>>(new ListSecurityMechanismHardeningsQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(data, LinkTo("ra:security-users", $"/api/v{ApiVersionSegment}/security/users", "POST"));
@@ -353,7 +353,7 @@ public sealed class RaCapabilitiesController(ICqrsGateway gateway) : HisHateoasC
 
     [HttpPost("security/mechanisms-hardening/assessments")]
     [ProducesResponseType(typeof(ResourceEnvelope<RecordSecurityAssessmentResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RecordSecurityMechanismAssessment(
+    public async Task<IActionResult> RecordSecurityMechanismAssessmentAsync(
         [FromBody] RecordSecurityMechanismAssessmentCommand command,
         CancellationToken cancellationToken)
     {

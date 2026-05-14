@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RecordMedicationDispensing;
 public sealed class RecordMedicationDispensingCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RecordMedicationDispensingCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordMedicationDispensingCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordMedicationDispensingCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddMedicationDispensingRecord(

@@ -10,7 +10,7 @@ public sealed class RecordProblemCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RecordProblemCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordProblemCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordProblemCommand request, CancellationToken cancellationToken)
     {
         var condition = new Coding(request.ConditionSystem, request.ConditionCode, request.ConditionDisplay);
         var id = Guid.CreateVersion7();

@@ -9,11 +9,11 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class ExternalScriptRouteFilterTests
 {
     [Fact]
-    public async Task Loads_script_from_uri_and_returns_Allow_for_truthy()
+    public async Task Loads_Script_From_Uri_And_Returns_Allow_For_Truthy_Async()
     {
         var loader = new StubLoader("payloadText.indexOf('keep') >= 0");
         var filter = new ExternalScriptRouteFilter(loader);
-        var msg = CreateMessage("""{"scriptUri":"file:///fake.js"}""", payload: "keep me");
+        var msg = Create_Message("""{"scriptUri":"file:///fake.js"}""", payload: "keep me");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -23,11 +23,11 @@ public sealed class ExternalScriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Returns_Drop_when_script_is_falsy()
+    public async Task Returns_Drop_When_Script_Is_Falsy_Async()
     {
         var loader = new StubLoader("false");
         var filter = new ExternalScriptRouteFilter(loader);
-        var msg = CreateMessage("""{"scriptUri":"https://scripts.example.com/f.js"}""");
+        var msg = Create_Message("""{"scriptUri":"https://scripts.example.com/f.js"}""");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -35,11 +35,11 @@ public sealed class ExternalScriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Passes_cacheTtl_to_loader()
+    public async Task Passes_Cachettl_To_Loader_Async()
     {
         var loader = new StubLoader("true");
         var filter = new ExternalScriptRouteFilter(loader);
-        var msg = CreateMessage("""{"scriptUri":"file:///fake.js","cacheTtlSeconds":30}""");
+        var msg = Create_Message("""{"scriptUri":"file:///fake.js","cacheTtlSeconds":30}""");
 
         await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -47,11 +47,11 @@ public sealed class ExternalScriptRouteFilterTests
     }
 
     [Fact]
-    public async Task Missing_scriptUri_allows_through_without_calling_loader()
+    public async Task Missing_Scripturi_Allows_Through_Without_Calling_Loader_Async()
     {
         var loader = new StubLoader("false");
         var filter = new ExternalScriptRouteFilter(loader);
-        var msg = CreateMessage("""{"cacheTtlSeconds":30}""");
+        var msg = Create_Message("""{"cacheTtlSeconds":30}""");
 
         var result = await filter.EvaluateAsync(msg, CancellationToken.None);
 
@@ -60,7 +60,7 @@ public sealed class ExternalScriptRouteFilterTests
     }
 
     [Fact]
-    public async Task No_parameters_metadata_allows_through()
+    public async Task No_Parameters_Metadata_Allows_Through_Async()
     {
         var loader = new StubLoader("false");
         var filter = new ExternalScriptRouteFilter(loader);
@@ -80,7 +80,7 @@ public sealed class ExternalScriptRouteFilterTests
         Assert.Empty(loader.Requests);
     }
 
-    private static IntegrationMessage CreateMessage(string parametersJson, string payload = "test")
+    private static IntegrationMessage Create_Message(string parametersJson, string payload = "test")
     {
         return new IntegrationMessage
         {

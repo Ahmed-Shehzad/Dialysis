@@ -13,7 +13,7 @@ public sealed class SecurityController(ICqrsGateway gateway) : HisHateoasControl
 {
     [HttpPost("local-users")]
     [ProducesResponseType(typeof(ResourceEnvelope<RegisterLocalUserResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> RegisterLocalUser(
+    public async Task<IActionResult> RegisterLocalUserAsync(
         [FromBody] RegisterLocalUserCommand command,
         CancellationToken cancellationToken)
     {

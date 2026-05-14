@@ -14,7 +14,7 @@ public sealed class AdmitPatientCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<AdmitPatientCommand, Guid>
 {
-    public async Task<Guid> Handle(AdmitPatientCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(AdmitPatientCommand request, CancellationToken cancellationToken)
     {
         var admission = Admission.Admit(request.PatientId, new WardCode(request.WardCode), DateTime.UtcNow);
         admissions.Add(admission);

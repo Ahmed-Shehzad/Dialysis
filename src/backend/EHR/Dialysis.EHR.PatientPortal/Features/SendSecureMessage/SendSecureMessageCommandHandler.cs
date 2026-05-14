@@ -11,7 +11,7 @@ public sealed class SendSecureMessageCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<SendSecureMessageCommand, Guid>
 {
-    public async Task<Guid> Handle(SendSecureMessageCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(SendSecureMessageCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var message = SecureMessage.Send(

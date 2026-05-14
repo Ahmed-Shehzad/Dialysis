@@ -18,7 +18,7 @@ internal sealed class ConsumeRouteContributor<TMessage> : IConsumeRouteContribut
                 var typed = (TMessage)messageObj;
                 var consumers = provider.GetServices<IConsumer<TMessage>>().ToArray();
                 foreach (var consumer in consumers)
-                    await consumer.Handle(new ConsumeContext<TMessage>(typed, cancellationToken, bus, correlationId, deduplicationId))
+                    await consumer.HandleAsync(new ConsumeContext<TMessage>(typed, cancellationToken, bus, correlationId, deduplicationId))
                         .ConfigureAwait(false);
             });
     }

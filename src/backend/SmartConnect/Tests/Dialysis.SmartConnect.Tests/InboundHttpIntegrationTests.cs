@@ -13,16 +13,16 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class InboundHttpIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<Program> _factory ;
 
     public InboundHttpIntegrationTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task Post_inbound_message_returns_200_and_records_ledger()
+    public async Task Post_Inbound_Message_Returns_200_And_Records_Ledger_Async()
     {
         using var client = _factory.CreateClient();
         var flowId = Guid.Parse("00000000-0000-4000-8000-0000000000aa");
-        await SeedStartedFlowAsync(
+        await Seedstartedflow_Async(
             flowId,
             new IntegrationFlowPipelineDefinition
             {
@@ -46,7 +46,7 @@ public sealed class InboundHttpIntegrationTests : IClassFixture<WebApplicationFa
     }
 
     [Fact]
-    public async Task Post_unknown_flow_returns_404_without_dispatch_body_success()
+    public async Task Post_Unknown_Flow_Returns_404_Without_Dispatch_Body_Success_Async()
     {
         using var client = _factory.CreateClient();
         var flowId = Guid.Parse("00000000-0000-4000-8000-00000000dead");
@@ -57,7 +57,7 @@ public sealed class InboundHttpIntegrationTests : IClassFixture<WebApplicationFa
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    private async Task SeedStartedFlowAsync(Guid flowId, IntegrationFlowPipelineDefinition pipeline)
+    private async Task Seedstartedflow_Async(Guid flowId, IntegrationFlowPipelineDefinition pipeline)
     {
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

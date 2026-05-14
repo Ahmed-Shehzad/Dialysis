@@ -10,7 +10,7 @@ public sealed class RecordAllergyCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RecordAllergyCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordAllergyCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordAllergyCommand request, CancellationToken cancellationToken)
     {
         var allergen = new Coding(request.AllergenSystem, request.AllergenCode, request.AllergenDisplay);
         var id = Guid.CreateVersion7();

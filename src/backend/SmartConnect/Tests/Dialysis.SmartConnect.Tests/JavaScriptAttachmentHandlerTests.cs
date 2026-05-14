@@ -10,9 +10,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class JavaScriptAttachmentHandlerTests
 {
     [Fact]
-    public async Task Script_calls_addAttachment_and_returns_modified_payload()
+    public async Task Script_Calls_Addattachment_And_Returns_Modified_Payload_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var store = sp.GetRequiredService<IAttachmentStore>();
         var handler = new JavaScriptAttachmentHandler(sp);
 
@@ -29,7 +29,7 @@ public sealed class JavaScriptAttachmentHandlerTests
             Store = store,
         };
 
-        var result = await handler.ExtractAsync(NewMessage(ctx.MessageId, ctx.FlowId, "before ORIG after"), ctx, CancellationToken.None);
+        var result = await handler.ExtractAsync(New_Message(ctx.MessageId, ctx.FlowId, "before ORIG after"), ctx, CancellationToken.None);
 
         var rewritten = Encoding.UTF8.GetString(result.RewrittenPayload.Span);
         Assert.Contains("${ATTACH:", rewritten);
@@ -41,9 +41,9 @@ public sealed class JavaScriptAttachmentHandlerTests
     }
 
     [Fact]
-    public async Task Missing_script_returns_unchanged()
+    public async Task Missing_Script_Returns_Unchanged_Async()
     {
-        await using var sp = BuildServices();
+        await using var sp = Build_Services();
         var handler = new JavaScriptAttachmentHandler(sp);
         var ctx = new AttachmentHandlerContext
         {
@@ -53,11 +53,11 @@ public sealed class JavaScriptAttachmentHandlerTests
             PropertiesJson = null,
             Store = sp.GetRequiredService<IAttachmentStore>(),
         };
-        var result = await handler.ExtractAsync(NewMessage(ctx.MessageId, ctx.FlowId, "x"), ctx, CancellationToken.None);
+        var result = await handler.ExtractAsync(New_Message(ctx.MessageId, ctx.FlowId, "x"), ctx, CancellationToken.None);
         Assert.False(result.Extracted);
     }
 
-    private static IntegrationMessage NewMessage(Guid messageId, Guid flowId, string body) => new()
+    private static IntegrationMessage New_Message(Guid messageId, Guid flowId, string body) => new()
     {
         Id = messageId,
         FlowId = flowId,
@@ -67,7 +67,7 @@ public sealed class JavaScriptAttachmentHandlerTests
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 
-    private static ServiceProvider BuildServices()
+    private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
         services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_jsah_{Guid.NewGuid():N}");

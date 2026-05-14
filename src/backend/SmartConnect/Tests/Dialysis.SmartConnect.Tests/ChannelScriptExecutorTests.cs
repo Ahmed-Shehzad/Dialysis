@@ -7,16 +7,16 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class ChannelScriptExecutorTests
 {
-    private readonly InMemoryVariableMapStore _maps = new();
-    private readonly ChannelScriptExecutor _executor;
+    private readonly InMemoryVariableMapStore _Maps = new();
+    private readonly ChannelScriptExecutor _Executor ;
 
     public ChannelScriptExecutorTests()
     {
-        _executor = new ChannelScriptExecutor(_maps, NullLogger<ChannelScriptExecutor>.Instance);
+        _Executor = new ChannelScriptExecutor(_Maps, NullLogger<ChannelScriptExecutor>.Instance);
     }
 
     [Fact]
-    public async Task PreProcessor_return_false_drops()
+    public async Task Preprocessor_Return_False_Drops_Async()
     {
         var msg = new IntegrationMessage
         {
@@ -28,12 +28,12 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        var r = await _executor.RunPreProcessorAsync("false;", msg, CancellationToken.None);
+        var r = await _Executor.RunPreProcessorAsync("false;", msg, CancellationToken.None);
         Assert.True(r.Dropped);
     }
 
     [Fact]
-    public async Task PreProcessor_return_string_mutates_payload()
+    public async Task Preprocessor_Return_String_Mutates_Payload_Async()
     {
         var msg = new IntegrationMessage
         {
@@ -45,13 +45,13 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        var r = await _executor.RunPreProcessorAsync("'next';", msg, CancellationToken.None);
+        var r = await _Executor.RunPreProcessorAsync("'next';", msg, CancellationToken.None);
         Assert.False(r.Dropped);
         Assert.Equal("next", Encoding.UTF8.GetString(r.NewPayload!));
     }
 
     [Fact]
-    public async Task PreProcessor_persists_globalChannelMap_put()
+    public async Task Preprocessor_Persists_Globalchannelmap_Put_Async()
     {
         // After the variable-maps refactor, the per-channel persisted scope is named globalChannelMap.
         // channelMap is now message-scoped (in-memory, not persisted), per Mirth semantics.
@@ -66,13 +66,13 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        await _executor.RunPreProcessorAsync("globalChannelMap.put('k','v'); true;", msg, CancellationToken.None);
-        var v = await _maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
+        await _Executor.RunPreProcessorAsync("globalChannelMap.put('k','v'); true;", msg, CancellationToken.None);
+        var v = await _Maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
         Assert.Equal("v", v);
     }
 
     [Fact]
-    public async Task PreProcessor_channelMap_is_message_scoped_not_persisted()
+    public async Task Preprocessor_Channelmap_Is_Message_Scoped_Not_Persisted_Async()
     {
         var flowId = Guid.Parse("00000000-0000-4000-8000-0000000000a4");
         var msg = new IntegrationMessage
@@ -85,8 +85,8 @@ public sealed class ChannelScriptExecutorTests
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
-        await _executor.RunPreProcessorAsync("channelMap.put('k','v'); true;", msg, CancellationToken.None);
-        var v = await _maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
+        await _Executor.RunPreProcessorAsync("channelMap.put('k','v'); true;", msg, CancellationToken.None);
+        var v = await _Maps.GetAsync(VariableMapScope.GlobalChannel, flowId, "k", CancellationToken.None);
         Assert.Null(v);
     }
 }

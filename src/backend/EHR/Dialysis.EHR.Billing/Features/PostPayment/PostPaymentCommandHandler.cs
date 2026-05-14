@@ -11,7 +11,7 @@ public sealed class PostPaymentCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<PostPaymentCommand, Guid>
 {
-    public async Task<Guid> Handle(PostPaymentCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(PostPaymentCommand request, CancellationToken cancellationToken)
     {
         var amount = new Money(request.Amount, request.CurrencyCode);
         var id = Guid.CreateVersion7();

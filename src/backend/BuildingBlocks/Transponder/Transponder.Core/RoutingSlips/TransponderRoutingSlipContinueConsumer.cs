@@ -13,21 +13,21 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
     TransponderRoutingSlipEventPublisher events,
     ILogger<TransponderRoutingSlipContinueConsumer> logger) : IConsumer<TransponderRoutingSlipContinue>
 {
-    private static readonly string SagaKind = TransponderRoutingSlipPersistenceKind.SagaKind;
+    private static readonly string _sagaKind = TransponderRoutingSlipPersistenceKind.SagaKind;
 
-    public async Task Handle(ConsumeContext<TransponderRoutingSlipContinue> context)
+    public async Task HandleAsync(ConsumeContext<TransponderRoutingSlipContinue> context)
     {
         var slipId = context.Message.SlipId;
         ArgumentException.ThrowIfNullOrWhiteSpace(slipId);
 
-        var gate = TransponderSagaInstanceLock.Get(SagaKind, slipId);
+        var gate = TransponderSagaInstanceLock.Get(_sagaKind, slipId);
         TransponderRoutingSlipContinue? followUp = null;
         TransponderPublishOptions? followUpOptions = null;
         var pending = new List<Func<Task>>();
         await gate.WaitAsync(context.CancellationToken).ConfigureAwait(false);
         try
         {
-            var record = await store.GetAsync(SagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+            var record = await store.GetAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
             if (record is null)
             {
                 logger.LogWarning("[RoutingSlip] No persisted slip for {SlipId}; ignoring continue.", slipId);
@@ -61,7 +61,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
             if (state.CurrentIndex >= state.Itinerary.Count)
             {
-                await store.DeleteAsync(SagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -69,7 +69,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
             if (!options.Value.ActivitiesByName.TryGetValue(step.Name, out var activityType))
             {
                 logger.LogError("[RoutingSlip] Unknown activity '{Activity}' for slip {SlipId}.", step.Name, slipId);
-                await store.DeleteAsync(SagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 var idx = state.CurrentIndex;
                 var corr = state.CorrelationId;
                 pending.Add(() =>
@@ -107,7 +107,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                 var variablesCopy = new Dictionary<string, string>(state.Variables, StringComparer.Ordinal);
                 var failedIndex = state.CurrentIndex;
                 var corr = state.CorrelationId;
-                await store.DeleteAsync(SagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 pending.Add(() =>
                     PublishExecuteFaultAndCompensationAsync(
                         slipId,
@@ -137,7 +137,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
             if (state.CurrentIndex >= state.Itinerary.Count)
             {
-                await store.DeleteAsync(SagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 pending.Add(() =>
                     events.PublishActivityCompletedAsync(
                         slipId,
@@ -153,7 +153,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
             var next = new TransponderSagaRecord
             {
-                SagaKind = SagaKind,
+                SagaKind = _sagaKind,
                 InstanceKey = slipId,
                 StateName = state.Itinerary[state.CurrentIndex].Name,
                 StateJson = SerializeState(state),

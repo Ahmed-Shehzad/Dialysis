@@ -9,7 +9,7 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.ServerSentEvents;
 /// <summary>Fans out published envelopes to every open GET <c>subscribe</c> response stream.</summary>
 public sealed class TransponderSseIngressRelay(ILogger<TransponderSseIngressRelay> logger)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly ConcurrentDictionary<Guid, Subscriber> _subscribers = new();
 
@@ -53,7 +53,7 @@ public sealed class TransponderSseIngressRelay(ILogger<TransponderSseIngressRela
     /// <summary>Serializes <paramref name="envelope"/> as one SSE event and writes to all subscribers.</summary>
     public async Task BroadcastAsync(TransponderSseEnvelopeDto envelope, CancellationToken cancellationToken)
     {
-        var json = JsonSerializer.Serialize(envelope, JsonOptions);
+        var json = JsonSerializer.Serialize(envelope, _jsonOptions);
         var bytes = Encoding.UTF8.GetBytes($"data: {json}\n\n");
 
         foreach (var kv in _subscribers.ToArray())

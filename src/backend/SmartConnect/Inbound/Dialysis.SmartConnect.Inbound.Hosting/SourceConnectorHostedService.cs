@@ -19,7 +19,7 @@ public sealed class SourceConnectorHostedService(
     ILoggerFactory loggerFactory,
     ILogger<SourceConnectorHostedService> logger) : BackgroundService
 {
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Eagerly resolve every registered ISourceConnector so that AddSourceConnector<T>'s
         // factory lambda runs and inserts the connector into the registry before lookup.

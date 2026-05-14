@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class XsltTransformStageTests
 {
-    private const string SimpleStylesheet = """
+    private const string Simple_Stylesheet = """
         <?xml version="1.0" encoding="UTF-8"?>
         <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
           <xsl:output method="xml" indent="no" omit-xml-declaration="yes"/>
@@ -17,11 +17,11 @@ public sealed class XsltTransformStageTests
         """;
 
     [Fact]
-    public async Task Transform_applies_xslt_stylesheet()
+    public async Task Transform_Applies_Xslt_Stylesheet_Async()
     {
         var stage = new XsltTransformStage();
         var xml = "<root><value>hello</value></root>";
-        var msg = CreateMessage($$"""{"stylesheet":{{EscapeJson(SimpleStylesheet)}}}""", xml);
+        var msg = Create_Message($$"""{"stylesheet":{{Escape_Json(Simple_Stylesheet)}}}""", xml);
 
         var result = await stage.TransformAsync(msg, CancellationToken.None);
 
@@ -30,7 +30,7 @@ public sealed class XsltTransformStageTests
     }
 
     [Fact]
-    public async Task Transform_without_parameters_passes_through()
+    public async Task Transform_Without_Parameters_Passes_Through_Async()
     {
         var stage = new XsltTransformStage();
         var msg = new IntegrationMessage
@@ -49,13 +49,13 @@ public sealed class XsltTransformStageTests
     }
 
     [Fact]
-    public async Task Transform_caches_compiled_stylesheets()
+    public async Task Transform_Caches_Compiled_Stylesheets_Async()
     {
         var stage = new XsltTransformStage();
         var xml = "<root><value>v</value></root>";
-        var paramJson = $$"""{"stylesheet":{{EscapeJson(SimpleStylesheet)}}}""";
-        var msg1 = CreateMessage(paramJson, xml);
-        var msg2 = CreateMessage(paramJson, xml);
+        var paramJson = $$"""{"stylesheet":{{Escape_Json(Simple_Stylesheet)}}}""";
+        var msg1 = Create_Message(paramJson, xml);
+        var msg2 = Create_Message(paramJson, xml);
 
         // Both should succeed (second uses cache)
         var r1 = await stage.TransformAsync(msg1, CancellationToken.None);
@@ -66,15 +66,15 @@ public sealed class XsltTransformStageTests
     }
 
     [Fact]
-    public async Task Transform_throws_on_invalid_xml()
+    public async Task Transform_Throws_On_Invalid_Xml_Async()
     {
         var stage = new XsltTransformStage();
-        var msg = CreateMessage($$"""{"stylesheet":{{EscapeJson(SimpleStylesheet)}}}""", "not xml at all");
+        var msg = Create_Message($$"""{"stylesheet":{{Escape_Json(Simple_Stylesheet)}}}""", "not xml at all");
 
         await Assert.ThrowsAnyAsync<Exception>(() => stage.TransformAsync(msg, CancellationToken.None));
     }
 
-    private static IntegrationMessage CreateMessage(string parametersJson, string payload)
+    private static IntegrationMessage Create_Message(string parametersJson, string payload)
     {
         return new IntegrationMessage
         {
@@ -90,6 +90,6 @@ public sealed class XsltTransformStageTests
         };
     }
 
-    private static string EscapeJson(string s) =>
+    private static string Escape_Json(string s) =>
         System.Text.Json.JsonSerializer.Serialize(s);
 }

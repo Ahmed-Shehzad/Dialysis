@@ -10,7 +10,7 @@ public sealed class MergePatientsCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<MergePatientsCommand, Unit>
 {
-    public async Task<Unit> Handle(MergePatientsCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> HandleAsync(MergePatientsCommand request, CancellationToken cancellationToken)
     {
         if (request.SurvivingPatientId == request.SupersededPatientId)
             throw new InvalidOperationException("Cannot merge a patient into itself.");

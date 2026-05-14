@@ -9,11 +9,11 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class ExternalScriptTransformStageTests
 {
     [Fact]
-    public async Task Loads_script_from_uri_and_replaces_payload()
+    public async Task Loads_Script_From_Uri_And_Replaces_Payload_Async()
     {
         var loader = new StubLoader("payloadText.toUpperCase()");
         var stage = new ExternalScriptTransformStage(loader);
-        var msg = CreateMessage("""{"scriptUri":"file:///t.js"}""", payload: "hello");
+        var msg = Create_Message("""{"scriptUri":"file:///t.js"}""", payload: "hello");
 
         var result = await stage.TransformAsync(msg, CancellationToken.None);
 
@@ -22,11 +22,11 @@ public sealed class ExternalScriptTransformStageTests
     }
 
     [Fact]
-    public async Task Missing_scriptUri_returns_input_unchanged()
+    public async Task Missing_Scripturi_Returns_Input_Unchanged_Async()
     {
         var loader = new StubLoader("'CHANGED'");
         var stage = new ExternalScriptTransformStage(loader);
-        var msg = CreateMessage("""{"cacheTtlSeconds":10}""", payload: "original");
+        var msg = Create_Message("""{"cacheTtlSeconds":10}""", payload: "original");
 
         var result = await stage.TransformAsync(msg, CancellationToken.None);
 
@@ -35,18 +35,18 @@ public sealed class ExternalScriptTransformStageTests
     }
 
     [Fact]
-    public async Task Passes_cacheTtl_to_loader()
+    public async Task Passes_Cachettl_To_Loader_Async()
     {
         var loader = new StubLoader("'x'");
         var stage = new ExternalScriptTransformStage(loader);
-        var msg = CreateMessage("""{"scriptUri":"file:///t.js","cacheTtlSeconds":120}""");
+        var msg = Create_Message("""{"scriptUri":"file:///t.js","cacheTtlSeconds":120}""");
 
         await stage.TransformAsync(msg, CancellationToken.None);
 
         Assert.Equal(TimeSpan.FromSeconds(120), loader.Requests[0].ttl);
     }
 
-    private static IntegrationMessage CreateMessage(string parametersJson, string payload = "test")
+    private static IntegrationMessage Create_Message(string parametersJson, string payload = "test")
     {
         return new IntegrationMessage
         {

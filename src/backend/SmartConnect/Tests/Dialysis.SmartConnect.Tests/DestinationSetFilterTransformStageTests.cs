@@ -8,7 +8,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class DestinationSetFilterTransformStageTests
 {
     [Fact]
-    public async Task RemoveAllExcept_narrows_set_to_named_routes()
+    public async Task Removeallexcept_Narrows_Set_To_Named_Routes_Async()
     {
         var paramsJson = """
         {
@@ -17,7 +17,7 @@ public sealed class DestinationSetFilterTransformStageTests
         }
         """;
 
-        var msg = WrapMessage().WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
+        var msg = Wrap_Message().WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
 
         var result = await new DestinationSetFilterTransformStage().TransformAsync(msg, CancellationToken.None);
 
@@ -26,7 +26,7 @@ public sealed class DestinationSetFilterTransformStageTests
     }
 
     [Fact]
-    public async Task Remove_drops_named_routes()
+    public async Task Remove_Drops_Named_Routes_Async()
     {
         var paramsJson = """
         {
@@ -35,7 +35,7 @@ public sealed class DestinationSetFilterTransformStageTests
         }
         """;
 
-        var msg = WrapMessage().WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
+        var msg = Wrap_Message().WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
 
         var result = await new DestinationSetFilterTransformStage().TransformAsync(msg, CancellationToken.None);
 
@@ -47,7 +47,7 @@ public sealed class DestinationSetFilterTransformStageTests
     }
 
     [Fact]
-    public async Task RemoveAll_yields_empty_set()
+    public async Task Removeall_Yields_Empty_Set_Async()
     {
         var paramsJson = """
         {
@@ -56,7 +56,7 @@ public sealed class DestinationSetFilterTransformStageTests
         }
         """;
 
-        var msg = WrapMessage().WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
+        var msg = Wrap_Message().WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
 
         var result = await new DestinationSetFilterTransformStage().TransformAsync(msg, CancellationToken.None);
 
@@ -65,15 +65,15 @@ public sealed class DestinationSetFilterTransformStageTests
     }
 
     [Fact]
-    public async Task No_parameters_returns_message_unchanged()
+    public async Task No_Parameters_Returns_Message_Unchanged_Async()
     {
-        var msg = WrapMessage();
+        var msg = Wrap_Message();
         var result = await new DestinationSetFilterTransformStage().TransformAsync(msg, CancellationToken.None);
         Assert.False(result.Metadata.ContainsKey(DestinationSetFilterTransformStage.DestinationSetMetadataKey));
     }
 
     [Fact]
-    public async Task Script_can_branch_on_payload_text()
+    public async Task Script_Can_Branch_On_Payload_Text_Async()
     {
         var paramsJson = """
         {
@@ -82,8 +82,8 @@ public sealed class DestinationSetFilterTransformStageTests
         }
         """;
 
-        var vipMsg = WrapMessage("VIP-patient").WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
-        var normalMsg = WrapMessage("regular-patient").WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
+        var vipMsg = Wrap_Message("VIP-patient").WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
+        var normalMsg = Wrap_Message("regular-patient").WithMetadata(DestinationSetFilterTransformStage.ParametersMetadataKey, paramsJson);
 
         var stage = new DestinationSetFilterTransformStage();
         var vipResult = await stage.TransformAsync(vipMsg, CancellationToken.None);
@@ -93,7 +93,7 @@ public sealed class DestinationSetFilterTransformStageTests
         Assert.Equal("default", normalResult.Metadata[DestinationSetFilterTransformStage.DestinationSetMetadataKey]);
     }
 
-    private static IntegrationMessage WrapMessage(string payload = "test") =>
+    private static IntegrationMessage Wrap_Message(string payload = "test") =>
         new()
         {
             Id = Guid.NewGuid(),

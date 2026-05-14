@@ -8,7 +8,7 @@ namespace Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment
 public sealed class RecordSecurityMechanismAssessmentCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
     : ICommandHandler<RecordSecurityMechanismAssessmentCommand, Guid>
 {
-    public async Task<Guid> Handle(RecordSecurityMechanismAssessmentCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RecordSecurityMechanismAssessmentCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         store.AddSecurityMechanismHardening(

@@ -280,7 +280,7 @@ public sealed class NatsTransponderTransport(
             DeduplicationId: deduplicationId);
     }
 
-    private async static Task PublishPoisonCoreAsync(
+    private static async Task PublishPoisonCoreAsync(
         NatsClient client,
         TransponderNatsOptions o,
         TransportMessage failed,

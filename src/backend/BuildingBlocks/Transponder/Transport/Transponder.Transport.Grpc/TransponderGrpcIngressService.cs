@@ -11,7 +11,7 @@ public sealed class TransponderGrpcIngressService(
     ILogger<TransponderGrpcIngressService> logger,
     IServiceProvider services) : TransponderIngress.TransponderIngressBase
 {
-    public async override Task<PublishResponse> Publish(TransportEnvelope request, ServerCallContext context)
+    public override async Task<PublishResponse> Publish(TransportEnvelope request, ServerCallContext context)
     {
         if (string.IsNullOrEmpty(request.RoutingKey))
             throw new RpcException(new Status(StatusCode.InvalidArgument, "routing_key is required."));
@@ -25,7 +25,7 @@ public sealed class TransponderGrpcIngressService(
         return new PublishResponse();
     }
 
-    public async override Task Subscribe(
+    public override async Task Subscribe(
         SubscribeRequest request,
         IServerStreamWriter<TransportEnvelope> responseStream,
         ServerCallContext context)

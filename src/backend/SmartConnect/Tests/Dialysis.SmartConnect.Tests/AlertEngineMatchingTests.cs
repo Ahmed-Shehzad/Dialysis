@@ -8,9 +8,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class AlertEngineMatchingTests
 {
     [Fact]
-    public async Task Rule_scoped_to_other_flow_does_not_fire()
+    public async Task Rule_Scoped_To_Other_Flow_Does_Not_Fire_Async()
     {
-        var (sp, recordedKinds) = await BuildAsync();
+        var (sp, recordedKinds) = await Build_Async();
         var rules = sp.GetRequiredService<IAlertRuleRepository>();
         var store = sp.GetRequiredService<IAlertEventStore>();
         var engine = sp.GetRequiredService<AlertEngine>();
@@ -35,9 +35,9 @@ public sealed class AlertEngineMatchingTests
     }
 
     [Fact]
-    public async Task Regex_pattern_filters_by_error_detail()
+    public async Task Regex_Pattern_Filters_By_Error_Detail_Async()
     {
-        var (sp, recordedKinds) = await BuildAsync();
+        var (sp, recordedKinds) = await Build_Async();
         var rules = sp.GetRequiredService<IAlertRuleRepository>();
         var engine = sp.GetRequiredService<AlertEngine>();
         var flowId = Guid.CreateVersion7();
@@ -58,9 +58,9 @@ public sealed class AlertEngineMatchingTests
     }
 
     [Fact]
-    public async Task Throttle_window_suppresses_repeats()
+    public async Task Throttle_Window_Suppresses_Repeats_Async()
     {
-        var (sp, recordedKinds, fakeTime) = await BuildWithTimeAsync();
+        var (sp, recordedKinds, fakeTime) = await Build_With_Time_Async();
         var rules = sp.GetRequiredService<IAlertRuleRepository>();
         var engine = sp.GetRequiredService<AlertEngine>();
         var flowId = Guid.CreateVersion7();
@@ -88,9 +88,9 @@ public sealed class AlertEngineMatchingTests
     }
 
     [Fact]
-    public async Task Rule_with_no_patterns_matches_all()
+    public async Task Rule_With_No_Patterns_Matches_All_Async()
     {
-        var (sp, recordedKinds) = await BuildAsync();
+        var (sp, recordedKinds) = await Build_Async();
         var rules = sp.GetRequiredService<IAlertRuleRepository>();
         var engine = sp.GetRequiredService<AlertEngine>();
 
@@ -106,13 +106,13 @@ public sealed class AlertEngineMatchingTests
         Assert.Single(recordedKinds);
     }
 
-    private async static Task<(ServiceProvider sp, List<string> recordedKinds)> BuildAsync()
+    private static async Task<(ServiceProvider sp, List<string> recordedKinds)> Build_Async()
     {
-        var (sp, recorded, _) = await BuildWithTimeAsync();
+        var (sp, recorded, _) = await Build_With_Time_Async();
         return (sp, recorded);
     }
 
-    private static Task<(ServiceProvider sp, List<string> recordedKinds, AdvanceableTimeProvider time)> BuildWithTimeAsync()
+    private static Task<(ServiceProvider sp, List<string> recordedKinds, AdvanceableTimeProvider time)> Build_With_Time_Async()
     {
         var recorded = new List<string>();
         var services = new ServiceCollection();

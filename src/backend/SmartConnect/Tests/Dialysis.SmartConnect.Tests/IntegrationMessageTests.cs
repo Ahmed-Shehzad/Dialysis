@@ -5,7 +5,7 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class IntegrationMessageTests
 {
     [Fact]
-    public void WithMetadata_preserves_payload_and_merges_keys()
+    public void With_Metadata_Preserves_Payload_And_Merges_Keys()
     {
         var id = Guid.NewGuid();
         var flowId = Guid.NewGuid();

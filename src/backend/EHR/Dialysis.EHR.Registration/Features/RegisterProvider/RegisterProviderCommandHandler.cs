@@ -10,7 +10,7 @@ public sealed class RegisterProviderCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<RegisterProviderCommand, Guid>
 {
-    public async Task<Guid> Handle(RegisterProviderCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(RegisterProviderCommand request, CancellationToken cancellationToken)
     {
         if (await providers.FindByNpiAsync(request.NationalProviderIdentifier, cancellationToken).ConfigureAwait(false) is not null)
             throw new InvalidOperationException($"NPI '{request.NationalProviderIdentifier}' is already registered.");
