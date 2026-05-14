@@ -6,7 +6,7 @@ using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.ExtendedPlugins;
-using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Dialysis.SmartConnect.VariableMaps;
 

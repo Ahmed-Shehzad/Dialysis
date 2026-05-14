@@ -92,7 +92,7 @@ public sealed class DefaultExternalScriptLoader : IExternalScriptLoader
         var client = _httpClients.CreateClient("smartconnect-outbound");
         using var response = await client.GetAsync(uri, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
-        if (response.Content.Headers.ContentLength is long len && len > opts.MaxScriptBytes)
+        if (response.Content.Headers.ContentLength is { } len && len > opts.MaxScriptBytes)
         {
             throw new InvalidOperationException($"External script at '{uri}' reports {len} bytes; exceeds MaxScriptBytes ({opts.MaxScriptBytes}).");
         }
@@ -106,7 +106,7 @@ public sealed class DefaultExternalScriptLoader : IExternalScriptLoader
             {
                 throw new InvalidOperationException($"External script at '{uri}' exceeded MaxScriptBytes ({opts.MaxScriptBytes}) during read.");
             }
-            ms.Write(buffer, 0, read);
+            await ms.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

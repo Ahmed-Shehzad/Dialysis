@@ -46,4 +46,7 @@ app.MapGet("/", () => Results.Ok(new { module = "pdms", version = "v1" }));
 
 await app.RunAsync().ConfigureAwait(false);
 
-public partial class Program;
+namespace Dialysis.PDMS.Api
+{
+    public partial class Program;
+}

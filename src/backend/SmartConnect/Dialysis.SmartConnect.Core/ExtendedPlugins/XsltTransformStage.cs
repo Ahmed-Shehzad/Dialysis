@@ -47,7 +47,9 @@ public sealed class XsltTransformStage : ITransformStage
         using var outputStream = new MemoryStream();
         using var xmlWriter = XmlWriter.Create(outputStream, transform.OutputSettings);
         transform.Transform(xmlReader, xmlWriter);
+#pragma warning disable VSTHRD103 // XslCompiledTransform.OutputSettings.Async is false; FlushAsync would throw. Sink is MemoryStream, no I/O.
         xmlWriter.Flush();
+#pragma warning restore VSTHRD103
 
         var resultBytes = outputStream.ToArray();
         return Task.FromResult(message.CloneWithPayload(resultBytes, PayloadFormat.Utf8Text));

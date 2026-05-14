@@ -69,5 +69,8 @@ app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
 
 await app.RunAsync().ConfigureAwait(false);
 
-/// <summary>Test factory marker.</summary>
-public partial class Program;
+namespace Dialysis.EHR.Api
+{
+    /// <summary>Test factory marker.</summary>
+    public partial class Program;
+}

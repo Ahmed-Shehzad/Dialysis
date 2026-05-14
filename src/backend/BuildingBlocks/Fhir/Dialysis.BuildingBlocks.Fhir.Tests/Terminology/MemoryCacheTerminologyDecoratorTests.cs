@@ -53,7 +53,7 @@ public sealed class MemoryCacheTerminologyDecoratorTests
         public ValueTask<Parameters> LookupAsync(string system, string code, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref counts.LookupCalls);
-            return new(new Parameters());
+            return new ValueTask<Parameters>(new Parameters());
         }
 
         public ValueTask<Parameters> ValidateCodeAsync(string valueSetUrl, string code, string? system, CancellationToken cancellationToken)

@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 internal sealed class RoutingSlipActivityExecutionContext(
     string slipId,

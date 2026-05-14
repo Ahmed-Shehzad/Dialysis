@@ -1,6 +1,7 @@
 using System.Text;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Scheduling;
 
 /// <summary>Builds <see cref="TransponderScheduledEnvelope"/> snapshots using <see cref="IMessageSerializer"/>.</summary>
 public static class TransponderScheduledEnvelopeFactory

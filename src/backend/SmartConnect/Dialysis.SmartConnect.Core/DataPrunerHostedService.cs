@@ -1,6 +1,6 @@
 using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.Attachments;
-using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

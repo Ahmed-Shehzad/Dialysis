@@ -1,5 +1,6 @@
 using System.Text;
 using Dialysis.SmartConnect.Scripts;
+using Dialysis.SmartConnect.VariableMaps;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

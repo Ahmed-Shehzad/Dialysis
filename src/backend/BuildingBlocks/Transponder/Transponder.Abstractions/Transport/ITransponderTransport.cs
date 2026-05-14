@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Transport;
 
 /// <summary>
 /// Broker-specific send/receive. Host integrations replace <see cref="ITransponderBus"/> and use a transport for cross-process messaging.

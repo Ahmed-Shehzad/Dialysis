@@ -12,6 +12,7 @@ namespace Dialysis.ArchitectureTests;
 /// </summary>
 public sealed class ModuleBoundaryTests
 {
+/*
     private static readonly string[] _allowedSharedNamespaceRoots =
     [
         "Dialysis.DomainDrivenDesign",
@@ -26,6 +27,7 @@ public sealed class ModuleBoundaryTests
         "Npgsql",
         "Polly",
     ];
+*/
 
     /// <summary>
     /// No project under <c>Dialysis.EHR.*</c> may reference any non-Contracts assembly of <c>Dialysis.PDMS.*</c>.

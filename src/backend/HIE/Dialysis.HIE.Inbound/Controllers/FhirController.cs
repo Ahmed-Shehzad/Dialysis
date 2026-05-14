@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Inbound.Controllers;
 
@@ -41,7 +40,7 @@ public sealed class FhirController(
         Resource resource;
         try
         {
-            resource = _parser.Parse<Resource>(body);
+            resource = await _parser.ParseAsync<Resource>(body);
         }
         catch (Exception ex)
         {

@@ -17,7 +17,7 @@ public sealed class LabOrderMapper : IFhirResourceMapper<LabOrderPlacedIntegrati
             Subject = new ResourceReference($"Patient/{e.PatientId}"),
             Encounter = new ResourceReference($"Encounter/{e.EncounterId}"),
             Requester = new ResourceReference($"Practitioner/{e.OrderingProviderId}"),
-            PerformerType = new CodeableConcept(null, e.LabFacilityCode),
+            PerformerType = new CodeableConcept { Text = e.LabFacilityCode },
         };
         var code = new CodeableConcept();
         foreach (var loinc in e.LoincPanelCodes)

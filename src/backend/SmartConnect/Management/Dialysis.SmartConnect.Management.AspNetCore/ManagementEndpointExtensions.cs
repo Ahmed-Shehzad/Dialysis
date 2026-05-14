@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

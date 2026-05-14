@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
+
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
 {

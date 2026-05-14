@@ -51,7 +51,7 @@ public static class ScheduleFactory
         var intervalSeconds = s.IntervalSeconds ?? 0;
         if (intervalSeconds <= 0)
             throw new ArgumentException("Interval schedule requires IntervalSeconds > 0.", nameof(s));
-        TimeSpan? initial = s.InitialDelaySeconds is int delay && delay > 0
+        TimeSpan? initial = s.InitialDelaySeconds is { } delay && delay > 0
             ? TimeSpan.FromSeconds(delay)
             : null;
         return new IntervalSchedule(TimeSpan.FromSeconds(intervalSeconds), initial);

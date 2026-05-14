@@ -18,10 +18,8 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
     public const string HttpClientName = "Dialysis.Fhir.Terminology";
 
     private static readonly FhirJsonParser _parser = new();
-    private static readonly FhirJsonSerializer _serializer = new();
 
     private readonly HttpClient _http;
-    private readonly FhirTerminologyOptions _options;
     private readonly ILogger<HttpFhirTerminologyService> _logger;
 
     public HttpFhirTerminologyService(
@@ -30,18 +28,18 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
         ILogger<HttpFhirTerminologyService> logger)
     {
         _http = http;
-        _options = options.Value;
+        var fhirTerminologyOptions = options.Value;
         _logger = logger;
 
         if (_http.BaseAddress is null)
-            _http.BaseAddress = new Uri(_options.Endpoint.TrimEnd('/') + "/");
+            _http.BaseAddress = new Uri(fhirTerminologyOptions.Endpoint.TrimEnd('/') + "/");
         if (_http.Timeout == TimeSpan.FromSeconds(100)) // System.Net.Http default
-            _http.Timeout = _options.Timeout;
+            _http.Timeout = fhirTerminologyOptions.Timeout;
 
         _http.DefaultRequestHeaders.Accept.Clear();
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/fhir+json"));
-        if (!string.IsNullOrWhiteSpace(_options.BearerToken))
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.BearerToken);
+        if (!string.IsNullOrWhiteSpace(fhirTerminologyOptions.BearerToken))
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", fhirTerminologyOptions.BearerToken);
     }
 
     public async ValueTask<Parameters> LookupAsync(string system, string code, CancellationToken cancellationToken)
@@ -107,7 +105,7 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
 
         try
         {
-            return _parser.Parse<TResource>(body);
+            return await _parser.ParseAsync<TResource>(body);
         }
         catch (FormatException ex)
         {

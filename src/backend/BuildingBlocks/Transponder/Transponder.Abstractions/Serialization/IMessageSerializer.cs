@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Transport;
+
+namespace Dialysis.BuildingBlocks.Transponder.Serialization;
 
 /// <summary>
 /// Serializes message contracts for <see cref="ITransponderTransport"/>.

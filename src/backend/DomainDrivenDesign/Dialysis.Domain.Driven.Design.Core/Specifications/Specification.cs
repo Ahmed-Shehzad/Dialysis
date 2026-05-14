@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using Dialysis.DomainDrivenDesign.Specifications;
 
 namespace Dialysis.DomainDrivenDesign.Specifications;
 

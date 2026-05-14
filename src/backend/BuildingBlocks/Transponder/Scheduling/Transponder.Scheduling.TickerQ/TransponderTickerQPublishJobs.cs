@@ -1,4 +1,5 @@
 using System.Text;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.Logging;
 using TickerQ.Utilities.Base;
 

@@ -16,7 +16,7 @@ public sealed class DefaultFhirProfileValidator(FhirProfileMap profileMap) : IFh
         ArgumentNullException.ThrowIfNull(resource);
         var profiles = profileMap.GetProfilesFor(resource.TypeName);
         if (profiles.Count == 0 || profileMap.Mode == FhirProfileEnforcementMode.Off)
-            return new(new FhirProfileValidationResult(IsValid: true, new OperationOutcome()));
+            return new ValueTask<FhirProfileValidationResult>(new FhirProfileValidationResult(IsValid: true, new OperationOutcome()));
 
         // Skeleton — profile-driven validation is wired by the host when a real validator is provided.
         // The returned outcome lists the bound profiles as informational entries so callers can surface
@@ -31,6 +31,6 @@ public sealed class DefaultFhirProfileValidator(FhirProfileMap profileMap) : IFh
                 Diagnostics = $"profile {profile} is bound for {resource.TypeName}",
             });
         }
-        return new(new FhirProfileValidationResult(IsValid: true, outcome));
+        return new ValueTask<FhirProfileValidationResult>(new FhirProfileValidationResult(IsValid: true, outcome));
     }
 }

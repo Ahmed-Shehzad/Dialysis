@@ -35,7 +35,7 @@ public static class ModuleTelemetryExtensions
                 r.AddService(serviceName, serviceVersion: options.ServiceVersion);
                 r.AddAttributes(
                 [
-                    new("dialysis.module", moduleSlug)
+                    new KeyValuePair<string, object>("dialysis.module", moduleSlug)
                 ]);
             })
             .WithTracing(t =>

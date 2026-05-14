@@ -1,7 +1,6 @@
 using System.Text;
 using Dialysis.BuildingBlocks.Fhir.Serialization;
 using Hl7.Fhir.Model;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Task = System.Threading.Tasks.Task;
 

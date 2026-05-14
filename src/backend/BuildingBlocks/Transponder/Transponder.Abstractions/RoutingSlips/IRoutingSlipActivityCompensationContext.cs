@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Context passed to <see cref="IRoutingSlipCompensatableActivity.CompensateAsync"/> after a later activity faults.

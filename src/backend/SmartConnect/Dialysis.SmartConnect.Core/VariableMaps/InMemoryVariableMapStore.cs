@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Dialysis.SmartConnect;
+namespace Dialysis.SmartConnect.VariableMaps;
 
 /// <summary>
 /// In-memory implementation of <see cref="IVariableMapStore"/> for all scopes.

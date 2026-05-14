@@ -29,7 +29,8 @@ public sealed class OutboundDispatcher(
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var batch = await store.ClaimPendingAsync(_options.DispatchBatchSize, now, cancellationToken).ConfigureAwait(false);
-        if (batch.Count == 0) return 0;
+        if (batch.Count == 0)
+            return 0;
 
         var processed = 0;
         foreach (var bundle in batch)
@@ -56,7 +57,7 @@ public sealed class OutboundDispatcher(
         Resource resource;
         try
         {
-            resource = _parser.Parse<Resource>(bundle.FhirJson);
+            resource = await _parser.ParseAsync<Resource>(bundle.FhirJson);
         }
         catch (Exception ex)
         {
@@ -107,7 +108,8 @@ public sealed class OutboundDispatcher(
 
     private async Task EmitDeliveredAsync(OutboundBundle bundle, DateTime deliveredAt, CancellationToken cancellationToken)
     {
-        if (!_options.EmitDeliveryEvents || transponderOutbox is null) return;
+        if (!_options.EmitDeliveryEvents || transponderOutbox is null)
+            return;
         var evt = new FhirResourceDeliveredIntegrationEvent(
             Guid.NewGuid(),
             deliveredAt,
@@ -123,7 +125,8 @@ public sealed class OutboundDispatcher(
 
     private async Task EmitFailedAsync(OutboundBundle bundle, CancellationToken cancellationToken)
     {
-        if (!_options.EmitDeliveryEvents || transponderOutbox is null) return;
+        if (!_options.EmitDeliveryEvents || transponderOutbox is null)
+            return;
         var evt = new FhirResourceDeliveryFailedIntegrationEvent(
             Guid.NewGuid(),
             timeProvider.GetUtcNow().UtcDateTime,
@@ -139,7 +142,8 @@ public sealed class OutboundDispatcher(
 
     private async Task EnqueueEventAsync<T>(T evt, CancellationToken cancellationToken)
     {
-        if (transponderOutbox is null) return;
+        if (transponderOutbox is null)
+            return;
         var json = JsonSerializer.Serialize(evt);
         var envelope = new TransponderOutboxEnvelope(typeof(T).AssemblyQualifiedName!, json);
         await transponderOutbox.EnqueueAsync(envelope, cancellationToken).ConfigureAwait(false);

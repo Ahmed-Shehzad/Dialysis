@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
 
 /// <summary>
 /// Published when an activity <see cref="IRoutingSlipActivity.ExecuteAsync"/> throws or when an activity name cannot be resolved.

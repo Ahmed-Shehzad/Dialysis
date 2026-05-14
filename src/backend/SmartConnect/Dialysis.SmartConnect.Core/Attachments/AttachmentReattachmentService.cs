@@ -46,7 +46,7 @@ public sealed class AttachmentReattachmentService(IAttachmentStore store)
             {
                 var span = text.AsSpan(cursor, start - cursor);
                 var pre = utf8.GetBytes(span.ToArray());
-                ms.Write(pre, 0, pre.Length);
+                await ms.WriteAsync(pre.AsMemory(0, pre.Length), cancellationToken).ConfigureAwait(false);
             }
             ms.Write(att.Data.Span);
             cursor = start + length;
@@ -55,7 +55,7 @@ public sealed class AttachmentReattachmentService(IAttachmentStore store)
         if (cursor < text.Length)
         {
             var tail = utf8.GetBytes(text.AsSpan(cursor).ToArray());
-            ms.Write(tail, 0, tail.Length);
+            await ms.WriteAsync(tail.AsMemory(0, tail.Length), cancellationToken).ConfigureAwait(false);
         }
 
         return new ReadOnlyMemory<byte>(ms.ToArray());

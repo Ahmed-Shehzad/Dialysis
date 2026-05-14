@@ -1,4 +1,5 @@
 using System.Text;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 
 namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 

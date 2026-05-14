@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Optional compensation for a routing slip activity. Invoked in reverse order of successful execution when a later activity faults.

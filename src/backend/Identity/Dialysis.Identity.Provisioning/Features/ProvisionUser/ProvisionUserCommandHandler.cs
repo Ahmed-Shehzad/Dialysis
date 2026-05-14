@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.Identity.Contracts.Integration;

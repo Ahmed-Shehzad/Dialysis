@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>
 /// Process-local saga storage for development and tests. For production across multiple nodes, register

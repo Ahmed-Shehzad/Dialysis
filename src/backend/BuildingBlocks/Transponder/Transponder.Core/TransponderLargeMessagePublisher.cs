@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 
 namespace Dialysis.BuildingBlocks.Transponder;
 

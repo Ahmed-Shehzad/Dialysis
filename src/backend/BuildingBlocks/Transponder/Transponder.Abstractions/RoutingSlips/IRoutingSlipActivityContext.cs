@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
+
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Execution context for a single routing slip activity.

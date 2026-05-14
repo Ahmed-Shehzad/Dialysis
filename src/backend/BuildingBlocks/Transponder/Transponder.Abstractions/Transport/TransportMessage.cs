@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Transport;
 
 /// <summary>
 /// Wire-level payload for <see cref="ITransponderTransport"/>.

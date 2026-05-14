@@ -7,7 +7,6 @@ using Hl7.Fhir.Serialization;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
-using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Outbound.Partners.Http;
 

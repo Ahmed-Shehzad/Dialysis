@@ -5,6 +5,7 @@ using Dialysis.SmartConnect.Attachments.Handlers;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.ExtendedPlugins;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Dialysis.SmartConnect.Transforms;
 using Dialysis.SmartConnect.VariableMaps;
@@ -18,7 +19,7 @@ public static class SmartConnectServiceCollectionExtensions
 {
     /// <summary>
     /// Registers SmartConnect runtime services: <see cref="IFlowRuntime"/>, <see cref="IFlowPluginRegistry"/>, and built-in plugins.
-    /// Call persistence plugins (for example <c>AddSmartConnectPersistenceInMemory</c> or <c>AddSmartConnectPersistenceForSqlServer</c>) to register <see cref="Persistence.IIntegrationFlowRepository"/> and <see cref="Persistence.IMessageLedger"/>.
+    /// Call persistence plugins (for example <c>AddSmartConnectPersistenceInMemory</c> or <c>AddSmartConnectPersistenceForSqlServer</c>) to register <see cref="IIntegrationFlowRepository"/> and <see cref="IMessageLedger"/>.
     /// </summary>
     public static IServiceCollection AddSmartConnectCore(this IServiceCollection services)
     {

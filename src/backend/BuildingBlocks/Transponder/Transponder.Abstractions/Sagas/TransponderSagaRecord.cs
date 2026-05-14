@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>
 /// Durable snapshot of a saga instance (logical process keyed by <see cref="InstanceKey"/>).

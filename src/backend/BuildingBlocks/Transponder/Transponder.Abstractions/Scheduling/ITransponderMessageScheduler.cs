@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Scheduling;
 
 /// <summary>
 /// Queues publication through <see cref="ITransponderBus"/> for a later instant (once) or on a recurring cron.

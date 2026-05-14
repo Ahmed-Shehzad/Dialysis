@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.CQRS;
+using Dialysis.Identity.Api;
 using Dialysis.Identity.Composition;
 using Dialysis.Identity.Contracts.Security;
 using Dialysis.Identity.Provisioning.Features.AssignRoleToUser;
@@ -114,8 +115,11 @@ roles.MapGet("/", async (ICqrsGateway gateway, CancellationToken ct) =>
 
 await app.RunAsync().ConfigureAwait(false);
 
-/// <summary>Body for assigning a role to a user.</summary>
-public sealed record AssignRoleBody(string RoleCode);
+namespace Dialysis.Identity.Api
+{
+    /// <summary>Body for assigning a role to a user.</summary>
+    public sealed record AssignRoleBody(string RoleCode);
 
-/// <summary>Test factory marker.</summary>
-public partial class Program;
+    /// <summary>Test factory marker.</summary>
+    public partial class Program;
+}

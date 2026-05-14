@@ -1,4 +1,4 @@
-namespace Dialysis.SmartConnect.Persistence;
+namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
 public interface IMessageLedger
 {

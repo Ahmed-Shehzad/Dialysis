@@ -9,10 +9,8 @@ public sealed class MeditechAdapterOptions
     public required string ClientSecret { get; set; }
 }
 
-public sealed class MeditechAuthProvider(Microsoft.Extensions.Options.IOptions<MeditechAdapterOptions> options) : IExternalEhrAuthProvider
+public sealed class MeditechAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly MeditechAdapterOptions _options = options.Value;
-
     public string VendorName => "Meditech";
 
     public Task<string> AcquireAccessTokenAsync(ExternalEhrContext context, CancellationToken cancellationToken)

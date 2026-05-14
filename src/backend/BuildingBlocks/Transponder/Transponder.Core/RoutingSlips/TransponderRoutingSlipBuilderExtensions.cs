@@ -1,7 +1,8 @@
+using Dialysis.BuildingBlocks.Transponder.Sagas;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>Registers durable routing slip activities and the continue consumer.</summary>
 public static class TransponderRoutingSlipBuilderExtensions

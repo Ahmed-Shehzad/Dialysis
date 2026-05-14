@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.BuildingBlocks.Transponder;

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Serialization;
 
 /// <summary>
 /// JSON serializer using <see cref="JsonSerializer"/> with camel-case names.

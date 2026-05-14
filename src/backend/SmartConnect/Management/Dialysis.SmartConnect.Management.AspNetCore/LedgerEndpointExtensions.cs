@@ -1,4 +1,4 @@
-using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;

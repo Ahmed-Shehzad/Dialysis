@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>
 /// Saga logic for one inbound message contract. Register with <see cref="TransponderSagaBuilderExtensions.AddSagaMessageHandler{TState,TMessage,THandler}"/>.

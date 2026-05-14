@@ -1,4 +1,3 @@
-using Dialysis.DomainDrivenDesign.DomainEvents;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.DomainDrivenDesign.DomainEvents;

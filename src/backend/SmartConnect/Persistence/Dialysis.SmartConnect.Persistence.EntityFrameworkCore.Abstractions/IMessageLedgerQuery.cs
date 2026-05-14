@@ -1,4 +1,4 @@
-namespace Dialysis.SmartConnect.Persistence;
+namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
 /// <summary>Paged read access to the append-only message ledger.</summary>
 public interface IMessageLedgerQuery

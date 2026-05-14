@@ -127,7 +127,7 @@ public sealed class DatabaseReaderSourceConnector : ISourceConnector
                 var row = new Dictionary<string, object?>(reader.FieldCount);
                 for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                    row[reader.GetName(i)] = await reader.IsDBNullAsync(i, cancellationToken).ConfigureAwait(false) ? null : reader.GetValue(i);
                 }
 
                 // Update watermark

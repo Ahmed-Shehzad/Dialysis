@@ -11,10 +11,8 @@ public sealed class OpenEmrAdapterOptions
     public string Scope { get; set; } = "openid offline_access patient/*.read";
 }
 
-public sealed class OpenEmrAuthProvider(Microsoft.Extensions.Options.IOptions<OpenEmrAdapterOptions> options) : IExternalEhrAuthProvider
+public sealed class OpenEmrAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly OpenEmrAdapterOptions _options = options.Value;
-
     public string VendorName => "OpenEMR";
 
     public Task<string> AcquireAccessTokenAsync(ExternalEhrContext context, CancellationToken cancellationToken)

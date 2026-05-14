@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
-using Dialysis.BuildingBlocks.Transponder;
-using Dialysis.SmartConnect;
+using Dialysis.BuildingBlocks.Transponder.Transport;
 using Dialysis.SmartConnect.Inbound.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

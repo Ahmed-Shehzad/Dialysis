@@ -9,10 +9,8 @@ public sealed class CernerAdapterOptions
     public required string ClientSecret { get; set; }
 }
 
-public sealed class CernerAuthProvider(Microsoft.Extensions.Options.IOptions<CernerAdapterOptions> options) : IExternalEhrAuthProvider
+public sealed class CernerAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly CernerAdapterOptions _options = options.Value;
-
     public string VendorName => "Cerner";
 
     public Task<string> AcquireAccessTokenAsync(ExternalEhrContext context, CancellationToken cancellationToken)

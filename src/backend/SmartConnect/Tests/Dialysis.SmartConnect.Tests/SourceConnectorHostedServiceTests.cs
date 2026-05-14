@@ -110,7 +110,9 @@ public sealed class SourceConnectorHostedServiceTests
         await host.StartAsync().ConfigureAwait(true);
         try
         {
+#pragma warning disable VSTHRD003 // TCS task signals from the connector under test; intentional cross-context await.
             var started = await Task.WhenAny(connector.Started.Task, Task.Delay(300)).ConfigureAwait(true);
+#pragma warning restore VSTHRD003
             Assert.NotSame(connector.Started.Task, started);
         }
         finally

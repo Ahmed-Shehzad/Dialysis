@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Starts a durable routing slip: inserts saga-backed state and publishes the first <see cref="TransponderRoutingSlipContinue"/>.

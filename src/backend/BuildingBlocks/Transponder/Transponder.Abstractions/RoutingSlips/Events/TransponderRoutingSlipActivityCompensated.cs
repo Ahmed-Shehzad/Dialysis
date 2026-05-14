@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
 
 /// <summary>
 /// Published after <see cref="IRoutingSlipCompensatableActivity.CompensateAsync"/> completes successfully for one prior activity.

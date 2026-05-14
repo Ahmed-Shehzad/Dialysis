@@ -1,4 +1,4 @@
-using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.CodeTemplates;
 

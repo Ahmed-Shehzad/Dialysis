@@ -2,7 +2,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;

@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
 
 /// <summary>
 /// Published after an itinerary activity executes successfully (including the final activity before <see cref="TransponderRoutingSlipCompleted"/>).

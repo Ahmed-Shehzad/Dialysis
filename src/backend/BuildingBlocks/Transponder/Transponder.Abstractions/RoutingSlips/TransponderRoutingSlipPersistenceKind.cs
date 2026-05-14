@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Sagas;
+
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Marker for durable routing slip rows stored in <see cref="ITransponderSagaStore"/> / <c>SagaInstances</c>.

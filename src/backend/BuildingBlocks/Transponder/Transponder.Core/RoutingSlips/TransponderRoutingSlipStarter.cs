@@ -1,8 +1,10 @@
 using System.Text;
+using Dialysis.BuildingBlocks.Transponder.Sagas;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 internal sealed class TransponderRoutingSlipStarter(
     ITransponderSagaStore store,

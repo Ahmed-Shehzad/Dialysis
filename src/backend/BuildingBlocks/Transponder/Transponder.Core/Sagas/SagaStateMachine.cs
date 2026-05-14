@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>
 /// Declarative edges for enum-backed saga phases. Use inside <see cref="ITransponderSagaMessageHandler{TState,TMessage}.HandleAsync"/> to validate transitions.

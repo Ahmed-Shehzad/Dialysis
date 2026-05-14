@@ -20,7 +20,7 @@ public sealed class SearchPatientsFlowTests(HisApiWebApplicationFactory factory)
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var now = DateTime.UtcNow;
-        db.RaFullTextSearchEntries.AddRange(
+        await db.RaFullTextSearchEntries.AddRangeAsync(
             new RaFullTextSearchEntry { Id = Guid.CreateVersion7(), CorpusCode = EfPatientSearchReadModel.PatientCorpusCode, ExternalId = "MRN-1", SearchText = "Alice Johnson", IndexedAtUtc = now },
             new RaFullTextSearchEntry { Id = Guid.CreateVersion7(), CorpusCode = EfPatientSearchReadModel.PatientCorpusCode, ExternalId = "MRN-2", SearchText = "Bob Smith", IndexedAtUtc = now },
             new RaFullTextSearchEntry { Id = Guid.CreateVersion7(), CorpusCode = "orders", ExternalId = "ORD-9", SearchText = "Aspirin order", IndexedAtUtc = now });

@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Transponder.RoutingSlips;
+using Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
+using Dialysis.BuildingBlocks.Transponder.Sagas;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -6,9 +9,9 @@ namespace Dialysis.BuildingBlocks.Transponder.Tests;
 [Collection(nameof(RoutingSlipTestCollection))]
 public sealed class RoutingSlipEventTests
 {
-    private static readonly Lock _loglock = new();
+    private static readonly Lock _logLock = new();
 
-    private static readonly List<string> _eventlog = [];
+    private static readonly List<string> _eventLog = [];
 
     [Fact]
     public async Task Happy_Path_Emits_Activity_Completed_Then_Slip_Completed_Async()
@@ -33,8 +36,8 @@ public sealed class RoutingSlipEventTests
         var starter = provider.GetRequiredService<ITransponderRoutingSlipStarter>();
         var store = provider.GetRequiredService<ITransponderSagaStore>();
 
-        lock (_loglock)
-            _eventlog.Clear();
+        lock (_logLock)
+            _eventLog.Clear();
         var slipId = await starter.StartAsync(
             [
                 new TransponderRoutingSlipActivityRef { Name = nameof(RoutingSlipEventOkA) },
@@ -44,8 +47,8 @@ public sealed class RoutingSlipEventTests
         Assert.Null(await store.GetAsync(TransponderRoutingSlipPersistenceKind.SagaKind, slipId));
 
         List<string> snapshot;
-        lock (_loglock)
-            snapshot = [.._eventlog];
+        lock (_logLock)
+            snapshot = [.. _eventLog];
 
         Assert.Equal(
             new[] { nameof(TransponderRoutingSlipActivityCompleted) + ":0", nameof(TransponderRoutingSlipActivityCompleted) + ":1", nameof(TransponderRoutingSlipCompleted) },
@@ -71,8 +74,8 @@ public sealed class RoutingSlipEventTests
         var starter = provider.GetRequiredService<ITransponderRoutingSlipStarter>();
 
         RoutingSlipEventCompensatableA.Compensated = false;
-        lock (_loglock)
-            _eventlog.Clear();
+        lock (_logLock)
+            _eventLog.Clear();
         await starter.StartAsync(
             [
                 new TransponderRoutingSlipActivityRef { Name = nameof(RoutingSlipEventCompensatableA) },
@@ -81,8 +84,8 @@ public sealed class RoutingSlipEventTests
 
         Assert.True(RoutingSlipEventCompensatableA.Compensated);
         List<string> snapshot;
-        lock (_loglock)
-            snapshot = [.._eventlog];
+        lock (_logLock)
+            snapshot = [.. _eventLog];
 
         Assert.Equal(
             new[]
@@ -117,8 +120,8 @@ public sealed class RoutingSlipEventTests
         var starter = provider.GetRequiredService<ITransponderRoutingSlipStarter>();
 
         RoutingSlipEventCompensatableA.Compensated = false;
-        lock (_loglock)
-            _eventlog.Clear();
+        lock (_logLock)
+            _eventLog.Clear();
         await starter.StartAsync(
             [
                 new TransponderRoutingSlipActivityRef { Name = nameof(RoutingSlipEventCompensatableA) },
@@ -127,8 +130,8 @@ public sealed class RoutingSlipEventTests
             ]);
 
         List<string> snapshot;
-        lock (_loglock)
-            snapshot = [.._eventlog];
+        lock (_logLock)
+            snapshot = [.. _eventLog];
 
         Assert.Contains(nameof(TransponderRoutingSlipActivityCompensationFailed), snapshot);
         Assert.Contains(nameof(TransponderRoutingSlipCompensationFailed), snapshot);
@@ -139,8 +142,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityCompleted> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipActivityCompleted) + ":" + context.Message.ActivityIndex);
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipActivityCompleted) + ":" + context.Message.ActivityIndex);
             return Task.CompletedTask;
         }
     }
@@ -149,8 +152,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipCompleted> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipCompleted));
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipCompleted));
             return Task.CompletedTask;
         }
     }
@@ -159,8 +162,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityFaulted> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipActivityFaulted));
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipActivityFaulted));
             return Task.CompletedTask;
         }
     }
@@ -169,8 +172,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityCompensated> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipActivityCompensated));
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipActivityCompensated));
             return Task.CompletedTask;
         }
     }
@@ -179,8 +182,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipActivityCompensationFailed> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipActivityCompensationFailed));
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipActivityCompensationFailed));
             return Task.CompletedTask;
         }
     }
@@ -189,8 +192,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipCompensationFailed> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipCompensationFailed));
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipCompensationFailed));
             return Task.CompletedTask;
         }
     }
@@ -199,8 +202,8 @@ public sealed class RoutingSlipEventTests
     {
         public Task HandleAsync(ConsumeContext<TransponderRoutingSlipFaulted> context)
         {
-            lock (_loglock)
-                _eventlog.Add(nameof(TransponderRoutingSlipFaulted));
+            lock (_logLock)
+                _eventLog.Add(nameof(TransponderRoutingSlipFaulted));
             return Task.CompletedTask;
         }
     }

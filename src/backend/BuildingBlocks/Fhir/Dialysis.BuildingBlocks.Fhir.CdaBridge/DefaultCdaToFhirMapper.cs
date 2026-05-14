@@ -38,9 +38,13 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
         {
             Id = idElement?.Attribute("extension")?.Value ?? Guid.NewGuid().ToString(),
         };
-        if (idElement?.Attribute("root")?.Value is string root4)
+        if (idElement?.Attribute("root")?.Value is { } root4)
         {
-            patient.Identifier.Add(new Identifier(system: $"urn:oid:{root4}", value: idElement.Attribute("extension")?.Value));
+            var value = idElement.Attribute("extension")?.Value;
+            if (value != null)
+            {
+                patient.Identifier.Add(new Identifier(system: $"urn:oid:{root4}", value: value));
+            }
         }
         var family = nameElement?.Element(_hl7 + "family")?.Value;
         var given = nameElement?.Element(_hl7 + "given")?.Value;

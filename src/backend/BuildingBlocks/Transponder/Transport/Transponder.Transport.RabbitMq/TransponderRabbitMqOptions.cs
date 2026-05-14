@@ -15,7 +15,7 @@ public sealed class TransponderRabbitMqOptions
     public string QueueName { get; set; } = "transponder.default";
 
     /// <summary>
-    /// When true, the publish channel is created with publisher confirmations; <see cref="RabbitMQ.Client.IChannel.BasicPublishAsync"/> surfaces broker nacks as exceptions.
+    /// When true, the publish channel is created with publisher confirmations; <c>IChannel.BasicPublishAsync</c> surfaces broker nacks as exceptions.
     /// </summary>
     public bool PublisherConfirmsEnabled { get; set; } = true;
 

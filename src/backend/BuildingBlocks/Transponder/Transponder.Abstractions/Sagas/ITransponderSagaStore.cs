@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>
 /// Persists saga instances for long-running processes. Implement with EF Core, Redis, or other storage; Transponder.Core ships an in-memory store for development and tests.

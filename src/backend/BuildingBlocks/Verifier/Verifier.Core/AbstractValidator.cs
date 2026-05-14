@@ -22,8 +22,12 @@ public abstract class AbstractValidator<T> : IValidator<T>
         return rule;
     }
 
-    public virtual ValidationResult<T> Validate(T instance) =>
-        ValidateAsync(instance, CancellationToken.None).GetAwaiter().GetResult();
+    public virtual ValidationResult<T> Validate(T instance)
+    {
+#pragma warning disable VSTHRD002 // Sync IValidator<T>.Validate bridges to ValidateAsync; callers using the sync API opt into this.
+        return ValidateAsync(instance, CancellationToken.None).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+    }
 
     public virtual async Task<ValidationResult<T>> ValidateAsync(T instance, CancellationToken cancellationToken = default)
     {

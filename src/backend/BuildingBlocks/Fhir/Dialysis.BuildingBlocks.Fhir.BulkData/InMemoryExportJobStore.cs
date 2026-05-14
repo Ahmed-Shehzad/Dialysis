@@ -9,7 +9,7 @@ public sealed class InMemoryExportJobStore : IExportJobStore
     public ValueTask<ExportJob> CreateAsync(ExportJob job, CancellationToken cancellationToken)
     {
         _jobs[job.Id] = job;
-        return new(job);
+        return new ValueTask<ExportJob>(job);
     }
 
     public ValueTask<ExportJob?> GetAsync(string jobId, CancellationToken cancellationToken)
@@ -26,6 +26,6 @@ public sealed class InMemoryExportJobStore : IExportJobStore
         var active = _jobs.Values
             .Where(j => j.Status is ExportJobStatus.Queued or ExportJobStatus.InProgress)
             .ToArray();
-        return new(active);
+        return new ValueTask<IReadOnlyList<ExportJob>>(active);
     }
 }

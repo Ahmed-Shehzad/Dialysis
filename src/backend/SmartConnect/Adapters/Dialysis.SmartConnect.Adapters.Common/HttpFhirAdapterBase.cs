@@ -22,7 +22,7 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return (TResource)_parser.Parse(json, typeof(TResource));
+        return (TResource)await _parser.ParseAsync(json, typeof(TResource));
     }
 
     public async Task<Bundle> SearchAsync(string resourceType, IDictionary<string, string> parameters, ExternalEhrContext context, CancellationToken cancellationToken)
@@ -32,7 +32,7 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return (Bundle)_parser.Parse(json, typeof(Bundle));
+        return (Bundle)await _parser.ParseAsync(json, typeof(Bundle));
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, ExternalEhrContext context, CancellationToken cancellationToken)

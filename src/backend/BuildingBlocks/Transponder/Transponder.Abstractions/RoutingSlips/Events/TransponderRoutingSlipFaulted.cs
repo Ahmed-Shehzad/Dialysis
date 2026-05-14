@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
 
 /// <summary>
 /// Published after a slip faults (activity failure, missing registration, or compensation phase). Observers should treat the slip as terminal.

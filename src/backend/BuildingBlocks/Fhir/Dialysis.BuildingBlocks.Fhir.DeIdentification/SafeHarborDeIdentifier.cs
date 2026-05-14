@@ -7,7 +7,7 @@ namespace Dialysis.BuildingBlocks.Fhir.DeIdentification;
 /// generalizes dates to year, and replaces free-text comment fields with empty values flagged as
 /// data-absent. Operates on cloned resources; the source resource is never mutated.
 /// </summary>
-public sealed class SafeHarborDeIdentifier(IDateShiftProvider? dateShiftProvider = null) : IFhirDeIdentifier
+public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
 {
     public Resource Apply(Resource resource, DeIdentificationProfile profile)
     {

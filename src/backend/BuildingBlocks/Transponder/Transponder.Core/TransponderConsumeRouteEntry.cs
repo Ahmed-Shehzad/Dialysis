@@ -1,3 +1,5 @@
+using Dialysis.BuildingBlocks.Transponder.Serialization;
+
 namespace Dialysis.BuildingBlocks.Transponder;
 
 internal sealed record TransponderConsumeRouteEntry(

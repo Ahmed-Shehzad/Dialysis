@@ -1,4 +1,3 @@
-using Dialysis.DomainDrivenDesign.DomainEvents;
 using Dialysis.DomainDrivenDesign.Primitives;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -33,7 +32,9 @@ public sealed class DomainEventSaveChangesInterceptor(IServiceScopeFactory scope
 
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
+#pragma warning disable VSTHRD002 // Sync EF interceptor entry point — no async hook; callers using SaveChanges() opt into this bridge.
         DispatchAsync(CancellationToken.None).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
         return base.SavedChanges(eventData, result);
     }
 

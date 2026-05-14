@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>Collects state transitions requested by <see cref="ITransponderSagaMessageHandler{TState,TMessage}"/> during one delivery.</summary>
 public interface ITransponderSagaMessageMutator<TState>

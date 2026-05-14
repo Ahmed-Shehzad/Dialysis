@@ -43,7 +43,7 @@ public sealed class InMemoryTerminologyService : ITerminologyService
                 parameters.Add("display", new FhirString(concept.Display));
             }
         }
-        return new(parameters);
+        return new ValueTask<Parameters>(parameters);
     }
 
     public ValueTask<Parameters> ValidateCodeAsync(string valueSetUrl, string code, string? system, CancellationToken cancellationToken)
@@ -57,7 +57,7 @@ public sealed class InMemoryTerminologyService : ITerminologyService
                 i.Concept.Any(c => string.Equals(c.Code, code, StringComparison.Ordinal))) == true;
         }
         result.Add("result", new FhirBoolean(valid));
-        return new(result);
+        return new ValueTask<Parameters>(result);
     }
 
     public ValueTask<Parameters> TranslateAsync(string conceptMapUrl, string sourceSystem, string sourceCode, CancellationToken cancellationToken)
@@ -79,7 +79,7 @@ public sealed class InMemoryTerminologyService : ITerminologyService
                 }
             }
         }
-        return new(result);
+        return new ValueTask<Parameters>(result);
     }
 
     public ValueTask<ValueSet> ExpandAsync(string valueSetUrl, IReadOnlyDictionary<string, string> filters, CancellationToken cancellationToken)
@@ -101,8 +101,8 @@ public sealed class InMemoryTerminologyService : ITerminologyService
             }
             var clone = (ValueSet)vs.DeepCopy();
             clone.Expansion = expansion;
-            return new(clone);
+            return new ValueTask<ValueSet>(clone);
         }
-        return new(new ValueSet { Url = valueSetUrl });
+        return new ValueTask<ValueSet>(new ValueSet { Url = valueSetUrl });
     }
 }

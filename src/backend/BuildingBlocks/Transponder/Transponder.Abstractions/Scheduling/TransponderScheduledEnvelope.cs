@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
+
+namespace Dialysis.BuildingBlocks.Transponder.Scheduling;
 
 /// <summary>
 /// Serialized snapshot of a message to publish when a schedule fires. Used by scheduler integrations (Hangfire, Quartz, …).

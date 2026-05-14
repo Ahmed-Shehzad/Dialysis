@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

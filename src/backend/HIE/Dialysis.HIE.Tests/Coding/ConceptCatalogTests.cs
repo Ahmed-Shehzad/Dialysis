@@ -8,8 +8,8 @@ public sealed class ConceptCatalogTests
 {
     private static ConceptCatalog Make_Sut() => new(
     [
-        new(ClinicalConcepts.RenalDialysis, CodeSystems.SnomedCt, "265764009", "Renal dialysis"),
-        new(ClinicalConcepts.SubsequentEvaluationNote, CodeSystems.Loinc, "11506-3", "Subsequent evaluation note"),
+        new ConceptCatalogEntry(ClinicalConcepts.RenalDialysis, CodeSystems.SnomedCt, "265764009", "Renal dialysis"),
+        new ConceptCatalogEntry(ClinicalConcepts.SubsequentEvaluationNote, CodeSystems.Loinc, "11506-3", "Subsequent evaluation note"),
     ]);
 
     [Fact]

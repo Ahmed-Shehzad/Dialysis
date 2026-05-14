@@ -356,7 +356,9 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
     public IEnumerable<ValidationFailure> Execute(ValidationContext<T> context)
     {
         var task = ExecuteAsync(context, CancellationToken.None).AsTask();
+#pragma warning disable VSTHRD002 // Sync IExecutableValidationRule.Execute bridges to ExecuteAsync.
         return task.GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     public async ValueTask<IReadOnlyList<ValidationFailure>> ExecuteAsync(ValidationContext<T> context, CancellationToken cancellationToken)

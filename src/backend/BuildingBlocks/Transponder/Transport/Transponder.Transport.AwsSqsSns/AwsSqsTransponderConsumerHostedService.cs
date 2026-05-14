@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

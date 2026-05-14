@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Hangfire;
 using Microsoft.Extensions.Logging;
 

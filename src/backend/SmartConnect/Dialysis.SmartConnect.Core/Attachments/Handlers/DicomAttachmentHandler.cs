@@ -18,7 +18,7 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
 
     public string Kind => KindValue;
 
-    public Task<AttachmentHandlerResult> ExtractAsync(
+    public async Task<AttachmentHandlerResult> ExtractAsync(
         IntegrationMessage message,
         AttachmentHandlerContext context,
         CancellationToken cancellationToken)
@@ -29,15 +29,15 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
         try
         {
             using var input = new MemoryStream(message.Payload.ToArray());
-            dicom = DicomFile.Open(input);
+            dicom = await DicomFile.OpenAsync(input);
         }
         catch (DicomFileException)
         {
-            return Task.FromResult(AttachmentHandlerResult.Unchanged(message.Payload));
+            return AttachmentHandlerResult.Unchanged(message.Payload);
         }
         catch (DicomDataException)
         {
-            return Task.FromResult(AttachmentHandlerResult.Unchanged(message.Payload));
+            return AttachmentHandlerResult.Unchanged(message.Payload);
         }
 
         var attachments = new List<Attachment>(tags.Count);
@@ -66,19 +66,19 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
 
         if (attachments.Count == 0)
         {
-            return Task.FromResult(AttachmentHandlerResult.Unchanged(message.Payload));
+            return AttachmentHandlerResult.Unchanged(message.Payload);
         }
 
         using var output = new MemoryStream();
-        dicom.Save(output);
+        await dicom.SaveAsync(output);
         var rewritten = output.ToArray();
 
-        return Task.FromResult(new AttachmentHandlerResult
+        return new AttachmentHandlerResult
         {
             RewrittenPayload = rewritten,
             Attachments = attachments,
             Extracted = true,
-        });
+        };
     }
 
     private static byte[]? TryGetBytes(DicomDataset ds, DicomTag tag)

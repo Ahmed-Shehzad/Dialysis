@@ -1,7 +1,8 @@
 using System.Text;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.Logging;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>
 /// Bridges <see cref="IConsumer{TMessage}"/> to <see cref="ITransponderSagaMessageHandler{TState,TMessage}"/> with durable state and per-instance serialization.

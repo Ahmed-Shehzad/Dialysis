@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>Stable saga family key used with <see cref="ITransponderSagaStore"/>.</summary>
 public static class TransponderSagaKind

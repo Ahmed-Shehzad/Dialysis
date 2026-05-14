@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 /// <summary>Serializes all saga work for the same (<paramref name="sagaKind"/>, <paramref name="instanceKey"/>) across message types.</summary>
 internal static class TransponderSagaInstanceLock

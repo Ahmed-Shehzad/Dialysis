@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 
 internal sealed class TransponderSagaMutator<TState> : ITransponderSagaMessageMutator<TState>
     where TState : class, new()

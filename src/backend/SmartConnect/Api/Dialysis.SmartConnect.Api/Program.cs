@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddModuleHost<SmartConnectPermissionCatalog>(new ModuleHostingOptions
 {
     ModuleSlug = "smartconnect",
-    HandlerAssemblies = [typeof(Program).Assembly],
+    HandlerAssemblies = [typeof(Dialysis.SmartConnect.Api.Program).Assembly],
 });
 
 builder.Services.AddSmartConnectPersistenceInMemory(databaseName: "SmartConnectApi");
@@ -54,5 +54,8 @@ app.MapSmartConnectPrunerRoutes();
 
 await app.RunAsync().ConfigureAwait(false);
 
-/// <summary>Marker for <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.</summary>
-public partial class Program;
+namespace Dialysis.SmartConnect.Api
+{
+    /// <summary>Marker for <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.</summary>
+    public partial class Program;
+}

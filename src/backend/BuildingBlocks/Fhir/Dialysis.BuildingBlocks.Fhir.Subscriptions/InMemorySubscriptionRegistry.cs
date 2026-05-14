@@ -9,7 +9,7 @@ public sealed class InMemorySubscriptionRegistry : ISubscriptionRegistry, ISubsc
     public ValueTask<FhirSubscriptionRegistration> RegisterAsync(FhirSubscriptionRegistration registration, CancellationToken cancellationToken)
     {
         _entries[registration.Id] = registration;
-        return new(registration);
+        return new ValueTask<FhirSubscriptionRegistration>(registration);
     }
 
     public ValueTask<FhirSubscriptionRegistration?> GetAsync(string subscriptionId, CancellationToken cancellationToken)
@@ -20,7 +20,7 @@ public sealed class InMemorySubscriptionRegistry : ISubscriptionRegistry, ISubsc
         var matches = _entries.Values
             .Where(s => s.Status == SubscriptionStatus.Active && string.Equals(s.TopicUrl, topicUrl, StringComparison.Ordinal))
             .ToArray();
-        return new(matches);
+        return new ValueTask<IReadOnlyList<FhirSubscriptionRegistration>>(matches);
     }
 
     public ValueTask DeleteAsync(string subscriptionId, CancellationToken cancellationToken)

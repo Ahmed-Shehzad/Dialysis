@@ -10,10 +10,8 @@ public sealed class EpicAdapterOptions
     public required string PrivateKeyPemPath { get; set; }
 }
 
-public sealed class EpicAuthProvider(Microsoft.Extensions.Options.IOptions<EpicAdapterOptions> options, IHttpClientFactory httpClientFactory) : IExternalEhrAuthProvider
+public sealed class EpicAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly EpicAdapterOptions _options = options.Value;
-
     public string VendorName => "Epic";
 
     // Production wiring: build a signed JWT with the Epic-issued client_id, post to /token, cache the

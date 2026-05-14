@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
+
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Default no-op consumers so routing slip events always have an in-process consume route (additional observers can be registered with <c>AddConsumer&lt;TEvent, T&gt;()</c>).

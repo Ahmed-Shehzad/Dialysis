@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
 
 /// <summary>
 /// Published when at least one <see cref="TransponderRoutingSlipActivityCompensationFailed"/> occurred during fault handling (after <see cref="TransponderRoutingSlipActivityFaulted"/>).

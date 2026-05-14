@@ -17,7 +17,7 @@ public sealed class DialysisSessionMapper(IConceptCatalog concepts) :
         Code = concepts.Get(ClinicalConcepts.RenalDialysis),
         Subject = new ResourceReference($"Patient/{e.PatientId}"),
         Performed = new Period { StartElement = new FhirDateTime(e.StartedAtUtc) },
-        UsedCode = [new CodeableConcept(null, e.DialyzerModel)],
+        UsedCode = [new CodeableConcept { Text = e.DialyzerModel }],
     };
 
     public Procedure Map(DialysisSessionCompletedIntegrationEvent e) => new()
@@ -38,6 +38,6 @@ public sealed class DialysisSessionMapper(IConceptCatalog concepts) :
         Code = concepts.Get(ClinicalConcepts.RenalDialysis),
         Subject = new ResourceReference($"Patient/{e.PatientId}"),
         Performed = new Period { EndElement = new FhirDateTime(e.AbortedAtUtc) },
-        StatusReason = new CodeableConcept(null, e.ReasonCode),
+        StatusReason = new CodeableConcept { Text = e.ReasonCode },
     };
 }

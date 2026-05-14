@@ -1,4 +1,4 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// One step in a routing slip itinerary: a registered activity <see cref="Name"/> plus optional JSON arguments.

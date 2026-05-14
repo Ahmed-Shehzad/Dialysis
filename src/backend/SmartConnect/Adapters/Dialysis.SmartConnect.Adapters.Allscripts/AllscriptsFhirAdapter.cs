@@ -11,10 +11,8 @@ public sealed class AllscriptsAdapterOptions
     public required string Password { get; set; }
 }
 
-public sealed class AllscriptsAuthProvider(Microsoft.Extensions.Options.IOptions<AllscriptsAdapterOptions> options) : IExternalEhrAuthProvider
+public sealed class AllscriptsAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly AllscriptsAdapterOptions _options = options.Value;
-
     public string VendorName => "Allscripts";
 
     public Task<string> AcquireAccessTokenAsync(ExternalEhrContext context, CancellationToken cancellationToken)

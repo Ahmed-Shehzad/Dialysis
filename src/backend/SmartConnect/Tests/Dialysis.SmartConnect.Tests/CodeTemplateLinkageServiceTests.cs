@@ -1,5 +1,5 @@
 using Dialysis.SmartConnect.CodeTemplates;
-using Dialysis.SmartConnect.Persistence;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

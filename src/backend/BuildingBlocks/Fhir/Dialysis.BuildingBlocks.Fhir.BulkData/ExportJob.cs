@@ -1,5 +1,3 @@
-using Hl7.Fhir.Model;
-
 namespace Dialysis.BuildingBlocks.Fhir.BulkData;
 
 public enum ExportJobStatus

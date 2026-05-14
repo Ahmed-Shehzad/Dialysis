@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Transponder.RoutingSlips;
+using Dialysis.BuildingBlocks.Transponder.Sagas;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

@@ -1,7 +1,6 @@
 using Dialysis.BuildingBlocks.Fhir.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 
 namespace Dialysis.BuildingBlocks.PlatformGateway;

@@ -1,4 +1,4 @@
-namespace Dialysis.SmartConnect.Persistence;
+namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
 /// <summary>Per-flow message statistics (grouped by <see cref="MessageLedgerStatus"/>).</summary>
 public interface IMessageLedgerStatistics

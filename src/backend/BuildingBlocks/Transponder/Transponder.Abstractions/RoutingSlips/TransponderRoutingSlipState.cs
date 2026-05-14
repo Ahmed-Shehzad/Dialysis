@@ -1,4 +1,6 @@
-namespace Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Sagas;
+
+namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
 /// <summary>
 /// Serializable snapshot of an in-flight routing slip (stored as saga <see cref="TransponderSagaRecord.StateJson"/>).

@@ -1,5 +1,4 @@
 using Dialysis.CQRS;
-using Dialysis.HIE.Consent.Domain;
 using Dialysis.HIE.Consent.Features.GrantConsent;
 using Dialysis.HIE.Consent.Features.ListConsentsForPatient;
 using Dialysis.HIE.Consent.Features.RevokeConsent;
