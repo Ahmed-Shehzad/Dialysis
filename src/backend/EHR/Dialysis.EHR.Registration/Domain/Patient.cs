@@ -30,7 +30,7 @@ public sealed class Patient : AggregateRoot<Guid>
 
     public string MedicalRecordNumber { get; private set; } = string.Empty;
 
-    public HumanName Name { get; private set; } = default!;
+    public HumanName Name { get; private set; } = null!;
 
     public DateOnly DateOfBirth { get; private set; }
 

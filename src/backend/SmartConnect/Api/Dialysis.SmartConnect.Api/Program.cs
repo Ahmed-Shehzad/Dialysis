@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddModuleHost<SmartConnectPermissionCatalog>(new ModuleHostingOptions
 {
     ModuleSlug = "smartconnect",
-    HandlerAssemblies = new[] { typeof(Program).Assembly },
+    HandlerAssemblies = [typeof(Program).Assembly],
 });
 
 builder.Services.AddSmartConnectPersistenceInMemory(databaseName: "SmartConnectApi");

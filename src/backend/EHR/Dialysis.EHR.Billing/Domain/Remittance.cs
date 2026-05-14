@@ -26,9 +26,9 @@ public sealed class Remittance : AggregateRoot<Guid>
 
     public string PayerCode { get; private set; } = string.Empty;
 
-    public Money PaidAmount { get; private set; } = default!;
+    public Money PaidAmount { get; private set; } = null!;
 
-    public Money AdjustmentAmount { get; private set; } = default!;
+    public Money AdjustmentAmount { get; private set; } = null!;
 
     public AdjudicationStatus AdjudicationStatus { get; private set; }
 

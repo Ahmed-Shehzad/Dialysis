@@ -17,7 +17,7 @@ public sealed class VitalSignReading : AggregateRoot<Guid>
 
     public Guid? EncounterId { get; private set; }
 
-    public Coding ObservationType { get; private set; } = default!;
+    public Coding ObservationType { get; private set; } = null!;
 
     public decimal Value { get; private set; }
 

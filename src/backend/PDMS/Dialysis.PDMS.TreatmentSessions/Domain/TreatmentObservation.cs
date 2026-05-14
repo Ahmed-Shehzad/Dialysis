@@ -27,7 +27,7 @@ public sealed class TreatmentObservation : Entity<Guid>
 
     public long MdcCode { get; private set; }
 
-    public string ContainmentPath { get; private set; } = default!;
+    public string ContainmentPath { get; private set; } = null!;
 
     public decimal? ValueNumeric { get; private set; }
 

@@ -26,7 +26,7 @@ public sealed class Payment : AggregateRoot<Guid>
 
     public Guid? ClaimId { get; private set; }
 
-    public Money Amount { get; private set; } = default!;
+    public Money Amount { get; private set; } = null!;
 
     public PaymentMethod Method { get; private set; }
 

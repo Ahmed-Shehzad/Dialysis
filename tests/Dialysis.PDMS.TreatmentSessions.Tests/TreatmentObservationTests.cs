@@ -55,12 +55,12 @@ public sealed class TreatmentObservationTests
             mdcCode: 12345L, containmentPath: "1.1.4.27",
             valueNumeric: null, valueString: null,
             units: "ml/h",
-            profileValues: new[] { 600m, 800m, 400m },
-            profileTimesSeconds: new[] { 0, 600, 1800 },
+            profileValues: [600m, 800m, 400m],
+            profileTimesSeconds: [0, 600, 1800],
             sourceMessageId: Guid.NewGuid());
 
-        observation.ProfileValues.ShouldBe(new[] { 600m, 800m, 400m });
-        observation.ProfileTimesSeconds.ShouldBe(new[] { 0, 600, 1800 });
+        observation.ProfileValues.ShouldBe([600m, 800m, 400m]);
+        observation.ProfileTimesSeconds.ShouldBe([0, 600, 1800]);
     }
 
     [Fact]
@@ -93,8 +93,8 @@ public sealed class TreatmentObservationTests
             mdcCode: 1L, containmentPath: "1",
             valueNumeric: null, valueString: null,
             units: null,
-            profileValues: new[] { 1m, 2m, 3m },
-            profileTimesSeconds: new[] { 0, 10 },
+            profileValues: [1m, 2m, 3m],
+            profileTimesSeconds: [0, 10],
             sourceMessageId: Guid.NewGuid()));
     }
 

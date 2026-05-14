@@ -22,7 +22,7 @@ public sealed class Immunization : AggregateRoot<Guid>
 
     public Guid PatientId { get; private set; }
 
-    public Coding Vaccine { get; private set; } = default!;
+    public Coding Vaccine { get; private set; } = null!;
 
     public DateOnly AdministeredOn { get; private set; }
 

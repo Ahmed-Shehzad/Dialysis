@@ -79,7 +79,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
         {
             db.CodeTemplates.Add(new CodeTemplateEntity
             {
-                Id = t.Id == default ? Guid.CreateVersion7() : t.Id,
+                Id = t.Id == Guid.Empty ? Guid.CreateVersion7() : t.Id,
                 LibraryId = library.Id,
                 Name = t.Name,
                 Code = t.Code,

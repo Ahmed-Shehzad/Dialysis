@@ -39,7 +39,7 @@ public sealed partial class Hl7V2Message : ParsedMessage
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(raw);
 
-        var lines = raw.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = raw.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length == 0 || !lines[0].StartsWith("MSH"))
         {
             throw new FormatException("HL7 v2 message must begin with MSH segment.");

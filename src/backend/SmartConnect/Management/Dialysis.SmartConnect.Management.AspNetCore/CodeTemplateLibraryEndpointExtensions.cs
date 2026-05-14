@@ -40,7 +40,7 @@ public static class CodeTemplateLibraryEndpointExtensions
                 CodeTemplateLinkageService linkage,
                 CancellationToken ct) =>
             {
-                var id = body.Id == default ? Guid.CreateVersion7() : body.Id;
+                var id = body.Id == Guid.Empty ? Guid.CreateVersion7() : body.Id;
                 var library = WithGeneratedIds(body, id);
                 await repo.UpsertAsync(library, ct).ConfigureAwait(false);
                 await linkage.ReconcileLibraryWriteAsync(id, [], library.LinkedFlowIds, ct).ConfigureAwait(false);
@@ -88,7 +88,7 @@ public static class CodeTemplateLibraryEndpointExtensions
                 var imported = new List<Guid>();
                 foreach (var library in body)
                 {
-                    var id = library.Id == default ? Guid.CreateVersion7() : library.Id;
+                    var id = library.Id == Guid.Empty ? Guid.CreateVersion7() : library.Id;
                     var withIds = WithGeneratedIds(library, id);
                     var existing = await repo.GetByIdAsync(id, ct).ConfigureAwait(false);
                     await repo.UpsertAsync(withIds, ct).ConfigureAwait(false);
@@ -147,7 +147,7 @@ public static class CodeTemplateLibraryEndpointExtensions
     {
         var templates = library.Templates.Select((t, i) => new CodeTemplate
         {
-            Id = t.Id == default ? Guid.CreateVersion7() : t.Id,
+            Id = t.Id == Guid.Empty ? Guid.CreateVersion7() : t.Id,
             LibraryId = libraryId,
             Name = t.Name,
             Code = t.Code,

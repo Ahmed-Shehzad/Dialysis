@@ -83,7 +83,7 @@ public sealed class MirthXmlCodeTemplateImporter
         // Accept either a root <list> containing <codeTemplateLibrary> entries,
         // or a single <codeTemplateLibrary> root.
         var libraryNodes = doc.Root.Name.LocalName.Equals("codeTemplateLibrary", StringComparison.Ordinal)
-            ? new[] { doc.Root }
+            ? [doc.Root]
             : doc.Root.Descendants().Where(e => e.Name.LocalName == "codeTemplateLibrary").ToArray();
 
         var result = new List<CodeTemplateLibrary>(libraryNodes.Length);

@@ -35,9 +35,9 @@ public sealed class DialysisSession : AggregateRoot<Guid>
 
     public DialysisSessionStatus Status { get; private set; }
 
-    public SessionPrescription Prescription { get; private set; } = default!;
+    public SessionPrescription Prescription { get; private set; } = null!;
 
-    public VascularAccess Access { get; private set; } = default!;
+    public VascularAccess Access { get; private set; } = null!;
 
     public decimal? AchievedUfVolumeLiters { get; private set; }
 

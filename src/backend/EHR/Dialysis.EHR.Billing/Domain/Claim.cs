@@ -37,7 +37,7 @@ public sealed class Claim : AggregateRoot<Guid>
 
     public string ClaimFormatCode { get; private set; } = string.Empty;
 
-    public Money BilledTotal { get; private set; } = default!;
+    public Money BilledTotal { get; private set; } = null!;
 
     public string? ExternalControlNumber { get; private set; }
 

@@ -64,7 +64,7 @@ public sealed class NatsTransponderTransport(
         {
             var js = _jetStream ?? throw new InvalidOperationException("JetStream context is not initialized.");
             var pubOpts = string.IsNullOrEmpty(message.DeduplicationId)
-                ? default
+                ? null
                 : new NatsJSPubOpts { MsgId = message.DeduplicationId };
             var ack = await js
                 .PublishAsync(o.IngressSubject, payload, serializer, pubOpts, headers, cancellationToken)
@@ -80,7 +80,7 @@ public sealed class NatsTransponderTransport(
                     headers,
                     replyTo: null,
                     serializer,
-                    opts: default,
+                    opts: null,
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -196,7 +196,7 @@ public sealed class NatsTransponderTransport(
             .ConfigureAwait(false);
 
         await foreach (var msg in consumer
-                           .ConsumeAsync(deserializer, opts: default, cancellationToken: cancellationToken)
+                           .ConsumeAsync(deserializer, opts: null, cancellationToken: cancellationToken)
                            .ConfigureAwait(false))
         {
             msg.EnsureSuccess();
@@ -295,7 +295,7 @@ public sealed class NatsTransponderTransport(
                 headers,
                 replyTo: null,
                 serializer,
-                opts: default,
+                opts: null,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
     }
@@ -309,7 +309,7 @@ public sealed class NatsTransponderTransport(
         var headers = BuildHeaders(failed);
         var serializer = NatsClientDefaultSerializerRegistry.Default.GetSerializer<byte[]>();
         var pubOpts = string.IsNullOrEmpty(failed.DeduplicationId)
-            ? default
+            ? null
             : new NatsJSPubOpts { MsgId = failed.DeduplicationId + "-poison" };
         var ack = await js
             .PublishAsync(o.PoisonSubject, failed.Payload.ToArray(), serializer, pubOpts, headers, cancellationToken)

@@ -64,7 +64,7 @@ public sealed class FlowRuntimeEngineTests
 
         var result = await runtime.DispatchAsync(msg, CancellationToken.None);
         Assert.True(result.Succeeded);
-        Assert.Equal(new[] { 0, 1 }, result.OutboundRoutesAttempted);
+        Assert.Equal([0, 1], result.OutboundRoutesAttempted);
 
         var capture = sp.GetRequiredService<CapturingOutboundAdapter>();
         Assert.Single(capture.Sent);
@@ -171,7 +171,7 @@ public sealed class FlowRuntimeEngineTests
 
         var result = await runtime.DispatchAsync(msg, CancellationToken.None);
         Assert.False(result.Succeeded);
-        Assert.Equal(new[] { 0 }, result.OutboundRoutesAttempted);
+        Assert.Equal([0], result.OutboundRoutesAttempted);
 
         var capture = sp.GetRequiredService<CapturingOutboundAdapter>();
         Assert.Empty(capture.Sent);
@@ -219,7 +219,7 @@ public sealed class FlowRuntimeEngineTests
 
         var result = await runtime.DispatchAsync(msg, CancellationToken.None);
         Assert.True(result.Succeeded);
-        Assert.Equal(new[] { 0, 1 }, result.OutboundRoutesAttempted);
+        Assert.Equal([0, 1], result.OutboundRoutesAttempted);
 
         var capture = sp.GetRequiredService<CapturingOutboundAdapter>();
         Assert.Single(capture.Sent);

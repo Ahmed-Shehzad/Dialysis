@@ -26,7 +26,7 @@ public sealed class Provider : AggregateRoot<Guid>
 
     public string NationalProviderIdentifier { get; private set; } = string.Empty;
 
-    public HumanName Name { get; private set; } = default!;
+    public HumanName Name { get; private set; } = null!;
 
     public ProviderKind Kind { get; private set; }
 

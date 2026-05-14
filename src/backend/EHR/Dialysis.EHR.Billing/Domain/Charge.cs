@@ -33,7 +33,7 @@ public sealed class Charge : AggregateRoot<Guid>
 
     public IReadOnlyCollection<string> DiagnosisPointerIcd10Codes => _diagnosisPointers;
 
-    public Money BilledAmount { get; private set; } = default!;
+    public Money BilledAmount { get; private set; } = null!;
 
     public ChargeStatus Status { get; private set; }
 

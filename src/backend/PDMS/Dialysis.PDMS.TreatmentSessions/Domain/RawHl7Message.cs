@@ -34,15 +34,15 @@ public sealed class RawHl7Message : Entity<Guid>
 
     public Guid? SessionId { get; private set; }
 
-    public string MessageType { get; private set; } = default!;
+    public string MessageType { get; private set; } = null!;
 
-    public string MessageControlId { get; private set; } = default!;
+    public string MessageControlId { get; private set; } = null!;
 
     public DateTime ReceivedAtUtc { get; private set; }
 
     public Hl7MessageDirection Direction { get; private set; }
 
-    public byte[] Payload { get; private set; } = default!;
+    public byte[] Payload { get; private set; } = null!;
 
     public Hl7ProcessingStatus ProcessingStatus { get; private set; }
 

@@ -39,7 +39,7 @@ public static class AlertEndpointExtensions
                 "/",
                 async (AlertRule body, IAlertRuleRepository repo, CancellationToken ct) =>
                 {
-                    var id = body.Id == default ? Guid.CreateVersion7() : body.Id;
+                    var id = body.Id == Guid.Empty ? Guid.CreateVersion7() : body.Id;
                     var rule = WithId(body, id);
                     await repo.UpsertAsync(rule, ct).ConfigureAwait(false);
                     return Results.Created($"/smartconnect/v1/admin/alert-rules/{id}", rule);

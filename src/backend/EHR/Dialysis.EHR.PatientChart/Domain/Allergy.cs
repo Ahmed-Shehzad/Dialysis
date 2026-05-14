@@ -30,7 +30,7 @@ public sealed class Allergy : AggregateRoot<Guid>
 
     public Guid PatientId { get; private set; }
 
-    public Coding Allergen { get; private set; } = default!;
+    public Coding Allergen { get; private set; } = null!;
 
     public string? ReactionText { get; private set; }
 

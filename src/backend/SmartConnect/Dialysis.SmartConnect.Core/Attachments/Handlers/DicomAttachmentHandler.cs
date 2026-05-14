@@ -132,7 +132,7 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
 
     private static bool TryParseTag(string? raw, out DicomTag tag)
     {
-        tag = default!;
+        tag = null!;
         if (string.IsNullOrWhiteSpace(raw)) return false;
         var parts = raw.Replace("(", "").Replace(")", "").Split(',');
         if (parts.Length != 2) return false;

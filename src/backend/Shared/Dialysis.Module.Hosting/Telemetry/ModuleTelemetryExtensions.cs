@@ -33,10 +33,10 @@ public static class ModuleTelemetryExtensions
             .ConfigureResource(r =>
             {
                 r.AddService(serviceName, serviceVersion: options.ServiceVersion);
-                r.AddAttributes(new KeyValuePair<string, object>[]
-                {
-                    new("dialysis.module", moduleSlug),
-                });
+                r.AddAttributes(
+                [
+                    new("dialysis.module", moduleSlug)
+                ]);
             })
             .WithTracing(t =>
             {

@@ -31,13 +31,13 @@ var rabbitExchange = builder.Configuration["His:Transponder:RabbitMq:ExchangeNam
 builder.AddModuleHost<HisPermissionCatalog>(new ModuleHostingOptions
 {
     ModuleSlug = "his",
-    HandlerAssemblies = new[]
-    {
+    HandlerAssemblies =
+    [
         typeof(HisOperationsMarker).Assembly,
         typeof(HisDataServicesMarker).Assembly,
         typeof(HisIntegrationMarker).Assembly,
-        typeof(RaCapabilitiesMarker).Assembly,
-    },
+        typeof(RaCapabilitiesMarker).Assembly
+    ],
 });
 
 builder.Services.AddHospitalInformationSystem(

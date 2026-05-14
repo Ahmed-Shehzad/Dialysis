@@ -24,16 +24,16 @@ var rabbitExchange = builder.Configuration["Ehr:Transponder:RabbitMq:ExchangeNam
 builder.AddModuleHost<EhrPermissionCatalog>(new ModuleHostingOptions
 {
     ModuleSlug = "ehr",
-    HandlerAssemblies = new[]
-    {
+    HandlerAssemblies =
+    [
         typeof(EhrRegistrationMarker).Assembly,
         typeof(EhrPatientChartMarker).Assembly,
         typeof(EhrSchedulingMarker).Assembly,
         typeof(EhrPatientPortalMarker).Assembly,
         typeof(EhrClinicalNotesMarker).Assembly,
         typeof(EhrBillingMarker).Assembly,
-        typeof(EhrIntegrationMarker).Assembly,
-    },
+        typeof(EhrIntegrationMarker).Assembly
+    ],
 });
 
 builder.Services.AddElectronicHealthRecord(

@@ -72,7 +72,7 @@ public static class ModuleHostingServiceCollectionExtensions
             builder.Services.AddAuthorization();
         }
 
-        var assemblies = options.HandlerAssemblies?.ToArray() ?? new[] { Assembly.GetCallingAssembly() };
+        var assemblies = options.HandlerAssemblies?.ToArray() ?? [Assembly.GetCallingAssembly()];
         builder.Services.AddCqrs(c => c.AddFromAssemblies(assemblies));
 
         var telemetrySection = builder.Configuration.GetSection($"{options.ModuleSlug}:Telemetry");

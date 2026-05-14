@@ -17,7 +17,7 @@ var rabbitExchange = builder.Configuration["Pdms:Transponder:RabbitMq:ExchangeNa
 builder.AddModuleHost<PdmsPermissionCatalog>(new ModuleHostingOptions
 {
     ModuleSlug = "pdms",
-    HandlerAssemblies = new[] { typeof(PdmsTreatmentSessionsMarker).Assembly },
+    HandlerAssemblies = [typeof(PdmsTreatmentSessionsMarker).Assembly],
 });
 
 builder.Services.AddPatientDataManagementSystem(

@@ -16,7 +16,7 @@ public sealed class DialysisMachine : AggregateRoot<Guid>
     {
     }
 
-    public string SerialNumber { get; private set; } = default!;
+    public string SerialNumber { get; private set; } = null!;
 
     public string? VendorCode { get; private set; }
 

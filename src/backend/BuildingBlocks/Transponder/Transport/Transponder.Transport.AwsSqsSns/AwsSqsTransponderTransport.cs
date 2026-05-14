@@ -112,7 +112,7 @@ public sealed class AwsSqsTransponderTransport(
                             QueueUrl = queueUrl,
                             MaxNumberOfMessages = maxMsgs,
                             WaitTimeSeconds = wait,
-                            MessageAttributeNames = new List<string> { "All" },
+                            MessageAttributeNames = ["All"],
                         },
                         cancellationToken)
                     .ConfigureAwait(false);

@@ -24,10 +24,10 @@ var rabbitExchange = builder.Configuration["Identity:Transponder:RabbitMq:Exchan
 builder.AddModuleHost<IdentityPermissionCatalog>(new ModuleHostingOptions
 {
     ModuleSlug = "identity",
-    HandlerAssemblies = new[]
-    {
-        typeof(Dialysis.Identity.Provisioning.IdentityProvisioningMarker).Assembly,
-    },
+    HandlerAssemblies =
+    [
+        typeof(Dialysis.Identity.Provisioning.IdentityProvisioningMarker).Assembly
+    ],
 });
 
 builder.Services.AddIdentity(

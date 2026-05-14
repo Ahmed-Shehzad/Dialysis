@@ -28,7 +28,7 @@ public sealed class MdcCodeCatalogEntry : Entity<long>
     {
     }
 
-    public string DisplayName { get; private set; } = default!;
+    public string DisplayName { get; private set; } = null!;
 
     public MdcCodeCategory Category { get; private set; }
 

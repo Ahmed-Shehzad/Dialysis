@@ -23,7 +23,7 @@ public sealed class ProblemListItem : AggregateRoot<Guid>
 
     public Guid PatientId { get; private set; }
 
-    public Coding Condition { get; private set; } = default!;
+    public Coding Condition { get; private set; } = null!;
 
     public ProblemStatus Status { get; private set; }
 

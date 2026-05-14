@@ -27,7 +27,7 @@ public sealed class MedicationStatement : AggregateRoot<Guid>
 
     public Guid PatientId { get; private set; }
 
-    public Coding Medication { get; private set; } = default!;
+    public Coding Medication { get; private set; } = null!;
 
     public string DoseText { get; private set; } = string.Empty;
 

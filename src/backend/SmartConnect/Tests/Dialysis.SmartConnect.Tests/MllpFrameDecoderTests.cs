@@ -72,11 +72,11 @@ public sealed class MllpFrameDecoderTests
         const int max = 2;
         var dec = new MllpFrameDecoder(max);
         // Start + 3 payload bytes (over max) before end — should reset on third add
-        dec.Append(new byte[] { 0x0B, 0x41, 0x42, 0x43, 0x1C, 0x0D });
+        dec.Append([0x0B, 0x41, 0x42, 0x43, 0x1C, 0x0D]);
         Assert.False(dec.TryTakeMessage(out _));
 
         // Valid small frame after bad one
-        dec.Append(new byte[] { 0x0B, 0x7A, 0x1C, 0x0D });
+        dec.Append([0x0B, 0x7A, 0x1C, 0x0D]);
         Assert.True(dec.TryTakeMessage(out var p));
         Assert.Equal(new byte[] { 0x7A }, p);
     }

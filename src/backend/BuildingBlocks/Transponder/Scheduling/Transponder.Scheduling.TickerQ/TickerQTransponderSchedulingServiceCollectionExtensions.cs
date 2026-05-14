@@ -21,7 +21,7 @@ public static class TickerQTransponderSchedulingServiceCollectionExtensions
         services.RemoveDescriptorsFor(typeof(ITransponderMessageScheduler));
         services.AddTickerQ<TimeTickerEntity, CronTickerEntity>(b =>
         {
-            b.AddTickerQDiscovery(new[] { Assembly.GetExecutingAssembly() });
+            b.AddTickerQDiscovery([Assembly.GetExecutingAssembly()]);
             configureTickerQ?.Invoke(b);
         });
         services.AddSingleton<TransponderTickerQPublishJobs>();
@@ -32,7 +32,7 @@ public static class TickerQTransponderSchedulingServiceCollectionExtensions
     /// <summary>Adds Transponder TickerQ function discovery to an existing <c>AddTickerQ</c> configuration.</summary>
     public static TickerOptionsBuilder<TimeTickerEntity, CronTickerEntity> ConfigureTransponderTickerQDiscovery(
         this TickerOptionsBuilder<TimeTickerEntity, CronTickerEntity> builder) =>
-        builder.AddTickerQDiscovery(new[] { Assembly.GetExecutingAssembly() });
+        builder.AddTickerQDiscovery([Assembly.GetExecutingAssembly()]);
 
     /// <summary>Registers only <see cref="ITransponderMessageScheduler"/> and job services (TickerQ must already be configured).</summary>
     public static IServiceCollection AddTransponderTickerQSchedulerOnly(this IServiceCollection services)

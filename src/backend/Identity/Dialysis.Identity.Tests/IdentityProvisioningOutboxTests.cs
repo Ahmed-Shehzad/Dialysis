@@ -54,7 +54,7 @@ public sealed class IdentityProvisioningOutboxTests(IdentityApiWebApplicationFac
             CancellationToken.None);
 
         await gateway.SendCommandAsync<DefineRoleCommand, Guid>(
-            new DefineRoleCommand("his.facility-admin", "HIS Facility Admin", new[] { "his.staff.assign", "his.inventory.move" }),
+            new DefineRoleCommand("his.facility-admin", "HIS Facility Admin", ["his.staff.assign", "his.inventory.move"]),
             CancellationToken.None);
 
         await gateway.SendCommandAsync<AssignRoleToUserCommand, Dialysis.CQRS.Unit>(
