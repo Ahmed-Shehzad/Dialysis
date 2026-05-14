@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.HIE.Core.Abstraction</RootNamespace>
+    <Description>HIE module ports: mappers, partner endpoints, consent gate, archetype projection. Infrastructure-free.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+  </ItemGroup>
+
+</Project>

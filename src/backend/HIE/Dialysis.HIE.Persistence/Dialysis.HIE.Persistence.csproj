@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.HIE.Persistence</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Core.Abstraction/Dialysis.HIE.Core.Abstraction.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Core/Dialysis.HIE.Core.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Consent/Dialysis.HIE.Consent.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.OpenEhr/Dialysis.HIE.OpenEhr.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Outbound/Dialysis.HIE.Outbound.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core/Dialysis.Domain.Driven.Design.Core.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+  </ItemGroup>
+
+</Project>

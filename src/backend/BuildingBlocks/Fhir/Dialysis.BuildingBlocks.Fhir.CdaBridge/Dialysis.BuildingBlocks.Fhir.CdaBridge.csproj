@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.CdaBridge</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.CdaBridge</AssemblyName>
+    <Description>CDA R2 / CCD ↔ FHIR R4 bidirectional bridge. XML/XPath-based parser, FHIR Bundle generator.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+  </ItemGroup>
+
+</Project>

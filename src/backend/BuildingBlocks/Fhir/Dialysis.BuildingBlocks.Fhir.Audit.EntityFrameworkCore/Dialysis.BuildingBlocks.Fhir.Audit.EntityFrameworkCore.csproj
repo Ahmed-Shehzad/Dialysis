@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore</AssemblyName>
+    <Description>EF Core persistence for FHIR AuditEvent records hosted on each module's DbContext under the fhir_audit schema.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+</Project>

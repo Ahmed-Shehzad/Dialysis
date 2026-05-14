@@ -1,8 +1,11 @@
+using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.PatientFlow.Fhir;
 using Dialysis.HIS.Persistence;
+using Hl7.Fhir.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +25,8 @@ public static class HospitalInformationSystemExtensions
         IConfiguration configuration,
         Action<DbContextOptionsBuilder>? configurePersistence = null,
         bool enableOutboxRelay = false,
+        bool enableFhirEndpoints = false,
+        Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
         _ = configuration;
@@ -37,6 +42,16 @@ public static class HospitalInformationSystemExtensions
 
         if (enableOutboxRelay)
             services.AddTransponderOutboxRelay<HisDbContext>();
+
+        if (enableFhirEndpoints)
+        {
+            services.AddFhir(fhir =>
+            {
+                fhir.UseBaseUrl("/fhir");
+                fhir.AddReader<Encounter, HisAdmissionEncounterReader>();
+                configureFhir?.Invoke(fhir);
+            });
+        }
 
         return services;
     }

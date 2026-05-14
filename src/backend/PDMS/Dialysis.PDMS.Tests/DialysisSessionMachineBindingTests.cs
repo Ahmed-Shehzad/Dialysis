@@ -6,12 +6,12 @@ namespace Dialysis.PDMS.Tests;
 
 public sealed class DialysisSessionMachineBindingTests
 {
-    private static readonly DateTime _scheduledStart = DateTime.UtcNow.AddMinutes(5);
+    private static readonly DateTime _scheduledstart = DateTime.UtcNow.AddMinutes(5);
 
     private static DialysisSession New_Scheduled_Session() => DialysisSession.Schedule(
         id: Guid.NewGuid(),
         patientId: Guid.NewGuid(),
-        scheduledStartUtc: _scheduledStart,
+        scheduledStartUtc: _scheduledstart,
         prescription: new SessionPrescription(
             dialyzerModel: "Polyflux 17L",
             prescribedDurationMinutes: 240,

@@ -22,6 +22,7 @@
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

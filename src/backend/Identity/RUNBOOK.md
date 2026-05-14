@@ -118,3 +118,60 @@ The JSON response includes `access_token` suitable for `Authorization: Bearer` a
 ## 6. Changing secrets
 
 After editing `keycloak/dialysis-realm.json`, reset the Postgres volume or re-import the realm; align `Identity:Keycloak:ClientSecret` in the BFF and any automation secrets.
+
+## 7. SMART-on-FHIR smoke test
+
+The Keycloak realm ships an additional public client `smart-on-fhir` (PKCE-only) configured for SMART app launch. Discovery is served at the resource module's `/.well-known/smart-configuration` once `<Module>:Fhir:Smart:Enabled=true`.
+
+### 7.1 Inspect the discovery document
+
+With HIS running and `His:Fhir:Smart:Enabled=true`:
+
+```bash
+curl -sS http://localhost:5288/.well-known/smart-configuration | jq .
+```
+
+You should see `issuer` pointing at Keycloak, `authorization_endpoint` / `token_endpoint` on Keycloak, and `capabilities` advertising `launch-ehr`, `launch-standalone`, `permission-patient`, etc.
+
+### 7.2 Standalone launch with PKCE
+
+```bash
+# 1. Generate a PKCE pair (manual or via your client library).
+# 2. Open the browser flow:
+open "http://localhost:8080/realms/dialysis/protocol/openid-connect/auth?\
+client_id=smart-on-fhir&\
+response_type=code&\
+redirect_uri=http://localhost:9090/cb&\
+scope=openid+fhirUser+launch/patient+patient/Patient.read+offline_access&\
+state=demo&\
+aud=dialysis-his-api&\
+code_challenge=PKCE_CHALLENGE&\
+code_challenge_method=S256"
+# 3. After login, exchange code for token:
+curl -sS -X POST "http://localhost:8080/realms/dialysis/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "client_id=smart-on-fhir" \
+  --data-urlencode "code=PASTE_FROM_REDIRECT" \
+  --data-urlencode "redirect_uri=http://localhost:9090/cb" \
+  --data-urlencode "code_verifier=PKCE_VERIFIER"
+```
+
+### 7.3 Call a FHIR endpoint with the SMART access token
+
+```bash
+curl -sS -H "Authorization: Bearer ACCESS_TOKEN" \
+  http://localhost:5288/fhir/Patient/{id}
+```
+
+The resource module enforces the SMART scope via `SmartScopePolicyProvider` (e.g., `patient/Patient.read`) before delegating to the `IFhirReader<Patient>` for the requested id.
+
+### 7.4 Adding the `smart-on-fhir` client to a fresh realm
+
+If you reset the realm and need to add the client manually:
+
+1. Keycloak admin → Clients → Create.
+2. Client ID: `smart-on-fhir`, type **public**, **PKCE enforced** (S256).
+3. Valid redirect URIs: `http://localhost:9090/cb`, plus production apps as needed.
+4. Optional protocol mappers to project `patient`, `encounter`, `fhirUser` claims from user attributes onto the access token (needed for `IFhirLaunchContextAccessor`).
+5. Save. The discovery document immediately reflects the new authorization endpoint and supported scopes.

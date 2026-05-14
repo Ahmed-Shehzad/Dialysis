@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Dialysis.BuildingBlocks.Fhir.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIS.Composition;
 using Dialysis.HIS.Contracts.Security;
@@ -40,6 +41,8 @@ builder.AddModuleHost<HisPermissionCatalog>(new ModuleHostingOptions
     ],
 });
 
+var enableFhirEndpoints = builder.Configuration.GetValue("His:Fhir:Enabled", false);
+
 builder.Services.AddHospitalInformationSystem(
     builder.Configuration,
     configurePersistence: string.IsNullOrWhiteSpace(connectionString)
@@ -48,6 +51,7 @@ builder.Services.AddHospitalInformationSystem(
             connectionString,
             pg => pg.MigrationsHistoryTable("__ef_migrations", "his")),
     enableOutboxRelay: enableOutbox,
+    enableFhirEndpoints: enableFhirEndpoints,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>
@@ -96,5 +100,8 @@ app.MapGet(
     .AllowAnonymous();
 app.MapGet("/", () => Results.Ok(new { module = "his", version = "v1" }));
 app.MapControllers();
+
+if (enableFhirEndpoints)
+    app.MapFhirEndpoints();
 
 await app.RunAsync().ConfigureAwait(false);

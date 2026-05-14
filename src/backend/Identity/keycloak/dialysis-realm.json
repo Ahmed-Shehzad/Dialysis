@@ -150,6 +150,33 @@
       ],
       "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email"],
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    },
+    {
+      "id": "20000000-0000-4000-8000-000000000003",
+      "clientId": "smart-on-fhir",
+      "name": "SMART-on-FHIR App",
+      "description": "Public PKCE client for SMART-on-FHIR app launch against module FHIR endpoints",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:9090/*",
+        "http://localhost:5288/smart-callback",
+        "smart-launch://callback"
+      ],
+      "webOrigins": ["http://localhost:9090", "http://localhost:5288"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "+"
+      },
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["openid", "profile", "fhirUser"],
+      "optionalClientScopes": ["offline_access", "launch", "launch/patient", "patient/*.read", "user/*.read", "system/*.read"]
     }
   ],
   "browserSecurityHeaders": {

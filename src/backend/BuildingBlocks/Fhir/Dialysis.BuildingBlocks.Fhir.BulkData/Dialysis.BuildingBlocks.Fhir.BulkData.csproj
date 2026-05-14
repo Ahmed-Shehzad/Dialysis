@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.BulkData</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.BulkData</AssemblyName>
+    <Description>FHIR Bulk Data Access IG: async $export operation, status polling, NDJSON writer, pluggable storage.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
+  </ItemGroup>
+
+</Project>

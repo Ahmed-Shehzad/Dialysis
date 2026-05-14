@@ -38,12 +38,12 @@
     <ProjectReference Include="../../src/backend/Identity/Dialysis.Identity.Composition/Dialysis.Identity.Composition.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
-    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Api/Dialysis.Hie.Api.csproj" />
-    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
-    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Outbound/Dialysis.Hie.Outbound.csproj" />
-    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Inbound/Dialysis.Hie.Inbound.csproj" />
-    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Persistence/Dialysis.Hie.Persistence.csproj" />
-    <ProjectReference Include="../../src/backend/Hie/Dialysis.Hie.Composition/Dialysis.Hie.Composition.csproj" />
+    <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
+    <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />
+    <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Outbound/Dialysis.HIE.Outbound.csproj" />
+    <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
+    <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Persistence/Dialysis.HIE.Persistence.csproj" />
+    <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Composition/Dialysis.HIE.Composition.csproj" />
   </ItemGroup>
 
   <ItemGroup>

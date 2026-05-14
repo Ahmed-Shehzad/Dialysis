@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.SmartConnect.Adapters.Allscripts</RootNamespace>
+    <AssemblyName>Dialysis.SmartConnect.Adapters.Allscripts</AssemblyName>
+    <Description>Veradigm / Allscripts Sunrise FHIR adapter scaffold.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.SmartConnect.Adapters.Common/Dialysis.SmartConnect.Adapters.Common.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+</Project>

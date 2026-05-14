@@ -6,7 +6,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class XsltTransformStageTests
 {
-    private const string SimpleStylesheet = """
+    private const string Simplestylesheet = """
         <?xml version="1.0" encoding="UTF-8"?>
         <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
           <xsl:output method="xml" indent="no" omit-xml-declaration="yes"/>
@@ -21,7 +21,7 @@ public sealed class XsltTransformStageTests
     {
         var stage = new XsltTransformStage();
         var xml = "<root><value>hello</value></root>";
-        var msg = Create_Message($$"""{"stylesheet":{{Escape_Json(SimpleStylesheet)}}}""", xml);
+        var msg = Create_Message($$"""{"stylesheet":{{Escape_Json(Simplestylesheet)}}}""", xml);
 
         var result = await stage.TransformAsync(msg, CancellationToken.None);
 
@@ -53,7 +53,7 @@ public sealed class XsltTransformStageTests
     {
         var stage = new XsltTransformStage();
         var xml = "<root><value>v</value></root>";
-        var paramJson = $$"""{"stylesheet":{{Escape_Json(SimpleStylesheet)}}}""";
+        var paramJson = $$"""{"stylesheet":{{Escape_Json(Simplestylesheet)}}}""";
         var msg1 = Create_Message(paramJson, xml);
         var msg2 = Create_Message(paramJson, xml);
 
@@ -69,7 +69,7 @@ public sealed class XsltTransformStageTests
     public async Task Transform_Throws_On_Invalid_Xml_Async()
     {
         var stage = new XsltTransformStage();
-        var msg = Create_Message($$"""{"stylesheet":{{Escape_Json(SimpleStylesheet)}}}""", "not xml at all");
+        var msg = Create_Message($$"""{"stylesheet":{{Escape_Json(Simplestylesheet)}}}""", "not xml at all");
 
         await Assert.ThrowsAnyAsync<Exception>(() => stage.TransformAsync(msg, CancellationToken.None));
     }

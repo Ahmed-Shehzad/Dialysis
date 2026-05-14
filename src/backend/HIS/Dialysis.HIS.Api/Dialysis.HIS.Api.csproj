@@ -29,6 +29,7 @@
     <ProjectReference Include="../Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.Testing</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.Testing</AssemblyName>
+    <Description>xUnit-friendly FHIR test helpers: resource equality assertions, JSON snapshot comparisons, fake readers/searchers/consent gates.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+
+</Project>

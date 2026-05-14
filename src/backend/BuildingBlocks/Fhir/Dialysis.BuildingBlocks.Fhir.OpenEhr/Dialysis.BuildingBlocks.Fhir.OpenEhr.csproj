@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.OpenEhr</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.OpenEhr</AssemblyName>
+    <Description>openEHR ↔ FHIR bridge primitives: archetype-id helpers, mapper contracts, composition builder.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+  </ItemGroup>
+
+</Project>

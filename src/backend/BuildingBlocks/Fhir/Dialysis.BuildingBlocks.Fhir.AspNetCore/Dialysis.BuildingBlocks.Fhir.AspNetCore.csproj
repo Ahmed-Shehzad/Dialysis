@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.AspNetCore</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.AspNetCore</AssemblyName>
+    <Description>ASP.NET Core endpoint surface for the cross-cutting FHIR R4 building block: dynamic /fhir/{type}/{id} routing, application/fhir+json formatters, OperationOutcome exception filter, CapabilityStatement endpoint, MapFhirEndpoints extension.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+  </ItemGroup>
+
+</Project>

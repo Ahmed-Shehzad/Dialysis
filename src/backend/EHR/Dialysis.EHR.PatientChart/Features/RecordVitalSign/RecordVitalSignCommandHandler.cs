@@ -1,14 +1,20 @@
+using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Contracts.CodeSets;
+using Dialysis.EHR.Contracts.Integration;
 using Dialysis.EHR.PatientChart.Domain;
 using Dialysis.EHR.PatientChart.Ports;
+using Dialysis.EHR.PatientChart.Projections;
 
 namespace Dialysis.EHR.PatientChart.Features.RecordVitalSign;
 
 public sealed class RecordVitalSignCommandHandler(
     IVitalSignRepository vitals,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ITransponderBus bus,
+    VitalSignOpenEhrProjector openEhrProjector,
+    TimeProvider timeProvider)
     : ICommandHandler<RecordVitalSignCommand, Guid>
 {
     public async Task<Guid> HandleAsync(RecordVitalSignCommand request, CancellationToken cancellationToken)
@@ -26,6 +32,23 @@ public sealed class RecordVitalSignCommandHandler(
             request.RecordedByProviderId);
         vitals.Add(reading);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        if (openEhrProjector.Project(reading) is { } projection)
+        {
+            var openEhrEvent = new ChartVitalSignProjectedAsOpenEhrIntegrationEvent(
+                EventId: Guid.CreateVersion7(),
+                OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+                SchemaVersion: 1,
+                VitalSignReadingId: id,
+                PatientId: reading.PatientId,
+                EncounterId: reading.EncounterId,
+                RecordedByProviderId: reading.RecordedByProviderId,
+                ArchetypeId: projection.ArchetypeId,
+                CompositionJson: projection.CompositionJson,
+                ObservedAtUtc: reading.ObservedAtUtc);
+            await bus.PublishAsync(openEhrEvent, cancellationToken).ConfigureAwait(false);
+        }
+
         return id;
     }
 }

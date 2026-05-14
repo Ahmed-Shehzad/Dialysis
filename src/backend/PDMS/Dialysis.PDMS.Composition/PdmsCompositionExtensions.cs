@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
@@ -11,6 +12,7 @@ using Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
+using Dialysis.PDMS.TreatmentSessions.Projections;
 using Dialysis.SmartConnect.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,10 +27,14 @@ public static class PdmsCompositionExtensions
         IConfiguration configuration,
         Action<DbContextOptionsBuilder>? configurePersistence = null,
         bool enableOutboxRelay = false,
+        bool enableFhirEndpoints = false,
+        Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
         services.AddPdmsCore();
         services.AddPdmsPersistence(configurePersistence);
+
+        services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
 
         services.AddTransponder(t =>
         {
@@ -50,6 +56,15 @@ public static class PdmsCompositionExtensions
 
         if (enableOutboxRelay)
             services.AddTransponderOutboxRelay<PdmsDbContext>();
+
+        if (enableFhirEndpoints)
+        {
+            services.AddFhir(fhir =>
+            {
+                fhir.UseBaseUrl("/fhir");
+                configureFhir?.Invoke(fhir);
+            });
+        }
 
         return services;
     }

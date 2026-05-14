@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
@@ -9,7 +10,9 @@ using Dialysis.EHR.Integration;
 using Dialysis.EHR.Integration.Adapters;
 using Dialysis.EHR.Integration.Consumers;
 using Dialysis.EHR.Integration.Ports;
+using Dialysis.EHR.Integration.Projections;
 using Dialysis.EHR.PatientChart;
+using Dialysis.EHR.PatientChart.Projections;
 using Dialysis.EHR.PatientPortal;
 using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration;
@@ -32,6 +35,8 @@ public static class EhrCompositionExtensions
         IConfiguration configuration,
         Action<DbContextOptionsBuilder>? configurePersistence = null,
         bool enableOutboxRelay = false,
+        bool enableFhirEndpoints = false,
+        Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
         services.AddEhrCore();
@@ -40,6 +45,9 @@ public static class EhrCompositionExtensions
         services.TryAddScoped<IPharmacyGateway, NoopPharmacyGateway>();
         services.TryAddScoped<ILabGateway, NoopLabGateway>();
         services.TryAddScoped<IInsurerGateway, NoopInsurerGateway>();
+
+        services.AddSingleton<VitalSignOpenEhrProjector>();
+        services.AddSingleton<LabResultOpenEhrProjector>();
 
         services.AddTransponder(t =>
         {
@@ -65,6 +73,15 @@ public static class EhrCompositionExtensions
 
         if (enableOutboxRelay)
             services.AddTransponderOutboxRelay<EhrDbContext>();
+
+        if (enableFhirEndpoints)
+        {
+            services.AddFhir(fhir =>
+            {
+                fhir.UseBaseUrl("/fhir");
+                configureFhir?.Invoke(fhir);
+            });
+        }
 
         return services;
     }

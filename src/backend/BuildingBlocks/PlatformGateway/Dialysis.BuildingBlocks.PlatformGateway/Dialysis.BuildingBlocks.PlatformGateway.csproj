@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.PlatformGateway</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.PlatformGateway</AssemblyName>
+    <Description>Single ergonomic facade exposing the FHIR Platform APIs layer: maps FHIR + SMART + bulk data + subscriptions + terminology in one MapPlatformApis call.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../Fhir/Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
+    <ProjectReference Include="../../Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
+    <ProjectReference Include="../../Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
+  </ItemGroup>
+
+</Project>

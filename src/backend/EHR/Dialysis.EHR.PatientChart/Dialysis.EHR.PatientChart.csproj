@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />

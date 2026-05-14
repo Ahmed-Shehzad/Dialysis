@@ -159,7 +159,7 @@ public sealed class ModuleBoundaryTests
     [Fact]
     public void Hie_assemblies_must_not_depend_on_other_modules_internals()
     {
-        var hieAssemblies = LoadByPrefix("Dialysis.Hie.");
+        var hieAssemblies = LoadByPrefix("Dialysis.HIE.");
         foreach (var asm in hieAssemblies)
         {
             var referenced = asm.GetReferencedAssemblies();
@@ -192,7 +192,7 @@ public sealed class ModuleBoundaryTests
     [InlineData("Dialysis.PDMS.Contracts")]
     [InlineData("Dialysis.Identity.Contracts")]
     [InlineData("Dialysis.SmartConnect.Contracts")]
-    [InlineData("Dialysis.Hie.Contracts")]
+    [InlineData("Dialysis.HIE.Contracts")]
     public void Contracts_assemblies_must_be_infrastructure_free(string contractsAssemblyName)
     {
         var asm = LoadByName(contractsAssemblyName);

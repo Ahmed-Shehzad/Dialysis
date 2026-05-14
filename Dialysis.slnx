@@ -33,6 +33,32 @@
     <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Quartz/Transponder.Scheduling.Quartz.csproj" />
     <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.TickerQ/Transponder.Scheduling.TickerQ.csproj" />
   </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Fhir/">
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Abstractions/Dialysis.BuildingBlocks.Fhir.Abstractions.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions/Dialysis.BuildingBlocks.Fhir.Subscriptions.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Validation/Dialysis.BuildingBlocks.Fhir.Validation.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.DeIdentification/Dialysis.BuildingBlocks.Fhir.DeIdentification.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Tefca/Dialysis.BuildingBlocks.Fhir.Tefca.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Terminology/Dialysis.BuildingBlocks.Fhir.Terminology.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.OpenEhr/Dialysis.BuildingBlocks.Fhir.OpenEhr.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.CdaBridge/Dialysis.BuildingBlocks.Fhir.CdaBridge.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Testing/Dialysis.BuildingBlocks.Fhir.Testing.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Tests/Dialysis.BuildingBlocks.Fhir.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Direct/">
+    <Project Path="src/backend/BuildingBlocks/Direct/Dialysis.BuildingBlocks.Direct/Dialysis.BuildingBlocks.Direct.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/PlatformGateway/">
+    <Project Path="src/backend/BuildingBlocks/PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway.csproj" />
+  </Folder>
   <Folder Name="/src/backend/CQRS/">
     <Project Path="src/backend/CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <Project Path="src/backend/CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
@@ -112,18 +138,27 @@
     <Project Path="src/backend/Identity/Dialysis.Identity.Api/Dialysis.Identity.Api.csproj" />
     <Project Path="src/backend/Identity/Dialysis.Identity.Tests/Dialysis.Identity.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/backend/Hie/">
-    <Project Path="src/backend/Hie/Dialysis.Hie.Contracts/Dialysis.Hie.Contracts.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Core.Abstraction/Dialysis.Hie.Core.Abstraction.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Core/Dialysis.Hie.Core.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Consent/Dialysis.Hie.Consent.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.OpenEhr/Dialysis.Hie.OpenEhr.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Outbound/Dialysis.Hie.Outbound.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Inbound/Dialysis.Hie.Inbound.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Persistence/Dialysis.Hie.Persistence.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Composition/Dialysis.Hie.Composition.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Api/Dialysis.Hie.Api.csproj" />
-    <Project Path="src/backend/Hie/Dialysis.Hie.Tests/Dialysis.Hie.Tests.csproj" />
+  <Folder Name="/src/backend/HIE/">
+    <Project Path="src/backend/HIE/Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Core.Abstraction/Dialysis.HIE.Core.Abstraction.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Core/Dialysis.HIE.Core.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Consent/Dialysis.HIE.Consent.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.OpenEhr/Dialysis.HIE.OpenEhr.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Outbound/Dialysis.HIE.Outbound.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Persistence/Dialysis.HIE.Persistence.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Composition/Dialysis.HIE.Composition.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Xds/Dialysis.HIE.Xds.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Tests/Dialysis.HIE.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/SmartConnect/Adapters/">
+    <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Common/Dialysis.SmartConnect.Adapters.Common.csproj" />
+    <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Epic/Dialysis.SmartConnect.Adapters.Epic.csproj" />
+    <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Cerner/Dialysis.SmartConnect.Adapters.Cerner.csproj" />
+    <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Allscripts/Dialysis.SmartConnect.Adapters.Allscripts.csproj" />
+    <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Meditech/Dialysis.SmartConnect.Adapters.Meditech.csproj" />
+    <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.OpenEMR/Dialysis.SmartConnect.Adapters.OpenEMR.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/">
     <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
