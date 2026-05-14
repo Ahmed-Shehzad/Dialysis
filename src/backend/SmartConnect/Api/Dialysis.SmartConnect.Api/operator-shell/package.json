@@ -1,0 +1,15 @@
+{
+  "name": "smartconnect-operator-shell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SmartConnect operator UI — TS bundle served from the API host at /smartconnect/index.html. Output is committed under wwwroot/smartconnect/ so CI does not need Node.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/app.ts --bundle --outfile=../wwwroot/smartconnect/app.js --target=es2022 --sourcemap --loader:.css=css",
+    "watch": "esbuild src/app.ts --bundle --outfile=../wwwroot/smartconnect/app.js --target=es2022 --sourcemap --loader:.css=css --watch"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0",
+    "typescript": "5.7.2"
+  }
+}

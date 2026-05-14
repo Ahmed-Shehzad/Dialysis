@@ -35,6 +35,12 @@ public static class SmartConnectServiceCollectionExtensions
         services.TryAddSingleton<IFlowExecutionContextAccessor, FlowExecutionContextAccessor>();
         services.AddSingleton<JavascriptTransformStage>(sp => new JavascriptTransformStage(sp));
         services.AddSingleton<JavascriptRouteFilter>(sp => new JavascriptRouteFilter(sp));
+        services.TryAddSingleton<IExternalScriptLoader, DefaultExternalScriptLoader>();
+        services.AddOptions<ExternalScriptOptions>();
+        services.AddSingleton<ExternalScriptRouteFilter>(sp =>
+            new ExternalScriptRouteFilter(sp.GetRequiredService<IExternalScriptLoader>(), sp));
+        services.AddSingleton<ExternalScriptTransformStage>(sp =>
+            new ExternalScriptTransformStage(sp.GetRequiredService<IExternalScriptLoader>(), sp));
         services.AddSingleton<RuleBuilderRouteFilter>();
         services.AddSingleton<XsltTransformStage>();
         services.AddSingleton<JsonTransformStage>();
@@ -76,6 +82,7 @@ public static class SmartConnectServiceCollectionExtensions
             var registry = new MutableFlowPluginRegistry();
             registry.RegisterRouteFilter(sp.GetRequiredService<AllowAllRouteFilter>());
             registry.RegisterRouteFilter(sp.GetRequiredService<JavascriptRouteFilter>());
+            registry.RegisterRouteFilter(sp.GetRequiredService<ExternalScriptRouteFilter>());
             registry.RegisterRouteFilter(sp.GetRequiredService<RuleBuilderRouteFilter>());
             registry.RegisterRouteFilter(sp.GetRequiredService<IteratorRouteFilter>());
             registry.RegisterOutboundAdapter(sp.GetRequiredService<PassThroughOutboundAdapter>());
@@ -86,6 +93,7 @@ public static class SmartConnectServiceCollectionExtensions
             registry.RegisterOutboundAdapter(sp.GetRequiredService<DatabaseOutboundAdapter>());
             registry.RegisterOutboundAdapter(sp.GetRequiredService<ChannelWriterOutboundAdapter>());
             registry.RegisterTransformStage(sp.GetRequiredService<JavascriptTransformStage>());
+            registry.RegisterTransformStage(sp.GetRequiredService<ExternalScriptTransformStage>());
             registry.RegisterTransformStage(sp.GetRequiredService<XsltTransformStage>());
             registry.RegisterTransformStage(sp.GetRequiredService<JsonTransformStage>());
             registry.RegisterTransformStage(sp.GetRequiredService<XmlTransformStage>());

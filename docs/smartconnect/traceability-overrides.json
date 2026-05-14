@@ -126,9 +126,9 @@
       "evidence": "Management routes (flow import); parity with MC UI import is partial"
     },
     "620627148862": {
-      "mapping": "Operator shell: flows table, message browser (filter + list + reprocess), pruner readout, API links",
-      "status": "In progress",
-      "evidence": "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html"
+      "mapping": "Operator shell: TS+esbuild bundle served at /smartconnect/index.html. Hash-routed panels (Flows, Messages, Attachments, Alerts, Alert events, Code templates, Variable maps editor, Pruner, Health) + bearer-token auth bar. Source under Api/operator-shell/, built bundle committed to wwwroot/smartconnect/",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html; src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/app.js; src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/operator-shell/src/app.ts; src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/operator-shell/src/panels/; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/OperatorShellSmokeTests.cs"
     },
     "cabdef066e91": {
       "mapping": "File Reader source connector (polling, after-read actions, quarantine)",
@@ -3449,6 +3449,16 @@
       "mapping": "Edit Alert View: headless equivalent via REST admin API at /smartconnect/v1/admin/alert-rules/{id} (full CRUD + /test endpoint); AlertEngine fires matching rules from FlowRuntimeEngine failure path with 3 action providers (email, webhook, channel-redispatch) and throttled per-process firing",
       "status": "Done",
       "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Alerts/AlertRule.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/AlertEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/EmailAlertActionProvider.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/WebhookAlertActionProvider.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/Actions/ChannelRedispatchAlertActionProvider.cs; src/backend/SmartConnect/Management/Dialysis.SmartConnect.Management.AspNetCore/AlertEndpointExtensions.cs"
+    },
+    "85f102539778": {
+      "mapping": "External Script filter rule: loads JS body from file:// or http(s):// URI (IExternalScriptLoader), evaluates via same Jint context as inline JS",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ExternalScriptRouteFilter.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ExternalScriptParameters.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/DefaultExternalScriptLoader.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scripts/IExternalScriptLoader.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scripts/ExternalScriptOptions.cs"
+    },
+    "bbf2966bbe5f": {
+      "mapping": "External Script transformer step: loads JS body from file:// or http(s):// URI (IExternalScriptLoader), evaluates via same Jint context as inline JS",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ExternalScriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ExternalScriptParameters.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/DefaultExternalScriptLoader.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scripts/IExternalScriptLoader.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scripts/ExternalScriptOptions.cs"
     }
   }
 }

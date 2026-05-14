@@ -20,4 +20,15 @@
     <ProjectReference Include="../../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Operator-shell TS sources ride along in the project but never compile into the assembly. -->
+    <None Include="operator-shell/**/*" Exclude="operator-shell/node_modules/**;operator-shell/.cache/**" />
+  </ItemGroup>
+
+  <Target Name="BuildOperatorShell" BeforeTargets="Build"
+          Condition="Exists('$(MSBuildProjectDirectory)/operator-shell/node_modules')">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)/operator-shell"
+          Command="npm run build" />
+  </Target>
+
 </Project>

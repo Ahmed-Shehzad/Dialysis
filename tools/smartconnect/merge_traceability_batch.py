@@ -19,16 +19,14 @@ PROTECT_IN_PROGRESS = frozenset(
         "746ed16e96e7",  # Database requirements / EF
         "1048ab38243e",  # Management HTTP API
         "c304f38f491b",  # Import channel
-        "620627148862",  # Web dashboard / operator shell
+        # Web dashboard / operator shell — closed in the Operator-shell UI batch; entry is in DONE_BATCH now.
         # Variable maps — closed in the Variable Maps batch; entries are in DONE_BATCH now.
         # Code Template Libraries — closed in the Code Template Libraries batch; entries are in DONE_BATCH now.
         # Alerts — closed in the Channel Alerts batch; entry is in DONE_BATCH now.
         # Phase 1 (scheduling + iterator + DSF) IDs were here during Phase 0; now they live in DONE_BATCH.
         # "Remove From Iterators" stays — UI-task wording; iterator engine itself is Done elsewhere.
         "8a5d6f5134bb",  # Remove From Iterators
-        # External Script filter / transformer — separate batch
-        "85f102539778",  # External Script Filter Rule
-        "bbf2966bbe5f",  # External Script Transformer Step
+        # External Script filter / transformer — closed in the External Script batch; entries are in DONE_BATCH now.
         # OAuth 2.0 token verification — real backlog
         "1a89aa729221",  # OAuth 2.0 Token Verification
         # Response transformers — real concept (engine already supports the slot)
@@ -653,6 +651,18 @@ DONE_BATCH: dict[str, tuple[str, str]] = {
     "803fb9390d22": (
         "Transform step kinds: javascript, xslt, json, xml, mapper-transform, message-builder",
         f"{EV_CORE}/SmartConnectServiceCollectionExtensions.cs",
+    ),
+    "85f102539778": (
+        "External Script filter rule: loads JS body from file:// or http(s):// URI (IExternalScriptLoader), evaluates via same Jint context as inline JS",
+        f"{EV_EXT}/ExternalScriptRouteFilter.cs; {EV_EXT}/ExternalScriptParameters.cs; {EV_CORE}/Scripts/DefaultExternalScriptLoader.cs; {EV_ABS}/Scripts/IExternalScriptLoader.cs; {EV_ABS}/Scripts/ExternalScriptOptions.cs",
+    ),
+    "bbf2966bbe5f": (
+        "External Script transformer step: loads JS body from file:// or http(s):// URI (IExternalScriptLoader), evaluates via same Jint context as inline JS",
+        f"{EV_EXT}/ExternalScriptTransformStage.cs; {EV_EXT}/ExternalScriptParameters.cs; {EV_CORE}/Scripts/DefaultExternalScriptLoader.cs; {EV_ABS}/Scripts/IExternalScriptLoader.cs; {EV_ABS}/Scripts/ExternalScriptOptions.cs",
+    ),
+    "620627148862": (
+        "Operator shell: TS+esbuild bundle served at /smartconnect/index.html. Hash-routed panels (Flows, Messages, Attachments, Alerts, Alert events, Code templates, Variable maps editor, Pruner, Health) + bearer-token auth bar. Source under Api/operator-shell/, built bundle committed to wwwroot/smartconnect/",
+        "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/index.html; src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/wwwroot/smartconnect/app.js; src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/operator-shell/src/app.ts; src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/operator-shell/src/panels/; src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/OperatorShellSmokeTests.cs",
     ),
     "dc7441c576af": (
         "IntegrationMessage: payload bytes, format enum, metadata dictionary, correlation id",

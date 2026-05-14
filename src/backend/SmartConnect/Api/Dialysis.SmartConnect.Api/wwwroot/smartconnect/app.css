@@ -1,0 +1,148 @@
+/* src/styles.css */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.45;
+  color: #222;
+  background: #fff;
+}
+header.sc-header {
+  border-bottom: 1px solid #ddd;
+  padding: 0.75rem 1.5rem;
+  background: #f7f7f7;
+}
+header.sc-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+}
+.auth-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+  margin: 0.4rem 0;
+}
+.auth-bar input[type=password] {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+}
+nav.sc-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0.5rem 0 0 0;
+  padding: 0;
+  gap: 0.25rem;
+}
+nav.sc-nav li {
+  margin: 0;
+}
+nav.sc-nav a {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  text-decoration: none;
+  color: #047;
+  background: #fff;
+  font-size: 0.85rem;
+}
+nav.sc-nav a:hover {
+  background: #eef;
+}
+main {
+  margin: 1.25rem 1.5rem;
+  max-width: 64rem;
+}
+main h2 {
+  font-size: 1.15rem;
+  margin: 0.25rem 0 0.5rem 0;
+}
+main h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem 0;
+}
+main h4 {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 0.25rem 0;
+}
+main a {
+  color: #047;
+}
+main p.muted,
+main span.muted,
+main div.muted,
+main label.muted {
+  color: #555;
+  font-size: 0.9rem;
+}
+main .err {
+  color: #a00;
+}
+main code {
+  background: #f0f0f0;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+main table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6rem 0;
+  font-size: 0.9rem;
+}
+main th,
+main td {
+  border: 1px solid #ccc;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+main th {
+  background: #f7f7f7;
+}
+main button {
+  font-size: 0.85rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background: #fafafa;
+  cursor: pointer;
+}
+main button:hover:not(:disabled) {
+  background: #eef;
+}
+main button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+main input[type=text],
+main input[type=number],
+main input[type=password],
+main select {
+  font-size: 0.9rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+}
+main pre.json-block,
+main pre.code-block {
+  background: #f6f8fa;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 0.5rem 0.7rem;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  white-space: pre;
+}
+/*# sourceMappingURL=app.css.map */

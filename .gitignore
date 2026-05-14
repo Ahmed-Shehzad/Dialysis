@@ -92,3 +92,8 @@ local.settings.json
 *.swo
 *~
 *.bak
+
+## Node (operator-shell TS build)
+node_modules/
+.cache/
+
