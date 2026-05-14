@@ -18,6 +18,7 @@
     <ProjectReference Include="../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DistributedCache/Dialysis.BuildingBlocks.DistributedCache.Valkey/Dialysis.BuildingBlocks.DistributedCache.Valkey.csproj" />
   </ItemGroup>
 
   <ItemGroup>

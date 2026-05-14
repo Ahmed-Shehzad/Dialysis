@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.TreatmentSessions.Domain;
@@ -27,6 +30,11 @@ public sealed class PdmsDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ApplyConfiguration(new AuditEventRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new SubscriptionRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationOutboxRecordConfiguration());
 
         modelBuilder.Entity<DialysisSession>(b =>
         {

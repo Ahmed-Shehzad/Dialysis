@@ -103,9 +103,12 @@ public sealed class FhirController(
     private static async Task<IActionResult> FhirResultAsync(IActionResult fallbackStatus, Resource resource, CancellationToken cancellationToken)
     {
         var json = await _serializer.SerializeToStringAsync(resource).ConfigureAwait(false);
-        var statusCode = fallbackStatus is StatusCodeResult sc ? sc.StatusCode
-            : fallbackStatus is ObjectResult or ? or.StatusCode ?? StatusCodes.Status200OK
-            : StatusCodes.Status200OK;
+        var statusCode = fallbackStatus switch
+        {
+            StatusCodeResult sc => sc.StatusCode,
+            ObjectResult or => or.StatusCode ?? StatusCodes.Status200OK,
+            _ => StatusCodes.Status200OK
+        };
         return new ContentResult
         {
             Content = json,

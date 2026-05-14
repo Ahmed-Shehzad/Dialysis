@@ -1,4 +1,7 @@
 using Dialysis.BuildingBlocks.Fhir;
+using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
@@ -28,6 +31,9 @@ public static class PdmsCompositionExtensions
         Action<DbContextOptionsBuilder>? configurePersistence = null,
         bool enableOutboxRelay = false,
         bool enableFhirEndpoints = false,
+        bool enableFhirAuditPersistence = false,
+        bool enableFhirBulkDataPersistence = false,
+        bool enableFhirSubscriptionsPersistence = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
@@ -65,6 +71,13 @@ public static class PdmsCompositionExtensions
                 configureFhir?.Invoke(fhir);
             });
         }
+
+        if (enableFhirAuditPersistence)
+            services.AddFhirAuditEntityFrameworkStore<PdmsDbContext>();
+        if (enableFhirBulkDataPersistence)
+            services.AddFhirBulkDataEntityFrameworkStore<PdmsDbContext>();
+        if (enableFhirSubscriptionsPersistence)
+            services.AddFhirSubscriptionsEntityFrameworkStore<PdmsDbContext>();
 
         return services;
     }

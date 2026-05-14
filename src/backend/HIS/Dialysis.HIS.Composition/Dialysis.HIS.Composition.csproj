@@ -24,6 +24,9 @@
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
   </ItemGroup>
 

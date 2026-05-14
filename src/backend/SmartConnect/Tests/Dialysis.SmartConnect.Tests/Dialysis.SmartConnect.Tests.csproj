@@ -35,6 +35,11 @@
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+    <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Epic/Dialysis.SmartConnect.Adapters.Epic.csproj" />
+    <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Cerner/Dialysis.SmartConnect.Adapters.Cerner.csproj" />
+    <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Meditech/Dialysis.SmartConnect.Adapters.Meditech.csproj" />
+    <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.OpenEMR/Dialysis.SmartConnect.Adapters.OpenEMR.csproj" />
+    <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Allscripts/Dialysis.SmartConnect.Adapters.Allscripts.csproj" />
   </ItemGroup>
 
 </Project>

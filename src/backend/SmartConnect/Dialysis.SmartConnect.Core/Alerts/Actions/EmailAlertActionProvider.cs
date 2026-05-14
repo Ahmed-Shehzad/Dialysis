@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
 
@@ -5,7 +6,8 @@ namespace Dialysis.SmartConnect.Alerts.Actions;
 
 /// <summary>
 /// Sends an SMTP email when an alert fires. Properties JSON shape:
-/// <c>{"host":"smtp.example","port":587,"from":"...","to":"a@b,c@d","subject":"...","body":"..."}</c>.
+/// <c>{"host":"smtp.example","port":587,"from":"...","to":"a@b,c@d","subject":"...","body":"...",
+/// "enableSsl":true,"username":"...","password":"...","timeoutSeconds":30}</c>.
 /// <see cref="AlertVariables"/> is applied to <c>subject</c> and <c>body</c>.
 /// </summary>
 public sealed class EmailAlertActionProvider : IAlertActionProvider
@@ -46,9 +48,16 @@ public sealed class EmailAlertActionProvider : IAlertActionProvider
         var port = props.Port > 0 ? props.Port : 25;
 
         using var message = new MailMessage(props.From, props.To, subject, body);
+        var transport = new SmtpTransportOptions(
+            Host: props.Host,
+            Port: port,
+            EnableSsl: props.EnableSsl,
+            Username: props.Username,
+            Password: props.Password,
+            TimeoutSeconds: props.TimeoutSeconds);
         try
         {
-            await Deliverer.SendAsync(message, props.Host, port, cancellationToken).ConfigureAwait(false);
+            await Deliverer.SendAsync(message, transport, cancellationToken).ConfigureAwait(false);
             return AlertActionResult.Success($"Sent to {props.To}");
         }
         catch (Exception ex)
@@ -65,19 +74,44 @@ public sealed class EmailAlertActionProvider : IAlertActionProvider
         public string? To { get; set; }
         public string? Subject { get; set; }
         public string? Body { get; set; }
+        public bool EnableSsl { get; set; }
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+        public int TimeoutSeconds { get; set; }
     }
+
+    /// <summary>Per-message SMTP transport settings: host, port, TLS, optional credentials, timeout.</summary>
+    public sealed record SmtpTransportOptions(
+        string Host,
+        int Port,
+        bool EnableSsl,
+        string? Username,
+        string? Password,
+        int TimeoutSeconds);
 
     /// <summary>Indirection so tests can substitute a fake deliverer instead of opening a real SMTP socket.</summary>
     public interface ISmtpDeliverer
     {
-        Task SendAsync(MailMessage message, string host, int port, CancellationToken cancellationToken);
+        Task SendAsync(MailMessage message, SmtpTransportOptions transport, CancellationToken cancellationToken);
     }
 
     private sealed class DefaultSmtpDeliverer : ISmtpDeliverer
     {
-        public async Task SendAsync(MailMessage message, string host, int port, CancellationToken cancellationToken)
+        public async Task SendAsync(MailMessage message, SmtpTransportOptions transport, CancellationToken cancellationToken)
         {
-            using var client = new SmtpClient(host, port);
+            using var client = new SmtpClient(transport.Host, transport.Port)
+            {
+                EnableSsl = transport.EnableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+            };
+            if (transport.TimeoutSeconds > 0)
+            {
+                client.Timeout = transport.TimeoutSeconds * 1000;
+            }
+            if (!string.IsNullOrEmpty(transport.Username))
+            {
+                client.Credentials = new NetworkCredential(transport.Username, transport.Password ?? string.Empty);
+            }
             await client.SendMailAsync(message, cancellationToken).ConfigureAwait(false);
         }
     }

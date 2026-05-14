@@ -1,4 +1,5 @@
 using System.Reflection;
+using Dialysis.BuildingBlocks.DistributedCache.Valkey;
 using Dialysis.CQRS;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.Module.Contracts.Authorization;
@@ -94,6 +95,16 @@ public static class ModuleHostingServiceCollectionExtensions
         builder.Services.AddProblemDetails();
         builder.Services.AddModuleApiVersioning();
         builder.Services.AddHealthChecks();
+
+        var valkeySection = builder.Configuration.GetSection($"{options.ModuleSlug}:DistributedCache:Valkey");
+        if (!string.IsNullOrWhiteSpace(valkeySection["ConnectionString"]))
+        {
+            if (string.IsNullOrWhiteSpace(valkeySection["InstanceName"]))
+            {
+                valkeySection["InstanceName"] = options.ModuleSlug;
+            }
+            builder.Services.AddValkeyDistributedCache(valkeySection);
+        }
 
         return builder;
     }

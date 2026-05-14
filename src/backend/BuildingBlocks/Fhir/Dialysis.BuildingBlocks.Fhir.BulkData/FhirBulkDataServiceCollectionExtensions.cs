@@ -92,7 +92,12 @@ public static class FhirBulkDataServiceCollectionExtensions
         var manifest = new
         {
             transactionTime = job.CompletedAt ?? job.CreatedAt,
-            request = $"/fhir/{(job.Scope == ExportScope.Patient ? "Patient/" : job.Scope == ExportScope.Group ? $"Group/{job.GroupId}/" : "")}$export",
+            request = $"/fhir/{(job.Scope switch
+            {
+                ExportScope.Patient => "Patient/",
+                ExportScope.Group => $"Group/{job.GroupId}/",
+                _ => ""
+            })}$export",
             requiresAccessToken = true,
             output = job.Outputs.Select(o => new { type = o.ResourceType, url = storage.BuildOutputUrl(job.Id, o.ResourceType) }),
             error = Array.Empty<object>(),

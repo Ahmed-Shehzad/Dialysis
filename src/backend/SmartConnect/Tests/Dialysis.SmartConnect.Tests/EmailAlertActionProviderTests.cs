@@ -61,11 +61,11 @@ public sealed class EmailAlertActionProviderTests
         public string? LastHost { get; private set; }
         public int LastPort { get; private set; }
 
-        public Task SendAsync(MailMessage message, string host, int port, CancellationToken cancellationToken)
+        public Task SendAsync(MailMessage message, EmailAlertActionProvider.SmtpTransportOptions transport, CancellationToken cancellationToken)
         {
             Last = message;
-            LastHost = host;
-            LastPort = port;
+            LastHost = transport.Host;
+            LastPort = transport.Port;
             return Task.CompletedTask;
         }
     }

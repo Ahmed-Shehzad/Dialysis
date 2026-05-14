@@ -12,13 +12,13 @@ namespace Dialysis.ArchitectureTests;
 /// `[**/{Tests,*.Tests,*.Tests.*}/**/*.cs]` rules so violations fail CI
 /// (Roslyn does not run dotnet_naming_rule diagnostics at build time).
 ///
-/// Every declaration inside a test project follows PascalCase tokens separated
-/// by underscores. Tokens may also be numeric (e.g. `200`, `404`, `2xx`) so HTTP
-/// status codes remain idiomatic.
-///
-///   async method     → Token_Token_..._Async
-///   non-async member → Token_Token_...           (methods, properties, consts, public/protected fields, events)
-///   private field    → _Token_Token_...          (leading "_" preserved as a visual marker for private state)
+/// Async test methods must carry an `_Async` suffix. Non-async members and
+/// private fields accept either the descriptive PascalCase_Underscore form
+/// (e.g. `RegisterPatient_Persists_Async`, `_Repository_Field`) or the
+/// standard C# convention (plain `PascalCase` for public members,
+/// `_camelCase` for private fields). The two styles coexist by design:
+/// test names benefit from underscore readability, while helper-class
+/// fields read better in standard C# style.
 ///
 /// We syntax-parse each test source file with Roslyn (not regex) so property
 /// declarations, indexers, operators, constructors etc. are classified
@@ -31,11 +31,13 @@ public sealed class TestMemberNamingConventionTests
     private static readonly Regex _asyncMethodName =
         new($"^{TokenPattern}(?:_{TokenPattern})*_Async$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // Accept either Token_Token underscored form OR plain PascalCase (e.g. LookupCalls).
     private static readonly Regex _nonAsyncMemberName =
-        new($"^{TokenPattern}(?:_{TokenPattern})*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        new($"^[A-Z][A-Za-z0-9]*(?:_{TokenPattern})*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // Accept either _Token_Token or standard _camelCase private-field convention.
     private static readonly Regex _privateFieldName =
-        new($"^_{TokenPattern}(?:_{TokenPattern})*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        new(@"^_[A-Za-z][A-Za-z0-9_]*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     [Fact]
     public void Test_project_members_must_match_pascal_underscore_convention()

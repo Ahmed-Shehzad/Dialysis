@@ -1,23 +1,53 @@
+using Microsoft.Extensions.Options;
+
 namespace Dialysis.SmartConnect.Adapters.Meditech;
 
 public sealed class MeditechAdapterOptions
 {
+    /// <summary>FHIR R4 base URL, e.g. <c>https://fhir.meditech.com/v1/{tenant}/r4</c>.</summary>
     public required string BaseUrl { get; set; }
+
+    /// <summary>OAuth2 token endpoint published by the Meditech tenant.</summary>
+    public required string TokenEndpoint { get; set; }
 
     public required string ClientId { get; set; }
 
     public required string ClientSecret { get; set; }
+
+    public string Scope { get; set; } = "system/Patient.read";
 }
 
-public sealed class MeditechAuthProvider : IExternalEhrAuthProvider
+/// <summary>
+/// Meditech Expanse backend-services auth via OAuth2 <c>client_credentials</c> grant with HTTP Basic
+/// authentication. Bearer tokens are cached per-tenant.
+/// </summary>
+public sealed class MeditechAuthProvider(IOptions<MeditechAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
+    : IExternalEhrAuthProvider
 {
+    private readonly MeditechAdapterOptions _options = options.Value;
+
     public string VendorName => "Meditech";
 
     public Task<string> AcquireAccessTokenAsync(ExternalEhrContext context, CancellationToken cancellationToken)
-        => Task.FromResult(string.Empty);
+    {
+        var request = new OAuth2TokenRequest(
+            VendorName: VendorName,
+            TokenEndpoint: _options.TokenEndpoint,
+            CacheKey: $"meditech-token::{context.TenantId}",
+            FormFields:
+            [
+                new("grant_type", "client_credentials"),
+                new("scope", _options.Scope),
+            ],
+            BasicAuth: new BasicAuthCredential(_options.ClientId, _options.ClientSecret));
+        return tokenAcquirer.AcquireAsync(request, cancellationToken);
+    }
 }
 
-public sealed class MeditechFhirAdapter(IHttpClientFactory httpClientFactory, MeditechAuthProvider authProvider, Microsoft.Extensions.Options.IOptions<MeditechAdapterOptions> options)
+public sealed class MeditechFhirAdapter(
+    IHttpClientFactory httpClientFactory,
+    MeditechAuthProvider authProvider,
+    IOptions<MeditechAdapterOptions> options)
     : HttpFhirAdapterBase(httpClientFactory, authProvider)
 {
     private readonly MeditechAdapterOptions _options = options.Value;

@@ -1,0 +1,157 @@
+name: dialysis-modules
+
+# Module-host orchestration overlay. Run alongside the base infra compose:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.modules.yml up -d
+#
+# Brings up each module host pointed at its own Postgres, sharing one RabbitMQ + Valkey + Keycloak.
+# Each module is independently scalable — bump `replicas` to scale horizontally; Valkey backs the
+# distributed cache + ASP.NET Data Protection key ring so multi-replica is safe.
+
+services:
+  his-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.module
+      args:
+        MODULE_PROJECT: src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj
+        MODULE_DLL: Dialysis.HIS.Api.dll
+    image: dialysis/his-api:dev
+    depends_on:
+      postgres-his: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__His: Host=postgres-his;Port=5432;Database=dialysis_his;Username=postgres;Password=postgres
+      His__UseForwardedHeaders: "true"
+      His__UseHsts: "true"
+      His__Transponder__EnableOutboxRelay: "true"
+      His__Transponder__RabbitMq__ConnectionUri: amqp://dialysis:dialysis@rabbitmq:5672/
+      His__Authentication__Authority: http://keycloak:8080/realms/dialysis
+      His__Authentication__Audience: account
+      His__Authentication__RequireAuthorityWhenNotDevelopment: "true"
+      His__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
+      His__DistributedCache__Valkey__InstanceName: his
+      His__Telemetry__OtlpEndpoint: http://otel-collector:4317
+    ports:
+      - "5288:8080"
+    deploy:
+      replicas: 1
+
+  ehr-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.module
+      args:
+        MODULE_PROJECT: src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj
+        MODULE_DLL: Dialysis.EHR.Api.dll
+    image: dialysis/ehr-api:dev
+    depends_on:
+      postgres-ehr: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Ehr: Host=postgres-ehr;Port=5432;Database=dialysis_ehr;Username=postgres;Password=postgres
+      Ehr__UseForwardedHeaders: "true"
+      Ehr__UseHsts: "true"
+      Ehr__Transponder__EnableOutboxRelay: "true"
+      Ehr__Transponder__RabbitMq__ConnectionUri: amqp://dialysis:dialysis@rabbitmq:5672/
+      Ehr__Authentication__Authority: http://keycloak:8080/realms/dialysis
+      Ehr__Authentication__Audience: account
+      Ehr__Authentication__RequireAuthorityWhenNotDevelopment: "true"
+      Ehr__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
+      Ehr__DistributedCache__Valkey__InstanceName: ehr
+      Ehr__Telemetry__OtlpEndpoint: http://otel-collector:4317
+    ports:
+      - "5289:8080"
+    deploy:
+      replicas: 1
+
+  pdms-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.module
+      args:
+        MODULE_PROJECT: src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj
+        MODULE_DLL: Dialysis.PDMS.Api.dll
+    image: dialysis/pdms-api:dev
+    depends_on:
+      postgres-pdms: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Pdms: Host=postgres-pdms;Port=5432;Database=dialysis_pdms;Username=postgres;Password=postgres
+      Pdms__UseForwardedHeaders: "true"
+      Pdms__UseHsts: "true"
+      Pdms__Transponder__EnableOutboxRelay: "true"
+      Pdms__Transponder__RabbitMq__ConnectionUri: amqp://dialysis:dialysis@rabbitmq:5672/
+      Pdms__Authentication__Authority: http://keycloak:8080/realms/dialysis
+      Pdms__Authentication__Audience: account
+      Pdms__Authentication__RequireAuthorityWhenNotDevelopment: "true"
+      Pdms__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
+      Pdms__DistributedCache__Valkey__InstanceName: pdms
+      Pdms__Telemetry__OtlpEndpoint: http://otel-collector:4317
+    ports:
+      - "5290:8080"
+    deploy:
+      replicas: 1
+
+  smartconnect-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.module
+      args:
+        MODULE_PROJECT: src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj
+        MODULE_DLL: Dialysis.SmartConnect.Api.dll
+    image: dialysis/smartconnect-api:dev
+    depends_on:
+      postgres-smartconnect: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__SmartConnect: Host=postgres-smartconnect;Port=5432;Database=dialysis_smartconnect;Username=postgres;Password=postgres
+      SmartConnect__UseHsts: "true"
+      SmartConnect__Transponder__EnableOutboxRelay: "true"
+      SmartConnect__Transponder__RabbitMq__ConnectionUri: amqp://dialysis:dialysis@rabbitmq:5672/
+      SmartConnect__Authentication__Authority: http://keycloak:8080/realms/dialysis
+      SmartConnect__Authentication__Audience: account
+      SmartConnect__Authentication__RequireAuthorityWhenNotDevelopment: "true"
+      SmartConnect__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
+      SmartConnect__DistributedCache__Valkey__InstanceName: smartconnect
+      SmartConnect__Telemetry__OtlpEndpoint: http://otel-collector:4317
+    ports:
+      - "5291:8080"
+    deploy:
+      replicas: 1
+
+  hie-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.module
+      args:
+        MODULE_PROJECT: src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj
+        MODULE_DLL: Dialysis.HIE.Api.dll
+    image: dialysis/hie-api:dev
+    depends_on:
+      postgres-hie: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Hie: Host=postgres-hie;Port=5432;Database=dialysis_hie;Username=postgres;Password=postgres
+      Hie__UseHsts: "true"
+      Hie__Transponder__RabbitMq__ConnectionUri: amqp://dialysis:dialysis@rabbitmq:5672/
+      Hie__Authentication__Authority: http://keycloak:8080/realms/dialysis
+      Hie__Authentication__Audience: account
+      Hie__Authentication__RequireAuthorityWhenNotDevelopment: "true"
+      Hie__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
+      Hie__DistributedCache__Valkey__InstanceName: hie
+      Hie__Telemetry__OtlpEndpoint: http://otel-collector:4317
+    ports:
+      - "5292:8080"
+    deploy:
+      replicas: 1

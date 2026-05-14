@@ -102,6 +102,19 @@ services:
       timeout: 3s
       retries: 10
 
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--appendonly", "yes", "--save", "60", "1000"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:4-management-alpine
     environment:
@@ -147,3 +160,4 @@ volumes:
   postgres-pdms-data:
   postgres-identity-data:
   postgres-hie-data:
+  valkey-data:

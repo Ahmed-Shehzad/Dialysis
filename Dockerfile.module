@@ -1,0 +1,40 @@
+# Generic multi-stage Dockerfile for any Dialysis module API host.
+# Build args:
+#   MODULE_PROJECT — relative path to the API csproj (e.g. src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj)
+#   MODULE_DLL     — assembly DLL name (e.g. Dialysis.HIS.Api.dll)
+# The same image is reused for HIS / EHR / PDMS / SmartConnect / HIE / Identity by varying the build args.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG MODULE_PROJECT
+WORKDIR /src
+
+# Copy solution-wide files first so package restore is cached.
+COPY Directory.Build.props Directory.Packages.props global.json nuget.config* ./
+
+# Copy the entire src tree — modular monolith with central package management means most projects
+# transitively depend on building-blocks, so a partial copy doesn't shrink the build context much.
+COPY src/ src/
+COPY tests/ tests/
+COPY Dialysis.slnx ./
+
+RUN dotnet restore "${MODULE_PROJECT}"
+RUN dotnet publish "${MODULE_PROJECT}" -c Release -o /app/publish --no-restore /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+ARG MODULE_DLL
+ENV MODULE_DLL=${MODULE_DLL}
+ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_NOLOGO=true
+
+WORKDIR /app
+COPY --from=build /app/publish ./
+
+# Use the unprivileged user shipped with the aspnet image so the container never runs as root.
+USER app
+EXPOSE 8080
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
+    CMD wget --quiet --spider http://localhost:8080/health/live || exit 1
+
+ENTRYPOINT ["sh", "-c", "exec dotnet ${MODULE_DLL}"]

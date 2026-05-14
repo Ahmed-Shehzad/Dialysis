@@ -366,14 +366,13 @@ dotnet_naming_style.test_pascal_underscore.capitalization = pascal_case
 dotnet_naming_rule.constants_pascal_case.severity = error
 dotnet_naming_rule.constants_pascal_case.style = test_pascal_underscore
 
-# 4. Private fields → "_" prefix + Token_Token. Static and instance both.
-dotnet_naming_rule.private_fields_underscore.severity = error
-dotnet_naming_rule.private_fields_underscore.style = test_private_pascal_underscore
-dotnet_naming_rule.private_static_fields_s_underscore.severity = error
-dotnet_naming_rule.private_static_fields_s_underscore.style = test_private_pascal_underscore
-dotnet_naming_style.test_private_pascal_underscore.required_prefix = _
-dotnet_naming_style.test_private_pascal_underscore.word_separator = _
-dotnet_naming_style.test_private_pascal_underscore.capitalization = pascal_case
+# 4. Private fields → "_" prefix + either PascalCase_Underscore or camelCase. Static and instance both.
+#    The architecture test (TestMemberNamingConventionTests) accepts both styles; editorconfig
+#    here mirrors that with the standard `underscore_camel` style so Rider does not nag.
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_rule.private_static_fields_s_underscore.severity = warning
+dotnet_naming_rule.private_static_fields_s_underscore.style = underscore_camel
 
 ###############################
 # SonarAnalyzer.CSharp rules

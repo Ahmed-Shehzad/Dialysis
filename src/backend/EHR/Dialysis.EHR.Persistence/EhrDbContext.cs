@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Billing.Domain;
@@ -63,5 +66,10 @@ public sealed class EhrDbContext(
     {
         base.OnModelCreating(modelBuilder);
         Configurations.EhrModelConfiguration.Configure(modelBuilder);
+
+        modelBuilder.ApplyConfiguration(new AuditEventRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new SubscriptionRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationOutboxRecordConfiguration());
     }
 }

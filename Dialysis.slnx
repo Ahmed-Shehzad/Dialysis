@@ -6,6 +6,9 @@
     <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/" />
+  <Folder Name="/src/backend/BuildingBlocks/DistributedCache/">
+    <Project Path="src/backend/BuildingBlocks/DistributedCache/Dialysis.BuildingBlocks.DistributedCache.Valkey/Dialysis.BuildingBlocks.DistributedCache.Valkey.csproj" />
+  </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Intercessor/">
     <Project Path="src/backend/BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Intercessor/Intercessor.Core/Intercessor.Core.csproj" />
