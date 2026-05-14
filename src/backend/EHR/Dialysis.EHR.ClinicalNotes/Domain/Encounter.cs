@@ -59,6 +59,7 @@ public sealed class Encounter : AggregateRoot<Guid>
         encounter.RaiseIntegrationEvent(new EncounterOpenedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             EncounterId: id,
             PatientId: patientId,
             ProviderId: providerId,
@@ -100,6 +101,7 @@ public sealed class Encounter : AggregateRoot<Guid>
         RaiseIntegrationEvent(new EncounterClosedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             EncounterId: Id,
             PatientId: PatientId,
             ProviderId: ProviderId,

@@ -63,6 +63,7 @@ public sealed class Remittance : AggregateRoot<Guid>
         remittance.RaiseIntegrationEvent(new RemittanceReceivedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             RemittanceId: id,
             ClaimId: claimId,
             PaidAmount: paidAmount.Amount,

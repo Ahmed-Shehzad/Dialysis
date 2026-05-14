@@ -13,8 +13,7 @@ public sealed class AssignStaffPrimaryRoleCommandHandler(IStaffRepository staff,
         var member = await staff.GetAsync(request.StaffMemberId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("Staff member not found.");
 
-        member.PrimaryRoleCode = request.RoleCode;
-        staff.Update(member);
+        member.AssignPrimaryRole(request.RoleCode);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }

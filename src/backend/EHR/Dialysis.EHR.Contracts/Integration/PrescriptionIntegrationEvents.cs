@@ -5,6 +5,7 @@ namespace Dialysis.EHR.Contracts.Integration;
 public sealed record PrescriptionOrderedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid PrescriptionId,
     Guid PatientId,
     Guid EncounterId,
@@ -21,6 +22,7 @@ public sealed record PrescriptionOrderedIntegrationEvent(
 public sealed record PrescriptionCancelledIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid PrescriptionId,
     Guid PatientId,
     string ReasonCode) : IIntegrationEvent;
@@ -28,6 +30,7 @@ public sealed record PrescriptionCancelledIntegrationEvent(
 public sealed record PrescriptionAcknowledgedByPharmacyIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid PrescriptionId,
     string PharmacyNcpdpId,
     string AcknowledgementCode,

@@ -5,6 +5,7 @@ namespace Dialysis.EHR.Contracts.Integration;
 public sealed record PatientPortalAppointmentRequestedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid RequestId,
     Guid PatientId,
     string ReasonText,
@@ -14,6 +15,7 @@ public sealed record PatientPortalAppointmentRequestedIntegrationEvent(
 public sealed record PatientPortalSecureMessageSentIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid MessageId,
     Guid PatientId,
     Guid? TargetProviderId,

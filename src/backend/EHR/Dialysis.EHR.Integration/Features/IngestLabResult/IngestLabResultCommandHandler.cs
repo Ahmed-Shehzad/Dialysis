@@ -17,6 +17,7 @@ public sealed class IngestLabResultCommandHandler(
         var integrationEvent = new LabResultReceivedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+            SchemaVersion: 1,
             LabResultId: resultId,
             LabOrderId: request.LabOrderId,
             PatientId: request.PatientId,

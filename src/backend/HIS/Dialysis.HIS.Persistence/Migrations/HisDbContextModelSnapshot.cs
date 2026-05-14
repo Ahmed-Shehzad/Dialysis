@@ -205,6 +205,21 @@ namespace Dialysis.HIS.Persistence.Migrations
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -214,23 +229,25 @@ namespace Dialysis.HIS.Persistence.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
-                    b.Property<DateOnly>("PeriodEnd")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly>("PeriodStart")
-                        .HasColumnType("date");
-
-                    b.Property<string>("StatusCode")
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("StatusCode");
 
                     b.Property<DateTime>("SubmittedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("StatusCode");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_BillingExportJobs_StatusCode");
 
                     b.ToTable("BillingExportJobs", "his_operations");
                 });
@@ -241,6 +258,21 @@ namespace Dialysis.HIS.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("QuantityOnHand")
                         .HasColumnType("integer");
 
@@ -248,6 +280,12 @@ namespace Dialysis.HIS.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -260,14 +298,35 @@ namespace Dialysis.HIS.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PrimaryRoleCode")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -644,6 +703,33 @@ namespace Dialysis.HIS.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RaWaitlistEntries", "his_ra");
+                });
+
+            modelBuilder.Entity("Dialysis.HIS.Operations.Domain.BillingExportJob", b =>
+                {
+                    b.OwnsOne("Dialysis.HIS.Operations.Domain.ValueObjects.BillingPeriod", "Period", b1 =>
+                        {
+                            b1.Property<Guid>("BillingExportJobId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateOnly>("End")
+                                .HasColumnType("date")
+                                .HasColumnName("PeriodEnd");
+
+                            b1.Property<DateOnly>("Start")
+                                .HasColumnType("date")
+                                .HasColumnName("PeriodStart");
+
+                            b1.HasKey("BillingExportJobId");
+
+                            b1.ToTable("BillingExportJobs", "his_operations");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BillingExportJobId");
+                        });
+
+                    b.Navigation("Period")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

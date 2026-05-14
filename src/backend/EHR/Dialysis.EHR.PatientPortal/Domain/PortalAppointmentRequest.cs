@@ -61,6 +61,7 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
         request.RaiseIntegrationEvent(new PatientPortalAppointmentRequestedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             RequestId: id,
             PatientId: patientId,
             ReasonText: request.ReasonText,

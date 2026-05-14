@@ -10,6 +10,7 @@ namespace Dialysis.HIS.Contracts.IntegrationEvents.Billing;
 public sealed record BillingExportJobQueuedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid JobId,
     string PayerCode,
     DateOnly PeriodStart,

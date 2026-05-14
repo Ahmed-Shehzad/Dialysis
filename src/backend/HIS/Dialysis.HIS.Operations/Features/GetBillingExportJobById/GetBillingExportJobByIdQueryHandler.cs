@@ -13,10 +13,10 @@ public sealed class GetBillingExportJobByIdQueryHandler(IBillingExportJobReposit
             ? null
             : new BillingExportJobStatusDto(
                 job.Id,
-                job.PayerCode,
-                job.StatusCode,
-                job.PeriodStart,
-                job.PeriodEnd,
+                job.PayerCode.Value,
+                job.Status.Name,
+                job.Period.Start,
+                job.Period.End,
                 job.SubmittedAtUtc,
                 job.CompletedAtUtc,
                 job.Notes);

@@ -68,6 +68,7 @@ public sealed class Charge : AggregateRoot<Guid>
         charge.RaiseIntegrationEvent(new ChargeCapturedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             ChargeId: id,
             PatientId: patientId,
             EncounterId: encounterId,

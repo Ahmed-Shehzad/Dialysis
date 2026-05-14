@@ -5,6 +5,7 @@ namespace Dialysis.EHR.Contracts.Integration;
 public sealed record ChargeCapturedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid ChargeId,
     Guid PatientId,
     Guid EncounterId,
@@ -16,6 +17,7 @@ public sealed record ChargeCapturedIntegrationEvent(
 public sealed record ClaimSubmittedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid ClaimId,
     Guid PatientId,
     Guid PayerId,
@@ -28,6 +30,7 @@ public sealed record ClaimSubmittedIntegrationEvent(
 public sealed record RemittanceReceivedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid RemittanceId,
     Guid ClaimId,
     decimal PaidAmount,
@@ -39,6 +42,7 @@ public sealed record RemittanceReceivedIntegrationEvent(
 public sealed record PaymentPostedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid PaymentId,
     Guid PatientId,
     Guid? ClaimId,

@@ -63,6 +63,7 @@ public sealed class SecureMessage : AggregateRoot<Guid>
         message.RaiseIntegrationEvent(new PatientPortalSecureMessageSentIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             MessageId: id,
             PatientId: patientId,
             TargetProviderId: targetProviderId,

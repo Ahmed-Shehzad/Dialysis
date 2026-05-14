@@ -5,6 +5,7 @@ namespace Dialysis.EHR.Contracts.Integration;
 public sealed record AppointmentBookedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid AppointmentId,
     Guid PatientId,
     Guid ProviderId,
@@ -16,6 +17,7 @@ public sealed record AppointmentBookedIntegrationEvent(
 public sealed record AppointmentCancelledIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid AppointmentId,
     Guid PatientId,
     string ReasonCode) : IIntegrationEvent;
@@ -23,6 +25,7 @@ public sealed record AppointmentCancelledIntegrationEvent(
 public sealed record AppointmentRescheduledIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid AppointmentId,
     Guid PatientId,
     DateTime NewStartUtc,
@@ -31,6 +34,7 @@ public sealed record AppointmentRescheduledIntegrationEvent(
 public sealed record AppointmentCheckedInIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid AppointmentId,
     Guid PatientId,
     DateTime CheckedInAtUtc) : IIntegrationEvent;

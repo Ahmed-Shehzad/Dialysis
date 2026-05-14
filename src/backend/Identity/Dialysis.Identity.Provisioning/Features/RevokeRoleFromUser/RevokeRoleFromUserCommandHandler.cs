@@ -33,6 +33,7 @@ public sealed class RevokeRoleFromUserCommandHandler(
             new RoleRevokedIntegrationEvent(
                 EventId: Guid.CreateVersion7(),
                 OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+                SchemaVersion: 1,
                 UserId: user.Id,
                 Subject: user.Subject,
                 RoleCode: role.Code),

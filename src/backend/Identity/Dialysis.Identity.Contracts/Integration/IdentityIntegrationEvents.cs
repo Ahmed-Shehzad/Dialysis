@@ -6,6 +6,7 @@ namespace Dialysis.Identity.Contracts.Integration;
 public sealed record UserRegisteredIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid UserId,
     string Subject,
     string DisplayName,
@@ -15,6 +16,7 @@ public sealed record UserRegisteredIntegrationEvent(
 public sealed record UserDeactivatedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid UserId,
     string Subject) : IIntegrationEvent;
 
@@ -25,6 +27,7 @@ public sealed record UserDeactivatedIntegrationEvent(
 public sealed record RoleAssignedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid UserId,
     string Subject,
     string RoleCode,
@@ -34,6 +37,7 @@ public sealed record RoleAssignedIntegrationEvent(
 public sealed record RoleRevokedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid UserId,
     string Subject,
     string RoleCode) : IIntegrationEvent;

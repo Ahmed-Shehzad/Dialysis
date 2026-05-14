@@ -62,6 +62,7 @@ public sealed class Appointment : AggregateRoot<Guid>
         appointment.RaiseIntegrationEvent(new AppointmentBookedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             AppointmentId: id,
             PatientId: patientId,
             ProviderId: providerId,
@@ -85,6 +86,7 @@ public sealed class Appointment : AggregateRoot<Guid>
         RaiseIntegrationEvent(new AppointmentRescheduledIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             AppointmentId: Id,
             PatientId: PatientId,
             NewStartUtc: newStartUtc,
@@ -103,6 +105,7 @@ public sealed class Appointment : AggregateRoot<Guid>
         RaiseIntegrationEvent(new AppointmentCancelledIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             AppointmentId: Id,
             PatientId: PatientId,
             ReasonCode: CancellationReasonCode));
@@ -119,6 +122,7 @@ public sealed class Appointment : AggregateRoot<Guid>
         RaiseIntegrationEvent(new AppointmentCheckedInIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             AppointmentId: Id,
             PatientId: PatientId,
             CheckedInAtUtc: checkedInAtUtc));

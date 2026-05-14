@@ -6,6 +6,7 @@ namespace Dialysis.EHR.Contracts.Integration;
 public sealed record PatientRegisteredIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid PatientId,
     string MedicalRecordNumber,
     string FamilyName,
@@ -18,6 +19,7 @@ public sealed record PatientRegisteredIntegrationEvent(
 public sealed record PatientDemographicsUpdatedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid PatientId,
     string MedicalRecordNumber,
     string FamilyName,
@@ -27,6 +29,7 @@ public sealed record PatientDemographicsUpdatedIntegrationEvent(
 public sealed record PatientsMergedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid SurvivingPatientId,
     Guid SupersededPatientId,
     string SurvivingMedicalRecordNumber) : IIntegrationEvent;

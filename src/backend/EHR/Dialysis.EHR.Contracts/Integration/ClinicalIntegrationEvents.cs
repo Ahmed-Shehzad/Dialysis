@@ -5,6 +5,7 @@ namespace Dialysis.EHR.Contracts.Integration;
 public sealed record EncounterOpenedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid EncounterId,
     Guid PatientId,
     Guid ProviderId,
@@ -14,6 +15,7 @@ public sealed record EncounterOpenedIntegrationEvent(
 public sealed record EncounterClosedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid EncounterId,
     Guid PatientId,
     Guid ProviderId,
@@ -24,6 +26,7 @@ public sealed record EncounterClosedIntegrationEvent(
 public sealed record ClinicalNoteSignedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid NoteId,
     Guid EncounterId,
     Guid PatientId,

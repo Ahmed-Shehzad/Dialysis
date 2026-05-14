@@ -1,28 +1,31 @@
 using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.PDMS.TreatmentSessions.Adapters;
 using Dialysis.SmartConnect.Contracts.Integration;
 using Microsoft.Extensions.Logging;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 
 /// <summary>
-/// Phase A stub. Consumes <see cref="DialysisMachineAlarmIntegrationEvent"/> from SmartConnect and logs the
-/// event without driving the alarm state machine. Phase B replaces the body with: resolve current
-/// <c>DialysisSession</c>, find-or-raise <c>TreatmentAlarm</c> by (machine, alarm-code, active), refresh /
-/// inactivate / resolve per <see cref="DialysisMachineAlarmIntegrationEvent.State"/>, persist.
+/// SmartConnect → PDMS boundary consumer. Translates the upstream
+/// <see cref="DialysisMachineAlarmIntegrationEvent"/> via <see cref="SmartConnectAlarmTranslator"/> (the
+/// named Anticorruption Layer, Evans pp. 258–260) before any PDMS-side processing. Phase B fills in
+/// machine/session resolution + <c>TreatmentAlarm</c> aggregate persistence on top of the translated
+/// <see cref="IncomingAlarm"/>; until then the consumer logs the translated intent so the boundary is
+/// observable in tests and operations.
 /// </summary>
 public sealed class TreatmentAlarmConsumer(ILogger<TreatmentAlarmConsumer> logger)
     : IConsumer<DialysisMachineAlarmIntegrationEvent>
 {
     public Task Handle(ConsumeContext<DialysisMachineAlarmIntegrationEvent> context)
     {
-        var alarm = context.Message;
+        var translated = SmartConnectAlarmTranslator.Translate(context.Message);
         logger.LogInformation(
-            "[Phase A stub] Received alarm {AlarmCode} from machine {Serial} in state {State} at {ObservedAt}, message-id {MessageControlId}.",
-            alarm.AlarmCode,
-            alarm.MachineSerial,
-            alarm.State,
-            alarm.ObservedAtUtc,
-            alarm.MessageControlId);
+            "[ACL] Incoming alarm: machine {Serial} code {AlarmCode} state {State} observed {ObservedAt} (message-id {MessageControlId}).",
+            translated.MachineSerial,
+            translated.AlarmCode,
+            translated.State,
+            translated.ObservedAtUtc,
+            translated.MessageControlId);
         return Task.CompletedTask;
     }
 }

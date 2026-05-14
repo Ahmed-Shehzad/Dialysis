@@ -160,3 +160,48 @@ Legend: **[x]** first vertical slice in code · **[ ]** still to do or harden fo
 ## Related code (outside HIS)
 
 - [EHR](../EHR), [PDMS](../PDMS) — integrate via **integration events** and ACLs, not direct domain references to those assemblies from HIS domain types.
+
+---
+
+## DDD Alignment
+
+This section is the contract that holds HIS to the DDD standard from Evans (2003) and Jordanov & Petrov, *TEM Journal* 12(4) 2023. The same shape is mirrored in every module's README.
+
+**Subdomain classification** (Evans, p. 281): **Core**. Operational excellence — facility scheduling, treatment ordering, medication dispensing, billing-export queue, RA-aligned reference capabilities — is what differentiates the platform; HIS owns it.
+
+**Domain vision statement**: *"The platform differentiates by integrating clinical workflows, scheduling, treatment ordering and operational queues into one HIS that speaks the Tummers (2021) reference-architecture language."*
+
+**Bounded Context**: `Dialysis.HIS.*` is one Bounded Context with internal sub-contexts grouped by RA module (Operations, PatientFlow, Scheduling, Medication, RaCapabilities, DataServices, Security, Integration, PatientAccess). Cross-sub-context references go through [`Dialysis.HIS.Contracts`](Dialysis.HIS.Contracts) only — domain types in one slice never reference domain types in another slice.
+
+**Aggregate roots** (Evans pp. 88–94):
+- [`BillingExportJob`](Dialysis.HIS.Operations/Domain/BillingExportJob.cs) — Operations
+- [`StaffMember`](Dialysis.HIS.Operations/Domain/StaffMember.cs) — Operations
+- [`InventoryItem`](Dialysis.HIS.Operations/Domain/InventoryItem.cs) — Operations
+- All `Ra*` records under [`Dialysis.HIS.RaCapabilities/Domain/`](Dialysis.HIS.RaCapabilities/Domain) — RA reference-architecture surfaces (read-mostly; write surfaces use named `Add*` commands on `IRaCapabilityCommandStore`).
+- [`DataImportJob`](Dialysis.HIS.DataServices/Domain), [`DeviceReadingRecord`](Dialysis.HIS.Integration/DeviceIngestion) — DataServices, Integration.
+
+**Ubiquitous language glossary** (curated; non-exhaustive):
+| Term | Meaning |
+|---|---|
+| `BillingExportJob` | Queue entry triggering EHR-side claim export for a payer + period. HIS holds the trigger only. |
+| `PayerCode` | 2–16 uppercase alphanumerics/hyphens identifying a payer contract. |
+| `BillingPeriod` | Date range `[Start, End)` for a billing-export window, `Start < End` invariant. |
+| `StaffMember` | A clinical or operational staff identity local to HIS (separate from IdP user). |
+| `InventoryItem` | A tracked consumable with a running, never-negative `QuantityOnHand`. |
+| `ManagerDashboard` | Reporting read-model aggregating queued billing-exports + open quality tasks + recent imports. |
+| `Encounter` / `Appointment` / `MedicationOrder` / `Dispensing` / `Referral` / `Admission` / `Discharge` / `Waitlist` / `QualityWorkflowTask` | RA Tummers et al. sub-module concepts; see [`his_ra_submodules.md`](his_ra_submodules.md). |
+
+**Context-map role** (Evans pp. 250–264; cross-module table in [`his_ddd_modular_plan.md`](his_ddd_modular_plan.md)):
+- **Supplier** to EHR for `BillingExportJobQueued` and `PrescriptionOrdered` (Customer/Supplier).
+- **Customer** of EHR for `PatientRegistered`/`PatientDemographicsUpdated`/`PatientsMerged` (consumed via ACL; HIS never holds an EHR-owned `Patient` aggregate).
+- **Customer** of PDMS for `DialysisSession*` events (ACL).
+- **Conformist** of Identity for OIDC claims.
+
+**Large-scale structure** (Evans p. 327 — Knowledge Level): The Tummers et al. (2021) Reference Architecture in [`his_ra_submodules.md`](his_ra_submodules.md) is HIS' Knowledge Level — it describes the categorization of capabilities; concrete aggregates are the instances of those categories.
+
+**Module-specific anti-patterns to watch**:
+- "Billing claims" — never modelled in HIS. The HIS `BillingExportJob` only queues an export. The Claim/Charge/Remittance aggregates live in `Dialysis.EHR.Billing`.
+- Public setters on HIS aggregate-root properties — enforced by [`AggregateRootEncapsulationTests`](../../../tests/Dialysis.ArchitectureTests/AggregateRootEncapsulationTests.cs).
+- Cross-slice direct domain references — enforced by the module-boundary architecture test; every cross-slice need goes through `Dialysis.HIS.Contracts` integration events.
+
+**Integration-event versioning**: every `IIntegrationEvent` declares an `int SchemaVersion`. See the policy at [`BuildingBlocks/.../IntegrationEvents/Versioning.md`](../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/IntegrationEvents/Versioning.md).

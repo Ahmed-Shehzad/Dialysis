@@ -30,6 +30,7 @@ public sealed class DeactivateUserCommandHandler(
             new UserDeactivatedIntegrationEvent(
                 EventId: Guid.CreateVersion7(),
                 OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+                SchemaVersion: 1,
                 UserId: user.Id,
                 Subject: user.Subject),
             cancellationToken).ConfigureAwait(false);

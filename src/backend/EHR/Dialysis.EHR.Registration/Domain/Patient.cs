@@ -69,6 +69,7 @@ public sealed class Patient : AggregateRoot<Guid>
         patient.RaiseIntegrationEvent(new PatientRegisteredIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             PatientId: patient.Id,
             MedicalRecordNumber: patient.MedicalRecordNumber,
             FamilyName: name.FamilyName,
@@ -92,6 +93,7 @@ public sealed class Patient : AggregateRoot<Guid>
         RaiseIntegrationEvent(new PatientDemographicsUpdatedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             PatientId: Id,
             MedicalRecordNumber: MedicalRecordNumber,
             FamilyName: name.FamilyName,
@@ -119,6 +121,7 @@ public sealed class Patient : AggregateRoot<Guid>
         RaiseIntegrationEvent(new PatientsMergedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             SurvivingPatientId: survivingPatientId,
             SupersededPatientId: Id,
             SurvivingMedicalRecordNumber: survivingMedicalRecordNumber));

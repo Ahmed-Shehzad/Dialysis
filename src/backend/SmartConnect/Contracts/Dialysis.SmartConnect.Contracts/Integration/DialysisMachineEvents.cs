@@ -26,6 +26,7 @@ public sealed record NormalizedMachineObservation(
 public sealed record DialysisMachineTreatmentSnapshotIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     string MachineSerial,
     string? VendorCode,
     string? ModelCode,
@@ -51,6 +52,7 @@ public enum DialysisMachineAlarmState
 public sealed record DialysisMachineAlarmIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     string MachineSerial,
     Guid SourceMessageId,
     string MessageControlId,

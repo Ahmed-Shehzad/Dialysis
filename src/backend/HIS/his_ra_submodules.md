@@ -5,6 +5,8 @@
 
 Sub-module **labels** below match the boxes in Fig. 6 (Medication management **3**, Security **3**, Data management **5**, Patient monitoring **7**, Planning and scheduling **6**, Generic MIS **10** → **34** total).
 
+**Role in HIS DDD alignment** — this matrix is HIS' **Large-Scale Structure** per Eric Evans, *Domain-Driven Design* (2003), p. 327 (**Knowledge Level**): the table describes the rules that classify HIS capabilities; the code aggregates and CQRS slices are the instances of those classifications. The companion Context Map across all modules lives in [`his_ddd_modular_plan.md`](his_ddd_modular_plan.md).
+
 ## Status legend
 
 | Status | Meaning |

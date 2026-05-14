@@ -1,27 +1,30 @@
 using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.PDMS.TreatmentSessions.Adapters;
 using Dialysis.SmartConnect.Contracts.Integration;
 using Microsoft.Extensions.Logging;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 
 /// <summary>
-/// Phase A stub. Consumes <see cref="DialysisMachineTreatmentSnapshotIntegrationEvent"/> from SmartConnect
-/// and logs the event without persisting. Phase B replaces the body with: upsert <c>DialysisMachine</c>,
-/// resolve current <c>DialysisSession</c>, append <c>TreatmentObservation</c> rows, persist a
-/// <c>RawHl7Message</c> audit row.
+/// SmartConnect → PDMS boundary consumer for treatment-status snapshots. Translates the upstream
+/// <see cref="DialysisMachineTreatmentSnapshotIntegrationEvent"/> via
+/// <see cref="SmartConnectSnapshotTranslator"/> (the named Anticorruption Layer, Evans pp. 258–260).
+/// Phase B persists each translated <see cref="IncomingObservation"/> as a <c>TreatmentObservation</c>
+/// child of the bound session; until then the consumer logs the translated intent.
 /// </summary>
 public sealed class TreatmentSnapshotConsumer(ILogger<TreatmentSnapshotConsumer> logger)
     : IConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent>
 {
     public Task Handle(ConsumeContext<DialysisMachineTreatmentSnapshotIntegrationEvent> context)
     {
-        var snapshot = context.Message;
+        var translated = SmartConnectSnapshotTranslator.Translate(context.Message);
         logger.LogInformation(
-            "[Phase A stub] Received treatment snapshot from machine {Serial}: {ObservationCount} observations at {ObservedAt}, message-id {MessageControlId}.",
-            snapshot.MachineSerial,
-            snapshot.Observations.Count,
-            snapshot.ObservedAtUtc,
-            snapshot.MessageControlId);
+            "[ACL] Incoming treatment snapshot: machine {Serial} mrn {Mrn} observations {Count} observed {ObservedAt} (message-id {MessageControlId}).",
+            translated.MachineSerial,
+            translated.PatientMrn,
+            translated.Observations.Count,
+            translated.ObservedAtUtc,
+            translated.MessageControlId);
         return Task.CompletedTask;
     }
 }

@@ -5,6 +5,7 @@ namespace Dialysis.PDMS.Contracts.Integration;
 public sealed record DialysisSessionStartedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid SessionId,
     Guid PatientId,
     DateTime StartedAtUtc,
@@ -14,6 +15,7 @@ public sealed record DialysisSessionStartedIntegrationEvent(
 public sealed record DialysisSessionCompletedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid SessionId,
     Guid PatientId,
     DateTime CompletedAtUtc,
@@ -23,6 +25,7 @@ public sealed record DialysisSessionCompletedIntegrationEvent(
 public sealed record DialysisSessionAbortedIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid SessionId,
     Guid PatientId,
     DateTime AbortedAtUtc,
@@ -31,6 +34,7 @@ public sealed record DialysisSessionAbortedIntegrationEvent(
 public sealed record IntradialyticAdverseEventIntegrationEvent(
     Guid EventId,
     DateTime OccurredOn,
+    int SchemaVersion,
     Guid SessionId,
     Guid PatientId,
     DateTime ObservedAtUtc,

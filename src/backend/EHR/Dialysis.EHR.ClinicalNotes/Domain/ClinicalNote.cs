@@ -95,6 +95,7 @@ public sealed class ClinicalNote : AggregateRoot<Guid>
         RaiseIntegrationEvent(new ClinicalNoteSignedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             NoteId: Id,
             EncounterId: EncounterId,
             PatientId: PatientId,

@@ -97,6 +97,7 @@ public sealed class Claim : AggregateRoot<Guid>
         RaiseIntegrationEvent(new ClaimSubmittedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             ClaimId: Id,
             PatientId: PatientId,
             PayerId: PayerId,

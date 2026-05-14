@@ -60,6 +60,7 @@ public sealed class Payment : AggregateRoot<Guid>
         payment.RaiseIntegrationEvent(new PaymentPostedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             PaymentId: id,
             PatientId: patientId,
             ClaimId: claimId,

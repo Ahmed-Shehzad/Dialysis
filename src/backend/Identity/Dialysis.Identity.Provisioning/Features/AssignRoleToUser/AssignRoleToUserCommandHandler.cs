@@ -43,6 +43,7 @@ public sealed class AssignRoleToUserCommandHandler(
         var @event = new RoleAssignedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: now,
+            SchemaVersion: 1,
             UserId: user.Id,
             Subject: user.Subject,
             RoleCode: role.Code,

@@ -156,3 +156,71 @@ Use as **implementation backlog**; order reflects stakeholder risk. See [README.
 - **Vertical Slice Architecture** = feature folders, not duplicated layer cake per feature.
 - **SOLID**: small handlers, explicit policy types.
 - **Modular monolith**: enforce with project references; optional architecture tests later.
+
+---
+
+## Cross-module Context Map (Evans pp. 243–264)
+
+This section is the **system-wide Context Map** the Dialysis monolith follows. Each row names the relationship per Evans' seven patterns; each module's README echoes its role. The mermaid below shows the full picture.
+
+| Pair                              | Direction          | Pattern (Evans)                                              | Mechanism                                                                                              |
+| --------------------------------- | ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| HIS → EHR                         | HIS supplies       | **Customer/Supplier** (p. 252)                               | `BillingExportJobQueued`, `PrescriptionOrdered` via Transponder outbox                                  |
+| EHR → HIS                         | EHR supplies       | **Customer/Supplier** + **Anticorruption Layer** at HIS side | `PatientRegistered`/`PatientDemographicsUpdated`/`PatientsMerged` — HIS never holds EHR's `Patient`     |
+| EHR → PDMS                        | EHR supplies       | **Customer/Supplier** + **ACL** at PDMS                      | `Patient*` events; PDMS keeps `PatientId : Guid` only                                                  |
+| PDMS → EHR, HIS                   | PDMS supplies      | **Customer/Supplier**                                        | `DialysisSessionStarted/Completed/Aborted`                                                              |
+| SmartConnect → PDMS               | SmartConnect supplies | **Anticorruption Layer** (pp. 258–260)                       | `DialysisMachineAlarm`, `DialysisMachineTreatmentSnapshot` → `SmartConnectAlarmTranslator`, `SmartConnectSnapshotTranslator` |
+| SmartConnect → EHR, HIS           | SmartConnect supplies | **Open Host Service + Published Language** (pp. 263–264)     | Versioned integration events per `IIntegrationEvent.SchemaVersion`; consumers MAY add their own ACL    |
+| Identity → all                    | Identity supplies  | **Conformist** (p. 255)                                      | OIDC JWT claims (`sub`, `roles`, `his_patient_id`, etc.); downstream modules map roles to permissions  |
+| BuildingBlocks ↔ all              | shared             | **Shared Kernel** (p. 251)                                   | `Dialysis.DomainDrivenDesign.*` (Entity/AggregateRoot/ValueObject/Enumeration/IIntegrationEvent), `Intercessor`, `Verifier`, `Transponder`, `Dialysis.CQRS.Core.Abstraction`, `Dialysis.Module.Hosting` |
+
+### Mermaid (full system)
+
+```mermaid
+flowchart LR
+  subgraph Shared["Shared Kernel<br/>DomainDrivenDesign · Verifier · Intercessor · Transponder · CQRS"]
+    SK[BuildingBlocks]
+  end
+  IdP[Identity<br/>Generic Subdomain]
+  HIS[HIS<br/>Core: facility ops]
+  EHR[EHR<br/>Core: clinical SoR + billing]
+  PDMS[PDMS<br/>Core: machine sessions]
+  SC[SmartConnect<br/>Generic: HL7 ETL]
+
+  SK -.->|Shared Kernel| HIS
+  SK -.->|Shared Kernel| EHR
+  SK -.->|Shared Kernel| PDMS
+  SK -.->|Shared Kernel| SC
+  SK -.->|Shared Kernel| IdP
+
+  IdP -- "Conformist · JWT" --> HIS
+  IdP -- "Conformist · JWT" --> EHR
+  IdP -- "Conformist · JWT" --> PDMS
+  IdP -- "Conformist · JWT" --> SC
+
+  HIS -- "Customer/Supplier · BillingExportJobQueued / PrescriptionOrdered" --> EHR
+  EHR -- "Customer/Supplier · Patient* (ACL @ HIS)" --> HIS
+  EHR -- "Customer/Supplier · Patient* (ACL @ PDMS)" --> PDMS
+  PDMS -- "Customer/Supplier · DialysisSession*" --> EHR
+  PDMS -- "Customer/Supplier · DialysisSession*" --> HIS
+
+  SC -- "OHS+PL · DialysisMachineAlarm / Snapshot (ACL @ PDMS)" --> PDMS
+  SC -- "OHS+PL · events" --> EHR
+  SC -- "OHS+PL · events" --> HIS
+```
+
+### Distillation (Evans pp. 281–305)
+
+| Module | Classification | Why |
+|---|---|---|
+| HIS | **Core** | Differentiator: operational excellence in dialysis-facility management (Tummers RA-aligned). |
+| EHR | **Core** | System of record for patient identity, chart, prescriptions, billing claims. |
+| PDMS | **Core** | Closed-loop integration with dialysis machines; audit-grade treatment-session capture. |
+| SmartConnect | **Generic Subdomain** | HL7 / FHIR / MDC ETL; replaceable by a commercial Mirth Connect. |
+| Identity | **Generic Subdomain** | OIDC broker; replaceable by Okta/Auth0/Entra. |
+
+Investment level follows the classification (Evans p. 281): Core gets deep modeling effort and rich tests; Generic Subdomains are kept thin and replaceable.
+
+### Integration-event versioning
+
+Every `IIntegrationEvent` declares an `int SchemaVersion`. See the policy at [`Versioning.md`](../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/IntegrationEvents/Versioning.md). Enforced by [`IntegrationEventVersioningTests`](../../../tests/Dialysis.ArchitectureTests/IntegrationEventVersioningTests.cs).

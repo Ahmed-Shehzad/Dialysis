@@ -34,6 +34,7 @@ public sealed class ProvisionUserCommandHandler(
         var @event = new UserRegisteredIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+            SchemaVersion: 1,
             UserId: id,
             Subject: request.Subject,
             DisplayName: request.DisplayName,

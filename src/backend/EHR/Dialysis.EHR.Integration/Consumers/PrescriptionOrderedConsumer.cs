@@ -3,12 +3,15 @@ using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.EHR.Integration.Domain;
 using Dialysis.EHR.Integration.Ports;
+using Dialysis.EHR.Integration.Translators;
 
 namespace Dialysis.EHR.Integration.Consumers;
 
 /// <summary>
 /// Reacts to <see cref="PrescriptionOrderedIntegrationEvent"/> by queueing an outbound NCPDP SCRIPT
-/// transmission to the pharmacy and invoking the wire gateway.
+/// transmission to the pharmacy and invoking the wire gateway. The boundary between the upstream
+/// ClinicalNotes-Prescription Published Language and the local PharmacyTransmission model is named
+/// explicitly via <see cref="PrescriptionOrderedTranslator"/> (Evans Anticorruption Layer, pp. 258–260).
 /// </summary>
 public sealed class PrescriptionOrderedConsumer(
     IPharmacyTransmissionRepository transmissions,
@@ -19,15 +22,14 @@ public sealed class PrescriptionOrderedConsumer(
 {
     public async Task Handle(ConsumeContext<PrescriptionOrderedIntegrationEvent> context)
     {
-        var message = context.Message;
+        var translated = PrescriptionOrderedTranslator.Translate(context.Message);
         var id = Guid.CreateVersion7();
-        var payloadDigest = ComputeDigest(message);
         var transmission = PharmacyTransmission.Queue(
             id,
-            message.PrescriptionId,
-            message.PharmacyNcpdpId,
-            message.TransmissionFormat,
-            payloadDigest);
+            translated.PrescriptionId,
+            translated.PharmacyNcpdpId,
+            translated.TransmissionFormat,
+            translated.PayloadDigest);
 
         try
         {
@@ -42,7 +44,4 @@ public sealed class PrescriptionOrderedConsumer(
         transmissions.Add(transmission);
         await unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
     }
-
-    private static string ComputeDigest(PrescriptionOrderedIntegrationEvent message) =>
-        $"{message.PrescriptionId:N}|{message.MedicationRxnormCode}|{message.DoseText}|{message.FrequencyText}|{message.QuantityDispensed}";
 }

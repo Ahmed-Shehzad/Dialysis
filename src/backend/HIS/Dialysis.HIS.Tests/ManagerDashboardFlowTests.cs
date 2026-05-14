@@ -2,6 +2,7 @@ using Dialysis.CQRS;
 using Dialysis.HIS.DataServices.Features.ManagerDashboard;
 using Dialysis.HIS.DataServices.Ports;
 using Dialysis.HIS.Operations.Domain;
+using Dialysis.HIS.Operations.Domain.ValueObjects;
 using Dialysis.HIS.Persistence;
 using Dialysis.HIS.RaCapabilities.Domain;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,25 +20,20 @@ public sealed class ManagerDashboardFlowTests(HisApiWebApplicationFactory factor
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
-        db.BillingExportJobs.Add(new BillingExportJob
-        {
-            Id = Guid.CreateVersion7(),
-            PayerCode = "ACME-01",
-            StatusCode = "Queued",
-            PeriodStart = new DateOnly(2026, 5, 1),
-            PeriodEnd = new DateOnly(2026, 5, 31),
-            SubmittedAtUtc = DateTime.UtcNow,
-        });
-        db.BillingExportJobs.Add(new BillingExportJob
-        {
-            Id = Guid.CreateVersion7(),
-            PayerCode = "ACME-02",
-            StatusCode = "Completed",
-            PeriodStart = new DateOnly(2026, 4, 1),
-            PeriodEnd = new DateOnly(2026, 4, 30),
-            SubmittedAtUtc = DateTime.UtcNow.AddDays(-3),
-            CompletedAtUtc = DateTime.UtcNow.AddDays(-2),
-        });
+        var queued = BillingExportJob.Queue(
+            new PayerCode("ACME-01"),
+            new BillingPeriod(new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 31)),
+            notes: null,
+            nowUtc: DateTime.UtcNow);
+        db.BillingExportJobs.Add(queued);
+
+        var completed = BillingExportJob.Queue(
+            new PayerCode("ACME-02"),
+            new BillingPeriod(new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30)),
+            notes: null,
+            nowUtc: DateTime.UtcNow.AddDays(-3));
+        completed.MarkCompleted(DateTime.UtcNow.AddDays(-2));
+        db.BillingExportJobs.Add(completed);
 
         db.RaQualityWorkflowTasks.Add(new RaQualityWorkflowTask
         {

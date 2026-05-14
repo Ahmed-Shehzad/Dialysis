@@ -81,6 +81,7 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         RaiseIntegrationEvent(new DialysisSessionStartedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             SessionId: Id,
             PatientId: PatientId,
             StartedAtUtc: startedAtUtc,
@@ -131,6 +132,7 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         RaiseIntegrationEvent(new DialysisSessionCompletedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             SessionId: Id,
             PatientId: PatientId,
             CompletedAtUtc: completedAtUtc,
@@ -151,6 +153,7 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         RaiseIntegrationEvent(new DialysisSessionAbortedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             SessionId: Id,
             PatientId: PatientId,
             AbortedAtUtc: abortedAtUtc,

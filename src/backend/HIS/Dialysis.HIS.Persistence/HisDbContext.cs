@@ -3,6 +3,8 @@ using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.DataServices.Domain;
 using Dialysis.HIS.Integration.DeviceIngestion;
 using Dialysis.HIS.Operations.Domain;
+using Dialysis.HIS.Operations.Domain.Enumerations;
+using Dialysis.HIS.Operations.Domain.ValueObjects;
 using Dialysis.HIS.RaCapabilities.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -60,7 +62,10 @@ public sealed class HisDbContext(
         {
             e.ToTable("InventoryItems", "his_operations");
             e.HasKey(i => i.Id);
-            e.Property(i => i.Sku).HasMaxLength(64).IsRequired();
+            e.Property(i => i.Sku)
+                .HasConversion(s => s.Value, v => new Sku(v))
+                .HasMaxLength(64)
+                .IsRequired();
         });
 
         modelBuilder.Entity<DataImportJob>(e =>
@@ -76,13 +81,23 @@ public sealed class HisDbContext(
         {
             e.ToTable("BillingExportJobs", "his_operations");
             e.HasKey(b => b.Id);
-            e.Property(b => b.PayerCode).HasMaxLength(16).IsRequired();
-            e.Property(b => b.StatusCode).HasMaxLength(32).IsRequired();
-            e.Property(b => b.PeriodStart).IsRequired();
-            e.Property(b => b.PeriodEnd).IsRequired();
+            e.Property(b => b.PayerCode)
+                .HasConversion(p => p.Value, s => new PayerCode(s))
+                .HasMaxLength(16)
+                .IsRequired();
+            e.Property(b => b.Status)
+                .HasConversion(s => s.Name, n => BillingExportJobStatus.FromName(n))
+                .HasColumnName("StatusCode")
+                .HasMaxLength(32)
+                .IsRequired();
+            e.OwnsOne(b => b.Period, p =>
+            {
+                p.Property(x => x.Start).HasColumnName("PeriodStart").HasColumnType("date").IsRequired();
+                p.Property(x => x.End).HasColumnName("PeriodEnd").HasColumnType("date").IsRequired();
+            });
             e.Property(b => b.SubmittedAtUtc).IsRequired();
             e.Property(b => b.Notes).HasMaxLength(500);
-            e.HasIndex(b => b.StatusCode);
+            e.HasIndex(b => b.Status).HasDatabaseName("IX_BillingExportJobs_StatusCode");
         });
 
         modelBuilder.Entity<DeviceReadingRecord>(e =>

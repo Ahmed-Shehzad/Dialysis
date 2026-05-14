@@ -1,4 +1,5 @@
 using Dialysis.HIS.DataServices.Ports;
+using Dialysis.HIS.Operations.Domain.Enumerations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
@@ -14,7 +15,7 @@ public sealed class EfManagerDashboardReadModel(HisDbContext db) : IManagerDashb
 
         var queuedBilling = await db.BillingExportJobs
             .AsNoTracking()
-            .CountAsync(j => j.StatusCode == "Queued", cancellationToken)
+            .CountAsync(j => j.Status == BillingExportJobStatus.Queued, cancellationToken)
             .ConfigureAwait(false);
 
         var openQuality = await db.RaQualityWorkflowTasks

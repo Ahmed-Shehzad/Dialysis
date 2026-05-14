@@ -70,6 +70,7 @@ public sealed class LabOrder : AggregateRoot<Guid>
         order.RaiseIntegrationEvent(new LabOrderPlacedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             LabOrderId: id,
             PatientId: patientId,
             EncounterId: encounterId,
@@ -93,6 +94,7 @@ public sealed class LabOrder : AggregateRoot<Guid>
         RaiseIntegrationEvent(new LabOrderCancelledIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             LabOrderId: Id,
             PatientId: PatientId,
             ReasonCode: CancellationReasonCode));

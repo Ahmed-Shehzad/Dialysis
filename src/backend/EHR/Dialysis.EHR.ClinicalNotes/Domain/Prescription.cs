@@ -97,6 +97,7 @@ public sealed class Prescription : AggregateRoot<Guid>
         rx.RaiseIntegrationEvent(new PrescriptionOrderedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             PrescriptionId: id,
             PatientId: patientId,
             EncounterId: encounterId,
@@ -125,6 +126,7 @@ public sealed class Prescription : AggregateRoot<Guid>
         RaiseIntegrationEvent(new PrescriptionCancelledIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
             PrescriptionId: Id,
             PatientId: PatientId,
             ReasonCode: CancellationReasonCode));
