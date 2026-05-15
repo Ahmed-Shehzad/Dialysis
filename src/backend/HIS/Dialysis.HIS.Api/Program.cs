@@ -117,6 +117,8 @@ if (builder.Configuration.GetValue("His:UseHsts", false) && !app.Environment.IsD
     app.UseHsts();
 
 app.UseModuleHost();
+if (enableFhirSubscriptions)
+    app.UseWebSockets();
 app.UseRateLimiter();
 app.MapOpenApi();
 app.MapGet(

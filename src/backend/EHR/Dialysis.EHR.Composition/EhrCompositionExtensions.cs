@@ -3,6 +3,7 @@ using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.EHR.PatientChart.Fhir;
 using Dialysis.EHR.Registration.Fhir;
@@ -48,6 +49,7 @@ public static class EhrCompositionExtensions
         bool enableFhirBulkDataExport = false,
         bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
+        bool enableFhirSubscriptions = false,
         bool enableDemoSeed = false,
         bool enableRegistrationSimulator = false,
         Action<FhirBuilder>? configureFhir = null,
@@ -68,6 +70,9 @@ public static class EhrCompositionExtensions
             t.AddConsumer<PrescriptionOrderedIntegrationEvent, PrescriptionOrderedConsumer>();
             t.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
             t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
+
+            if (enableFhirSubscriptions)
+                t.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedSubscriptionBroadcaster>();
         });
         configureTransponderTransport?.Invoke(services);
 
@@ -120,6 +125,15 @@ public static class EhrCompositionExtensions
         if (enableFhirSmartOnFhir)
         {
             services.AddFhirSmartOnFhir(configuration.GetSection("Ehr:Fhir:Smart"));
+        }
+
+        if (enableFhirSubscriptions)
+        {
+            services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
+                Url: LabResultReceivedSubscriptionBroadcaster.TopicUrl,
+                Title: "Lab result received",
+                Description: "Fires when a lab result is received for an EHR patient. Filter by patient, LOINC code, or abnormal flag.",
+                FilterParameterNames: ["patient", "code", "abnormal"])));
         }
 
         if (enableDemoSeed)

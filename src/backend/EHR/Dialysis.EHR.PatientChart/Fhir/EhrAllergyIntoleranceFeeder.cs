@@ -9,7 +9,9 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// <summary>
 /// Streams every <c>Allergy</c> aggregate as a FHIR R4 <c>AllergyIntolerance</c>. Severity maps
 /// to the FHIR criticality value set; the source coding (typically SNOMED or RxNorm) is forwarded
-/// onto <c>AllergyIntolerance.code</c>.
+/// onto <c>AllergyIntolerance.code</c>. No <c>Meta.lastUpdated</c> is emitted: the aggregate
+/// records only a clinical onset <c>DateOnly</c>, not a system audit timestamp, so a synthetic
+/// value would corrupt incremental (<c>_since</c>) bulk-export sync.
 /// </summary>
 public sealed class EhrAllergyIntoleranceFeeder(IAllergyRepository allergies) : INdjsonResourceFeeder<AllergyIntolerance>
 {

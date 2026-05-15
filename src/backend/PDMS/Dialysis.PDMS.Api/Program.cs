@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Module.Hosting;
 using Dialysis.PDMS.Api.Realtime;
@@ -31,8 +32,11 @@ var enablePdmsVitalsTicker = builder.Configuration.GetValue("Pdms:Demo:VitalsTic
 var enablePdmsMachineSim = builder.Configuration.GetValue("Pdms:Demo:MachineTelemetrySimulator", false);
 var enablePdmsBulkDataExport = builder.Configuration.GetValue("Pdms:Fhir:BulkData:Enabled", false);
 var enablePdmsSmartOnFhir = builder.Configuration.GetValue("Pdms:Fhir:Smart:Enabled", false);
+var enablePdmsSubscriptions = builder.Configuration.GetValue("Pdms:Fhir:Subscriptions:Enabled", false);
 var pdmsBulkDataExportScope = builder.Configuration["Pdms:Fhir:BulkData:RequireScope"]
     ?? (enablePdmsSmartOnFhir ? "system/*.read" : null);
+var pdmsSubscriptionsScope = builder.Configuration["Pdms:Fhir:Subscriptions:RequireScope"]
+    ?? (enablePdmsSmartOnFhir ? "user/*.write" : null);
 
 builder.Services.AddPatientDataManagementSystem(
     builder.Configuration,
@@ -45,6 +49,8 @@ builder.Services.AddPatientDataManagementSystem(
     enableFhirBulkDataPersistence: enablePdmsBulkDataExport,
     enableFhirBulkDataExport: enablePdmsBulkDataExport,
     enableFhirSmartOnFhir: enablePdmsSmartOnFhir,
+    enableFhirSubscriptions: enablePdmsSubscriptions,
+    enableFhirSubscriptionsPersistence: enablePdmsSubscriptions,
     enableDemoSeed: enablePdmsDemoSeed,
     enableVitalsTicker: enablePdmsVitalsTicker,
     enableMachineTelemetrySimulator: enablePdmsMachineSim,
@@ -89,6 +95,8 @@ builder.Services.AddSingleton<IVitalsBroadcaster, SignalRVitalsBroadcaster>();
 var app = builder.Build();
 
 app.UseModuleHost();
+if (enablePdmsSubscriptions)
+    app.UseWebSockets();
 app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "pdms", version = "v1" }));
@@ -100,6 +108,9 @@ if (enablePdmsSmartOnFhir)
 
 if (enablePdmsBulkDataExport)
     app.MapFhirBulkDataEndpoints(requireScope: pdmsBulkDataExportScope);
+
+if (enablePdmsSubscriptions)
+    app.MapFhirSubscriptionEndpoints(requireScope: pdmsSubscriptionsScope);
 
 await app.RunAsync().ConfigureAwait(false);
 

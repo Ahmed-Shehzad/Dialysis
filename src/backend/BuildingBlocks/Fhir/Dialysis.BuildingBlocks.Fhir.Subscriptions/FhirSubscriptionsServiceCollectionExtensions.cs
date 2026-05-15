@@ -17,7 +17,14 @@ public static class FhirSubscriptionsServiceCollectionExtensions
         services.TryAddSingleton<InMemorySubscriptionRegistry>();
         services.TryAddSingleton<ISubscriptionRegistry>(sp => sp.GetRequiredService<InMemorySubscriptionRegistry>());
         services.TryAddSingleton<ISubscriptionMatcher>(sp => sp.GetRequiredService<InMemorySubscriptionRegistry>());
-        services.TryAddSingleton<ISubscriptionNotificationDispatcher, RestHookNotificationDispatcher>();
+
+        // Channel adapters (REST-hook ships as the durable production path; WebSocket + SSE are
+        // connection-scoped push). The composite routes by the subscription's channel type.
+        services.TryAddSingleton<FhirSubscriptionConnectionManager>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, RestHookNotificationDispatcher>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, WebSocketNotificationDispatcher>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, ServerSentEventsNotificationDispatcher>());
+        services.TryAddSingleton<ISubscriptionNotificationDispatcher, CompositeSubscriptionNotificationDispatcher>();
         services.TryAddSingleton<SubscriptionBroadcaster>();
         services.AddHttpClient(nameof(RestHookNotificationDispatcher));
 

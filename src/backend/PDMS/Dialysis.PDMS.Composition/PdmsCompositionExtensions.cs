@@ -3,7 +3,9 @@ using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.PDMS.TreatmentSessions.Fhir;
 using Hl7.Fhir.Model;
 using Dialysis.BuildingBlocks.Transponder;
@@ -45,6 +47,7 @@ public static class PdmsCompositionExtensions
         bool enableFhirBulkDataExport = false,
         bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
+        bool enableFhirSubscriptions = false,
         bool enableDemoSeed = false,
         bool enableVitalsTicker = false,
         bool enableMachineTelemetrySimulator = false,
@@ -63,6 +66,9 @@ public static class PdmsCompositionExtensions
         {
             t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
             t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
+
+            if (enableFhirSubscriptions)
+                t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventSubscriptionBroadcaster>();
         });
         configureTransponderTransport?.Invoke(services);
 
@@ -112,6 +118,15 @@ public static class PdmsCompositionExtensions
         if (enableFhirSmartOnFhir)
         {
             services.AddFhirSmartOnFhir(configuration.GetSection("Pdms:Fhir:Smart"));
+        }
+
+        if (enableFhirSubscriptions)
+        {
+            services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
+                Url: IntradialyticAdverseEventSubscriptionBroadcaster.TopicUrl,
+                Title: "Intradialytic adverse event",
+                Description: "Fires when an intradialytic adverse event is recorded. Filter by patient, adverse-event kind, or severity.",
+                FilterParameterNames: ["patient", "kind", "severity"])));
         }
 
         if (enableDemoSeed)

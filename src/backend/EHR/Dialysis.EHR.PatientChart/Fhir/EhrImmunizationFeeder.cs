@@ -11,7 +11,10 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// <summary>
 /// Streams every <c>Immunization</c> aggregate as a FHIR R4 <c>Immunization</c>. Vaccine code
 /// (typically CVX), administered date, lot, manufacturer, and site are forwarded onto the FHIR
-/// resource; the administering provider becomes a <c>performer</c> reference.
+/// resource; the administering provider becomes a <c>performer</c> reference. No
+/// <c>Meta.lastUpdated</c> is emitted: the aggregate records only an administered <c>DateOnly</c>,
+/// not a system audit timestamp, so a synthetic value would corrupt incremental
+/// (<c>_since</c>) bulk-export sync.
 /// </summary>
 public sealed class EhrImmunizationFeeder(IImmunizationRepository immunizations) : INdjsonResourceFeeder<FhirImmunization>
 {
