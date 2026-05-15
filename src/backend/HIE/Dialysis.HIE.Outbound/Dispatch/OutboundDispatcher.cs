@@ -90,7 +90,7 @@ public sealed class OutboundDispatcher(
             }
             else
             {
-                var retryAt = timeProvider.GetUtcNow().UtcDateTime.AddSeconds(_options.BackoffSeconds * bundle.Attempts);
+                var retryAt = timeProvider.GetUtcNow().UtcDateTime.AddSeconds((double)_options.BackoffSeconds * bundle.Attempts);
                 bundle.MarkAttemptFailed(result.FailureReason ?? $"HTTP {result.StatusCode}", retryAt, _options.MaxAttempts);
                 if (bundle.Status == OutboundBundleStatus.Failed)
                     await EmitFailedAsync(bundle, cancellationToken).ConfigureAwait(false);
@@ -98,7 +98,7 @@ public sealed class OutboundDispatcher(
         }
         catch (Exception ex)
         {
-            var retryAt = timeProvider.GetUtcNow().UtcDateTime.AddSeconds(_options.BackoffSeconds * (bundle.Attempts + 1));
+            var retryAt = timeProvider.GetUtcNow().UtcDateTime.AddSeconds((double)_options.BackoffSeconds * (bundle.Attempts + 1));
             bundle.MarkAttemptFailed(ex.Message, retryAt, _options.MaxAttempts);
             logger.LogError(ex, "Delivery threw for bundle {Id}", bundle.Id);
             if (bundle.Status == OutboundBundleStatus.Failed)

@@ -25,7 +25,7 @@
     const list = Array.isArray(children) ? children : [children];
     for (const c of list) {
       if (c === null || c === void 0 || c === false) continue;
-      node.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+      node.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
     }
   }
   function clear(node) {
