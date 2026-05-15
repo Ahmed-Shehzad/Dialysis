@@ -76,7 +76,7 @@ public sealed class FhirController(
             {
                 patient.Identifier.Add(new Identifier
                 {
-                    System = Dialysis.HIE.Core.Coding.CodeSystems.MrnIdentifier,
+                    System = Core.Coding.CodeSystems.MrnIdentifier,
                     Value = m.MedicalRecordNumber,
                 });
             }

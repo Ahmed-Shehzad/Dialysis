@@ -64,6 +64,8 @@ services:
       Ehr__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
       Ehr__DistributedCache__Valkey__InstanceName: ehr
       Ehr__Telemetry__OtlpEndpoint: http://otel-collector:4317
+      Ehr__Demo__Enabled: "true"
+      Ehr__Demo__RegistrationSimulator: "true"
     ports:
       - "5289:8080"
     deploy:
@@ -94,6 +96,9 @@ services:
       Pdms__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
       Pdms__DistributedCache__Valkey__InstanceName: pdms
       Pdms__Telemetry__OtlpEndpoint: http://otel-collector:4317
+      Pdms__Demo__Enabled: "true"
+      Pdms__Demo__VitalsTicker: "true"
+      Pdms__Demo__MachineTelemetrySimulator: "true"
     ports:
       - "5290:8080"
     deploy:
@@ -123,6 +128,8 @@ services:
       SmartConnect__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
       SmartConnect__DistributedCache__Valkey__InstanceName: smartconnect
       SmartConnect__Telemetry__OtlpEndpoint: http://otel-collector:4317
+      SmartConnect__Demo__Enabled: "true"
+      SmartConnect__Demo__Hl7Simulator: "true"
     ports:
       - "5291:8080"
     deploy:
@@ -151,7 +158,43 @@ services:
       Hie__DistributedCache__Valkey__ConnectionString: valkey:6379,abortConnect=false
       Hie__DistributedCache__Valkey__InstanceName: hie
       Hie__Telemetry__OtlpEndpoint: http://otel-collector:4317
+      Hie__Demo__Enabled: "true"
     ports:
       - "5292:8080"
+    deploy:
+      replicas: 1
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    image: dialysis/gateway:dev
+    depends_on:
+      his-api: { condition: service_started }
+      ehr-api: { condition: service_started }
+      pdms-api: { condition: service_started }
+      smartconnect-api: { condition: service_started }
+      hie-api: { condition: service_started }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      Gateway__Authority: http://keycloak:8080/realms/dialysis
+      Gateway__Audience: account
+      Gateway__RequireAuthentication: "true"
+      Gateway__Cors__AllowedOrigins__0: http://localhost:8080
+      Gateway__Cors__AllowedOrigins__1: http://web
+    ports:
+      - "5000:8080"
+    deploy:
+      replicas: 1
+
+  web:
+    build:
+      context: src/frontend/dialysis-web
+      dockerfile: Dockerfile
+    image: dialysis/web:dev
+    depends_on:
+      gateway: { condition: service_started }
+    ports:
+      - "8080:80"
     deploy:
       replicas: 1

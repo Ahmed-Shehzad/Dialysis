@@ -16,7 +16,7 @@ public static class VendorAdapterServiceCollectionExtensions
     public static IServiceCollection AddVendorAdapterTokenAcquirer(this IServiceCollection services)
     {
         services.TryAddSingleton<IDistributedCache>(_ =>
-            new Microsoft.Extensions.Caching.Distributed.MemoryDistributedCache(
+            new MemoryDistributedCache(
                 Microsoft.Extensions.Options.Options.Create(new Microsoft.Extensions.Caching.Memory.MemoryDistributedCacheOptions())));
         services.TryAddSingleton<OAuth2TokenAcquirer>(sp => new OAuth2TokenAcquirer(
             sp.GetRequiredService<IHttpClientFactory>(),

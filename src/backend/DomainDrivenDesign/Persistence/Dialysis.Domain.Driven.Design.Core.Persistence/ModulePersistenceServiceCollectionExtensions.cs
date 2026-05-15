@@ -29,4 +29,16 @@ public static class ModulePersistenceServiceCollectionExtensions
         services.TryAddScoped<AuditSaveChangesInterceptor>();
         return services;
     }
+
+    /// <summary>
+    /// Registers <see cref="IntegrationEventOutboxSaveChangesInterceptor"/> as scoped so the module's
+    /// <c>DbContextOptionsBuilder</c> can attach it via <c>AddInterceptors</c>. Requires
+    /// <c>AddTransponder(...)</c> + <c>AddTransponderEfOutboxAndInbox&lt;TContext&gt;()</c> to have run
+    /// previously (those register the message serializer and the per-context outbox writer).
+    /// </summary>
+    public static IServiceCollection AddModuleIntegrationEventOutbox(this IServiceCollection services)
+    {
+        services.TryAddScoped<IntegrationEventOutboxSaveChangesInterceptor>();
+        return services;
+    }
 }

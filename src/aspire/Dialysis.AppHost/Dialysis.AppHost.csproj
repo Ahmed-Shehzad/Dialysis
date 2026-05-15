@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.2.4" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>dialysis-apphost-c5b5b4f4-9f7f-4f9a-b0b0-0a0a0a0a0a0a</UserSecretsId>
+    <RootNamespace>Dialysis.AppHost</RootNamespace>
+    <AssemblyName>Dialysis.AppHost</AssemblyName>
+    <Description>Aspire orchestration host: spins per-module Postgres + RabbitMQ + Valkey + Keycloak + module APIs + Identity BFF + Gateway for a single F5 dev experience.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Valkey" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
+    <ProjectReference Include="../../backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj" />
+    <ProjectReference Include="../../backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
+    <ProjectReference Include="../../backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
+    <ProjectReference Include="../../backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
+    <ProjectReference Include="../../backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj" />
+    <ProjectReference Include="../../backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
+  </ItemGroup>
+
+</Project>

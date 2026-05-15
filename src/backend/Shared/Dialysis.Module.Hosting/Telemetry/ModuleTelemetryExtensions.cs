@@ -27,7 +27,10 @@ public static class ModuleTelemetryExtensions
         var options = new ModuleTelemetryOptions();
         configure?.Invoke(options);
         var serviceName = string.IsNullOrWhiteSpace(options.ServiceName) ? $"Dialysis.{moduleSlug}" : options.ServiceName;
-        var hasOtlp = !string.IsNullOrWhiteSpace(options.OtlpEndpoint);
+        var otlpEndpoint = !string.IsNullOrWhiteSpace(options.OtlpEndpoint)
+            ? options.OtlpEndpoint
+            : Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+        var hasOtlp = !string.IsNullOrWhiteSpace(otlpEndpoint);
 
         services.AddOpenTelemetry()
             .ConfigureResource(r =>
@@ -49,7 +52,7 @@ public static class ModuleTelemetryExtensions
                     t.AddSource(source);
 
                 if (hasOtlp)
-                    t.AddOtlpExporter(o => o.Endpoint = new Uri(options.OtlpEndpoint!));
+                    t.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint!));
                 else
                     t.AddConsoleExporter();
             })
@@ -61,7 +64,7 @@ public static class ModuleTelemetryExtensions
                     m.AddMeter(meter);
 
                 if (hasOtlp)
-                    m.AddOtlpExporter(o => o.Endpoint = new Uri(options.OtlpEndpoint!));
+                    m.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint!));
                 else
                     m.AddConsoleExporter();
             });

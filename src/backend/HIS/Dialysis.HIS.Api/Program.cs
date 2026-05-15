@@ -9,10 +9,12 @@ using Dialysis.HIS.Operations;
 using Dialysis.HIS.Persistence;
 using Dialysis.HIS.RaCapabilities;
 using Dialysis.Module.Hosting;
+using Dialysis.ServiceDefaults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 if (builder.Configuration.GetValue("His:UseForwardedHeaders", false))
 {
@@ -78,6 +80,17 @@ builder.Services.AddRateLimiter(o =>
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Apply EF migrations on startup so the HIS module is self-hosting against a fresh
+// Aspire-managed Postgres container. Gated on configuration (His:AutoMigrate, default
+// true in Development) — in production the DBA owns the migration step out-of-band.
+if (!string.IsNullOrWhiteSpace(connectionString)
+    && builder.Configuration.GetValue("His:AutoMigrate", app.Environment.IsDevelopment()))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
+    await db.Database.MigrateAsync().ConfigureAwait(false);
+}
 
 if (builder.Configuration.GetValue("His:UseForwardedHeaders", false))
     app.UseForwardedHeaders();

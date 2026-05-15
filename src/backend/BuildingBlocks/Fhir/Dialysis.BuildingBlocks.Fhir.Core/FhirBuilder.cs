@@ -17,7 +17,7 @@ public sealed class FhirBuilder
     internal FhirBuilder(IServiceCollection services, FhirResourceRegistry registry)
     {
         Services = services;
-        this._registry = registry;
+        _registry = registry;
     }
 
     public IServiceCollection Services { get; }

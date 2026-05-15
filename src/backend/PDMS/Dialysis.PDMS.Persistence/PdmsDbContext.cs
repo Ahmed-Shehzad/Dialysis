@@ -71,7 +71,7 @@ public sealed class PdmsDbContext(
             b.HasMany(s => s.Readings).WithOne().HasForeignKey(r => r.SessionId).OnDelete(DeleteBehavior.Cascade);
             b.Navigation(s => s.Readings).AutoInclude();
 
-            ModuleDbContextBase.MapAuditShadow(b);
+            MapAuditShadow(b);
         });
 
         modelBuilder.Entity<IntradialyticReading>(b =>
@@ -85,7 +85,7 @@ public sealed class PdmsDbContext(
             b.Property(r => r.UltrafiltrationRateMlPerHour).HasPrecision(8, 2);
             b.Property(r => r.ConductivityMsPerCm).HasPrecision(6, 3);
             b.Property(r => r.Notes).HasMaxLength(2000);
-            ModuleDbContextBase.MapAuditShadow(b);
+            MapAuditShadow(b);
         });
 
         modelBuilder.Entity<DialysisMachine>(b =>
@@ -96,7 +96,7 @@ public sealed class PdmsDbContext(
             b.HasIndex(m => m.SerialNumber).IsUnique();
             b.Property(m => m.VendorCode).HasMaxLength(32);
             b.Property(m => m.ModelCode).HasMaxLength(64);
-            ModuleDbContextBase.MapAuditShadow(b);
+            MapAuditShadow(b);
         });
 
         modelBuilder.Entity<TreatmentObservation>(b =>
@@ -128,7 +128,7 @@ public sealed class PdmsDbContext(
             b.Property(a => a.AcknowledgedBy).HasMaxLength(128);
             b.HasIndex(a => new { a.MachineId, a.State });
             b.HasIndex(a => new { a.SessionId, a.FirstObservedUtc });
-            ModuleDbContextBase.MapAuditShadow(b);
+            MapAuditShadow(b);
         });
 
         modelBuilder.Entity<MdcCodeCatalogEntry>(b =>

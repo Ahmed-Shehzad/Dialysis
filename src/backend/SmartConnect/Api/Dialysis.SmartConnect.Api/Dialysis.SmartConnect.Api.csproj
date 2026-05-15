@@ -19,6 +19,7 @@
     <ProjectReference Include="../../Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <ProjectReference Include="../../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

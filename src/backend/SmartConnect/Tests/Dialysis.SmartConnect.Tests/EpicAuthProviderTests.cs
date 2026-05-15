@@ -27,8 +27,8 @@ public sealed class EpicAuthProviderTests
 
         var capturingHandler = new CapturingHandler();
         var factory = new SingleClientHttpClientFactory(capturingHandler);
-        IDistributedCache cache = new Microsoft.Extensions.Caching.Distributed.MemoryDistributedCache(
-            Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions()));
+        IDistributedCache cache = new MemoryDistributedCache(
+            Options.Create(new MemoryDistributedCacheOptions()));
         var acquirer = new OAuth2TokenAcquirer(factory, cache, TimeSpan.FromSeconds(1));
         var sut = new EpicAuthProvider(options, acquirer);
 

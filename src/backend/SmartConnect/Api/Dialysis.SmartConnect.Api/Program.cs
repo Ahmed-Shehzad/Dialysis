@@ -1,4 +1,5 @@
 using Dialysis.Module.Hosting;
+using Dialysis.ServiceDefaults;
 using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Contracts.Security;
@@ -10,6 +11,7 @@ using Dialysis.SmartConnect.Management.AspNetCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 builder.AddModuleHost<SmartConnectPermissionCatalog>(new ModuleHostingOptions
 {
@@ -34,6 +36,12 @@ builder.Services.AddSmartConnectInboundHttpOptions();
 builder.Services.AddSmartConnectMllpInbound();
 builder.Services.AddSmartConnectTransponderInboundBridgeIfEnabled(builder.Configuration);
 builder.Services.AddHostedService<BuiltInCodeTemplatesSeeder>();
+
+if (builder.Configuration.GetValue("SmartConnect:Demo:Enabled", false))
+    builder.Services.AddHostedService<Dialysis.SmartConnect.Api.Demo.SmartConnectDemoSeeder>();
+
+if (builder.Configuration.GetValue("SmartConnect:Demo:Hl7Simulator", false))
+    builder.Services.AddHostedService<Dialysis.SmartConnect.Api.Demo.Hl7V2SimulatorService>();
 
 var app = builder.Build();
 

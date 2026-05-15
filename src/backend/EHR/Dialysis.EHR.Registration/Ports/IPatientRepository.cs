@@ -8,5 +8,7 @@ public interface IPatientRepository
 
     Task<Patient?> FindByMedicalRecordNumberAsync(string medicalRecordNumber, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Patient>> SearchAsync(string? nameFragment, int take, CancellationToken cancellationToken = default);
+
     void Add(Patient patient);
 }

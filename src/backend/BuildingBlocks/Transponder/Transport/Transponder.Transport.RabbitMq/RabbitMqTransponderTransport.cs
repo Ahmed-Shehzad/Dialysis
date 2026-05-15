@@ -11,6 +11,7 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 public sealed class RabbitMqTransponderTransport(
     IOptions<TransponderRabbitMqOptions> options,
     RabbitMqSubscriptionRegistry registry,
+    IEnumerable<IConsumeRouteMetadata> consumeRoutes,
     ILogger<RabbitMqTransponderTransport> logger) : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
@@ -159,16 +160,62 @@ public sealed class RabbitMqTransponderTransport(
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var routingKey in registry.RoutingKeys)
+        // Bind each routing key on the EXCHANGE THE PRODUCER PUBLISHES TO, not the local one.
+        // Cross-module integration events live in `Dialysis.<Producer>.Contracts.*` namespaces;
+        // the producer publishes on `dialysis.<producer>.events`. Binding the consumer queue
+        // there is what makes events actually reach a remote module's consumers. Falls back to
+        // the local exchange for transport-internal types like TransponderMessageChunk whose
+        // namespace doesn't match a module.
+        var bindings = new HashSet<(string Exchange, string RoutingKey)>();
+        foreach (var kvp in registry.RoutingKeyToType)
+        {
+            var exchange = ResolveProducerExchange(kvp.Value, o.ExchangeName);
+            bindings.Add((exchange, kvp.Key));
+        }
+        foreach (var route in consumeRoutes)
+        {
+            var rk = route.MessageType.FullName ?? route.MessageType.Name;
+            var exchange = ResolveProducerExchange(route.MessageType, o.ExchangeName);
+            bindings.Add((exchange, rk));
+        }
+
+        // Declare every foreign producer exchange before binding to it. Idempotent on the broker
+        // side; safe even when the producing module hasn't started yet.
+        foreach (var ex in bindings.Select(b => b.Exchange).Distinct(StringComparer.Ordinal))
+        {
+            if (string.Equals(ex, o.ExchangeName, StringComparison.Ordinal))
+                continue; // already declared above
+            await consume
+                .ExchangeDeclareAsync(
+                    exchange: ex,
+                    type: ExchangeType.Direct,
+                    durable: true,
+                    autoDelete: false,
+                    passive: false,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        foreach (var (exchange, routingKey) in bindings)
         {
             await consume
                 .QueueBindAsync(
                     queue: o.QueueName,
-                    exchange: o.ExchangeName,
+                    exchange: exchange,
                     routingKey: routingKey,
                     arguments: null,
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        if (bindings.Count > 0)
+        {
+            var foreignCount = bindings.Count(b => !string.Equals(b.Exchange, o.ExchangeName, StringComparison.Ordinal));
+            logger.LogInformation(
+                "Transponder RabbitMQ bound queue {Queue} to {Total} routing keys ({Foreign} on foreign exchanges).",
+                o.QueueName,
+                bindings.Count,
+                foreignCount);
         }
 
         var consumer = new AsyncEventingBasicConsumer(consume);
@@ -240,6 +287,29 @@ public sealed class RabbitMqTransponderTransport(
             return true;
 
         return !deadLetterConfigured;
+    }
+
+    /// <summary>
+    /// Derives the exchange a message of <paramref name="messageType"/> is published on, by
+    /// convention from its namespace (<c>Dialysis.&lt;Module&gt;.*</c> → <c>dialysis.{module}.events</c>).
+    /// Falls back to <paramref name="localExchange"/> for types that don't fit the module convention
+    /// (transport-internal chunk messages, shared-kernel events).
+    /// </summary>
+    private static string ResolveProducerExchange(Type messageType, string localExchange)
+    {
+        var ns = messageType.Namespace;
+        if (ns is null || !ns.StartsWith("Dialysis.", StringComparison.Ordinal))
+            return localExchange;
+
+        var afterDialysis = ns.AsSpan("Dialysis.".Length);
+        var dot = afterDialysis.IndexOf('.');
+        var firstSegment = (dot < 0 ? afterDialysis : afterDialysis[..dot]).ToString();
+
+        // Infra namespaces under Dialysis.* are not modules — they emit/consume locally.
+        if (firstSegment is "BuildingBlocks" or "DomainDrivenDesign" or "CQRS" or "Module")
+            return localExchange;
+
+        return $"dialysis.{firstSegment.ToLowerInvariant()}.events";
     }
 
     private static IDictionary<string, object?>? BuildQueueArguments(TransponderRabbitMqOptions o, bool deadLetterConfigured)

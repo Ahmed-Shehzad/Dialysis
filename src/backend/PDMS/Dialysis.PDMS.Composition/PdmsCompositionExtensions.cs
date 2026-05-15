@@ -13,13 +13,17 @@ using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
 using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
 using Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
+using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
+using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
 using Dialysis.PDMS.TreatmentSessions.Projections;
+using Dialysis.PDMS.TreatmentSessions.Realtime;
 using Dialysis.SmartConnect.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Dialysis.PDMS.Composition;
 
@@ -34,6 +38,9 @@ public static class PdmsCompositionExtensions
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
         bool enableFhirSubscriptionsPersistence = false,
+        bool enableDemoSeed = false,
+        bool enableVitalsTicker = false,
+        bool enableMachineTelemetrySimulator = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
@@ -41,6 +48,9 @@ public static class PdmsCompositionExtensions
         services.AddPdmsPersistence(configurePersistence);
 
         services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
+
+        // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
+        services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
 
         services.AddTransponder(t =>
         {
@@ -58,6 +68,9 @@ public static class PdmsCompositionExtensions
             c.AddCommandBehavior<RecordReadingCommand, Guid, AuthorizationPipelineBehavior<RecordReadingCommand, Guid>>();
             c.AddCommandBehavior<CompleteSessionCommand, Unit, AuthorizationPipelineBehavior<CompleteSessionCommand, Unit>>();
             c.AddCommandBehavior<AbortSessionCommand, Unit, AuthorizationPipelineBehavior<AbortSessionCommand, Unit>>();
+
+            c.AddQueryBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>, AuthorizationPipelineBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>>();
+            c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();
         });
 
         if (enableOutboxRelay)
@@ -78,6 +91,15 @@ public static class PdmsCompositionExtensions
             services.AddFhirBulkDataEntityFrameworkStore<PdmsDbContext>();
         if (enableFhirSubscriptionsPersistence)
             services.AddFhirSubscriptionsEntityFrameworkStore<PdmsDbContext>();
+
+        if (enableDemoSeed)
+            services.AddHostedService<Demo.PdmsDemoSeeder>();
+
+        if (enableVitalsTicker)
+            services.AddHostedService<Demo.VitalsTickerService>();
+
+        if (enableMachineTelemetrySimulator)
+            services.AddHostedService<Demo.MachineTelemetrySimulatorService>();
 
         return services;
     }

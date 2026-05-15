@@ -36,10 +36,15 @@ public static class EhrPersistenceServiceCollectionExtensions
             var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
             if (interceptor is not null)
                 options.AddInterceptors(interceptor);
+
+            var integrationEventOutbox = sp.GetService<IntegrationEventOutboxSaveChangesInterceptor>();
+            if (integrationEventOutbox is not null)
+                options.AddInterceptors(integrationEventOutbox);
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<EhrDbContext>());
         services.AddTransponderEfOutboxAndInbox<EhrDbContext>();
+        services.AddModuleIntegrationEventOutbox();
 
         // Registration
         services.AddScoped<IPatientRepository, PatientRepository>();

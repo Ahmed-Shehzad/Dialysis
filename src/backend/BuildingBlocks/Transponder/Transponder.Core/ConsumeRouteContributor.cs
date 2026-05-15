@@ -5,6 +5,8 @@ namespace Dialysis.BuildingBlocks.Transponder;
 internal sealed class ConsumeRouteContributor<TMessage> : IConsumeRouteContributor
     where TMessage : class
 {
+    public Type MessageType => typeof(TMessage);
+
     public void Contribute(Dictionary<string, TransponderConsumeRouteEntry> routes)
     {
         var key = RoutingKey.For<TMessage>();

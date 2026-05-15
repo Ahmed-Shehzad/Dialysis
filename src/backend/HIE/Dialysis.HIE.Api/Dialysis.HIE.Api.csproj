@@ -28,6 +28,7 @@
     <ProjectReference Include="../Dialysis.HIE.OpenEhr/Dialysis.HIE.OpenEhr.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

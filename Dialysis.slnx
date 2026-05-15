@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/src/aspire/">
+    <Project Path="src/aspire/Dialysis.AppHost/Dialysis.AppHost.csproj" />
+    <Project Path="src/aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+  </Folder>
   <Folder Name="/src/backend/" />
   <Folder Name="/src/backend/BuildingBlocks/Verifier/">
     <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Abstractions/Verifier.Abstractions.csproj" />

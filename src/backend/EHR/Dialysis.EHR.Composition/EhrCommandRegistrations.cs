@@ -11,6 +11,7 @@ using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
+using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.PatientChart.Features.RecordAllergy;
 using Dialysis.EHR.PatientChart.Features.RecordImmunization;
 using Dialysis.EHR.PatientChart.Features.RecordMedicationStatement;
@@ -21,6 +22,7 @@ using Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
 using Dialysis.EHR.Registration.Features.MergePatients;
 using Dialysis.EHR.Registration.Features.RegisterPatient;
 using Dialysis.EHR.Registration.Features.RegisterProvider;
+using Dialysis.EHR.Registration.Features.SearchPatients;
 using Dialysis.EHR.Registration.Features.UpdatePatientDemographics;
 using Dialysis.EHR.Scheduling.Features.BookAppointment;
 using Dialysis.EHR.Scheduling.Features.CancelAppointment;
@@ -78,5 +80,9 @@ internal static class EhrCommandRegistrations
 
         // Integration
         c.AddCommandBehavior<IngestLabResultCommand, Guid, AuthorizationPipelineBehavior<IngestLabResultCommand, Guid>>();
+
+        // Queries
+        c.AddQueryBehavior<SearchPatientsQuery, IReadOnlyList<PatientSummary>, AuthorizationPipelineBehavior<SearchPatientsQuery, IReadOnlyList<PatientSummary>>>();
+        c.AddQueryBehavior<GetPatientChartQuery, PatientChartView, AuthorizationPipelineBehavior<GetPatientChartQuery, PatientChartView>>();
     }
 }

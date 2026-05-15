@@ -13,4 +13,8 @@
     <PackageReference Include="Yarp.ReverseProxy" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+  </ItemGroup>
+
 </Project>

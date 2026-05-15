@@ -5,11 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.Module.Gateway</RootNamespace>
-    <Description>YARP reverse-proxy host: routes /identity/*, /his/*, /smartconnect/*, /ehr/*, /pdms/*, /portal/* to the per-module API hosts and forwards bearer tokens.</Description>
+    <Description>YARP edge gateway: terminates SPA traffic, validates Keycloak JWTs, load-balances per module cluster, forwards bearer tokens.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Yarp.ReverseProxy" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

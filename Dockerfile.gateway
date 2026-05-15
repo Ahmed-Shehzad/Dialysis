@@ -1,0 +1,27 @@
+# YARP gateway image — terminates SPA traffic and load-balances per-module clusters.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY Directory.Build.props Directory.Packages.props global.json nuget.config* ./
+COPY src/ src/
+COPY tests/ tests/
+COPY Dialysis.slnx ./
+
+RUN dotnet restore src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj
+RUN dotnet publish src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj \
+    -c Release -o /app/publish --no-restore /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+ENV ASPNETCORE_URLS=http://+:8080
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_NOLOGO=true
+
+WORKDIR /app
+COPY --from=build /app/publish ./
+USER app
+EXPOSE 8080
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
+    CMD wget --quiet --spider http://localhost:8080/health/live || exit 1
+
+ENTRYPOINT ["dotnet", "Dialysis.Module.Gateway.dll"]

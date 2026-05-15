@@ -38,7 +38,7 @@ internal static class RegistrationConfiguration
                 a.Property(x => x.CountryCode).HasColumnName("AddressCountryCode").HasMaxLength(2);
             });
             b.Ignore(p => p.ContactPoints);
-            b.OwnsMany<Registration.Domain.ContactPoint>("_contactPoints", c =>
+            b.OwnsMany<ContactPoint>("_contactPoints", c =>
             {
                 c.ToTable("PatientContactPoints", Schema);
                 c.WithOwner().HasForeignKey("PatientId");

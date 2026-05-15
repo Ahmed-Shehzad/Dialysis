@@ -42,6 +42,8 @@ public static class EhrCompositionExtensions
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
         bool enableFhirSubscriptionsPersistence = false,
+        bool enableDemoSeed = false,
+        bool enableRegistrationSimulator = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
@@ -95,6 +97,12 @@ public static class EhrCompositionExtensions
             services.AddFhirBulkDataEntityFrameworkStore<EhrDbContext>();
         if (enableFhirSubscriptionsPersistence)
             services.AddFhirSubscriptionsEntityFrameworkStore<EhrDbContext>();
+
+        if (enableDemoSeed)
+            services.AddHostedService<Demo.EhrDemoSeeder>();
+
+        if (enableRegistrationSimulator)
+            services.AddHostedService<Demo.EhrPatientRegistrationSimulator>();
 
         return services;
     }

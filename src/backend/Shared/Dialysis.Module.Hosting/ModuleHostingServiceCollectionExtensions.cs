@@ -69,6 +69,22 @@ public static class ModuleHostingServiceCollectionExtensions
                         && string.Equals(issuer.Scheme, "http", StringComparison.OrdinalIgnoreCase)
                         && builder.Environment.IsDevelopment())
                         o.RequireHttpsMetadata = false;
+                    // SignalR WebSocket upgrades can't carry custom headers from the browser,
+                    // so the JS client appends ?access_token=<jwt>. Honor it for /hubs/* paths.
+                    o.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = ctx =>
+                        {
+                            var accessToken = ctx.Request.Query["access_token"];
+                            var path = ctx.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken)
+                                && path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ctx.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        },
+                    };
                 });
             builder.Services.AddAuthorization();
         }

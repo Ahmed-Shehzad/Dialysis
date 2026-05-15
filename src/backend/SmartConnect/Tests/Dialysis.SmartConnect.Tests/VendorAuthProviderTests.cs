@@ -13,7 +13,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class VendorAuthProviderTests
 {
-    private static readonly ExternalEhrContext _Context = new("t1", PatientLaunchContext: null);
+    private static readonly ExternalEhrContext _context = new("t1", PatientLaunchContext: null);
 
     [Fact]
     public async Task Cerner_Posts_Client_Credentials_With_Basic_Auth_And_Caches_Async()
@@ -30,8 +30,8 @@ public sealed class VendorAuthProviderTests
             }),
             acquirer);
 
-        var first = await sut.AcquireAccessTokenAsync(_Context, CancellationToken.None);
-        var second = await sut.AcquireAccessTokenAsync(_Context, CancellationToken.None);
+        var first = await sut.AcquireAccessTokenAsync(_context, CancellationToken.None);
+        var second = await sut.AcquireAccessTokenAsync(_context, CancellationToken.None);
 
         Assert.Equal("opaque-token", first);
         Assert.Equal(first, second);
@@ -56,7 +56,7 @@ public sealed class VendorAuthProviderTests
             }),
             acquirer);
 
-        var token = await sut.AcquireAccessTokenAsync(_Context, CancellationToken.None);
+        var token = await sut.AcquireAccessTokenAsync(_context, CancellationToken.None);
 
         Assert.Equal("opaque-token", token);
         Assert.Equal("Basic", handler.LastAuthScheme);
@@ -78,7 +78,7 @@ public sealed class VendorAuthProviderTests
             }),
             acquirer);
 
-        var token = await sut.AcquireAccessTokenAsync(_Context, CancellationToken.None);
+        var token = await sut.AcquireAccessTokenAsync(_context, CancellationToken.None);
 
         Assert.Equal("opaque-token", token);
         Assert.Null(handler.LastAuthScheme);
@@ -103,7 +103,7 @@ public sealed class VendorAuthProviderTests
             }),
             acquirer);
 
-        var token = await sut.AcquireAccessTokenAsync(_Context, CancellationToken.None);
+        var token = await sut.AcquireAccessTokenAsync(_context, CancellationToken.None);
 
         Assert.Equal("opaque-token", token);
         Assert.Equal("password", handler.LastForm["grant_type"]);
@@ -117,8 +117,8 @@ public sealed class VendorAuthProviderTests
     {
         var handler = new CapturingHandler();
         var factory = new SingleClientHttpClientFactory(handler);
-        IDistributedCache cache = new Microsoft.Extensions.Caching.Distributed.MemoryDistributedCache(
-            Microsoft.Extensions.Options.Options.Create(new MemoryDistributedCacheOptions()));
+        IDistributedCache cache = new MemoryDistributedCache(
+            Options.Create(new MemoryDistributedCacheOptions()));
         var acquirer = new OAuth2TokenAcquirer(factory, cache, TimeSpan.FromSeconds(1));
         return (acquirer, handler);
     }

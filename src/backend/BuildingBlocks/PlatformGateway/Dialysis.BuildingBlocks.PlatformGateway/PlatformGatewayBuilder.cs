@@ -10,7 +10,7 @@ public sealed class PlatformGatewayBuilder
     private readonly IEndpointRouteBuilder _endpoints;
     private string _baseUrl = "/fhir";
 
-    internal PlatformGatewayBuilder(IEndpointRouteBuilder endpoints) => this._endpoints = endpoints;
+    internal PlatformGatewayBuilder(IEndpointRouteBuilder endpoints) => _endpoints = endpoints;
 
     public PlatformGatewayBuilder WithFhir(Action<FhirEndpointOptions>? configure = null)
     {

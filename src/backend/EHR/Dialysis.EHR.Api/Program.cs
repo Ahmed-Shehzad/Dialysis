@@ -10,9 +10,11 @@ using Dialysis.EHR.PatientPortal;
 using Dialysis.EHR.Registration;
 using Dialysis.EHR.Scheduling;
 using Dialysis.Module.Hosting;
+using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 const string connectionStringName = "Ehr";
 var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
@@ -36,6 +38,9 @@ builder.AddModuleHost<EhrPermissionCatalog>(new ModuleHostingOptions
     ],
 });
 
+var enableEhrDemoSeed = builder.Configuration.GetValue("Ehr:Demo:Enabled", false);
+var enableEhrRegistrationSim = builder.Configuration.GetValue("Ehr:Demo:RegistrationSimulator", false);
+
 builder.Services.AddElectronicHealthRecord(
     builder.Configuration,
     configurePersistence: string.IsNullOrWhiteSpace(connectionString)
@@ -44,6 +49,8 @@ builder.Services.AddElectronicHealthRecord(
             connectionString,
             pg => pg.MigrationsHistoryTable("__ef_migrations", "ehr")),
     enableOutboxRelay: enableOutbox,
+    enableDemoSeed: enableEhrDemoSeed,
+    enableRegistrationSimulator: enableEhrRegistrationSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>
@@ -60,12 +67,15 @@ builder.Services.AddElectronicHealthRecord(
             sub.Listen<ClaimSubmittedIntegrationEvent>();
         }));
 
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
 app.UseModuleHost();
 app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
+app.MapControllers();
 
 await app.RunAsync().ConfigureAwait(false);
 

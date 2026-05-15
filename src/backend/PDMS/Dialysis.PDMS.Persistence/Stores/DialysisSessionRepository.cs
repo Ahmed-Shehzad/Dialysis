@@ -15,5 +15,24 @@ public sealed class DialysisSessionRepository(PdmsDbContext db) : IDialysisSessi
             .OrderByDescending(s => s.ScheduledStartUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<DialysisSession>> ListRecentAsync(
+        DateTime sinceUtc,
+        int take,
+        CancellationToken cancellationToken = default) =>
+        await db.Sessions
+            .Where(s => s.ScheduledStartUtc >= sinceUtc)
+            .OrderByDescending(s => s.ScheduledStartUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<DialysisSession>> ListActiveAsync(
+        CancellationToken cancellationToken = default) =>
+        await db.Sessions
+            .Where(s => s.Status == DialysisSessionStatus.InProgress
+                     || s.Status == DialysisSessionStatus.Scheduled
+                     || s.Status == DialysisSessionStatus.Paused)
+            .OrderBy(s => s.ScheduledStartUtc)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public void Add(DialysisSession session) => db.Sessions.Add(session);
 }

@@ -36,6 +36,7 @@ public static class HealthInformationExchangeExtensions
         IConfiguration configuration,
         Action<DbContextOptionsBuilder>? configurePersistence = null,
         bool enableOutboxRelay = false,
+        bool enableDemoSeed = false,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
         services.AddHiePersistence(configurePersistence);
@@ -89,6 +90,9 @@ public static class HealthInformationExchangeExtensions
 
         if (enableOutboxRelay)
             services.AddTransponderOutboxRelay<HieDbContext>();
+
+        if (enableDemoSeed)
+            services.AddHostedService<Demo.HieDemoSeeder>();
 
         return services;
     }

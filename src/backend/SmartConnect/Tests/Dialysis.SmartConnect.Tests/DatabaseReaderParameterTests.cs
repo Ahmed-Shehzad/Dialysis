@@ -22,7 +22,7 @@ public sealed class DatabaseReaderParameterTests
 
         var p = DatabaseReaderParameters.Parse(raw);
 
-        Assert.Equal(Dialysis.SmartConnect.ExtendedPlugins.DatabaseProvider.SqlServer, p.Provider);
+        Assert.Equal(ExtendedPlugins.DatabaseProvider.SqlServer, p.Provider);
         Assert.Equal("MyConn", p.ConnectionStringName);
         Assert.Equal("SELECT * FROM Msgs WHERE Id > @watermark", p.PollSql);
         Assert.Equal("Id", p.WatermarkColumn);
