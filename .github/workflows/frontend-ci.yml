@@ -24,6 +24,11 @@ defaults:
   run:
     working-directory: src/frontend/dialysis-web
 
+env:
+  # Husky's prepare-script hook installs git hooks for dev machines. CI doesn't
+  # need them and HUSKY=0 makes the prepare script a no-op (husky v9 contract).
+  HUSKY: "0"
+
 jobs:
   spa:
     name: SPA build + checks
@@ -38,9 +43,12 @@ jobs:
           cache-dependency-path: src/frontend/dialysis-web/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
 
-      - name: Lint
+      - name: Format check (Prettier)
+        run: npm run format:check
+
+      - name: Lint (ESLint)
         run: npm run lint
 
       - name: Type check

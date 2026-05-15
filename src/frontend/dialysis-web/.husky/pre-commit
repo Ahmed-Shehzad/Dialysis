@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Auto-format + lint staged SPA files before each commit.
+# Husky v9 invokes hooks from the git repo root; cd into the SPA so lint-staged
+# resolves the local eslint/prettier configs. If no SPA files are staged,
+# lint-staged exits 0 and the commit proceeds.
+set -e
+
+cd "$(dirname "$0")/.."
+npx --no-install lint-staged --config package.json
