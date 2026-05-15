@@ -30,7 +30,10 @@ export function appendChildren(node: Node, children: ElChild | ElChild[] | undef
   const list = Array.isArray(children) ? children : [children];
   for (const c of list) {
     if (c === null || c === undefined || c === false) continue;
-    node.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+    // Only real DOM nodes are appended as-is; every other value (strings,
+    // numbers, and crucially exception/user text) goes through a text node so
+    // it can never be reinterpreted as HTML.
+    node.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
   }
 }
 

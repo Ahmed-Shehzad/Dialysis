@@ -76,7 +76,7 @@ public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader
             bool b => b,
             int i => i != 0,
             long l => l != 0,
-            double d => d != 0,
+            double d => d < 0 || d > 0,
             string s => !string.IsNullOrEmpty(s),
             null => false,
             _ => true,

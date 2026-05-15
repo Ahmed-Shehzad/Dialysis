@@ -78,7 +78,7 @@ public sealed class PdmsDemoSeeder(IServiceProvider services, ILogger<PdmsDemoSe
             for (var i = 0; i < 4; i++)
             {
                 session.RecordReading(
-                    now.AddMinutes(-15 + i * 3),
+                    now.AddMinutes(-15 + i * 3.0),
                     systolic: 138 + i,
                     diastolic: 82 + (i % 2),
                     heartRateBpm: 74 + i,

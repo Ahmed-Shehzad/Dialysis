@@ -21,16 +21,15 @@ public abstract class ModuleWebApplicationFactory<TEntryPoint, TDbContext>
     where TEntryPoint : class
     where TDbContext : DbContext
 {
-    private readonly PostgreSqlContainer _postgres;
+    private PostgreSqlContainer? _postgres;
 
-    protected ModuleWebApplicationFactory()
-    {
-        _postgres = new PostgreSqlBuilder("postgres:17-alpine")
-            .WithDatabase($"dialysis_{ModuleSlug}_test")
-            .WithUsername("postgres")
-            .WithPassword("postgres")
-            .Build();
-    }
+    // Built lazily (not in the constructor) so the abstract ModuleSlug is only read once the
+    // most-derived instance is fully constructed — avoids a virtual call from a base constructor.
+    private PostgreSqlContainer Postgres => _postgres ??= new PostgreSqlBuilder("postgres:17-alpine")
+        .WithDatabase($"dialysis_{ModuleSlug}_test")
+        .WithUsername("postgres")
+        .WithPassword("postgres")
+        .Build();
 
     /// <summary>Module slug (e.g. <c>"ehr"</c>, <c>"his"</c>, <c>"identity"</c>). Used as the configuration section root.</summary>
     protected abstract string ModuleSlug { get; }
@@ -45,7 +44,7 @@ public abstract class ModuleWebApplicationFactory<TEntryPoint, TDbContext>
 
     public async Task InitializeAsync()
     {
-        await _postgres.StartAsync().ConfigureAwait(false);
+        await Postgres.StartAsync().ConfigureAwait(false);
 
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TDbContext>();
@@ -54,13 +53,14 @@ public abstract class ModuleWebApplicationFactory<TEntryPoint, TDbContext>
 
     public new async Task DisposeAsync()
     {
-        await _postgres.DisposeAsync().ConfigureAwait(false);
+        if (_postgres is not null)
+            await _postgres.DisposeAsync().ConfigureAwait(false);
         await base.DisposeAsync().ConfigureAwait(false);
     }
 
     protected sealed override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseSetting($"ConnectionStrings:{ConnectionStringName}", _postgres.GetConnectionString());
+        builder.UseSetting($"ConnectionStrings:{ConnectionStringName}", Postgres.GetConnectionString());
         builder.UseSetting($"{ConnectionStringName}:Authentication:Authority", string.Empty);
         builder.UseSetting($"{ConnectionStringName}:Authentication:RequireAuthorityWhenNotDevelopment", "false");
         builder.UseSetting($"{ConnectionStringName}:Transponder:EnableOutboxRelay", "false");
