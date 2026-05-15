@@ -41,6 +41,9 @@ public sealed class MedicationStatement : AggregateRoot<Guid>
 
     public string? ReasonText { get; private set; }
 
+    /// <summary>System audit timestamp — drives FHIR <c>Meta.lastUpdated</c> and incremental (<c>_since</c>) bulk export.</summary>
+    public DateTimeOffset UpdatedAtUtc { get; private set; } = DateTimeOffset.UtcNow;
+
     public static MedicationStatement Record(
         Guid id,
         Guid patientId,
@@ -64,6 +67,7 @@ public sealed class MedicationStatement : AggregateRoot<Guid>
             StartedOn = startedOn,
             Status = MedicationStatementStatus.Active,
             ReasonText = string.IsNullOrWhiteSpace(reasonText) ? null : reasonText.Trim(),
+            UpdatedAtUtc = DateTimeOffset.UtcNow,
         };
     }
 
@@ -75,5 +79,6 @@ public sealed class MedicationStatement : AggregateRoot<Guid>
             throw new InvalidOperationException("Stop date cannot precede start.");
         Status = MedicationStatementStatus.Stopped;
         StoppedOn = stoppedOn;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 }

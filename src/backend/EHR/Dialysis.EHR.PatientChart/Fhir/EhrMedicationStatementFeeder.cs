@@ -11,10 +11,9 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// <summary>
 /// Streams every <c>MedicationStatement</c> aggregate as a FHIR R4 <c>MedicationStatement</c>.
 /// Patient-reported medications carry free-text dose + frequency on a single dosage entry; the
-/// period between <c>StartedOn</c> and <c>StoppedOn</c> populates <c>effective[x]</c>. No
-/// <c>Meta.lastUpdated</c> is emitted: the aggregate records only clinical <c>DateOnly</c> values,
-/// not a system audit timestamp, so a synthetic value would corrupt incremental
-/// (<c>_since</c>) bulk-export sync.
+/// period between <c>StartedOn</c> and <c>StoppedOn</c> populates <c>effective[x]</c>. The
+/// aggregate's <c>UpdatedAtUtc</c> audit timestamp drives <c>Meta.lastUpdated</c> and the
+/// incremental (<c>_since</c>) export filter.
 /// </summary>
 public sealed class EhrMedicationStatementFeeder(IMedicationStatementRepository statements) : INdjsonResourceFeeder<FhirMedicationStatement>
 {
@@ -33,6 +32,7 @@ public sealed class EhrMedicationStatementFeeder(IMedicationStatementRepository 
     private static FhirMedicationStatement Project(DomainMedicationStatement source) => new()
     {
         Id = source.Id.ToString(),
+        Meta = new Meta { LastUpdated = source.UpdatedAtUtc },
         Status = MapStatus(source.Status),
         Subject = new ResourceReference($"Patient/{source.PatientId}"),
         Medication = new CodeableConcept(source.Medication.System, source.Medication.Code, source.Medication.Display),

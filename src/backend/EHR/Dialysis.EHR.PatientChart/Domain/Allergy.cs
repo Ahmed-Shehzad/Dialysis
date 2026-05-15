@@ -40,6 +40,9 @@ public sealed class Allergy : AggregateRoot<Guid>
 
     public DateOnly? OnsetDate { get; private set; }
 
+    /// <summary>System audit timestamp — drives FHIR <c>Meta.lastUpdated</c> and incremental (<c>_since</c>) bulk export.</summary>
+    public DateTimeOffset UpdatedAtUtc { get; private set; } = DateTimeOffset.UtcNow;
+
     public static Allergy Record(
         Guid id,
         Guid patientId,
@@ -60,6 +63,7 @@ public sealed class Allergy : AggregateRoot<Guid>
             Severity = severity,
             VerificationStatus = verificationStatus,
             OnsetDate = onsetDate,
+            UpdatedAtUtc = DateTimeOffset.UtcNow,
         };
     }
 
@@ -68,5 +72,6 @@ public sealed class Allergy : AggregateRoot<Guid>
         if (VerificationStatus == AllergyVerificationStatus.Refuted)
             return;
         VerificationStatus = AllergyVerificationStatus.Refuted;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 }

@@ -24,6 +24,8 @@ public static class FhirSubscriptionsServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, RestHookNotificationDispatcher>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, WebSocketNotificationDispatcher>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, ServerSentEventsNotificationDispatcher>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, EmailNotificationDispatcher>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, SmsNotificationDispatcher>());
         services.TryAddSingleton<ISubscriptionNotificationDispatcher, CompositeSubscriptionNotificationDispatcher>();
         services.TryAddSingleton<SubscriptionBroadcaster>();
         services.AddHttpClient(nameof(RestHookNotificationDispatcher));

@@ -20,6 +20,8 @@ internal static class PatientChartConfiguration
             b.Property(a => a.ReactionText).HasMaxLength(2000);
             b.Property(a => a.Severity).HasConversion<int>().IsRequired();
             b.Property(a => a.VerificationStatus).HasConversion<int>().IsRequired();
+            b.Property(a => a.UpdatedAtUtc).IsRequired();
+            b.HasIndex(a => a.UpdatedAtUtc);
             b.OwnsOne(a => a.Allergen, MapCoding);
             ModuleDbContextBase.MapAuditShadow(b);
         });
@@ -59,6 +61,8 @@ internal static class PatientChartConfiguration
             b.Property(i => i.LotNumber).HasMaxLength(64);
             b.Property(i => i.Manufacturer).HasMaxLength(128);
             b.Property(i => i.SiteCode).HasMaxLength(32);
+            b.Property(i => i.UpdatedAtUtc).IsRequired();
+            b.HasIndex(i => i.UpdatedAtUtc);
             b.OwnsOne(i => i.Vaccine, MapCoding);
             ModuleDbContextBase.MapAuditShadow(b);
         });
@@ -73,6 +77,8 @@ internal static class PatientChartConfiguration
             b.Property(m => m.FrequencyText).HasMaxLength(256).IsRequired();
             b.Property(m => m.Status).HasConversion<int>().IsRequired();
             b.Property(m => m.ReasonText).HasMaxLength(2000);
+            b.Property(m => m.UpdatedAtUtc).IsRequired();
+            b.HasIndex(m => m.UpdatedAtUtc);
             b.OwnsOne(m => m.Medication, MapCoding);
             ModuleDbContextBase.MapAuditShadow(b);
         });
