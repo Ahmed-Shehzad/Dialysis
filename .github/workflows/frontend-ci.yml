@@ -1,0 +1,58 @@
+# SPA CI for src/frontend/dialysis-web: install → lint → typecheck → build.
+# Playwright E2E is intentionally not run here — the suite requires the live Aspire
+# stack (Keycloak + five module APIs + five Postgres containers) and is documented
+# in playwright.config.ts as a developer-driven smoke. It can be triggered manually
+# via workflow_dispatch if the environment is provisioned.
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - "src/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    paths:
+      - "src/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: src/frontend/dialysis-web
+
+jobs:
+  spa:
+    name: SPA build + checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: src/frontend/dialysis-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload dist artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialysis-web-dist
+          path: src/frontend/dialysis-web/dist
+          retention-days: 7
