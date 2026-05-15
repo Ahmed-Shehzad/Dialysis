@@ -48,10 +48,9 @@ public sealed class HttpContextCurrentUser(
             var valid = new HashSet<string>(permissionCatalog.All, StringComparer.Ordinal);
             var granted = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (var c in user.FindAll(_options.PermissionClaimType))
+            foreach (var c in user.FindAll(_options.PermissionClaimType).Where(c => valid.Contains(c.Value)))
             {
-                if (valid.Contains(c.Value))
-                    granted.Add(c.Value);
+                granted.Add(c.Value);
             }
 
             foreach (var roleClaim in user.FindAll(_options.RoleClaimType))
@@ -67,7 +66,7 @@ public sealed class HttpContextCurrentUser(
                 }
             }
 
-            return granted.ToList();
+            return [.. granted];
         }
     }
 }
