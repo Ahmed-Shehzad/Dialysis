@@ -17,5 +17,5 @@ public sealed class NatsSubscriptionRegistry
 
     public IReadOnlyDictionary<string, Type> RoutingKeyToType => _routingKeyToType;
 
-    public IReadOnlyCollection<string> RoutingKeys => _routingKeyToType.Keys.ToArray();
+    public IReadOnlyCollection<string> RoutingKeys => [.. _routingKeyToType.Keys];
 }

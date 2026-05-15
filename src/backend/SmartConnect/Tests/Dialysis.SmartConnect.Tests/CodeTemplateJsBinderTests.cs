@@ -117,6 +117,6 @@ public sealed class CodeTemplateJsBinderTests
             CodeTemplateContext context,
             CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<CodeTemplate>>(
-                templates.Where(t => t.Contexts.Contains(context)).ToList());
+                [.. templates.Where(t => t.Contexts.Contains(context))]);
     }
 }

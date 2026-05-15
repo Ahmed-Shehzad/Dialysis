@@ -36,7 +36,7 @@ internal sealed class TransponderRoutingSlipStarter(
         var sagaKind = TransponderRoutingSlipPersistenceKind.SagaKind;
         var state = new TransponderRoutingSlipState
         {
-            Itinerary = itinerary.Select(s => new TransponderRoutingSlipActivityRef { Name = s.Name, ArgumentsJson = s.ArgumentsJson }).ToList(),
+            Itinerary = [.. itinerary.Select(s => new TransponderRoutingSlipActivityRef { Name = s.Name, ArgumentsJson = s.ArgumentsJson })],
             CurrentIndex = 0,
             CorrelationId = publishOptions?.CorrelationId,
         };

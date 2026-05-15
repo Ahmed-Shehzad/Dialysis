@@ -17,13 +17,13 @@ public static class SmartConnectSnapshotTranslator
             ObservedAtUtc: message.ObservedAtUtc,
             PatientMrn: message.PatientMrn,
             FillerOrderNumber: message.FillerOrderNumber,
-            Observations: message.Observations.Select(o => new IncomingObservation(
+            Observations: [.. message.Observations.Select(o => new IncomingObservation(
                 MdcCode: o.MdcCode,
                 ContainmentPath: o.ContainmentPath,
                 NumericValue: o.NumericValue,
                 StringValue: o.StringValue,
                 Units: o.Units,
-                ObservedAtUtc: o.ObservedAtUtc)).ToList(),
+                ObservedAtUtc: o.ObservedAtUtc))],
             MessageControlId: message.MessageControlId);
 }
 

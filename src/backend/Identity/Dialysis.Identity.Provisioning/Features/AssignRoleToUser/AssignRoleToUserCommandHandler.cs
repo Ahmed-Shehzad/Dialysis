@@ -48,7 +48,7 @@ public sealed class AssignRoleToUserCommandHandler(
             UserId: user.Id,
             Subject: user.Subject,
             RoleCode: role.Code,
-            Permissions: role.Permissions.ToArray());
+            Permissions: [.. role.Permissions]);
 
         var payload = serializer.Serialize(@event);
         await outbox.EnqueueAsync(new TransponderOutboxEnvelope(

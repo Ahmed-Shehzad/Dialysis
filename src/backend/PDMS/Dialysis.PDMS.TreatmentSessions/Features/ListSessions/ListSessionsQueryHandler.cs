@@ -15,7 +15,7 @@ public sealed class ListSessionsQueryHandler(IDialysisSessionRepository sessions
             ? await sessions.ListActiveAsync(cancellationToken).ConfigureAwait(false)
             : await sessions.ListRecentAsync(time.GetUtcNow().UtcDateTime.AddDays(-7), take, cancellationToken).ConfigureAwait(false);
 
-        return data
+        return [.. data
             .Take(take)
             .Select(s => new DialysisSessionListItem(
                 s.Id,
@@ -24,7 +24,6 @@ public sealed class ListSessionsQueryHandler(IDialysisSessionRepository sessions
                 s.ScheduledStartUtc,
                 s.ActualStartUtc,
                 s.ActualEndUtc,
-                s.MachineId))
-            .ToList();
+                s.MachineId))];
     }
 }

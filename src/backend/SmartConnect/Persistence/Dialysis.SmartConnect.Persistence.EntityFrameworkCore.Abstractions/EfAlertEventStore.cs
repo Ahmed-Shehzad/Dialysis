@@ -41,7 +41,7 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
             .OrderByDescending(e => e.OccurredAtUtc)
             .Take(Math.Clamp(take, 1, 500))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return rows.Select(ToDomain).ToList();
+        return [.. rows.Select(ToDomain)];
     }
 
     public async Task<IReadOnlyList<AlertEvent>> GetForRuleAsync(Guid ruleId, int take, CancellationToken cancellationToken = default)
@@ -51,13 +51,14 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
             .OrderByDescending(e => e.OccurredAtUtc)
             .Take(Math.Clamp(take, 1, 500))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return rows.Select(ToDomain).ToList();
+        return [.. rows.Select(ToDomain)];
     }
 
     public async Task<int> DeleteOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken = default)
     {
         var rows = await db.AlertEvents.Where(e => e.OccurredAtUtc < cutoffUtc).ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (rows.Count == 0) return 0;
+        if (rows.Count == 0)
+            return 0;
         db.AlertEvents.RemoveRange(rows);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return rows.Count;

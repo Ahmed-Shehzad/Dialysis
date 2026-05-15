@@ -42,8 +42,10 @@ public sealed class Encounter : AggregateRoot<Guid>
         DateTime startedAtUtc,
         Guid? appointmentId = null)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (providerId == Guid.Empty) throw new ArgumentException("Provider required.", nameof(providerId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (providerId == Guid.Empty)
+            throw new ArgumentException("Provider required.", nameof(providerId));
         ArgumentException.ThrowIfNullOrWhiteSpace(encounterClassCode);
 
         var encounter = new Encounter(id)
@@ -89,7 +91,8 @@ public sealed class Encounter : AggregateRoot<Guid>
 
     public void Close(DateTime closedAtUtc)
     {
-        if (Status == EncounterStatus.Finished) return;
+        if (Status == EncounterStatus.Finished)
+            return;
         if (Status == EncounterStatus.Cancelled)
             throw new InvalidOperationException("Cannot close a cancelled encounter.");
         if (_diagnoses.Count == 0)
@@ -106,8 +109,8 @@ public sealed class Encounter : AggregateRoot<Guid>
             PatientId: PatientId,
             ProviderId: ProviderId,
             ClosedAtUtc: closedAtUtc,
-            DiagnosisIcd10Codes: _diagnoses.Select(d => d.Icd10Code).ToArray(),
-            ProcedureCptCodes: _procedures.Select(p => p.CptCode).ToArray()));
+            DiagnosisIcd10Codes: [.. _diagnoses.Select(d => d.Icd10Code)],
+            ProcedureCptCodes: [.. _procedures.Select(p => p.CptCode)]));
     }
 
     public void Cancel()

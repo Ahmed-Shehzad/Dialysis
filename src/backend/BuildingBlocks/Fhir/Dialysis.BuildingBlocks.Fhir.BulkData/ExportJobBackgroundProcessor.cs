@@ -50,7 +50,7 @@ internal sealed class ExportJobBackgroundProcessor(
         await store.UpdateAsync(inProgress, cancellationToken).ConfigureAwait(false);
 
         var types = job.ResourceTypes.Count == 0
-            ? binder.SupportedResourceTypes.ToArray()
+            ? [.. binder.SupportedResourceTypes]
             : job.ResourceTypes;
 
         var outputs = new List<ExportJobOutput>(types.Count);

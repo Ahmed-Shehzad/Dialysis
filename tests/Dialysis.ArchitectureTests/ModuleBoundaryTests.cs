@@ -12,22 +12,22 @@ namespace Dialysis.ArchitectureTests;
 /// </summary>
 public sealed class ModuleBoundaryTests
 {
-/*
-    private static readonly string[] _allowedSharedNamespaceRoots =
-    [
-        "Dialysis.DomainDrivenDesign",
-        "Dialysis.BuildingBlocks",
-        "Dialysis.CQRS",
-        "Dialysis.Module.Contracts",
-        "Dialysis.Module.Hosting",
-        "System",
-        "Microsoft",
-        "Asp.Versioning",
-        "OpenTelemetry",
-        "Npgsql",
-        "Polly",
-    ];
-*/
+    /*
+        private static readonly string[] _allowedSharedNamespaceRoots =
+        [
+            "Dialysis.DomainDrivenDesign",
+            "Dialysis.BuildingBlocks",
+            "Dialysis.CQRS",
+            "Dialysis.Module.Contracts",
+            "Dialysis.Module.Hosting",
+            "System",
+            "Microsoft",
+            "Asp.Versioning",
+            "OpenTelemetry",
+            "Npgsql",
+            "Polly",
+        ];
+    */
 
     /// <summary>
     /// No project under <c>Dialysis.EHR.*</c> may reference any non-Contracts assembly of <c>Dialysis.PDMS.*</c>.
@@ -86,9 +86,12 @@ public sealed class ModuleBoundaryTests
             var violations = referenced
                 .Where(r =>
                 {
-                    if (r.Name is null) return false;
-                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name is null)
+                        return false;
+                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal))
+                        return true;
                     return false;
                 })
                 .Select(r => $"{asm.GetName().Name} -> {r.Name}")
@@ -112,10 +115,14 @@ public sealed class ModuleBoundaryTests
             var violations = referenced
                 .Where(r =>
                 {
-                    if (r.Name is null) return false;
-                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name is null)
+                        return false;
+                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal))
+                        return true;
                     return false;
                 })
                 .Select(r => $"{asm.GetName().Name} -> {r.Name}")
@@ -139,11 +146,16 @@ public sealed class ModuleBoundaryTests
             var violations = referenced
                 .Where(r =>
                 {
-                    if (r.Name is null) return false;
-                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.Identity.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.Identity.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name is null)
+                        return false;
+                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.Identity.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.Identity.Contracts", StringComparison.Ordinal))
+                        return true;
                     return false;
                 })
                 .Select(r => $"{asm.GetName().Name} -> {r.Name}")
@@ -168,12 +180,18 @@ public sealed class ModuleBoundaryTests
             var violations = referenced
                 .Where(r =>
                 {
-                    if (r.Name is null) return false;
-                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.Identity.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.Identity.Contracts", StringComparison.Ordinal)) return true;
-                    if (r.Name.StartsWith("Dialysis.SmartConnect.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.SmartConnect.Contracts", StringComparison.Ordinal)) return true;
+                    if (r.Name is null)
+                        return false;
+                    if (r.Name.StartsWith("Dialysis.EHR.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.EHR.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.PDMS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.PDMS.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.HIS.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.HIS.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.Identity.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.Identity.Contracts", StringComparison.Ordinal))
+                        return true;
+                    if (r.Name.StartsWith("Dialysis.SmartConnect.", StringComparison.Ordinal) && !r.Name.Equals("Dialysis.SmartConnect.Contracts", StringComparison.Ordinal))
+                        return true;
                     return false;
                 })
                 .Select(r => $"{asm.GetName().Name} -> {r.Name}")
@@ -254,18 +272,19 @@ public sealed class ModuleBoundaryTests
         var baseDir = AppContext.BaseDirectory;
         foreach (var dll in Directory.EnumerateFiles(baseDir, $"{prefix}*.dll"))
         {
-            try { Assembly.LoadFrom(dll); } catch { /* best effort */ }
+            try
+            { Assembly.LoadFrom(dll); }
+            catch { /* best effort */ }
         }
-        return AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => a.GetName().Name is { } n && n.StartsWith(prefix, StringComparison.Ordinal))
-            .ToList();
+        return [.. AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name is { } n && n.StartsWith(prefix, StringComparison.Ordinal))];
     }
 
     private static Assembly LoadByName(string assemblyName)
     {
         var match = AppDomain.CurrentDomain.GetAssemblies()
             .FirstOrDefault(a => string.Equals(a.GetName().Name, assemblyName, StringComparison.Ordinal));
-        if (match is not null) return match;
+        if (match is not null)
+            return match;
 
         var dll = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.dll");
         return Assembly.LoadFrom(dll);

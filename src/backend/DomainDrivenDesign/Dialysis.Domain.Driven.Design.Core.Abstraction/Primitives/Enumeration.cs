@@ -62,10 +62,9 @@ public abstract class Enumeration : IComparable<Enumeration>, IEqualityOperators
     /// </summary>
     public static IReadOnlyList<T> GetAll<T>()
         where T : Enumeration =>
-        typeof(T)
+        [.. typeof(T)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
             .Where(f => f.FieldType == typeof(T))
             .Select(f => f.GetValue(null))
-            .Cast<T>()
-            .ToList();
+            .Cast<T>()];
 }

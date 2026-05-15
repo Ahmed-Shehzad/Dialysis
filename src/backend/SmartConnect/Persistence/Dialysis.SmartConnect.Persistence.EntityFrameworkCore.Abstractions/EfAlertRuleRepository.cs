@@ -16,7 +16,7 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
     public async Task<IReadOnlyList<AlertRule>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var rows = await db.AlertRules.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
-        return rows.Select(ToDomain).ToList();
+        return [.. rows.Select(ToDomain)];
     }
 
     public async Task<AlertRule?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -31,7 +31,7 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
         var rows = await db.AlertRules.AsNoTracking()
             .Where(r => r.Enabled)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        return rows.Select(ToDomain).ToList();
+        return [.. rows.Select(ToDomain)];
     }
 
     public async Task UpsertAsync(AlertRule rule, CancellationToken cancellationToken = default)
@@ -79,7 +79,8 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var existing = await db.AlertRules.FirstOrDefaultAsync(r => r.Id == id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return;
+        if (existing is null)
+            return;
         db.AlertRules.Remove(existing);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

@@ -47,11 +47,14 @@ public sealed class Charge : AggregateRoot<Guid>
         IReadOnlyList<string> diagnosisPointerIcd10Codes,
         Money billedAmount)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (encounterId == Guid.Empty) throw new ArgumentException("Encounter required.", nameof(encounterId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (encounterId == Guid.Empty)
+            throw new ArgumentException("Encounter required.", nameof(encounterId));
         ArgumentException.ThrowIfNullOrWhiteSpace(cptCode);
         ArgumentNullException.ThrowIfNull(billedAmount);
-        if (billedAmount.Amount < 0) throw new ArgumentException("Billed amount must be non-negative.", nameof(billedAmount));
+        if (billedAmount.Amount < 0)
+            throw new ArgumentException("Billed amount must be non-negative.", nameof(billedAmount));
         if (diagnosisPointerIcd10Codes is null || diagnosisPointerIcd10Codes.Count == 0)
             throw new ArgumentException("At least one diagnosis pointer is required.", nameof(diagnosisPointerIcd10Codes));
 
@@ -73,7 +76,7 @@ public sealed class Charge : AggregateRoot<Guid>
             PatientId: patientId,
             EncounterId: encounterId,
             CptCode: charge.CptCode,
-            DiagnosisPointerIcd10Codes: charge._diagnosisPointers.ToArray(),
+            DiagnosisPointerIcd10Codes: [.. charge._diagnosisPointers],
             BilledAmount: billedAmount.Amount,
             CurrencyCode: billedAmount.CurrencyCode));
 
@@ -82,8 +85,10 @@ public sealed class Charge : AggregateRoot<Guid>
 
     public void AssignToClaim(Guid claimId)
     {
-        if (Status != ChargeStatus.Captured) throw new InvalidOperationException($"Cannot assign charge in status {Status}.");
-        if (claimId == Guid.Empty) throw new ArgumentException("Claim required.", nameof(claimId));
+        if (Status != ChargeStatus.Captured)
+            throw new InvalidOperationException($"Cannot assign charge in status {Status}.");
+        if (claimId == Guid.Empty)
+            throw new ArgumentException("Claim required.", nameof(claimId));
         Status = ChargeStatus.OnClaim;
         AssignedClaimId = claimId;
     }

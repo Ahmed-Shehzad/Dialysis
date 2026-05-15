@@ -9,8 +9,6 @@ public sealed class ListRolesQueryHandler(IRoleDefinitionRepository roles)
     public async Task<IReadOnlyList<RoleSummaryDto>> HandleAsync(ListRolesQuery request, CancellationToken cancellationToken)
     {
         var defs = await roles.ListAsync(cancellationToken).ConfigureAwait(false);
-        return defs
-            .Select(r => new RoleSummaryDto(r.Id, r.Code, r.DisplayName, r.Permissions.ToArray()))
-            .ToList();
+        return [.. defs.Select(r => new RoleSummaryDto(r.Id, r.Code, r.DisplayName, [.. r.Permissions]))];
     }
 }

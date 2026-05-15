@@ -62,7 +62,7 @@ public static class FhirEndpointExtensions
                 new CapabilityStatement.RestComponent
                 {
                     Mode = CapabilityStatement.RestfulCapabilityMode.Server,
-                    Resource = capabilityProvider.DescribeResources().ToList(),
+                    Resource = [.. capabilityProvider.DescribeResources()],
                 },
             ],
         };
