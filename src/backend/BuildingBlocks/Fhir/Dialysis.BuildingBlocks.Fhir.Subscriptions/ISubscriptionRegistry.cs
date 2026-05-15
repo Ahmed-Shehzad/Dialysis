@@ -33,3 +33,13 @@ public interface ISubscriptionNotificationDispatcher
         Hl7.Fhir.Model.Resource? payloadResource,
         CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// A single-channel dispatcher. The composite dispatcher resolves all registered channel
+/// dispatchers and routes each notification to the one whose <see cref="Channel"/> matches
+/// the subscription's channel type.
+/// </summary>
+public interface ISubscriptionChannelDispatcher : ISubscriptionNotificationDispatcher
+{
+    SubscriptionChannelType Channel { get; }
+}

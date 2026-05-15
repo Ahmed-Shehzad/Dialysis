@@ -23,6 +23,7 @@ public sealed class EhrVitalSignObservationFeeder(IVitalSignRepository readings)
             yield return new Observation
             {
                 Id = reading.Id.ToString(),
+                Meta = new Meta { LastUpdated = new DateTimeOffset(DateTime.SpecifyKind(reading.ObservedAtUtc, DateTimeKind.Utc)) },
                 Status = ObservationStatus.Final,
                 Subject = new ResourceReference($"Patient/{reading.PatientId}"),
                 Encounter = reading.EncounterId is null ? null : new ResourceReference($"Encounter/{reading.EncounterId}"),

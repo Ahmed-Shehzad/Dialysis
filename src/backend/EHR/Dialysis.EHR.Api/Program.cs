@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.ClinicalNotes;
@@ -44,8 +45,11 @@ var enableEhrDemoSeed = builder.Configuration.GetValue("Ehr:Demo:Enabled", false
 var enableEhrRegistrationSim = builder.Configuration.GetValue("Ehr:Demo:RegistrationSimulator", false);
 var enableEhrBulkDataExport = builder.Configuration.GetValue("Ehr:Fhir:BulkData:Enabled", false);
 var enableEhrSmartOnFhir = builder.Configuration.GetValue("Ehr:Fhir:Smart:Enabled", false);
+var enableEhrSubscriptions = builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Enabled", false);
 var ehrBulkDataExportScope = builder.Configuration["Ehr:Fhir:BulkData:RequireScope"]
     ?? (enableEhrSmartOnFhir ? "system/*.read" : null);
+var ehrSubscriptionsScope = builder.Configuration["Ehr:Fhir:Subscriptions:RequireScope"]
+    ?? (enableEhrSmartOnFhir ? "user/*.write" : null);
 
 builder.Services.AddElectronicHealthRecord(
     builder.Configuration,
@@ -58,6 +62,8 @@ builder.Services.AddElectronicHealthRecord(
     enableFhirBulkDataPersistence: enableEhrBulkDataExport,
     enableFhirBulkDataExport: enableEhrBulkDataExport,
     enableFhirSmartOnFhir: enableEhrSmartOnFhir,
+    enableFhirSubscriptions: enableEhrSubscriptions,
+    enableFhirSubscriptionsPersistence: enableEhrSubscriptions,
     enableDemoSeed: enableEhrDemoSeed,
     enableRegistrationSimulator: enableEhrRegistrationSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
@@ -74,6 +80,8 @@ builder.Services.AddElectronicHealthRecord(
             sub.Listen<PrescriptionOrderedIntegrationEvent>();
             sub.Listen<LabOrderPlacedIntegrationEvent>();
             sub.Listen<ClaimSubmittedIntegrationEvent>();
+            if (enableEhrSubscriptions)
+                sub.Listen<LabResultReceivedIntegrationEvent>();
         }));
 
 builder.Services.AddControllers();
@@ -81,6 +89,8 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 app.UseModuleHost();
+if (enableEhrSubscriptions)
+    app.UseWebSockets();
 app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
@@ -91,6 +101,9 @@ if (enableEhrSmartOnFhir)
 
 if (enableEhrBulkDataExport)
     app.MapFhirBulkDataEndpoints(requireScope: ehrBulkDataExportScope);
+
+if (enableEhrSubscriptions)
+    app.MapFhirSubscriptionEndpoints(requireScope: ehrSubscriptionsScope);
 
 await app.RunAsync().ConfigureAwait(false);
 

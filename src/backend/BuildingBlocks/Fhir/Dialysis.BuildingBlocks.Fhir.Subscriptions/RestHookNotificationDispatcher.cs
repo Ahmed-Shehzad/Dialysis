@@ -16,9 +16,11 @@ public sealed class RestHookNotificationDispatcher(
     IHttpClientFactory httpClientFactory,
     FhirJsonSerializerProvider serializer,
     ISubscriptionRegistry registry,
-    ILogger<RestHookNotificationDispatcher> logger) : ISubscriptionNotificationDispatcher
+    ILogger<RestHookNotificationDispatcher> logger) : ISubscriptionChannelDispatcher
 {
     private const int MaxConsecutiveFailures = 5;
+
+    public SubscriptionChannelType Channel => SubscriptionChannelType.RestHook;
 
     public async ValueTask DispatchAsync(
         FhirSubscriptionRegistration subscription,
@@ -29,7 +31,7 @@ public sealed class RestHookNotificationDispatcher(
         if (subscription.ChannelType != SubscriptionChannelType.RestHook)
             return;
 
-        var bundle = BuildNotificationBundle(subscription, payloadResource);
+        var bundle = SubscriptionNotificationBundleFactory.Build(subscription, payloadResource);
         var json = serializer.Serialize(bundle);
         var body = Encoding.UTF8.GetBytes(json);
 
@@ -76,24 +78,5 @@ public sealed class RestHookNotificationDispatcher(
         var nextFailureCount = subscription.ConsecutiveFailures + 1;
         var nextStatus = nextFailureCount >= MaxConsecutiveFailures ? SubscriptionStatus.Error : subscription.Status;
         return registry.UpdateStatusAsync(subscription.Id, nextStatus, nextFailureCount, cancellationToken).AsTask();
-    }
-
-    private static Bundle BuildNotificationBundle(FhirSubscriptionRegistration subscription, Resource? payload)
-    {
-        var bundle = new Bundle
-        {
-            Type = Bundle.BundleType.History,
-            Timestamp = DateTimeOffset.UtcNow,
-        };
-        bundle.Meta = new Meta
-        {
-            Profile = ["http://hl7.org/fhir/uv/subscriptions-backport/StructureDefinition/backport-subscription-notification"],
-        };
-        if (payload is not null)
-        {
-            bundle.Entry.Add(new Bundle.EntryComponent { Resource = payload });
-        }
-        bundle.Identifier = new Identifier(system: "urn:dialysis:fhir:subscription", value: subscription.Id);
-        return bundle;
     }
 }

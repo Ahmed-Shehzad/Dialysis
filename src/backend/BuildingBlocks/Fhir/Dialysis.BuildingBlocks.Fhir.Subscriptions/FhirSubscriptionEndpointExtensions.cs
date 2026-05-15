@@ -1,3 +1,5 @@
+using System.Net.WebSockets;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +30,8 @@ public static class FhirSubscriptionEndpointExtensions
             endpoints.MapDelete(prefix + "/Subscription/{id}", DeleteAsync),
             endpoints.MapGet(prefix + "/SubscriptionTopic", ListTopicsAsync),
             endpoints.MapGet(prefix + "/SubscriptionTopic/{name}", GetTopicAsync),
+            endpoints.MapGet(prefix + "/subscription/sse", SseAsync),
+            endpoints.MapGet(prefix + "/subscription/websocket", WebSocketAsync),
         };
 
         if (!string.IsNullOrWhiteSpace(requireScope))
@@ -124,10 +128,171 @@ public static class FhirSubscriptionEndpointExtensions
         await context.Response.WriteAsJsonAsync(match, context.RequestAborted).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// SSE channel: <c>GET {prefix}/subscription/sse?subscription={id}</c>. Holds the
+    /// <c>text/event-stream</c> response open and binds it to the subscription so the SSE channel
+    /// dispatcher can push notification Bundles. Blocks until the client disconnects.
+    /// </summary>
+    private static async Task SseAsync(HttpContext context)
+    {
+        var subscriptionId = context.Request.Query["subscription"].ToString();
+        if (string.IsNullOrWhiteSpace(subscriptionId))
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        var registry = context.RequestServices.GetRequiredService<ISubscriptionRegistry>();
+        var registration = await registry.GetAsync(subscriptionId, context.RequestAborted).ConfigureAwait(false);
+        if (registration is null)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        var connections = context.RequestServices.GetRequiredService<FhirSubscriptionConnectionManager>();
+        var cancellationToken = context.RequestAborted;
+        var response = context.Response;
+        response.ContentType = "text/event-stream; charset=utf-8";
+        response.Headers.CacheControl = "no-cache, no-transform";
+        response.Headers.Append("X-Accel-Buffering", "no");
+        await response.StartAsync(cancellationToken).ConfigureAwait(false);
+
+        var sink = new ResponseStreamSink(response.Body);
+        using (connections.Register(subscriptionId, sink))
+        {
+            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (cancellationToken.Register(static s => ((TaskCompletionSource)s!).TrySetResult(), tcs))
+            {
+                try
+                {
+                    await sink.SendAsync(Encoding.UTF8.GetBytes(": fhir-subscription\n\n"), cancellationToken).ConfigureAwait(false);
+                    await tcs.Task.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // client disconnected
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// WebSocket channel: <c>GET {prefix}/subscription/websocket</c>. Implements the Backport IG
+    /// text handshake — the client sends <c>bind &lt;subscriptionId&gt;</c>, the server replies
+    /// <c>bound &lt;id&gt;</c> and pushes notification Bundles; <c>ping</c>→<c>pong</c> keep-alive;
+    /// <c>unbind</c> or socket close ends the binding.
+    /// </summary>
+    private static async Task WebSocketAsync(HttpContext context)
+    {
+        if (!context.WebSockets.IsWebSocketRequest)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        var registry = context.RequestServices.GetRequiredService<ISubscriptionRegistry>();
+        var connections = context.RequestServices.GetRequiredService<FhirSubscriptionConnectionManager>();
+        using var socket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+        var cancellationToken = context.RequestAborted;
+        var sink = new WebSocketSink(socket);
+        IDisposable? binding = null;
+        var buffer = new byte[4096];
+
+        try
+        {
+            while (socket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
+            {
+                var result = await socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+                if (result.MessageType == WebSocketMessageType.Close)
+                    break;
+                if (result.MessageType != WebSocketMessageType.Text)
+                    continue;
+
+                var message = Encoding.UTF8.GetString(buffer, 0, result.Count).Trim();
+                if (message.StartsWith("bind ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var subscriptionId = message[5..].Trim();
+                    var registration = await registry.GetAsync(subscriptionId, cancellationToken).ConfigureAwait(false);
+                    if (registration is null)
+                    {
+                        await sink.SendTextAsync($"error unknown-subscription {subscriptionId}", cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+                    binding?.Dispose();
+                    binding = connections.Register(subscriptionId, sink);
+                    await sink.SendTextAsync($"bound {subscriptionId}", cancellationToken).ConfigureAwait(false);
+                }
+                else if (message.Equals("ping", StringComparison.OrdinalIgnoreCase))
+                {
+                    await sink.SendTextAsync("pong", cancellationToken).ConfigureAwait(false);
+                }
+                else if (message.Equals("unbind", StringComparison.OrdinalIgnoreCase))
+                {
+                    binding?.Dispose();
+                    binding = null;
+                    await sink.SendTextAsync("unbound", cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // client or host disconnected
+        }
+        catch (WebSocketException)
+        {
+            // abrupt client disconnect
+        }
+        finally
+        {
+            binding?.Dispose();
+        }
+    }
+
     private sealed record SubscriptionCreateRequest(
         string Topic,
         string ChannelType,
         string ChannelEndpoint,
         string? Secret,
         Dictionary<string, string>? Filters);
+
+    private sealed class ResponseStreamSink(Stream body) : IFhirSubscriptionSink
+    {
+        private readonly SemaphoreSlim _write = new(1, 1);
+
+        public async ValueTask SendAsync(ReadOnlyMemory<byte> payload, CancellationToken cancellationToken)
+        {
+            await _write.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await body.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
+                await body.FlushAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _write.Release();
+            }
+        }
+    }
+
+    private sealed class WebSocketSink(WebSocket socket) : IFhirSubscriptionSink
+    {
+        private readonly SemaphoreSlim _write = new(1, 1);
+
+        public async ValueTask SendAsync(ReadOnlyMemory<byte> payload, CancellationToken cancellationToken)
+        {
+            await _write.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await socket.SendAsync(payload, WebSocketMessageType.Text, endOfMessage: true, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _write.Release();
+            }
+        }
+
+        public ValueTask SendTextAsync(string text, CancellationToken cancellationToken)
+            => SendAsync(Encoding.UTF8.GetBytes(text), cancellationToken);
+    }
 }
