@@ -24,7 +24,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
         var templates = await db.CodeTemplates.AsNoTracking()
             .Where(t => libIds.Contains(t.LibraryId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        var grouped = templates.GroupBy(t => t.LibraryId).ToDictionary(g => g.Key, g => (IReadOnlyList<CodeTemplateEntity>)[.. g.OrderBy(t => t.Position)]);
+        var grouped = templates.GroupBy(t => t.LibraryId).ToDictionary(g => g.Key, g => [.. g.OrderBy(t => t.Position)]);
         return [.. libs.Select(l => ToDomain(l, grouped.TryGetValue(l.Id, out var ts) ? ts : []))];
     }
 
