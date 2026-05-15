@@ -19,40 +19,42 @@ namespace Dialysis.Identity.Composition;
 
 public static class IdentityCompositionExtensions
 {
-    /// <summary>
-    /// Wires the Identity module's domain services, persistence, CQRS handlers, authorization
-    /// pipeline behaviors, and Transponder transport bootstrap. Cross-cutting (auth, telemetry,
-    /// OpenAPI, etc.) is added separately via <c>AddModuleHost</c>.
-    /// </summary>
-    public static IServiceCollection AddIdentity(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        Action<DbContextOptionsBuilder>? configurePersistence = null,
-        bool enableOutboxRelay = false,
-        Action<IServiceCollection>? configureTransponderTransport = null)
+    extension(IServiceCollection services)
     {
-        services.AddIdentityPersistence(configurePersistence);
-
-        services.AddTransponder(_ => { });
-        configureTransponderTransport?.Invoke(services);
-
-        services.AddCqrs(c =>
+        /// <summary>
+        /// Wires the Identity module's domain services, persistence, CQRS handlers, authorization
+        /// pipeline behaviors, and Transponder transport bootstrap. Cross-cutting (auth, telemetry,
+        /// OpenAPI, etc.) is added separately via <c>AddModuleHost</c>.
+        /// </summary>
+        public IServiceCollection AddIdentity(
+            IConfiguration configuration,
+            Action<DbContextOptionsBuilder>? configurePersistence = null,
+            bool enableOutboxRelay = false,
+            Action<IServiceCollection>? configureTransponderTransport = null)
         {
-            c.AddFromAssembliesOf(typeof(IdentityProvisioningMarker));
+            services.AddIdentityPersistence(configurePersistence);
 
-            c.AddCommandBehavior<ProvisionUserCommand, Guid, AuthorizationPipelineBehavior<ProvisionUserCommand, Guid>>();
-            c.AddCommandBehavior<DeactivateUserCommand, Unit, AuthorizationPipelineBehavior<DeactivateUserCommand, Unit>>();
-            c.AddCommandBehavior<DefineRoleCommand, Guid, AuthorizationPipelineBehavior<DefineRoleCommand, Guid>>();
-            c.AddCommandBehavior<AssignRoleToUserCommand, Unit, AuthorizationPipelineBehavior<AssignRoleToUserCommand, Unit>>();
-            c.AddCommandBehavior<RevokeRoleFromUserCommand, Unit, AuthorizationPipelineBehavior<RevokeRoleFromUserCommand, Unit>>();
+            services.AddTransponder(_ => { });
+            configureTransponderTransport?.Invoke(services);
 
-            c.AddQueryBehavior<ListRolesQuery, IReadOnlyList<RoleSummaryDto>, AuthorizationPipelineBehavior<ListRolesQuery, IReadOnlyList<RoleSummaryDto>>>();
-            c.AddQueryBehavior<ListUserPermissionsQuery, UserPermissionsDto?, AuthorizationPipelineBehavior<ListUserPermissionsQuery, UserPermissionsDto?>>();
-        });
+            services.AddCqrs(c =>
+            {
+                c.AddFromAssembliesOf(typeof(IdentityProvisioningMarker));
 
-        if (enableOutboxRelay)
-            services.AddTransponderOutboxRelay<IdentityDbContext>();
+                c.AddCommandBehavior<ProvisionUserCommand, Guid, AuthorizationPipelineBehavior<ProvisionUserCommand, Guid>>();
+                c.AddCommandBehavior<DeactivateUserCommand, Unit, AuthorizationPipelineBehavior<DeactivateUserCommand, Unit>>();
+                c.AddCommandBehavior<DefineRoleCommand, Guid, AuthorizationPipelineBehavior<DefineRoleCommand, Guid>>();
+                c.AddCommandBehavior<AssignRoleToUserCommand, Unit, AuthorizationPipelineBehavior<AssignRoleToUserCommand, Unit>>();
+                c.AddCommandBehavior<RevokeRoleFromUserCommand, Unit, AuthorizationPipelineBehavior<RevokeRoleFromUserCommand, Unit>>();
 
-        return services;
+                c.AddQueryBehavior<ListRolesQuery, IReadOnlyList<RoleSummaryDto>, AuthorizationPipelineBehavior<ListRolesQuery, IReadOnlyList<RoleSummaryDto>>>();
+                c.AddQueryBehavior<ListUserPermissionsQuery, UserPermissionsDto?, AuthorizationPipelineBehavior<ListUserPermissionsQuery, UserPermissionsDto?>>();
+            });
+
+            if (enableOutboxRelay)
+                services.AddTransponderOutboxRelay<IdentityDbContext>();
+
+            return services;
+        }
     }
 }

@@ -10,25 +10,28 @@ namespace Dialysis.DomainDrivenDesign.DomainServices;
 /// </summary>
 public static class DomainServiceRegistry
 {
-    public static IServiceCollection AddDomainServices(this IServiceCollection services, Assembly assembly)
+    extension(IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(assembly);
-
-        var implementations = assembly.GetTypes()
-            .Where(t => t is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false })
-            .Where(t => typeof(IDomainService).IsAssignableFrom(t));
-
-        foreach (var implementation in implementations)
+        public IServiceCollection AddDomainServices(Assembly assembly)
         {
-            services.TryAddScoped(implementation);
-            foreach (var contract in implementation.GetInterfaces()
-                         .Where(i => typeof(IDomainService).IsAssignableFrom(i) && i != typeof(IDomainService)))
-            {
-                services.TryAddEnumerable(ServiceDescriptor.Scoped(contract, implementation));
-            }
-        }
+            ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(assembly);
 
-        return services;
+            var implementations = assembly.GetTypes()
+                .Where(t => t is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false })
+                .Where(t => typeof(IDomainService).IsAssignableFrom(t));
+
+            foreach (var implementation in implementations)
+            {
+                services.TryAddScoped(implementation);
+                foreach (var contract in implementation.GetInterfaces()
+                             .Where(i => typeof(IDomainService).IsAssignableFrom(i) && i != typeof(IDomainService)))
+                {
+                    services.TryAddEnumerable(ServiceDescriptor.Scoped(contract, implementation));
+                }
+            }
+
+            return services;
+        }
     }
 }

@@ -6,11 +6,14 @@ namespace Dialysis.SmartConnect.Inbound.DatabaseReader;
 /// <summary>DI registration for <see cref="DatabaseReaderSourceConnector"/>.</summary>
 public static class DatabaseReaderServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers <see cref="DatabaseReaderSourceConnector"/> with the source-connector registry.
-    /// Operators add instances under <c>SmartConnect:SourceConnectors:Instances</c> with
-    /// <c>Kind = "database-reader"</c>.
-    /// </summary>
-    public static IServiceCollection AddSmartConnectDatabaseReader(this IServiceCollection services) =>
-        services.AddSourceConnector<DatabaseReaderSourceConnector>();
+    extension(IServiceCollection services)
+    {
+        /// <summary>
+        /// Registers <see cref="DatabaseReaderSourceConnector"/> with the source-connector registry.
+        /// Operators add instances under <c>SmartConnect:SourceConnectors:Instances</c> with
+        /// <c>Kind = "database-reader"</c>.
+        /// </summary>
+        public IServiceCollection AddSmartConnectDatabaseReader() =>
+            services.AddSourceConnector<DatabaseReaderSourceConnector>();
+    }
 }

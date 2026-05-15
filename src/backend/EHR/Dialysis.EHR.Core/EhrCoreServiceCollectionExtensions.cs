@@ -8,9 +8,12 @@ namespace Dialysis.EHR.Core;
 /// </summary>
 public static class EhrCoreServiceCollectionExtensions
 {
-    public static IServiceCollection AddEhrCore(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.TryAddSingleton<IEhrClock, EhrClock>();
-        return services;
+        public IServiceCollection AddEhrCore()
+        {
+            services.TryAddSingleton<IEhrClock, EhrClock>();
+            return services;
+        }
     }
 }

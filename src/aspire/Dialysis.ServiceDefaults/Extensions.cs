@@ -14,43 +14,48 @@ namespace Dialysis.ServiceDefaults;
 /// </summary>
 public static class Extensions
 {
-    /// <summary>
-    /// Registers service discovery and applies standard resilience + discovery to every named
-    /// <see cref="System.Net.Http.HttpClient"/>. Safe to call alongside <c>AddModuleHost</c>;
-    /// it does not touch OTel, health checks, or authentication.
-    /// </summary>
-    public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder)
-        where TBuilder : IHostApplicationBuilder
+    extension<TBuilder>(TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        builder.Services.AddServiceDiscovery();
-
-        builder.Services.ConfigureHttpClientDefaults(http =>
+        /// <summary>
+        /// Registers service discovery and applies standard resilience + discovery to every named
+        /// <see cref="System.Net.Http.HttpClient"/>. Safe to call alongside <c>AddModuleHost</c>;
+        /// it does not touch OTel, health checks, or authentication.
+        /// </summary>
+        public TBuilder AddServiceDefaults()
         {
-            http.AddStandardResilienceHandler();
-            http.AddServiceDiscovery();
-        });
+            ArgumentNullException.ThrowIfNull(builder);
 
-        return builder;
+            builder.Services.AddServiceDiscovery();
+
+            builder.Services.ConfigureHttpClientDefaults(http =>
+            {
+                http.AddStandardResilienceHandler();
+                http.AddServiceDiscovery();
+            });
+
+            return builder;
+        }
     }
 
-    /// <summary>
-    /// Maps the lightweight liveness probe (<c>/alive</c>) used by the Aspire dashboard.
-    /// The richer per-module readiness probe is mapped by <c>UseModuleHost()</c>; this only
-    /// adds the "process is up" probe that has no DI / DB dependencies.
-    /// </summary>
-    public static WebApplication MapDefaultEndpoints(this WebApplication app)
+    extension(WebApplication app)
     {
-        ArgumentNullException.ThrowIfNull(app);
-
-        if (app.Environment.IsDevelopment())
+        /// <summary>
+        /// Maps the lightweight liveness probe (<c>/alive</c>) used by the Aspire dashboard.
+        /// The richer per-module readiness probe is mapped by <c>UseModuleHost()</c>; this only
+        /// adds the "process is up" probe that has no DI / DB dependencies.
+        /// </summary>
+        public WebApplication MapDefaultEndpoints()
         {
-            app.MapGet("/alive", () => Results.Ok(new { status = "alive" }))
-                .AllowAnonymous()
-                .WithName("aspire-alive");
-        }
+            ArgumentNullException.ThrowIfNull(app);
 
-        return app;
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapGet("/alive", () => Results.Ok(new { status = "alive" }))
+                    .AllowAnonymous()
+                    .WithName("aspire-alive");
+            }
+
+            return app;
+        }
     }
 }

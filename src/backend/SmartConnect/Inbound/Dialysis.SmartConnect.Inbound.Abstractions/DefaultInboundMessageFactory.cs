@@ -38,23 +38,25 @@ public sealed class DefaultInboundMessageFactory(TimeProvider? time = null) : II
 /// <summary>DI registration for default inbound message factory and transport.</summary>
 public static class InboundAbstractionsServiceCollectionExtensions
 {
-    public static IServiceCollection AddDefaultInboundMessageFactory(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
-        services.AddSingleton<IInboundMessageFactory>(sp =>
-            new DefaultInboundMessageFactory(sp.GetService<TimeProvider>()));
-        return services;
-    }
-
-    /// <summary>
-    /// Registers <see cref="IInboundTransport"/> with optional preflight using <see cref="IIntegrationFlowRepository"/> when registered.
-    /// </summary>
-    public static IServiceCollection AddSmartConnectInboundTransport(this IServiceCollection services)
-    {
-        services.AddScoped<IInboundTransport>(sp =>
-            new InboundTransport(
-                sp.GetRequiredService<IFlowRuntime>(),
-                sp.GetService<IIntegrationFlowRepository>()));
-        return services;
+        public IServiceCollection AddDefaultInboundMessageFactory()
+        {
+            services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+            services.AddSingleton<IInboundMessageFactory>(sp =>
+                new DefaultInboundMessageFactory(sp.GetService<TimeProvider>()));
+            return services;
+        }
+        /// <summary>
+        /// Registers <see cref="IInboundTransport"/> with optional preflight using <see cref="IIntegrationFlowRepository"/> when registered.
+        /// </summary>
+        public IServiceCollection AddSmartConnectInboundTransport()
+        {
+            services.AddScoped<IInboundTransport>(sp =>
+                new InboundTransport(
+                    sp.GetRequiredService<IFlowRuntime>(),
+                    sp.GetService<IIntegrationFlowRepository>()));
+            return services;
+        }
     }
 }

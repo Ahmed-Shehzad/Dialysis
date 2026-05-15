@@ -21,109 +21,107 @@ namespace Dialysis.HIS.Composition;
 
 public static class HospitalInformationSystemExtensions
 {
-    /// <summary>
-    /// Registers HIS facility-operations bounded contexts (Operations, DataServices, Integration, RaCapabilities),
-    /// EF persistence against PostgreSQL, CQRS via <see cref="HisCqrsServiceCollectionExtensions.AddHisCqrs"/>,
-    /// authorization pipeline behaviors, Transponder bus, and optional outbox relay.
-    /// Clinical concerns (Registration/Scheduling/PatientChart/Portal/ClinicalNotes/Billing) have moved to the EHR module.
-    /// </summary>
-    public static IServiceCollection AddHospitalInformationSystem(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        Action<DbContextOptionsBuilder>? configurePersistence = null,
-        bool enableOutboxRelay = false,
-        bool enableFhirEndpoints = false,
-        bool enableFhirAuditPersistence = false,
-        bool enableFhirBulkDataPersistence = false,
-        bool enableFhirBulkDataExport = false,
-        bool enableFhirSmartOnFhir = false,
-        bool enableFhirSubscriptionsPersistence = false,
-        bool enableFhirSubscriptions = false,
-        Action<FhirBuilder>? configureFhir = null,
-        Action<IServiceCollection>? configureTransponderTransport = null)
+    extension(IServiceCollection services)
     {
-        _ = configuration;
-
-        services.AddHisPersistence(configurePersistence);
-
-        services.AddSingleton(new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)));
-
-        services.AddTransponder(t =>
+        /// <summary>
+        /// Registers HIS facility-operations bounded contexts (Operations, DataServices, Integration, RaCapabilities),
+        /// EF persistence against PostgreSQL, CQRS via <see cref="HisCqrsServiceCollectionExtensions.AddHisCqrs"/>,
+        /// authorization pipeline behaviors, Transponder bus, and optional outbox relay.
+        /// Clinical concerns (Registration/Scheduling/PatientChart/Portal/ClinicalNotes/Billing) have moved to the EHR module.
+        /// </summary>
+        public IServiceCollection AddHospitalInformationSystem(IConfiguration configuration,
+            Action<DbContextOptionsBuilder>? configurePersistence = null,
+            bool enableOutboxRelay = false,
+            bool enableFhirEndpoints = false,
+            bool enableFhirAuditPersistence = false,
+            bool enableFhirBulkDataPersistence = false,
+            bool enableFhirBulkDataExport = false,
+            bool enableFhirSmartOnFhir = false,
+            bool enableFhirSubscriptionsPersistence = false,
+            bool enableFhirSubscriptions = false,
+            Action<FhirBuilder>? configureFhir = null,
+            Action<IServiceCollection>? configureTransponderTransport = null)
         {
+            _ = configuration;
+
+            services.AddHisPersistence(configurePersistence);
+
+            services.AddSingleton(new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)));
+
+            services.AddTransponder(t =>
+            {
+                if (enableFhirSubscriptions)
+                {
+                    t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedSubscriptionBroadcaster>();
+                }
+            });
+            configureTransponderTransport?.Invoke(services);
+
+            services.AddHisCqrs();
+
+            if (enableOutboxRelay)
+                services.AddTransponderOutboxRelay<HisDbContext>();
+
+            if (enableFhirEndpoints)
+            {
+                services.AddFhir(fhir =>
+                {
+                    fhir.UseBaseUrl("/fhir");
+                    fhir.AddReader<Encounter, HisAdmissionEncounterReader>();
+                    configureFhir?.Invoke(fhir);
+                });
+            }
+
+            if (enableFhirAuditPersistence)
+                services.AddFhirAuditEntityFrameworkStore<HisDbContext>();
+            if (enableFhirBulkDataPersistence)
+                services.AddFhirBulkDataEntityFrameworkStore<HisDbContext>();
+            if (enableFhirSubscriptionsPersistence)
+                services.AddFhirSubscriptionsEntityFrameworkStore<HisDbContext>();
+
+            if (enableFhirBulkDataExport)
+            {
+                var storageRoot = configuration["His:Fhir:BulkData:StorageRoot"]
+                                  ?? Path.Combine(Path.GetTempPath(), "dialysis-his-bulk-data");
+                services.AddFhirBulkData(storageRoot);
+                services.AddFhirBulkDataOrchestrator();
+                services.AddFhirBulkDataFeeder<HisPatientStubFeeder, Patient>();
+                services.AddFhirBulkDataFeeder<HisAdmissionEncounterFeeder, Encounter>();
+            }
+
+            if (enableFhirSmartOnFhir)
+            {
+                services.AddFhirSmartOnFhir(configuration.GetSection("His:Fhir:Smart"));
+            }
+
             if (enableFhirSubscriptions)
             {
-                t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedSubscriptionBroadcaster>();
+                services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
+                    Url: PatientAdmittedSubscriptionBroadcaster.TopicUrl,
+                    Title: "Encounter admission/discharge",
+                    Description: "Fires when a patient is admitted to or discharged from a HIS ward.",
+                    FilterParameterNames: ["patient", "ward", "action"])));
             }
-        });
-        configureTransponderTransport?.Invoke(services);
 
-        services.AddHisCqrs();
-
-        if (enableOutboxRelay)
-            services.AddTransponderOutboxRelay<HisDbContext>();
-
-        if (enableFhirEndpoints)
-        {
-            services.AddFhir(fhir =>
-            {
-                fhir.UseBaseUrl("/fhir");
-                fhir.AddReader<Encounter, HisAdmissionEncounterReader>();
-                configureFhir?.Invoke(fhir);
-            });
+            return services;
         }
-
-        if (enableFhirAuditPersistence)
-            services.AddFhirAuditEntityFrameworkStore<HisDbContext>();
-        if (enableFhirBulkDataPersistence)
-            services.AddFhirBulkDataEntityFrameworkStore<HisDbContext>();
-        if (enableFhirSubscriptionsPersistence)
-            services.AddFhirSubscriptionsEntityFrameworkStore<HisDbContext>();
-
-        if (enableFhirBulkDataExport)
+        /// <summary>Applies RabbitMQ as <see cref="ITransponderBus"/> when <paramref name="rabbitConnectionUri"/> is non-empty.</summary>
+        public void AddHisTransponderRabbitMqIfConfigured(string? rabbitConnectionUri,
+            string? queueName = null,
+            string? exchangeName = null)
         {
-            var storageRoot = configuration["His:Fhir:BulkData:StorageRoot"]
-                ?? Path.Combine(Path.GetTempPath(), "dialysis-his-bulk-data");
-            services.AddFhirBulkData(storageRoot);
-            services.AddFhirBulkDataOrchestrator();
-            services.AddFhirBulkDataFeeder<HisPatientStubFeeder, Patient>();
-            services.AddFhirBulkDataFeeder<HisAdmissionEncounterFeeder, Encounter>();
+            if (string.IsNullOrWhiteSpace(rabbitConnectionUri))
+                return;
+
+            services.AddTransponderRabbitMq(
+                o =>
+                {
+                    o.ConnectionUri = rabbitConnectionUri;
+                    if (!string.IsNullOrWhiteSpace(queueName))
+                        o.QueueName = queueName;
+                    if (!string.IsNullOrWhiteSpace(exchangeName))
+                        o.ExchangeName = exchangeName;
+                });
         }
-
-        if (enableFhirSmartOnFhir)
-        {
-            services.AddFhirSmartOnFhir(configuration.GetSection("His:Fhir:Smart"));
-        }
-
-        if (enableFhirSubscriptions)
-        {
-            services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
-                Url: PatientAdmittedSubscriptionBroadcaster.TopicUrl,
-                Title: "Encounter admission/discharge",
-                Description: "Fires when a patient is admitted to or discharged from a HIS ward.",
-                FilterParameterNames: ["patient", "ward", "action"])));
-        }
-
-        return services;
-    }
-
-    /// <summary>Applies RabbitMQ as <see cref="ITransponderBus"/> when <paramref name="rabbitConnectionUri"/> is non-empty.</summary>
-    public static void AddHisTransponderRabbitMqIfConfigured(
-        this IServiceCollection services,
-        string? rabbitConnectionUri,
-        string? queueName = null,
-        string? exchangeName = null)
-    {
-        if (string.IsNullOrWhiteSpace(rabbitConnectionUri))
-            return;
-
-        services.AddTransponderRabbitMq(
-            o =>
-            {
-                o.ConnectionUri = rabbitConnectionUri;
-                if (!string.IsNullOrWhiteSpace(queueName))
-                    o.QueueName = queueName;
-                if (!string.IsNullOrWhiteSpace(exchangeName))
-                    o.ExchangeName = exchangeName;
-            });
     }
 }

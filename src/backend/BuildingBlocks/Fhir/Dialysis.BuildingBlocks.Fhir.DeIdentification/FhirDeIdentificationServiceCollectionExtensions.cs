@@ -5,9 +5,12 @@ namespace Dialysis.BuildingBlocks.Fhir.DeIdentification;
 
 public static class FhirDeIdentificationServiceCollectionExtensions
 {
-    public static IServiceCollection AddFhirDeIdentification(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.TryAddSingleton<IFhirDeIdentifier, SafeHarborDeIdentifier>();
-        return services;
+        public IServiceCollection AddFhirDeIdentification()
+        {
+            services.TryAddSingleton<IFhirDeIdentifier, SafeHarborDeIdentifier>();
+            return services;
+        }
     }
 }

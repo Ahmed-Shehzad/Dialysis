@@ -15,9 +15,10 @@ public sealed class InMemoryAuditEventStore(int capacity = 10_000) : IAuditEvent
     public ValueTask AppendAsync(AuditEvent auditEvent, CancellationToken cancellationToken)
     {
         _events.Enqueue(auditEvent);
-        while (_events.Count > _capacity && _events.TryDequeue(out _)) { }
+        while (_events.Count > _capacity && _events.TryDequeue(out _))
+        { }
         return ValueTask.CompletedTask;
     }
 
-    public IEnumerable<AuditEvent> Snapshot() => _events.ToArray();
+    public IEnumerable<AuditEvent> Snapshot() => [.. _events];
 }

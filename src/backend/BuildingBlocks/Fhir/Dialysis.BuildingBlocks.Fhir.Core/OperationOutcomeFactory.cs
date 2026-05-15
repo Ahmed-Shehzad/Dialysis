@@ -49,13 +49,13 @@ public static class OperationOutcomeFactory
 
     public static OperationOutcome BadRequest(IEnumerable<FhirError> errors) => new()
     {
-        Issue = errors.Select(e => new OperationOutcome.IssueComponent
+        Issue = [.. errors.Select(e => new OperationOutcome.IssueComponent
         {
             Severity = MapSeverity(e.Severity),
             Code = OperationOutcome.IssueType.Invalid,
             Diagnostics = e.Diagnostics,
             Details = new CodeableConcept { Coding = [new Coding(system: null, code: e.Code)], Text = e.Diagnostics },
-        }).ToList(),
+        })],
     };
 
     public static OperationOutcome NotSupported(string reason) => new()

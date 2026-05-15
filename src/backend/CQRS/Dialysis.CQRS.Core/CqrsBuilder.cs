@@ -110,6 +110,6 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
         if (markerTypes.Length == 0)
             return this;
 
-        return AddFromAssemblies(markerTypes.Where(static t => t is not null).Select(static t => t.Assembly).Distinct().ToArray());
+        return AddFromAssemblies([.. markerTypes.Where(static t => t is not null).Select(static t => t.Assembly).Distinct()]);
     }
 }

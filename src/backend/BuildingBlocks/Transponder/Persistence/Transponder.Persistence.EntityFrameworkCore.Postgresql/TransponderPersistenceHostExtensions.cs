@@ -5,15 +5,17 @@ namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore.Po
 
 public static class TransponderPersistenceHostExtensions
 {
-    /// <summary>
-    /// Applies pending EF Core migrations for <see cref="TransponderPersistenceDbContext"/> using the configured schema.
-    /// </summary>
-    public static async Task ApplyTransponderPostgreSqlPersistenceMigrationsAsync(
-        this IServiceProvider services,
-        CancellationToken cancellationToken = default)
+    extension(IServiceProvider services)
     {
-        await using var scope = services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<TransponderPersistenceDbContext>();
-        await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+        /// <summary>
+        /// Applies pending EF Core migrations for <see cref="TransponderPersistenceDbContext"/> using the configured schema.
+        /// </summary>
+        public async Task ApplyTransponderPostgreSqlPersistenceMigrationsAsync(
+            CancellationToken cancellationToken = default)
+        {
+            await using var scope = services.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<TransponderPersistenceDbContext>();
+            await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 }

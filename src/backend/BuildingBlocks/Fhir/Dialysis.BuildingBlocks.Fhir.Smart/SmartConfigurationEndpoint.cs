@@ -9,14 +9,17 @@ namespace Dialysis.BuildingBlocks.Fhir.Smart;
 
 public static class SmartConfigurationEndpoint
 {
-    /// <summary>
-    /// Maps <c>GET /.well-known/smart-configuration</c> with the SMART app launch discovery
-    /// document built from <see cref="SmartOnFhirOptions"/>.
-    /// </summary>
-    public static IEndpointRouteBuilder MapSmartConfigurationEndpoint(this IEndpointRouteBuilder endpoints)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/.well-known/smart-configuration", HandleAsync).AllowAnonymous();
-        return endpoints;
+        /// <summary>
+        /// Maps <c>GET /.well-known/smart-configuration</c> with the SMART app launch discovery
+        /// document built from <see cref="SmartOnFhirOptions"/>.
+        /// </summary>
+        public IEndpointRouteBuilder MapSmartConfigurationEndpoint()
+        {
+            endpoints.MapGet("/.well-known/smart-configuration", HandleAsync).AllowAnonymous();
+            return endpoints;
+        }
     }
 
     private static async Task HandleAsync(HttpContext context)

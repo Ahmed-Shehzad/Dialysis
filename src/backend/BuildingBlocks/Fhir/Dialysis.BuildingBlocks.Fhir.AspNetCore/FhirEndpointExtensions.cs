@@ -12,37 +12,39 @@ namespace Dialysis.BuildingBlocks.Fhir.AspNetCore;
 
 public static class FhirEndpointExtensions
 {
-    /// <summary>
-    /// Wires the FHIR endpoint surface at the configured base URL:
-    /// <list type="bullet">
-    ///   <item><description><c>GET {BaseUrl}/metadata</c> — CapabilityStatement</description></item>
-    ///   <item><description><c>GET {BaseUrl}/{resourceType}/{id}</c> — single resource read</description></item>
-    ///   <item><description><c>GET {BaseUrl}/{resourceType}</c> — type-level search returning a Bundle</description></item>
-    /// </list>
-    /// </summary>
-    public static IEndpointRouteBuilder MapFhirEndpoints(
-        this IEndpointRouteBuilder endpoints,
-        Action<FhirEndpointOptions>? configure = null)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
-
-        var options = new FhirEndpointOptions();
-        configure?.Invoke(options);
-        var resolved = endpoints.ServiceProvider.GetService<IOptions<FhirEndpointOptions>>()?.Value;
-        if (resolved is not null)
+        /// <summary>
+        /// Wires the FHIR endpoint surface at the configured base URL:
+        /// <list type="bullet">
+        ///   <item><description><c>GET {BaseUrl}/metadata</c> — CapabilityStatement</description></item>
+        ///   <item><description><c>GET {BaseUrl}/{resourceType}/{id}</c> — single resource read</description></item>
+        ///   <item><description><c>GET {BaseUrl}/{resourceType}</c> — type-level search returning a Bundle</description></item>
+        /// </list>
+        /// </summary>
+        public IEndpointRouteBuilder MapFhirEndpoints(
+            Action<FhirEndpointOptions>? configure = null)
         {
-            options.BaseUrl = resolved.BaseUrl;
-            options.PublicBaseUrl = resolved.PublicBaseUrl;
-            options.RespectFormatQueryParameter = resolved.RespectFormatQueryParameter;
+            ArgumentNullException.ThrowIfNull(endpoints);
+
+            var options = new FhirEndpointOptions();
+            configure?.Invoke(options);
+            var resolved = endpoints.ServiceProvider.GetService<IOptions<FhirEndpointOptions>>()?.Value;
+            if (resolved is not null)
+            {
+                options.BaseUrl = resolved.BaseUrl;
+                options.PublicBaseUrl = resolved.PublicBaseUrl;
+                options.RespectFormatQueryParameter = resolved.RespectFormatQueryParameter;
+            }
+
+            var baseUrl = options.BaseUrl.TrimEnd('/');
+
+            endpoints.MapGet(baseUrl + "/metadata", HandleMetadataAsync);
+            endpoints.MapGet(baseUrl + "/{resourceType}/{id}", HandleReadAsync);
+            endpoints.MapGet(baseUrl + "/{resourceType}", HandleSearchAsync);
+
+            return endpoints;
         }
-
-        var baseUrl = options.BaseUrl.TrimEnd('/');
-
-        endpoints.MapGet(baseUrl + "/metadata", HandleMetadataAsync);
-        endpoints.MapGet(baseUrl + "/{resourceType}/{id}", HandleReadAsync);
-        endpoints.MapGet(baseUrl + "/{resourceType}", HandleSearchAsync);
-
-        return endpoints;
     }
 
     private static async Task HandleMetadataAsync(HttpContext context)
@@ -62,7 +64,7 @@ public static class FhirEndpointExtensions
                 new CapabilityStatement.RestComponent
                 {
                     Mode = CapabilityStatement.RestfulCapabilityMode.Server,
-                    Resource = capabilityProvider.DescribeResources().ToList(),
+                    Resource = [.. capabilityProvider.DescribeResources()],
                 },
             ],
         };

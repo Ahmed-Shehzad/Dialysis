@@ -84,7 +84,7 @@ public sealed class MllpFrameDecoder
     {
         if (b == CarriageReturn)
         {
-            _completed.Enqueue(_buffer.ToArray());
+            _completed.Enqueue([.. _buffer]);
             _buffer.Clear();
             _state = DecoderState.SeekStart;
             return;

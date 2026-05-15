@@ -21,7 +21,7 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
             .OrderBy(f => f.Name)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        return rows.Select(Map).ToList();
+        return [.. rows.Select(Map)];
     }
 
     public async Task AddAsync(IntegrationFlow flow, CancellationToken cancellationToken)

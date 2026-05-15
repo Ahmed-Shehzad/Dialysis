@@ -9,10 +9,9 @@ public sealed class ListConsentsForPatientQueryHandler(IConsentRepository reposi
     public async Task<IReadOnlyList<ConsentDto>> HandleAsync(ListConsentsForPatientQuery request, CancellationToken cancellationToken)
     {
         var rows = await repository.ListForPatientAsync(request.PatientId, cancellationToken).ConfigureAwait(false);
-        return rows
+        return [.. rows
             .Select(c => new ConsentDto(
                 c.Id, c.PatientId, c.PartnerId, c.Scope, c.Direction,
-                c.EffectiveFromUtc, c.EffectiveToUtc, c.RevokedAtUtc))
-            .ToList();
+                c.EffectiveFromUtc, c.EffectiveToUtc, c.RevokedAtUtc))];
     }
 }

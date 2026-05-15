@@ -32,11 +32,16 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
         CancellationToken cancellationToken = default)
     {
         var query = db.AuditEvents.AsQueryable();
-        if (category is { } cat) query = query.Where(e => e.Category == (int)cat);
-        if (level is { } lvl) query = query.Where(e => e.Level == (int)lvl);
-        if (flowId is { } fid) query = query.Where(e => e.FlowId == fid);
-        if (from is { } fromTs) query = query.Where(e => e.Timestamp >= fromTs);
-        if (to is { } toTs) query = query.Where(e => e.Timestamp <= toTs);
+        if (category is { } cat)
+            query = query.Where(e => e.Category == (int)cat);
+        if (level is { } lvl)
+            query = query.Where(e => e.Level == (int)lvl);
+        if (flowId is { } fid)
+            query = query.Where(e => e.FlowId == fid);
+        if (from is { } fromTs)
+            query = query.Where(e => e.Timestamp >= fromTs);
+        if (to is { } toTs)
+            query = query.Where(e => e.Timestamp <= toTs);
 
         var entities = await query
             .OrderByDescending(e => e.Timestamp)
@@ -45,7 +50,7 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return entities.Select(e => new AuditEvent
+        return [.. entities.Select(e => new AuditEvent
         {
             Id = e.Id,
             Timestamp = e.Timestamp,
@@ -55,13 +60,14 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
             UserId = e.UserId,
             Summary = e.Summary,
             AttributesJson = e.AttributesJson,
-        }).ToList();
+        })];
     }
 
     public async Task<AuditEvent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var e = await db.AuditEvents.FindAsync([id], cancellationToken).ConfigureAwait(false);
-        if (e is null) return null;
+        if (e is null)
+            return null;
         return new AuditEvent
         {
             Id = e.Id,

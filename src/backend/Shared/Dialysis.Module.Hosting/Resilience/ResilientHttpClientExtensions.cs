@@ -6,25 +6,27 @@ namespace Dialysis.Module.Hosting.Resilience;
 
 public static class ResilientHttpClientExtensions
 {
-    /// <summary>
-    /// Adds a named <see cref="HttpClient"/> with a Polly retry policy (3 attempts, exponential backoff)
-    /// for cross-module HTTP / gRPC fallbacks. Use sparingly — domain events should travel over Transponder.
-    /// </summary>
-    public static IHttpClientBuilder AddResilientModuleHttpClient(
-        this IServiceCollection services,
-        string name,
-        Action<HttpClient>? configureClient = null)
+    extension(IServiceCollection services)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        /// <summary>
+        /// Adds a named <see cref="HttpClient"/> with a Polly retry policy (3 attempts, exponential backoff)
+        /// for cross-module HTTP / gRPC fallbacks. Use sparingly — domain events should travel over Transponder.
+        /// </summary>
+        public IHttpClientBuilder AddResilientModuleHttpClient(
+            string name,
+            Action<HttpClient>? configureClient = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        var builder = services.AddHttpClient(name);
-        if (configureClient is not null)
-            builder.ConfigureHttpClient(configureClient);
+            var builder = services.AddHttpClient(name);
+            if (configureClient is not null)
+                builder.ConfigureHttpClient(configureClient);
 
-        builder.AddPolicyHandler(HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: static attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt))));
+            builder.AddPolicyHandler(HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: static attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt))));
 
-        return builder;
+            return builder;
+        }
     }
 }

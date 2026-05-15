@@ -24,22 +24,22 @@ public sealed class GetPatientChartQueryHandler(
 
         return new PatientChartView(
             request.PatientId,
-            allergyList.Select(a => new PatientChartItem(
+            [.. allergyList.Select(a => new PatientChartItem(
                 "Allergy", a.Id, DateTime.UtcNow, a.Allergen.Code, a.Allergen.Display ?? a.Allergen.Code,
-                a.ReactionText, a.VerificationStatus.ToString())).ToList(),
-            problemList.Select(p => new PatientChartItem(
+                a.ReactionText, a.VerificationStatus.ToString()))],
+            [.. problemList.Select(p => new PatientChartItem(
                 "Problem", p.Id, p.OnsetDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
-                p.Condition.Code, p.Condition.Display ?? p.Condition.Code, p.Notes, p.Status.ToString())).ToList(),
-            medList.Select(m => new PatientChartItem(
+                p.Condition.Code, p.Condition.Display ?? p.Condition.Code, p.Notes, p.Status.ToString()))],
+            [.. medList.Select(m => new PatientChartItem(
                 "Medication", m.Id, m.StartedOn.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
                 m.Medication.Code, m.Medication.Display ?? m.Medication.Code,
-                $"{m.DoseText} · {m.FrequencyText}", m.Status.ToString())).ToList(),
-            vitalsList.Select(v => new PatientChartItem(
+                $"{m.DoseText} · {m.FrequencyText}", m.Status.ToString()))],
+            [.. vitalsList.Select(v => new PatientChartItem(
                 "Vital", v.Id, v.ObservedAtUtc,
                 v.ObservationType.Code, v.ObservationType.Display ?? v.ObservationType.Code,
-                $"{v.Value.ToString(CultureInfo.InvariantCulture)} {v.UnitCode}", null)).ToList(),
-            immunList.Select(i => new PatientChartItem(
+                $"{v.Value.ToString(CultureInfo.InvariantCulture)} {v.UnitCode}", null))],
+            [.. immunList.Select(i => new PatientChartItem(
                 "Immunization", i.Id, i.AdministeredOn.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
-                i.Vaccine.Code, i.Vaccine.Display ?? i.Vaccine.Code, i.SiteCode, i.Status.ToString())).ToList());
+                i.Vaccine.Code, i.Vaccine.Display ?? i.Vaccine.Code, i.SiteCode, i.Status.ToString()))]);
     }
 }

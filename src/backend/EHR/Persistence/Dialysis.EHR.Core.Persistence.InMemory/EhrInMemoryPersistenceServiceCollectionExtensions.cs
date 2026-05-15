@@ -8,11 +8,14 @@ namespace Dialysis.EHR.Core.Persistence.InMemory;
 /// </summary>
 public static class EhrInMemoryPersistenceServiceCollectionExtensions
 {
-    public static IServiceCollection AddEhrInMemoryRepository<TAggregate, TId>(this IServiceCollection services)
+    extension(IServiceCollection services)
+    {
+        public IServiceCollection AddEhrInMemoryRepository<TAggregate, TId>()
         where TAggregate : AggregateRoot<TId>
         where TId : notnull
-    {
-        services.AddSingleton<IEhrRepository<TAggregate, TId>, InMemoryEhrRepository<TAggregate, TId>>();
-        return services;
+        {
+            services.AddSingleton<IEhrRepository<TAggregate, TId>, InMemoryEhrRepository<TAggregate, TId>>();
+            return services;
+        }
     }
 }

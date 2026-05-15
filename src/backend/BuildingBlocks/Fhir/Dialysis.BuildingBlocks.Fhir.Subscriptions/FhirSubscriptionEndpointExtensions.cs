@@ -10,20 +10,21 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 
 public static class FhirSubscriptionEndpointExtensions
 {
-    /// <summary>
-    /// Maps the FHIR <c>Subscription</c> management endpoints — the single controlled write
-    /// exception to the v1 "no writes on resource routes" rule, since clients must be able to
-    /// register interest. Also exposes the per-host <c>SubscriptionTopic</c> catalog.
-    /// </summary>
-    public static IEndpointRouteBuilder MapFhirSubscriptionEndpoints(
-        this IEndpointRouteBuilder endpoints,
-        string baseUrl = "/fhir",
-        string? requireScope = null)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
-        var prefix = baseUrl.TrimEnd('/');
+        /// <summary>
+        /// Maps the FHIR <c>Subscription</c> management endpoints — the single controlled write
+        /// exception to the v1 "no writes on resource routes" rule, since clients must be able to
+        /// register interest. Also exposes the per-host <c>SubscriptionTopic</c> catalog.
+        /// </summary>
+        public IEndpointRouteBuilder MapFhirSubscriptionEndpoints(
+            string baseUrl = "/fhir",
+            string? requireScope = null)
+        {
+            ArgumentNullException.ThrowIfNull(endpoints);
+            var prefix = baseUrl.TrimEnd('/');
 
-        var routes = new List<IEndpointConventionBuilder>
+            var routes = new List<IEndpointConventionBuilder>
         {
             endpoints.MapPost(prefix + "/Subscription", CreateAsync),
             endpoints.MapGet(prefix + "/Subscription/{id}", GetAsync),
@@ -34,15 +35,16 @@ public static class FhirSubscriptionEndpointExtensions
             endpoints.MapGet(prefix + "/subscription/websocket", WebSocketAsync),
         };
 
-        if (!string.IsNullOrWhiteSpace(requireScope))
-        {
-            foreach (var route in routes)
+            if (!string.IsNullOrWhiteSpace(requireScope))
             {
-                route.RequireAuthorization(requireScope);
+                foreach (var route in routes)
+                {
+                    route.RequireAuthorization(requireScope);
+                }
             }
-        }
 
-        return endpoints;
+            return endpoints;
+        }
     }
 
     private static async Task CreateAsync(HttpContext context)

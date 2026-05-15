@@ -138,7 +138,7 @@ internal static class CqrsAssemblyScanner
         }
         catch (ReflectionTypeLoadException ex)
         {
-            types = ex.Types.Where(t => t is not null).Cast<Type>().ToArray();
+            types = [.. ex.Types.Where(t => t is not null).Cast<Type>()];
         }
 
         foreach (var type in types)

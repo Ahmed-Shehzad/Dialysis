@@ -16,7 +16,7 @@ public sealed class ListSessionReadingsQueryHandler(IDialysisSessionRepository s
 
         var limit = Math.Clamp(request.Limit, 1, 5000);
 
-        return session.Readings
+        return [.. session.Readings
             .OrderByDescending(r => r.ObservedAtUtc)
             .Take(limit)
             .Select(r => new VitalsReadingSnapshot(
@@ -30,7 +30,6 @@ public sealed class ListSessionReadingsQueryHandler(IDialysisSessionRepository s
                 r.VenousPressureMmHg,
                 r.UltrafiltrationRateMlPerHour,
                 r.ConductivityMsPerCm,
-                r.Notes))
-            .ToList();
+                r.Notes))];
     }
 }

@@ -30,12 +30,13 @@ public sealed class ConceptCatalog : IConceptCatalog
         _concepts.TryGetValue(conceptName, out var concept) ? (CodeableConcept)concept.DeepCopy() : null;
 
     /// <summary>Returns the registered raw entries — used by the startup validator.</summary>
-    public IReadOnlyCollection<ConceptCatalogEntry> Entries => _entries.Values.ToArray();
+    public IReadOnlyCollection<ConceptCatalogEntry> Entries => [.. _entries.Values];
 
     /// <summary>Updates the display value for an existing concept (called by the validator after $lookup).</summary>
     public void UpdateDisplay(string conceptName, string display)
     {
-        if (!_entries.TryGetValue(conceptName, out var entry)) return;
+        if (!_entries.TryGetValue(conceptName, out var entry))
+            return;
         _concepts[conceptName] = BuildCodeableConcept(entry, display);
     }
 

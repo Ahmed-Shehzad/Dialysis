@@ -26,7 +26,7 @@ public class InMemoryEhrRepository<TAggregate, TId> : IEhrRepository<TAggregate,
         {
             values = values.Where(specification.IsSatisfiedBy);
         }
-        return Task.FromResult<IReadOnlyList<TAggregate>>(values.ToArray());
+        return Task.FromResult<IReadOnlyList<TAggregate>>([.. values]);
     }
 
     public Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)

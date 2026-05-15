@@ -7,81 +7,84 @@ namespace Dialysis.SmartConnect.Management.AspNetCore;
 /// <summary>Maps <c>/smartconnect/v1/admin/config-map/*</c> CRUD routes for variable/configuration maps.</summary>
 public static class ConfigurationMapEndpointExtensions
 {
-    public static IEndpointRouteBuilder MapSmartConnectConfigurationMapRoutes(this IEndpointRouteBuilder endpoints)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/smartconnect/v1/admin/config-map").WithTags("SmartConnect Admin");
+        public IEndpointRouteBuilder MapSmartConnectConfigurationMapRoutes()
+        {
+            var group = endpoints.MapGroup("/smartconnect/v1/admin/config-map").WithTags("SmartConnect Admin");
 
-        group.MapGet(
-                "/{scope}",
-                async (
-                    string scope,
-                    Guid? flowId,
-                    IVariableMapStore store,
-                    CancellationToken ct) =>
-                {
-                    if (!TryParseScope(scope, out var parsed))
-                        return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
+            group.MapGet(
+                    "/{scope}",
+                    async (
+                        string scope,
+                        Guid? flowId,
+                        IVariableMapStore store,
+                        CancellationToken ct) =>
+                    {
+                        if (!TryParseScope(scope, out var parsed))
+                            return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
 
-                    var all = await store.GetAllAsync(parsed, flowId, ct).ConfigureAwait(false);
-                    return Results.Ok(all);
-                })
-            .WithName("SmartConnect_GetConfigMap");
+                        var all = await store.GetAllAsync(parsed, flowId, ct).ConfigureAwait(false);
+                        return Results.Ok(all);
+                    })
+                .WithName("SmartConnect_GetConfigMap");
 
-        group.MapGet(
-                "/{scope}/{key}",
-                async (
-                    string scope,
-                    string key,
-                    Guid? flowId,
-                    IVariableMapStore store,
-                    CancellationToken ct) =>
-                {
-                    if (!TryParseScope(scope, out var parsed))
-                        return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
+            group.MapGet(
+                    "/{scope}/{key}",
+                    async (
+                        string scope,
+                        string key,
+                        Guid? flowId,
+                        IVariableMapStore store,
+                        CancellationToken ct) =>
+                    {
+                        if (!TryParseScope(scope, out var parsed))
+                            return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
 
-                    var value = await store.GetAsync(parsed, flowId, key, ct).ConfigureAwait(false);
-                    return value is null
-                        ? Results.NotFound()
-                        : Results.Ok(new { key, value });
-                })
-            .WithName("SmartConnect_GetConfigMapEntry");
+                        var value = await store.GetAsync(parsed, flowId, key, ct).ConfigureAwait(false);
+                        return value is null
+                            ? Results.NotFound()
+                            : Results.Ok(new { key, value });
+                    })
+                .WithName("SmartConnect_GetConfigMapEntry");
 
-        group.MapPut(
-                "/{scope}/{key}",
-                async (
-                    string scope,
-                    string key,
-                    Guid? flowId,
-                    ConfigMapValueBody body,
-                    IVariableMapStore store,
-                    CancellationToken ct) =>
-                {
-                    if (!TryParseScope(scope, out var parsed))
-                        return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
+            group.MapPut(
+                    "/{scope}/{key}",
+                    async (
+                        string scope,
+                        string key,
+                        Guid? flowId,
+                        ConfigMapValueBody body,
+                        IVariableMapStore store,
+                        CancellationToken ct) =>
+                    {
+                        if (!TryParseScope(scope, out var parsed))
+                            return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
 
-                    await store.SetAsync(parsed, flowId, key, body.Value, ct).ConfigureAwait(false);
-                    return Results.NoContent();
-                })
-            .WithName("SmartConnect_SetConfigMapEntry");
+                        await store.SetAsync(parsed, flowId, key, body.Value, ct).ConfigureAwait(false);
+                        return Results.NoContent();
+                    })
+                .WithName("SmartConnect_SetConfigMapEntry");
 
-        group.MapDelete(
-                "/{scope}/{key}",
-                async (
-                    string scope,
-                    string key,
-                    Guid? flowId,
-                    IVariableMapStore store,
-                    CancellationToken ct) =>
-                {
-                    if (!TryParseScope(scope, out var parsed))
-                        return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
+            group.MapDelete(
+                    "/{scope}/{key}",
+                    async (
+                        string scope,
+                        string key,
+                        Guid? flowId,
+                        IVariableMapStore store,
+                        CancellationToken ct) =>
+                    {
+                        if (!TryParseScope(scope, out var parsed))
+                            return Results.BadRequest(new { error = $"Invalid scope '{scope}'." });
 
-                    await store.RemoveAsync(parsed, flowId, key, ct).ConfigureAwait(false);
-                    return Results.NoContent();
-                })
-            .WithName("SmartConnect_DeleteConfigMapEntry");
+                        await store.RemoveAsync(parsed, flowId, key, ct).ConfigureAwait(false);
+                        return Results.NoContent();
+                    })
+                .WithName("SmartConnect_DeleteConfigMapEntry");
 
-        return endpoints;
+            return endpoints;
+        }
     }
 
     private static bool TryParseScope(string raw, out VariableMapScope scope)

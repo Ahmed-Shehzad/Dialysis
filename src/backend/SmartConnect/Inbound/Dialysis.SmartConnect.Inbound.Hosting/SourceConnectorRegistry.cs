@@ -27,5 +27,5 @@ public sealed class SourceConnectorRegistry : ISourceConnectorRegistry
             ? null
             : _connectors.TryGetValue(kind, out var c) ? c : null;
 
-    public IReadOnlyCollection<ISourceConnector> All => _connectors.Values.ToArray();
+    public IReadOnlyCollection<ISourceConnector> All => [.. _connectors.Values];
 }

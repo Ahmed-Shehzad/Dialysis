@@ -37,7 +37,7 @@ public sealed class DefaultFhirCapabilityProvider(FhirResourceRegistry registry)
 
             if (capability.SupportedProfiles.Count > 1)
             {
-                component.SupportedProfile = capability.SupportedProfiles.Skip(1).ToList();
+                component.SupportedProfile = [.. capability.SupportedProfiles.Skip(1)];
             }
 
             result.Add(component);

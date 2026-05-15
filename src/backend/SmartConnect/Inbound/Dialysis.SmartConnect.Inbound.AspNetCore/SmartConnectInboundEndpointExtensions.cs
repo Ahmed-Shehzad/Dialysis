@@ -18,14 +18,17 @@ public static class SmartConnectInboundEndpointExtensions
 
     public const string ApiKeyHeaderName = "X-SmartConnect-ApiKey";
 
-    /// <summary>
-    /// Registers POST <c>/smartconnect/v1/flows/{flowId}/messages</c> on the route builder.
-    /// </summary>
-    public static IEndpointConventionBuilder MapSmartConnectInboundRoutes(this IEndpointRouteBuilder endpoints)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapPost(
-            "/smartconnect/v1/flows/{flowId:guid}/messages",
-            PostInboundMessageAsync).DisableAntiforgery();
+        /// <summary>
+        /// Registers POST <c>/smartconnect/v1/flows/{flowId}/messages</c> on the route builder.
+        /// </summary>
+        public IEndpointConventionBuilder MapSmartConnectInboundRoutes()
+        {
+            return endpoints.MapPost(
+                "/smartconnect/v1/flows/{flowId:guid}/messages",
+                PostInboundMessageAsync).DisableAntiforgery();
+        }
     }
 
     private static async Task PostInboundMessageAsync(

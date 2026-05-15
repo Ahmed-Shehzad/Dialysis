@@ -48,9 +48,12 @@ public sealed class LabOrder : AggregateRoot<Guid>
         IReadOnlyList<string> loincPanelCodes,
         string transmissionFormat)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (encounterId == Guid.Empty) throw new ArgumentException("Encounter required.", nameof(encounterId));
-        if (orderingProviderId == Guid.Empty) throw new ArgumentException("Ordering provider required.", nameof(orderingProviderId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (encounterId == Guid.Empty)
+            throw new ArgumentException("Encounter required.", nameof(encounterId));
+        if (orderingProviderId == Guid.Empty)
+            throw new ArgumentException("Ordering provider required.", nameof(orderingProviderId));
         ArgumentException.ThrowIfNullOrWhiteSpace(labFacilityCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(transmissionFormat);
         if (loincPanelCodes is null || loincPanelCodes.Count == 0)
@@ -76,7 +79,7 @@ public sealed class LabOrder : AggregateRoot<Guid>
             EncounterId: encounterId,
             OrderingProviderId: orderingProviderId,
             LabFacilityCode: order.LabFacilityCode,
-            LoincPanelCodes: order._loincPanelCodes.ToArray(),
+            LoincPanelCodes: [.. order._loincPanelCodes],
             TransmissionFormat: order.TransmissionFormat));
 
         return order;

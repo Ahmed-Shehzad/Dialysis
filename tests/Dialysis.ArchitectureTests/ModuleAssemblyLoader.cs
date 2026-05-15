@@ -12,7 +12,8 @@ internal static class ModuleAssemblyLoader
 
     public static IReadOnlyList<Assembly> LoadAll()
     {
-        if (_cached is not null) return _cached;
+        if (_cached is not null)
+            return _cached;
 
         var here = Path.GetDirectoryName(typeof(ModuleAssemblyLoader).Assembly.Location)!;
         var loaded = AppDomain.CurrentDomain.GetAssemblies()
@@ -22,7 +23,8 @@ internal static class ModuleAssemblyLoader
         foreach (var dll in Directory.EnumerateFiles(here, "Dialysis.*.dll"))
         {
             var name = Path.GetFileNameWithoutExtension(dll);
-            if (loaded.ContainsKey(name)) continue;
+            if (loaded.ContainsKey(name))
+                continue;
             try
             {
                 var asm = Assembly.LoadFrom(dll);
@@ -34,7 +36,7 @@ internal static class ModuleAssemblyLoader
             }
         }
 
-        _cached = loaded.Values.ToList();
+        _cached = [.. loaded.Values];
         return _cached;
     }
 }

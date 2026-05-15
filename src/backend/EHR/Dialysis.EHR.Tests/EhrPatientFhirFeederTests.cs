@@ -70,10 +70,10 @@ public sealed class EhrPatientFhirFeederTests
             => Task.FromResult(patients.FirstOrDefault(p => p.MedicalRecordNumber == medicalRecordNumber));
 
         public Task<IReadOnlyList<Patient>> SearchAsync(string? nameFragment, int take, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<Patient>>(patients.Take(take).ToList());
+            => Task.FromResult<IReadOnlyList<Patient>>([.. patients.Take(take)]);
 
         public Task<PatientSearchPage> SearchAsync(PatientSearchCriteria criteria, CancellationToken cancellationToken = default)
-            => Task.FromResult(new PatientSearchPage(patients.ToList(), patients.Length));
+            => Task.FromResult(new PatientSearchPage([.. patients], patients.Length));
 
         public async IAsyncEnumerable<Patient> StreamAllAsync(
             DateTimeOffset? since,
