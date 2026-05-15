@@ -54,18 +54,35 @@ public static class FhirBulkDataServiceCollectionExtensions
     /// Maps <c>GET /fhir/$export</c>, <c>GET /fhir/Patient/$export</c>, <c>GET /fhir/Group/{id}/$export</c>,
     /// <c>GET /fhir/bulk-data/jobs/{id}</c>, <c>DELETE /fhir/bulk-data/jobs/{id}</c>, and
     /// <c>GET /fhir/bulk-data/jobs/{id}/files/{file}</c> per the Bulk Data Access IG.
+    /// When <paramref name="requireScope"/> is set, every endpoint is wrapped in
+    /// <c>RequireAuthorization(requireScope)</c> — the SMART scope policy provider will
+    /// synthesize a policy resolving the scope from the caller's JWT.
     /// </summary>
-    public static IEndpointRouteBuilder MapFhirBulkDataEndpoints(this IEndpointRouteBuilder endpoints, string baseUrl = "/fhir")
+    public static IEndpointRouteBuilder MapFhirBulkDataEndpoints(
+        this IEndpointRouteBuilder endpoints,
+        string baseUrl = "/fhir",
+        string? requireScope = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         var prefix = baseUrl.TrimEnd('/');
 
-        endpoints.MapGet(prefix + "/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.System, groupId: null));
-        endpoints.MapGet(prefix + "/Patient/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.Patient, groupId: null));
-        endpoints.MapGet(prefix + "/Group/{id}/$export", (HttpContext ctx, string id) => StartExportAsync(ctx, ExportScope.Group, groupId: id));
-        endpoints.MapGet(prefix + "/bulk-data/jobs/{id}", PollJobAsync);
-        endpoints.MapDelete(prefix + "/bulk-data/jobs/{id}", CancelJobAsync);
-        endpoints.MapGet(prefix + "/bulk-data/jobs/{id}/files/{file}", DownloadFileAsync);
+        var routes = new List<IEndpointConventionBuilder>
+        {
+            endpoints.MapGet(prefix + "/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.System, groupId: null)),
+            endpoints.MapGet(prefix + "/Patient/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.Patient, groupId: null)),
+            endpoints.MapGet(prefix + "/Group/{id}/$export", (HttpContext ctx, string id) => StartExportAsync(ctx, ExportScope.Group, groupId: id)),
+            endpoints.MapGet(prefix + "/bulk-data/jobs/{id}", PollJobAsync),
+            endpoints.MapDelete(prefix + "/bulk-data/jobs/{id}", CancelJobAsync),
+            endpoints.MapGet(prefix + "/bulk-data/jobs/{id}/files/{file}", DownloadFileAsync),
+        };
+
+        if (!string.IsNullOrWhiteSpace(requireScope))
+        {
+            foreach (var route in routes)
+            {
+                route.RequireAuthorization(requireScope);
+            }
+        }
 
         return endpoints;
     }

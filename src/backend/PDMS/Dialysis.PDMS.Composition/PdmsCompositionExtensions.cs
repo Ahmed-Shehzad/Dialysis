@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.PDMS.TreatmentSessions.Fhir;
 using Hl7.Fhir.Model;
@@ -42,6 +43,7 @@ public static class PdmsCompositionExtensions
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
         bool enableFhirBulkDataExport = false,
+        bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
         bool enableDemoSeed = false,
         bool enableVitalsTicker = false,
@@ -105,6 +107,11 @@ public static class PdmsCompositionExtensions
             services.AddFhirBulkData(storageRoot);
             services.AddFhirBulkDataOrchestrator();
             services.AddFhirBulkDataFeeder<PdmsDialysisSessionProcedureFeeder, Procedure>();
+        }
+
+        if (enableFhirSmartOnFhir)
+        {
+            services.AddFhirSmartOnFhir(configuration.GetSection("Pdms:Fhir:Smart"));
         }
 
         if (enableDemoSeed)

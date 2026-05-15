@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.EHR.Registration.Fhir;
 using Dialysis.BuildingBlocks.Transponder;
@@ -44,6 +45,7 @@ public static class EhrCompositionExtensions
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
         bool enableFhirBulkDataExport = false,
+        bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
         bool enableDemoSeed = false,
         bool enableRegistrationSimulator = false,
@@ -108,6 +110,11 @@ public static class EhrCompositionExtensions
             services.AddFhirBulkData(storageRoot);
             services.AddFhirBulkDataOrchestrator();
             services.AddFhirBulkDataFeeder<EhrPatientFhirFeeder, Hl7.Fhir.Model.Patient>();
+        }
+
+        if (enableFhirSmartOnFhir)
+        {
+            services.AddFhirSmartOnFhir(configuration.GetSection("Ehr:Fhir:Smart"));
         }
 
         if (enableDemoSeed)

@@ -26,6 +26,7 @@
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
   </ItemGroup>
 
   <ItemGroup>

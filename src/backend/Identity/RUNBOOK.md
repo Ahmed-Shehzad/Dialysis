@@ -166,7 +166,39 @@ curl -sS -H "Authorization: Bearer ACCESS_TOKEN" \
 
 The resource module enforces the SMART scope via `SmartScopePolicyProvider` (e.g., `patient/Patient.read`) before delegating to the `IFhirReader<Patient>` for the requested id.
 
-### 7.4 Adding the `smart-on-fhir` client to a fresh realm
+### 7.4 Kick off a Bulk Data `$export` with a SMART access token
+
+When the resource host runs with `<Module>:Fhir:Smart:Enabled=true` **and** `<Module>:Fhir:BulkData:Enabled=true`, the `$export` route is wrapped in a `system/*.read` requirement by default (override via `<Module>:Fhir:BulkData:RequireScope`):
+
+```bash
+# 1. Get a token with the system scope (client credentials grant for backend services).
+ACCESS_TOKEN=$(curl -sS -X POST \
+  "http://localhost:8080/realms/dialysis/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=client_credentials" \
+  --data-urlencode "client_id=smart-on-fhir-system" \
+  --data-urlencode "client_secret=..." \
+  --data-urlencode "scope=system/*.read" | jq -r .access_token)
+
+# 2. Kick off the export.
+curl -sS -i -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Prefer: respond-async" \
+  "http://localhost:5288/fhir/\$export"
+# Expect: HTTP/1.1 202 Accepted
+#         Content-Location: /fhir/bulk-data/jobs/<job-id>
+
+# 3. Poll status until 200 with a manifest.
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:5288/fhir/bulk-data/jobs/<job-id>" | jq .
+
+# 4. Download an output NDJSON file.
+curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" \
+  "http://localhost:5288/fhir/bulk-data/jobs/<job-id>/files/Encounter.ndjson"
+```
+
+A token missing `system/*.read` returns `401 Unauthorized`. A token whose scope is `user/*.read` or `patient/*.read` does **not** satisfy `system/*.read`; the operator-shell flow requires a service token, not an end-user token.
+
+### 7.5 Adding the `smart-on-fhir` client to a fresh realm
 
 If you reset the realm and need to add the client manually:
 
@@ -175,3 +207,9 @@ If you reset the realm and need to add the client manually:
 3. Valid redirect URIs: `http://localhost:9090/cb`, plus production apps as needed.
 4. Optional protocol mappers to project `patient`, `encounter`, `fhirUser` claims from user attributes onto the access token (needed for `IFhirLaunchContextAccessor`).
 5. Save. The discovery document immediately reflects the new authorization endpoint and supported scopes.
+
+For the `$export` system-credentials flow add a second client:
+
+1. Client ID: `smart-on-fhir-system`, type **confidential**, **service accounts enabled**.
+2. Client scopes: include a `system/*.read` scope so the issued access token carries it.
+3. Use `grant_type=client_credentials` and `scope=system/*.read` to acquire bearer tokens for backend pipelines, payer integrations, and TEFCA outbound flows.
