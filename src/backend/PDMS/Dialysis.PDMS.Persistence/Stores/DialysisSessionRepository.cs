@@ -35,4 +35,15 @@ public sealed class DialysisSessionRepository(PdmsDbContext db) : IDialysisSessi
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public void Add(DialysisSession session) => db.Sessions.Add(session);
+
+    public IAsyncEnumerable<DialysisSession> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        var query = db.Sessions.AsNoTracking().OrderBy(s => s.ScheduledStartUtc).AsQueryable();
+        if (since is { } cutoff)
+        {
+            var cutoffUtc = cutoff.UtcDateTime;
+            query = query.Where(s => (s.ActualStartUtc ?? s.ScheduledStartUtc) >= cutoffUtc);
+        }
+        return query.AsAsyncEnumerable();
+    }
 }

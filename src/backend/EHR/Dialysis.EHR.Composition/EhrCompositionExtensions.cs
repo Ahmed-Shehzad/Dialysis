@@ -1,7 +1,9 @@
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.EHR.Registration.Fhir;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
@@ -41,6 +43,7 @@ public static class EhrCompositionExtensions
         bool enableFhirEndpoints = false,
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
+        bool enableFhirBulkDataExport = false,
         bool enableFhirSubscriptionsPersistence = false,
         bool enableDemoSeed = false,
         bool enableRegistrationSimulator = false,
@@ -97,6 +100,15 @@ public static class EhrCompositionExtensions
             services.AddFhirBulkDataEntityFrameworkStore<EhrDbContext>();
         if (enableFhirSubscriptionsPersistence)
             services.AddFhirSubscriptionsEntityFrameworkStore<EhrDbContext>();
+
+        if (enableFhirBulkDataExport)
+        {
+            var storageRoot = configuration["Ehr:Fhir:BulkData:StorageRoot"]
+                ?? Path.Combine(Path.GetTempPath(), "dialysis-ehr-bulk-data");
+            services.AddFhirBulkData(storageRoot);
+            services.AddFhirBulkDataOrchestrator();
+            services.AddFhirBulkDataFeeder<EhrPatientFhirFeeder, Hl7.Fhir.Model.Patient>();
+        }
 
         if (enableDemoSeed)
             services.AddHostedService<Demo.EhrDemoSeeder>();
