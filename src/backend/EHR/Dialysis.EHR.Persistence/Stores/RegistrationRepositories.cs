@@ -85,6 +85,12 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
     }
 
     public void Add(Patient patient) => db.Patients.Add(patient);
+
+    public IAsyncEnumerable<Patient> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        _ = since; // reserved: Patient lacks a last-modified timestamp for now
+        return db.Patients.AsNoTracking().OrderBy(p => p.MedicalRecordNumber).AsAsyncEnumerable();
+    }
 }
 
 public sealed class ProviderRepository(EhrDbContext db) : IProviderRepository

@@ -26,5 +26,13 @@ public interface IPatientRepository
 
     Task<PatientSearchPage> SearchAsync(PatientSearchCriteria criteria, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Streams every <see cref="Patient"/> for bulk-export NDJSON output. Ordered by MRN
+    /// for stable pagination. The Patient aggregate does not yet carry a last-modified
+    /// timestamp, so the FHIR <c>_since</c> filter is best-effort and currently ignored —
+    /// the parameter is reserved for the eventual <c>Meta.lastUpdated</c> tracking.
+    /// </summary>
+    IAsyncEnumerable<Patient> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default);
+
     void Add(Patient patient);
 }

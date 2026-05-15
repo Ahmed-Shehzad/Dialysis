@@ -12,5 +12,12 @@ public interface IDialysisSessionRepository
 
     Task<IReadOnlyList<DialysisSession>> ListActiveAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Streams every <see cref="DialysisSession"/> ordered by <c>ScheduledStartUtc</c> for stable
+    /// bulk-export NDJSON output. When <paramref name="since"/> is provided, only sessions whose
+    /// scheduled start (or actual start if present) is at-or-after the cutoff are returned.
+    /// </summary>
+    IAsyncEnumerable<DialysisSession> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default);
+
     void Add(DialysisSession session);
 }

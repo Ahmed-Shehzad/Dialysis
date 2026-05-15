@@ -1,7 +1,10 @@
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.PDMS.TreatmentSessions.Fhir;
+using Hl7.Fhir.Model;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
@@ -38,6 +41,7 @@ public static class PdmsCompositionExtensions
         bool enableFhirEndpoints = false,
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
+        bool enableFhirBulkDataExport = false,
         bool enableFhirSubscriptionsPersistence = false,
         bool enableDemoSeed = false,
         bool enableVitalsTicker = false,
@@ -93,6 +97,15 @@ public static class PdmsCompositionExtensions
             services.AddFhirBulkDataEntityFrameworkStore<PdmsDbContext>();
         if (enableFhirSubscriptionsPersistence)
             services.AddFhirSubscriptionsEntityFrameworkStore<PdmsDbContext>();
+
+        if (enableFhirBulkDataExport)
+        {
+            var storageRoot = configuration["Pdms:Fhir:BulkData:StorageRoot"]
+                ?? Path.Combine(Path.GetTempPath(), "dialysis-pdms-bulk-data");
+            services.AddFhirBulkData(storageRoot);
+            services.AddFhirBulkDataOrchestrator();
+            services.AddFhirBulkDataFeeder<PdmsDialysisSessionProcedureFeeder, Procedure>();
+        }
 
         if (enableDemoSeed)
             services.AddHostedService<Demo.PdmsDemoSeeder>();
