@@ -36,6 +36,9 @@ public sealed class Immunization : AggregateRoot<Guid>
 
     public Guid? AdministeringProviderId { get; private set; }
 
+    /// <summary>System audit timestamp — drives FHIR <c>Meta.lastUpdated</c> and incremental (<c>_since</c>) bulk export.</summary>
+    public DateTimeOffset UpdatedAtUtc { get; private set; } = DateTimeOffset.UtcNow;
+
     public static Immunization Record(
         Guid id,
         Guid patientId,
@@ -59,11 +62,13 @@ public sealed class Immunization : AggregateRoot<Guid>
             SiteCode = string.IsNullOrWhiteSpace(siteCode) ? null : siteCode.Trim(),
             AdministeringProviderId = administeringProviderId,
             Status = ImmunizationStatus.Completed,
+            UpdatedAtUtc = DateTimeOffset.UtcNow,
         };
     }
 
     public void MarkEnteredInError()
     {
         Status = ImmunizationStatus.EnteredInError;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 }

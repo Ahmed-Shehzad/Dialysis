@@ -16,8 +16,10 @@ public sealed class AllergyRepository(EhrDbContext db) : IAllergyRepository
 
     public IAsyncEnumerable<Allergy> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        _ = since; // Allergy has no last-modified timestamp yet — pass-through.
-        return db.Allergies.AsNoTracking().OrderBy(a => a.PatientId).ThenBy(a => a.Id).AsAsyncEnumerable();
+        var query = db.Allergies.AsNoTracking().OrderBy(a => a.UpdatedAtUtc).ThenBy(a => a.Id).AsQueryable();
+        if (since is { } cutoff)
+            query = query.Where(a => a.UpdatedAtUtc >= cutoff);
+        return query.AsAsyncEnumerable();
     }
 }
 
@@ -70,12 +72,9 @@ public sealed class ImmunizationRepository(EhrDbContext db) : IImmunizationRepos
 
     public IAsyncEnumerable<Immunization> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        var query = db.Immunizations.AsNoTracking().OrderBy(i => i.AdministeredOn).AsQueryable();
+        var query = db.Immunizations.AsNoTracking().OrderBy(i => i.UpdatedAtUtc).ThenBy(i => i.Id).AsQueryable();
         if (since is { } cutoff)
-        {
-            var cutoffDate = DateOnly.FromDateTime(cutoff.UtcDateTime);
-            query = query.Where(i => i.AdministeredOn >= cutoffDate);
-        }
+            query = query.Where(i => i.UpdatedAtUtc >= cutoff);
         return query.AsAsyncEnumerable();
     }
 }
@@ -96,12 +95,9 @@ public sealed class MedicationStatementRepository(EhrDbContext db) : IMedication
 
     public IAsyncEnumerable<MedicationStatement> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        var query = db.MedicationStatements.AsNoTracking().OrderBy(m => m.StartedOn).AsQueryable();
+        var query = db.MedicationStatements.AsNoTracking().OrderBy(m => m.UpdatedAtUtc).ThenBy(m => m.Id).AsQueryable();
         if (since is { } cutoff)
-        {
-            var cutoffDate = DateOnly.FromDateTime(cutoff.UtcDateTime);
-            query = query.Where(m => (m.StoppedOn ?? m.StartedOn) >= cutoffDate);
-        }
+            query = query.Where(m => m.UpdatedAtUtc >= cutoff);
         return query.AsAsyncEnumerable();
     }
 }

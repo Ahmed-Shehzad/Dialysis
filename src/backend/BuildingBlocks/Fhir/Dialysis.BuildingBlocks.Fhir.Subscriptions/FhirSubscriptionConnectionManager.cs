@@ -17,10 +17,19 @@ public interface IFhirSubscriptionSink
 /// Connection lifetime mirrors <c>TransponderSseIngressRelay</c>: a concurrent registry plus a
 /// per-sink write lock, with registration disposed when the request aborts.
 /// </summary>
-public sealed class FhirSubscriptionConnectionManager
+/// <remarks>
+/// A bounded per-subscription replay buffer holds notifications that were pushed while no
+/// connection was bound. When a client (re)connects, <see cref="FlushReplayAsync"/> drains the
+/// buffer to it, so a WebSocket/SSE subscriber that briefly drops does not silently miss events.
+/// The buffer is in-memory and bounded (oldest dropped past capacity); durable cross-restart
+/// redelivery remains the job of the EF-Core-backed <c>NotificationOutbox</c> follow-up.
+/// </remarks>
+public sealed class FhirSubscriptionConnectionManager(int replayCapacity = 50)
 {
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, IFhirSubscriptionSink>> _bindings =
         new(StringComparer.Ordinal);
+
+    private readonly ConcurrentDictionary<string, ReplayBuffer> _replay = new(StringComparer.Ordinal);
 
     public IDisposable Register(string subscriptionId, IFhirSubscriptionSink sink)
     {
@@ -33,25 +42,56 @@ public sealed class FhirSubscriptionConnectionManager
         return new Registration(this, subscriptionId, connectionId);
     }
 
-    /// <summary>Pushes <paramref name="payload"/> to every connection bound to the subscription. Returns the delivery count.</summary>
+    /// <summary>
+    /// Drains the replay buffer for <paramref name="subscriptionId"/> into <paramref name="sink"/>.
+    /// Called by the SSE/WebSocket endpoints immediately after binding a connection so the client
+    /// receives any notifications that arrived while it was disconnected.
+    /// </summary>
+    public async ValueTask FlushReplayAsync(string subscriptionId, IFhirSubscriptionSink sink, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(subscriptionId);
+        ArgumentNullException.ThrowIfNull(sink);
+
+        if (!_replay.TryGetValue(subscriptionId, out var buffer))
+            return;
+
+        foreach (var payload in buffer.Drain())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await sink.SendAsync(payload, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Pushes <paramref name="payload"/> to every connection bound to the subscription. When no
+    /// connection is bound the payload is buffered (bounded) for replay on the next reconnect.
+    /// Returns the delivery count.
+    /// </summary>
     public async ValueTask<int> PushAsync(string subscriptionId, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken)
     {
-        if (!_bindings.TryGetValue(subscriptionId, out var connections))
-            return 0;
-
         var delivered = 0;
-        foreach (var (connectionId, sink) in connections.ToArray())
+        if (_bindings.TryGetValue(subscriptionId, out var connections))
         {
-            try
+            foreach (var (connectionId, sink) in connections.ToArray())
             {
-                await sink.SendAsync(payload, cancellationToken).ConfigureAwait(false);
-                delivered++;
-            }
-            catch
-            {
-                connections.TryRemove(connectionId, out _);
+                try
+                {
+                    await sink.SendAsync(payload, cancellationToken).ConfigureAwait(false);
+                    delivered++;
+                }
+                catch
+                {
+                    connections.TryRemove(connectionId, out _);
+                }
             }
         }
+
+        if (delivered == 0 && replayCapacity > 0)
+        {
+            var buffer = _replay.GetOrAdd(subscriptionId, _ => new ReplayBuffer(replayCapacity));
+            buffer.Add(payload.ToArray());
+        }
+
         return delivered;
     }
 
@@ -69,5 +109,33 @@ public sealed class FhirSubscriptionConnectionManager
         : IDisposable
     {
         public void Dispose() => owner.Unregister(subscriptionId, connectionId);
+    }
+
+    private sealed class ReplayBuffer(int capacity)
+    {
+        private readonly Lock _gate = new();
+        private readonly Queue<byte[]> _items = new();
+
+        public void Add(byte[] payload)
+        {
+            lock (_gate)
+            {
+                _items.Enqueue(payload);
+                while (_items.Count > capacity)
+                    _items.Dequeue();
+            }
+        }
+
+        public IReadOnlyList<byte[]> Drain()
+        {
+            lock (_gate)
+            {
+                if (_items.Count == 0)
+                    return [];
+                var snapshot = _items.ToArray();
+                _items.Clear();
+                return snapshot;
+            }
+        }
     }
 }

@@ -9,9 +9,8 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// <summary>
 /// Streams every <c>Allergy</c> aggregate as a FHIR R4 <c>AllergyIntolerance</c>. Severity maps
 /// to the FHIR criticality value set; the source coding (typically SNOMED or RxNorm) is forwarded
-/// onto <c>AllergyIntolerance.code</c>. No <c>Meta.lastUpdated</c> is emitted: the aggregate
-/// records only a clinical onset <c>DateOnly</c>, not a system audit timestamp, so a synthetic
-/// value would corrupt incremental (<c>_since</c>) bulk-export sync.
+/// onto <c>AllergyIntolerance.code</c>. The aggregate's <c>UpdatedAtUtc</c> audit timestamp
+/// drives <c>Meta.lastUpdated</c> and the incremental (<c>_since</c>) export filter.
 /// </summary>
 public sealed class EhrAllergyIntoleranceFeeder(IAllergyRepository allergies) : INdjsonResourceFeeder<AllergyIntolerance>
 {
@@ -26,6 +25,7 @@ public sealed class EhrAllergyIntoleranceFeeder(IAllergyRepository allergies) : 
             yield return new AllergyIntolerance
             {
                 Id = allergy.Id.ToString(),
+                Meta = new Meta { LastUpdated = allergy.UpdatedAtUtc },
                 Patient = new ResourceReference($"Patient/{allergy.PatientId}"),
                 Code = new CodeableConcept(allergy.Allergen.System, allergy.Allergen.Code, allergy.Allergen.Display),
                 VerificationStatus = MapVerification(allergy.VerificationStatus),

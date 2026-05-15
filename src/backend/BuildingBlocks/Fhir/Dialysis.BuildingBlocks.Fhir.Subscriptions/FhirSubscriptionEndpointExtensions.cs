@@ -167,6 +167,7 @@ public static class FhirSubscriptionEndpointExtensions
                 try
                 {
                     await sink.SendAsync(Encoding.UTF8.GetBytes(": fhir-subscription\n\n"), cancellationToken).ConfigureAwait(false);
+                    await connections.FlushReplayAsync(subscriptionId, sink, cancellationToken).ConfigureAwait(false);
                     await tcs.Task.ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -222,6 +223,7 @@ public static class FhirSubscriptionEndpointExtensions
                     binding?.Dispose();
                     binding = connections.Register(subscriptionId, sink);
                     await sink.SendTextAsync($"bound {subscriptionId}", cancellationToken).ConfigureAwait(false);
+                    await connections.FlushReplayAsync(subscriptionId, sink, cancellationToken).ConfigureAwait(false);
                 }
                 else if (message.Equals("ping", StringComparison.OrdinalIgnoreCase))
                 {
