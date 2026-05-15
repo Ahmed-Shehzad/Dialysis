@@ -12,37 +12,37 @@ namespace Dialysis.DomainDrivenDesign.CompositionRoot;
 /// </summary>
 public static class DomainDrivenDesignServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers the in-memory <see cref="IDomainEventDispatcher"/> and the
-    /// <see cref="DomainEventSaveChangesInterceptor"/>. The interceptor must additionally be
-    /// added to the module's <c>DbContextOptions</c> in <c>OnConfiguring</c> / <c>AddDbContext</c>.
-    /// Handlers run in a fresh DI scope (post-commit) so they can use their own DbContext.
-    /// </summary>
-    public static IServiceCollection AddDomainEventDispatch(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.TryAddScoped<IDomainEventDispatcher, InMemoryDomainEventDispatcher>();
-        services.TryAddScoped<DomainEventSaveChangesInterceptor>();
-        return services;
-    }
-
-    /// <summary>
-    /// Convenience wrapper: registers domain-event dispatch and scans the given assemblies for
-    /// <see cref="DomainEvents.IDomainEventHandler{TEvent}"/> implementations and
-    /// <see cref="IDomainService"/> implementations.
-    /// </summary>
-    public static IServiceCollection AddDomainDrivenDesignCore(
-        this IServiceCollection services,
-        params Assembly[] assemblies)
-    {
-        services.AddDomainEventDispatch();
-
-        foreach (var assembly in assemblies)
+        /// <summary>
+        /// Registers the in-memory <see cref="IDomainEventDispatcher"/> and the
+        /// <see cref="DomainEventSaveChangesInterceptor"/>. The interceptor must additionally be
+        /// added to the module's <c>DbContextOptions</c> in <c>OnConfiguring</c> / <c>AddDbContext</c>.
+        /// Handlers run in a fresh DI scope (post-commit) so they can use their own DbContext.
+        /// </summary>
+        public IServiceCollection AddDomainEventDispatch()
         {
-            services.AddDomainServices(assembly);
-            RegisterDomainEventHandlers(services, assembly);
+            services.TryAddScoped<IDomainEventDispatcher, InMemoryDomainEventDispatcher>();
+            services.TryAddScoped<DomainEventSaveChangesInterceptor>();
+            return services;
         }
+        /// <summary>
+        /// Convenience wrapper: registers domain-event dispatch and scans the given assemblies for
+        /// <see cref="DomainEvents.IDomainEventHandler{TEvent}"/> implementations and
+        /// <see cref="IDomainService"/> implementations.
+        /// </summary>
+        public IServiceCollection AddDomainDrivenDesignCore(params Assembly[] assemblies)
+        {
+            services.AddDomainEventDispatch();
 
-        return services;
+            foreach (var assembly in assemblies)
+            {
+                services.AddDomainServices(assembly);
+                RegisterDomainEventHandlers(services, assembly);
+            }
+
+            return services;
+        }
     }
 
     private static void RegisterDomainEventHandlers(IServiceCollection services, Assembly assembly)

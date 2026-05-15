@@ -13,71 +13,76 @@ public static class GroupEndpointExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
-    public static IEndpointRouteBuilder MapSmartConnectGroupRoutes(this IEndpointRouteBuilder endpoints)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/smartconnect/v1/admin/groups").WithTags("SmartConnect Admin");
+        public IEndpointRouteBuilder MapSmartConnectGroupRoutes()
+        {
+            var group = endpoints.MapGroup("/smartconnect/v1/admin/groups").WithTags("SmartConnect Admin");
 
-        group.MapGet(
-                "/",
-                async (SmartConnectDbContext db, CancellationToken ct) =>
-                {
-                    var groups = await db.FlowGroups.ToListAsync(ct).ConfigureAwait(false);
-                    return Results.Ok(groups.Select(g => new FlowGroup
+            group.MapGet(
+                    "/",
+                    async (SmartConnectDbContext db, CancellationToken ct) =>
                     {
-                        Id = g.Id, Name = g.Name, Description = g.Description,
-                    }));
-                })
-            .WithName("SmartConnect_ListGroups");
+                        var groups = await db.FlowGroups.ToListAsync(ct).ConfigureAwait(false);
+                        return Results.Ok(groups.Select(g => new FlowGroup
+                        {
+                            Id = g.Id,
+                            Name = g.Name,
+                            Description = g.Description,
+                        }));
+                    })
+                .WithName("SmartConnect_ListGroups");
 
-        group.MapGet(
-                "/{groupId:guid}/export",
-                async (Guid groupId, SmartConnectDbContext db, CancellationToken ct) =>
-                {
-                    var entity = await db.FlowGroups.AsNoTracking()
-                        .FirstOrDefaultAsync(g => g.Id == groupId, ct).ConfigureAwait(false);
-                    if (entity is null)
+            group.MapGet(
+                    "/{groupId:guid}/export",
+                    async (Guid groupId, SmartConnectDbContext db, CancellationToken ct) =>
                     {
-                        return Results.NotFound();
-                    }
+                        var entity = await db.FlowGroups.AsNoTracking()
+                            .FirstOrDefaultAsync(g => g.Id == groupId, ct).ConfigureAwait(false);
+                        if (entity is null)
+                        {
+                            return Results.NotFound();
+                        }
 
-                    var dto = new FlowGroup
+                        var dto = new FlowGroup
+                        {
+                            Id = entity.Id,
+                            Name = entity.Name,
+                            Description = entity.Description,
+                        };
+                        var json = JsonSerializer.Serialize(dto, _jsonOptions);
+                        return Results.Text(json, "application/json");
+                    })
+                .WithName("SmartConnect_ExportGroup");
+
+            group.MapPost(
+                    "/",
+                    async (FlowGroup body, SmartConnectDbContext db, CancellationToken ct) =>
                     {
-                        Id = entity.Id,
-                        Name = entity.Name,
-                        Description = entity.Description,
-                    };
-                    var json = JsonSerializer.Serialize(dto, _jsonOptions);
-                    return Results.Text(json, "application/json");
-                })
-            .WithName("SmartConnect_ExportGroup");
+                        var entity = new FlowGroupEntity
+                        {
+                            Id = body.Id == Guid.Empty ? Guid.NewGuid() : body.Id,
+                            Name = body.Name,
+                            Description = body.Description,
+                        };
+                        db.FlowGroups.Add(entity);
+                        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+                        return Results.Created($"/smartconnect/v1/admin/groups/{entity.Id}",
+                            new FlowGroup { Id = entity.Id, Name = entity.Name, Description = entity.Description });
+                    })
+                .WithName("SmartConnect_CreateGroup");
 
-        group.MapPost(
-                "/",
-                async (FlowGroup body, SmartConnectDbContext db, CancellationToken ct) =>
-                {
-                    var entity = new FlowGroupEntity
+            group.MapDelete(
+                    "/{groupId:guid}",
+                    async (Guid groupId, SmartConnectDbContext db, CancellationToken ct) =>
                     {
-                        Id = body.Id == Guid.Empty ? Guid.NewGuid() : body.Id,
-                        Name = body.Name,
-                        Description = body.Description,
-                    };
-                    db.FlowGroups.Add(entity);
-                    await db.SaveChangesAsync(ct).ConfigureAwait(false);
-                    return Results.Created($"/smartconnect/v1/admin/groups/{entity.Id}",
-                        new FlowGroup { Id = entity.Id, Name = entity.Name, Description = entity.Description });
-                })
-            .WithName("SmartConnect_CreateGroup");
+                        var deleted = await db.FlowGroups.Where(g => g.Id == groupId)
+                            .ExecuteDeleteAsync(ct).ConfigureAwait(false);
+                        return deleted > 0 ? Results.NoContent() : Results.NotFound();
+                    })
+                .WithName("SmartConnect_DeleteGroup");
 
-        group.MapDelete(
-                "/{groupId:guid}",
-                async (Guid groupId, SmartConnectDbContext db, CancellationToken ct) =>
-                {
-                    var deleted = await db.FlowGroups.Where(g => g.Id == groupId)
-                        .ExecuteDeleteAsync(ct).ConfigureAwait(false);
-                    return deleted > 0 ? Results.NoContent() : Results.NotFound();
-                })
-            .WithName("SmartConnect_DeleteGroup");
-
-        return endpoints;
+            return endpoints;
+        }
     }
 }

@@ -6,11 +6,14 @@ namespace Dialysis.HIE.Xds;
 
 public static class HieXdsServiceCollectionExtensions
 {
-    public static IServiceCollection AddHieXdsBridge(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        var bridge = new DefaultXdsFhirBridge();
-        services.TryAddSingleton<IXdsToFhirMapper>(bridge);
-        services.TryAddSingleton<IFhirToXdsMapper>(bridge);
-        return services;
+        public IServiceCollection AddHieXdsBridge()
+        {
+            var bridge = new DefaultXdsFhirBridge();
+            services.TryAddSingleton<IXdsToFhirMapper>(bridge);
+            services.TryAddSingleton<IFhirToXdsMapper>(bridge);
+            return services;
+        }
     }
 }

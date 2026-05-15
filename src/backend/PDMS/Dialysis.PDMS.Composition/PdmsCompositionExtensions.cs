@@ -36,8 +36,9 @@ namespace Dialysis.PDMS.Composition;
 
 public static class PdmsCompositionExtensions
 {
-    public static IServiceCollection AddPatientDataManagementSystem(
-        this IServiceCollection services,
+    extension(IServiceCollection services)
+    {
+        public IServiceCollection AddPatientDataManagementSystem(
         IConfiguration configuration,
         Action<DbContextOptionsBuilder>? configurePersistence = null,
         bool enableOutboxRelay = false,
@@ -53,91 +54,92 @@ public static class PdmsCompositionExtensions
         bool enableMachineTelemetrySimulator = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
-    {
-        services.AddPdmsCore();
-        services.AddPdmsPersistence(configurePersistence);
-
-        services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
-
-        // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
-        services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
-
-        services.AddTransponder(t =>
         {
-            t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
-            t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
+            services.AddPdmsCore();
+            services.AddPdmsPersistence(configurePersistence);
+
+            services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
+
+            // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
+            services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
+
+            services.AddTransponder(t =>
+            {
+                t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
+                t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
+
+                if (enableFhirSubscriptions)
+                    t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventSubscriptionBroadcaster>();
+            });
+            configureTransponderTransport?.Invoke(services);
+
+            services.AddCqrs(c =>
+            {
+                c.AddFromAssembliesOf(typeof(PdmsTreatmentSessionsMarker));
+
+                c.AddCommandBehavior<ScheduleSessionCommand, Guid, AuthorizationPipelineBehavior<ScheduleSessionCommand, Guid>>();
+                c.AddCommandBehavior<StartSessionCommand, Unit, AuthorizationPipelineBehavior<StartSessionCommand, Unit>>();
+                c.AddCommandBehavior<RecordReadingCommand, Guid, AuthorizationPipelineBehavior<RecordReadingCommand, Guid>>();
+                c.AddCommandBehavior<CompleteSessionCommand, Unit, AuthorizationPipelineBehavior<CompleteSessionCommand, Unit>>();
+                c.AddCommandBehavior<AbortSessionCommand, Unit, AuthorizationPipelineBehavior<AbortSessionCommand, Unit>>();
+
+                c.AddQueryBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>, AuthorizationPipelineBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>>();
+                c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();
+                c.AddQueryBehavior<GetSessionSummaryQuery, SessionSummaryDto, AuthorizationPipelineBehavior<GetSessionSummaryQuery, SessionSummaryDto>>();
+            });
+
+            if (enableOutboxRelay)
+                services.AddTransponderOutboxRelay<PdmsDbContext>();
+
+            if (enableFhirEndpoints)
+            {
+                services.AddFhir(fhir =>
+                {
+                    fhir.UseBaseUrl("/fhir");
+                    configureFhir?.Invoke(fhir);
+                });
+            }
+
+            if (enableFhirAuditPersistence)
+                services.AddFhirAuditEntityFrameworkStore<PdmsDbContext>();
+            if (enableFhirBulkDataPersistence)
+                services.AddFhirBulkDataEntityFrameworkStore<PdmsDbContext>();
+            if (enableFhirSubscriptionsPersistence)
+                services.AddFhirSubscriptionsEntityFrameworkStore<PdmsDbContext>();
+
+            if (enableFhirBulkDataExport)
+            {
+                var storageRoot = configuration["Pdms:Fhir:BulkData:StorageRoot"]
+                    ?? Path.Combine(Path.GetTempPath(), "dialysis-pdms-bulk-data");
+                services.AddFhirBulkData(storageRoot);
+                services.AddFhirBulkDataOrchestrator();
+                services.AddFhirBulkDataFeeder<PdmsDialysisSessionProcedureFeeder, Procedure>();
+            }
+
+            if (enableFhirSmartOnFhir)
+            {
+                services.AddFhirSmartOnFhir(configuration.GetSection("Pdms:Fhir:Smart"));
+            }
 
             if (enableFhirSubscriptions)
-                t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventSubscriptionBroadcaster>();
-        });
-        configureTransponderTransport?.Invoke(services);
-
-        services.AddCqrs(c =>
-        {
-            c.AddFromAssembliesOf(typeof(PdmsTreatmentSessionsMarker));
-
-            c.AddCommandBehavior<ScheduleSessionCommand, Guid, AuthorizationPipelineBehavior<ScheduleSessionCommand, Guid>>();
-            c.AddCommandBehavior<StartSessionCommand, Unit, AuthorizationPipelineBehavior<StartSessionCommand, Unit>>();
-            c.AddCommandBehavior<RecordReadingCommand, Guid, AuthorizationPipelineBehavior<RecordReadingCommand, Guid>>();
-            c.AddCommandBehavior<CompleteSessionCommand, Unit, AuthorizationPipelineBehavior<CompleteSessionCommand, Unit>>();
-            c.AddCommandBehavior<AbortSessionCommand, Unit, AuthorizationPipelineBehavior<AbortSessionCommand, Unit>>();
-
-            c.AddQueryBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>, AuthorizationPipelineBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>>();
-            c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();
-            c.AddQueryBehavior<GetSessionSummaryQuery, SessionSummaryDto, AuthorizationPipelineBehavior<GetSessionSummaryQuery, SessionSummaryDto>>();
-        });
-
-        if (enableOutboxRelay)
-            services.AddTransponderOutboxRelay<PdmsDbContext>();
-
-        if (enableFhirEndpoints)
-        {
-            services.AddFhir(fhir =>
             {
-                fhir.UseBaseUrl("/fhir");
-                configureFhir?.Invoke(fhir);
-            });
+                services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
+                    Url: IntradialyticAdverseEventSubscriptionBroadcaster.TopicUrl,
+                    Title: "Intradialytic adverse event",
+                    Description: "Fires when an intradialytic adverse event is recorded. Filter by patient, adverse-event kind, or severity.",
+                    FilterParameterNames: ["patient", "kind", "severity"])));
+            }
+
+            if (enableDemoSeed)
+                services.AddHostedService<Demo.PdmsDemoSeeder>();
+
+            if (enableVitalsTicker)
+                services.AddHostedService<Demo.VitalsTickerService>();
+
+            if (enableMachineTelemetrySimulator)
+                services.AddHostedService<Demo.MachineTelemetrySimulatorService>();
+
+            return services;
         }
-
-        if (enableFhirAuditPersistence)
-            services.AddFhirAuditEntityFrameworkStore<PdmsDbContext>();
-        if (enableFhirBulkDataPersistence)
-            services.AddFhirBulkDataEntityFrameworkStore<PdmsDbContext>();
-        if (enableFhirSubscriptionsPersistence)
-            services.AddFhirSubscriptionsEntityFrameworkStore<PdmsDbContext>();
-
-        if (enableFhirBulkDataExport)
-        {
-            var storageRoot = configuration["Pdms:Fhir:BulkData:StorageRoot"]
-                ?? Path.Combine(Path.GetTempPath(), "dialysis-pdms-bulk-data");
-            services.AddFhirBulkData(storageRoot);
-            services.AddFhirBulkDataOrchestrator();
-            services.AddFhirBulkDataFeeder<PdmsDialysisSessionProcedureFeeder, Procedure>();
-        }
-
-        if (enableFhirSmartOnFhir)
-        {
-            services.AddFhirSmartOnFhir(configuration.GetSection("Pdms:Fhir:Smart"));
-        }
-
-        if (enableFhirSubscriptions)
-        {
-            services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
-                Url: IntradialyticAdverseEventSubscriptionBroadcaster.TopicUrl,
-                Title: "Intradialytic adverse event",
-                Description: "Fires when an intradialytic adverse event is recorded. Filter by patient, adverse-event kind, or severity.",
-                FilterParameterNames: ["patient", "kind", "severity"])));
-        }
-
-        if (enableDemoSeed)
-            services.AddHostedService<Demo.PdmsDemoSeeder>();
-
-        if (enableVitalsTicker)
-            services.AddHostedService<Demo.VitalsTickerService>();
-
-        if (enableMachineTelemetrySimulator)
-            services.AddHostedService<Demo.MachineTelemetrySimulatorService>();
-
-        return services;
     }
 }

@@ -43,15 +43,18 @@ public sealed class PlatformGatewayBuilder
 
 public static class PlatformGatewayExtensions
 {
-    /// <summary>
-    /// Single ergonomic facade — composes FHIR + SMART + bulk-data endpoints in one call so module
-    /// hosts don't need to remember the individual <c>Map*</c> extensions.
-    /// </summary>
-    public static IEndpointRouteBuilder MapPlatformApis(this IEndpointRouteBuilder endpoints, Action<PlatformGatewayBuilder> configure)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
-        var builder = new PlatformGatewayBuilder(endpoints);
-        configure(builder);
-        return endpoints;
+        /// <summary>
+        /// Single ergonomic facade — composes FHIR + SMART + bulk-data endpoints in one call so module
+        /// hosts don't need to remember the individual <c>Map*</c> extensions.
+        /// </summary>
+        public IEndpointRouteBuilder MapPlatformApis(Action<PlatformGatewayBuilder> configure)
+        {
+            ArgumentNullException.ThrowIfNull(endpoints);
+            var builder = new PlatformGatewayBuilder(endpoints);
+            configure(builder);
+            return endpoints;
+        }
     }
 }

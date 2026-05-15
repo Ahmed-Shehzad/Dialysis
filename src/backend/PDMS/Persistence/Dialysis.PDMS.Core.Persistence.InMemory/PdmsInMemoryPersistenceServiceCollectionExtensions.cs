@@ -5,11 +5,14 @@ namespace Dialysis.PDMS.Core.Persistence.InMemory;
 
 public static class PdmsInMemoryPersistenceServiceCollectionExtensions
 {
-    public static IServiceCollection AddPdmsInMemoryRepository<TAggregate, TId>(this IServiceCollection services)
+    extension(IServiceCollection services)
+    {
+        public IServiceCollection AddPdmsInMemoryRepository<TAggregate, TId>()
         where TAggregate : AggregateRoot<TId>
         where TId : notnull
-    {
-        services.AddSingleton<IPdmsRepository<TAggregate, TId>, InMemoryPdmsRepository<TAggregate, TId>>();
-        return services;
+        {
+            services.AddSingleton<IPdmsRepository<TAggregate, TId>, InMemoryPdmsRepository<TAggregate, TId>>();
+            return services;
+        }
     }
 }

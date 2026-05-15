@@ -12,22 +12,25 @@ namespace Dialysis.Module.Hosting.Middleware;
 /// </summary>
 public static class SecurityHeadersMiddleware
 {
-    public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
+    extension(IApplicationBuilder app)
     {
-        ArgumentNullException.ThrowIfNull(app);
-        return app.Use(static async (context, next) =>
+        public IApplicationBuilder UseSecurityHeaders()
         {
-            var headers = context.Response.Headers;
-            headers.Append("X-Content-Type-Options", "nosniff");
-            headers.Append("Referrer-Policy", "no-referrer");
-            headers.Append("X-Frame-Options", "DENY");
-            headers.Append(
-                "Permissions-Policy",
-                "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-            headers.Append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
-            headers.Append("Cross-Origin-Opener-Policy", "same-origin");
-            headers.Append("Cross-Origin-Resource-Policy", "same-site");
-            await next.Invoke().ConfigureAwait(false);
-        });
+            ArgumentNullException.ThrowIfNull(app);
+            return app.Use(static async (context, next) =>
+            {
+                var headers = context.Response.Headers;
+                headers.Append("X-Content-Type-Options", "nosniff");
+                headers.Append("Referrer-Policy", "no-referrer");
+                headers.Append("X-Frame-Options", "DENY");
+                headers.Append(
+                    "Permissions-Policy",
+                    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
+                headers.Append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+                headers.Append("Cross-Origin-Opener-Policy", "same-origin");
+                headers.Append("Cross-Origin-Resource-Policy", "same-site");
+                await next.Invoke().ConfigureAwait(false);
+            });
+        }
     }
 }

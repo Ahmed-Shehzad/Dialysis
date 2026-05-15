@@ -26,94 +26,92 @@ namespace Dialysis.HIE.Composition;
 
 public static class HealthInformationExchangeExtensions
 {
-    /// <summary>
-    /// Wires HIE persistence, mappers, integration-event consumers, the outbound dispatcher hosted service,
-    /// inbound ingestion, the partner endpoint resolver, openEHR composition writer, and Transponder
-    /// (with optional outbox relay + RabbitMQ transport).
-    /// </summary>
-    public static IServiceCollection AddHealthInformationExchange(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        Action<DbContextOptionsBuilder>? configurePersistence = null,
-        bool enableOutboxRelay = false,
-        bool enableDemoSeed = false,
-        Action<IServiceCollection>? configureTransponderTransport = null)
+    extension(IServiceCollection services)
     {
-        services.AddHiePersistence(configurePersistence);
-
-        services.AddFhirTerminology(configuration, "Hie:Fhir:Terminology");
-        services.AddHieConceptCatalog();
-
-        services.Configure<OutboundOptions>(configuration.GetSection("Hie:Outbound"));
-
-        services.AddTransponder(bus =>
+        /// <summary>
+        /// Wires HIE persistence, mappers, integration-event consumers, the outbound dispatcher hosted service,
+        /// inbound ingestion, the partner endpoint resolver, openEHR composition writer, and Transponder
+        /// (with optional outbox relay + RabbitMQ transport).
+        /// </summary>
+        public IServiceCollection AddHealthInformationExchange(IConfiguration configuration,
+            Action<DbContextOptionsBuilder>? configurePersistence = null,
+            bool enableOutboxRelay = false,
+            bool enableDemoSeed = false,
+            Action<IServiceCollection>? configureTransponderTransport = null)
         {
-            bus.AddConsumer<PatientRegisteredIntegrationEvent, PatientRegisteredConsumer>();
-            bus.AddConsumer<PatientDemographicsUpdatedIntegrationEvent, PatientDemographicsUpdatedConsumer>();
-            bus.AddConsumer<PatientsMergedIntegrationEvent, PatientsMergedConsumer>();
-            bus.AddConsumer<EncounterOpenedIntegrationEvent, EncounterOpenedConsumer>();
-            bus.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedConsumer>();
-            bus.AddConsumer<ClinicalNoteSignedIntegrationEvent, ClinicalNoteSignedConsumer>();
-            bus.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
-            bus.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedConsumer>();
-            bus.AddConsumer<DialysisSessionStartedIntegrationEvent, DialysisSessionStartedConsumer>();
-            bus.AddConsumer<DialysisSessionCompletedIntegrationEvent, DialysisSessionCompletedConsumer>();
-            bus.AddConsumer<DialysisSessionAbortedIntegrationEvent, DialysisSessionAbortedConsumer>();
-            bus.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventConsumer>();
-            bus.AddConsumer<ChartVitalSignProjectedAsOpenEhrIntegrationEvent, ChartVitalSignOpenEhrConsumer>();
-            bus.AddConsumer<LabResultProjectedAsOpenEhrIntegrationEvent, LabResultOpenEhrConsumer>();
-            bus.AddConsumer<HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent, HaemodialysisSessionOpenEhrConsumer>();
-        });
-        configureTransponderTransport?.Invoke(services);
+            services.AddHiePersistence(configurePersistence);
 
-        services.AddScoped<PatientMapper>();
-        services.AddScoped<EncounterMapper>();
-        services.AddScoped<ClinicalNoteMapper>();
-        services.AddScoped<LabOrderMapper>();
-        services.AddScoped<LabResultMapper>();
-        services.AddScoped<DialysisSessionMapper>();
-        services.AddScoped<AdverseEventMapper>();
+            services.AddFhirTerminology(configuration, "Hie:Fhir:Terminology");
+            services.AddHieConceptCatalog();
 
-        services.AddScoped<OutboundQueueWriter>();
-        services.AddFhirHttpPartnerEndpoints(configuration);
-        services.AddSingleton<IPartnerEndpointResolver, PartnerEndpointResolver>();
-        services.AddScoped<IOutboundDispatcher, OutboundDispatcher>();
-        services.AddHostedService<OutboundDispatcherHostedService>();
+            services.Configure<OutboundOptions>(configuration.GetSection("Hie:Outbound"));
 
-        services.AddScoped<CompositionWriter>();
-        services.AddScoped<IArchetypeProjection<Patient>, PatientArchetypeProjection>();
-        services.AddScoped<IArchetypeProjection<Procedure>, ProcedureArchetypeProjection>();
-        services.AddScoped<IArchetypeProjection<Observation>, ObservationArchetypeProjection>();
-        services.AddScoped<InboundIngestionService>();
+            services.AddTransponder(bus =>
+            {
+                bus.AddConsumer<PatientRegisteredIntegrationEvent, PatientRegisteredConsumer>();
+                bus.AddConsumer<PatientDemographicsUpdatedIntegrationEvent, PatientDemographicsUpdatedConsumer>();
+                bus.AddConsumer<PatientsMergedIntegrationEvent, PatientsMergedConsumer>();
+                bus.AddConsumer<EncounterOpenedIntegrationEvent, EncounterOpenedConsumer>();
+                bus.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedConsumer>();
+                bus.AddConsumer<ClinicalNoteSignedIntegrationEvent, ClinicalNoteSignedConsumer>();
+                bus.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
+                bus.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedConsumer>();
+                bus.AddConsumer<DialysisSessionStartedIntegrationEvent, DialysisSessionStartedConsumer>();
+                bus.AddConsumer<DialysisSessionCompletedIntegrationEvent, DialysisSessionCompletedConsumer>();
+                bus.AddConsumer<DialysisSessionAbortedIntegrationEvent, DialysisSessionAbortedConsumer>();
+                bus.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventConsumer>();
+                bus.AddConsumer<ChartVitalSignProjectedAsOpenEhrIntegrationEvent, ChartVitalSignOpenEhrConsumer>();
+                bus.AddConsumer<LabResultProjectedAsOpenEhrIntegrationEvent, LabResultOpenEhrConsumer>();
+                bus.AddConsumer<HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent, HaemodialysisSessionOpenEhrConsumer>();
+            });
+            configureTransponderTransport?.Invoke(services);
 
-        services.AddHieCqrsAuthorization();
+            services.AddScoped<PatientMapper>();
+            services.AddScoped<EncounterMapper>();
+            services.AddScoped<ClinicalNoteMapper>();
+            services.AddScoped<LabOrderMapper>();
+            services.AddScoped<LabResultMapper>();
+            services.AddScoped<DialysisSessionMapper>();
+            services.AddScoped<AdverseEventMapper>();
 
-        if (enableOutboxRelay)
-            services.AddTransponderOutboxRelay<HieDbContext>();
+            services.AddScoped<OutboundQueueWriter>();
+            services.AddFhirHttpPartnerEndpoints(configuration);
+            services.AddSingleton<IPartnerEndpointResolver, PartnerEndpointResolver>();
+            services.AddScoped<IOutboundDispatcher, OutboundDispatcher>();
+            services.AddHostedService<OutboundDispatcherHostedService>();
 
-        if (enableDemoSeed)
-            services.AddHostedService<Demo.HieDemoSeeder>();
+            services.AddScoped<CompositionWriter>();
+            services.AddScoped<IArchetypeProjection<Patient>, PatientArchetypeProjection>();
+            services.AddScoped<IArchetypeProjection<Procedure>, ProcedureArchetypeProjection>();
+            services.AddScoped<IArchetypeProjection<Observation>, ObservationArchetypeProjection>();
+            services.AddScoped<InboundIngestionService>();
 
-        return services;
-    }
+            services.AddHieCqrsAuthorization();
 
-    /// <summary>Applies RabbitMQ as <see cref="ITransponderBus"/> when <paramref name="rabbitConnectionUri"/> is non-empty.</summary>
-    public static void AddHieTransponderRabbitMqIfConfigured(
-        this IServiceCollection services,
-        string? rabbitConnectionUri,
-        string? queueName = null,
-        string? exchangeName = null)
-    {
-        if (string.IsNullOrWhiteSpace(rabbitConnectionUri))
-            return;
+            if (enableOutboxRelay)
+                services.AddTransponderOutboxRelay<HieDbContext>();
 
-        services.AddTransponderRabbitMq(o =>
+            if (enableDemoSeed)
+                services.AddHostedService<Demo.HieDemoSeeder>();
+
+            return services;
+        }
+        /// <summary>Applies RabbitMQ as <see cref="ITransponderBus"/> when <paramref name="rabbitConnectionUri"/> is non-empty.</summary>
+        public void AddHieTransponderRabbitMqIfConfigured(string? rabbitConnectionUri,
+            string? queueName = null,
+            string? exchangeName = null)
         {
-            o.ConnectionUri = rabbitConnectionUri;
-            if (!string.IsNullOrWhiteSpace(queueName))
-                o.QueueName = queueName;
-            if (!string.IsNullOrWhiteSpace(exchangeName))
-                o.ExchangeName = exchangeName;
-        });
+            if (string.IsNullOrWhiteSpace(rabbitConnectionUri))
+                return;
+
+            services.AddTransponderRabbitMq(o =>
+            {
+                o.ConnectionUri = rabbitConnectionUri;
+                if (!string.IsNullOrWhiteSpace(queueName))
+                    o.QueueName = queueName;
+                if (!string.IsNullOrWhiteSpace(exchangeName))
+                    o.ExchangeName = exchangeName;
+            });
+        }
     }
 }

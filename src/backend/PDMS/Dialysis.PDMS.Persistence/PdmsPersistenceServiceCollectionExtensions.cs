@@ -9,25 +9,27 @@ namespace Dialysis.PDMS.Persistence;
 
 public static class PdmsPersistenceServiceCollectionExtensions
 {
-    public static IServiceCollection AddPdmsPersistence(
-        this IServiceCollection services,
-        Action<DbContextOptionsBuilder>? configure = null)
+    extension(IServiceCollection services)
     {
-        services.AddOptions<TransponderPersistenceOptions>()
-            .Configure(o => o.Schema = "pdms");
-
-        services.AddDbContext<PdmsDbContext>((sp, options) =>
+        public IServiceCollection AddPdmsPersistence(
+        Action<DbContextOptionsBuilder>? configure = null)
         {
-            configure?.Invoke(options);
-            var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
-            if (interceptor is not null)
-                options.AddInterceptors(interceptor);
-        });
+            services.AddOptions<TransponderPersistenceOptions>()
+                .Configure(o => o.Schema = "pdms");
 
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PdmsDbContext>());
-        services.AddTransponderEfOutboxAndInbox<PdmsDbContext>();
-        services.AddScoped<IDialysisSessionRepository, DialysisSessionRepository>();
+            services.AddDbContext<PdmsDbContext>((sp, options) =>
+            {
+                configure?.Invoke(options);
+                var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
+                if (interceptor is not null)
+                    options.AddInterceptors(interceptor);
+            });
 
-        return services;
+            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PdmsDbContext>());
+            services.AddTransponderEfOutboxAndInbox<PdmsDbContext>();
+            services.AddScoped<IDialysisSessionRepository, DialysisSessionRepository>();
+
+            return services;
+        }
     }
 }

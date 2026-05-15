@@ -10,63 +10,65 @@ namespace Dialysis.BuildingBlocks.Fhir.BulkData;
 
 public static class FhirBulkDataServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers the bulk-data engine: in-memory job store, local file storage,
-    /// and the orchestrator interface (implementation supplied by host or replaced by EF/cloud variants).
-    /// </summary>
-    public static IServiceCollection AddFhirBulkData(this IServiceCollection services, string storageRoot)
+    extension(IServiceCollection services)
     {
-        services.TryAddSingleton<IExportJobStore, InMemoryExportJobStore>();
-        services.TryAddSingleton<IBulkDataStorage>(new LocalFileBulkDataStorage(storageRoot));
-        return services;
+        /// <summary>
+        /// Registers the bulk-data engine: in-memory job store, local file storage,
+        /// and the orchestrator interface (implementation supplied by host or replaced by EF/cloud variants).
+        /// </summary>
+        public IServiceCollection AddFhirBulkData(string storageRoot)
+        {
+            services.TryAddSingleton<IExportJobStore, InMemoryExportJobStore>();
+            services.TryAddSingleton<IBulkDataStorage>(new LocalFileBulkDataStorage(storageRoot));
+            return services;
+        }
+        /// <summary>
+        /// Registers the default in-process orchestrator: <see cref="DefaultExportJobOrchestrator"/>
+        /// + <see cref="ExportJobQueue"/> + <see cref="ExportJobBackgroundProcessor"/> hosted service +
+        /// <see cref="NdjsonFeederBinder"/>. Hosts then call
+        /// <see cref="AddFhirBulkDataFeeder{TFeeder,TResource}"/> once per resource type they want to export.
+        /// </summary>
+        public IServiceCollection AddFhirBulkDataOrchestrator()
+        {
+            services.TryAddSingleton(TimeProvider.System);
+            services.TryAddSingleton<ExportJobQueue>();
+            services.TryAddSingleton<NdjsonFeederBinder>();
+            services.TryAddSingleton<IExportJobOrchestrator, DefaultExportJobOrchestrator>();
+            services.AddHostedService<ExportJobBackgroundProcessor>();
+            return services;
+        }
+        /// <summary>
+        /// Registers a per-resource-type NDJSON feeder. Each call adds an <see cref="INdjsonFeederBinding"/>
+        /// instance; <see cref="NdjsonFeederBinder"/> aggregates them at runtime.
+        /// </summary>
+        public IServiceCollection AddFhirBulkDataFeeder<TFeeder, TResource>()
+            where TFeeder : class, INdjsonResourceFeeder<TResource>
+            where TResource : Resource
+        {
+            services.AddScoped<INdjsonResourceFeeder<TResource>, TFeeder>();
+            services.AddSingleton<INdjsonFeederBinding>(new NdjsonFeederBinding<TResource>());
+            return services;
+        }
     }
 
-    /// <summary>
-    /// Registers the default in-process orchestrator: <see cref="DefaultExportJobOrchestrator"/>
-    /// + <see cref="ExportJobQueue"/> + <see cref="ExportJobBackgroundProcessor"/> hosted service +
-    /// <see cref="NdjsonFeederBinder"/>. Hosts then call
-    /// <see cref="AddFhirBulkDataFeeder{TFeeder,TResource}"/> once per resource type they want to export.
-    /// </summary>
-    public static IServiceCollection AddFhirBulkDataOrchestrator(this IServiceCollection services)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<ExportJobQueue>();
-        services.TryAddSingleton<NdjsonFeederBinder>();
-        services.TryAddSingleton<IExportJobOrchestrator, DefaultExportJobOrchestrator>();
-        services.AddHostedService<ExportJobBackgroundProcessor>();
-        return services;
-    }
+        /// <summary>
+        /// Maps <c>GET /fhir/$export</c>, <c>GET /fhir/Patient/$export</c>, <c>GET /fhir/Group/{id}/$export</c>,
+        /// <c>GET /fhir/bulk-data/jobs/{id}</c>, <c>DELETE /fhir/bulk-data/jobs/{id}</c>, and
+        /// <c>GET /fhir/bulk-data/jobs/{id}/files/{file}</c> per the Bulk Data Access IG.
+        /// When <paramref name="requireScope"/> is set, every endpoint is wrapped in
+        /// <c>RequireAuthorization(requireScope)</c> — the SMART scope policy provider will
+        /// synthesize a policy resolving the scope from the caller's JWT.
+        /// </summary>
+        public IEndpointRouteBuilder MapFhirBulkDataEndpoints(
+            string baseUrl = "/fhir",
+            string? requireScope = null)
+        {
+            ArgumentNullException.ThrowIfNull(endpoints);
+            var prefix = baseUrl.TrimEnd('/');
 
-    /// <summary>
-    /// Registers a per-resource-type NDJSON feeder. Each call adds an <see cref="INdjsonFeederBinding"/>
-    /// instance; <see cref="NdjsonFeederBinder"/> aggregates them at runtime.
-    /// </summary>
-    public static IServiceCollection AddFhirBulkDataFeeder<TFeeder, TResource>(this IServiceCollection services)
-        where TFeeder : class, INdjsonResourceFeeder<TResource>
-        where TResource : Resource
-    {
-        services.AddScoped<INdjsonResourceFeeder<TResource>, TFeeder>();
-        services.AddSingleton<INdjsonFeederBinding>(new NdjsonFeederBinding<TResource>());
-        return services;
-    }
-
-    /// <summary>
-    /// Maps <c>GET /fhir/$export</c>, <c>GET /fhir/Patient/$export</c>, <c>GET /fhir/Group/{id}/$export</c>,
-    /// <c>GET /fhir/bulk-data/jobs/{id}</c>, <c>DELETE /fhir/bulk-data/jobs/{id}</c>, and
-    /// <c>GET /fhir/bulk-data/jobs/{id}/files/{file}</c> per the Bulk Data Access IG.
-    /// When <paramref name="requireScope"/> is set, every endpoint is wrapped in
-    /// <c>RequireAuthorization(requireScope)</c> — the SMART scope policy provider will
-    /// synthesize a policy resolving the scope from the caller's JWT.
-    /// </summary>
-    public static IEndpointRouteBuilder MapFhirBulkDataEndpoints(
-        this IEndpointRouteBuilder endpoints,
-        string baseUrl = "/fhir",
-        string? requireScope = null)
-    {
-        ArgumentNullException.ThrowIfNull(endpoints);
-        var prefix = baseUrl.TrimEnd('/');
-
-        var routes = new List<IEndpointConventionBuilder>
+            var routes = new List<IEndpointConventionBuilder>
         {
             endpoints.MapGet(prefix + "/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.System, groupId: null)),
             endpoints.MapGet(prefix + "/Patient/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.Patient, groupId: null)),
@@ -76,15 +78,16 @@ public static class FhirBulkDataServiceCollectionExtensions
             endpoints.MapGet(prefix + "/bulk-data/jobs/{id}/files/{file}", DownloadFileAsync),
         };
 
-        if (!string.IsNullOrWhiteSpace(requireScope))
-        {
-            foreach (var route in routes)
+            if (!string.IsNullOrWhiteSpace(requireScope))
             {
-                route.RequireAuthorization(requireScope);
+                foreach (var route in routes)
+                {
+                    route.RequireAuthorization(requireScope);
+                }
             }
-        }
 
-        return endpoints;
+            return endpoints;
+        }
     }
 
     private static async Task StartExportAsync(HttpContext context, ExportScope scope, string? groupId)

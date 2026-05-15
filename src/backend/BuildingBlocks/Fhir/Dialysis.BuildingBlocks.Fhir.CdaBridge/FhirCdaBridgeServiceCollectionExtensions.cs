@@ -5,10 +5,13 @@ namespace Dialysis.BuildingBlocks.Fhir.CdaBridge;
 
 public static class FhirCdaBridgeServiceCollectionExtensions
 {
-    public static IServiceCollection AddFhirCdaBridge(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.TryAddSingleton<ICdaToFhirMapper, DefaultCdaToFhirMapper>();
-        services.TryAddSingleton<IFhirToCdaMapper, DefaultFhirToCdaMapper>();
-        return services;
+        public IServiceCollection AddFhirCdaBridge()
+        {
+            services.TryAddSingleton<ICdaToFhirMapper, DefaultCdaToFhirMapper>();
+            services.TryAddSingleton<IFhirToCdaMapper, DefaultFhirToCdaMapper>();
+            return services;
+        }
     }
 }

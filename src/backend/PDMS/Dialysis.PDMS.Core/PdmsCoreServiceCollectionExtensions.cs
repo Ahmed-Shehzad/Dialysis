@@ -5,9 +5,12 @@ namespace Dialysis.PDMS.Core;
 
 public static class PdmsCoreServiceCollectionExtensions
 {
-    public static IServiceCollection AddPdmsCore(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.TryAddSingleton<IPdmsClock, PdmsClock>();
-        return services;
+        public IServiceCollection AddPdmsCore()
+        {
+            services.TryAddSingleton<IPdmsClock, PdmsClock>();
+            return services;
+        }
     }
 }

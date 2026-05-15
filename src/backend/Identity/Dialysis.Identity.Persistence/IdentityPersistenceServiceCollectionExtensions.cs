@@ -9,28 +9,30 @@ namespace Dialysis.Identity.Persistence;
 
 public static class IdentityPersistenceServiceCollectionExtensions
 {
-    public static IServiceCollection AddIdentityPersistence(
-        this IServiceCollection services,
-        Action<DbContextOptionsBuilder>? configure = null)
+    extension(IServiceCollection services)
     {
-        services.AddOptions<TransponderPersistenceOptions>()
-            .Configure(o => o.Schema = "identity");
-
-        services.AddDbContext<IdentityDbContext>((sp, options) =>
+        public IServiceCollection AddIdentityPersistence(
+        Action<DbContextOptionsBuilder>? configure = null)
         {
-            configure?.Invoke(options);
-            var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
-            if (interceptor is not null)
-                options.AddInterceptors(interceptor);
-        });
+            services.AddOptions<TransponderPersistenceOptions>()
+                .Configure(o => o.Schema = "identity");
 
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<IdentityDbContext>());
-        services.AddTransponderEfOutboxAndInbox<IdentityDbContext>();
+            services.AddDbContext<IdentityDbContext>((sp, options) =>
+            {
+                configure?.Invoke(options);
+                var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
+                if (interceptor is not null)
+                    options.AddInterceptors(interceptor);
+            });
 
-        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
-        services.AddScoped<IRoleDefinitionRepository, RoleDefinitionRepository>();
-        services.AddScoped<IRoleAssignmentRepository, RoleAssignmentRepository>();
+            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<IdentityDbContext>());
+            services.AddTransponderEfOutboxAndInbox<IdentityDbContext>();
 
-        return services;
+            services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+            services.AddScoped<IRoleDefinitionRepository, RoleDefinitionRepository>();
+            services.AddScoped<IRoleAssignmentRepository, RoleAssignmentRepository>();
+
+            return services;
+        }
     }
 }

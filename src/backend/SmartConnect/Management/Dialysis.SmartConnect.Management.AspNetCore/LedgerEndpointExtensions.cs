@@ -8,36 +8,39 @@ namespace Dialysis.SmartConnect.Management.AspNetCore;
 /// <summary>Maps <c>/smartconnect/v1/ledger/*</c> query routes.</summary>
 public static class LedgerEndpointExtensions
 {
-    public static IEndpointRouteBuilder MapSmartConnectLedgerRoutes(this IEndpointRouteBuilder endpoints)
+    extension(IEndpointRouteBuilder endpoints)
     {
-        var g = endpoints.MapGroup("/smartconnect/v1/ledger").WithTags("SmartConnect Ledger");
+        public IEndpointRouteBuilder MapSmartConnectLedgerRoutes()
+        {
+            var g = endpoints.MapGroup("/smartconnect/v1/ledger").WithTags("SmartConnect Ledger");
 
-        g.MapGet(
-                "/entries",
-                async (
-                    IMessageLedgerQuery query,
-                    CancellationToken ct,
-                    Guid? flowId = null,
-                    string? correlationIdPrefix = null,
-                    DateTimeOffset? fromUtc = null,
-                    DateTimeOffset? toUtc = null,
-                    int skip = 0,
-                    int take = 50) =>
-                {
-                    var criteria = new MessageLedgerQueryCriteria
+            g.MapGet(
+                    "/entries",
+                    async (
+                        IMessageLedgerQuery query,
+                        CancellationToken ct,
+                        Guid? flowId = null,
+                        string? correlationIdPrefix = null,
+                        DateTimeOffset? fromUtc = null,
+                        DateTimeOffset? toUtc = null,
+                        int skip = 0,
+                        int take = 50) =>
                     {
-                        FlowId = flowId,
-                        CorrelationIdPrefix = correlationIdPrefix,
-                        CreatedFromUtc = fromUtc,
-                        CreatedToUtc = toUtc,
-                        Skip = skip,
-                        Take = take <= 0 ? 50 : take,
-                    };
-                    var (items, total) = await query.QueryAsync(criteria, ct).ConfigureAwait(false);
-                    return Results.Ok(new { total, items });
-                })
-            .WithName("SmartConnect_QueryLedger");
+                        var criteria = new MessageLedgerQueryCriteria
+                        {
+                            FlowId = flowId,
+                            CorrelationIdPrefix = correlationIdPrefix,
+                            CreatedFromUtc = fromUtc,
+                            CreatedToUtc = toUtc,
+                            Skip = skip,
+                            Take = take <= 0 ? 50 : take,
+                        };
+                        var (items, total) = await query.QueryAsync(criteria, ct).ConfigureAwait(false);
+                        return Results.Ok(new { total, items });
+                    })
+                .WithName("SmartConnect_QueryLedger");
 
-        return endpoints;
+            return endpoints;
+        }
     }
 }

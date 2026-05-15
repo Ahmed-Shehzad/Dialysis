@@ -51,7 +51,9 @@ namespace Dialysis.HIS.Composition;
 /// </summary>
 public static class HisCqrsServiceCollectionExtensions
 {
-    public static IServiceCollection AddHisCqrs(this IServiceCollection services) =>
+    extension(IServiceCollection services)
+    {
+        public IServiceCollection AddHisCqrs() =>
         services.AddCqrs(cqrs =>
         {
             cqrs.AddFromAssembliesOf(
@@ -107,4 +109,5 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<PlaceMedicationOrderCommand, Guid, AuthorizationPipelineBehavior<PlaceMedicationOrderCommand, Guid>>();
             cqrs.AddQueryBehavior<GetPatientPortalSummaryQuery, PatientPortalSummaryDto, AuthorizationPipelineBehavior<GetPatientPortalSummaryQuery, PatientPortalSummaryDto>>();
         });
+    }
 }

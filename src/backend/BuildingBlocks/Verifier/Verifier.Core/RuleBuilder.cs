@@ -436,133 +436,147 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
 /// <summary>Fluent constraints for <see cref="IRuleBuilder{T,TProperty}"/>.</summary>
 public static class VerifierRuleExtensions
 {
-    public static IRuleBuilder<T, TProperty> NotNull<T, TProperty>(this IRuleBuilder<T, TProperty> ruleBuilder)
+    extension<T, TProperty>(IRuleBuilder<T, TProperty> ruleBuilder)
     {
-        Unwrap(ruleBuilder).AddValidator(new NotNullValidator<T, TProperty>());
-        return ruleBuilder;
+        public IRuleBuilder<T, TProperty> NotNull()
+        {
+            Unwrap(ruleBuilder).AddValidator(new NotNullValidator<T, TProperty>());
+            return ruleBuilder;
+        }
+
+        public IRuleBuilder<T, TProperty> Must(Func<T, TProperty, bool> predicate)
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            Unwrap(ruleBuilder).AddValidator(new PredicateValidator<T, TProperty>(predicate, "The specified condition was not met for '{PropertyName}'."));
+            return ruleBuilder;
+        }
+
+        /// <summary>Async predicate (for example a remote uniqueness check). The "Async" suffix names the
+        /// predicate's async nature, mirroring the FluentValidation API; the builder itself returns synchronously.</summary>
+#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
+        public IRuleBuilder<T, TProperty> MustAsync(
+            Func<T, TProperty, CancellationToken, Task<bool>> predicate)
+#pragma warning restore VSTHRD200
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            Unwrap(ruleBuilder).AddAsyncValidator(
+                new AsyncPredicateValidator<T, TProperty>(
+                    async (t, p, ct) => await predicate(t, p, ct).ConfigureAwait(false),
+                    "The specified condition was not met for '{PropertyName}'."));
+            return ruleBuilder;
+        }
+
+        /// <summary>Async predicate (for example a remote uniqueness check). See sibling overload for the suffix rationale.</summary>
+#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
+        public IRuleBuilder<T, TProperty> MustAsync(
+            Func<T, TProperty, CancellationToken, ValueTask<bool>> predicate)
+#pragma warning restore VSTHRD200
+        {
+            ArgumentNullException.ThrowIfNull(predicate);
+            Unwrap(ruleBuilder).AddAsyncValidator(
+                new AsyncPredicateValidator<T, TProperty>(
+                    (t, p, ct) => predicate(t, p, ct),
+                    "The specified condition was not met for '{PropertyName}'."));
+            return ruleBuilder;
+        }
     }
 
-    public static IRuleBuilder<T, string?> NotEmpty<T>(this IRuleBuilder<T, string?> ruleBuilder)
+    extension<T>(IRuleBuilder<T, string?> ruleBuilder)
     {
-        Unwrap(ruleBuilder).AddValidator(new NotEmptyStringValidator<T>());
-        return ruleBuilder;
+        public IRuleBuilder<T, string?> NotEmpty()
+        {
+            Unwrap(ruleBuilder).AddValidator(new NotEmptyStringValidator<T>());
+            return ruleBuilder;
+        }
     }
 
-    public static IRuleBuilder<T, TCollection?> NotEmpty<T, TCollection>(this IRuleBuilder<T, TCollection?> ruleBuilder)
-        where TCollection : class, IEnumerable
+    extension<T, TCollection>(IRuleBuilder<T, TCollection?> ruleBuilder) where TCollection : class, IEnumerable
     {
-        Unwrap(ruleBuilder).AddValidator(new EnumerableNotEmptyValidator<T, TCollection>());
-        return ruleBuilder;
+        public IRuleBuilder<T, TCollection?> NotEmpty()
+        {
+            Unwrap(ruleBuilder).AddValidator(new EnumerableNotEmptyValidator<T, TCollection>());
+            return ruleBuilder;
+        }
     }
 
-    /// <summary>Inclusive length; use <c>0</c> for max-only or <see cref="int.MaxValue"/> for min-only.</summary>
-    public static IRuleBuilder<T, string?> Length<T>(this IRuleBuilder<T, string?> ruleBuilder, int min, int max)
+    extension<T>(IRuleBuilder<T, string?> ruleBuilder)
     {
-        Unwrap(ruleBuilder).AddValidator(new LengthRangeValidator<T>(min, max));
-        return ruleBuilder;
+        /// <summary>Inclusive length; use <c>0</c> for max-only or <see cref="int.MaxValue"/> for min-only.</summary>
+        public IRuleBuilder<T, string?> Length(int min, int max)
+        {
+            Unwrap(ruleBuilder).AddValidator(new LengthRangeValidator<T>(min, max));
+            return ruleBuilder;
+        }
+        public IRuleBuilder<T, string?> Matches(string pattern, RegexOptions options = RegexOptions.None)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
+            var regex = new Regex(pattern, options, TimeSpan.FromMilliseconds(250));
+            Unwrap(ruleBuilder).AddValidator(new RegularExpressionValidator<T>(regex, "'{PropertyName}' was not in the correct format."));
+            return ruleBuilder;
+        }
     }
 
-    public static IRuleBuilder<T, string?> Matches<T>(this IRuleBuilder<T, string?> ruleBuilder, string pattern, RegexOptions options = RegexOptions.None)
+    extension<T, TComparable>(IRuleBuilder<T, TComparable?> ruleBuilder) where TComparable : struct, IComparable<TComparable>
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
-        var regex = new Regex(pattern, options, TimeSpan.FromMilliseconds(250));
-        Unwrap(ruleBuilder).AddValidator(new RegularExpressionValidator<T>(regex, "'{PropertyName}' was not in the correct format."));
-        return ruleBuilder;
-    }
-
-    public static IRuleBuilder<T, TComparable?> GreaterThan<T, TComparable>(this IRuleBuilder<T, TComparable?> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
+        public IRuleBuilder<T, TComparable?> GreaterThan(TComparable threshold)
+=>
         AddNullableComparable(ruleBuilder, ComparableKind.GreaterThan, threshold, default);
 
-    public static IRuleBuilder<T, TComparable> GreaterThan<T, TComparable>(this IRuleBuilder<T, TComparable> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
+        public IRuleBuilder<T, TComparable?> GreaterThanOrEqualTo(TComparable threshold)
+    =>
+            AddNullableComparable(ruleBuilder, ComparableKind.GreaterThanOrEqual, threshold, default);
+
+        public IRuleBuilder<T, TComparable?> LessThan(TComparable threshold)
+    =>
+            AddNullableComparable(ruleBuilder, ComparableKind.LessThan, threshold, default);
+
+        public IRuleBuilder<T, TComparable?> LessThanOrEqualTo(TComparable threshold)
+    =>
+            AddNullableComparable(ruleBuilder, ComparableKind.LessThanOrEqual, threshold, default);
+
+        public IRuleBuilder<T, TComparable?> InclusiveBetween(TComparable from, TComparable to)
+    =>
+            AddNullableComparable(ruleBuilder, ComparableKind.BetweenInclusive, from, to);
+    }
+
+    extension<T, TComparable>(IRuleBuilder<T, TComparable> ruleBuilder) where TComparable : struct, IComparable<TComparable>
+    {
+        public IRuleBuilder<T, TComparable> GreaterThan(TComparable threshold)
+=>
         AddComparable(ruleBuilder, ComparableKind.GreaterThan, threshold, default);
 
-    public static IRuleBuilder<T, TComparable?> GreaterThanOrEqualTo<T, TComparable>(this IRuleBuilder<T, TComparable?> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddNullableComparable(ruleBuilder, ComparableKind.GreaterThanOrEqual, threshold, default);
+        public IRuleBuilder<T, TComparable> GreaterThanOrEqualTo(TComparable threshold)
+    =>
+            AddComparable(ruleBuilder, ComparableKind.GreaterThanOrEqual, threshold, default);
 
-    public static IRuleBuilder<T, TComparable> GreaterThanOrEqualTo<T, TComparable>(this IRuleBuilder<T, TComparable> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddComparable(ruleBuilder, ComparableKind.GreaterThanOrEqual, threshold, default);
+        public IRuleBuilder<T, TComparable> LessThan(TComparable threshold)
+    =>
+            AddComparable(ruleBuilder, ComparableKind.LessThan, threshold, default);
 
-    public static IRuleBuilder<T, TComparable?> LessThan<T, TComparable>(this IRuleBuilder<T, TComparable?> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddNullableComparable(ruleBuilder, ComparableKind.LessThan, threshold, default);
+        public IRuleBuilder<T, TComparable> LessThanOrEqualTo(TComparable threshold)
+    =>
+            AddComparable(ruleBuilder, ComparableKind.LessThanOrEqual, threshold, default);
 
-    public static IRuleBuilder<T, TComparable> LessThan<T, TComparable>(this IRuleBuilder<T, TComparable> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddComparable(ruleBuilder, ComparableKind.LessThan, threshold, default);
-
-    public static IRuleBuilder<T, TComparable?> LessThanOrEqualTo<T, TComparable>(this IRuleBuilder<T, TComparable?> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddNullableComparable(ruleBuilder, ComparableKind.LessThanOrEqual, threshold, default);
-
-    public static IRuleBuilder<T, TComparable> LessThanOrEqualTo<T, TComparable>(this IRuleBuilder<T, TComparable> ruleBuilder, TComparable threshold)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddComparable(ruleBuilder, ComparableKind.LessThanOrEqual, threshold, default);
-
-    public static IRuleBuilder<T, TComparable?> InclusiveBetween<T, TComparable>(this IRuleBuilder<T, TComparable?> ruleBuilder, TComparable from, TComparable to)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddNullableComparable(ruleBuilder, ComparableKind.BetweenInclusive, from, to);
-
-    public static IRuleBuilder<T, TComparable> InclusiveBetween<T, TComparable>(this IRuleBuilder<T, TComparable> ruleBuilder, TComparable from, TComparable to)
-        where TComparable : struct, IComparable<TComparable> =>
-        AddComparable(ruleBuilder, ComparableKind.BetweenInclusive, from, to);
-
-    public static IRuleBuilder<T, TProperty> Must<T, TProperty>(this IRuleBuilder<T, TProperty> ruleBuilder, Func<T, TProperty, bool> predicate)
-    {
-        ArgumentNullException.ThrowIfNull(predicate);
-        Unwrap(ruleBuilder).AddValidator(new PredicateValidator<T, TProperty>(predicate, "The specified condition was not met for '{PropertyName}'."));
-        return ruleBuilder;
+        public IRuleBuilder<T, TComparable> InclusiveBetween(TComparable from, TComparable to)
+    =>
+            AddComparable(ruleBuilder, ComparableKind.BetweenInclusive, from, to);
     }
 
-    /// <summary>Async predicate (for example a remote uniqueness check). The "Async" suffix names the
-    /// predicate's async nature, mirroring the FluentValidation API; the builder itself returns synchronously.</summary>
-#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
-    public static IRuleBuilder<T, TProperty> MustAsync<T, TProperty>(
-        this IRuleBuilder<T, TProperty> ruleBuilder,
-        Func<T, TProperty, CancellationToken, Task<bool>> predicate)
-#pragma warning restore VSTHRD200
+    extension<T, TProperty>(IRuleBuilder<T, TProperty> ruleBuilder)
     {
-        ArgumentNullException.ThrowIfNull(predicate);
-        Unwrap(ruleBuilder).AddAsyncValidator(
-            new AsyncPredicateValidator<T, TProperty>(
-                async (t, p, ct) => await predicate(t, p, ct).ConfigureAwait(false),
-                "The specified condition was not met for '{PropertyName}'."));
-        return ruleBuilder;
-    }
-
-    /// <summary>Async predicate (for example a remote uniqueness check). See sibling overload for the suffix rationale.</summary>
-#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
-    public static IRuleBuilder<T, TProperty> MustAsync<T, TProperty>(
-        this IRuleBuilder<T, TProperty> ruleBuilder,
-        Func<T, TProperty, CancellationToken, ValueTask<bool>> predicate)
-#pragma warning restore VSTHRD200
-    {
-        ArgumentNullException.ThrowIfNull(predicate);
-        Unwrap(ruleBuilder).AddAsyncValidator(
-            new AsyncPredicateValidator<T, TProperty>(
-                (t, p, ct) => predicate(t, p, ct),
-                "The specified condition was not met for '{PropertyName}'."));
-        return ruleBuilder;
-    }
-
-    /// <summary>Registers a custom async property validator (for example network I/O).</summary>
-    public static IRuleBuilder<T, TProperty> AddAsyncValidator<T, TProperty>(
-        this IRuleBuilder<T, TProperty> ruleBuilder,
-        IAsyncPropertyValidator<T, TProperty> validator)
-    {
-        ArgumentNullException.ThrowIfNull(validator);
-        Unwrap(ruleBuilder).AddAsyncValidator(validator);
-        return ruleBuilder;
-    }
-
-    public static IRuleBuilder<T, TChild> SetValidator<T, TChild>(this IRuleBuilder<T, TChild> ruleBuilder, IValidator<TChild> validator)
-    {
-        ArgumentNullException.ThrowIfNull(validator);
-        Unwrap(ruleBuilder).AddNestedValidator(validator);
-        return ruleBuilder;
+        /// <summary>Registers a custom async property validator (for example network I/O).</summary>
+        public IRuleBuilder<T, TProperty> AddAsyncValidator(IAsyncPropertyValidator<T, TProperty> validator)
+        {
+            ArgumentNullException.ThrowIfNull(validator);
+            Unwrap(ruleBuilder).AddAsyncValidator(validator);
+            return ruleBuilder;
+        }
+        public IRuleBuilder<T, TProperty> SetValidator(IValidator<TProperty> validator)
+        {
+            ArgumentNullException.ThrowIfNull(validator);
+            Unwrap(ruleBuilder).AddNestedValidator(validator);
+            return ruleBuilder;
+        }
     }
 
     private static IRuleBuilder<T, TComparable?> AddNullableComparable<T, TComparable>(
