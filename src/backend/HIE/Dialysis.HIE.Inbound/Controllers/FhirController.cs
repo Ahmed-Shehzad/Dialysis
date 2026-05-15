@@ -33,7 +33,7 @@ public sealed class FhirController(
     {
         var partnerId = Request.Headers["X-HIE-Partner"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(partnerId))
-            return await FhirResultAsync(BadRequest(), MissingPartnerOutcome(), cancellationToken).ConfigureAwait(false);
+            return await FhirResultAsync(BadRequest(), MissingPartnerOutcome()).ConfigureAwait(false);
 
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
@@ -45,14 +45,14 @@ public sealed class FhirController(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Inbound FHIR parse error");
-            return await FhirResultAsync(UnprocessableEntity(), ParseErrorOutcome(ex.Message), cancellationToken).ConfigureAwait(false);
+            return await FhirResultAsync(UnprocessableEntity(), ParseErrorOutcome(ex.Message)).ConfigureAwait(false);
         }
 
         var outcome = await ingestion.IngestAsync(partnerId, resource, cancellationToken).ConfigureAwait(false);
         var status = outcome.Issue.Any(i => i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal)
             ? StatusCodes.Status422UnprocessableEntity
             : StatusCodes.Status200OK;
-        return await FhirResultAsync(StatusCode(status), outcome, cancellationToken).ConfigureAwait(false);
+        return await FhirResultAsync(StatusCode(status), outcome).ConfigureAwait(false);
     }
 
     [HttpGet("Patient/$match")]
@@ -97,27 +97,25 @@ public sealed class FhirController(
             });
         }
 
-        return await FhirResultAsync(Ok(), bundle, cancellationToken).ConfigureAwait(false);
+        return await FhirResultAsync(Ok(), bundle).ConfigureAwait(false);
     }
 
-    private static Task<IActionResult> FhirResultAsync(IActionResult fallbackStatus, Resource resource, CancellationToken cancellationToken)
+    private static async Task<IActionResult> FhirResultAsync(IActionResult fallbackStatus, Resource resource)
     {
-        _ = cancellationToken;
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var json = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var json = await _serializer.SerializeToStringAsync(resource);
+
         var statusCode = fallbackStatus switch
         {
             StatusCodeResult sc => sc.StatusCode,
             ObjectResult or => or.StatusCode ?? StatusCodes.Status200OK,
             _ => StatusCodes.Status200OK
         };
-        return System.Threading.Tasks.Task.FromResult<IActionResult>(new ContentResult
+        return new ContentResult
         {
             Content = json,
             ContentType = "application/fhir+json",
             StatusCode = statusCode,
-        });
+        };
     }
 
     private static OperationOutcome MissingPartnerOutcome() => new()
