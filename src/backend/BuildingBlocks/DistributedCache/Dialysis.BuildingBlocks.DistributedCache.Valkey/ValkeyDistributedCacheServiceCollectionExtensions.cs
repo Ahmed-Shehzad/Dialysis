@@ -18,7 +18,6 @@ public static class ValkeyDistributedCacheServiceCollectionExtensions
         /// shared <see cref="IConnectionMultiplexer"/>, persists ASP.NET Core Data Protection keys to
         /// Valkey, and registers a health check. Idempotent across multiple invocations within a host.
         /// </summary>
-        /// <param name="services">DI container.</param>
         /// <param name="configurationSection">Bind target for <see cref="ValkeyDistributedCacheOptions"/>.</param>
         /// <param name="healthCheckName">Health-check name (defaults to <c>valkey</c>); shows up in the readiness payload.</param>
         public IServiceCollection AddValkeyDistributedCache(
