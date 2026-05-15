@@ -63,7 +63,7 @@ public sealed class DestinationSetFilterTransformStage : ITransformStage
         var destinationSet = new DestinationSetController(allowed, available);
 
         cancellationToken.ThrowIfCancellationRequested();
-        var engine = new Engine(options =>
+        using var engine = new Engine(options =>
         {
             options.LimitRecursion(64);
             options.TimeoutInterval(TimeSpan.FromSeconds(3));

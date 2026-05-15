@@ -53,11 +53,11 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
             query = query.Where(p => EF.Functions.ILike(p.MedicalRecordNumber, pattern));
         }
 
-        if (criteria.DateOfBirthFrom.HasValue)
-            query = query.Where(p => p.DateOfBirth >= criteria.DateOfBirthFrom.Value);
+        if (criteria.DateOfBirthFrom is { } dobFrom)
+            query = query.Where(p => p.DateOfBirth >= dobFrom);
 
-        if (criteria.DateOfBirthTo.HasValue)
-            query = query.Where(p => p.DateOfBirth <= criteria.DateOfBirthTo.Value);
+        if (criteria.DateOfBirthTo is { } dobTo)
+            query = query.Where(p => p.DateOfBirth <= dobTo);
 
         if (!string.IsNullOrWhiteSpace(criteria.SexAtBirthCode))
         {
@@ -65,8 +65,8 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
             query = query.Where(p => p.SexAtBirthCode == code);
         }
 
-        if (criteria.Status.HasValue)
-            query = query.Where(p => p.Status == criteria.Status.Value);
+        if (criteria.Status is { } status)
+            query = query.Where(p => p.Status == status);
 
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 

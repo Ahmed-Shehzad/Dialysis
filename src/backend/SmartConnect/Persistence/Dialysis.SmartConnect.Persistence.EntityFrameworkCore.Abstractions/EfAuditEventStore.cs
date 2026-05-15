@@ -32,11 +32,11 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
         CancellationToken cancellationToken = default)
     {
         var query = db.AuditEvents.AsQueryable();
-        if (category.HasValue) query = query.Where(e => e.Category == (int)category.Value);
-        if (level.HasValue) query = query.Where(e => e.Level == (int)level.Value);
-        if (flowId.HasValue) query = query.Where(e => e.FlowId == flowId.Value);
-        if (from.HasValue) query = query.Where(e => e.Timestamp >= from.Value);
-        if (to.HasValue) query = query.Where(e => e.Timestamp <= to.Value);
+        if (category is { } cat) query = query.Where(e => e.Category == (int)cat);
+        if (level is { } lvl) query = query.Where(e => e.Level == (int)lvl);
+        if (flowId is { } fid) query = query.Where(e => e.FlowId == fid);
+        if (from is { } fromTs) query = query.Where(e => e.Timestamp >= fromTs);
+        if (to is { } toTs) query = query.Where(e => e.Timestamp <= toTs);
 
         var entities = await query
             .OrderByDescending(e => e.Timestamp)

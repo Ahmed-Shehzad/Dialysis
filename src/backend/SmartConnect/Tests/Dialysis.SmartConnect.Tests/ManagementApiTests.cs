@@ -56,9 +56,10 @@ public sealed class ManagementApiTests
         Assert.Contains(flowId.ToString(), json, StringComparison.Ordinal);
 
         using var importClient = factory.CreateClient();
+        using var importContent = new StringContent(json, Encoding.UTF8, "application/json");
         var import = await importClient.PostAsync(
             "/smartconnect/v1/admin/flows/import",
-            new StringContent(json, Encoding.UTF8, "application/json"));
+            importContent);
         import.EnsureSuccessStatusCode();
     }
 
@@ -102,7 +103,7 @@ public sealed class ManagementApiTests
         };
         (await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", flow)).EnsureSuccessStatusCode();
 
-        var msg = new ByteArrayContent("hi"u8.ToArray());
+        using var msg = new ByteArrayContent("hi"u8.ToArray());
         var inbound = await client.PostAsync(
             $"/smartconnect/v1/flows/{flowId}/messages",
             msg);

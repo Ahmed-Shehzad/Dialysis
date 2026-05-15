@@ -121,7 +121,7 @@ public sealed class TransponderChunkReassemblyConsumer(
 
         public byte[] Merge()
         {
-            var ms = new MemoryStream();
+            using var ms = new MemoryStream();
             for (var i = 0; i < TotalChunks; i++)
             {
                 if (!Segments.TryGetValue(i, out var part))

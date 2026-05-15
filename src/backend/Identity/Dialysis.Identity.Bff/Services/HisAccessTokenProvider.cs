@@ -27,7 +27,7 @@ public sealed class HisAccessTokenProvider(
     public async Task<string?> GetAccessTokenForHisAsync(CancellationToken cancellationToken)
     {
         var http = httpContextAccessor.HttpContext;
-        if (http?.User.Identity?.IsAuthenticated != true)
+        if (http is null || http.User.Identity?.IsAuthenticated != true)
             return null;
 
         var subjectToken = await http.GetTokenAsync("access_token").ConfigureAwait(false);

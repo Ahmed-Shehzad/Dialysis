@@ -49,7 +49,7 @@ public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var engine = new Engine(options =>
+        using var engine = new Engine(options =>
         {
             options.LimitRecursion(64);
             options.TimeoutInterval(TimeSpan.FromSeconds(3));

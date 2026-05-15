@@ -33,7 +33,7 @@ public sealed class JavaScriptAttachmentHandler(IServiceProvider services) : IAt
         }
 
         var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
-        var engine = new Engine(opts =>
+        using var engine = new Engine(opts =>
         {
             opts.LimitRecursion(64);
             opts.TimeoutInterval(TimeSpan.FromSeconds(5));

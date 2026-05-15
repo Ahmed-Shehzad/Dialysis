@@ -31,7 +31,7 @@ public sealed class MessageBrowserApiTests
         (await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", flow)).EnsureSuccessStatusCode();
 
         // Dispatch a message
-        var msg = new ByteArrayContent("test-payload"u8.ToArray());
+        using var msg = new ByteArrayContent("test-payload"u8.ToArray());
         (await client.PostAsync($"/smartconnect/v1/flows/{flowId}/messages", msg)).EnsureSuccessStatusCode();
 
         // Query messages
@@ -64,7 +64,7 @@ public sealed class MessageBrowserApiTests
         };
         (await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", flow)).EnsureSuccessStatusCode();
 
-        var msg = new ByteArrayContent("payload-by-id"u8.ToArray());
+        using var msg = new ByteArrayContent("payload-by-id"u8.ToArray());
         (await client.PostAsync($"/smartconnect/v1/flows/{flowId}/messages", msg)).EnsureSuccessStatusCode();
 
         var list = await client.GetFromJsonAsync<JsonElement>(
@@ -99,7 +99,7 @@ public sealed class MessageBrowserApiTests
         };
         (await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", flow)).EnsureSuccessStatusCode();
 
-        var msg = new ByteArrayContent("data"u8.ToArray());
+        using var msg = new ByteArrayContent("data"u8.ToArray());
         (await client.PostAsync($"/smartconnect/v1/flows/{flowId}/messages", msg)).EnsureSuccessStatusCode();
 
         var stats = await client.GetFromJsonAsync<JsonElement>(

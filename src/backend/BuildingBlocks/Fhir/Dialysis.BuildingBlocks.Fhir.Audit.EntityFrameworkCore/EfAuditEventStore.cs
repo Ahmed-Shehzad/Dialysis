@@ -30,7 +30,9 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
             ResourceType = resourceType,
             ResourceId = resourceId,
             Outcome = auditEvent.Outcome?.ToString() ?? "0",
-            ResourceJson = await _serializer.SerializeToStringAsync(auditEvent).ConfigureAwait(false),
+#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
+            ResourceJson = _serializer.SerializeToString(auditEvent),
+#pragma warning restore VSTHRD103
         };
 
         db.Set<AuditEventRecord>().Add(record);

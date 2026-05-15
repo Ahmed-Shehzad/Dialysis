@@ -24,9 +24,9 @@ public sealed class RoutingSlipTests
         state.CompletedActivities.Add(new TransponderRoutingSlipCompletedActivityEntry { Index = 0, Name = "X" });
 
         var bytes = serializer.Serialize(state);
-        var parsed = serializer.Deserialize(typeof(TransponderRoutingSlipState), bytes) as TransponderRoutingSlipState;
+        var parsed = Assert.IsType<TransponderRoutingSlipState>(
+            serializer.Deserialize(typeof(TransponderRoutingSlipState), bytes));
 
-        Assert.NotNull(parsed);
         Assert.Equal(1, parsed.CurrentIndex);
         Assert.Single(parsed.CompletedActivities);
         Assert.Equal("X", parsed.CompletedActivities[0].Name);
@@ -47,9 +47,9 @@ public sealed class RoutingSlipTests
         state.CompletedActivities.Add(new TransponderRoutingSlipCompletedActivityEntry { Index = 0, Name = "A" });
 
         var bytes = serializer.Serialize(state);
-        var parsed = serializer.Deserialize(typeof(TransponderRoutingSlipState), bytes) as TransponderRoutingSlipState;
+        var parsed = Assert.IsType<TransponderRoutingSlipState>(
+            serializer.Deserialize(typeof(TransponderRoutingSlipState), bytes));
 
-        Assert.NotNull(parsed);
         Assert.Equal(2, parsed.Itinerary.Count);
         Assert.Equal(1, parsed.CurrentIndex);
         Assert.Single(parsed.CompletedActivities);
