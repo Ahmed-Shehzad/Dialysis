@@ -35,8 +35,8 @@ export type PatientSearchFilters = {
   givenName?: string;
   mrn?: string;
   dobFrom?: string; // YYYY-MM-DD
-  dobTo?: string;   // YYYY-MM-DD
-  sex?: string;     // "male" | "female" | other code
+  dobTo?: string; // YYYY-MM-DD
+  sex?: string; // "male" | "female" | other code
   status?: "Active" | "Inactive" | "Deceased" | "Merged";
   skip?: number;
   take?: number;
@@ -112,7 +112,10 @@ export type OrderLabTestRequest = {
 };
 
 export const registerPatient = async (body: RegisterPatientRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>("/api/ehr/api/v1.0/clinical/patients", body);
+  const response = await apiClient.post<{ id: string }>(
+    "/api/ehr/api/v1.0/clinical/patients",
+    body,
+  );
   return response.data.id;
 };
 

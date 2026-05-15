@@ -235,8 +235,7 @@ export const VariableMapScope = {
   Global: "Global",
   Configuration: "Configuration",
 } as const;
-export type VariableMapScopeValue =
-  (typeof VariableMapScope)[keyof typeof VariableMapScope];
+export type VariableMapScopeValue = (typeof VariableMapScope)[keyof typeof VariableMapScope];
 
 // --- Audit Events --------------------------------------------------------
 export const AuditEventCategory = {
@@ -249,8 +248,7 @@ export const AuditEventCategory = {
   UserAction: 6,
   Error: 7,
 } as const;
-export type AuditEventCategoryValue =
-  (typeof AuditEventCategory)[keyof typeof AuditEventCategory];
+export type AuditEventCategoryValue = (typeof AuditEventCategory)[keyof typeof AuditEventCategory];
 
 export const AuditEventCategoryLabel: Record<AuditEventCategoryValue, string> = {
   0: "FlowDeployed",

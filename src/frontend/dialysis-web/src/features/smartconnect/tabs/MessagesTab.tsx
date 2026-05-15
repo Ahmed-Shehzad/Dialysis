@@ -37,13 +37,7 @@ const statusClass = (s: MessageLedgerStatusValue): string => {
   }
 };
 
-const MessageDrawer = ({
-  entryId,
-  onClose,
-}: {
-  entryId: string;
-  onClose: () => void;
-}) => {
+const MessageDrawer = ({ entryId, onClose }: { entryId: string; onClose: () => void }) => {
   const queryClient = useQueryClient();
   const entry = useQuery({
     queryKey: ["smartconnect", "messages", entryId],
@@ -125,7 +119,8 @@ const MessageDrawer = ({
                 </pre>
               ) : (
                 <div className="text-xs text-slate-500">
-                  (none — payload snapshots are recorded only at the Received and OutboundFailed stages)
+                  (none — payload snapshots are recorded only at the Received and OutboundFailed
+                  stages)
                 </div>
               )}
             </div>
@@ -141,14 +136,11 @@ const MessageDrawer = ({
               </button>
               {reprocess.data && (
                 <span className="text-xs text-emerald-300">
-                  Resubmitted as <code className="font-mono">{reprocess.data.reprocessedMessageId}</code>
+                  Resubmitted as{" "}
+                  <code className="font-mono">{reprocess.data.reprocessedMessageId}</code>
                 </span>
               )}
-              {reprocess.error && (
-                <span className="text-xs text-rose-300">
-                  Reprocess failed.
-                </span>
-              )}
+              {reprocess.error && <span className="text-xs text-rose-300">Reprocess failed.</span>}
             </div>
           </div>
         )}
@@ -190,7 +182,9 @@ export const MessagesTab = () => {
         >
           <option value="">All flows</option>
           {flows.data?.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
         <select
@@ -207,7 +201,9 @@ export const MessagesTab = () => {
         >
           <option value="">Any status</option>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{MessageLedgerStatusLabel[s]}</option>
+            <option key={s} value={s}>
+              {MessageLedgerStatusLabel[s]}
+            </option>
           ))}
         </select>
         <input
@@ -282,7 +278,8 @@ export const MessagesTab = () => {
           </div>
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>
-              Showing {page + 1}–{Math.min(page + list.data.items.length, totalCount)} of {totalCount}
+              Showing {page + 1}–{Math.min(page + list.data.items.length, totalCount)} of{" "}
+              {totalCount}
             </span>
             <span className="flex gap-2">
               <button

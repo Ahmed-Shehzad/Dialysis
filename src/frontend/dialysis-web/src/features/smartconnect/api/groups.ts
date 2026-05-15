@@ -1,8 +1,7 @@
 import { apiClient } from "@/lib/api/apiClient";
 import { ADMIN_PREFIX, type FlowGroup } from "./types";
 
-const path = (id?: string) =>
-  id ? `${ADMIN_PREFIX}/groups/${id}` : `${ADMIN_PREFIX}/groups`;
+const path = (id?: string) => (id ? `${ADMIN_PREFIX}/groups/${id}` : `${ADMIN_PREFIX}/groups`);
 
 export const fetchGroups = async (): Promise<FlowGroup[]> => {
   const res = await apiClient.get<FlowGroup[]>(path());

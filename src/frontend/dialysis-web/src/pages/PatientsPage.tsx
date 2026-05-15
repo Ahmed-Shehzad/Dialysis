@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import {
-  searchEhrPatientsPage,
-  type PatientSearchFilters,
-} from "@/features/ehr/api/ehrApi";
+import { searchEhrPatientsPage, type PatientSearchFilters } from "@/features/ehr/api/ehrApi";
 
 const PAGE_SIZES = [10, 25, 50, 100];
 
@@ -80,7 +77,10 @@ export const PatientsPage = () => {
   }, [debounced]);
 
   const skip = pageIndex * pageSize;
-  const apiFilters = useMemo(() => toApiFilters(debounced, skip, pageSize), [debounced, skip, pageSize]);
+  const apiFilters = useMemo(
+    () => toApiFilters(debounced, skip, pageSize),
+    [debounced, skip, pageSize],
+  );
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["ehr", "patients", "page", apiFilters],
@@ -110,7 +110,9 @@ export const PatientsPage = () => {
       <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <div className="md:col-span-2">
-            <label htmlFor="filter-q" className={labelClass}>Free-text (name or MRN)</label>
+            <label htmlFor="filter-q" className={labelClass}>
+              Free-text (name or MRN)
+            </label>
             <input
               id="filter-q"
               type="search"
@@ -122,7 +124,9 @@ export const PatientsPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="filter-mrn" className={labelClass}>MRN</label>
+            <label htmlFor="filter-mrn" className={labelClass}>
+              MRN
+            </label>
             <input
               id="filter-mrn"
               value={form.mrn}
@@ -131,7 +135,9 @@ export const PatientsPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="filter-status" className={labelClass}>Status</label>
+            <label htmlFor="filter-status" className={labelClass}>
+              Status
+            </label>
             <select
               id="filter-status"
               value={form.status}
@@ -147,7 +153,9 @@ export const PatientsPage = () => {
           </div>
 
           <div>
-            <label htmlFor="filter-family" className={labelClass}>Family name</label>
+            <label htmlFor="filter-family" className={labelClass}>
+              Family name
+            </label>
             <input
               id="filter-family"
               value={form.familyName}
@@ -156,7 +164,9 @@ export const PatientsPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="filter-given" className={labelClass}>Given name</label>
+            <label htmlFor="filter-given" className={labelClass}>
+              Given name
+            </label>
             <input
               id="filter-given"
               value={form.givenName}
@@ -165,7 +175,9 @@ export const PatientsPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="filter-sex" className={labelClass}>Sex at birth</label>
+            <label htmlFor="filter-sex" className={labelClass}>
+              Sex at birth
+            </label>
             <select
               id="filter-sex"
               value={form.sex}
@@ -181,7 +193,9 @@ export const PatientsPage = () => {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label htmlFor="filter-dob-from" className={labelClass}>DOB from</label>
+              <label htmlFor="filter-dob-from" className={labelClass}>
+                DOB from
+              </label>
               <input
                 id="filter-dob-from"
                 type="date"
@@ -191,7 +205,9 @@ export const PatientsPage = () => {
               />
             </div>
             <div>
-              <label htmlFor="filter-dob-to" className={labelClass}>DOB to</label>
+              <label htmlFor="filter-dob-to" className={labelClass}>
+                DOB to
+              </label>
               <input
                 id="filter-dob-to"
                 type="date"
@@ -217,7 +233,9 @@ export const PatientsPage = () => {
             )}
           </span>
           <span className="flex items-center gap-2">
-            <label htmlFor="page-size" className="text-slate-500">Page size</label>
+            <label htmlFor="page-size" className="text-slate-500">
+              Page size
+            </label>
             <select
               id="page-size"
               value={pageSize}
@@ -228,7 +246,9 @@ export const PatientsPage = () => {
               className="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs text-slate-100"
             >
               {PAGE_SIZES.map((n) => (
-                <option key={n} value={n}>{n}</option>
+                <option key={n} value={n}>
+                  {n}
+                </option>
               ))}
             </select>
           </span>
@@ -255,7 +275,9 @@ export const PatientsPage = () => {
           <tbody className="divide-y divide-slate-800/70 bg-slate-900/40">
             {isLoading && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-400">Loading…</td>
+                <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                  Loading…
+                </td>
               </tr>
             )}
             {!isLoading && data?.items.length === 0 && (
@@ -267,7 +289,9 @@ export const PatientsPage = () => {
             )}
             {data?.items.map((p) => (
               <tr key={p.id} className="hover:bg-slate-800/40">
-                <td className="px-3 py-2 font-mono text-xs text-slate-300">{p.medicalRecordNumber}</td>
+                <td className="px-3 py-2 font-mono text-xs text-slate-300">
+                  {p.medicalRecordNumber}
+                </td>
                 <td className="px-3 py-2">
                   <Link to={`/patients/${p.id}`} className="text-clinic-50 hover:underline">
                     {p.familyName}, {p.givenName}
@@ -284,9 +308,7 @@ export const PatientsPage = () => {
 
       <nav className="flex items-center justify-between text-xs text-slate-400">
         <span>
-          {total === 0
-            ? "No results"
-            : `Showing ${showingFrom}–${showingTo} of ${total}`}
+          {total === 0 ? "No results" : `Showing ${showingFrom}–${showingTo} of ${total}`}
         </span>
         <span className="flex items-center gap-2">
           <button

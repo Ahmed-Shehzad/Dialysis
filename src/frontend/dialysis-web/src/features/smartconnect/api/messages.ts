@@ -6,9 +6,7 @@ import {
   type MessageListResponse,
 } from "./types";
 
-export const fetchMessages = async (
-  query: MessageListQuery = {},
-): Promise<MessageListResponse> => {
+export const fetchMessages = async (query: MessageListQuery = {}): Promise<MessageListResponse> => {
   const res = await apiClient.get<MessageListResponse>(`${ADMIN_PREFIX}/messages`, {
     params: query,
   });
@@ -20,9 +18,7 @@ export const fetchMessage = async (id: string): Promise<MessageLedgerEntry> => {
   return res.data;
 };
 
-export const reprocessMessage = async (
-  id: string,
-): Promise<{ reprocessedMessageId: string }> => {
+export const reprocessMessage = async (id: string): Promise<{ reprocessedMessageId: string }> => {
   const res = await apiClient.post<{ reprocessedMessageId: string }>(
     `${ADMIN_PREFIX}/messages/${id}/reprocess`,
   );

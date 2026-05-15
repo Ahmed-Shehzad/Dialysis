@@ -37,10 +37,7 @@ export type PatientMatchQuery = {
   birthdate?: string;
 };
 
-export const submitFhirBundle = async (
-  bundleJson: string,
-  partner: string,
-): Promise<unknown> => {
+export const submitFhirBundle = async (bundleJson: string, partner: string): Promise<unknown> => {
   const response = await apiClient.post("/api/hie/api/v1.0/fhir/Bundle", bundleJson, {
     headers: {
       "Content-Type": "application/fhir+json",

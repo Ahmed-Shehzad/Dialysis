@@ -44,7 +44,8 @@ const BundleIngestPanel = () => {
         <h3 className="text-sm font-medium text-slate-100">Submit FHIR Bundle (inbound)</h3>
         <p className="text-xs text-slate-400">
           POST <span className="font-mono">/api/v1.0/fhir/Bundle</span> with header{" "}
-          <span className="font-mono">X-HIE-Partner</span>. Validates + persists incoming clinical data.
+          <span className="font-mono">X-HIE-Partner</span>. Validates + persists incoming clinical
+          data.
         </p>
       </header>
       <FormField label="Partner id">
@@ -68,9 +69,7 @@ const BundleIngestPanel = () => {
           {m.isPending ? "Submitting…" : "Submit"}
         </button>
         {m.error && <span className="text-xs text-rose-300">{errorMessage(m.error)}</span>}
-        {response !== null && (
-          <span className="text-xs text-emerald-300">Accepted ✓</span>
-        )}
+        {response !== null && <span className="text-xs text-emerald-300">Accepted ✓</span>}
       </div>
       {response !== null && (
         <pre className="overflow-auto rounded-md border border-slate-700 bg-slate-950 p-2 text-xs text-slate-300">
@@ -98,8 +97,8 @@ const PatientMatchPanel = () => {
       <header>
         <h3 className="text-sm font-medium text-slate-100">Patient $match (outbound query)</h3>
         <p className="text-xs text-slate-400">
-          GET <span className="font-mono">/api/v1.0/fhir/Patient/$match</span> against the HIE patient
-          index. Returns a FHIR <span className="font-mono">Bundle.type=searchset</span>.
+          GET <span className="font-mono">/api/v1.0/fhir/Patient/$match</span> against the HIE
+          patient index. Returns a FHIR <span className="font-mono">Bundle.type=searchset</span>.
         </p>
       </header>
       <div className="grid gap-3 sm:grid-cols-2">

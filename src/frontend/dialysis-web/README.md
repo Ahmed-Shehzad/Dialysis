@@ -23,6 +23,7 @@ src/
 ```
 
 Design rules:
+
 - **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
   except through stable contracts under `lib/`.
 - **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.

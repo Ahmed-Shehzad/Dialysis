@@ -58,7 +58,9 @@ export const DashboardPage = () => {
               >
                 <div className="font-mono text-xs text-slate-400">{s.id.slice(0, 8)}…</div>
                 <div className="mt-1 text-sm text-slate-200">Patient {s.patientId.slice(0, 8)}</div>
-                <div className={`mt-2 text-xs font-medium ${statusClass[s.status]}`}>{s.status}</div>
+                <div className={`mt-2 text-xs font-medium ${statusClass[s.status]}`}>
+                  {s.status}
+                </div>
               </Link>
             </li>
           ))}

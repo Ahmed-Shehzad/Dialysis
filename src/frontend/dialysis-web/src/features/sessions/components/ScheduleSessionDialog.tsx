@@ -58,7 +58,11 @@ const initialForm = (defaultPatientId?: string): FormState => ({
   accessEstablishedOn: defaultAccessDate(),
 });
 
-export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: ScheduleSessionDialogProps) => {
+export const ScheduleSessionDialog = ({
+  open,
+  onClose,
+  defaultPatientId,
+}: ScheduleSessionDialogProps) => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(() => initialForm(defaultPatientId));
   const [localStart, setLocalStart] = useState(defaultStart());
@@ -202,7 +206,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
             )}
           </div>
           <div>
-            <label htmlFor="schedule-start" className={labelClass}>Scheduled start (local)</label>
+            <label htmlFor="schedule-start" className={labelClass}>
+              Scheduled start (local)
+            </label>
             <input
               id="schedule-start"
               required
@@ -214,9 +220,13 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
           </div>
 
           <fieldset className="md:col-span-3 grid grid-cols-1 gap-4 rounded-md border border-slate-800 bg-slate-900/40 p-4 md:grid-cols-3">
-            <legend className="px-2 text-xs uppercase tracking-wide text-slate-400">Prescription</legend>
+            <legend className="px-2 text-xs uppercase tracking-wide text-slate-400">
+              Prescription
+            </legend>
             <div>
-              <label htmlFor="dialyzer" className={labelClass}>Dialyzer model</label>
+              <label htmlFor="dialyzer" className={labelClass}>
+                Dialyzer model
+              </label>
               <input
                 id="dialyzer"
                 required
@@ -226,7 +236,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="duration" className={labelClass}>Duration (min, 60–480)</label>
+              <label htmlFor="duration" className={labelClass}>
+                Duration (min, 60–480)
+              </label>
               <input
                 id="duration"
                 required
@@ -239,7 +251,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="anticoag" className={labelClass}>Anticoagulation</label>
+              <label htmlFor="anticoag" className={labelClass}>
+                Anticoagulation
+              </label>
               <select
                 id="anticoag"
                 value={form.anticoagulationProtocolCode}
@@ -247,12 +261,16 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
                 className={inputClass}
               >
                 {ANTICOAG_PROTOCOLS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="qb" className={labelClass}>Blood flow mL/min (100–600)</label>
+              <label htmlFor="qb" className={labelClass}>
+                Blood flow mL/min (100–600)
+              </label>
               <input
                 id="qb"
                 required
@@ -265,7 +283,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="qd" className={labelClass}>Dialysate flow mL/min</label>
+              <label htmlFor="qd" className={labelClass}>
+                Dialysate flow mL/min
+              </label>
               <input
                 id="qd"
                 required
@@ -276,7 +296,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="uf" className={labelClass}>Target UF L</label>
+              <label htmlFor="uf" className={labelClass}>
+                Target UF L
+              </label>
               <input
                 id="uf"
                 required
@@ -289,7 +311,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="k" className={labelClass}>Dialysate K⁺ mmol/L</label>
+              <label htmlFor="k" className={labelClass}>
+                Dialysate K⁺ mmol/L
+              </label>
               <input
                 id="k"
                 required
@@ -301,7 +325,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="ca" className={labelClass}>Dialysate Ca²⁺ mmol/L</label>
+              <label htmlFor="ca" className={labelClass}>
+                Dialysate Ca²⁺ mmol/L
+              </label>
               <input
                 id="ca"
                 required
@@ -313,7 +339,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="na" className={labelClass}>Dialysate Na⁺ mmol/L</label>
+              <label htmlFor="na" className={labelClass}>
+                Dialysate Na⁺ mmol/L
+              </label>
               <input
                 id="na"
                 required
@@ -326,9 +354,13 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
           </fieldset>
 
           <fieldset className="md:col-span-3 grid grid-cols-1 gap-4 rounded-md border border-slate-800 bg-slate-900/40 p-4 md:grid-cols-3">
-            <legend className="px-2 text-xs uppercase tracking-wide text-slate-400">Vascular access</legend>
+            <legend className="px-2 text-xs uppercase tracking-wide text-slate-400">
+              Vascular access
+            </legend>
             <div>
-              <label htmlFor="access-kind" className={labelClass}>Kind</label>
+              <label htmlFor="access-kind" className={labelClass}>
+                Kind
+              </label>
               <select
                 id="access-kind"
                 value={form.accessKind}
@@ -336,12 +368,16 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
                 className={inputClass}
               >
                 {ACCESS_KINDS.map((k) => (
-                  <option key={k.value} value={k.value}>{k.label}</option>
+                  <option key={k.value} value={k.value}>
+                    {k.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="access-site" className={labelClass}>Site</label>
+              <label htmlFor="access-site" className={labelClass}>
+                Site
+              </label>
               <input
                 id="access-site"
                 required
@@ -351,7 +387,9 @@ export const ScheduleSessionDialog = ({ open, onClose, defaultPatientId }: Sched
               />
             </div>
             <div>
-              <label htmlFor="access-est" className={labelClass}>Established on</label>
+              <label htmlFor="access-est" className={labelClass}>
+                Established on
+              </label>
               <input
                 id="access-est"
                 required

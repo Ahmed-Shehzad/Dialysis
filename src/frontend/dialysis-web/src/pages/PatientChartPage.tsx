@@ -1,6 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPatientChart, type ChartItem, type PatientChartView } from "@/features/ehr/api/ehrApi";
+import {
+  fetchPatientChart,
+  type ChartItem,
+  type PatientChartView,
+} from "@/features/ehr/api/ehrApi";
 import { fetchConsentsForPatient, type ConsentDto } from "@/features/hie/api/hieApi";
 
 const Section = ({ title, items }: { title: string; items: ChartItem[] }) => (
@@ -81,7 +85,11 @@ export const PatientChartPage = () => {
                 <div className="col-span-4 font-mono text-xs text-slate-300">{c.partnerId}</div>
                 <div className="col-span-3 text-slate-300">{c.scope}</div>
                 <div className="col-span-2 text-xs uppercase text-slate-400">
-                  {typeof c.direction === "number" ? (c.direction === 1 ? "Inbound" : "Outbound") : c.direction}
+                  {typeof c.direction === "number"
+                    ? c.direction === 1
+                      ? "Inbound"
+                      : "Outbound"
+                    : c.direction}
                 </div>
                 <div className="col-span-3 text-xs text-slate-400">
                   effective {new Date(c.effectiveFromUtc).toLocaleDateString()}

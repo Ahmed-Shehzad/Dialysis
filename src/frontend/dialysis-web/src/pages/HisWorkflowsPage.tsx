@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FormField, TextInput, WorkflowCard } from "@/components/ui/FormField";
-import {
-  admitPatient,
-  bookAppointment,
-  placeMedicationOrder,
-} from "@/features/his/api/hisApi";
+import { admitPatient, bookAppointment, placeMedicationOrder } from "@/features/his/api/hisApi";
 
 const errorMessage = (err: unknown): string => {
   const status = (err as { response?: { status?: number } })?.response?.status;
@@ -55,7 +51,9 @@ const AdmitPatientCard = () => {
 const BookAppointmentCard = () => {
   const [patientId, setPatientId] = useState("");
   const [providerId, setProviderId] = useState("");
-  const [start, setStart] = useState(new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 16));
+  const [start, setStart] = useState(
+    new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 16),
+  );
   const [duration, setDuration] = useState(30);
   const [lastId, setLastId] = useState<string | null>(null);
 

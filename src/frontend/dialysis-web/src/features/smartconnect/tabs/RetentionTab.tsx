@@ -25,7 +25,8 @@ export const RetentionTab = () => {
           <div className="rounded-md border border-slate-800 bg-slate-900/40 p-4">
             <div className="text-xs uppercase text-slate-500">Sweep interval</div>
             <div className="mt-1 text-2xl font-semibold text-slate-100">
-              {opts.data.intervalHours.toFixed(1)} <span className="text-base text-slate-400">h</span>
+              {opts.data.intervalHours.toFixed(1)}{" "}
+              <span className="text-base text-slate-400">h</span>
             </div>
             <div className="mt-1 text-xs text-slate-500">
               raw: <code className="text-slate-300">{opts.data.interval}</code>
@@ -34,7 +35,8 @@ export const RetentionTab = () => {
           <div className="rounded-md border border-slate-800 bg-slate-900/40 p-4">
             <div className="text-xs uppercase text-slate-500">Retention window</div>
             <div className="mt-1 text-2xl font-semibold text-slate-100">
-              {opts.data.retentionDays.toFixed(1)} <span className="text-base text-slate-400">days</span>
+              {opts.data.retentionDays.toFixed(1)}{" "}
+              <span className="text-base text-slate-400">days</span>
             </div>
             <div className="mt-1 text-xs text-slate-500">
               raw: <code className="text-slate-300">{opts.data.retentionPeriod}</code>
@@ -44,9 +46,10 @@ export const RetentionTab = () => {
       )}
 
       <p className="text-xs text-slate-500">
-        To change these values, update <code className="text-slate-400">SmartConnect:Pruner:Interval</code> /
-        <code className="text-slate-400"> :RetentionPeriod</code> in the module's configuration and restart.
-        Editable retention is on the backlog.
+        To change these values, update{" "}
+        <code className="text-slate-400">SmartConnect:Pruner:Interval</code> /
+        <code className="text-slate-400"> :RetentionPeriod</code> in the module's configuration and
+        restart. Editable retention is on the backlog.
       </p>
     </section>
   );

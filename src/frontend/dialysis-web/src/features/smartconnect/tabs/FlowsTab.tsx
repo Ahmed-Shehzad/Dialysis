@@ -41,7 +41,9 @@ const FlowStatistics = ({ flowId }: { flowId: string }) => {
   });
   if (stats.isLoading) return <span className="text-xs text-slate-500">…</span>;
   if (stats.error || !stats.data?.length) return <span className="text-xs text-slate-500">—</span>;
-  const byStatus = new Map<number, number>(stats.data.map((s: FlowStatusCount) => [s.status, s.count]));
+  const byStatus = new Map<number, number>(
+    stats.data.map((s: FlowStatusCount) => [s.status, s.count]),
+  );
   const cell = (status: number) => byStatus.get(status) ?? 0;
   return (
     <div className="flex flex-wrap gap-3 text-xs">
@@ -198,7 +200,12 @@ export const FlowsTab = () => {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-medium text-slate-200">
-          Flows {flows.data ? <span className="text-slate-500">({filtered.length}/{flows.data.length})</span> : null}
+          Flows{" "}
+          {flows.data ? (
+            <span className="text-slate-500">
+              ({filtered.length}/{flows.data.length})
+            </span>
+          ) : null}
         </h3>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <select
@@ -208,7 +215,9 @@ export const FlowsTab = () => {
           >
             <option value="">All groups</option>
             {groups.data?.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
             ))}
           </select>
           <select
@@ -250,13 +259,14 @@ export const FlowsTab = () => {
                 <tr key={f.id} className="hover:bg-slate-900/30">
                   <td className="px-3 py-2 align-top">
                     <div className="text-slate-100">{f.name}</div>
-                    {f.description && (
-                      <div className="text-xs text-slate-500">{f.description}</div>
-                    )}
+                    {f.description && <div className="text-xs text-slate-500">{f.description}</div>}
                     {f.tags?.length ? (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {f.tags.map((t) => (
-                          <span key={t} className="rounded bg-slate-800/70 px-1.5 py-0.5 text-[10px] text-slate-400">
+                          <span
+                            key={t}
+                            className="rounded bg-slate-800/70 px-1.5 py-0.5 text-[10px] text-slate-400"
+                          >
                             {t}
                           </span>
                         ))}
@@ -290,8 +300,10 @@ export const FlowsTab = () => {
       )}
 
       <p className="text-xs text-slate-500">
-        Statuses match the Mirth-style ledger ({Object.values(MessageLedgerStatusLabel).join(" · ")}). Counts come from
-        <code className="px-1 text-slate-400">/flows/{"{id}"}/statistics</code> and refresh every 15s.
+        Statuses match the Mirth-style ledger ({Object.values(MessageLedgerStatusLabel).join(" · ")}
+        ). Counts come from
+        <code className="px-1 text-slate-400">/flows/{"{id}"}/statistics</code> and refresh every
+        15s.
       </p>
     </section>
   );

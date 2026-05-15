@@ -1,9 +1,5 @@
 import { apiClient } from "@/lib/api/apiClient";
-import {
-  ADMIN_PREFIX,
-  type FlowStatusCount,
-  type IntegrationFlow,
-} from "./types";
+import { ADMIN_PREFIX, type FlowStatusCount, type IntegrationFlow } from "./types";
 
 export const fetchFlows = async (): Promise<IntegrationFlow[]> => {
   const res = await apiClient.get<IntegrationFlow[]>(`${ADMIN_PREFIX}/flows`);
@@ -30,8 +26,7 @@ export const deleteFlow = async (flowId: string): Promise<void> => {
 
 export const startFlow = (flowId: string) =>
   apiClient.post(`${ADMIN_PREFIX}/flows/${flowId}/start`);
-export const stopFlow = (flowId: string) =>
-  apiClient.post(`${ADMIN_PREFIX}/flows/${flowId}/stop`);
+export const stopFlow = (flowId: string) => apiClient.post(`${ADMIN_PREFIX}/flows/${flowId}/stop`);
 export const pauseFlow = (flowId: string) =>
   apiClient.post(`${ADMIN_PREFIX}/flows/${flowId}/pause`);
 
@@ -46,8 +41,6 @@ export const exportFlow = async (flowId: string): Promise<IntegrationFlow> => {
 };
 
 export const fetchFlowStatistics = async (flowId: string): Promise<FlowStatusCount[]> => {
-  const res = await apiClient.get<FlowStatusCount[]>(
-    `${ADMIN_PREFIX}/flows/${flowId}/statistics`,
-  );
+  const res = await apiClient.get<FlowStatusCount[]>(`${ADMIN_PREFIX}/flows/${flowId}/statistics`);
   return res.data ?? [];
 };

@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchActiveSessions, type DialysisSessionSummary } from "@/features/sessions/api/sessionsApi";
+import {
+  fetchActiveSessions,
+  type DialysisSessionSummary,
+} from "@/features/sessions/api/sessionsApi";
 import { ScheduleSessionDialog } from "@/features/sessions/components/ScheduleSessionDialog";
 
 type StatusFilter = "all" | "active" | DialysisSessionSummary["status"];
@@ -27,9 +30,7 @@ const statusBadge = (status: DialysisSessionSummary["status"]) => {
     Cancelled: "bg-slate-600 text-slate-200",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status]}`}>
-      {status}
-    </span>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status]}`}>{status}</span>
   );
 };
 
@@ -53,9 +54,7 @@ export const SessionsPage = () => {
   }, [query.data, filter]);
 
   const grouped = useMemo(() => {
-    const active = filtered.filter((s) =>
-      ["Scheduled", "InProgress", "Paused"].includes(s.status),
-    );
+    const active = filtered.filter((s) => ["Scheduled", "InProgress", "Paused"].includes(s.status));
     const finished = filtered.filter((s) =>
       ["Completed", "Aborted", "Cancelled"].includes(s.status),
     );
@@ -78,7 +77,9 @@ export const SessionsPage = () => {
             className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100"
           >
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
           <button
@@ -100,7 +101,8 @@ export const SessionsPage = () => {
 
       {!query.isLoading && filtered.length === 0 && (
         <div className="rounded-md border border-slate-800 bg-slate-900/40 p-6 text-center text-sm text-slate-400">
-          No sessions match the current filter. Click <span className="text-clinic-300">+ Schedule session</span> to create one.
+          No sessions match the current filter. Click{" "}
+          <span className="text-clinic-300">+ Schedule session</span> to create one.
         </div>
       )}
 
@@ -139,10 +141,16 @@ const SessionsTable = ({ title, rows }: { title: string; rows: DialysisSessionSu
           {rows.map((s) => (
             <tr key={s.id} className="hover:bg-slate-900/60">
               <td className="px-4 py-2 font-mono text-xs text-slate-300">{s.id.slice(0, 8)}</td>
-              <td className="px-4 py-2 font-mono text-xs text-slate-300">{s.patientId.slice(0, 8)}</td>
+              <td className="px-4 py-2 font-mono text-xs text-slate-300">
+                {s.patientId.slice(0, 8)}
+              </td>
               <td className="px-4 py-2">{statusBadge(s.status)}</td>
-              <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(s.scheduledStartUtc)}</td>
-              <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(s.actualStartUtc)}</td>
+              <td className="px-4 py-2 text-xs text-slate-400">
+                {formatDateTime(s.scheduledStartUtc)}
+              </td>
+              <td className="px-4 py-2 text-xs text-slate-400">
+                {formatDateTime(s.actualStartUtc)}
+              </td>
               <td className="px-4 py-2 text-xs text-slate-400">{formatDateTime(s.actualEndUtc)}</td>
               <td className="px-4 py-2 font-mono text-xs text-slate-400">
                 {s.machineId ? s.machineId.slice(0, 8) : "—"}

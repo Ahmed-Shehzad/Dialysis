@@ -1,10 +1,5 @@
 import { apiClient } from "@/lib/api/apiClient";
-import {
-  ADMIN_PREFIX,
-  type AlertEvent,
-  type AlertRule,
-  type TestAlertRequest,
-} from "./types";
+import { ADMIN_PREFIX, type AlertEvent, type AlertRule, type TestAlertRequest } from "./types";
 
 const RULES = `${ADMIN_PREFIX}/alert-rules`;
 const EVENTS = `${ADMIN_PREFIX}/alert-events`;
@@ -44,10 +39,12 @@ export const testAlertRule = async (
   return res.data;
 };
 
-export const fetchAlertEvents = async (params: {
-  ruleId?: string;
-  take?: number;
-} = {}): Promise<AlertEvent[]> => {
+export const fetchAlertEvents = async (
+  params: {
+    ruleId?: string;
+    take?: number;
+  } = {},
+): Promise<AlertEvent[]> => {
   const res = await apiClient.get<AlertEvent[]>(EVENTS, { params });
   return res.data ?? [];
 };

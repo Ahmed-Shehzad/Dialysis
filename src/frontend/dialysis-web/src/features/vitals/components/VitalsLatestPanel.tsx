@@ -14,7 +14,10 @@ const evaluate = (reading: VitalsReading | undefined): Metric[] => {
       label: "Systolic",
       value: reading.systolicBloodPressure,
       unit: "mmHg",
-      tone: reading.systolicBloodPressure < 90 || reading.systolicBloodPressure > 180 ? "alert" : "neutral",
+      tone:
+        reading.systolicBloodPressure < 90 || reading.systolicBloodPressure > 180
+          ? "alert"
+          : "neutral",
     },
     {
       label: "Diastolic",
@@ -28,8 +31,18 @@ const evaluate = (reading: VitalsReading | undefined): Metric[] => {
       unit: "bpm",
       tone: reading.heartRateBpm < 50 || reading.heartRateBpm > 120 ? "alert" : "neutral",
     },
-    { label: "Arterial P.", value: reading.arterialPressureMmHg.toFixed(0), unit: "mmHg", tone: "neutral" },
-    { label: "Venous P.", value: reading.venousPressureMmHg.toFixed(0), unit: "mmHg", tone: "neutral" },
+    {
+      label: "Arterial P.",
+      value: reading.arterialPressureMmHg.toFixed(0),
+      unit: "mmHg",
+      tone: "neutral",
+    },
+    {
+      label: "Venous P.",
+      value: reading.venousPressureMmHg.toFixed(0),
+      unit: "mmHg",
+      tone: "neutral",
+    },
     {
       label: "UF rate",
       value: reading.ultrafiltrationRateMlPerHour.toFixed(0),
@@ -63,10 +76,7 @@ export const VitalsLatestPanel = ({ latest }: VitalsLatestPanelProps) => {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
       {metrics.map((m) => (
-        <div
-          key={m.label}
-          className={`rounded-lg border bg-slate-900/60 p-3 ${toneClass[m.tone]}`}
-        >
+        <div key={m.label} className={`rounded-lg border bg-slate-900/60 p-3 ${toneClass[m.tone]}`}>
           <div className="text-xs uppercase tracking-wide text-slate-400">{m.label}</div>
           <div className="mt-1 font-mono text-2xl text-slate-100">
             {m.value}

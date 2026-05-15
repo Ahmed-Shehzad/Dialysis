@@ -31,8 +31,11 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
       // without a Bearer. Either the BFF didn't return an accessToken, or it expired
       // (Keycloak access tokens live ~5min by default and there is no refresh flow yet).
       console.warn(
-        "[apiClient] " + (config.method ?? "GET").toUpperCase() + " " + (config.url ?? "")
-          + " — no access token in tokenStore; gateway will return 401.",
+        "[apiClient] " +
+          (config.method ?? "GET").toUpperCase() +
+          " " +
+          (config.url ?? "") +
+          " — no access token in tokenStore; gateway will return 401.",
       );
     }
   }

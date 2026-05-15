@@ -24,10 +24,9 @@ test("dump access token audience + issuer after live sign-in", async ({ page }) 
 
   // Decode the payload (same approach as the SPA decoder).
   const payload = JSON.parse(
-    Buffer.from(
-      at!.split(".")[1].replaceAll("-", "+").replaceAll("/", "_"),
-      "base64",
-    ).toString("utf-8"),
+    Buffer.from(at!.split(".")[1].replaceAll("-", "+").replaceAll("/", "_"), "base64").toString(
+      "utf-8",
+    ),
   ) as Record<string, unknown>;
 
   console.log("\n=== FULL ACCESS TOKEN PAYLOAD ===");
@@ -40,7 +39,11 @@ test("dump access token audience + issuer after live sign-in", async ({ page }) 
       headers: { Authorization: "Bearer " + token, Accept: "application/json" },
     });
     const text = await r.text();
-    return { status: r.status, body: text.slice(0, 300), wwwAuth: r.headers.get("www-authenticate") };
+    return {
+      status: r.status,
+      body: text.slice(0, 300),
+      wwwAuth: r.headers.get("www-authenticate"),
+    };
   }, at);
   console.log("=== /api/his GET ===");
   console.log("status:", apiResult.status);

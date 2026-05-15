@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAuditEvents, type AuditEventQuery } from "../api/auditEvents";
 import { fetchFlows } from "../api/flows";
 import {
-  AuditEventCategory,
   AuditEventCategoryLabel,
   type AuditEventCategoryValue,
   AuditEventLevel,
@@ -33,12 +32,11 @@ export const AuditEventsTab = () => {
     refetchInterval: 30_000,
   });
 
-  const update = (patch: Partial<AuditEventQuery>) =>
-    setFilters({ ...filters, skip: 0, ...patch });
+  const update = (patch: Partial<AuditEventQuery>) => setFilters({ ...filters, skip: 0, ...patch });
   const skip = filters.skip ?? 0;
 
   const flowName = (id?: string | null) =>
-    id ? flows.data?.find((f) => f.id === id)?.name ?? id.slice(0, 8) : "—";
+    id ? (flows.data?.find((f) => f.id === id)?.name ?? id.slice(0, 8)) : "—";
 
   return (
     <section className="space-y-4">
@@ -57,7 +55,9 @@ export const AuditEventsTab = () => {
         >
           <option value="">Any category</option>
           {Object.entries(AuditEventCategoryLabel).map(([v, label]) => (
-            <option key={v} value={v}>{label}</option>
+            <option key={v} value={v}>
+              {label}
+            </option>
           ))}
         </select>
         <select
@@ -74,7 +74,9 @@ export const AuditEventsTab = () => {
         >
           <option value="">Any level</option>
           {Object.entries(AuditEventLevelLabel).map(([v, label]) => (
-            <option key={v} value={v}>{label}</option>
+            <option key={v} value={v}>
+              {label}
+            </option>
           ))}
         </select>
         <select
@@ -84,7 +86,9 @@ export const AuditEventsTab = () => {
         >
           <option value="">All flows</option>
           {flows.data?.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
         <input

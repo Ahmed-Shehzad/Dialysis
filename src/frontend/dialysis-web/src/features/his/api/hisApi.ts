@@ -70,9 +70,10 @@ export type PlaceMedicationOrderRequest = {
 
 const unwrapPostId = (raw: unknown): string => {
   const body = raw as HateoasEnvelope<{ id: string } | string> | { id: string };
-  const data = "data" in (body as Record<string, unknown>)
-    ? (body as HateoasEnvelope<{ id: string } | string>).data
-    : body;
+  const data =
+    "data" in (body as Record<string, unknown>)
+      ? (body as HateoasEnvelope<{ id: string } | string>).data
+      : body;
   if (typeof data === "string") return data;
   return (data as { id: string }).id;
 };

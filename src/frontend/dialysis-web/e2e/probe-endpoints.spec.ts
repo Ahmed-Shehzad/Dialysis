@@ -30,36 +30,41 @@ test("probe every dashboard-dependent endpoint and report status", async ({ page
   // Grab the Bearer the BFF gave us, then probe every endpoint with it attached.
   const tokenResp = await page.evaluate(async () => {
     const r = await fetch("/identity/user", { credentials: "include" });
-    return r.ok ? (await r.json()) as { accessToken?: string } : null;
+    return r.ok ? ((await r.json()) as { accessToken?: string }) : null;
   });
   const accessToken = tokenResp?.accessToken;
   if (!accessToken) throw new Error("BFF /identity/user returned no accessToken");
 
-  const probe = await page.evaluate(async ({ urls, token }) => {
-    const fetchWithTimeout = async (url: string): Promise<{ status: number; bodyHead: string }> => {
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 30_000);
-      try {
-        const r = await fetch(url, {
-          credentials: "include",
-          headers: { Accept: "application/json", Authorization: "Bearer " + token },
-          signal: ctrl.signal,
-        });
-        const t = await r.text();
-        return { status: r.status, bodyHead: t.slice(0, 400) };
-      } catch (err) {
-        return { status: 0, bodyHead: "ABORT/ERR: " + String(err).slice(0, 200) };
-      } finally {
-        clearTimeout(tid);
+  const probe = await page.evaluate(
+    async ({ urls, token }) => {
+      const fetchWithTimeout = async (
+        url: string,
+      ): Promise<{ status: number; bodyHead: string }> => {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 30_000);
+        try {
+          const r = await fetch(url, {
+            credentials: "include",
+            headers: { Accept: "application/json", Authorization: "Bearer " + token },
+            signal: ctrl.signal,
+          });
+          const t = await r.text();
+          return { status: r.status, bodyHead: t.slice(0, 400) };
+        } catch (err) {
+          return { status: 0, bodyHead: "ABORT/ERR: " + String(err).slice(0, 200) };
+        } finally {
+          clearTimeout(tid);
+        }
+      };
+      const out: Array<{ url: string; status: number; bodyHead: string }> = [];
+      for (const u of urls) {
+        const r = await fetchWithTimeout(u);
+        out.push({ url: u, ...r });
       }
-    };
-    const out: Array<{ url: string; status: number; bodyHead: string }> = [];
-    for (const u of urls) {
-      const r = await fetchWithTimeout(u);
-      out.push({ url: u, ...r });
-    }
-    return out;
-  }, { urls: ENDPOINTS, token: accessToken });
+      return out;
+    },
+    { urls: ENDPOINTS, token: accessToken },
+  );
 
   console.log("\n\n=== ENDPOINT PROBE RESULTS ===");
   for (const r of probe) {

@@ -45,7 +45,8 @@ const RuleRow = ({ rule, onPick }: { rule: AlertRule; onPick: () => void }) => (
       </span>
     </td>
     <td className="px-3 py-2 text-xs text-slate-400">
-      {rule.errorPatterns.map((p) => AlertErrorTypeLabel[p.errorType] ?? p.errorType).join(", ") || "—"}
+      {rule.errorPatterns.map((p) => AlertErrorTypeLabel[p.errorType] ?? p.errorType).join(", ") ||
+        "—"}
     </td>
     <td className="px-3 py-2 text-xs text-slate-400">
       {rule.actions.length} action{rule.actions.length === 1 ? "" : "s"}
@@ -54,13 +55,7 @@ const RuleRow = ({ rule, onPick }: { rule: AlertRule; onPick: () => void }) => (
   </tr>
 );
 
-const RuleEditor = ({
-  rule,
-  onClose,
-}: {
-  rule: AlertRule;
-  onClose: () => void;
-}) => {
+const RuleEditor = ({ rule, onClose }: { rule: AlertRule; onClose: () => void }) => {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<AlertRule>(rule);
   const dirty = JSON.stringify(draft) !== JSON.stringify(rule);
@@ -80,8 +75,7 @@ const RuleEditor = ({
     },
   });
   const test = useMutation({
-    mutationFn: () =>
-      testAlertRule(rule.id, { errorType: AlertErrorType.OutboundFailure }, false),
+    mutationFn: () => testAlertRule(rule.id, { errorType: AlertErrorType.OutboundFailure }, false),
   });
 
   return (
@@ -139,7 +133,9 @@ const RuleEditor = ({
                 className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
               >
                 {Object.entries(AlertErrorTypeLabel).map(([v, label]) => (
-                  <option key={v} value={v}>{label}</option>
+                  <option key={v} value={v}>
+                    {label}
+                  </option>
                 ))}
               </select>
               <input
@@ -197,15 +193,17 @@ const RuleEditor = ({
           <legend className="px-1 text-slate-400">Actions ({draft.actions.length})</legend>
           {draft.actions.length === 0 && (
             <div className="text-slate-500">
-              No actions configured. Actions live in the database (kind + propertiesJson);
-              v1 UI doesn't author them inline.
+              No actions configured. Actions live in the database (kind + propertiesJson); v1 UI
+              doesn't author them inline.
             </div>
           )}
           {draft.actions.map((a, i) => (
             <div key={i} className="rounded border border-slate-800 bg-slate-900/40 p-2">
               <div className="text-slate-200">{a.kind}</div>
               {a.propertiesJson && (
-                <pre className="mt-1 max-h-24 overflow-auto text-xs text-slate-400">{a.propertiesJson}</pre>
+                <pre className="mt-1 max-h-24 overflow-auto text-xs text-slate-400">
+                  {a.propertiesJson}
+                </pre>
               )}
             </div>
           ))}
@@ -241,7 +239,9 @@ const RuleEditor = ({
         </div>
         {test.data && (
           <div className="rounded-md border border-slate-800 bg-slate-900/40 p-2 text-xs text-slate-300">
-            Test fired at {new Date(test.data.occurredAtUtc).toLocaleString()} — {test.data.actionOutcomes.length} action outcome{test.data.actionOutcomes.length === 1 ? "" : "s"}.
+            Test fired at {new Date(test.data.occurredAtUtc).toLocaleString()} —{" "}
+            {test.data.actionOutcomes.length} action outcome
+            {test.data.actionOutcomes.length === 1 ? "" : "s"}.
           </div>
         )}
       </aside>
@@ -275,7 +275,8 @@ export const AlertsTab = () => {
       <div>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-medium text-slate-200">
-            Rules {rules.data ? <span className="text-slate-500">({rules.data.length})</span> : null}
+            Rules{" "}
+            {rules.data ? <span className="text-slate-500">({rules.data.length})</span> : null}
           </h3>
           <button
             type="button"
@@ -335,8 +336,8 @@ export const AlertsTab = () => {
                 </div>
                 <div className="text-slate-200">{e.errorDetail ?? "(no detail)"}</div>
                 <div className="text-xs text-slate-500">
-                  rule={e.ruleId.slice(0, 8)} · flow={e.flowId?.slice(0, 8) ?? "—"} ·
-                  outcomes={e.actionOutcomes.length}
+                  rule={e.ruleId.slice(0, 8)} · flow={e.flowId?.slice(0, 8) ?? "—"} · outcomes=
+                  {e.actionOutcomes.length}
                 </div>
               </li>
             ))}

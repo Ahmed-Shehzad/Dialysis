@@ -11,9 +11,17 @@ import { VariableMapScope, type VariableMapScopeValue } from "../api/types";
 
 const SCOPES: Array<{ key: VariableMapScopeValue; label: string; hint: string }> = [
   { key: VariableMapScope.Global, label: "Global", hint: "Server-wide variables" },
-  { key: VariableMapScope.Configuration, label: "Configuration", hint: "Read-mostly key/value, host settings" },
+  {
+    key: VariableMapScope.Configuration,
+    label: "Configuration",
+    hint: "Read-mostly key/value, host settings",
+  },
   { key: VariableMapScope.GlobalChannel, label: "GlobalChannel", hint: "All channels see these" },
-  { key: VariableMapScope.Channel, label: "Channel", hint: "Per-flow overrides (requires flow id)" },
+  {
+    key: VariableMapScope.Channel,
+    label: "Channel",
+    hint: "Per-flow overrides (requires flow id)",
+  },
 ];
 
 export const ConfigurationMapTab = () => {
@@ -58,7 +66,9 @@ export const ConfigurationMapTab = () => {
             className="mt-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
           >
             {SCOPES.map((s) => (
-              <option key={s.key} value={s.key}>{s.label}</option>
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
             ))}
           </select>
         </div>
@@ -72,7 +82,9 @@ export const ConfigurationMapTab = () => {
             >
               <option value="">Pick a flow…</option>
               {flows.data?.map((f) => (
-                <option key={f.id} value={f.id}>{f.name}</option>
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
               ))}
             </select>
           </div>

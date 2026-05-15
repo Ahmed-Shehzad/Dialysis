@@ -37,8 +37,8 @@ export const IntegrationsPage = () => {
       <header>
         <h2 className="text-xl font-semibold text-clinic-50">Integrations (SmartConnect)</h2>
         <p className="text-sm text-slate-400">
-          Operator console — flows, message ledger, configuration map, code templates, alerts,
-          audit events, and retention. Modelled on the Mirth Connect Administrator left rail.
+          Operator console — flows, message ledger, configuration map, code templates, alerts, audit
+          events, and retention. Modelled on the Mirth Connect Administrator left rail.
         </p>
       </header>
       <IntegrationsTabs current={tab} onChange={setTab} />

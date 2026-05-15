@@ -34,7 +34,10 @@ test.beforeAll(async ({ request }) => {
     const r = await request.get("/_gateway", { timeout: 2000 });
     if (!r.ok()) test.skip(true, `gateway /_gateway returned ${r.status()} — is Aspire up?`);
   } catch (err) {
-    test.skip(true, `gateway not reachable at baseURL — start Aspire AppHost first. (${(err as Error).message})`);
+    test.skip(
+      true,
+      `gateway not reachable at baseURL — start Aspire AppHost first. (${(err as Error).message})`,
+    );
   }
 });
 
@@ -50,7 +53,9 @@ const signIn = async (page: import("@playwright/test").Page) => {
   await page.locator("#username").fill(KEYCLOAK_USERNAME);
   await page.locator("#password").fill(KEYCLOAK_PASSWORD);
   await Promise.all([
-    page.waitForURL((url) => url.host === "localhost:9090" && url.pathname === "/", { timeout: 60_000 }),
+    page.waitForURL((url) => url.host === "localhost:9090" && url.pathname === "/", {
+      timeout: 60_000,
+    }),
     page.locator("#kc-login, input[name=login], button[name=login]").first().click(),
   ]);
 };
@@ -83,12 +88,17 @@ test("dashboard's gateway-routed API calls all return 200 after sign-in", async 
     const res = apiResponses.get(path);
     expect(res, `Dashboard never called ${path}`).toBeDefined();
     const status = res!.status();
-    expect(status, `${path} returned ${status}. ` +
-      `401 → auth regression (decodeJwt / Bearer); 403 → permission map; 500 → migrations/data.`).toBe(200);
+    expect(
+      status,
+      `${path} returned ${status}. ` +
+        `401 → auth regression (decodeJwt / Bearer); 403 → permission map; 500 → migrations/data.`,
+    ).toBe(200);
   }
 });
 
-test("apiClient attaches Authorization: Bearer on every gateway-routed call after sign-in", async ({ page }) => {
+test("apiClient attaches Authorization: Bearer on every gateway-routed call after sign-in", async ({
+  page,
+}) => {
   const missingBearer: string[] = [];
 
   page.on("request", (req) => {
@@ -106,7 +116,8 @@ test("apiClient attaches Authorization: Bearer on every gateway-routed call afte
   expect(
     missingBearer,
     "These gateway-routed requests went out without a Bearer token — " +
-    "the apiClient interceptor or the decodeJwt path is broken: " + missingBearer.join(", "),
+      "the apiClient interceptor or the decodeJwt path is broken: " +
+      missingBearer.join(", "),
   ).toEqual([]);
 });
 
@@ -122,7 +133,10 @@ test("BFF /identity/user returns a non-empty accessToken claim", async ({ page }
 
   expect(body.status, "Expected 200 from /identity/user after sign-in").toBe(200);
   const data = body.json as { accessToken?: string } | null;
-  expect(typeof data?.accessToken, "/identity/user.accessToken missing — BFF SaveTokens not persisting").toBe("string");
+  expect(
+    typeof data?.accessToken,
+    "/identity/user.accessToken missing — BFF SaveTokens not persisting",
+  ).toBe("string");
   const token = data!.accessToken!;
   expect(token.length).toBeGreaterThan(100);
   expect(token.split(".")).toHaveLength(3);

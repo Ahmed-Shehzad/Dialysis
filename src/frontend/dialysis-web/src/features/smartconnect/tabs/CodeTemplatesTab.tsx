@@ -7,10 +7,7 @@ import {
   importCodeTemplateLibrariesMirthXml,
   updateCodeTemplateLibrary,
 } from "../api/codeTemplates";
-import {
-  type CodeTemplateLibrary,
-  CodeTemplateTypeLabel,
-} from "../api/types";
+import { type CodeTemplateLibrary, CodeTemplateTypeLabel } from "../api/types";
 
 const emptyLibrary = (): CodeTemplateLibrary => ({
   id: crypto.randomUUID(),
@@ -135,9 +132,7 @@ export const CodeTemplatesTab = () => {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <input
                 value={selected.name}
-                onChange={(e) =>
-                  updateName.mutate({ ...selected, name: e.target.value })
-                }
+                onChange={(e) => updateName.mutate({ ...selected, name: e.target.value })}
                 className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
               />
               <button
@@ -152,23 +147,23 @@ export const CodeTemplatesTab = () => {
             </div>
             <textarea
               value={selected.description ?? ""}
-              onChange={(e) =>
-                updateName.mutate({ ...selected, description: e.target.value })
-              }
+              onChange={(e) => updateName.mutate({ ...selected, description: e.target.value })}
               placeholder="Library description"
               className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200"
               rows={2}
             />
 
             <div className="text-xs text-slate-500">
-              Linked to {selected.linkedFlowIds.length} flow{selected.linkedFlowIds.length === 1 ? "" : "s"}
-              {selected.autoLinkNewFlows ? " · auto-links new flows" : ""} · revision {selected.revision}
+              Linked to {selected.linkedFlowIds.length} flow
+              {selected.linkedFlowIds.length === 1 ? "" : "s"}
+              {selected.autoLinkNewFlows ? " · auto-links new flows" : ""} · revision{" "}
+              {selected.revision}
             </div>
 
             {selected.templates.length === 0 ? (
               <div className="rounded-md border border-slate-800 bg-slate-900/40 p-4 text-xs text-slate-500">
-                Empty library. Add templates by uploading a Mirth XML export — inline template editing
-                isn't in the v1 UI; use the API or re-import.
+                Empty library. Add templates by uploading a Mirth XML export — inline template
+                editing isn't in the v1 UI; use the API or re-import.
               </div>
             ) : (
               <ul className="space-y-2">
@@ -181,7 +176,9 @@ export const CodeTemplatesTab = () => {
                       </span>
                     </div>
                     {t.jsDoc && (
-                      <pre className="mt-1 max-h-24 overflow-auto text-xs text-slate-400">{t.jsDoc}</pre>
+                      <pre className="mt-1 max-h-24 overflow-auto text-xs text-slate-400">
+                        {t.jsDoc}
+                      </pre>
                     )}
                     <pre className="mt-2 max-h-72 overflow-auto rounded border border-slate-800 bg-slate-950 p-2 font-mono text-xs text-slate-200">
                       {t.code}

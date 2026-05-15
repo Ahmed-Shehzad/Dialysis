@@ -16,9 +16,7 @@ export type AuditEventQuery = {
   take?: number;
 };
 
-export const fetchAuditEvents = async (
-  query: AuditEventQuery = {},
-): Promise<AuditEvent[]> => {
+export const fetchAuditEvents = async (query: AuditEventQuery = {}): Promise<AuditEvent[]> => {
   const res = await apiClient.get<AuditEvent[]>(`${ADMIN_PREFIX}/events`, {
     params: query,
   });

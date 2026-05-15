@@ -1,1 +1,0 @@
-{"root":["./vite.config.ts","./playwright.config.ts","./e2e/auth.spec.ts","./e2e/decode-jwt.spec.ts","./e2e/diagnose-token.spec.ts","./e2e/probe-endpoints.spec.ts","./e2e/visual-demo.spec.ts"],"version":"5.9.3"}

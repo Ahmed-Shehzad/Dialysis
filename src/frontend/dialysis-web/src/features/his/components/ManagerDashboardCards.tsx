@@ -36,7 +36,11 @@ export const ManagerDashboardCards = () => {
         hint="awaiting EHR consumption"
       />
       <StatCard label="Open quality tasks" value={data.openQualityWorkflowTasksCount} />
-      <StatCard label="Recent import jobs" value={data.recentImportJobsCount} hint="last 24 hours" />
+      <StatCard
+        label="Recent import jobs"
+        value={data.recentImportJobsCount}
+        hint="last 24 hours"
+      />
     </div>
   );
 };

@@ -12,10 +12,9 @@ export type DialysisSessionSummary = {
 };
 
 export const fetchActiveSessions = async (activeOnly = true): Promise<DialysisSessionSummary[]> => {
-  const response = await apiClient.get<DialysisSessionSummary[]>(
-    "/api/pdms/api/v1.0/sessions",
-    { params: { activeOnly, take: 100 } },
-  );
+  const response = await apiClient.get<DialysisSessionSummary[]>("/api/pdms/api/v1.0/sessions", {
+    params: { activeOnly, take: 100 },
+  });
   return response.data ?? [];
 };
 

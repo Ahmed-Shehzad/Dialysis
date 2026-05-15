@@ -48,9 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (cancelled) return;
       cancelled = true;
       console.warn(
-        "[auth] fetchCurrentUser exceeded "
-          + AUTH_PROBE_HARD_TIMEOUT_MS
-          + "ms — forcing anonymous state. Check Network tab for /identity/user.",
+        "[auth] fetchCurrentUser exceeded " +
+          AUTH_PROBE_HARD_TIMEOUT_MS +
+          "ms — forcing anonymous state. Check Network tab for /identity/user.",
       );
       setUser(null);
       setStatus("anonymous");
@@ -101,21 +101,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Using location.assign + console.log so we can verify in DevTools exactly which
         // URL the browser is navigating to — "the page just refreshes" usually means the
         // navigation target is wrong, not that the click did nothing.
-        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? globalThis.location.origin)
-          .replace(/\/$/, "");
-        const target = apiBase
-          + "/identity/login?returnUrl="
-          + encodeURIComponent(apiBase + "/");
+        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? globalThis.location.origin).replace(
+          /\/$/,
+          "",
+        );
+        const target = apiBase + "/identity/login?returnUrl=" + encodeURIComponent(apiBase + "/");
         console.info("[auth] signIn → navigating to", target);
         globalThis.location.assign(target);
       },
       signOut: () => {
         tokenStore.set(null);
-        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? globalThis.location.origin)
-          .replace(/\/$/, "");
-        const target = apiBase
-          + "/identity/logout?returnUrl="
-          + encodeURIComponent(apiBase + "/");
+        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? globalThis.location.origin).replace(
+          /\/$/,
+          "",
+        );
+        const target = apiBase + "/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/");
         console.info("[auth] signOut → navigating to", target);
         globalThis.location.assign(target);
       },

@@ -180,9 +180,7 @@ export const BokehChart = ({
         itemStyle: { color: s.color },
         lineStyle: { color: s.color, width: 2 },
         emphasis: { focus: "series" },
-        areaStyle: s.area
-          ? { color: s.color, opacity: 0.15 }
-          : undefined,
+        areaStyle: s.area ? { color: s.color, opacity: 0.15 } : undefined,
         data: s.data.map(([x, y]) => [x instanceof Date ? x.getTime() : x, y]),
       })),
     };

@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchSessionSummary, type SessionSummary } from "../api/sessionsApi";
 
-const formatDateTime = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString() : "—";
+const formatDateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "—");
 
 const statusBadge = (status: SessionSummary["status"]) => {
   const map: Record<SessionSummary["status"], string> = {
@@ -14,13 +13,19 @@ const statusBadge = (status: SessionSummary["status"]) => {
     Cancelled: "bg-slate-600 text-slate-200",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status]}`}>
-      {status}
-    </span>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status]}`}>{status}</span>
   );
 };
 
-const Stat = ({ label, value, accent }: { label: string; value: React.ReactNode; accent?: boolean }) => (
+const Stat = ({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: React.ReactNode;
+  accent?: boolean;
+}) => (
   <div>
     <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
     <div className={`mt-0.5 text-sm font-medium ${accent ? "text-clinic-50" : "text-slate-200"}`}>
@@ -45,7 +50,9 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
     return (
       <div className="rounded-md border border-rose-800 bg-rose-950/40 p-3 text-xs text-rose-200">
         Failed to load session summary.{" "}
-        <button onClick={() => refetch()} className="underline">retry</button>
+        <button onClick={() => refetch()} className="underline">
+          retry
+        </button>
       </div>
     );
   }
@@ -53,13 +60,14 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
   const s = data;
   const ufPct = s.ufAchievementPercent;
   const ufBar = ufPct === null ? null : Math.min(100, Math.max(0, ufPct));
-  const ufColor = ufPct === null
-    ? "bg-slate-700"
-    : ufPct >= 95 && ufPct <= 105
-      ? "bg-emerald-600"
-      : ufPct < 80 || ufPct > 120
-        ? "bg-rose-600"
-        : "bg-amber-500";
+  const ufColor =
+    ufPct === null
+      ? "bg-slate-700"
+      : ufPct >= 95 && ufPct <= 105
+        ? "bg-emerald-600"
+        : ufPct < 80 || ufPct > 120
+          ? "bg-rose-600"
+          : "bg-amber-500";
 
   return (
     <section className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
@@ -115,8 +123,14 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
             <Stat label="Dialyzer" value={s.prescription.dialyzerModel} />
             <Stat label="Anticoagulation" value={s.prescription.anticoagulationProtocolCode} />
             <Stat label="Blood flow" value={`${s.prescription.bloodFlowRateMlPerMin} mL/min`} />
-            <Stat label="Dialysate flow" value={`${s.prescription.dialysateFlowRateMlPerMin} mL/min`} />
-            <Stat label="K⁺ / Ca²⁺ / Na⁺" value={`${s.prescription.dialysatePotassiumMmolPerL} / ${s.prescription.dialysateCalciumMmolPerL} / ${s.prescription.dialysateSodiumMmolPerL}`} />
+            <Stat
+              label="Dialysate flow"
+              value={`${s.prescription.dialysateFlowRateMlPerMin} mL/min`}
+            />
+            <Stat
+              label="K⁺ / Ca²⁺ / Na⁺"
+              value={`${s.prescription.dialysatePotassiumMmolPerL} / ${s.prescription.dialysateCalciumMmolPerL} / ${s.prescription.dialysateSodiumMmolPerL}`}
+            />
             <Stat label="Access" value={`${s.access.kind} — ${s.access.site}`} />
           </div>
         </div>

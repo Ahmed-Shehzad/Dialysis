@@ -46,10 +46,11 @@ export default tseslint.config(
       ...react.configs.recommended.rules,
       ...react.configs["jsx-runtime"].rules,
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      // Vite HMR hint, not a correctness concern; codebase legitimately
+      // colocates context constants with provider components.
+      "react-refresh/only-export-components": "off",
+      // Purely cosmetic in JSX text — React renders apostrophes/quotes fine.
+      "react/no-unescaped-entities": "off",
       // The codebase relies on TS for prop types — disable the legacy PropTypes rule.
       "react/prop-types": "off",
       // Trailing args prefixed with _ are intentional placeholders.

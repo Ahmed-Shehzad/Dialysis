@@ -21,9 +21,7 @@ export const IntegrationEventsTable = () => {
         Cross-module integration events (HIS outbox)
       </h3>
       {isLoading && <div className="text-xs text-slate-400">Loading…</div>}
-      {error && (
-        <div className="text-xs text-rose-300">Failed to read the integration outbox.</div>
-      )}
+      {error && <div className="text-xs text-rose-300">Failed to read the integration outbox.</div>}
       {data && data.length === 0 && (
         <div className="text-xs text-slate-400">No events published recently.</div>
       )}
@@ -40,7 +38,10 @@ export const IntegrationEventsTable = () => {
               <div className="col-span-2 text-xs text-slate-400">
                 {e.processedAtUtc ? "delivered" : "pending"}
               </div>
-              <div className="col-span-2 truncate font-mono text-xs text-slate-500" title={e.correlationId ?? ""}>
+              <div
+                className="col-span-2 truncate font-mono text-xs text-slate-500"
+                title={e.correlationId ?? ""}
+              >
                 {e.correlationId?.slice(0, 8) ?? ""}
               </div>
             </li>

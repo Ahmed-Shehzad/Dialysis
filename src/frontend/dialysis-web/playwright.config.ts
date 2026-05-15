@@ -12,8 +12,8 @@ const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:9090";
 // chromium-derivative pointed at by E2E_BROWSER_PATH). slowMo gives the human watcher a
 // chance to follow the click → redirect → login → dashboard sequence.
 const headed = process.env.E2E_HEADED === "1";
-const bravePath = process.env.E2E_BROWSER_PATH
-  ?? "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser";
+const bravePath =
+  process.env.E2E_BROWSER_PATH ?? "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -34,7 +34,5 @@ export default defineConfig({
       ? { executablePath: bravePath, slowMo: 400, args: ["--start-maximized"] }
       : {},
   },
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });
