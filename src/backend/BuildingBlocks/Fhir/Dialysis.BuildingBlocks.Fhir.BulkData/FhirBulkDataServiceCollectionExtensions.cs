@@ -1,3 +1,4 @@
+using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -21,8 +22,38 @@ public static class FhirBulkDataServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Registers the default in-process orchestrator: <see cref="DefaultExportJobOrchestrator"/>
+    /// + <see cref="ExportJobQueue"/> + <see cref="ExportJobBackgroundProcessor"/> hosted service +
+    /// <see cref="NdjsonFeederBinder"/>. Hosts then call
+    /// <see cref="AddFhirBulkDataFeeder{TFeeder,TResource}"/> once per resource type they want to export.
+    /// </summary>
+    public static IServiceCollection AddFhirBulkDataOrchestrator(this IServiceCollection services)
+    {
+        services.TryAddSingleton(TimeProvider.System);
+        services.TryAddSingleton<ExportJobQueue>();
+        services.TryAddSingleton<NdjsonFeederBinder>();
+        services.TryAddSingleton<IExportJobOrchestrator, DefaultExportJobOrchestrator>();
+        services.AddHostedService<ExportJobBackgroundProcessor>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers a per-resource-type NDJSON feeder. Each call adds an <see cref="INdjsonFeederBinding"/>
+    /// instance; <see cref="NdjsonFeederBinder"/> aggregates them at runtime.
+    /// </summary>
+    public static IServiceCollection AddFhirBulkDataFeeder<TFeeder, TResource>(this IServiceCollection services)
+        where TFeeder : class, INdjsonResourceFeeder<TResource>
+        where TResource : Resource
+    {
+        services.AddScoped<INdjsonResourceFeeder<TResource>, TFeeder>();
+        services.AddSingleton<INdjsonFeederBinding>(new NdjsonFeederBinding<TResource>());
+        return services;
+    }
+
+    /// <summary>
     /// Maps <c>GET /fhir/$export</c>, <c>GET /fhir/Patient/$export</c>, <c>GET /fhir/Group/{id}/$export</c>,
-    /// <c>GET /fhir/bulk-data/jobs/{id}</c>, <c>DELETE /fhir/bulk-data/jobs/{id}</c> per the IG.
+    /// <c>GET /fhir/bulk-data/jobs/{id}</c>, <c>DELETE /fhir/bulk-data/jobs/{id}</c>, and
+    /// <c>GET /fhir/bulk-data/jobs/{id}/files/{file}</c> per the Bulk Data Access IG.
     /// </summary>
     public static IEndpointRouteBuilder MapFhirBulkDataEndpoints(this IEndpointRouteBuilder endpoints, string baseUrl = "/fhir")
     {
@@ -34,6 +65,7 @@ public static class FhirBulkDataServiceCollectionExtensions
         endpoints.MapGet(prefix + "/Group/{id}/$export", (HttpContext ctx, string id) => StartExportAsync(ctx, ExportScope.Group, groupId: id));
         endpoints.MapGet(prefix + "/bulk-data/jobs/{id}", PollJobAsync);
         endpoints.MapDelete(prefix + "/bulk-data/jobs/{id}", CancelJobAsync);
+        endpoints.MapGet(prefix + "/bulk-data/jobs/{id}/files/{file}", DownloadFileAsync);
 
         return endpoints;
     }
@@ -99,7 +131,7 @@ public static class FhirBulkDataServiceCollectionExtensions
                 _ => ""
             })}$export",
             requiresAccessToken = true,
-            output = job.Outputs.Select(o => new { type = o.ResourceType, url = storage.BuildOutputUrl(job.Id, o.ResourceType) }),
+            output = job.Outputs.Select(o => new { type = o.ResourceType, url = storage.BuildOutputUrl(job.Id, o.ResourceType), count = o.ResourceCount }),
             error = Array.Empty<object>(),
         };
         context.Response.StatusCode = StatusCodes.Status200OK;
@@ -117,5 +149,41 @@ public static class FhirBulkDataServiceCollectionExtensions
         }
         await orchestrator.CancelAsync(id, context.RequestAborted).ConfigureAwait(false);
         context.Response.StatusCode = StatusCodes.Status202Accepted;
+    }
+
+    private static async Task DownloadFileAsync(HttpContext context, string id, string file)
+    {
+        var store = context.RequestServices.GetRequiredService<IExportJobStore>();
+        var storage = context.RequestServices.GetRequiredService<IBulkDataStorage>();
+
+        var job = await store.GetAsync(id, context.RequestAborted).ConfigureAwait(false);
+        if (job is null || job.Status != ExportJobStatus.Completed)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        Stream stream;
+        try
+        {
+            stream = await storage.OpenReadAsync(id, file, context.RequestAborted).ConfigureAwait(false);
+        }
+        catch (FileNotFoundException)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        context.Response.ContentType = "application/fhir+ndjson";
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        await using (stream)
+        {
+            await stream.CopyToAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
+        }
     }
 }
