@@ -46,6 +46,13 @@ public sealed class Patient : AggregateRoot<Guid>
 
     public Guid? SupersededByPatientId { get; private set; }
 
+    /// <summary>
+    /// Tracks the last time this aggregate's persisted state changed. Surfaces as the FHIR
+    /// <c>Meta.lastUpdated</c> on the projected Patient resource and powers the bulk-export
+    /// <c>_since</c> filter so external pipelines pull only what changed since the last sync.
+    /// </summary>
+    public DateTimeOffset UpdatedAtUtc { get; private set; } = DateTimeOffset.UtcNow;
+
     public static Patient Register(
         Guid id,
         string medicalRecordNumber,
@@ -89,6 +96,7 @@ public sealed class Patient : AggregateRoot<Guid>
         SexAtBirthCode = sexAtBirthCode?.Trim();
         PreferredLanguageCode = preferredLanguageCode?.Trim();
         PrimaryAddress = primaryAddress;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
 
         RaiseIntegrationEvent(new PatientDemographicsUpdatedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
@@ -106,6 +114,7 @@ public sealed class Patient : AggregateRoot<Guid>
         EnsureMutable();
         _contactPoints.Clear();
         _contactPoints.AddRange(contactPoints);
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public void MergeInto(Guid survivingPatientId, string survivingMedicalRecordNumber)
@@ -117,6 +126,7 @@ public sealed class Patient : AggregateRoot<Guid>
 
         Status = PatientStatus.Merged;
         SupersededByPatientId = survivingPatientId;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
 
         RaiseIntegrationEvent(new PatientsMergedIntegrationEvent(
             EventId: Guid.CreateVersion7(),

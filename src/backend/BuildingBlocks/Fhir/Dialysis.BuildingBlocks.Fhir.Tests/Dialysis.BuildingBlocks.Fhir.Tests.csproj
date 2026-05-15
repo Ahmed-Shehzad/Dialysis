@@ -15,6 +15,7 @@
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Subscriptions/Dialysis.BuildingBlocks.Fhir.Subscriptions.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Terminology/Dialysis.BuildingBlocks.Fhir.Terminology.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Testing/Dialysis.BuildingBlocks.Fhir.Testing.csproj" />
     <PackageReference Include="Hl7.Fhir.R4" />

@@ -2,6 +2,7 @@ using System.Threading.RateLimiting;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIS.Composition;
 using Dialysis.HIS.Contracts.Security;
@@ -48,8 +49,11 @@ builder.AddModuleHost<HisPermissionCatalog>(new ModuleHostingOptions
 var enableFhirEndpoints = builder.Configuration.GetValue("His:Fhir:Enabled", false);
 var enableFhirBulkDataExport = builder.Configuration.GetValue("His:Fhir:BulkData:Enabled", false);
 var enableFhirSmartOnFhir = builder.Configuration.GetValue("His:Fhir:Smart:Enabled", false);
+var enableFhirSubscriptions = builder.Configuration.GetValue("His:Fhir:Subscriptions:Enabled", false);
 var fhirBulkDataExportScope = builder.Configuration["His:Fhir:BulkData:RequireScope"]
     ?? (enableFhirSmartOnFhir ? "system/*.read" : null);
+var fhirSubscriptionsScope = builder.Configuration["His:Fhir:Subscriptions:RequireScope"]
+    ?? (enableFhirSmartOnFhir ? "user/*.write" : null);
 
 builder.Services.AddHospitalInformationSystem(
     builder.Configuration,
@@ -63,6 +67,8 @@ builder.Services.AddHospitalInformationSystem(
     enableFhirBulkDataPersistence: enableFhirBulkDataExport,
     enableFhirBulkDataExport: enableFhirBulkDataExport,
     enableFhirSmartOnFhir: enableFhirSmartOnFhir,
+    enableFhirSubscriptions: enableFhirSubscriptions,
+    enableFhirSubscriptionsPersistence: enableFhirSubscriptions,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>
@@ -131,5 +137,8 @@ if (enableFhirSmartOnFhir)
 
 if (enableFhirBulkDataExport)
     app.MapFhirBulkDataEndpoints(requireScope: fhirBulkDataExportScope);
+
+if (enableFhirSubscriptions)
+    app.MapFhirSubscriptionEndpoints(requireScope: fhirSubscriptionsScope);
 
 await app.RunAsync().ConfigureAwait(false);

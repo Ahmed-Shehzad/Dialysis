@@ -10,13 +10,28 @@ public static class FhirSubscriptionsServiceCollectionExtensions
     /// replace <see cref="ISubscriptionRegistry"/> with the EF-Core-backed implementation from
     /// <c>Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore</c>.
     /// </summary>
-    public static IServiceCollection AddFhirSubscriptions(this IServiceCollection services)
+    public static IServiceCollection AddFhirSubscriptions(
+        this IServiceCollection services,
+        Action<SubscriptionTopicCatalog>? configureTopics = null)
     {
         services.TryAddSingleton<InMemorySubscriptionRegistry>();
         services.TryAddSingleton<ISubscriptionRegistry>(sp => sp.GetRequiredService<InMemorySubscriptionRegistry>());
         services.TryAddSingleton<ISubscriptionMatcher>(sp => sp.GetRequiredService<InMemorySubscriptionRegistry>());
         services.TryAddSingleton<ISubscriptionNotificationDispatcher, RestHookNotificationDispatcher>();
+        services.TryAddSingleton<SubscriptionBroadcaster>();
         services.AddHttpClient(nameof(RestHookNotificationDispatcher));
+
+        // The topic catalog is a singleton mutated at composition time. Resolve any existing
+        // instance, otherwise create a fresh one, register it, and apply the configurator.
+        var existing = services.FirstOrDefault(d => d.ServiceType == typeof(SubscriptionTopicCatalog));
+        var catalog = existing?.ImplementationInstance as SubscriptionTopicCatalog;
+        if (catalog is null)
+        {
+            catalog = new SubscriptionTopicCatalog();
+            services.AddSingleton(catalog);
+        }
+        configureTopics?.Invoke(catalog);
+
         return services;
     }
 }

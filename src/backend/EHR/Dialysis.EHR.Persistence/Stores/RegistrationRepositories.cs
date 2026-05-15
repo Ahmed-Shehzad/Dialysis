@@ -88,8 +88,12 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
 
     public IAsyncEnumerable<Patient> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        _ = since; // reserved: Patient lacks a last-modified timestamp for now
-        return db.Patients.AsNoTracking().OrderBy(p => p.MedicalRecordNumber).AsAsyncEnumerable();
+        var query = db.Patients.AsNoTracking().OrderBy(p => p.MedicalRecordNumber).AsQueryable();
+        if (since is { } cutoff)
+        {
+            query = query.Where(p => p.UpdatedAtUtc >= cutoff);
+        }
+        return query.AsAsyncEnumerable();
     }
 }
 

@@ -3,7 +3,9 @@ using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
+using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
@@ -36,6 +38,7 @@ public static class HospitalInformationSystemExtensions
         bool enableFhirBulkDataExport = false,
         bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
+        bool enableFhirSubscriptions = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
@@ -45,7 +48,13 @@ public static class HospitalInformationSystemExtensions
 
         services.AddSingleton(new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)));
 
-        services.AddTransponder(_ => { });
+        services.AddTransponder(t =>
+        {
+            if (enableFhirSubscriptions)
+            {
+                t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedSubscriptionBroadcaster>();
+            }
+        });
         configureTransponderTransport?.Invoke(services);
 
         services.AddHisCqrs();
@@ -76,12 +85,22 @@ public static class HospitalInformationSystemExtensions
                 ?? Path.Combine(Path.GetTempPath(), "dialysis-his-bulk-data");
             services.AddFhirBulkData(storageRoot);
             services.AddFhirBulkDataOrchestrator();
+            services.AddFhirBulkDataFeeder<HisPatientStubFeeder, Patient>();
             services.AddFhirBulkDataFeeder<HisAdmissionEncounterFeeder, Encounter>();
         }
 
         if (enableFhirSmartOnFhir)
         {
             services.AddFhirSmartOnFhir(configuration.GetSection("His:Fhir:Smart"));
+        }
+
+        if (enableFhirSubscriptions)
+        {
+            services.AddFhirSubscriptions(topics => topics.Add(new SubscriptionTopicDescriptor(
+                Url: PatientAdmittedSubscriptionBroadcaster.TopicUrl,
+                Title: "Encounter admission/discharge",
+                Description: "Fires when a patient is admitted to or discharged from a HIS ward.",
+                FilterParameterNames: ["patient", "ward", "action"])));
         }
 
         return services;

@@ -10,11 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
     <PackageReference Include="Hl7.Fhir.R4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
 </Project>
