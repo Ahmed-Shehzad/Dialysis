@@ -19,6 +19,64 @@ export const fetchActiveSessions = async (activeOnly = true): Promise<DialysisSe
   return response.data ?? [];
 };
 
+export type SessionPrescription = {
+  dialyzerModel: string;
+  prescribedDurationMinutes: number;
+  bloodFlowRateMlPerMin: number;
+  dialysateFlowRateMlPerMin: number;
+  dialysatePotassiumMmolPerL: number;
+  dialysateCalciumMmolPerL: number;
+  dialysateSodiumMmolPerL: number;
+  targetUfVolumeLiters: number;
+  anticoagulationProtocolCode: string;
+};
+
+export type VascularAccessSummary = {
+  kind: string;
+  site: string;
+  establishedOn: string;
+};
+
+export type ReadingStats = {
+  count: number;
+  systolicMin: number | null;
+  systolicMax: number | null;
+  systolicAvg: number | null;
+  diastolicMin: number | null;
+  diastolicMax: number | null;
+  diastolicAvg: number | null;
+  heartRateMin: number | null;
+  heartRateMax: number | null;
+  heartRateAvg: number | null;
+  lastUltrafiltrationRateMlPerHour: number | null;
+  firstObservedAtUtc: string | null;
+  lastObservedAtUtc: string | null;
+};
+
+export type SessionSummary = {
+  id: string;
+  patientId: string;
+  status: DialysisSessionSummary["status"];
+  scheduledStartUtc: string;
+  actualStartUtc: string | null;
+  actualEndUtc: string | null;
+  actualDurationMinutes: number | null;
+  achievedUfVolumeLiters: number | null;
+  ufAchievementPercent: number | null;
+  abortReasonCode: string | null;
+  machineId: string | null;
+  prescription: SessionPrescription;
+  access: VascularAccessSummary;
+  readings: ReadingStats;
+};
+
+export const fetchSessionSummary = async (sessionId: string): Promise<SessionSummary> => {
+  const response = await apiClient.get<SessionSummary>(
+    `/api/pdms/api/v1.0/sessions/${sessionId}/summary`,
+  );
+  return response.data;
+};
+
 export const fetchSessionReadings = async (
   sessionId: string,
   limit = 200,

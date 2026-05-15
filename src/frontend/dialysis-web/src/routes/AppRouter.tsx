@@ -4,6 +4,7 @@ import { useAuth } from "@/features/auth/components/AuthProvider";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { SessionLivePage } from "@/pages/SessionLivePage";
+import { SessionsPage } from "@/pages/SessionsPage";
 import { PatientsPage } from "@/pages/PatientsPage";
 import { PatientChartPage } from "@/pages/PatientChartPage";
 import { IntegrationsPage } from "@/pages/IntegrationsPage";
@@ -64,7 +65,7 @@ export const AppRouter = () => (
       <Route index element={<DashboardPage />} />
       <Route path="patients" element={<PatientsPage />} />
       <Route path="patients/:patientId" element={<PatientChartPage />} />
-      <Route path="sessions" element={<DashboardPage />} />
+      <Route path="sessions" element={<SessionsPage />} />
       <Route path="sessions/:sessionId" element={<SessionLivePage />} />
       <Route path="integrations" element={<IntegrationsPage />} />
       <Route path="workflows/his" element={<HisWorkflowsPage />} />

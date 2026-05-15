@@ -18,16 +18,52 @@ public sealed class EhrPatientRegistrationSimulator(
     ILogger<EhrPatientRegistrationSimulator> logger) : BackgroundService
 {
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(20);
-    private static readonly string[] _familyNames =
+
+    private static readonly (string Family, string Origin)[] _families =
     [
-        "Andersen", "Bauer", "Carter", "Dubois", "Esposito", "Fernandez", "Gupta",
-        "Hayashi", "Ivanov", "Johansson", "Kim", "Lopez", "Müller", "Novak",
+        ("Andersen", "NO"), ("Bauer", "DE"), ("Carter", "US"), ("Dubois", "FR"),
+        ("Esposito", "IT"), ("Fernandez", "ES"), ("Gupta", "IN"), ("Hayashi", "JP"),
+        ("Ivanov", "RU"), ("Johansson", "SE"), ("Kim", "KR"), ("Lopez", "MX"),
+        ("Müller", "DE"), ("Novak", "CZ"), ("Okafor", "NG"), ("Pereira", "BR"),
+        ("Qureshi", "PK"), ("Rossi", "IT"), ("Sato", "JP"), ("Tanaka", "JP"),
+        ("Ueno", "JP"), ("Vargas", "MX"), ("Watanabe", "JP"), ("Yilmaz", "TR"),
+        ("Zhao", "CN"), ("Patel", "IN"), ("Nguyen", "VN"), ("OConnor", "IE"),
+        ("Schneider", "DE"), ("Lindqvist", "SE"),
     ];
-    private static readonly string[] _givenNames =
+
+    private static readonly (string Given, string Sex)[] _given =
     [
-        "Liam", "Olivia", "Noah", "Emma", "Lucas", "Ava", "Mateo",
-        "Mei", "Ahmed", "Sophia", "Aiden", "Maya", "Diego", "Yara",
+        ("Liam", "male"), ("Olivia", "female"), ("Noah", "male"), ("Emma", "female"),
+        ("Lucas", "male"), ("Ava", "female"), ("Mateo", "male"), ("Mei", "female"),
+        ("Ahmed", "male"), ("Sophia", "female"), ("Aiden", "male"), ("Maya", "female"),
+        ("Diego", "male"), ("Yara", "female"), ("Hiroshi", "male"), ("Anika", "female"),
+        ("Kwame", "male"), ("Zara", "female"), ("Ravi", "male"), ("Ines", "female"),
+        ("Bjorn", "male"), ("Leila", "female"), ("Tomas", "male"), ("Chiara", "female"),
+        ("Idris", "male"), ("Priya", "female"), ("Jamal", "male"), ("Sana", "female"),
     ];
+
+    private static readonly string[] _middleNames =
+    [
+        "Alex", "Jordan", "Sam", "Taylor", "Riley", "Cameron", "Reese", "Sage", "", "", "",
+    ];
+
+    private static readonly (string Language, string[] Origins)[] _languages =
+    [
+        ("en-US", ["US", "IE", "NG"]),
+        ("de-DE", ["DE", "CZ"]),
+        ("fr-FR", ["FR"]),
+        ("it-IT", ["IT"]),
+        ("es-ES", ["ES", "MX", "BR"]),
+        ("ja-JP", ["JP"]),
+        ("ko-KR", ["KR"]),
+        ("ru-RU", ["RU"]),
+        ("zh-CN", ["CN", "VN"]),
+        ("hi-IN", ["IN", "PK"]),
+        ("tr-TR", ["TR"]),
+        ("sv-SE", ["SE", "NO"]),
+        ("pt-BR", ["BR"]),
+    ];
+
     private static readonly Random _rng = new(31415);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -58,22 +94,43 @@ public sealed class EhrPatientRegistrationSimulator(
         var db = scope.ServiceProvider.GetRequiredService<EhrDbContext>();
 
         // Full Guid v7 hex (32 chars) — the first 12 hex are the 48-bit millisecond timestamp
-        // (changes every tick), the remaining 20 are random. A 6-char prefix collided every tick
-        // because the top 24 bits of an ms timestamp only flip every ~4.66h.
+        // (changes every tick), the remaining 20 are random.
         var mrn = $"MRN-SIM-{Guid.CreateVersion7():N}";
-        var family = _familyNames[_rng.Next(_familyNames.Length)];
-        var given = _givenNames[_rng.Next(_givenNames.Length)];
-        var year = 1940 + _rng.Next(70);
-        var dob = new DateOnly(year, _rng.Next(1, 12), _rng.Next(1, 28));
+
+        var (family, origin) = _families[_rng.Next(_families.Length)];
+        var (given, sex) = _given[_rng.Next(_given.Length)];
+        var middle = _middleNames[_rng.Next(_middleNames.Length)];
+
+        // Realistic age distribution — dialysis patients skew older.
+        // Pull from the last 90 years, biased to 40–80 by rolling twice and taking the older.
+        var thisYear = DateTime.UtcNow.Year;
+        var rollA = thisYear - _rng.Next(18, 90);
+        var rollB = thisYear - _rng.Next(40, 85);
+        var year = Math.Min(rollA, rollB);
+        var month = _rng.Next(1, 13);
+        var maxDay = DateTime.DaysInMonth(year, month);
+        var dob = new DateOnly(year, month, _rng.Next(1, maxDay + 1));
+
+        var language = _languages
+            .FirstOrDefault(l => l.Origins.Contains(origin))
+            .Language ?? "en-US";
+
+        var humanName = string.IsNullOrEmpty(middle)
+            ? new HumanName(family, given)
+            : new HumanName(family, given, middle);
 
         var patient = Patient.Register(
             Guid.CreateVersion7(),
             mrn,
-            new HumanName(family, given),
+            humanName,
             dob,
-            sexAtBirthCode: _rng.Next(2) == 0 ? "male" : "female",
-            preferredLanguageCode: "en-US");
+            sexAtBirthCode: sex,
+            preferredLanguageCode: language);
         patients.Add(patient);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        logger.LogDebug(
+            "Simulator registered patient {Family}, {Given} ({Mrn}) DOB {Dob} lang {Lang}.",
+            family, given, mrn, dob, language);
     }
 }

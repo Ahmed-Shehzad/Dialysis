@@ -82,7 +82,7 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<IngestLabResultCommand, Guid, AuthorizationPipelineBehavior<IngestLabResultCommand, Guid>>();
 
         // Queries
-        c.AddQueryBehavior<SearchPatientsQuery, IReadOnlyList<PatientSummary>, AuthorizationPipelineBehavior<SearchPatientsQuery, IReadOnlyList<PatientSummary>>>();
+        c.AddQueryBehavior<SearchPatientsQuery, PatientSearchResult, AuthorizationPipelineBehavior<SearchPatientsQuery, PatientSearchResult>>();
         c.AddQueryBehavior<GetPatientChartQuery, PatientChartView, AuthorizationPipelineBehavior<GetPatientChartQuery, PatientChartView>>();
     }
 }

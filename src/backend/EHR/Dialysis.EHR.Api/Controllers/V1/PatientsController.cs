@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
+using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Features.SearchPatients;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,15 +13,24 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<PatientSummary>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PatientSearchResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchAsync(
         [FromQuery] string? q = null,
+        [FromQuery] string? familyName = null,
+        [FromQuery] string? givenName = null,
+        [FromQuery] string? mrn = null,
+        [FromQuery] DateOnly? dobFrom = null,
+        [FromQuery] DateOnly? dobTo = null,
+        [FromQuery] string? sex = null,
+        [FromQuery] PatientStatus? status = null,
+        [FromQuery] int skip = 0,
         [FromQuery] int take = 25,
         CancellationToken cancellationToken = default)
     {
         var results = await gateway
-            .SendQueryAsync<SearchPatientsQuery, IReadOnlyList<PatientSummary>>(
-                new SearchPatientsQuery(q, take), cancellationToken)
+            .SendQueryAsync<SearchPatientsQuery, PatientSearchResult>(
+                new SearchPatientsQuery(q, familyName, givenName, mrn, dobFrom, dobTo, sex, status, skip, take),
+                cancellationToken)
             .ConfigureAwait(false);
         return Ok(results);
     }

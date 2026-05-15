@@ -14,22 +14,74 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
 
     public async Task<IReadOnlyList<Patient>> SearchAsync(string? nameFragment, int take, CancellationToken cancellationToken = default)
     {
+        var page = await SearchAsync(
+            new PatientSearchCriteria(nameFragment, null, null, null, null, null, null, null, 0, take),
+            cancellationToken).ConfigureAwait(false);
+        return page.Items;
+    }
+
+    public async Task<PatientSearchPage> SearchAsync(
+        PatientSearchCriteria criteria,
+        CancellationToken cancellationToken = default)
+    {
         var query = db.Patients.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(nameFragment))
+
+        if (!string.IsNullOrWhiteSpace(criteria.Query))
         {
-            var pattern = $"%{nameFragment.Trim()}%";
+            var pattern = $"%{criteria.Query.Trim()}%";
             query = query.Where(p =>
                 EF.Functions.ILike(p.Name.FamilyName, pattern) ||
                 EF.Functions.ILike(p.Name.GivenName, pattern) ||
                 EF.Functions.ILike(p.MedicalRecordNumber, pattern));
         }
 
-        return await query
+        if (!string.IsNullOrWhiteSpace(criteria.FamilyName))
+        {
+            var pattern = $"%{criteria.FamilyName.Trim()}%";
+            query = query.Where(p => EF.Functions.ILike(p.Name.FamilyName, pattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.GivenName))
+        {
+            var pattern = $"%{criteria.GivenName.Trim()}%";
+            query = query.Where(p => EF.Functions.ILike(p.Name.GivenName, pattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.MedicalRecordNumber))
+        {
+            var pattern = $"%{criteria.MedicalRecordNumber.Trim()}%";
+            query = query.Where(p => EF.Functions.ILike(p.MedicalRecordNumber, pattern));
+        }
+
+        if (criteria.DateOfBirthFrom.HasValue)
+            query = query.Where(p => p.DateOfBirth >= criteria.DateOfBirthFrom.Value);
+
+        if (criteria.DateOfBirthTo.HasValue)
+            query = query.Where(p => p.DateOfBirth <= criteria.DateOfBirthTo.Value);
+
+        if (!string.IsNullOrWhiteSpace(criteria.SexAtBirthCode))
+        {
+            var code = criteria.SexAtBirthCode.Trim();
+            query = query.Where(p => p.SexAtBirthCode == code);
+        }
+
+        if (criteria.Status.HasValue)
+            query = query.Where(p => p.Status == criteria.Status.Value);
+
+        var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
+
+        var skip = Math.Max(0, criteria.Skip);
+        var take = Math.Clamp(criteria.Take, 1, 200);
+
+        var items = await query
             .OrderBy(p => p.Name.FamilyName)
             .ThenBy(p => p.Name.GivenName)
-            .Take(Math.Clamp(take, 1, 200))
+            .Skip(skip)
+            .Take(take)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        return new PatientSearchPage(items, total);
     }
 
     public void Add(Patient patient) => db.Patients.Add(patient);

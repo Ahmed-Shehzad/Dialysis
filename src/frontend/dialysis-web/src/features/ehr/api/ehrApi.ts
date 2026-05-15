@@ -29,11 +29,49 @@ export type PatientChartView = {
   immunizations: ChartItem[];
 };
 
-export const searchEhrPatients = async (q?: string, take = 25): Promise<EhrPatient[]> => {
-  const response = await apiClient.get<EhrPatient[]>("/api/ehr/api/v1.0/patients", {
-    params: { q, take },
+export type PatientSearchFilters = {
+  q?: string;
+  familyName?: string;
+  givenName?: string;
+  mrn?: string;
+  dobFrom?: string; // YYYY-MM-DD
+  dobTo?: string;   // YYYY-MM-DD
+  sex?: string;     // "male" | "female" | other code
+  status?: "Active" | "Inactive" | "Deceased" | "Merged";
+  skip?: number;
+  take?: number;
+};
+
+export type PatientSearchPage = {
+  items: EhrPatient[];
+  totalCount: number;
+  skip: number;
+  take: number;
+};
+
+const stripEmpty = (filters: PatientSearchFilters): Record<string, string | number> => {
+  const out: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(filters)) {
+    if (v === undefined || v === null) continue;
+    if (typeof v === "string" && v.trim() === "") continue;
+    out[k] = v;
+  }
+  return out;
+};
+
+export const searchEhrPatientsPage = async (
+  filters: PatientSearchFilters = {},
+): Promise<PatientSearchPage> => {
+  const response = await apiClient.get<PatientSearchPage>("/api/ehr/api/v1.0/patients", {
+    params: stripEmpty({ take: 25, skip: 0, ...filters }),
   });
-  return response.data ?? [];
+  return response.data ?? { items: [], totalCount: 0, skip: 0, take: filters.take ?? 25 };
+};
+
+/** Convenience wrapper preserving the legacy bare-array shape for non-paginated callers. */
+export const searchEhrPatients = async (q?: string, take = 25): Promise<EhrPatient[]> => {
+  const page = await searchEhrPatientsPage({ q, take });
+  return page.items;
 };
 
 export const fetchPatientChart = async (patientId: string): Promise<PatientChartView> => {

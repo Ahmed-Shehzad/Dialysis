@@ -3,6 +3,7 @@ using Dialysis.CQRS;
 using Dialysis.PDMS.TreatmentSessions.Domain;
 using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
 using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
+using Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
@@ -30,6 +31,27 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
                 new ListSessionsQuery(activeOnly, take), cancellationToken)
             .ConfigureAwait(false);
         return Ok(data);
+    }
+
+    [HttpGet("{sessionId:guid}/summary")]
+    [ProducesResponseType(typeof(SessionSummaryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSummaryAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var summary = await gateway
+                .SendQueryAsync<GetSessionSummaryQuery, SessionSummaryDto>(
+                    new GetSessionSummaryQuery(sessionId), cancellationToken)
+                .ConfigureAwait(false);
+            return Ok(summary);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpGet("{sessionId:guid}/readings")]

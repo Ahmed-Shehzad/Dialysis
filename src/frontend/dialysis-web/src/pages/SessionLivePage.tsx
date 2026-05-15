@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchActiveSessions } from "@/features/sessions/api/sessionsApi";
 import { useSessionReadings } from "@/features/sessions/hooks/useSessionReadings";
 import { SessionLifecycleControls } from "@/features/sessions/components/SessionLifecycleControls";
+import { TreatmentSummary } from "@/features/sessions/components/TreatmentSummary";
 import { useVitalsStream } from "@/features/vitals/hooks/useVitalsStream";
 import { VitalsChart } from "@/features/vitals/components/VitalsChart";
 import { VitalsLatestPanel } from "@/features/vitals/components/VitalsLatestPanel";
@@ -55,6 +56,8 @@ export const SessionLivePage = () => {
       </header>
 
       <SessionLifecycleControls session={session} />
+
+      {sessionId && <TreatmentSummary sessionId={sessionId} />}
 
       <VitalsLatestPanel latest={latest} />
 

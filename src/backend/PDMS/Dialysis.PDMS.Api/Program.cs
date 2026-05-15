@@ -48,7 +48,10 @@ builder.Services.AddPatientDataManagementSystem(
             if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
         }));
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 // SignalR with optional Valkey/Redis backplane for horizontal scale-out. With the backplane,
 // every PDMS replica subscribes to the same Valkey pub/sub channel, so a reading broadcast on
