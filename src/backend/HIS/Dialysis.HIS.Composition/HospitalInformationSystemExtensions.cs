@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder;
@@ -31,6 +32,7 @@ public static class HospitalInformationSystemExtensions
         bool enableFhirEndpoints = false,
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
+        bool enableFhirBulkDataExport = false,
         bool enableFhirSubscriptionsPersistence = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
@@ -65,6 +67,15 @@ public static class HospitalInformationSystemExtensions
             services.AddFhirBulkDataEntityFrameworkStore<HisDbContext>();
         if (enableFhirSubscriptionsPersistence)
             services.AddFhirSubscriptionsEntityFrameworkStore<HisDbContext>();
+
+        if (enableFhirBulkDataExport)
+        {
+            var storageRoot = configuration["His:Fhir:BulkData:StorageRoot"]
+                ?? Path.Combine(Path.GetTempPath(), "dialysis-his-bulk-data");
+            services.AddFhirBulkData(storageRoot);
+            services.AddFhirBulkDataOrchestrator();
+            services.AddFhirBulkDataFeeder<HisAdmissionEncounterFeeder, Encounter>();
+        }
 
         return services;
     }
