@@ -10,6 +10,7 @@ const NAV = [
   { to: "/workflows/ehr", label: "EHR" },
   { to: "/integrations", label: "Integrations" },
   { to: "/fhir-exchange", label: "FHIR Exchange" },
+  { to: "/subscriptions", label: "Subscriptions" },
 ];
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
