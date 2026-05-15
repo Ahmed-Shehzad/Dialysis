@@ -272,7 +272,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
             ct.ThrowIfCancellationRequested();
             if (value is null)
             {
-                return (IReadOnlyList<ValidationFailure>)
+                return
                 [
                     new ValidationFailure(path, $"'{path}' must not be null.", null)
                 ];

@@ -22,7 +22,9 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return (TResource)await _parser.ParseAsync(json, typeof(TResource));
+#pragma warning disable VSTHRD103 // Firely Parse is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
+        return (TResource)_parser.Parse(json, typeof(TResource));
+#pragma warning restore VSTHRD103
     }
 
     public async Task<Bundle> SearchAsync(string resourceType, IDictionary<string, string> parameters, ExternalEhrContext context, CancellationToken cancellationToken)
@@ -32,14 +34,16 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return (Bundle)await _parser.ParseAsync(json, typeof(Bundle));
+#pragma warning disable VSTHRD103 // Firely Parse is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
+        return (Bundle)_parser.Parse(json, typeof(Bundle));
+#pragma warning restore VSTHRD103
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, ExternalEhrContext context, CancellationToken cancellationToken)
     {
         using var client = httpClientFactory.CreateClient(Describe().VendorName);
         var token = await authProvider.AcquireAccessTokenAsync(context, cancellationToken).ConfigureAwait(false);
-        var request = new HttpRequestMessage(method, url);
+        using var request = new HttpRequestMessage(method, url);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/fhir+json"));
         if (!string.IsNullOrEmpty(token))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);

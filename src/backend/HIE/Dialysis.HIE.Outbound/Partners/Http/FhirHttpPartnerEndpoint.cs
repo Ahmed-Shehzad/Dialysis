@@ -72,7 +72,9 @@ public sealed class FhirHttpPartnerEndpoint : IPartnerEndpoint
     {
         ArgumentNullException.ThrowIfNull(resource);
 
-        var json = await _serializer.SerializeToStringAsync(resource).ConfigureAwait(false);
+#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
+        var json = _serializer.SerializeToString(resource);
+#pragma warning restore VSTHRD103
         var path = string.IsNullOrWhiteSpace(resource.Id)
             ? resource.TypeName
             : $"{resource.TypeName}/{resource.Id}";

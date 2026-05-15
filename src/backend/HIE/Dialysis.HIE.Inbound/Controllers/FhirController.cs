@@ -100,21 +100,24 @@ public sealed class FhirController(
         return await FhirResultAsync(Ok(), bundle, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<IActionResult> FhirResultAsync(IActionResult fallbackStatus, Resource resource, CancellationToken cancellationToken)
+    private static Task<IActionResult> FhirResultAsync(IActionResult fallbackStatus, Resource resource, CancellationToken cancellationToken)
     {
-        var json = await _serializer.SerializeToStringAsync(resource).ConfigureAwait(false);
+        _ = cancellationToken;
+#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
+        var json = _serializer.SerializeToString(resource);
+#pragma warning restore VSTHRD103
         var statusCode = fallbackStatus switch
         {
             StatusCodeResult sc => sc.StatusCode,
             ObjectResult or => or.StatusCode ?? StatusCodes.Status200OK,
             _ => StatusCodes.Status200OK
         };
-        return new ContentResult
+        return System.Threading.Tasks.Task.FromResult<IActionResult>(new ContentResult
         {
             Content = json,
             ContentType = "application/fhir+json",
             StatusCode = statusCode,
-        };
+        });
     }
 
     private static OperationOutcome MissingPartnerOutcome() => new()

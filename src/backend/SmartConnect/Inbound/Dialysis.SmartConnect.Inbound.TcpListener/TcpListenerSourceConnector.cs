@@ -31,7 +31,7 @@ public sealed class TcpListenerSourceConnector : ISourceConnector
         }
 
         var endpoint = new IPEndPoint(IPAddress.Parse(parameters.ListenAddress), parameters.ListenPort);
-        var listener = new System.Net.Sockets.TcpListener(endpoint);
+        using var listener = new System.Net.Sockets.TcpListener(endpoint);
         listener.Start();
 
         context.Logger.LogInformation(

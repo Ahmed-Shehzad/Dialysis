@@ -44,7 +44,9 @@ public sealed class OutboundQueueWriter(
         }
 
         var resource = mapper.Map(integrationEvent);
-        var fhirJson = await _serializer.SerializeToStringAsync(resource).ConfigureAwait(false);
+#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
+        var fhirJson = _serializer.SerializeToString(resource);
+#pragma warning restore VSTHRD103
 
         var bundle = new OutboundBundle(
             patientId,

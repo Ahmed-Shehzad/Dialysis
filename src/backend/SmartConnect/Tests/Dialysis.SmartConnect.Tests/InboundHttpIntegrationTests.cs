@@ -33,9 +33,10 @@ public sealed class InboundHttpIntegrationTests : IClassFixture<WebApplicationFa
                 ],
             }).ConfigureAwait(true);
 
+        using var requestContent = new StringContent("hello", Encoding.UTF8, "text/plain");
         var response = await client.PostAsync(
             $"/smartconnect/v1/flows/{flowId}/messages",
-            new StringContent("hello", Encoding.UTF8, "text/plain")).ConfigureAwait(true);
+            requestContent).ConfigureAwait(true);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -50,9 +51,10 @@ public sealed class InboundHttpIntegrationTests : IClassFixture<WebApplicationFa
     {
         using var client = _factory.CreateClient();
         var flowId = Guid.Parse("00000000-0000-4000-8000-00000000dead");
+        using var requestContent = new StringContent("x", Encoding.UTF8, "text/plain");
         var response = await client.PostAsync(
             $"/smartconnect/v1/flows/{flowId}/messages",
-            new StringContent("x", Encoding.UTF8, "text/plain")).ConfigureAwait(true);
+            requestContent).ConfigureAwait(true);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

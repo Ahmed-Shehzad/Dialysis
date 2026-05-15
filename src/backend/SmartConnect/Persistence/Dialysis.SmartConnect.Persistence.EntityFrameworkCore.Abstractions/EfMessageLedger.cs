@@ -26,9 +26,9 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
     public async Task<int> PruneAsync(DateTimeOffset olderThan, Guid? flowId = null, CancellationToken cancellationToken = default)
     {
         var query = db.MessageLedgerEntries.Where(e => e.CreatedAtUtc < olderThan);
-        if (flowId.HasValue)
+        if (flowId is { } fid)
         {
-            query = query.Where(e => e.FlowId == flowId.Value);
+            query = query.Where(e => e.FlowId == fid);
         }
 
         return await query.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);

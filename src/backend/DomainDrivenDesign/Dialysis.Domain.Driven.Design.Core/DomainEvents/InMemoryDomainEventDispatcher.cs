@@ -15,7 +15,7 @@ public sealed class InMemoryDomainEventDispatcher(IServiceProvider serviceProvid
         ArgumentNullException.ThrowIfNull(domainEvent);
 
         var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEvent.GetType());
-        var handlers = (IEnumerable<object>)serviceProvider.GetServices(handlerType);
+        var handlers = serviceProvider.GetServices(handlerType);
 
         List<Exception>? failures = null;
         foreach (var handler in handlers)

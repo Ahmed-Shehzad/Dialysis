@@ -93,9 +93,10 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
         </list>
         """;
 
+        using var importContent = new StringContent(xml, Encoding.UTF8, "application/Xml");
         var importResp = await client.PostAsync(
             "/smartconnect/v1/admin/code-template-libraries/import-mirth-Xml",
-            new StringContent(xml, Encoding.UTF8, "application/Xml"));
+            importContent);
         Assert.Equal(HttpStatusCode.OK, importResp.StatusCode);
 
         var getResp = await client.GetAsync("/smartconnect/v1/admin/code-template-libraries/77777777-7777-4777-8777-777777777777");
