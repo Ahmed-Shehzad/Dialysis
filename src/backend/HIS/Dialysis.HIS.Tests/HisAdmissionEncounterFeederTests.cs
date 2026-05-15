@@ -99,5 +99,25 @@ public sealed class HisAdmissionEncounterFeederTests
                 await Task.Yield();
             }
         }
+
+        public async IAsyncEnumerable<Guid> StreamDistinctPatientIdsAsync(
+            DateTimeOffset? since,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var seen = new HashSet<Guid>();
+            foreach (var admission in admissions)
+            {
+                if (since is { } cutoff)
+                {
+                    var latestUtc = admission.DischargedAtUtc ?? admission.AdmittedAtUtc;
+                    if (latestUtc < cutoff.UtcDateTime) continue;
+                }
+                if (seen.Add(admission.PatientId))
+                {
+                    yield return admission.PatientId;
+                }
+                await Task.Yield();
+            }
+        }
     }
 }

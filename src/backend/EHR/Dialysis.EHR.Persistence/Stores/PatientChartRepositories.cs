@@ -13,6 +13,12 @@ public sealed class AllergyRepository(EhrDbContext db) : IAllergyRepository
         await db.Allergies.Where(a => a.PatientId == patientId).ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public void Add(Allergy allergy) => db.Allergies.Add(allergy);
+
+    public IAsyncEnumerable<Allergy> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        _ = since; // Allergy has no last-modified timestamp yet — pass-through.
+        return db.Allergies.AsNoTracking().OrderBy(a => a.PatientId).ThenBy(a => a.Id).AsAsyncEnumerable();
+    }
 }
 
 public sealed class ProblemListRepository(EhrDbContext db) : IProblemListRepository
@@ -39,6 +45,17 @@ public sealed class VitalSignRepository(EhrDbContext db) : IVitalSignRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public void Add(VitalSignReading reading) => db.VitalSignReadings.Add(reading);
+
+    public IAsyncEnumerable<VitalSignReading> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        var query = db.VitalSignReadings.AsNoTracking().OrderBy(v => v.ObservedAtUtc).AsQueryable();
+        if (since is { } cutoff)
+        {
+            var cutoffUtc = cutoff.UtcDateTime;
+            query = query.Where(v => v.ObservedAtUtc >= cutoffUtc);
+        }
+        return query.AsAsyncEnumerable();
+    }
 }
 
 public sealed class ImmunizationRepository(EhrDbContext db) : IImmunizationRepository
@@ -50,6 +67,17 @@ public sealed class ImmunizationRepository(EhrDbContext db) : IImmunizationRepos
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public void Add(Immunization immunization) => db.Immunizations.Add(immunization);
+
+    public IAsyncEnumerable<Immunization> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        var query = db.Immunizations.AsNoTracking().OrderBy(i => i.AdministeredOn).AsQueryable();
+        if (since is { } cutoff)
+        {
+            var cutoffDate = DateOnly.FromDateTime(cutoff.UtcDateTime);
+            query = query.Where(i => i.AdministeredOn >= cutoffDate);
+        }
+        return query.AsAsyncEnumerable();
+    }
 }
 
 public sealed class MedicationStatementRepository(EhrDbContext db) : IMedicationStatementRepository
@@ -65,4 +93,15 @@ public sealed class MedicationStatementRepository(EhrDbContext db) : IMedication
     }
 
     public void Add(MedicationStatement statement) => db.MedicationStatements.Add(statement);
+
+    public IAsyncEnumerable<MedicationStatement> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        var query = db.MedicationStatements.AsNoTracking().OrderBy(m => m.StartedOn).AsQueryable();
+        if (since is { } cutoff)
+        {
+            var cutoffDate = DateOnly.FromDateTime(cutoff.UtcDateTime);
+            query = query.Where(m => (m.StoppedOn ?? m.StartedOn) >= cutoffDate);
+        }
+        return query.AsAsyncEnumerable();
+    }
 }

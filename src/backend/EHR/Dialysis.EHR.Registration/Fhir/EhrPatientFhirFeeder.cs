@@ -34,6 +34,7 @@ public sealed class EhrPatientFhirFeeder(IPatientRepository patients) : INdjsonR
         var fhir = new FhirPatient
         {
             Id = source.Id.ToString(),
+            Meta = new Meta { LastUpdated = source.UpdatedAtUtc },
             Identifier =
             [
                 new Identifier

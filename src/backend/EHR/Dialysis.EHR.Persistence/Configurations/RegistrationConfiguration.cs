@@ -20,6 +20,8 @@ internal static class RegistrationConfiguration
             b.Property(p => p.SexAtBirthCode).HasMaxLength(16);
             b.Property(p => p.PreferredLanguageCode).HasMaxLength(16);
             b.Property(p => p.Status).HasConversion<int>().IsRequired();
+            b.Property(p => p.UpdatedAtUtc).IsRequired();
+            b.HasIndex(p => p.UpdatedAtUtc);
             b.OwnsOne(p => p.Name, n =>
             {
                 n.Property(x => x.FamilyName).HasColumnName("FamilyName").HasMaxLength(128).IsRequired();

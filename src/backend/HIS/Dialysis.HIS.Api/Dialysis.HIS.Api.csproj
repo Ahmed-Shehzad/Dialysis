@@ -33,6 +33,7 @@
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions/Dialysis.BuildingBlocks.Fhir.Subscriptions.csproj" />
   </ItemGroup>
 
 </Project>

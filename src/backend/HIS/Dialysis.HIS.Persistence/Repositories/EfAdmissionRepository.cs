@@ -21,4 +21,15 @@ public sealed class EfAdmissionRepository(HisDbContext db) : IAdmissionRepositor
         }
         return query.AsAsyncEnumerable();
     }
+
+    public IAsyncEnumerable<Guid> StreamDistinctPatientIdsAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        var query = db.Admissions.AsNoTracking().AsQueryable();
+        if (since is { } cutoff)
+        {
+            var cutoffUtc = cutoff.UtcDateTime;
+            query = query.Where(a => (a.DischargedAtUtc ?? a.AdmittedAtUtc) >= cutoffUtc);
+        }
+        return query.Select(a => a.PatientId).Distinct().AsAsyncEnumerable();
+    }
 }
