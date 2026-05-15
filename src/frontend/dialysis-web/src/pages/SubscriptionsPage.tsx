@@ -5,6 +5,7 @@ import {
   deleteSubscription,
   listSubscriptionTopics,
   MODULE_LABELS,
+  simulateSubscriptionEvent,
   SUBSCRIPTION_MODULES,
   type SubscriptionModule,
   type SubscriptionTopic,
@@ -16,7 +17,10 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 type ActiveSubscription = {
   module: SubscriptionModule;
   id: string;
+  topicUrl: string;
   topicTitle: string;
+  /** Filters used at subscribe time — replayed as $simulate attributes so the event matches. */
+  filters: Record<string, string>;
 };
 
 const errorMessage = (err: unknown): string => {
@@ -40,14 +44,26 @@ const TopicCard = ({
   const [filters, setFilters] = useState<Record<string, string>>({});
 
   const m = useMutation({
-    mutationFn: () =>
-      createSubscription(module, {
+    mutationFn: async () => {
+      const activeFilters = Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v.trim().length > 0),
+      );
+      const reg = await createSubscription(module, {
         topic: topic.url,
         channelType: "ServerSentEvents",
         channelEndpoint: "sse:browser",
-        filters: Object.fromEntries(Object.entries(filters).filter(([, v]) => v.trim().length > 0)),
+        filters: activeFilters,
+      });
+      return { reg, activeFilters };
+    },
+    onSuccess: ({ reg, activeFilters }) =>
+      onSubscribed({
+        module,
+        id: reg.id,
+        topicUrl: topic.url,
+        topicTitle: topic.title,
+        filters: activeFilters,
       }),
-    onSuccess: (reg) => onSubscribed({ module, id: reg.id, topicTitle: topic.title }),
   });
 
   return (
@@ -95,6 +111,15 @@ const LiveFeed = ({ active, onStop }: { active: ActiveSubscription; onStop: () =
     onSettled: onStop,
   });
 
+  const simM = useMutation({
+    mutationFn: () =>
+      simulateSubscriptionEvent(active.module, {
+        topic: active.topicUrl,
+        attributes: active.filters,
+        note: `demo @ ${new Date().toLocaleTimeString()}`,
+      }),
+  });
+
   return (
     <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
       <header className="flex flex-wrap items-center justify-between gap-2">
@@ -108,6 +133,14 @@ const LiveFeed = ({ active, onStop }: { active: ActiveSubscription; onStop: () =
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={status} />
+          <button
+            type="button"
+            onClick={() => simM.mutate()}
+            disabled={simM.isPending}
+            className="rounded-md bg-clinic-600 px-2 py-1 text-xs font-medium text-white hover:bg-clinic-700 disabled:opacity-40"
+          >
+            {simM.isPending ? "Simulating…" : "Simulate event"}
+          </button>
           <button
             type="button"
             onClick={clear}
@@ -126,10 +159,20 @@ const LiveFeed = ({ active, onStop }: { active: ActiveSubscription; onStop: () =
         </div>
       </header>
 
+      {simM.data && (
+        <p className="text-xs text-emerald-300">
+          Simulated → {simM.data.matched} subscription{simM.data.matched === 1 ? "" : "s"} matched (
+          {simM.data.resourceType}). Watch the feed below.
+        </p>
+      )}
+      {simM.error && <p className="text-xs text-rose-300">{errorMessage(simM.error)}</p>}
+
       {notifications.length === 0 ? (
         <p className="text-xs text-slate-500">
-          Waiting for events. Trigger the source workflow (e.g. an admission, lab result, or
-          intradialytic adverse event) and matching notification Bundles appear here in real time.
+          Waiting for events. Click <span className="text-slate-300">Simulate event</span> above to
+          fan a synthetic event through the real matcher and dispatcher, or trigger the upstream
+          workflow (admission, lab result, intradialytic adverse event) — matching notification
+          Bundles appear here in real time.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -169,7 +212,9 @@ export const SubscriptionsPage = () => {
           R4 Subscription Backport topics published per module. Subscribe to a topic and the
           building block streams matching{" "}
           <span className="font-mono">subscription-notification</span> Bundles over Server-Sent
-          Events as integration events fire.
+          Events as integration events fire. Use{" "}
+          <span className="text-slate-300">Simulate event</span> to demo the end-to-end pipeline
+          without driving the upstream workflow.
         </p>
       </header>
 
