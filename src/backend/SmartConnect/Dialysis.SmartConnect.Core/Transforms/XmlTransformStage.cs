@@ -65,9 +65,9 @@ public sealed class XmlTransformStage : ITransformStage
                 var sb = new StringBuilder();
                 foreach (var item in list)
                 {
-                    if (item is XElement el) sb.Append(el.ToString());
+                    if (item is XElement el) sb.Append(el);
                     else if (item is XAttribute a) sb.Append(a.Value);
-                    else sb.Append(item.ToString());
+                    else sb.Append(item);
                 }
 
                 outputText = sb.ToString();
