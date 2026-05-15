@@ -34,6 +34,7 @@ orleans.codegen.cs
 ## Rider / JetBrains
 .idea/
 *.sln.iml
+*.lscache
 
 ## Visual Studio
 .vs/
