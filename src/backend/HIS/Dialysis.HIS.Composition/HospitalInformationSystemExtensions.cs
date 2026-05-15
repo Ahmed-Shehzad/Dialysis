@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
@@ -33,6 +34,7 @@ public static class HospitalInformationSystemExtensions
         bool enableFhirAuditPersistence = false,
         bool enableFhirBulkDataPersistence = false,
         bool enableFhirBulkDataExport = false,
+        bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
@@ -75,6 +77,11 @@ public static class HospitalInformationSystemExtensions
             services.AddFhirBulkData(storageRoot);
             services.AddFhirBulkDataOrchestrator();
             services.AddFhirBulkDataFeeder<HisAdmissionEncounterFeeder, Encounter>();
+        }
+
+        if (enableFhirSmartOnFhir)
+        {
+            services.AddFhirSmartOnFhir(configuration.GetSection("His:Fhir:Smart"));
         }
 
         return services;

@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.Fhir.BulkData;
+using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.ClinicalNotes;
@@ -42,6 +43,9 @@ builder.AddModuleHost<EhrPermissionCatalog>(new ModuleHostingOptions
 var enableEhrDemoSeed = builder.Configuration.GetValue("Ehr:Demo:Enabled", false);
 var enableEhrRegistrationSim = builder.Configuration.GetValue("Ehr:Demo:RegistrationSimulator", false);
 var enableEhrBulkDataExport = builder.Configuration.GetValue("Ehr:Fhir:BulkData:Enabled", false);
+var enableEhrSmartOnFhir = builder.Configuration.GetValue("Ehr:Fhir:Smart:Enabled", false);
+var ehrBulkDataExportScope = builder.Configuration["Ehr:Fhir:BulkData:RequireScope"]
+    ?? (enableEhrSmartOnFhir ? "system/*.read" : null);
 
 builder.Services.AddElectronicHealthRecord(
     builder.Configuration,
@@ -53,6 +57,7 @@ builder.Services.AddElectronicHealthRecord(
     enableOutboxRelay: enableOutbox,
     enableFhirBulkDataPersistence: enableEhrBulkDataExport,
     enableFhirBulkDataExport: enableEhrBulkDataExport,
+    enableFhirSmartOnFhir: enableEhrSmartOnFhir,
     enableDemoSeed: enableEhrDemoSeed,
     enableRegistrationSimulator: enableEhrRegistrationSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
@@ -81,8 +86,11 @@ app.MapOpenApi();
 app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
 app.MapControllers();
 
+if (enableEhrSmartOnFhir)
+    app.MapSmartConfigurationEndpoint();
+
 if (enableEhrBulkDataExport)
-    app.MapFhirBulkDataEndpoints();
+    app.MapFhirBulkDataEndpoints(requireScope: ehrBulkDataExportScope);
 
 await app.RunAsync().ConfigureAwait(false);
 

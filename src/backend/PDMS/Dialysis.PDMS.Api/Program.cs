@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.Fhir.BulkData;
+using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Module.Hosting;
 using Dialysis.PDMS.Api.Realtime;
@@ -29,6 +30,9 @@ var enablePdmsDemoSeed = builder.Configuration.GetValue("Pdms:Demo:Enabled", fal
 var enablePdmsVitalsTicker = builder.Configuration.GetValue("Pdms:Demo:VitalsTicker", false);
 var enablePdmsMachineSim = builder.Configuration.GetValue("Pdms:Demo:MachineTelemetrySimulator", false);
 var enablePdmsBulkDataExport = builder.Configuration.GetValue("Pdms:Fhir:BulkData:Enabled", false);
+var enablePdmsSmartOnFhir = builder.Configuration.GetValue("Pdms:Fhir:Smart:Enabled", false);
+var pdmsBulkDataExportScope = builder.Configuration["Pdms:Fhir:BulkData:RequireScope"]
+    ?? (enablePdmsSmartOnFhir ? "system/*.read" : null);
 
 builder.Services.AddPatientDataManagementSystem(
     builder.Configuration,
@@ -40,6 +44,7 @@ builder.Services.AddPatientDataManagementSystem(
     enableOutboxRelay: enableOutbox,
     enableFhirBulkDataPersistence: enablePdmsBulkDataExport,
     enableFhirBulkDataExport: enablePdmsBulkDataExport,
+    enableFhirSmartOnFhir: enablePdmsSmartOnFhir,
     enableDemoSeed: enablePdmsDemoSeed,
     enableVitalsTicker: enablePdmsVitalsTicker,
     enableMachineTelemetrySimulator: enablePdmsMachineSim,
@@ -90,8 +95,11 @@ app.MapGet("/", () => Results.Ok(new { module = "pdms", version = "v1" }));
 app.MapControllers();
 app.MapHub<VitalsHub>(VitalsHub.Path);
 
+if (enablePdmsSmartOnFhir)
+    app.MapSmartConfigurationEndpoint();
+
 if (enablePdmsBulkDataExport)
-    app.MapFhirBulkDataEndpoints();
+    app.MapFhirBulkDataEndpoints(requireScope: pdmsBulkDataExportScope);
 
 await app.RunAsync().ConfigureAwait(false);
 
