@@ -72,9 +72,30 @@ export const deleteSubscription = async (module: SubscriptionModule, id: string)
 };
 
 /**
+ * Backend-issued subscription ids are `Guid.NewGuid().ToString("N")` — exactly 32 hex
+ * characters. Validating against that shape is the contextual input check that prevents an
+ * unexpected value from ever being written into the SSE URL / EventSource sink (defence in
+ * depth on top of `encodeURIComponent`, guarding against DOM-based XSS).
+ */
+const SUBSCRIPTION_ID_PATTERN = /^[a-fA-F0-9]{32}$/;
+
+export const isValidSubscriptionId = (value: string): boolean =>
+  SUBSCRIPTION_ID_PATTERN.test(value);
+
+/**
  * Absolute (gateway-relative) URL of the SSE channel for a registered subscription.
  * The backend holds `text/event-stream` open and pushes `event: subscription-notification`
  * frames whose `data:` is a FHIR `Bundle.type=subscription-notification`.
+ *
+ * Throws if {@link subscriptionId} is not a well-formed id rather than emitting a URL built
+ * from unvalidated input.
  */
-export const subscriptionSseUrl = (module: SubscriptionModule, subscriptionId: string): string =>
-  `${fhirBase(module)}/subscription/sse?subscription=${encodeURIComponent(subscriptionId)}`;
+export const subscriptionSseUrl = (module: SubscriptionModule, subscriptionId: string): string => {
+  if (!SUBSCRIPTION_MODULES.includes(module)) {
+    throw new Error(`Unknown subscription module: ${String(module)}`);
+  }
+  if (!isValidSubscriptionId(subscriptionId)) {
+    throw new Error("Refusing to open SSE stream for a malformed subscription id.");
+  }
+  return `${fhirBase(module)}/subscription/sse?subscription=${encodeURIComponent(subscriptionId)}`;
+};

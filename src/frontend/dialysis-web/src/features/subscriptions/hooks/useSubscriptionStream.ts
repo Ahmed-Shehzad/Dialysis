@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  isValidSubscriptionId,
   subscriptionSseUrl,
   type SubscriptionModule,
 } from "@/features/subscriptions/api/subscriptionsApi";
@@ -41,6 +42,13 @@ export const useSubscriptionStream = (
   useEffect(() => {
     if (!module || !subscriptionId) {
       setStatus("idle");
+      return undefined;
+    }
+
+    if (!isValidSubscriptionId(subscriptionId)) {
+      // Never open an EventSource for an unvalidated id — fail closed instead of
+      // writing unsanitized input into the SSE URL.
+      setStatus("disconnected");
       return undefined;
     }
 
