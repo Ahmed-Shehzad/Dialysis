@@ -5,60 +5,95 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build, run, test
 
 - **SDK**: .NET 10.0.100 (`global.json`, `rollForward: latestFeature`). Central package management is on (`Directory.Build.props` + `Directory.Packages.props`); add new dependencies as `<PackageVersion>` in `Directory.Packages.props`, not per-project versions.
-- **Solution file** is `Dialysis.slnx` (XML-format solution, not `.sln`). Most tooling commands take it directly: `dotnet build Dialysis.slnx`, `dotnet test Dialysis.slnx`.
-- **Run a module host** (each module is a separate ASP.NET host):
-  - HIS: `dotnet run --project src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj` (dev URL `http://localhost:5288`)
-  - EHR: `dotnet run --project src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj`
-  - PDMS: `dotnet run --project src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj`
-  - SmartConnect: `dotnet run --project src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj`
-  - Identity BFF: `dotnet run --project src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj` (dev URL `http://localhost:5275`)
-- **Infra for local dev** is in the root `docker-compose.yml`: per-module Postgres containers (`postgres-his` 5440, `postgres-smartconnect` 5441, `postgres-ehr` 5442, `postgres-pdms` 5443, `postgres-identity` 5444), `rabbitmq` (5672 / mgmt 15672), and `keycloak` (8081). Module hosts are *not* in compose — start infra with `docker compose up -d`, then run module APIs with `dotnet run`.
-- **Identity dev infra** has its own compose at `src/backend/Identity/docker-compose.yml` (Keycloak + Postgres for the identity realm, port 8080); the realm `dialysis` is auto-imported from `keycloak/dialysis-realm.json`. See `src/backend/Identity/RUNBOOK.md` for the BFF + HIS-behind-JWT smoke flow.
-- **Tests**: `dotnet test Dialysis.slnx` runs everything. Single-project examples:
+- **Solution file** is `Dialysis.slnx` (XML-format solution, not `.sln`). Tooling takes it directly: `dotnet build Dialysis.slnx`, `dotnet test Dialysis.slnx`.
+- **Local dev = the Aspire AppHost. This is the single dev entrypoint:**
+  - `dotnet run --project src/aspire/Dialysis.AppHost`
+  - One process brings up per-module Postgres (HIS/EHR/PDMS/SmartConnect/HIE) + RabbitMQ + Valkey + Keycloak **and** runs all five module APIs + the Identity BFF + the edge Gateway + the Vite SPA. The Aspire dashboard (logs/metrics/traces) opens automatically; the OTLP endpoint is injected into every project via `OTEL_EXPORTER_OTLP_ENDPOINT` (`ModuleTelemetryExtensions` falls back to it when `<Module>:Telemetry:OtlpEndpoint` is unset).
+  - **Browser entry point is the Gateway: `http://localhost:9090`** (proxies `/identity/*`→BFF, `/api/*` `/fhir/*` `/hubs/*`→module APIs, catch-all→SPA). The BFF is pinned to `:5275` and the Gateway to `:9090` because the Keycloak `dialysis-bff` client only accepts those `redirect_uri`s — do not change these ports without updating `src/backend/Identity/keycloak/dialysis-realm.json`.
+  - Keycloak is deliberately **not** a persistent container: `--import-realm` only imports when the realm is absent, so a long-lived container would make `dialysis-realm.json` edits invisible. Re-running the AppHost re-imports.
+  - There is intentionally **no** base infra-only `docker-compose.yml` and no per-module `dotnet run` workflow — Aspire owns the dev inner loop. `src/aspire/Dialysis.ServiceDefaults` (`AddServiceDefaults()` / `MapDefaultEndpoints()`) supplies service discovery, HTTP resilience, and the `/alive` probe to every host.
+- **Identity-only smoke flow**: `src/backend/Identity/docker-compose.yml` (Keycloak + Postgres for the identity realm, port 5444; realm `dialysis` auto-imported from `src/backend/Identity/keycloak/`). See `src/backend/Identity/RUNBOOK.md` for the BFF + HIS-behind-JWT smoke test.
+- **Tests**: `dotnet test Dialysis.slnx` runs everything and needs **no infra** (in-memory EF + in-memory Transponder). Single-project examples:
   - `dotnet test src/backend/HIS/Dialysis.HIS.Tests/Dialysis.HIS.Tests.csproj`
   - `dotnet test tests/Dialysis.ArchitectureTests/Dialysis.ArchitectureTests.csproj`
   - Single test filter: `dotnet test ... --filter "FullyQualifiedName~SomeTestName"`
-- **HIS outbox golden-path test** is gated by `HIS_CI_OUTBOX_E2E=1` and needs real SQL Server + RabbitMQ (see `.github/workflows/his-ci.yml`). Default `dotnet test` of the HIS test project runs in-memory only — use `--filter "FullyQualifiedName!~HisOutboxRelayGoldenPathTests"` if you have those services running but don't want the golden path.
-- **EF migrations** (HIS): `dotnet ef ...` against `HisDbContextDesignTimeFactory`. Connection comes from `--connection`, `HIS_SQL_CONNECTION` env, or `ConnectionStrings:His` / `ConnectionStrings__His`. Each module's `<Module>.Persistence` project owns its own `DbContext` and migrations history table (e.g. PDMS uses `pdms.__ef_migrations`); never share a `DbContext` across modules.
-- **SmartConnect PDF SOT**: Python tools under `tools/smartconnect/` (`pip install -r tools/smartconnect/requirements.txt`) regenerate/verify PDF table-of-contents and traceability artifacts. CI (`.github/workflows/smartconnect-pdf-sot.yml`) requires `docs/book/mirth-connect-user-guide.pdf` to be materialized via Git LFS — without it, the workflow fails by design until the file is committed.
+- **HIS outbox golden-path test** is gated by `HIS_CI_OUTBOX_E2E=1` and needs real SQL Server + RabbitMQ (see `.github/workflows/his-ci.yml`). Default `dotnet test` of the HIS test project runs in-memory only — use `--filter "FullyQualifiedName!~HisOutboxRelayGoldenPathTests"` if you have those services but don't want the golden path.
+- **EF migrations**: each module's `<Module>.Persistence` project owns its own `DbContext`, design-time factory, and migrations history table (e.g. PDMS uses `pdms.__ef_migrations`), with schema-per-slice naming (`his_security`, `hie_outbound`, …). The Transponder outbox/inbox/saga tables live on that same `DbContext` under the `transponder` schema — never share a `DbContext` across modules and never add a second outbox.
+- **Frontend** (`src/frontend/dialysis-web`, React 18 + Vite + TypeScript + TanStack Query, npm): `npm run dev` (Vite `:5173`; `predev` auto-runs `npm install`), `npm run build` (`tsc -b && vite build`), `npm run lint` (`eslint . --max-warnings=0`), `npm run typecheck`, `npm run test:e2e` (Playwright). A Husky `pre-commit` hook runs `lint-staged` (eslint + prettier on staged files). The SPA proxies `/api`, `/fhir`, `/hubs`, `/identity`, `/auth` to the Gateway. Under Aspire the SPA is reached via the Gateway origin, not its own port.
+- **SmartConnect PDF SOT**: Python tools under `tools/smartconnect/` (`pip install -r tools/smartconnect/requirements.txt`) regenerate/verify the Mirth user-guide table-of-contents and traceability artifacts. CI (`.github/workflows/smartconnect-pdf-sot.yml`) requires `docs/book/mirth-connect-user-guide.pdf` materialized via Git LFS — without it the workflow fails by design.
+
+## Deployment (containerized stack)
+
+`docker compose -f docker-compose.modules.yml up -d` builds and runs the **production-like** topology: every module as a published Release image (`Dockerfile.module`, parameterized by `MODULE_PROJECT`/`MODULE_DLL`), the YARP gateway (`Dockerfile.gateway`), and the nginx-served SPA (`src/frontend/dialysis-web/Dockerfile`), plus all infra. Production env, HSTS, forwarded headers, Keycloak authority required. Hosts: HIS `:5288`, EHR `:5289`, PDMS `:5290`, SmartConnect `:5291`, HIE `:5292`, gateway `:5000`, web `:8080`. Module hosts are stateless and scale horizontally (`--scale his-api=3`); Valkey backs the distributed cache **and** the ASP.NET Data Protection key ring, so multi-replica is safe. This compose file is self-contained — there is no separate base compose to overlay. CI (`.github/workflows/*`) uses plain `dotnet`; it does **not** build these images or use Aspire.
 
 ## Architecture
 
-This is a **modular monolith**: each bounded context is a folder under `src/backend/<Module>/` (HIS, EHR, PDMS, SmartConnect, Identity), each with its own ASP.NET host and database. Modules communicate via **integration events** over Transponder (RabbitMQ in prod, in-memory in dev), never via direct domain references.
+A **modular monolith**: each bounded context under `src/backend/<Module>/` (HIS, EHR, PDMS, SmartConnect, HIE, Identity) has its own ASP.NET host and its own database. Modules communicate **only** via integration events over Transponder (RabbitMQ in the deployment stack, in-memory in dev/tests) — never via direct domain references.
 
-### Module project layout (HIS is the reference; EHR/PDMS follow the same shape)
+### Module project layout (HIS is the reference shape)
 
 For module `X`:
 - `Dialysis.X.Contracts` — integration events, permission catalog (`XPermissions`), `IPermissionedCommand`, public DTOs. **The only assembly other modules may reference.**
-- `Dialysis.X.<Slice>` — vertical slices (e.g. `PatientFlow`, `Scheduling`, `Medication`, `Registration`, `PatientChart`) holding commands/queries/handlers/domain types for one bounded slice.
-- `Dialysis.X.Persistence` — single `XDbContext`, schema-per-slice table naming (`his_security`, `his_patientflow`, …), repositories, read models, audit implementation. Extends Transponder's persistence base so the outbox/inbox live on the same `DbContext` (no duplicate outbox tables).
-- `Dialysis.X.Composition` — single `AddX(...)` registration extension consumed by the API host.
-- `Dialysis.X.Api` — ASP.NET host. Versioned MVC under `api/v1.0/...` via `Asp.Versioning.Mvc` + `Asp.Versioning.Mvc.ApiExplorer` (URL segment reader). OpenAPI is per ApiExplorer group, e.g. `GET /openapi/v1.json`. Successful JSON bodies use the HATEOAS envelope `{"data":...,"links":[{"rel","href","method"}]}` (`ResourceEnvelope<T>`). Neutral endpoints like `/health` appear in every versioned document.
+- `Dialysis.X.<Slice>` — vertical slices (e.g. `PatientFlow`, `Scheduling`, `Medication`, `Registration`, `PatientChart`, `TreatmentSessions`) holding commands/queries/handlers/domain types for one bounded slice. Slices also carry a `Fhir/` folder with their FHIR resource mappers.
+- `Dialysis.X.Persistence` — single `XDbContext`, schema-per-slice naming, repositories, read models, audit. Extends Transponder's EF persistence base so outbox/inbox/saga live on the same `DbContext`.
+- `Dialysis.X.Composition` — single `AddX(...)` registration extension consumed by the host.
+- `Dialysis.X.Api` — ASP.NET host. Versioned MVC under `api/v1.0/...` via `Asp.Versioning.Mvc` (+ ApiExplorer, URL-segment reader). OpenAPI per group (`GET /openapi/v1.json`). Successful JSON bodies use the HATEOAS envelope `{"data":...,"links":[...]}` (`ResourceEnvelope<T>`). Health: `/health/live`, `/health/ready`.
 - `Dialysis.X.Tests` — xUnit + `WebApplicationFactory` integration tests.
+
+**Known, intentional divergences from the reference shape:**
+- **Per-module persistence-provider split**: EHR, PDMS, and SmartConnect have a `Persistence/` sibling folder with `Core.Persistence.{Abstractions,InMemory,Postgresql}` projects (provider chosen at composition time). HIS keeps a single `Persistence` project.
+- **PDMS is single-slice** (`Dialysis.PDMS.TreatmentSessions`, `DialysisSession`/`TreatmentAlarm` aggregates) — it uses Evans' *System Metaphor* ("a treatment-machine cycle observed through telemetry") rather than HIS's many Responsibility-Layer slices. This is deliberate; do not "normalize" PDMS to the HIS shape.
+
+### HIE module (FHIR R4 / IHE health-information exchange)
+
+`src/backend/HIE/` is the cross-organization gateway. It still obeys the module pattern (owns `HieDbContext`, schemas `hie_outbound`/`hie_inbound`/`hie_consent`/`hie_xds_registry`/`transponder`; references only other modules' `*.Contracts`). Slices:
+- **Outbound** — consumes upstream integration events, maps them to FHIR resources (Patient, Encounter, LabOrder/Result, AdverseEvent, DialysisSession, ClinicalNote), validates against US Core, dispatches to partner endpoints with Polly retry, TEFCA IAS JWT auth, FHIR `AuditEvent` trail, and Pending→Dispatching→Delivered/DeadLettered state.
+- **Inbound** — partners `POST /fhir/{Type}`; TEFCA middleware validates the IAS JWT/trust anchor, the ingestion service validates profile + consent, then enqueues `Hl7FhirResourceReceivedIntegrationEvent` for the owning module to consume.
+- **Consent** — `ConsentPolicy` aggregates + `IsResourceAccessPermittedQuery`; EHR/HIS call this as a cross-module query to gate resource visibility.
+- **Xds** (IHE XDS Registry/Repository, ITI-18/41/42/43) and **OpenEhr** (openEHR Composition ↔ FHIR).
 
 ### Cross-cutting building blocks (`src/backend/BuildingBlocks/`)
 
-- **Intercessor** — in-process mediator used for command/query dispatch.
+- **Intercessor** — in-process mediator for command/query dispatch.
 - **Verifier** — request/command validation pipeline.
-- **Transponder** — distributed messaging (`ITransponderBus`), transports (RabbitMQ, NATS, Azure Service Bus, SQS, gRPC, SignalR, SSE), EF Core outbox/inbox/saga persistence (`SqlServer`, `Postgresql`, `Shared`), and schedulers (Hangfire / Quartz / TickerQ — pick exactly one per host). The transactional outbox lives on each module's own `DbContext` under the `transponder` schema; `enableOutboxRelay` (or `<Module>:Transponder:EnableOutboxRelay` config) opts the host into background publishing. See `src/backend/BuildingBlocks/Transponder/README.md` for the full transport/persistence/saga API.
+- **Transponder** — distributed messaging (`ITransponderBus`); transports (RabbitMQ, NATS, Azure Service Bus, SQS, gRPC, SignalR, SSE); EF outbox/inbox/saga persistence (`Postgresql`, `Shared`); schedulers (Hangfire / Quartz / TickerQ — exactly one per host). `enableOutboxRelay` (or `<Module>:Transponder:EnableOutboxRelay`) opts a host into background publishing. See `src/backend/BuildingBlocks/Transponder/README.md`.
+- **Fhir** — ~18 projects implementing the FHIR stack: `Core` (`IFhirResourceMapper<TEvent,TResource>`), `Validation` (US Core), `Smart` (SMART-on-FHIR), `Subscriptions`/`BulkData`/`Audit` (each with an `*.EntityFrameworkCore` persistence project), `Tefca` (IAS JWT + trust anchors), `Terminology`, `DeIdentification`, `OpenEhr`, `CdaBridge`, `AspNetCore` (middleware), `Testing`. Per-module mappers live in each slice's `Fhir/` folder; SmartConnect's `Hl7V2ToFhirPipeline` routes HL7v2 by MSH-9 trigger to per-trigger mappers.
+- **Direct** (Direct secure messaging), **PlatformGateway**, **DistributedCache.Valkey**.
 
-`DomainDrivenDesign/` holds DDD primitives (entities, value objects, aggregate root markers, persistence base classes). `CQRS/` holds CQRS contracts (commands, queries, handlers, pipeline behaviors). `Shared/Dialysis.Module.Contracts` + `Shared/Dialysis.Module.Hosting` provide the common host scaffolding consumed by every module's `Program.cs` via `builder.AddModuleHost<XPermissionCatalog>(new ModuleHostingOptions { ModuleSlug = "x", HandlerAssemblies = [...] })`.
+`DomainDrivenDesign/` holds DDD primitives + persistence base classes; `CQRS/` holds CQRS contracts and pipeline behaviors. `Shared/Dialysis.Module.{Contracts,Hosting,Hosting.Testing}` provide host scaffolding consumed by every `Program.cs` via `builder.AddModuleHost<XPermissionCatalog>(new ModuleHostingOptions { ModuleSlug = "x", HandlerAssemblies = [...] })`; `Shared/Dialysis.Module.Gateway` is the YARP edge gateway.
 
 ### Module boundary invariant (enforced)
 
-`tests/Dialysis.ArchitectureTests/ModuleBoundaryTests.cs` codifies the long-term rule via assembly-reference inspection and `NetArchTest`:
+`tests/Dialysis.ArchitectureTests` codifies, via assembly-reference inspection + `NetArchTest`:
 
-> A project under module `X` (e.g. `Dialysis.EHR.*`) may only reference its own siblings, the shared layers (`Dialysis.DomainDrivenDesign`, `Dialysis.BuildingBlocks`, `Dialysis.CQRS`, `Dialysis.Module.Contracts`, `Dialysis.Module.Hosting`), and the **`Dialysis.Y.Contracts`** assembly of any other module. Referencing any other module's internals is a build-test failure.
+> A project under module `X` may only reference its own siblings, the shared layers (`Dialysis.DomainDrivenDesign`, `Dialysis.BuildingBlocks`, `Dialysis.CQRS`, `Dialysis.Module.Contracts`, `Dialysis.Module.Hosting`), and the **`Dialysis.Y.Contracts`** assembly of any other module. Anything else is a build-test failure.
 
-When adding cross-module functionality, route it through an integration event in `<Module>.Contracts` and an `IConsumer<>` on the receiving side, not a direct project reference.
+It also enforces aggregate-root encapsulation and integration-event versioning. Cross-module functionality goes through an integration event in `<Module>.Contracts` + an `IConsumer<>` on the receiving side (or, for synchronous reads, a cross-module query like HIE's consent check) — never a direct project reference.
 
-### Reference architecture alignment (HIS-specific)
+### Reference-architecture alignment (HIS-specific)
 
-HIS is mapped to Tummers et al. (2021) — see `src/backend/HIS/README.md` and `src/backend/HIS/his_ddd_modular_plan.md`. Discovery endpoints:
-- `GET /api/v1.0/reference-architecture/catalog` — module catalog
-- `GET /api/v1.0/reference-architecture/capabilities` — capability entrypoints (CQRS in `Dialysis.HIS.RaCapabilities`, persisted in schema `his_ra`)
-- `GET /api/v1.0/help` — RA Help slice with doc paths
+HIS is mapped to Tummers et al. (2021) — see `src/backend/HIS/README.md` and `his_ddd_modular_plan.md`. Discovery: `GET /api/v1.0/reference-architecture/catalog`, `.../capabilities` (CQRS in `Dialysis.HIS.RaCapabilities`, schema `his_ra`), `GET /api/v1.0/help`.
 
 ### Identity / auth
 
-JWT Bearer is registered only when `<Module>:Authentication:Authority` is set; in Development with no Authority, `ICurrentUser` exposes all permissions for local work. IdP role/group names map to module permission strings via `<Module>:Authentication:RolePermissionMap`. HIS portal endpoints additionally filter by patient claim (`his_patient_id` or `sub` matching route `patientId`). The Identity BFF + Keycloak realm are the canonical IdP — see `src/backend/Identity/RUNBOOK.md`.
+JWT Bearer is registered only when `<Module>:Authentication:Authority` is set; in Development with no Authority, `ICurrentUser` exposes all permissions for local work. IdP role/group names map to module permission strings via `<Module>:Authentication:RolePermissionMap`. HIS portal endpoints additionally filter by patient claim (`his_patient_id` or `sub` matching route `patientId`). The Identity BFF + Keycloak realm `dialysis` are the canonical IdP — see `src/backend/Identity/RUNBOOK.md` and `ARCHITECTURE.md`.
+
+## Conventions & tooling
+
+- **Warnings are errors.** `Directory.Build.props` sets `TreatWarningsAsErrors=true`, `EnforceCodeStyleInBuild=true`, `GenerateDocumentationFile=true` (XML-doc warnings CS1591/1573/1574/1734/1735 are suppressed; missing docs on genuinely public API still surface as other diagnostics). Microsoft VS Threading analyzers are referenced solution-wide; **`VSTHRD200` (async methods must end with `Async`) is pinned to error** in `.editorconfig` — keep new async methods suffixed.
+- **Style** (`.editorconfig`, mostly warning-severity so they fail the build): file-scoped namespaces; no `this.`/`Me.` qualification; predefined type keywords; accessibility modifiers required; `readonly` where possible. SonarAnalyzer.CSharp runs in-build. Noisy rules are tuned down (`CA2007`, `CA1303` off; `CA1062`, `CA1848` suggestion).
+- **SonarQube MCP** (`.mcp.json` + `.github/instructions/sonarqube_mcp.instructions.md`): when modifying code, disable automatic analysis at task start and re-enable it (and run `analyze_file_list` on changed files) at the very end if those tools exist. Look up project keys via `search_my_sonarqube_projects` (don't guess); don't re-query issues immediately after a fix (the server lags).
+- **CI**: one workflow per module (`his/ehr/pdms/hie/smartconnect/identity-ci.yml`), `buildingblocks-transponder-ci.yml`, `buildingblocks-fhir-ci.yml`, `frontend-ci.yml` (eslint/prettier/tsc/Playwright), `solution-ci.yml` (full build + tests + architecture tests), `codeql.yml`, `smartconnect-pdf-sot.yml`. Path-filtered to the touched area.
+
+### Port reference (Aspire dev / deployment-compose)
+
+| Component | Aspire dev | compose | DB port |
+|---|---|---|---|
+| Gateway (browser entry) | 9090 | 5000 | — |
+| Identity BFF | 5275 | — | — |
+| HIS / EHR / PDMS / SmartConnect / HIE | dynamic (via Gateway) | 5288 / 5289 / 5290 / 5291 / 5292 | 5440 / 5442 / 5443 / 5441 / 5445 |
+| Web SPA | behind Gateway | 8080 | — |
+| Keycloak | 8081 | 8081 | — |
+| RabbitMQ | 5672 / mgmt 15672 | same | — |
+| Valkey | 6379 | same | — |
+| OTLP collector | injected | 4317 (gRPC) / 4318 (HTTP) | — |

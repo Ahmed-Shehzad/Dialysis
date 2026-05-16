@@ -241,7 +241,7 @@ erDiagram
 ## 8. Operational notes
 
 - The Keycloak realm `dialysis` is **auto-imported from [keycloak/dialysis-realm.json](keycloak/dialysis-realm.json)** on container start. Update that JSON to add clients / roles; commit alongside code changes.
-- The Identity docker-compose lives at [docker-compose.yml](docker-compose.yml) (Keycloak + Postgres on port 5444); the root `docker-compose.yml` runs the broader infra stack.
+- The Identity docker-compose lives at [docker-compose.yml](docker-compose.yml) (Keycloak + Postgres on port 5444); the root `docker-compose.modules.yml` runs the broader containerized stack, and the Aspire AppHost (`dotnet run --project src/aspire/Dialysis.AppHost`) is the local dev entrypoint.
 - BFF + JWT smoke test → [RUNBOOK.md](RUNBOOK.md).
 
 ---
