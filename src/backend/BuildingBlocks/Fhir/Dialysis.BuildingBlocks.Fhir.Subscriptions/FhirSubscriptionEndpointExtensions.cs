@@ -1,12 +1,10 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 
@@ -35,7 +33,6 @@ public static class FhirSubscriptionEndpointExtensions
             endpoints.MapGet(prefix + "/SubscriptionTopic/{name}", GetTopicAsync),
             endpoints.MapGet(prefix + "/subscription/sse", SseAsync),
             endpoints.MapGet(prefix + "/subscription/websocket", WebSocketAsync),
-            endpoints.MapPost(prefix + "/subscription/$simulate", SimulateAsync),
         };
 
             if (!string.IsNullOrWhiteSpace(requireScope))
@@ -131,72 +128,6 @@ public static class FhirSubscriptionEndpointExtensions
         }
         context.Response.StatusCode = StatusCodes.Status200OK;
         await context.Response.WriteAsJsonAsync(match, context.RequestAborted).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Showcase/diagnostic trigger: <c>POST {prefix}/subscription/$simulate</c>. Fans a synthetic
-    /// (or caller-supplied) FHIR resource through the <em>real</em> matcher + dispatcher pipeline so
-    /// the live SSE/WebSocket feed can be demonstrated without driving the upstream clinical
-    /// workflow. Inherits the same auth scope as the other Subscription routes.
-    /// </summary>
-    private static async Task SimulateAsync(HttpContext context)
-    {
-        var catalog = context.RequestServices.GetRequiredService<SubscriptionTopicCatalog>();
-        var matcher = context.RequestServices.GetRequiredService<ISubscriptionMatcher>();
-        var broadcaster = context.RequestServices.GetRequiredService<SubscriptionBroadcaster>();
-
-        SubscriptionSimulateRequest? payload;
-        try
-        {
-            payload = await JsonSerializer.DeserializeAsync<SubscriptionSimulateRequest>(
-                context.Request.Body,
-                cancellationToken: context.RequestAborted).ConfigureAwait(false);
-        }
-        catch (JsonException)
-        {
-            payload = null;
-        }
-
-        if (payload is null || string.IsNullOrWhiteSpace(payload.Topic))
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            return;
-        }
-
-        if (!catalog.TryGet(payload.Topic, out var topic))
-        {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsync($"Unknown topic '{payload.Topic}'.", context.RequestAborted).ConfigureAwait(false);
-            return;
-        }
-
-        var attributes = payload.Attributes is { Count: > 0 }
-            ? new Dictionary<string, string>(payload.Attributes, StringComparer.Ordinal)
-            : new Dictionary<string, string>(StringComparer.Ordinal);
-
-        Resource resource = BuildSyntheticResource(topic, payload);
-
-        var matched = await matcher.MatchAsync(payload.Topic, attributes, context.RequestAborted).ConfigureAwait(false);
-        await broadcaster.BroadcastAsync(payload.Topic, attributes, resource, context.RequestAborted).ConfigureAwait(false);
-
-        context.Response.StatusCode = StatusCodes.Status202Accepted;
-        await context.Response.WriteAsJsonAsync(
-            new { topic = payload.Topic, matched = matched.Count, resourceType = resource.TypeName },
-            context.RequestAborted).ConfigureAwait(false);
-    }
-
-    private static Basic BuildSyntheticResource(SubscriptionTopicDescriptor topic, SubscriptionSimulateRequest payload)
-    {
-        var label = string.IsNullOrWhiteSpace(payload.Note)
-            ? $"{topic.Title} (simulated)"
-            : $"{topic.Title} (simulated) — {payload.Note}";
-        return new Basic
-        {
-            Meta = new Meta { Tag = [new Coding("urn:dialysis:fhir:tag", "simulated", "Simulated event")] },
-            Code = new CodeableConcept { Text = label },
-            Created = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"),
-            Subject = string.IsNullOrWhiteSpace(payload.Subject) ? null : new ResourceReference(payload.Subject),
-        };
     }
 
     /// <summary>
@@ -328,12 +259,6 @@ public static class FhirSubscriptionEndpointExtensions
         string ChannelEndpoint,
         string? Secret,
         Dictionary<string, string>? Filters);
-
-    private sealed record SubscriptionSimulateRequest(
-        string Topic,
-        Dictionary<string, string>? Attributes,
-        string? Subject,
-        string? Note);
 
     private sealed class ResponseStreamSink(Stream body) : IFhirSubscriptionSink
     {

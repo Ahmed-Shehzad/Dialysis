@@ -71,38 +71,6 @@ export const deleteSubscription = async (module: SubscriptionModule, id: string)
   await apiClient.delete(`${fhirBase(module)}/Subscription/${id}`);
 };
 
-/** `POST /fhir/{module}/subscription/$simulate` body. */
-export type SimulateEventRequest = {
-  topic: string;
-  /** Match attributes — pass the subscription's filters so the simulated event matches it. */
-  attributes?: Record<string, string>;
-  subject?: string;
-  note?: string;
-};
-
-export type SimulateEventResult = {
-  topic: string;
-  matched: number;
-  resourceType: string;
-};
-
-/**
- * Fires a synthetic event through the real matcher + dispatcher so the live SSE/WebSocket
- * feed can be demonstrated without driving the upstream clinical workflow. `matched` reports
- * how many active subscriptions the event fanned out to.
- */
-export const simulateSubscriptionEvent = async (
-  module: SubscriptionModule,
-  request: SimulateEventRequest,
-): Promise<SimulateEventResult> => {
-  const response = await apiClient.post<SimulateEventResult>(
-    `${fhirBase(module)}/subscription/$simulate`,
-    request,
-    { headers: { "Content-Type": "application/json" } },
-  );
-  return response.data;
-};
-
 /**
  * Backend-issued subscription ids are `Guid.NewGuid().ToString("N")` — exactly 32 hex
  * characters. Validating against that shape is the contextual input check that prevents an
