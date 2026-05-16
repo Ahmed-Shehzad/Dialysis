@@ -12,6 +12,10 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 
 public static class FhirSubscriptionEndpointExtensions
 {
+    // Request bodies arrive camelCase from JS/web clients; match ASP.NET's web defaults
+    // (camelCase + case-insensitive) so the records bind instead of 400-ing on null props.
+    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
     extension(IEndpointRouteBuilder endpoints)
     {
         /// <summary>
@@ -57,7 +61,8 @@ public static class FhirSubscriptionEndpointExtensions
 
         var payload = await JsonSerializer.DeserializeAsync<SubscriptionCreateRequest>(
             context.Request.Body,
-            cancellationToken: context.RequestAborted).ConfigureAwait(false);
+            _jsonOptions,
+            context.RequestAborted).ConfigureAwait(false);
 
         if (payload is null || string.IsNullOrWhiteSpace(payload.Topic) || string.IsNullOrWhiteSpace(payload.ChannelEndpoint))
         {
@@ -150,7 +155,8 @@ public static class FhirSubscriptionEndpointExtensions
         {
             payload = await JsonSerializer.DeserializeAsync<SubscriptionSimulateRequest>(
                 context.Request.Body,
-                cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                _jsonOptions,
+                context.RequestAborted).ConfigureAwait(false);
         }
         catch (JsonException)
         {
