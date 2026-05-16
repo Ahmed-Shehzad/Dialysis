@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -22,6 +23,10 @@ public static class FhirSubscriptionsServiceCollectionExtensions
             // Channel adapters (REST-hook ships as the durable production path; WebSocket + SSE are
             // connection-scoped push). The composite routes by the subscription's channel type.
             services.TryAddSingleton<FhirSubscriptionConnectionManager>();
+            // RestHookNotificationDispatcher needs the FHIR serializer. It is normally
+            // registered by the core AddFhir(...), but subscription-only hosts never call
+            // that — register it here so the channel dispatchers resolve standalone.
+            services.TryAddSingleton<FhirJsonSerializerProvider>();
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, RestHookNotificationDispatcher>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, WebSocketNotificationDispatcher>());
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ISubscriptionChannelDispatcher, ServerSentEventsNotificationDispatcher>());
