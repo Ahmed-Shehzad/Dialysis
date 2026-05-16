@@ -4,6 +4,7 @@ import {
   subscriptionSseUrl,
   type SubscriptionModule,
 } from "@/features/subscriptions/api/subscriptionsApi";
+import { useAuth } from "@/features/auth/components/AuthProvider";
 
 type StreamStatus = "idle" | "connecting" | "connected" | "reconnecting" | "disconnected";
 
@@ -27,14 +28,16 @@ const MAX_BUFFER = 100;
  * Opens the FHIR Subscription SSE channel for a registered subscription and buffers the
  * incoming `subscription-notification` Bundles.
  *
- * Auth note: the browser `EventSource` API cannot attach an `Authorization` header, so this
- * relies on cookie forwarding (`withCredentials`) and the dev-mode auth bypass. Token-bound
- * SSE (query-param access token) is a deliberate follow-up, mirroring the WebSocket channel.
+ * Auth note: the browser `EventSource` API cannot attach an `Authorization` header, so the
+ * bearer is passed as an `access_token` query parameter (the same pattern SignalR uses; the
+ * gateway accepts it for streaming paths). `withCredentials` is also set so cookie-auth
+ * deployments keep working.
  */
 export const useSubscriptionStream = (
   module: SubscriptionModule | null,
   subscriptionId: string | null,
 ): UseSubscriptionStreamResult => {
+  const { getAccessToken } = useAuth();
   const [notifications, setNotifications] = useState<SubscriptionNotification[]>([]);
   const [status, setStatus] = useState<StreamStatus>("idle");
   const seqRef = useRef(0);
@@ -54,7 +57,7 @@ export const useSubscriptionStream = (
 
     let closed = false;
     setStatus("connecting");
-    const source = new EventSource(subscriptionSseUrl(module, subscriptionId), {
+    const source = new EventSource(subscriptionSseUrl(module, subscriptionId, getAccessToken()), {
       withCredentials: true,
     });
 
@@ -93,7 +96,7 @@ export const useSubscriptionStream = (
       source.close();
       setStatus("idle");
     };
-  }, [module, subscriptionId]);
+  }, [module, subscriptionId, getAccessToken]);
 
   return {
     notifications,

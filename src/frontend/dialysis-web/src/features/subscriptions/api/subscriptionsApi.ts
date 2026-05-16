@@ -121,13 +121,22 @@ export const isValidSubscriptionId = (value: string): boolean =>
  *
  * Throws if {@link subscriptionId} is not a well-formed id rather than emitting a URL built
  * from unvalidated input.
+ *
+ * The browser `EventSource` API cannot set an `Authorization` header, so the bearer is
+ * passed as an `access_token` query parameter — the same pattern SignalR uses, which the
+ * gateway already accepts for streaming paths.
  */
-export const subscriptionSseUrl = (module: SubscriptionModule, subscriptionId: string): string => {
+export const subscriptionSseUrl = (
+  module: SubscriptionModule,
+  subscriptionId: string,
+  accessToken?: string | null,
+): string => {
   if (!SUBSCRIPTION_MODULES.includes(module)) {
     throw new Error(`Unknown subscription module: ${String(module)}`);
   }
   if (!isValidSubscriptionId(subscriptionId)) {
     throw new Error("Refusing to open SSE stream for a malformed subscription id.");
   }
-  return `${fhirBase(module)}/subscription/sse?subscription=${encodeURIComponent(subscriptionId)}`;
+  const token = accessToken ? `&access_token=${encodeURIComponent(accessToken)}` : "";
+  return `${fhirBase(module)}/subscription/sse?subscription=${encodeURIComponent(subscriptionId)}${token}`;
 };
