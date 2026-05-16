@@ -10,7 +10,15 @@ namespace Dialysis.BuildingBlocks.Fhir.Validation.Authoring;
 /// </summary>
 public static class CoreSpecificationSource
 {
-    public static IAsyncResourceResolver Create()
+    // ZipSource extracts specification.zip into a shared /tmp cache on first use. Multiple
+    // instances extracting concurrently race ("Directory not empty"), so the resolver is
+    // memoized process-wide: one ZipSource, one extraction, shared by every registry.
+    private static readonly Lazy<IAsyncResourceResolver> _shared =
+        new(Build, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    public static IAsyncResourceResolver Create() => _shared.Value;
+
+    private static IAsyncResourceResolver Build()
     {
         // Fast path: zip already beside the executing assembly (normal published layout).
         try
