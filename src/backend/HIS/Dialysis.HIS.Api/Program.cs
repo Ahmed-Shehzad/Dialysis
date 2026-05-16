@@ -50,6 +50,10 @@ var enableFhirEndpoints = builder.Configuration.GetValue("His:Fhir:Enabled", fal
 var enableFhirBulkDataExport = builder.Configuration.GetValue("His:Fhir:BulkData:Enabled", false);
 var enableFhirSmartOnFhir = builder.Configuration.GetValue("His:Fhir:Smart:Enabled", false);
 var enableFhirSubscriptions = builder.Configuration.GetValue("His:Fhir:Subscriptions:Enabled", false);
+// Persistence defaults to the feature flag; set false to use the in-memory registry
+// (no DB / migration dependency — handy for local dev and demos).
+var enableFhirSubscriptionsPersistence =
+    builder.Configuration.GetValue("His:Fhir:Subscriptions:Persistence", enableFhirSubscriptions);
 var fhirBulkDataExportScope = builder.Configuration["His:Fhir:BulkData:RequireScope"]
     ?? (enableFhirSmartOnFhir ? "system/*.read" : null);
 var fhirSubscriptionsScope = builder.Configuration["His:Fhir:Subscriptions:RequireScope"]
@@ -68,7 +72,7 @@ builder.Services.AddHospitalInformationSystem(
     enableFhirBulkDataExport: enableFhirBulkDataExport,
     enableFhirSmartOnFhir: enableFhirSmartOnFhir,
     enableFhirSubscriptions: enableFhirSubscriptions,
-    enableFhirSubscriptionsPersistence: enableFhirSubscriptions,
+    enableFhirSubscriptionsPersistence: enableFhirSubscriptionsPersistence,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>
