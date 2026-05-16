@@ -5,6 +5,7 @@ using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.Validation;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
@@ -70,6 +71,12 @@ public static class HospitalInformationSystemExtensions
                     fhir.AddReader<Encounter, HisAdmissionEncounterReader>();
                     configureFhir?.Invoke(fhir);
                 });
+
+                // On-demand FHIR profile / Implementation Guide authoring + correctness verification.
+                // Optionally preload external packages (US Core, …) from a configured folder so
+                // declared IG dependencies resolve after every restart.
+                services.AddFhirArtifactAuthoring(o =>
+                    o.PackagesPath = configuration["His:Fhir:Authoring:PackagesPath"]);
             }
 
             if (enableFhirAuditPersistence)

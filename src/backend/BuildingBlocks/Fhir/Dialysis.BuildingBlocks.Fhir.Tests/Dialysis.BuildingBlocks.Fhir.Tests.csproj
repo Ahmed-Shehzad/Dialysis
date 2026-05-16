@@ -18,7 +18,11 @@
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Subscriptions/Dialysis.BuildingBlocks.Fhir.Subscriptions.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Terminology/Dialysis.BuildingBlocks.Fhir.Terminology.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Testing/Dialysis.BuildingBlocks.Fhir.Testing.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Validation/Dialysis.BuildingBlocks.Fhir.Validation.csproj" />
     <PackageReference Include="Hl7.Fhir.R4" />
+    <!-- Brings specification.zip (FHIR R4 core conformance) into the test output so the snapshot
+         generator / ZipSource.CreateValidationSource() can resolve base definitions. -->
+    <PackageReference Include="Hl7.Fhir.Specification.R4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />

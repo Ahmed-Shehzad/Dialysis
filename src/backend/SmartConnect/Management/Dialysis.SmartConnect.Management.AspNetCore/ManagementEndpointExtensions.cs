@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Dialysis.SmartConnect.Documents;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Microsoft.AspNetCore.Builder;
@@ -230,6 +231,44 @@ public static class ManagementEndpointExtensions
                         return entry is null ? Results.NotFound() : Results.Ok(entry);
                     })
                 .WithName("SmartConnect_GetMessage");
+
+            // Convert a captured payload into a downloadable clinical document. Supported
+            // ?format= values: raw, hl7, xml (HL7 v2 XML), cda (C-CDA R2.1 CCD), fhir (R4 Bundle).
+            admin.MapGet(
+                    "/messages/{ledgerEntryId:guid}/export",
+                    async (
+                        Guid ledgerEntryId,
+                        string? format,
+                        IMessageLedgerQuery ledgerQuery,
+                        CancellationToken ct) =>
+                    {
+                        var entry = await ledgerQuery.GetByIdAsync(ledgerEntryId, ct).ConfigureAwait(false);
+                        if (entry is null)
+                        {
+                            return Results.NotFound();
+                        }
+
+                        if (entry.PayloadSnapshot is null || entry.PayloadSnapshot.Length == 0)
+                        {
+                            return Results.BadRequest(new
+                            {
+                                error = "Ledger entry has no captured payload to export " +
+                                    "(snapshots are recorded only at the Received and OutboundFailed stages).",
+                            });
+                        }
+
+                        try
+                        {
+                            var doc = MessageDocumentExporter.Export(
+                                entry.PayloadSnapshot, format, entry.CorrelationId);
+                            return Results.File(doc.Content, doc.ContentType, doc.FileName);
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            return Results.BadRequest(new { error = ex.Message });
+                        }
+                    })
+                .WithName("SmartConnect_ExportMessage");
 
             admin.MapGet(
                     "/messages",
