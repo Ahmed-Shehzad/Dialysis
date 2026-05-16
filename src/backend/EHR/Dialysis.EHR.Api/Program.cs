@@ -46,6 +46,10 @@ var enableEhrRegistrationSim = builder.Configuration.GetValue("Ehr:Demo:Registra
 var enableEhrBulkDataExport = builder.Configuration.GetValue("Ehr:Fhir:BulkData:Enabled", false);
 var enableEhrSmartOnFhir = builder.Configuration.GetValue("Ehr:Fhir:Smart:Enabled", false);
 var enableEhrSubscriptions = builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Enabled", false);
+// Persistence defaults to the feature flag; set false to use the in-memory registry
+// (no DB / migration dependency — handy for local dev and demos).
+var enableEhrSubscriptionsPersistence =
+    builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Persistence", enableEhrSubscriptions);
 var ehrBulkDataExportScope = builder.Configuration["Ehr:Fhir:BulkData:RequireScope"]
     ?? (enableEhrSmartOnFhir ? "system/*.read" : null);
 var ehrSubscriptionsScope = builder.Configuration["Ehr:Fhir:Subscriptions:RequireScope"]
@@ -63,7 +67,7 @@ builder.Services.AddElectronicHealthRecord(
     enableFhirBulkDataExport: enableEhrBulkDataExport,
     enableFhirSmartOnFhir: enableEhrSmartOnFhir,
     enableFhirSubscriptions: enableEhrSubscriptions,
-    enableFhirSubscriptionsPersistence: enableEhrSubscriptions,
+    enableFhirSubscriptionsPersistence: enableEhrSubscriptionsPersistence,
     enableDemoSeed: enableEhrDemoSeed,
     enableRegistrationSimulator: enableEhrRegistrationSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)

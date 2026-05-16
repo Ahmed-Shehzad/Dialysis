@@ -69,7 +69,15 @@ if (!string.IsNullOrEmpty(authority))
                 {
                     var accessToken = ctx.Request.Query["access_token"];
                     var path = ctx.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+                    // SignalR hubs and the FHIR Subscription SSE/WebSocket streams cannot send
+                    // an Authorization header from the browser (EventSource / WS), so they pass
+                    // the bearer as an ?access_token= query parameter instead.
+                    var isStreamingPath =
+                        path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase) ||
+                        (path.HasValue &&
+                            (path.Value.Contains("/subscription/sse", StringComparison.OrdinalIgnoreCase) ||
+                             path.Value.Contains("/subscription/websocket", StringComparison.OrdinalIgnoreCase)));
+                    if (!string.IsNullOrEmpty(accessToken) && isStreamingPath)
                     {
                         ctx.Token = accessToken;
                     }

@@ -33,6 +33,10 @@ var enablePdmsMachineSim = builder.Configuration.GetValue("Pdms:Demo:MachineTele
 var enablePdmsBulkDataExport = builder.Configuration.GetValue("Pdms:Fhir:BulkData:Enabled", false);
 var enablePdmsSmartOnFhir = builder.Configuration.GetValue("Pdms:Fhir:Smart:Enabled", false);
 var enablePdmsSubscriptions = builder.Configuration.GetValue("Pdms:Fhir:Subscriptions:Enabled", false);
+// Persistence defaults to the feature flag; set false to use the in-memory registry
+// (no DB / migration dependency — handy for local dev and demos).
+var enablePdmsSubscriptionsPersistence =
+    builder.Configuration.GetValue("Pdms:Fhir:Subscriptions:Persistence", enablePdmsSubscriptions);
 var pdmsBulkDataExportScope = builder.Configuration["Pdms:Fhir:BulkData:RequireScope"]
     ?? (enablePdmsSmartOnFhir ? "system/*.read" : null);
 var pdmsSubscriptionsScope = builder.Configuration["Pdms:Fhir:Subscriptions:RequireScope"]
@@ -50,7 +54,7 @@ builder.Services.AddPatientDataManagementSystem(
     enableFhirBulkDataExport: enablePdmsBulkDataExport,
     enableFhirSmartOnFhir: enablePdmsSmartOnFhir,
     enableFhirSubscriptions: enablePdmsSubscriptions,
-    enableFhirSubscriptionsPersistence: enablePdmsSubscriptions,
+    enableFhirSubscriptionsPersistence: enablePdmsSubscriptionsPersistence,
     enableDemoSeed: enablePdmsDemoSeed,
     enableVitalsTicker: enablePdmsVitalsTicker,
     enableMachineTelemetrySimulator: enablePdmsMachineSim,
