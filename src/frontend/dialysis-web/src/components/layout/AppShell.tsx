@@ -1,6 +1,23 @@
 import { type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/AuthProvider";
+import { useTheme } from "@/features/theme/ThemeProvider";
+
+const ThemeToggle = () => {
+  const { theme, toggleTheme } = useTheme();
+  const nextLabel = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={`Switch to ${nextLabel} theme`}
+      title={`Switch to ${nextLabel} theme`}
+      className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 transition hover:border-slate-500"
+    >
+      {theme === "dark" ? "☾ Dark" : "☀ Light"}
+    </button>
+  );
+};
 
 const NAV = [
   { to: "/", label: "Dashboard", end: true },
@@ -36,6 +53,7 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
             </nav>
           </div>
           <div className="flex items-center gap-3 text-sm text-slate-300">
+            <ThemeToggle />
             {status === "authenticated" && user ? (
               <>
                 <span>{user.username}</span>

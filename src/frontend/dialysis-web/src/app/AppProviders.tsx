@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { type ReactNode, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
+import { ThemeProvider } from "@/features/theme/ThemeProvider";
 
 const buildQueryClient = () =>
   new QueryClient({
@@ -25,11 +26,13 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
   const [client] = useState(buildQueryClient);
 
   return (
-    <QueryClientProvider client={client}>
-      <BrowserRouter>
-        <AuthProvider>{children}</AuthProvider>
-      </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={client}>
+        <BrowserRouter>
+          <AuthProvider>{children}</AuthProvider>
+        </BrowserRouter>
+        <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
