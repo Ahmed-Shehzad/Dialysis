@@ -4,12 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        // B. Braun-inspired brand palette. Anchored on the corporate green
+        // (Pantone Green C ≈ #00A97A) at shade 500; full 50–900 ramp so the
+        // 100/200/300 shades the components already reference actually resolve.
         clinic: {
-          50: "#f0f9ff",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          900: "#0c4a6e",
+          50: "#e6f7f1",
+          100: "#c4ece0",
+          200: "#93ddc6",
+          300: "#59caa6",
+          400: "#1cb78b",
+          500: "#00a97a",
+          600: "#00855f",
+          700: "#006e4f",
+          800: "#015941",
+          900: "#06432f",
         },
         vitals: {
           systolic: "#ef4444",
