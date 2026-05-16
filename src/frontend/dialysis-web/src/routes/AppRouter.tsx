@@ -11,6 +11,7 @@ import { IntegrationsPage } from "@/pages/IntegrationsPage";
 import { HisWorkflowsPage } from "@/pages/HisWorkflowsPage";
 import { EhrWorkflowsPage } from "@/pages/EhrWorkflowsPage";
 import { FhirExchangePage } from "@/pages/FhirExchangePage";
+import { FhirAuthoringPage } from "@/pages/FhirAuthoringPage";
 import { SubscriptionsPage } from "@/pages/SubscriptionsPage";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -72,6 +73,7 @@ export const AppRouter = () => (
       <Route path="workflows/his" element={<HisWorkflowsPage />} />
       <Route path="workflows/ehr" element={<EhrWorkflowsPage />} />
       <Route path="fhir-exchange" element={<FhirExchangePage />} />
+      <Route path="fhir-authoring" element={<FhirAuthoringPage />} />
       <Route path="subscriptions" element={<SubscriptionsPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />

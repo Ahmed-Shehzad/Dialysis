@@ -136,7 +136,10 @@ app.MapGet("/", () => Results.Ok(new { module = "his", version = "v1" }));
 app.MapControllers();
 
 if (enableFhirEndpoints)
+{
     app.MapFhirEndpoints();
+    app.MapFhirAuthoringEndpoints();
+}
 
 if (enableFhirSmartOnFhir)
     app.MapSmartConfigurationEndpoint();

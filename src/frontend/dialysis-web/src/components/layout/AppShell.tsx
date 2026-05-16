@@ -27,6 +27,7 @@ const NAV = [
   { to: "/workflows/ehr", label: "EHR" },
   { to: "/integrations", label: "Integrations" },
   { to: "/fhir-exchange", label: "FHIR Exchange" },
+  { to: "/fhir-authoring", label: "FHIR Authoring" },
   { to: "/subscriptions", label: "Subscriptions" },
 ];
 
