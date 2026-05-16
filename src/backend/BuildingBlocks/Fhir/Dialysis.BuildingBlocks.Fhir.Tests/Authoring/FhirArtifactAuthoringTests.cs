@@ -23,7 +23,7 @@ public sealed class FhirArtifactAuthoringTests
     }
 
     [Fact]
-    public async Task Authors_Profile_Generates_Snapshot_And_Publishes_When_Valid()
+    public async Task Authors_Profile_Generates_Snapshot_And_Publishes_When_Valid_Async()
     {
         var (authoring, registry) = Build();
         var spec = FhirProfileSpec.For(
@@ -52,7 +52,7 @@ public sealed class FhirArtifactAuthoringTests
     }
 
     [Fact]
-    public async Task Invalid_Base_Definition_Fails_Verification_And_Is_Not_Published()
+    public async Task Invalid_Base_Definition_Fails_Verification_And_Is_Not_Published_Async()
     {
         var (authoring, registry) = Build();
         var spec = FhirProfileSpec.For(
@@ -74,7 +74,7 @@ public sealed class FhirArtifactAuthoringTests
     }
 
     [Fact]
-    public async Task Constraint_Path_Not_Rooted_At_Type_Throws()
+    public async Task Constraint_Path_Not_Rooted_At_Type_Throws_Async()
     {
         var (authoring, _) = Build();
         var spec = FhirProfileSpec.For(
@@ -89,7 +89,7 @@ public sealed class FhirArtifactAuthoringTests
     }
 
     [Fact]
-    public async Task Authors_ImplementationGuide_With_Profiles_And_Dependency()
+    public async Task Authors_Implementation_Guide_With_Profiles_And_Dependency_Async()
     {
         var (authoring, registry) = Build();
         var profile = FhirProfileSpec.For(

@@ -37,7 +37,7 @@ public sealed class MessageDocumentExporterTests
     }
 
     [Fact]
-    public void Ccd_Is_A_ClinicalDocument_With_Patient_And_Result()
+    public void Ccd_Is_A_Clinical_Document_With_Patient_And_Result()
     {
         var doc = MessageDocumentExporter.Export(Bytes(Oru), "cda", "sim-42");
 
@@ -83,7 +83,7 @@ public sealed class MessageDocumentExporterTests
     }
 
     [Fact]
-    public void Unknown_Format_Throws_ArgumentException()
+    public void Unknown_Format_Throws_Argument_Exception()
     {
         Assert.Throws<ArgumentException>(
             () => MessageDocumentExporter.Export(Bytes(Oru), "pdf", "x"));

@@ -62,7 +62,7 @@ public sealed class FhirPackageLoaderTests
     }
 
     [Fact]
-    public async Task Loads_Package_And_Registers_Canonicals()
+    public async Task Loads_Package_And_Registers_Canonicals_Async()
     {
         var services = new ServiceCollection();
         services.AddFhirArtifactAuthoring();
@@ -86,7 +86,7 @@ public sealed class FhirPackageLoaderTests
     }
 
     [Fact]
-    public async Task Declared_Dependency_No_Longer_Warns_After_Loading_Package()
+    public async Task Declared_Dependency_No_Longer_Warns_After_Loading_Package_Async()
     {
         var services = new ServiceCollection();
         services.AddFhirArtifactAuthoring();
