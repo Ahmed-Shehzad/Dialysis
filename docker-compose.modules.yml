@@ -1,14 +1,170 @@
-name: dialysis-modules
+name: dialysis
 
-# Module-host orchestration overlay. Run alongside the base infra compose:
+# Self-contained full-stack compose: per-module infra + every module host + edge gateway + web SPA.
 #
-#   docker compose -f docker-compose.yml -f docker-compose.modules.yml up -d
+#   docker compose -f docker-compose.modules.yml up -d
 #
-# Brings up each module host pointed at its own Postgres, sharing one RabbitMQ + Valkey + Keycloak.
-# Each module is independently scalable — bump `replicas` to scale horizontally; Valkey backs the
-# distributed cache + ASP.NET Data Protection key ring so multi-replica is safe.
+# This is the production-like / deployment topology (Release container images, HSTS, forwarded
+# headers, Keycloak authority required). For the local dev inner loop use the Aspire AppHost
+# instead — `dotnet run --project src/aspire/Dialysis.AppHost` — which runs the same shape via
+# `dotnet run` plus the Aspire dashboard. There is intentionally no base infra-only compose:
+# Aspire owns dev, this file owns containerized deployment.
+#
+# Per-module Postgres (one container per module — locks in the modular-monolith "each module
+# owns its own DB" invariant) + shared RabbitMQ + Valkey + Keycloak + OTLP collector. Each
+# module host is independently scalable — bump `replicas` (or `--scale <svc>=N`) to scale
+# horizontally; Valkey backs the distributed cache + ASP.NET Data Protection key ring so
+# multi-replica is safe.
 
 services:
+  # --- Infrastructure ------------------------------------------------------
+  postgres-his:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_his
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres-his-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_his"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-smartconnect:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_smartconnect
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5441:5432"
+    volumes:
+      - postgres-smartconnect-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_smartconnect"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-ehr:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_ehr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres-ehr-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_ehr"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-pdms:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_pdms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5443:5432"
+    volumes:
+      - postgres-pdms-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_pdms"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-identity:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_identity
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5444:5432"
+    volumes:
+      - postgres-identity-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-hie:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dialysis_hie
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5445:5432"
+    volumes:
+      - postgres-hie-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dialysis_hie"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--appendonly", "yes", "--save", "60", "1000"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: dialysis
+      RABBITMQ_DEFAULT_PASS: dialysis
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8081:8080"
+
+  # OTLP collector for module spans + metrics. Module hosts inside this compose point
+  # `<Module>:Telemetry:OtlpEndpoint` at http://otel-collector:4317.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
+  # --- Module hosts --------------------------------------------------------
   his-api:
     build:
       context: .
@@ -198,3 +354,12 @@ services:
       - "8080:80"
     deploy:
       replicas: 1
+
+volumes:
+  postgres-his-data:
+  postgres-smartconnect-data:
+  postgres-ehr-data:
+  postgres-pdms-data:
+  postgres-identity-data:
+  postgres-hie-data:
+  valkey-data:

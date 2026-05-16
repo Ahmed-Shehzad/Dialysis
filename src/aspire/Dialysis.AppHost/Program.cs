@@ -1,6 +1,6 @@
 // Aspire orchestration for the Dialysis modular monolith.
 //
-// Mirrors docker-compose.yml + docker-compose.modules.yml:
+// Mirrors the containerized deployment stack (docker-compose.modules.yml):
 //   • per-module Postgres (HIS, EHR, PDMS, SmartConnect, HIE)
 //   • shared RabbitMQ, Valkey, Keycloak (realm auto-imported)
 //   • each module API + Identity BFF + edge Gateway wired to the right infra

@@ -63,7 +63,7 @@ through one operations console.
 
 ```bash
 # 1. From repo root
-docker compose -f docker-compose.yml -f docker-compose.modules.yml up -d --build
+docker compose -f docker-compose.modules.yml up -d --build
 
 # 2. Wait for Keycloak realm import to finish (~30s)
 docker logs -f dialysis-keycloak 2>&1 | grep -m 1 "Realm 'dialysis' imported"
@@ -349,14 +349,14 @@ Between demos:
 
 ```bash
 # Full reset — drops all volumes (Postgres data, Valkey persistence, RabbitMQ state)
-docker compose -f docker-compose.yml -f docker-compose.modules.yml down -v
-docker compose -f docker-compose.yml -f docker-compose.modules.yml up -d
+docker compose -f docker-compose.modules.yml down -v
+docker compose -f docker-compose.modules.yml up -d
 ```
 
 Soft reset (just bounce the API hosts, keep Keycloak/Postgres warm):
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.modules.yml restart \
+docker compose -f docker-compose.modules.yml restart \
   his-api ehr-api pdms-api smartconnect-api hie-api gateway web
 ```
 

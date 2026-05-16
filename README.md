@@ -269,10 +269,10 @@ Dialysis/
 ├── Directory.Build.props         # MSBuild defaults (all projects)
 ├── Directory.Packages.props      # Central package management
 ├── global.json                   # .NET 10 SDK pin
-├── docker-compose.yml            # Per-module Postgres + RabbitMQ + Keycloak
+├── docker-compose.modules.yml    # Full containerized stack (deployment): infra + module hosts + gateway + web
 │
 ├── src/
-│   ├── aspire/                   # Aspire orchestration host (dev convenience)
+│   ├── aspire/                   # Aspire orchestration host (primary dev entrypoint)
 │   │
 │   ├── backend/
 │   │   ├── HIS/                  # Hospital Information System
@@ -319,23 +319,22 @@ Dialysis/
 ## 2.7 Running locally (developer onboarding)
 
 ```bash
-# 1. Start infrastructure (per-module Postgres + RabbitMQ + Keycloak)
-docker compose up -d
+# 1. One command starts everything: per-module Postgres + RabbitMQ + Valkey + Keycloak
+#    + every module API + Identity BFF + edge Gateway + the Vite SPA, with the Aspire
+#    dashboard (logs / metrics / traces) opening automatically.
+dotnet run --project src/aspire/Dialysis.AppHost
 
-# 2. Run any module API
-dotnet run --project src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj           # http://localhost:5288
-dotnet run --project src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj
-dotnet run --project src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj
-dotnet run --project src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj
-dotnet run --project src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj
-dotnet run --project src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj   # http://localhost:5275
+#    Browser entry point is the gateway: http://localhost:9090
+#    (Aspire pins the BFF to :5275 and the gateway to :9090 so the Keycloak OIDC
+#    redirect_uri stays valid; the SPA is proxied behind the gateway, not exposed directly.)
 
-# 3. Run the SPA
-cd src/frontend/dialysis-web && npm install && npm run dev
-
-# 4. Run tests
+# 2. Run tests (no infra required — uses in-memory providers)
 dotnet test Dialysis.slnx
 ```
+
+> The full containerized / production-like stack (Release images behind the gateway,
+> HSTS, Keycloak authority enforced) is `docker compose -f docker-compose.modules.yml up -d`.
+> That is the deployment path; Aspire above is the dev inner loop.
 
 Each module API exposes:
 
