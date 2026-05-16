@@ -1,12 +1,15 @@
-import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { fetchFlows } from "../api/flows";
 import {
+  EXPORT_FORMATS,
+  type ExportFormat,
   decodePayloadSnapshot,
+  exportMessageDocument,
   fetchMessage,
   fetchMessages,
   reprocessMessage,
 } from "../api/messages";
-import { fetchFlows } from "../api/flows";
 import {
   type MessageLedgerEntry,
   MessageLedgerStatus,
@@ -49,10 +52,15 @@ const MessageDrawer = ({ entryId, onClose }: { entryId: string; onClose: () => v
       queryClient.invalidateQueries({ queryKey: ["smartconnect", "messages"] });
     },
   });
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("cda");
+  const exportDoc = useMutation({
+    mutationFn: () => exportMessageDocument(entryId, exportFormat),
+  });
   const text = useMemo(
     () => decodePayloadSnapshot(entry.data?.payloadSnapshot),
     [entry.data?.payloadSnapshot],
   );
+  const hasPayload = Boolean(text);
 
   return (
     <div className="fixed inset-0 z-40 flex" role="dialog" aria-modal="true">
@@ -141,6 +149,36 @@ const MessageDrawer = ({ entryId, onClose }: { entryId: string; onClose: () => v
                 </span>
               )}
               {reprocess.error && <span className="text-xs text-rose-300">Reprocess failed.</span>}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-800 pt-3">
+              <span className="text-xs uppercase text-slate-500">Export as</span>
+              <select
+                aria-label="Export document format"
+                title="Export document format"
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+                disabled={!hasPayload}
+                className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 disabled:opacity-40"
+              >
+                {EXPORT_FORMATS.map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => exportDoc.mutate()}
+                disabled={!hasPayload || exportDoc.isPending}
+                className="rounded-md border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-40"
+              >
+                {exportDoc.isPending ? "Preparing…" : "Download"}
+              </button>
+              {!hasPayload && (
+                <span className="text-xs text-slate-500">(no captured payload to convert)</span>
+              )}
+              {exportDoc.error && <span className="text-xs text-rose-300">Export failed.</span>}
             </div>
           </div>
         )}
@@ -232,7 +270,7 @@ export const MessagesTab = () => {
 
       {list.isLoading && <div className="text-xs text-slate-400">Loading messages…</div>}
       {list.error && <div className="text-xs text-rose-300">Ledger unavailable.</div>}
-      {list.data && list.data.items.length === 0 && (
+      {list.data?.items.length === 0 && (
         <div className="rounded-md border border-slate-800 bg-slate-900/40 p-4 text-xs text-slate-500">
           No ledger entries match the current filters.
         </div>
