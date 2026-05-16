@@ -28,7 +28,7 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
   return (
     <ThemeProvider>
       <QueryClientProvider client={client}>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>{children}</AuthProvider>
         </BrowserRouter>
         <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />

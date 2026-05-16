@@ -9,6 +9,7 @@ import {
   authorProfile,
   listGuides,
   listProfiles,
+  loadPackage,
 } from "@/features/fhir-authoring/api/fhirAuthoringApi";
 
 const BLANK_CONSTRAINT: FhirElementConstraint = { path: "" };
@@ -150,6 +151,53 @@ const ConstraintEditor = ({
           </select>
         </div>
       ))}
+    </div>
+  );
+};
+
+const PackageLoadCard = () => {
+  const queryClient = useQueryClient();
+  const [file, setFile] = useState<File | null>(null);
+  const mut = useMutation({
+    mutationFn: (f: File) => loadPackage(f),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fhir-authoring"] }),
+  });
+  return (
+    <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+      <h3 className="text-sm font-medium text-slate-100">Load external FHIR package</h3>
+      <p className="text-xs text-slate-500">
+        Upload an HL7 package tarball (<code>.tgz</code> — US Core, CH Core, …). Its conformance
+        resources are registered so IGs that declare a dependency on it resolve and stop warning.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="file"
+          accept=".tgz,.tar.gz,application/gzip"
+          aria-label="FHIR package tarball"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="text-xs text-slate-300 file:mr-2 file:rounded-md file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-slate-200"
+        />
+        <button
+          type="button"
+          onClick={() => file && mut.mutate(file)}
+          disabled={!file || mut.isPending}
+          className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-clinic-700 disabled:opacity-40"
+        >
+          {mut.isPending ? "Loading…" : "Load package"}
+        </button>
+      </div>
+      {mut.data && (
+        <ul className="space-y-1 text-xs">
+          {mut.data.issues.map((issue, i) => (
+            <li key={i} className={severityClass(issue.severity)}>
+              {issue.diagnostics}
+            </li>
+          ))}
+        </ul>
+      )}
+      {mut.error && (
+        <p className="text-xs text-rose-300">Upload failed — is the HIS host running?</p>
+      )}
     </div>
   );
 };
@@ -322,6 +370,7 @@ export const FhirAuthoringPage = () => {
         </div>
       </div>
 
+      <PackageLoadCard />
       <PublishedList />
     </div>
   );

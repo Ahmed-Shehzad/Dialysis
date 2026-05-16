@@ -39,6 +39,7 @@ public static class FhirAuthoringEndpoints
 
             endpoints.MapPost(root + "/StructureDefinition", AuthorProfileAsync);
             endpoints.MapPost(root + "/ImplementationGuide", AuthorGuideAsync);
+            endpoints.MapPost(root + "/package", LoadPackageAsync);
             endpoints.MapGet(root + "/StructureDefinition", ListProfilesAsync);
             endpoints.MapGet(root + "/StructureDefinition/{id}", ReadProfileAsync);
             endpoints.MapGet(root + "/ImplementationGuide", ListGuidesAsync);
@@ -130,6 +131,46 @@ public static class FhirAuthoringEndpoints
         {
             await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest, ex.Message)
                 .ConfigureAwait(false);
+        }
+    }
+
+    private static async Task LoadPackageAsync(HttpContext context)
+    {
+        var loader = context.RequestServices.GetRequiredService<IFhirPackageLoader>();
+        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
+        var ct = context.RequestAborted;
+
+        try
+        {
+            var result = await loader.LoadAsync(context.Request.Body, ct).ConfigureAwait(false);
+            var outcome = new OperationOutcome();
+            outcome.Issue.Add(new OperationOutcome.IssueComponent
+            {
+                Severity = OperationOutcome.IssueSeverity.Information,
+                Code = OperationOutcome.IssueType.Informational,
+                Diagnostics =
+                    $"Loaded package {result.PackageName ?? "(unknown)"}@{result.PackageVersion ?? "?"}: " +
+                    $"{result.Loaded} conformance resource(s) registered, {result.Skipped} skipped.",
+            });
+            foreach (var canonical in result.Canonicals.Take(200))
+            {
+                outcome.Issue.Add(new OperationOutcome.IssueComponent
+                {
+                    Severity = OperationOutcome.IssueSeverity.Information,
+                    Code = OperationOutcome.IssueType.Informational,
+                    Diagnostics = $"registered {canonical}",
+                });
+            }
+
+            await WriteResourceAsync(
+                context, serializer, outcome,
+                result.Loaded > 0 ? StatusCodes.Status200OK : StatusCodes.Status422UnprocessableEntity)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or ArgumentException)
+        {
+            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest,
+                $"Could not read FHIR package tarball: {ex.Message}").ConfigureAwait(false);
         }
     }
 

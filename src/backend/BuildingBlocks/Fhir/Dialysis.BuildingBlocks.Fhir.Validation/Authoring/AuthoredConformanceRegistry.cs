@@ -14,6 +14,12 @@ public interface IFhirConformanceRegistry : IAsyncResourceResolver
 {
     void Register(Resource resource);
 
+    /// <summary>
+    /// Registers any conformance resource under an explicit canonical URL — used when loading
+    /// external FHIR packages (US Core, CH Core, …) whose resources span many resource types.
+    /// </summary>
+    void Register(string canonicalUrl, Resource resource);
+
     bool TryGet(string canonicalUrl, out Resource? resource);
 
     IReadOnlyCollection<StructureDefinition> Profiles { get; }
@@ -62,7 +68,16 @@ public sealed class AuthoredConformanceRegistry : IFhirConformanceRegistry
                 $"Resource of type {resource.TypeName} has no canonical URL to register under.",
                 nameof(resource));
 
-        _byCanonical[canonical] = resource;
+        Register(canonical, resource);
+    }
+
+    public void Register(string canonicalUrl, Resource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        if (string.IsNullOrWhiteSpace(canonicalUrl))
+            throw new ArgumentException("Canonical URL is required.", nameof(canonicalUrl));
+
+        _byCanonical[StripVersion(canonicalUrl)] = resource;
     }
 
     public bool TryGet(string canonicalUrl, out Resource? resource)

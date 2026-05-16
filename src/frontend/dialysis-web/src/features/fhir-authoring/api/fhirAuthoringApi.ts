@@ -134,6 +134,25 @@ export const authorImplementationGuide = async (
   return parseResult(res.status, res.data);
 };
 
+export type PackageLoadResult = {
+  ok: boolean;
+  httpStatus: number;
+  issues: VerificationIssue[];
+};
+
+/**
+ * Uploads an external FHIR package tarball (`.tgz` — US Core, CH Core, …). The host registers
+ * its conformance resources so IGs that declare a dependency on it resolve and stop warning.
+ */
+export const loadPackage = async (file: File): Promise<PackageLoadResult> => {
+  const body = await file.arrayBuffer();
+  const res = await apiClient.post<FhirBundleOrOutcome>(`${AUTHORING_BASE}/package`, body, {
+    headers: { "Content-Type": "application/gzip" },
+    ...acceptClientErrors,
+  });
+  return { ok: res.status === 200, httpStatus: res.status, issues: parseIssues(res.data) };
+};
+
 const parseSearchset = (body: FhirBundleOrOutcome): Record<string, unknown>[] =>
   (body.entry ?? []).map((e) => e.resource).filter(Boolean) as Record<string, unknown>[];
 

@@ -73,7 +73,10 @@ public static class HospitalInformationSystemExtensions
                 });
 
                 // On-demand FHIR profile / Implementation Guide authoring + correctness verification.
-                services.AddFhirArtifactAuthoring();
+                // Optionally preload external packages (US Core, …) from a configured folder so
+                // declared IG dependencies resolve after every restart.
+                services.AddFhirArtifactAuthoring(o =>
+                    o.PackagesPath = configuration["His:Fhir:Authoring:PackagesPath"]);
             }
 
             if (enableFhirAuditPersistence)
