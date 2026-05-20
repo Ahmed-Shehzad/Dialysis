@@ -7,8 +7,8 @@ import { SessionLifecycleControls } from "@/features/sessions/components/Session
 import { TreatmentSummary } from "@/features/sessions/components/TreatmentSummary";
 import { useVitalsStream } from "@/features/vitals/hooks/useVitalsStream";
 import { VitalsChart } from "@/features/vitals/components/VitalsChart";
-import { VitalsLatestPanel } from "@/features/vitals/components/VitalsLatestPanel";
 import { ChairsideHeader } from "@/modules/pdms/chairside/ChairsideHeader";
+import { KioskVitals } from "@/modules/pdms/chairside/KioskVitals";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
 export const SessionLivePage = () => {
@@ -64,7 +64,7 @@ export const SessionLivePage = () => {
 
       {sessionId && <TreatmentSummary sessionId={sessionId} />}
 
-      <VitalsLatestPanel latest={latest} />
+      <KioskVitals latest={latest} />
 
       <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
         <h3 className="mb-3 text-sm font-medium text-slate-200">
