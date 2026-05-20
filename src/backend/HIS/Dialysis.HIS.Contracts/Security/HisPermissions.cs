@@ -28,6 +28,13 @@ public static class HisPermissions
     public const string SecurityManage = "his.security.manage";
     public const string SchedulingBook = "his.scheduling.book";
     public const string PatientFlowAdmit = "his.patientflow.admit";
+
+    /// <summary>Read today's patient queue (receptionist's Front Desk view).</summary>
+    public const string PatientFlowQueueRead = "his.patientflow.queue.read";
+
+    /// <summary>Mutate today's patient queue (check-in, assign chair, walk-in).</summary>
+    public const string PatientFlowQueueManage = "his.patientflow.queue.manage";
+
     public const string PatientPortalRead = "his.patientaccess.portal.read";
     public const string MedicationOrderPlace = "his.medication.order.place";
 
@@ -45,6 +52,8 @@ public static class HisPermissions
         SecurityManage,
         SchedulingBook,
         PatientFlowAdmit,
+        PatientFlowQueueRead,
+        PatientFlowQueueManage,
         PatientPortalRead,
         MedicationOrderPlace,
     ];

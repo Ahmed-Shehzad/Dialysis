@@ -73,6 +73,9 @@ public static class PersistenceServiceCollectionExtensions
             services.AddScoped<IAdmissionRepository, EfAdmissionRepository>();
             services.AddScoped<IMedicationOrderRepository, EfMedicationOrderRepository>();
             services.AddScoped<IPatientPortalReadModel, EfPatientPortalReadModel>();
+            // Patient queue is in-memory while the workflow shape is being validated with
+            // clinical staff; singleton so every request hits the same demo queue.
+            services.AddSingleton<IPatientQueueRepository, InMemoryPatientQueueRepository>();
             return services;
         }
     }
