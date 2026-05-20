@@ -8,5 +8,6 @@ export const smartConnectModule: ModuleManifest = {
   tagline: "HL7 v2 inbound · vendor adapters",
   requires: "smartconnect.feeds.view",
   enabled: true,
+  home: "/integrations",
   renderRoutes: () => <Route path="integrations" element={<IntegrationsPage />} />,
 };

@@ -27,6 +27,12 @@ export interface ModuleManifest {
    */
   enabled: boolean;
   /**
+   * Absolute path the module switcher should navigate to when the user picks this module.
+   * Typically the module's "home" view — the receptionist's Today screen, the nurse's chart
+   * list, the operator's feeds dashboard. Optional for modules that aren't navigable yet.
+   */
+  home?: string;
+  /**
    * Returns the `<Route>` elements this module mounts under the authenticated shell.
    * Kept JSX-flavoured rather than `RouteObject[]` to match the existing declarative router.
    */

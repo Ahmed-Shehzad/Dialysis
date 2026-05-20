@@ -10,6 +10,7 @@ export const hieModule: ModuleManifest = {
   tagline: "FHIR partners · consent · subscriptions",
   requires: "hie.outbound.view",
   enabled: true,
+  home: "/fhir-exchange",
   renderRoutes: () => (
     <>
       <Route path="fhir-exchange" element={<FhirExchangePage />} />

@@ -9,6 +9,7 @@ export const pdmsModule: ModuleManifest = {
   tagline: "Live treatment · vitals · machine alarms",
   requires: "pdms.treatment_sessions.view",
   enabled: true,
+  home: "/sessions",
   renderRoutes: () => (
     <>
       <Route path="sessions" element={<SessionsPage />} />

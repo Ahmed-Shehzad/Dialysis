@@ -10,6 +10,7 @@ export const ehrModule: ModuleManifest = {
   tagline: "Patient record · orders · notes",
   requires: "ehr.patient_chart.view",
   enabled: true,
+  home: "/patients",
   renderRoutes: () => (
     <>
       <Route path="patients" element={<PatientsPage />} />

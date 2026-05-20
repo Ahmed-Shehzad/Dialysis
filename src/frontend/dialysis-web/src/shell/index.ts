@@ -1,3 +1,4 @@
+export { PatientContextBar } from "./PatientContextBar";
 export { PatientContextProvider, usePatientContext } from "./PatientContextProvider";
 export type { SelectedPatient } from "./PatientContextProvider";
 export { PermissionGate } from "./PermissionGate";
