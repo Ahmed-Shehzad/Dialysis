@@ -19,6 +19,7 @@ using Dialysis.EHR.PatientChart.Features.RecordProblem;
 using Dialysis.EHR.PatientChart.Features.RecordVitalSign;
 using Dialysis.EHR.PatientPortal.Features.RequestAppointment;
 using Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
+using Dialysis.EHR.Registration.Features.GetPatientById;
 using Dialysis.EHR.Registration.Features.MergePatients;
 using Dialysis.EHR.Registration.Features.RegisterPatient;
 using Dialysis.EHR.Registration.Features.RegisterProvider;
@@ -83,6 +84,7 @@ internal static class EhrCommandRegistrations
 
         // Queries
         c.AddQueryBehavior<SearchPatientsQuery, PatientSearchResult, AuthorizationPipelineBehavior<SearchPatientsQuery, PatientSearchResult>>();
+        c.AddQueryBehavior<GetPatientByIdQuery, PatientDetailDto?, AuthorizationPipelineBehavior<GetPatientByIdQuery, PatientDetailDto?>>();
         c.AddQueryBehavior<GetPatientChartQuery, PatientChartView, AuthorizationPipelineBehavior<GetPatientChartQuery, PatientChartView>>();
     }
 }

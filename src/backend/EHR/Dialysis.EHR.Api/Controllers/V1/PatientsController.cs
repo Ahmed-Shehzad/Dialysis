@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.Registration.Domain;
+using Dialysis.EHR.Registration.Features.GetPatientById;
 using Dialysis.EHR.Registration.Features.SearchPatients;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,6 +34,18 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
                 cancellationToken)
             .ConfigureAwait(false);
         return Ok(results);
+    }
+
+    [HttpGet("{patientId:guid}")]
+    [ProducesResponseType(typeof(PatientDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetByIdAsync(Guid patientId, CancellationToken cancellationToken)
+    {
+        var detail = await gateway
+            .SendQueryAsync<GetPatientByIdQuery, PatientDetailDto?>(
+                new GetPatientByIdQuery(patientId), cancellationToken)
+            .ConfigureAwait(false);
+        return detail is null ? NotFound() : Ok(detail);
     }
 
     [HttpGet("{patientId:guid}/chart")]

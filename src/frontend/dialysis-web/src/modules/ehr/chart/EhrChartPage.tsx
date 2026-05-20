@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPatientChart, type ChartItem } from "@/features/ehr/api/ehrApi";
+import { fetchEhrPatient, fetchPatientChart, type ChartItem } from "@/features/ehr/api/ehrApi";
 import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { usePatientContext } from "@/shell/PatientContextProvider";
@@ -60,22 +60,37 @@ export const EhrChartPage = () => {
     queryFn: () => fetchPatientChart(patientId as string),
     enabled: Boolean(patientId),
   });
+  const detail = useQuery({
+    queryKey: ["ehr", "patient", patientId],
+    queryFn: () => fetchEhrPatient(patientId as string),
+    enabled: Boolean(patientId),
+  });
   const consents = useQuery({
     queryKey: ["hie", "consents", patientId],
     queryFn: () => fetchConsentsForPatient(patientId as string),
     enabled: Boolean(patientId),
   });
 
-  // When the user lands here directly (deep link) and a name is already known in context,
-  // surface it. If the chart loads and no name is known, we leave the context untouched —
-  // a real "get patient" endpoint would be a follow-up; for now we accept the placeholder.
+  // Promote the resolved name + MRN into the cross-module patient context so subsequent
+  // navigation (back to HIS, into PDMS chairside, …) carries the real identifier rather
+  // than the route's bare GUID. We only write when the URL has shifted to a different
+  // patient — otherwise React Query's cached identity keeps this effect a no-op.
   useEffect(() => {
-    if (patientId && patient && patient.id !== patientId) {
-      // Patient context points elsewhere; the URL is authoritative for chart loading,
-      // so clear the stale selection rather than override the route.
+    if (!patientId) return;
+    if (patient?.id === patientId) return;
+    const d = detail.data;
+    if (d) {
+      select({
+        id: d.id,
+        displayName: `${d.givenName} ${d.familyName}`.trim(),
+        mrn: d.medicalRecordNumber,
+      });
+    } else if (!detail.isLoading) {
+      // Endpoint returned 404 or we're still in the very first render. Surface a placeholder
+      // so the bar at least reflects the route while the fetch settles.
       select({ id: patientId, displayName: `Patient ${patientId.slice(0, 8)}…` });
     }
-  }, [patientId, patient, select]);
+  }, [patientId, patient, detail.data, detail.isLoading, select]);
 
   const allergies = chart.data?.allergies ?? [];
   const problems = useMemo(
@@ -95,9 +110,18 @@ export const EhrChartPage = () => {
 
   if (!patientId) return <div className="text-slate-400">Missing patient id.</div>;
 
+  // Header identity prefers the cross-module context (so navigation from HIS keeps the same
+  // name the receptionist saw), then the fetched detail, then a placeholder. The branches
+  // collapse cleanly once the effect above has promoted detail into context, but the
+  // fallback chain matters during the first render or on a fresh deep link.
+  const detailFullName = detail.data
+    ? `${detail.data.givenName} ${detail.data.familyName}`.trim()
+    : undefined;
   const displayName =
-    patient && patient.id === patientId ? patient.displayName : `Patient ${patientId.slice(0, 8)}…`;
-  const mrn = patient && patient.id === patientId ? patient.mrn : undefined;
+    patient && patient.id === patientId
+      ? patient.displayName
+      : (detailFullName ?? `Patient ${patientId.slice(0, 8)}…`);
+  const mrn = patient && patient.id === patientId ? patient.mrn : detail.data?.medicalRecordNumber;
 
   return (
     <div className="space-y-6">
