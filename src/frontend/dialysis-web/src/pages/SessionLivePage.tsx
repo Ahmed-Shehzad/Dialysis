@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchActiveSessions } from "@/features/sessions/api/sessionsApi";
@@ -8,7 +8,8 @@ import { TreatmentSummary } from "@/features/sessions/components/TreatmentSummar
 import { useVitalsStream } from "@/features/vitals/hooks/useVitalsStream";
 import { VitalsChart } from "@/features/vitals/components/VitalsChart";
 import { VitalsLatestPanel } from "@/features/vitals/components/VitalsLatestPanel";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ChairsideHeader } from "@/modules/pdms/chairside/ChairsideHeader";
+import { usePatientContext } from "@/shell/PatientContextProvider";
 
 export const SessionLivePage = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -38,22 +39,26 @@ export const SessionLivePage = () => {
 
   const latest = merged.at(-1);
 
+  // Keep the cross-module patient context in sync with the session being watched, so a
+  // nurse who opened the chairside monitor from the HIS queue (or anywhere else) sees the
+  // same patient surfaced in the top-of-shell context bar and can jump back to their chart.
+  const { patient, select } = usePatientContext();
+  useEffect(() => {
+    if (!session) return;
+    if (patient?.id === session.patientId) return;
+    select({
+      id: session.patientId,
+      displayName: `Patient ${session.patientId.slice(0, 8)}…`,
+    });
+  }, [session, patient, select]);
+
   if (!sessionId) {
     return <div className="text-slate-400">Missing session id.</div>;
   }
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-clinic-50">Live session</h2>
-          <p className="font-mono text-xs text-slate-400">{sessionId}</p>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-slate-300">
-          <span>Realtime</span>
-          <StatusBadge status={stream.status} />
-        </div>
-      </header>
+      <ChairsideHeader session={session} sessionId={sessionId} realtimeStatus={stream.status} />
 
       <SessionLifecycleControls session={session} />
 
