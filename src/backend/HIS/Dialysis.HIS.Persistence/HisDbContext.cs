@@ -45,6 +45,7 @@ public sealed class HisDbContext(
     public DbSet<LocalUser> LocalUsers => Set<LocalUser>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Admission> Admissions => Set<Admission>();
+    public DbSet<PatientQueueEntry> PatientQueueEntries => Set<PatientQueueEntry>();
     public DbSet<MedicationOrder> MedicationOrders => Set<MedicationOrder>();
     public DbSet<BillingExportJobAudit> BillingExportJobAudits => Set<BillingExportJobAudit>();
 
@@ -300,6 +301,26 @@ public sealed class HisDbContext(
             e.Property(a => a.AdmittedAtUtc).IsRequired();
             e.Property(a => a.DischargedAtUtc);
             e.HasIndex(a => a.PatientId).HasDatabaseName("IX_Admissions_PatientId");
+        });
+
+        modelBuilder.Entity<PatientQueueEntry>(e =>
+        {
+            e.ToTable("PatientQueueEntries", "his_patientflow");
+            e.HasKey(q => q.Id);
+            e.Property(q => q.PatientId).IsRequired();
+            e.Property(q => q.PatientName).HasMaxLength(256).IsRequired();
+            e.Property(q => q.Mrn).HasMaxLength(32).IsRequired();
+            e.Property(q => q.ScheduledForUtc).IsRequired();
+            // Storing the enum by its name keeps reports / ad-hoc SQL readable; the enum
+            // is small enough that the byte cost is negligible compared to the clarity win.
+            e.Property(q => q.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+            e.Property(q => q.EligibilityVerified).IsRequired();
+            e.Property(q => q.Chair).HasMaxLength(32);
+            e.HasIndex(q => q.ScheduledForUtc).HasDatabaseName("IX_PatientQueueEntries_ScheduledForUtc");
+            e.HasIndex(q => q.PatientId).HasDatabaseName("IX_PatientQueueEntries_PatientId");
+            // Integration / domain events are in-memory only — EF must never try to map them.
+            e.Ignore(q => q.IntegrationEvents);
+            e.Ignore(q => q.DomainEvents);
         });
 
         modelBuilder.Entity<MedicationOrder>(e =>
