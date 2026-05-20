@@ -62,7 +62,7 @@ export const QueueCard = ({ entry, onAction }: QueueCardProps) => {
             {entry.patientName}
           </button>
           <p className="truncate text-xs text-slate-400">
-            {entry.mrn} · {formatTime(entry.scheduledFor)}
+            {entry.mrn} · {formatTime(entry.scheduledForUtc)}
             {entry.chair ? ` · ${entry.chair}` : ""}
           </p>
         </div>
