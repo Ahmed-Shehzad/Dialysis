@@ -1,4 +1,4 @@
-type Status = "connected" | "connecting" | "reconnecting" | "disconnected" | "idle";
+export type Status = "connected" | "connecting" | "reconnecting" | "disconnected" | "idle";
 
 const styles: Record<Status, string> = {
   connected: "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/50",
