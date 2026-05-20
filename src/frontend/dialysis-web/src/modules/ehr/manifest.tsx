@@ -1,8 +1,10 @@
 import { Route } from "react-router-dom";
-import { EhrWorkflowsPage } from "@/pages/EhrWorkflowsPage";
-import { PatientChartPage } from "@/pages/PatientChartPage";
-import { PatientsPage } from "@/pages/PatientsPage";
+import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
+
+const EhrWorkflowsPage = lazyPage(() => import("@/pages/EhrWorkflowsPage"), "EhrWorkflowsPage");
+const PatientChartPage = lazyPage(() => import("@/pages/PatientChartPage"), "PatientChartPage");
+const PatientsPage = lazyPage(() => import("@/pages/PatientsPage"), "PatientsPage");
 
 export const ehrModule: ModuleManifest = {
   slug: "ehr",

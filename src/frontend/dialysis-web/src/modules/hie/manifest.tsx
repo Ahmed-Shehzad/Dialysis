@@ -1,8 +1,10 @@
 import { Route } from "react-router-dom";
-import { FhirAuthoringPage } from "@/pages/FhirAuthoringPage";
-import { FhirExchangePage } from "@/pages/FhirExchangePage";
-import { SubscriptionsPage } from "@/pages/SubscriptionsPage";
+import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
+
+const FhirAuthoringPage = lazyPage(() => import("@/pages/FhirAuthoringPage"), "FhirAuthoringPage");
+const FhirExchangePage = lazyPage(() => import("@/pages/FhirExchangePage"), "FhirExchangePage");
+const SubscriptionsPage = lazyPage(() => import("@/pages/SubscriptionsPage"), "SubscriptionsPage");
 
 export const hieModule: ModuleManifest = {
   slug: "hie",

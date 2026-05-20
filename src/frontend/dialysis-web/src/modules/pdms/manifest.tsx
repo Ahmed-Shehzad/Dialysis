@@ -1,7 +1,9 @@
 import { Route } from "react-router-dom";
-import { SessionLivePage } from "@/pages/SessionLivePage";
-import { SessionsPage } from "@/pages/SessionsPage";
+import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
+
+const SessionLivePage = lazyPage(() => import("@/pages/SessionLivePage"), "SessionLivePage");
+const SessionsPage = lazyPage(() => import("@/pages/SessionsPage"), "SessionsPage");
 
 export const pdmsModule: ModuleManifest = {
   slug: "pdms",

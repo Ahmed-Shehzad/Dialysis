@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { useTheme } from "@/features/theme/ThemeProvider";
@@ -74,7 +74,17 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
         </div>
       </header>
       <PatientContextBar />
-      <main className="mx-auto max-w-7xl px-6 py-6">{children ?? <Outlet />}</main>
+      <main className="mx-auto max-w-7xl px-6 py-6">
+        <Suspense
+          fallback={
+            <div role="status" className="text-sm text-slate-400">
+              Loading…
+            </div>
+          }
+        >
+          {children ?? <Outlet />}
+        </Suspense>
+      </main>
     </div>
   );
 };

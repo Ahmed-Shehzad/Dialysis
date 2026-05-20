@@ -1,6 +1,8 @@
 import { Route } from "react-router-dom";
-import { IntegrationsPage } from "@/pages/IntegrationsPage";
+import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
+
+const IntegrationsPage = lazyPage(() => import("@/pages/IntegrationsPage"), "IntegrationsPage");
 
 export const smartConnectModule: ModuleManifest = {
   slug: "smartconnect",
