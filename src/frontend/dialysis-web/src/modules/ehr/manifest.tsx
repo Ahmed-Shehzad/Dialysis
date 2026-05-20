@@ -2,8 +2,8 @@ import { Route } from "react-router-dom";
 import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
 
+const EhrChartPage = lazyPage(() => import("@/modules/ehr/chart/EhrChartPage"), "EhrChartPage");
 const EhrWorkflowsPage = lazyPage(() => import("@/pages/EhrWorkflowsPage"), "EhrWorkflowsPage");
-const PatientChartPage = lazyPage(() => import("@/pages/PatientChartPage"), "PatientChartPage");
 const PatientsPage = lazyPage(() => import("@/pages/PatientsPage"), "PatientsPage");
 
 export const ehrModule: ModuleManifest = {
@@ -16,7 +16,7 @@ export const ehrModule: ModuleManifest = {
   renderRoutes: () => (
     <>
       <Route path="patients" element={<PatientsPage />} />
-      <Route path="patients/:patientId" element={<PatientChartPage />} />
+      <Route path="patients/:patientId" element={<EhrChartPage />} />
       <Route path="workflows/ehr" element={<EhrWorkflowsPage />} />
     </>
   ),
