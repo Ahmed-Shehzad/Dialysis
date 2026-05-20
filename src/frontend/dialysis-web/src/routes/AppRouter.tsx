@@ -1,19 +1,10 @@
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LoginPage } from "@/pages/LoginPage";
-import { SessionLivePage } from "@/pages/SessionLivePage";
-import { SessionsPage } from "@/pages/SessionsPage";
-import { PatientsPage } from "@/pages/PatientsPage";
-import { PatientChartPage } from "@/pages/PatientChartPage";
-import { IntegrationsPage } from "@/pages/IntegrationsPage";
-import { HisWorkflowsPage } from "@/pages/HisWorkflowsPage";
-import { EhrWorkflowsPage } from "@/pages/EhrWorkflowsPage";
-import { FhirExchangePage } from "@/pages/FhirExchangePage";
-import { FhirAuthoringPage } from "@/pages/FhirAuthoringPage";
-import { SubscriptionsPage } from "@/pages/SubscriptionsPage";
-import { useEffect, useState, type ReactNode } from "react";
+import { enabledModules } from "@/shell/registry";
 
 // After this many milliseconds in "loading", surface a manual sign-in button so the user
 // always has an out — even if the auth probe is genuinely stuck on some upstream hop.
@@ -65,16 +56,9 @@ export const AppRouter = () => (
       }
     >
       <Route index element={<DashboardPage />} />
-      <Route path="patients" element={<PatientsPage />} />
-      <Route path="patients/:patientId" element={<PatientChartPage />} />
-      <Route path="sessions" element={<SessionsPage />} />
-      <Route path="sessions/:sessionId" element={<SessionLivePage />} />
-      <Route path="integrations" element={<IntegrationsPage />} />
-      <Route path="workflows/his" element={<HisWorkflowsPage />} />
-      <Route path="workflows/ehr" element={<EhrWorkflowsPage />} />
-      <Route path="fhir-exchange" element={<FhirExchangePage />} />
-      <Route path="fhir-authoring" element={<FhirAuthoringPage />} />
-      <Route path="subscriptions" element={<SubscriptionsPage />} />
+      {enabledModules().map((m) => (
+        <Fragment key={m.slug}>{m.renderRoutes()}</Fragment>
+      ))}
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
