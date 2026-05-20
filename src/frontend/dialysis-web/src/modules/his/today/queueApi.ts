@@ -39,6 +39,38 @@ export interface CheckInRequest {
   eligibilityAcknowledged: boolean;
 }
 
+export interface AssignChairRequest {
+  entryId: string;
+  chair: string;
+}
+
+export interface RegisterWalkInRequest {
+  patientName: string;
+  mrn: string;
+  /** True when insurance eligibility was confirmed at the counter before submitting. */
+  eligibilityVerified: boolean;
+}
+
+/** Fixed chair roster for the demo. Replace with `/api/his/.../chairs` once it lands. */
+export const ALL_CHAIRS: readonly string[] = [
+  "Chair 1",
+  "Chair 2",
+  "Chair 3",
+  "Chair 4",
+  "Chair 5",
+  "Chair 6",
+  "Chair 7",
+  "Chair 8",
+];
+
+/** Computes which chairs are still free, given a snapshot of today's queue. */
+export const freeChairs = (entries: readonly QueueEntry[]): readonly string[] => {
+  const occupied = new Set(
+    entries.filter((e) => e.status === "in-treatment" && e.chair).map((e) => e.chair),
+  );
+  return ALL_CHAIRS.filter((c) => !occupied.has(c));
+};
+
 const QUEUE_QUERY_KEY = ["his", "todays-queue"] as const;
 
 // TODO(his): replace with a real endpoint once HIS exposes /todays-queue + /check-in. Until
@@ -132,6 +164,58 @@ const submitCheckIn = (req: CheckInRequest): Promise<QueueEntry> =>
     }, 250);
   });
 
+const submitAssignChair = (req: AssignChairRequest): Promise<QueueEntry> =>
+  new Promise((resolve, reject) => {
+    globalThis.setTimeout(() => {
+      const entry = mockStore.entries.find((e) => e.id === req.entryId);
+      if (!entry) {
+        reject(new Error("Queue entry not found"));
+        return;
+      }
+      if (entry.status !== "waiting") {
+        reject(new Error("Patient is not waiting for a chair right now."));
+        return;
+      }
+      const occupied = mockStore.entries.some(
+        (e) => e.status === "in-treatment" && e.chair === req.chair,
+      );
+      if (occupied) {
+        reject(new Error(`${req.chair} is already in use.`));
+        return;
+      }
+      entry.status = "in-treatment";
+      entry.chair = req.chair;
+      resolve({ ...entry });
+    }, 250);
+  });
+
+let nextWalkInSeq = 1;
+
+const submitRegisterWalkIn = (req: RegisterWalkInRequest): Promise<QueueEntry> =>
+  new Promise((resolve, reject) => {
+    globalThis.setTimeout(() => {
+      const name = req.patientName.trim();
+      const mrn = req.mrn.trim();
+      if (!name || !mrn) {
+        reject(new Error("Patient name and MRN are required."));
+        return;
+      }
+      const id = `walkin-${nextWalkInSeq++}`;
+      const entry: QueueEntry = {
+        id,
+        patientId: `p-walkin-${id}`,
+        patientName: name,
+        mrn,
+        scheduledFor: new Date().toISOString(),
+        // Walk-ins skip the Expected column — they arrived without an appointment.
+        status: "waiting",
+        eligibilityVerified: req.eligibilityVerified,
+      };
+      mockStore.entries.push(entry);
+      resolve({ ...entry });
+    }, 250);
+  });
+
 export const useTodaysQueue = (): UseQueryResult<readonly QueueEntry[]> =>
   useQuery({
     queryKey: QUEUE_QUERY_KEY,
@@ -139,38 +223,28 @@ export const useTodaysQueue = (): UseQueryResult<readonly QueueEntry[]> =>
     staleTime: 15_000,
   });
 
-interface CheckInContext {
+interface MutationContext {
   previous?: readonly QueueEntry[];
 }
 
 /**
- * Mutation that moves an Expected patient into Waiting. Uses an optimistic cache update so
- * the card moves columns immediately; if the server rejects, the cache is rolled back and
- * the dialog surfaces a humanized error. The query is invalidated on settle so the UI
- * resyncs with the canonical state once a real endpoint replaces the mock.
+ * Helper for the three queue mutations. Each one swaps in an optimistic version of the
+ * cache, rolls back on error, and invalidates on settle — the same shape, only the
+ * `applyOptimistic` step differs. Pulling it out keeps the call sites declarative and
+ * guarantees rollback semantics stay in lockstep across mutations.
  */
-export const useCheckInPatient = (): UseMutationResult<
-  QueueEntry,
-  Error,
-  CheckInRequest,
-  CheckInContext
-> => {
+const useQueueMutation = <TReq>(
+  mutationFn: (req: TReq) => Promise<QueueEntry>,
+  applyOptimistic: (entries: readonly QueueEntry[], req: TReq) => readonly QueueEntry[],
+): UseMutationResult<QueueEntry, Error, TReq, MutationContext> => {
   const queryClient = useQueryClient();
-  return useMutation<QueueEntry, Error, CheckInRequest, CheckInContext>({
-    mutationFn: submitCheckIn,
+  return useMutation<QueueEntry, Error, TReq, MutationContext>({
+    mutationFn,
     onMutate: async (req) => {
       await queryClient.cancelQueries({ queryKey: QUEUE_QUERY_KEY });
       const previous = queryClient.getQueryData<readonly QueueEntry[]>(QUEUE_QUERY_KEY);
       queryClient.setQueryData<readonly QueueEntry[]>(QUEUE_QUERY_KEY, (old) =>
-        old?.map((e) =>
-          e.id === req.entryId
-            ? {
-                ...e,
-                status: "waiting",
-                eligibilityVerified: e.eligibilityVerified || req.eligibilityAcknowledged,
-              }
-            : e,
-        ),
+        old ? applyOptimistic(old, req) : old,
       );
       return { previous };
     },
@@ -184,3 +258,42 @@ export const useCheckInPatient = (): UseMutationResult<
     },
   });
 };
+
+/** Moves an Expected patient to Waiting. */
+export const useCheckInPatient = () =>
+  useQueueMutation<CheckInRequest>(submitCheckIn, (entries, req) =>
+    entries.map((e) =>
+      e.id === req.entryId
+        ? {
+            ...e,
+            status: "waiting",
+            eligibilityVerified: e.eligibilityVerified || req.eligibilityAcknowledged,
+          }
+        : e,
+    ),
+  );
+
+/** Moves a Waiting patient to In treatment by assigning them a chair. */
+export const useAssignChair = () =>
+  useQueueMutation<AssignChairRequest>(submitAssignChair, (entries, req) =>
+    entries.map((e) =>
+      e.id === req.entryId ? { ...e, status: "in-treatment", chair: req.chair } : e,
+    ),
+  );
+
+/** Appends a walk-in patient directly into the Waiting column. */
+export const useRegisterWalkIn = () =>
+  useQueueMutation<RegisterWalkInRequest>(submitRegisterWalkIn, (entries, req) => [
+    ...entries,
+    {
+      // Synthetic id used only for the optimistic placeholder — the real id arrives via
+      // the mutation's resolved entry when `onSettled` invalidates the query.
+      id: `walkin-pending-${Date.now()}`,
+      patientId: `p-walkin-pending-${Date.now()}`,
+      patientName: req.patientName.trim(),
+      mrn: req.mrn.trim(),
+      scheduledFor: new Date().toISOString(),
+      status: "waiting",
+      eligibilityVerified: req.eligibilityVerified,
+    },
+  ]);

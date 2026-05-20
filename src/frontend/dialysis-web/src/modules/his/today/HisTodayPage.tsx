@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { AssignChairDialog } from "./AssignChairDialog";
 import { CheckInDialog } from "./CheckInDialog";
 import { QueueCard } from "./QueueCard";
+import { WalkInDialog } from "./WalkInDialog";
 import { useTodaysQueue, type QueueEntry, type QueueStatus } from "./queueApi";
 
 const COLUMNS: ReadonlyArray<{ status: QueueStatus; title: string; emptyHint: string }> = [
@@ -34,6 +36,8 @@ export const HisTodayPage = () => {
   const navigate = useNavigate();
   const queue = useTodaysQueue();
   const [checkInTarget, setCheckInTarget] = useState<QueueEntry | null>(null);
+  const [assignChairTarget, setAssignChairTarget] = useState<QueueEntry | null>(null);
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   const grouped = useMemo(() => {
     const groups: Record<QueueStatus, QueueEntry[]> = {
@@ -49,18 +53,17 @@ export const HisTodayPage = () => {
 
   const handleAction = (entry: QueueEntry) => {
     // Each column's primary action is a forward step in the queue.
-    // Expected → open the check-in dialog; In treatment → cross into the EHR chart.
-    // Assign-chair lands in the next HIS slice; surface a placeholder so the wiring intent
-    // stays visible until it ships.
+    // Expected → check-in dialog. Waiting → assign-chair dialog.
+    // In treatment → cross into the EHR chart.
     if (entry.status === "expected") {
       setCheckInTarget(entry);
       return;
     }
-    if (entry.status === "in-treatment") {
-      navigate(`/patients/${entry.patientId}`);
+    if (entry.status === "waiting") {
+      setAssignChairTarget(entry);
       return;
     }
-    globalThis.alert(`Assign chair for ${entry.patientName} — ships with the next HIS slice.`);
+    navigate(`/patients/${entry.patientId}`);
   };
 
   return (
@@ -72,7 +75,7 @@ export const HisTodayPage = () => {
         </div>
         <button
           type="button"
-          onClick={() => globalThis.alert("Walk-in registration — ships with the next HIS slice.")}
+          onClick={() => setWalkInOpen(true)}
           className="rounded-md bg-clinic-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-clinic-500"
         >
           + Walk-in
@@ -93,6 +96,12 @@ export const HisTodayPage = () => {
       {checkInTarget && (
         <CheckInDialog entry={checkInTarget} onClose={() => setCheckInTarget(null)} />
       )}
+
+      {assignChairTarget && (
+        <AssignChairDialog entry={assignChairTarget} onClose={() => setAssignChairTarget(null)} />
+      )}
+
+      {walkInOpen && <WalkInDialog onClose={() => setWalkInOpen(false)} />}
 
       {queue.data && (
         <div className="grid gap-4 md:grid-cols-3">
