@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { CheckInDialog } from "./CheckInDialog";
 import { QueueCard } from "./QueueCard";
 import { useTodaysQueue, type QueueEntry, type QueueStatus } from "./queueApi";
 
@@ -32,6 +33,7 @@ const todayLabel = (): string =>
 export const HisTodayPage = () => {
   const navigate = useNavigate();
   const queue = useTodaysQueue();
+  const [checkInTarget, setCheckInTarget] = useState<QueueEntry | null>(null);
 
   const grouped = useMemo(() => {
     const groups: Record<QueueStatus, QueueEntry[]> = {
@@ -46,19 +48,19 @@ export const HisTodayPage = () => {
   }, [queue.data]);
 
   const handleAction = (entry: QueueEntry) => {
-    // Each column's primary action is a forward step in the queue. For now we only have
-    // a real destination for "Open chart" (which crosses into the EHR module); the
-    // check-in / assign-chair flows ship in the next slice — we surface a placeholder so
-    // the receptionist can see the wiring intent.
+    // Each column's primary action is a forward step in the queue.
+    // Expected → open the check-in dialog; In treatment → cross into the EHR chart.
+    // Assign-chair lands in the next HIS slice; surface a placeholder so the wiring intent
+    // stays visible until it ships.
+    if (entry.status === "expected") {
+      setCheckInTarget(entry);
+      return;
+    }
     if (entry.status === "in-treatment") {
       navigate(`/patients/${entry.patientId}`);
       return;
     }
-    globalThis.alert(
-      entry.status === "expected"
-        ? `Check-in for ${entry.patientName} — ships with the next HIS slice.`
-        : `Assign chair for ${entry.patientName} — ships with the next HIS slice.`,
-    );
+    globalThis.alert(`Assign chair for ${entry.patientName} — ships with the next HIS slice.`);
   };
 
   return (
@@ -86,6 +88,10 @@ export const HisTodayPage = () => {
         >
           {humanizeError(queue.error)}
         </div>
+      )}
+
+      {checkInTarget && (
+        <CheckInDialog entry={checkInTarget} onClose={() => setCheckInTarget(null)} />
       )}
 
       {queue.data && (
