@@ -81,6 +81,32 @@ export const fetchPatientChart = async (patientId: string): Promise<PatientChart
   return response.data;
 };
 
+export type EhrPatientDetail = {
+  id: string;
+  medicalRecordNumber: string;
+  familyName: string;
+  givenName: string;
+  middleName?: string | null;
+  dateOfBirth: string; // YYYY-MM-DD
+  sexAtBirthCode?: string | null;
+  preferredLanguageCode?: string | null;
+  status: string;
+};
+
+/** Returns identity / demographics for one patient. Returns null on 404. */
+export const fetchEhrPatient = async (patientId: string): Promise<EhrPatientDetail | null> => {
+  try {
+    const response = await apiClient.get<EhrPatientDetail>(
+      `/api/ehr/api/v1.0/patients/${patientId}`,
+    );
+    return response.data;
+  } catch (error) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    if (status === 404) return null;
+    throw error;
+  }
+};
+
 export type RegisterPatientRequest = {
   medicalRecordNumber: string;
   familyName: string;
