@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { ThemeProvider } from "@/features/theme/ThemeProvider";
+import { PatientContextProvider } from "@/shell/PatientContextProvider";
 
 const buildQueryClient = () =>
   new QueryClient({
@@ -29,7 +30,9 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
     <ThemeProvider>
       <QueryClientProvider client={client}>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <PatientContextProvider>{children}</PatientContextProvider>
+          </AuthProvider>
         </BrowserRouter>
         <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
       </QueryClientProvider>

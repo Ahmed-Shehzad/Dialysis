@@ -1,0 +1,21 @@
+import { Route } from "react-router-dom";
+import { lazyPage } from "@/shared/lazyPage";
+import type { ModuleManifest } from "@/shell/types";
+
+const SessionLivePage = lazyPage(() => import("@/pages/SessionLivePage"), "SessionLivePage");
+const SessionsPage = lazyPage(() => import("@/pages/SessionsPage"), "SessionsPage");
+
+export const pdmsModule: ModuleManifest = {
+  slug: "pdms",
+  displayName: "Chairside",
+  tagline: "Live treatment · vitals · machine alarms",
+  requires: "pdms.treatment_sessions.view",
+  enabled: true,
+  home: "/sessions",
+  renderRoutes: () => (
+    <>
+      <Route path="sessions" element={<SessionsPage />} />
+      <Route path="sessions/:sessionId" element={<SessionLivePage />} />
+    </>
+  ),
+};

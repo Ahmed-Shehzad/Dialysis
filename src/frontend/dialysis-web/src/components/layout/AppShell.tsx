@@ -1,7 +1,9 @@
-import { type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { useTheme } from "@/features/theme/ThemeProvider";
+import { PatientContextBar } from "@/shell/PatientContextBar";
+import { enabledModules } from "@/shell/registry";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
@@ -19,25 +21,18 @@ const ThemeToggle = () => {
   );
 };
 
-const NAV = [
-  { to: "/", label: "Dashboard", end: true },
-  { to: "/patients", label: "Patients" },
-  { to: "/sessions", label: "Sessions" },
-  { to: "/workflows/his", label: "HIS" },
-  { to: "/workflows/ehr", label: "EHR" },
-  { to: "/integrations", label: "Integrations" },
-  { to: "/fhir-exchange", label: "FHIR Exchange" },
-  { to: "/fhir-authoring", label: "FHIR Authoring" },
-  { to: "/subscriptions", label: "Subscriptions" },
-];
-
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-1.5 text-sm font-medium transition ${
     isActive ? "bg-clinic-600 text-white" : "text-slate-300 hover:bg-slate-800"
   }`;
 
+// The top nav is the module switcher. Each enabled module surfaces its `displayName` as a
+// workflow label (e.g. "Front Desk", "Chairside") and navigates to its `home` route. The
+// dashboard stays as the leftmost entry — it'll grow into a role-aware home that shows
+// the right modules + the right cards for the signed-in user.
 export const AppShell = ({ children }: { children?: ReactNode }) => {
   const { user, signOut, status } = useAuth();
+  const modules = enabledModules();
 
   return (
     <div className="min-h-full">
@@ -45,12 +40,18 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
             <h1 className="text-lg font-semibold tracking-tight text-clinic-50">Dialysis</h1>
-            <nav className="flex gap-1">
-              {NAV.map((item) => (
-                <NavLink key={item.to} to={item.to} end={item.end} className={navClass}>
-                  {item.label}
-                </NavLink>
-              ))}
+            <nav className="flex flex-wrap gap-1" aria-label="Modules">
+              <NavLink to="/" end className={navClass}>
+                Dashboard
+              </NavLink>
+              {modules.map((m) => {
+                const target = m.home ?? "/";
+                return (
+                  <NavLink key={m.slug} to={target} title={m.tagline} className={navClass}>
+                    {m.displayName}
+                  </NavLink>
+                );
+              })}
             </nav>
           </div>
           <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -72,7 +73,18 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-6">{children ?? <Outlet />}</main>
+      <PatientContextBar />
+      <main className="mx-auto max-w-7xl px-6 py-6">
+        <Suspense
+          fallback={
+            <div role="status" className="text-sm text-slate-400">
+              Loading…
+            </div>
+          }
+        >
+          {children ?? <Outlet />}
+        </Suspense>
+      </main>
     </div>
   );
 };
