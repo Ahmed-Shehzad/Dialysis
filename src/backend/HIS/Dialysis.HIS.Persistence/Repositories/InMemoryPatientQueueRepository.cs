@@ -11,8 +11,9 @@ namespace Dialysis.HIS.Persistence.Repositories;
 /// <remarks>
 /// Singleton-scoped — every host shares one queue. Concurrent dictionary keeps reads
 /// allocation-free. Per-instance: bring up multiple replicas and they will diverge; that
-/// is acceptable for the demo path. Swap for an EF-backed repo once the HIS Scheduling +
-/// PatientFlow slices commit to a persisted query shape.
+/// is acceptable for the demo path. Once <c>dotnet ef migrations add HisPatientQueue</c>
+/// has been run and <see cref="EfPatientQueueRepository"/> is registered instead, this
+/// type becomes dead code and can be deleted.
 /// </remarks>
 public sealed class InMemoryPatientQueueRepository : IPatientQueueRepository
 {
@@ -42,40 +43,48 @@ public sealed class InMemoryPatientQueueRepository : IPatientQueueRepository
 
     private void SeedToday()
     {
-        // Today's date with fixed clinic-day times; UTC for storage.
         DateTime At(int hour, int minute) =>
             new DateTime(
                 DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day,
                 hour, minute, 0,
                 DateTimeKind.Utc);
 
-        Add(PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
+        Stash(PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
             "Anna Müller", "MRN-10421", At(8, 0), eligibilityVerified: true));
-        Add(PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
+        Stash(PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
             "Erik Larsen", "MRN-10433", At(8, 30), eligibilityVerified: false));
 
-        // A couple already checked in.
+        // A couple already checked in (replay the state transition so the entity passes
+        // through CheckIn rather than being constructed in the Waiting state). The events
+        // it raises along the way are historical — discard them before storing so the
+        // outbox isn't backfilled at startup.
         var priya = PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
             "Priya Shah", "MRN-10448", At(8, 45), eligibilityVerified: true);
-        priya.CheckIn(eligibilityAcknowledged: false);
-        Add(priya);
+        priya.CheckIn(At(8, 45), eligibilityAcknowledged: false);
+        priya.ClearIntegrationEvents();
+        Stash(priya);
 
         var liam = PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
             "Liam O'Connor", "MRN-10455", At(8, 50), eligibilityVerified: true);
-        liam.CheckIn(eligibilityAcknowledged: false);
-        Add(liam);
+        liam.CheckIn(At(8, 50), eligibilityAcknowledged: false);
+        liam.ClearIntegrationEvents();
+        Stash(liam);
 
         // Two patients already in chairs.
         var sofia = PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
             "Sofia Rossi", "MRN-10412", At(7, 30), eligibilityVerified: true);
-        sofia.CheckIn(eligibilityAcknowledged: false);
-        sofia.AssignChair("Chair 4");
-        Add(sofia);
+        sofia.CheckIn(At(7, 30), eligibilityAcknowledged: false);
+        sofia.AssignChair("Chair 4", At(7, 35));
+        sofia.ClearIntegrationEvents();
+        Stash(sofia);
 
         var henrik = PatientQueueEntry.Schedule(Guid.NewGuid(), Guid.NewGuid(),
             "Henrik Berg", "MRN-10401", At(7, 30), eligibilityVerified: true);
-        henrik.CheckIn(eligibilityAcknowledged: false);
-        henrik.AssignChair("Chair 7");
-        Add(henrik);
+        henrik.CheckIn(At(7, 30), eligibilityAcknowledged: false);
+        henrik.AssignChair("Chair 7", At(7, 36));
+        henrik.ClearIntegrationEvents();
+        Stash(henrik);
     }
+
+    private void Stash(PatientQueueEntry entry) => _entries[entry.Id] = entry;
 }
