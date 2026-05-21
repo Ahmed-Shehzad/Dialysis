@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { patientMatch, submitFhirBundle } from "@/features/hie/api/hieApi";
+import { ConsentAdminPanel } from "@/features/hie/components/ConsentAdminPanel";
 import { FormField, TextInput } from "@/components/ui/FormField";
 
 const SAMPLE_BUNDLE = JSON.stringify(
@@ -147,5 +148,6 @@ export const FhirExchangePage = () => (
       <BundleIngestPanel />
       <PatientMatchPanel />
     </div>
+    <ConsentAdminPanel />
   </div>
 );
