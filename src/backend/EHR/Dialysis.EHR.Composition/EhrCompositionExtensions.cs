@@ -74,6 +74,7 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
+                t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();
 
                 if (enableFhirSubscriptions)
                     t.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedSubscriptionBroadcaster>();
