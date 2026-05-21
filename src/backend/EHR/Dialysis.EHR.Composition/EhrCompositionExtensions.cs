@@ -12,6 +12,7 @@ using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Contracts.Integration;
+using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.Core;
 using Dialysis.EHR.Integration;
@@ -71,6 +72,8 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<PrescriptionOrderedIntegrationEvent, PrescriptionOrderedConsumer>();
                 t.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
                 t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
+                // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
+                t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
 
                 if (enableFhirSubscriptions)
                     t.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedSubscriptionBroadcaster>();
