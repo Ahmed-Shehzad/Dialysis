@@ -7,6 +7,7 @@ import { SessionLifecycleControls } from "@/features/sessions/components/Session
 import { TreatmentSummary } from "@/features/sessions/components/TreatmentSummary";
 import { useVitalsStream } from "@/features/vitals/hooks/useVitalsStream";
 import { VitalsChart } from "@/features/vitals/components/VitalsChart";
+import { ChairsideAlarmStrip } from "@/modules/pdms/chairside/ChairsideAlarmStrip";
 import { ChairsideHeader } from "@/modules/pdms/chairside/ChairsideHeader";
 import { KioskVitals } from "@/modules/pdms/chairside/KioskVitals";
 import { usePatientContext } from "@/shell/PatientContextProvider";
@@ -59,6 +60,8 @@ export const SessionLivePage = () => {
   return (
     <div className="space-y-6">
       <ChairsideHeader session={session} sessionId={sessionId} realtimeStatus={stream.status} />
+
+      <ChairsideAlarmStrip />
 
       <SessionLifecycleControls session={session} />
 
