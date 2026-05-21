@@ -21,6 +21,9 @@ public static class PdmsPermissions
 
     public const string VascularAccessRecord = "pdms.vascular-access.record";
 
+    public const string AlarmRead = "pdms.alarm.read";
+    public const string AlarmAcknowledge = "pdms.alarm.acknowledge";
+
     public static IReadOnlyList<string> All { get; } =
     [
         SessionSchedule, SessionStart, SessionComplete, SessionAbort, SessionRead,
@@ -28,6 +31,7 @@ public static class PdmsPermissions
         PrescriptionWrite,
         DryWeightAssess,
         VascularAccessRecord,
+        AlarmRead, AlarmAcknowledge,
     ];
 }
 

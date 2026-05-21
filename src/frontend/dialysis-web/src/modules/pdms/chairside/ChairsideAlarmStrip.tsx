@@ -1,4 +1,4 @@
-import { useActiveAlarms, type AlarmListItem } from "./alarmsApi";
+import { machineLabel, useActiveAlarms, type AlarmListItem } from "./alarmsApi";
 
 const STATE_TONE: Record<AlarmListItem["state"], string> = {
   present: "border-rose-500 bg-rose-950/40 text-rose-100",
@@ -55,7 +55,7 @@ export const ChairsideAlarmStrip = () => {
               a.state === "present" && !a.acknowledgedUtc ? "animate-pulse" : ""
             }`}
           >
-            <span className="font-medium">{a.machineLabel}</span>
+            <span className="font-medium">{machineLabel(a)}</span>
             <span className="text-xs uppercase tracking-wide opacity-80">
               {a.alarmSource ?? `Code ${a.alarmCode}`}
             </span>
