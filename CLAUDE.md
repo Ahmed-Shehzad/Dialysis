@@ -30,6 +30,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A **modular monolith**: each bounded context under `src/backend/<Module>/` (HIS, EHR, PDMS, SmartConnect, HIE, Identity) has its own ASP.NET host and its own database. Modules communicate **only** via integration events over Transponder (RabbitMQ in the deployment stack, in-memory in dev/tests) — never via direct domain references.
 
+### Event storming, not event sourcing
+
+We model with **event storming** (Brandolini): commands, aggregates, policies, domain events, integration events, read models. We **do not** implement event sourcing — aggregates persist current state via EF, never as a replayable log. The split in code:
+
+- **Domain events** (`Dialysis.DomainDrivenDesign.DomainEvents.IDomainEventHandler<T>`) — in-process, raised by aggregates, dispatched within the same `SaveChanges` transaction. Use for *within-context* coordination.
+- **Integration events** (`Dialysis.DomainDrivenDesign.IntegrationEvents.IIntegrationEvent`) — persisted to the Transponder outbox in the same transaction as the state change, then relayed asynchronously over RabbitMQ. Use for *cross-context* signals. Schema-versioned (`int SchemaVersion`); a bump goes through `IntegrationEventVersioningTests`.
+- **Read models** — denormalized tables or in-memory projections built from current aggregate state (e.g. `EfManagerDashboardReadModel`, `EfPatientSearchReadModel`). Never rebuilt from an event log.
+
+Do not introduce `IEventStore`, aggregate-from-event-log, or replay loops. If a feature feels like it wants event sourcing, model it as an aggregate + projection instead.
+
 ### Module project layout (HIS is the reference shape)
 
 For module `X`:
@@ -77,6 +87,20 @@ HIS is mapped to Tummers et al. (2021) — see `src/backend/HIS/README.md` and `
 ### Identity / auth
 
 JWT Bearer is registered only when `<Module>:Authentication:Authority` is set; in Development with no Authority, `ICurrentUser` exposes all permissions for local work. IdP role/group names map to module permission strings via `<Module>:Authentication:RolePermissionMap`. HIS portal endpoints additionally filter by patient claim (`his_patient_id` or `sub` matching route `patientId`). The Identity BFF + Keycloak realm `dialysis` are the canonical IdP — see `src/backend/Identity/RUNBOOK.md` and `ARCHITECTURE.md`.
+
+### Frontend module-shell (`src/frontend/dialysis-web`)
+
+The SPA mirrors the backend boundaries: one folder per module under `src/modules/<slug>/`, all composed into a shared chrome.
+
+- **`src/shell/`** is the kernel:
+  - `registry.ts` exports `MODULE_MANIFESTS` and `enabledModules()`. The router and the top-nav module switcher both read from this list — adding a module to the UI is a one-line change here.
+  - `types.ts` defines `ModuleManifest` (slug, displayName, tagline, optional `requires` permission, `enabled` flag, optional `home` route, `renderRoutes()`).
+  - `PatientContextProvider` + `usePatientContext` carry the selected patient (id, displayName, mrn) across modules — HIS check-in / EHR chart load / PDMS chairside all read and write the same context so the patient follows the user.
+  - `PatientContextBar` surfaces the selected patient under the app header.
+  - `PermissionGate` wraps content that requires authentication / a permission (today gates on auth only; permission claims wire through when the BFF surfaces them).
+- **`src/modules/<slug>/manifest.tsx`** per module (`his`, `ehr`, `pdms`, `smartconnect`, `hie`, `identity`). Pages are loaded through **`src/shared/lazyPage.ts`** which wraps `React.lazy` with a typed adapter for named exports; the router wraps the outlet in `<Suspense>`. Result: each module ships in its own chunk and only downloads on first visit. Initial bundle is ~89 kB gz; echarts (`BokehChart`) is its own ~380 kB gz chunk loaded only when a chart mounts.
+- **`humanizeError`** (`src/lib/api/humanizeError.ts`) maps ProblemDetails / network errors to user-readable sentences. Never expose raw status codes or stack traces to clinical users.
+- **TanStack Query mutation pattern** — every queue/chart/note mutation uses optimistic-update + rollback on error + invalidate-on-settle. `useQueueMutation` in `modules/his/today/queueApi.ts` is the canonical helper; copy its shape for new mutations.
 
 ## Conventions & tooling
 
