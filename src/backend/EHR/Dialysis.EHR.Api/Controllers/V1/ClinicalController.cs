@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
@@ -55,6 +56,17 @@ public sealed class ClinicalController(ICqrsGateway gateway) : ControllerBase
             new SignClinicalNoteCommand(noteId, body.SigningProviderId),
             cancellationToken).ConfigureAwait(false);
         return NoContent();
+    }
+
+    [HttpPost("notes/draft")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> DraftNoteAsync(
+        [FromBody] DraftClinicalNoteCommand body,
+        CancellationToken cancellationToken)
+    {
+        var id = await gateway.SendCommandAsync<DraftClinicalNoteCommand, Guid>(
+            body, cancellationToken).ConfigureAwait(false);
+        return Created($"/api/v1.0/clinical/notes/{id}", new { id });
     }
 
     [HttpPost("lab-orders")]

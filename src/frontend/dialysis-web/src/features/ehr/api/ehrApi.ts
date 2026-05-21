@@ -166,3 +166,28 @@ export const orderLabTest = async (body: OrderLabTestRequest): Promise<string> =
   );
   return response.data.id;
 };
+
+export type DraftClinicalNoteRequest = {
+  encounterId: string;
+  patientId: string;
+  authoringProviderId: string;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+};
+
+export const draftClinicalNote = async (body: DraftClinicalNoteRequest): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>(
+    "/api/ehr/api/v1.0/clinical/notes/draft",
+    body,
+  );
+  return response.data.id;
+};
+
+/**
+ * Well-known demo provider id seeded by `EhrDemoSeeder` when `Ehr:Demo:Enabled=true`.
+ * Surfaced to the SPA as the authoring provider for notes / encounters until real
+ * auth-claim → provider-id mapping lands. Stable across restarts.
+ */
+export const DEMO_PROVIDER_ID = "00000000-0000-0000-0000-000000000001";
