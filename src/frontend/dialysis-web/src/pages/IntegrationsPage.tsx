@@ -3,6 +3,7 @@ import {
   useIntegrationsTab,
   type IntegrationsTabKey,
 } from "@/features/smartconnect/components/IntegrationsTabs";
+import { IntegrationsSummary } from "@/features/smartconnect/components/IntegrationsSummary";
 import { FlowsTab } from "@/features/smartconnect/tabs/FlowsTab";
 import { MessagesTab } from "@/features/smartconnect/tabs/MessagesTab";
 import { ConfigurationMapTab } from "@/features/smartconnect/tabs/ConfigurationMapTab";
@@ -41,6 +42,7 @@ export const IntegrationsPage = () => {
           events, and retention. Modelled on the Mirth Connect Administrator left rail.
         </p>
       </header>
+      <IntegrationsSummary />
       <IntegrationsTabs current={tab} onChange={setTab} />
       <div>{renderTab(tab)}</div>
     </div>
