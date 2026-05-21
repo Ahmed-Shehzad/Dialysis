@@ -311,16 +311,14 @@ public sealed class HisDbContext(
             e.Property(q => q.PatientName).HasMaxLength(256).IsRequired();
             e.Property(q => q.Mrn).HasMaxLength(32).IsRequired();
             e.Property(q => q.ScheduledForUtc).IsRequired();
-            // Storing the enum by its name keeps reports / ad-hoc SQL readable; the enum
-            // is small enough that the byte cost is negligible compared to the clarity win.
-            e.Property(q => q.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+            // Codebase convention: store enums as int (matches ClinicalNotes, Portal,
+            // Integration configurations). The dashboard-side readability cost of a number is
+            // worth the consistency with the rest of the model.
+            e.Property(q => q.Status).HasConversion<int>().IsRequired();
             e.Property(q => q.EligibilityVerified).IsRequired();
             e.Property(q => q.Chair).HasMaxLength(32);
             e.HasIndex(q => q.ScheduledForUtc).HasDatabaseName("IX_PatientQueueEntries_ScheduledForUtc");
             e.HasIndex(q => q.PatientId).HasDatabaseName("IX_PatientQueueEntries_PatientId");
-            // Integration / domain events are in-memory only — EF must never try to map them.
-            e.Ignore(q => q.IntegrationEvents);
-            e.Ignore(q => q.DomainEvents);
         });
 
         modelBuilder.Entity<MedicationOrder>(e =>
