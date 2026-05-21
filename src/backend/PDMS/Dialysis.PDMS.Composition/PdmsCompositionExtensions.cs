@@ -16,6 +16,7 @@ using Dialysis.PDMS.Core;
 using Dialysis.PDMS.Persistence;
 using Dialysis.PDMS.TreatmentSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
+using Dialysis.PDMS.TreatmentSessions.Features.AcknowledgeAlarm;
 using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
 using Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 using Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
@@ -83,6 +84,7 @@ public static class PdmsCompositionExtensions
                 c.AddCommandBehavior<RecordReadingCommand, Guid, AuthorizationPipelineBehavior<RecordReadingCommand, Guid>>();
                 c.AddCommandBehavior<CompleteSessionCommand, Unit, AuthorizationPipelineBehavior<CompleteSessionCommand, Unit>>();
                 c.AddCommandBehavior<AbortSessionCommand, Unit, AuthorizationPipelineBehavior<AbortSessionCommand, Unit>>();
+                c.AddCommandBehavior<AcknowledgeAlarmCommand, Unit, AuthorizationPipelineBehavior<AcknowledgeAlarmCommand, Unit>>();
 
                 c.AddQueryBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>, AuthorizationPipelineBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>>();
                 c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();

@@ -8,6 +8,9 @@ public sealed class TreatmentAlarmRepository(PdmsDbContext db) : ITreatmentAlarm
 {
     public void Add(TreatmentAlarm alarm) => db.TreatmentAlarms.Add(alarm);
 
+    public Task<TreatmentAlarm?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        db.TreatmentAlarms.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
     public Task<TreatmentAlarm?> FindLiveAsync(Guid machineId, long alarmCode, CancellationToken cancellationToken = default) =>
         db.TreatmentAlarms
             .Where(a =>
