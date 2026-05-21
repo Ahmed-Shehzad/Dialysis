@@ -5,6 +5,7 @@ import { fetchEhrPatient, fetchPatientChart, type ChartItem } from "@/features/e
 import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
+import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
 const isActive = (item: ChartItem): boolean => {
@@ -56,6 +57,7 @@ export const EhrChartPage = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const { patient, select } = usePatientContext();
   const [noteOpen, setNoteOpen] = useState(false);
+  const [labsOpen, setLabsOpen] = useState(false);
 
   const chart = useQuery({
     queryKey: ["ehr", "chart", patientId],
@@ -143,7 +145,7 @@ export const EhrChartPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => globalThis.alert("Order labs — ships in the next EHR slice.")}
+            onClick={() => setLabsOpen(true)}
             className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500"
           >
             + Order labs
@@ -152,6 +154,8 @@ export const EhrChartPage = () => {
       </header>
 
       {noteOpen && <AddNoteDialog patientId={patientId} onClose={() => setNoteOpen(false)} />}
+
+      {labsOpen && <OrderLabsDialog patientId={patientId} onClose={() => setLabsOpen(false)} />}
 
       {chart.isLoading && <div className="text-sm text-slate-400">Loading chart…</div>}
       {chart.error && (

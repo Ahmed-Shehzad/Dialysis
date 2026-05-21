@@ -191,3 +191,25 @@ export const draftClinicalNote = async (body: DraftClinicalNoteRequest): Promise
  * auth-claim → provider-id mapping lands. Stable across restarts.
  */
 export const DEMO_PROVIDER_ID = "00000000-0000-0000-0000-000000000001";
+
+/**
+ * Demo lab facility code passed to `orderLabTest`. Placeholder until a real lab
+ * directory endpoint (`/clinical/lab-facilities`) exists.
+ */
+export const DEMO_LAB_FACILITY = "DEMO-LAB-01";
+
+/**
+ * Common dialysis-relevant LOINC panels surfaced in the Order Labs dialog. Hardcoded
+ * until the FHIR Terminology service is wired through to the SPA — at that point this
+ * list moves behind a real search.
+ */
+export const COMMON_LAB_PANELS: ReadonlyArray<{ loinc: string; display: string }> = [
+  { loinc: "24323-8", display: "Comprehensive metabolic panel" },
+  { loinc: "58410-2", display: "CBC panel — Blood" },
+  { loinc: "718-7", display: "Hemoglobin" },
+  { loinc: "4544-3", display: "Hematocrit" },
+  { loinc: "2160-0", display: "Creatinine" },
+  { loinc: "2823-3", display: "Potassium" },
+  { loinc: "2951-2", display: "Sodium" },
+  { loinc: "2885-2", display: "Total protein" },
+];
