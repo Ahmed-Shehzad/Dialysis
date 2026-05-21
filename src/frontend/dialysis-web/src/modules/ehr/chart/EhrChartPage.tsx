@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEhrPatient, fetchPatientChart, type ChartItem } from "@/features/ehr/api/ehrApi";
 import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
 const isActive = (item: ChartItem): boolean => {
@@ -54,6 +55,7 @@ const findVital = (vitals: readonly ChartItem[], matcher: RegExp): ChartItem | u
 export const EhrChartPage = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const { patient, select } = usePatientContext();
+  const [noteOpen, setNoteOpen] = useState(false);
 
   const chart = useQuery({
     queryKey: ["ehr", "chart", patientId],
@@ -134,7 +136,7 @@ export const EhrChartPage = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => globalThis.alert("Add note — ships in the next EHR slice.")}
+            onClick={() => setNoteOpen(true)}
             className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
           >
             + Add note
@@ -148,6 +150,8 @@ export const EhrChartPage = () => {
           </button>
         </div>
       </header>
+
+      {noteOpen && <AddNoteDialog patientId={patientId} onClose={() => setNoteOpen(false)} />}
 
       {chart.isLoading && <div className="text-sm text-slate-400">Loading chart…</div>}
       {chart.error && (
