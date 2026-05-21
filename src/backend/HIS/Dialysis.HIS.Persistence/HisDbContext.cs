@@ -45,7 +45,6 @@ public sealed class HisDbContext(
     public DbSet<LocalUser> LocalUsers => Set<LocalUser>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Admission> Admissions => Set<Admission>();
-    public DbSet<PatientQueueEntry> PatientQueueEntries => Set<PatientQueueEntry>();
     public DbSet<MedicationOrder> MedicationOrders => Set<MedicationOrder>();
     public DbSet<BillingExportJobAudit> BillingExportJobAudits => Set<BillingExportJobAudit>();
 
@@ -301,24 +300,6 @@ public sealed class HisDbContext(
             e.Property(a => a.AdmittedAtUtc).IsRequired();
             e.Property(a => a.DischargedAtUtc);
             e.HasIndex(a => a.PatientId).HasDatabaseName("IX_Admissions_PatientId");
-        });
-
-        modelBuilder.Entity<PatientQueueEntry>(e =>
-        {
-            e.ToTable("PatientQueueEntries", "his_patientflow");
-            e.HasKey(q => q.Id);
-            e.Property(q => q.PatientId).IsRequired();
-            e.Property(q => q.PatientName).HasMaxLength(256).IsRequired();
-            e.Property(q => q.Mrn).HasMaxLength(32).IsRequired();
-            e.Property(q => q.ScheduledForUtc).IsRequired();
-            // Codebase convention: store enums as int (matches ClinicalNotes, Portal,
-            // Integration configurations). The dashboard-side readability cost of a number is
-            // worth the consistency with the rest of the model.
-            e.Property(q => q.Status).HasConversion<int>().IsRequired();
-            e.Property(q => q.EligibilityVerified).IsRequired();
-            e.Property(q => q.Chair).HasMaxLength(32);
-            e.HasIndex(q => q.ScheduledForUtc).HasDatabaseName("IX_PatientQueueEntries_ScheduledForUtc");
-            e.HasIndex(q => q.PatientId).HasDatabaseName("IX_PatientQueueEntries_PatientId");
         });
 
         modelBuilder.Entity<MedicationOrder>(e =>
