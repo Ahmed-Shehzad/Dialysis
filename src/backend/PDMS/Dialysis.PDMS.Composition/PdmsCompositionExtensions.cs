@@ -19,6 +19,7 @@ using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
 using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
 using Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 using Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
+using Dialysis.PDMS.TreatmentSessions.Features.ListActiveAlarms;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
@@ -86,6 +87,7 @@ public static class PdmsCompositionExtensions
                 c.AddQueryBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>, AuthorizationPipelineBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>>();
                 c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();
                 c.AddQueryBehavior<GetSessionSummaryQuery, SessionSummaryDto, AuthorizationPipelineBehavior<GetSessionSummaryQuery, SessionSummaryDto>>();
+                c.AddQueryBehavior<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>, AuthorizationPipelineBehavior<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>>>();
             });
 
             if (enableOutboxRelay)

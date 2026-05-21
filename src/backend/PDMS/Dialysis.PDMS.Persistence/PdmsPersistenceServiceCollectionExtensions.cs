@@ -28,6 +28,7 @@ public static class PdmsPersistenceServiceCollectionExtensions
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PdmsDbContext>());
             services.AddTransponderEfOutboxAndInbox<PdmsDbContext>();
             services.AddScoped<IDialysisSessionRepository, DialysisSessionRepository>();
+            services.AddScoped<ITreatmentAlarmRepository, TreatmentAlarmRepository>();
 
             return services;
         }
