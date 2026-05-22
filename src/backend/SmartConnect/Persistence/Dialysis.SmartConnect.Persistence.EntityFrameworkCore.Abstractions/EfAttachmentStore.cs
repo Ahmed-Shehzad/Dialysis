@@ -7,28 +7,51 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 /// <summary>
 /// EF Core <see cref="IAttachmentStore"/>. Persists metadata via <see cref="AttachmentEntity"/> rows and
 /// delegates byte storage to the registered <see cref="IAttachmentBlobStore"/>. The default blob store
-/// writes bytes into the same row (<c>EfBytesAttachmentBlobStore</c>); a future filesystem impl leaves
+/// writes bytes into the same row (<c>InRowAttachmentBlobStore</c>); a future filesystem impl leaves
 /// <see cref="AttachmentEntity.Data"/> null and stores bytes externally.
 /// </summary>
+/// <remarks>
+/// Insert strategy depends on <see cref="IAttachmentBlobStore.StoresBytesInRow"/>. For in-row backends
+/// the bytes are written onto the entity before <c>SaveChanges</c>, making metadata + bytes atomic in
+/// a single round-trip. For out-of-row backends the bytes go to the blob store first (orphan-on-failure
+/// is cheaper to reap than orphan metadata that returns 404s for valid-looking ids), then the metadata
+/// row is inserted; the orphan reaper sweeps any stranded blobs.
+/// </remarks>
 public sealed class EfAttachmentStore(SmartConnectDbContext db, IAttachmentBlobStore blobs) : IAttachmentStore
 {
     public async Task<Attachment> AddAsync(Attachment attachment, CancellationToken cancellationToken)
     {
         var (entity, prepared) = PrepareInsert(attachment);
-        db.Attachments.Add(entity);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        if (blobs.StoresBytesInRow)
+        {
+            entity.Data = prepared.Data.ToArray();
+            db.Attachments.Add(entity);
+            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return prepared;
+        }
 
         await blobs.WriteAsync(entity.Id, prepared.Data, cancellationToken).ConfigureAwait(false);
+        db.Attachments.Add(entity);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return prepared;
     }
 
     public Attachment Add(Attachment attachment, CancellationToken cancellationToken)
     {
         var (entity, prepared) = PrepareInsert(attachment);
-        db.Attachments.Add(entity);
-        db.SaveChanges();
+
+        if (blobs.StoresBytesInRow)
+        {
+            entity.Data = prepared.Data.ToArray();
+            db.Attachments.Add(entity);
+            db.SaveChanges();
+            return prepared;
+        }
 
         blobs.Write(entity.Id, prepared.Data, cancellationToken);
+        db.Attachments.Add(entity);
+        db.SaveChanges();
         return prepared;
     }
 
@@ -68,17 +91,10 @@ public sealed class EfAttachmentStore(SmartConnectDbContext db, IAttachmentBlobS
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken).ConfigureAwait(false);
         if (entity is null) return null;
 
-        var bytes = await blobs.ReadAsync(id, cancellationToken).ConfigureAwait(false);
-        return new Attachment
-        {
-            Id = entity.Id,
-            MessageId = entity.MessageId,
-            FlowId = entity.FlowId,
-            MimeType = entity.MimeType,
-            Data = bytes ?? ReadOnlyMemory<byte>.Empty,
-            SizeBytes = entity.SizeBytes,
-            CreatedUtc = entity.CreatedUtc,
-        };
+        var bytes = blobs.StoresBytesInRow
+            ? (entity.Data is null ? ReadOnlyMemory<byte>.Empty : new ReadOnlyMemory<byte>(entity.Data))
+            : (await blobs.ReadAsync(id, cancellationToken).ConfigureAwait(false)) ?? ReadOnlyMemory<byte>.Empty;
+        return ProjectAttachment(entity, bytes);
     }
 
     public async Task<IReadOnlyList<Attachment>> GetForMessageAsync(Guid messageId, CancellationToken cancellationToken)
@@ -90,22 +106,34 @@ public sealed class EfAttachmentStore(SmartConnectDbContext db, IAttachmentBlobS
         if (entities.Count == 0) return [];
 
         var result = new List<Attachment>(entities.Count);
+        if (blobs.StoresBytesInRow)
+        {
+            foreach (var entity in entities)
+            {
+                var bytes = entity.Data is null ? ReadOnlyMemory<byte>.Empty : new ReadOnlyMemory<byte>(entity.Data);
+                result.Add(ProjectAttachment(entity, bytes));
+            }
+            return result;
+        }
+
         foreach (var entity in entities)
         {
-            var bytes = await blobs.ReadAsync(entity.Id, cancellationToken).ConfigureAwait(false);
-            result.Add(new Attachment
-            {
-                Id = entity.Id,
-                MessageId = entity.MessageId,
-                FlowId = entity.FlowId,
-                MimeType = entity.MimeType,
-                Data = bytes ?? ReadOnlyMemory<byte>.Empty,
-                SizeBytes = entity.SizeBytes,
-                CreatedUtc = entity.CreatedUtc,
-            });
+            var bytes = (await blobs.ReadAsync(entity.Id, cancellationToken).ConfigureAwait(false)) ?? ReadOnlyMemory<byte>.Empty;
+            result.Add(ProjectAttachment(entity, bytes));
         }
         return result;
     }
+
+    private static Attachment ProjectAttachment(AttachmentEntity entity, ReadOnlyMemory<byte> data) => new()
+    {
+        Id = entity.Id,
+        MessageId = entity.MessageId,
+        FlowId = entity.FlowId,
+        MimeType = entity.MimeType,
+        Data = data,
+        SizeBytes = entity.SizeBytes,
+        CreatedUtc = entity.CreatedUtc,
+    };
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
