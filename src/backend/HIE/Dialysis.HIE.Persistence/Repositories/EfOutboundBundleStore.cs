@@ -17,6 +17,21 @@ public sealed class EfOutboundBundleStore(HieDbContext db) : IOutboundBundleStor
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<OutboundBundle>> ListAsync(OutboundBundleStatus? statusFilter, int take, CancellationToken cancellationToken = default)
+    {
+        var query = db.OutboundBundles.AsNoTracking().AsQueryable();
+        if (statusFilter.HasValue)
+            query = query.Where(b => b.Status == statusFilter.Value);
+        return await query
+            .OrderByDescending(b => b.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public Task<OutboundBundle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        db.OutboundBundles.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
 }

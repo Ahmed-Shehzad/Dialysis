@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { patientMatch, submitFhirBundle } from "@/features/hie/api/hieApi";
 import { ConsentAdminPanel } from "@/features/hie/components/ConsentAdminPanel";
+import { InboundFeedPanel } from "@/features/hie/components/InboundFeedPanel";
+import { OutboundQueuePanel } from "@/features/hie/components/OutboundQueuePanel";
+import { PartnerStatusPanel } from "@/features/hie/components/PartnerStatusPanel";
 import { FormField, TextInput } from "@/components/ui/FormField";
 
 const SAMPLE_BUNDLE = JSON.stringify(
@@ -141,13 +144,20 @@ export const FhirExchangePage = () => (
     <header>
       <h2 className="text-xl font-semibold text-clinic-50">FHIR exchange (HIE)</h2>
       <p className="text-sm text-slate-400">
-        Inbound Bundle ingestion + outbound Patient $match across partner organizations.
+        Inbound Bundle ingestion, outbound Patient $match, cross-organization consent, and the
+        operator dispatch queue.
       </p>
     </header>
+
+    <PartnerStatusPanel />
+
     <div className="grid gap-4 lg:grid-cols-2">
       <BundleIngestPanel />
       <PatientMatchPanel />
     </div>
+
+    <OutboundQueuePanel />
+    <InboundFeedPanel />
     <ConsentAdminPanel />
   </div>
 );

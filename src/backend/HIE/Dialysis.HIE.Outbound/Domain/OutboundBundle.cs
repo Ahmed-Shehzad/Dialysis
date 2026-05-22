@@ -58,6 +58,20 @@ public sealed class OutboundBundle
         }
         NextAttemptAtUtc = nextAttemptAtUtc;
     }
+
+    /// <summary>
+    /// Operator-driven retry of a <see cref="OutboundBundleStatus.Failed"/> bundle. Resets
+    /// the status to <see cref="OutboundBundleStatus.Pending"/> with an immediate
+    /// <see cref="NextAttemptAtUtc"/> so the dispatcher claims it on its next tick. The
+    /// attempt counter is preserved as audit history; the operator is explicitly accepting
+    /// that the previous attempts ran. No-ops on bundles that are already delivered.
+    /// </summary>
+    public void MarkForRetry(DateTime asOfUtc)
+    {
+        if (Status == OutboundBundleStatus.Delivered) return;
+        Status = OutboundBundleStatus.Pending;
+        NextAttemptAtUtc = asOfUtc;
+    }
 }
 
 public enum OutboundBundleStatus

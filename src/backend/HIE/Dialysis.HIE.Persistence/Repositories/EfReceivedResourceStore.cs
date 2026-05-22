@@ -19,6 +19,18 @@ public sealed class EfReceivedResourceStore(HieDbContext db) : IReceivedResource
             await db.ReceivedResources.AddAsync(resource, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<ReceivedResource>> ListRecentAsync(string? partnerId, int take, CancellationToken cancellationToken = default)
+    {
+        var query = db.ReceivedResources.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(partnerId))
+            query = query.Where(r => r.PartnerId == partnerId);
+        return await query
+            .OrderByDescending(r => r.ReceivedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
 }
