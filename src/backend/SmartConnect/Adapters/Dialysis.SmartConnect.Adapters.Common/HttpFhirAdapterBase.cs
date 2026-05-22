@@ -12,6 +12,11 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
 {
     private static readonly FhirJsonParser _parser = new();
 
+    // Parse is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet (its *Async
+    // sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static TResource ParseFhirJson<TResource>(string json) where TResource : Resource =>
+        (TResource)_parser.Parse(json, typeof(TResource));
+
     public abstract ExternalEhrAdapterDescriptor Describe();
 
     public async Task<TResource> ReadAsync<TResource>(string id, ExternalEhrContext context, CancellationToken cancellationToken)
@@ -22,9 +27,7 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-#pragma warning disable VSTHRD103 // Firely Parse is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        return (TResource)_parser.Parse(json, typeof(TResource));
-#pragma warning restore VSTHRD103
+        return ParseFhirJson<TResource>(json);
     }
 
     public async Task<Bundle> SearchAsync(string resourceType, IDictionary<string, string> parameters, ExternalEhrContext context, CancellationToken cancellationToken)
@@ -34,9 +37,7 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-#pragma warning disable VSTHRD103 // Firely Parse is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        return (Bundle)_parser.Parse(json, typeof(Bundle));
-#pragma warning restore VSTHRD103
+        return ParseFhirJson<Bundle>(json);
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, ExternalEhrContext context, CancellationToken cancellationToken)

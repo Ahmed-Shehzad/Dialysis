@@ -16,8 +16,9 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
 {
     public const string KindValue = "ncpdp-to-fhir";
 
+    private static readonly FhirJsonSerializer _serializer = new();
+
     private readonly FrozenDictionary<string, INcpdpToFhirMapper> _byTransactionCode;
-    private readonly FhirJsonSerializer _serializer = new();
 
     public NcpdpToFhirTransformStage(IEnumerable<INcpdpToFhirMapper> mappers)
     {
@@ -30,29 +31,34 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
     public string Kind => KindValue;
 
     public Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
+        => Task.FromResult(Transform(message));
+
+    // The transform itself is purely CPU-bound (NCPDP parse + FHIR serialize on in-memory data).
+    // Splitting the work out of the *Async-named contract method lets us call Firely's
+    // synchronous SerializeToString here without VSTHRD103 — its *Async sibling is [Obsolete]
+    // (CodeQL cs/call-to-obsolete-method), so the analyzer would otherwise force us to suppress.
+    private IntegrationMessage Transform(IntegrationMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
         var text = Encoding.UTF8.GetString(message.Payload.Span);
         var parsed = NcpdpTelecomMessage.TryParse(text);
         if (parsed is null || string.IsNullOrWhiteSpace(parsed.TransactionCode))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         if (!_byTransactionCode.TryGetValue(parsed.TransactionCode, out var mapper))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         var resource = mapper.Map(parsed);
         if (resource is null)
         {
-            return Task.FromResult(message);
+            return message;
         }
 
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
         var json = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
-        return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text));
+        return message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text);
     }
 }

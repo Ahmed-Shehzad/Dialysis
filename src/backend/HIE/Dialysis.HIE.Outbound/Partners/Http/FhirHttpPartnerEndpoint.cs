@@ -18,6 +18,10 @@ public sealed class FhirHttpPartnerEndpoint : IPartnerEndpoint
 {
     private static readonly FhirJsonSerializer _serializer = new();
 
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
+
     private readonly HttpClient _httpClient;
     private readonly PartnerHttpOptions _options;
     private readonly ILogger<FhirHttpPartnerEndpoint> _logger;
@@ -72,9 +76,7 @@ public sealed class FhirHttpPartnerEndpoint : IPartnerEndpoint
     {
         ArgumentNullException.ThrowIfNull(resource);
 
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var json = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var json = SerializeFhirJson(resource);
         var path = string.IsNullOrWhiteSpace(resource.Id)
             ? resource.TypeName
             : $"{resource.TypeName}/{resource.Id}";

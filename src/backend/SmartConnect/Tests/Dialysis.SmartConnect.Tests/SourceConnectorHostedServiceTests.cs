@@ -110,10 +110,12 @@ public sealed class SourceConnectorHostedServiceTests
         await host.StartAsync().ConfigureAwait(true);
         try
         {
-#pragma warning disable VSTHRD003 // TCS task signals from the connector under test; intentional cross-context await.
-            var started = await Task.WhenAny(connector.Started.Task, Task.Delay(300)).ConfigureAwait(true);
-#pragma warning restore VSTHRD003
-            Assert.NotSame(connector.Started.Task, started);
+            // The connector is disabled, so its Started TCS should never fire. Wait a beat,
+            // then probe IsCompleted directly — no await on the foreign TCS task means no
+            // VSTHRD003 cross-context-await warning, and the negative assertion stays clean.
+            await Task.Delay(300).ConfigureAwait(true);
+            Assert.False(connector.Started.Task.IsCompleted,
+                "Disabled connector should not signal its Started TCS.");
         }
         finally
         {

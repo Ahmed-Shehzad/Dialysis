@@ -25,6 +25,10 @@ public sealed class InboundIngestionService(
 {
     private static readonly FhirJsonSerializer _serializer = new();
 
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method), so we can't take it).
+    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
+
     public async Task<OperationOutcome> IngestAsync(string partnerId, Resource resource, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(partnerId);
@@ -67,9 +71,7 @@ public sealed class InboundIngestionService(
             return;
         }
 
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var fhirJson = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var fhirJson = SerializeFhirJson(resource);
         var received = new ReceivedResource(
             partnerId,
             resource.TypeName,

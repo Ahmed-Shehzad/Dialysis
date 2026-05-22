@@ -14,6 +14,10 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
 {
     private static readonly FhirJsonSerializer _serializer = new();
 
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static string SerializeFhirJson(AuditEvent auditEvent) => _serializer.SerializeToString(auditEvent);
+
     public async ValueTask AppendAsync(AuditEvent auditEvent, CancellationToken cancellationToken)
     {
         var firstEntity = auditEvent.Entity.Count > 0 ? auditEvent.Entity[0] : null;
@@ -30,9 +34,7 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
             ResourceType = resourceType,
             ResourceId = resourceId,
             Outcome = auditEvent.Outcome?.ToString() ?? "0",
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-            ResourceJson = _serializer.SerializeToString(auditEvent),
-#pragma warning restore VSTHRD103
+            ResourceJson = SerializeFhirJson(auditEvent),
         };
 
         db.Set<AuditEventRecord>().Add(record);

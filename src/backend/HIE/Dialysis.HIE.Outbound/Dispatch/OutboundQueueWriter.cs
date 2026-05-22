@@ -24,6 +24,10 @@ public sealed class OutboundQueueWriter(
     private static readonly FhirJsonSerializer _serializer = new();
     private readonly OutboundOptions _options = options.Value;
 
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
+
     public async Task EnqueueAsync<TEvent, TResource>(
         TEvent integrationEvent,
         Guid patientId,
@@ -44,9 +48,7 @@ public sealed class OutboundQueueWriter(
         }
 
         var resource = mapper.Map(integrationEvent);
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var fhirJson = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var fhirJson = SerializeFhirJson(resource);
 
         var bundle = new OutboundBundle(
             patientId,
