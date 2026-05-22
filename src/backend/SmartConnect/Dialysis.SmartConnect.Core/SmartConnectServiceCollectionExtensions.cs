@@ -2,9 +2,11 @@ using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.Alerts.Actions;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Attachments.Handlers;
+using Dialysis.SmartConnect.Authentication;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.ExtendedPlugins;
+using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Dialysis.SmartConnect.Transforms;
@@ -30,6 +32,17 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddHttpClient("smartconnect-outbound");
             services.AddSingleton<AllowAllRouteFilter>();
             services.AddSingleton<PassThroughOutboundAdapter>();
+
+            // HTTP authentication providers (Bearer / API-Key / Basic / OAuth2 client-credentials).
+            // Falls back to an in-memory IDistributedCache when the host hasn't wired Valkey/Redis;
+            // a host that registers AddStackExchangeRedisCache first wins this TryAdd.
+            services.AddDistributedMemoryCache();
+            services.AddSingleton<IHttpAuthenticationProvider, BearerTokenAuthenticationProvider>();
+            services.AddSingleton<IHttpAuthenticationProvider, ApiKeyAuthenticationProvider>();
+            services.AddSingleton<IHttpAuthenticationProvider, BasicAuthenticationProvider>();
+            services.AddSingleton<IHttpAuthenticationProvider, OAuth2ClientCredentialsAuthenticationProvider>();
+            services.TryAddSingleton<IHttpAuthenticationProviderRegistry, HttpAuthenticationProviderRegistry>();
+
             services.AddSingleton<HttpOutboundAdapter>();
             services.AddSingleton<FileOutboundAdapter>();
             services.AddSingleton<SmtpOutboundAdapter>();
