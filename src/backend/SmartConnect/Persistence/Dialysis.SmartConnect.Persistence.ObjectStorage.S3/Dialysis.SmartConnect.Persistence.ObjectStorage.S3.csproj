@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.SmartConnect.Persistence.ObjectStorage.S3</RootNamespace>
+    <Description>S3-compatible (AWS S3, MinIO, Wasabi) attachment blob store for SmartConnect.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+</Project>

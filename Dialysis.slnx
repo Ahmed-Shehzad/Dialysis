@@ -191,6 +191,7 @@
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.S3/Dialysis.SmartConnect.Persistence.ObjectStorage.S3.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Tests/">
     <Project Path="src/backend/SmartConnect/Tests/Dialysis.SmartConnect.Tests/Dialysis.SmartConnect.Tests.csproj" />
