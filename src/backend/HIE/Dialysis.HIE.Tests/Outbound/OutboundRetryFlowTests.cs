@@ -112,7 +112,7 @@ public sealed class OutboundRetryFlowTests
     }
 
     [Fact]
-    public async Task Retryoutboundbundle_Is_NoOp_For_Delivered_Bundles_Async()
+    public async Task Retryoutboundbundle_On_Delivered_Bundle_Is_Idempotent_Async()
     {
         await using var factory = new HieWebApplicationFactory();
         Guid bundleId;
