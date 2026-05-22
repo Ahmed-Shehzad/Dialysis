@@ -75,6 +75,7 @@ public sealed class CustomAttachmentHandlerTests
     private sealed class StubStore : IAttachmentStore
     {
         public Task<Attachment> AddAsync(Attachment a, CancellationToken ct) => Task.FromResult(a);
+        public Attachment Add(Attachment a, CancellationToken ct) => a;
         public Task<Attachment?> GetAsync(Guid id, CancellationToken ct) => Task.FromResult<Attachment?>(null);
         public Task<IReadOnlyList<Attachment>> GetForMessageAsync(Guid messageId, CancellationToken ct) => Task.FromResult<IReadOnlyList<Attachment>>([]);
         public Task DeleteAsync(Guid id, CancellationToken ct) => Task.CompletedTask;

@@ -45,9 +45,7 @@ internal static class AttachmentJsBinder
                 CreatedUtc = DateTimeOffset.UtcNow,
             };
 
-#pragma warning disable VSTHRD002 // JS binding is a sync delegate — Jint can't await; bridge to async store call.
-            var stored = store.AddAsync(attachment, cancellationToken).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
+            var stored = store.Add(attachment, cancellationToken);
             return AttachmentReference.Format(stored.Id);
         }));
     }

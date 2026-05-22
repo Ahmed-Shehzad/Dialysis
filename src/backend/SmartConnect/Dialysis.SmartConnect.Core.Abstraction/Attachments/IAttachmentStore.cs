@@ -8,6 +8,13 @@ public interface IAttachmentStore
 {
     Task<Attachment> AddAsync(Attachment attachment, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Synchronous counterpart to <see cref="AddAsync"/>, provided so the Mirth-compat
+    /// JS <c>addAttachment(...)</c> global (a sync delegate the Jint engine cannot await)
+    /// has a real sync path instead of a sync-over-async bridge with a VSTHRD002 suppression.
+    /// </summary>
+    Attachment Add(Attachment attachment, CancellationToken cancellationToken);
+
     Task<Attachment?> GetAsync(Guid id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Attachment>> GetForMessageAsync(Guid messageId, CancellationToken cancellationToken);
