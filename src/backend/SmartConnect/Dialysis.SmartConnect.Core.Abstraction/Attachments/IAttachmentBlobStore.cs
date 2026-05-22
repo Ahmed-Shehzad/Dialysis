@@ -2,10 +2,18 @@ namespace Dialysis.SmartConnect.Attachments;
 
 /// <summary>
 /// Low-level byte-storage seam. Default implementation persists bytes in the same EF row as the metadata
-/// (<c>EfBytesAttachmentBlobStore</c>); future filesystem / object-storage implementations swap in here.
+/// (<c>InRowAttachmentBlobStore</c>); future filesystem / object-storage implementations swap in here.
 /// </summary>
 public interface IAttachmentBlobStore
 {
+    /// <summary>
+    /// <c>true</c> when bytes live in the same physical row as the attachment metadata (the in-row default).
+    /// Lets <c>EfAttachmentStore</c> persist metadata + bytes atomically in one transaction. Out-of-row
+    /// backends (filesystem, S3, Azure Blob) return <c>false</c>; they require blob-first ordering and
+    /// orphan reaping on metadata-save failure.
+    /// </summary>
+    bool StoresBytesInRow { get; }
+
     Task WriteAsync(Guid attachmentId, ReadOnlyMemory<byte> data, CancellationToken cancellationToken);
 
     /// <summary>
