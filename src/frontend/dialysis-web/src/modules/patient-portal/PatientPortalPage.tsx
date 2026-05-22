@@ -4,6 +4,7 @@ import { useAuth } from "@/features/auth/components/AuthProvider";
 import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { BookAppointmentDialog } from "./BookAppointmentDialog";
+import { PatientConsentsPanel } from "./PatientConsentsPanel";
 import { fetchPortalSummary, type PatientPortalSummary } from "./api";
 
 const FALLBACK_DEMO_PATIENT_ID = "";
@@ -134,6 +135,8 @@ export const PatientPortalPage = () => {
       )}
 
       {summary.data && <PortalTiles summary={summary.data} />}
+
+      {patientId && <PatientConsentsPanel patientId={patientId} />}
 
       {bookOpen && patientId && (
         <BookAppointmentDialog patientId={patientId} onClose={() => setBookOpen(false)} />
