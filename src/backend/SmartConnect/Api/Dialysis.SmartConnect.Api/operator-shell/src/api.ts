@@ -70,6 +70,12 @@ export function listAttachmentsForMessage(messageId: string): Promise<Attachment
 export function downloadAttachmentUrl(id: string): string {
   return `/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`;
 }
+/** Slice I: fetches the attachment payload bytes for an inline preview. */
+export async function fetchAttachmentBytes(id: string): Promise<Uint8Array> {
+  const res = await apiFetch(`/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`);
+  const buf = await res.arrayBuffer();
+  return new Uint8Array(buf);
+}
 export async function deleteAttachment(id: string): Promise<void> {
   await apiFetch(`/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
