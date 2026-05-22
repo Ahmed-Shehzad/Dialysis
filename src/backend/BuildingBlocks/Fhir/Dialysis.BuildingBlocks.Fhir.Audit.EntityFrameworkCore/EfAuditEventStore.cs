@@ -32,7 +32,9 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
             ResourceType = resourceType,
             ResourceId = resourceId,
             Outcome = auditEvent.Outcome?.ToString() ?? "0",
-            ResourceJson = JsonSerializer.Serialize(auditEvent, _fhirJson),
+            // Serialize via the Resource base type so ForFhir's polymorphic converter writes
+            // the `resourceType` discriminator before the subclass fields.
+            ResourceJson = JsonSerializer.Serialize<Resource>(auditEvent, _fhirJson),
         };
 
         db.Set<AuditEventRecord>().Add(record);

@@ -46,7 +46,9 @@ public sealed class OutboundQueueWriter(
         }
 
         var resource = mapper.Map(integrationEvent);
-        var fhirJson = JsonSerializer.Serialize(resource, _fhirJson);
+        // Serialize via the Resource base type so ForFhir's polymorphic converter writes the
+        // `resourceType` discriminator before the subclass fields.
+        var fhirJson = JsonSerializer.Serialize<Resource>(resource, _fhirJson);
 
         var bundle = new OutboundBundle(
             patientId,

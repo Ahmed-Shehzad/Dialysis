@@ -104,7 +104,10 @@ public sealed class NcpdpToFhirMappingTests
         var transformed = await stage.TransformAsync(message, CancellationToken.None);
 
         var json = Encoding.UTF8.GetString(transformed.Payload.Span);
-        var resource = JsonSerializer.Deserialize<Claim>(json, _fhirJsonOptions)!;
+        // Deserialize through the polymorphic Resource entrypoint — ForFhir reads the
+        // `resourceType` discriminator to instantiate the right subclass.
+        var deserialized = JsonSerializer.Deserialize<Resource>(json, _fhirJsonOptions)!;
+        var resource = Assert.IsType<Claim>(deserialized);
         Assert.Equal(FinancialResourceStatusCodes.Active, resource.Status);
         Assert.Equal("Patient/PT-123", resource.Patient.Reference);
     }

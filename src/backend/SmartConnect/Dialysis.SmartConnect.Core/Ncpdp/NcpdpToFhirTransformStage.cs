@@ -55,7 +55,10 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
             return Task.FromResult(message);
         }
 
-        var json = JsonSerializer.Serialize(resource, resource.GetType(), _fhirJson);
+        // Serialize via the Resource base type so ForFhir's polymorphic converter writes the
+        // `resourceType` discriminator before the subclass fields — round-tripping via
+        // JsonSerializer.Deserialize<Resource> (or a concrete subclass) then works correctly.
+        var json = JsonSerializer.Serialize<Resource>(resource, _fhirJson);
         return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text));
     }
 }
