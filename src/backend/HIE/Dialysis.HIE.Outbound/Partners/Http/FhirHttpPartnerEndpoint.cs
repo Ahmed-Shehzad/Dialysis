@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using Dialysis.HIE.Core.Abstraction.Partners;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -16,7 +17,8 @@ namespace Dialysis.HIE.Outbound.Partners.Http;
 /// </summary>
 public sealed class FhirHttpPartnerEndpoint : IPartnerEndpoint
 {
-    private static readonly FhirJsonSerializer _serializer = new();
+    private static readonly JsonSerializerOptions _fhirJson =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
     private readonly HttpClient _httpClient;
     private readonly PartnerHttpOptions _options;
@@ -72,9 +74,7 @@ public sealed class FhirHttpPartnerEndpoint : IPartnerEndpoint
     {
         ArgumentNullException.ThrowIfNull(resource);
 
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var json = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var json = JsonSerializer.Serialize(resource, _fhirJson);
         var path = string.IsNullOrWhiteSpace(resource.Id)
             ? resource.TypeName
             : $"{resource.TypeName}/{resource.Id}";

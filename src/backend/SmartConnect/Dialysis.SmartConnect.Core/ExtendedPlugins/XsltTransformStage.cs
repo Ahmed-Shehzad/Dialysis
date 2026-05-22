@@ -20,22 +20,29 @@ public sealed class XsltTransformStage : ITransformStage
     public string Kind => "xslt";
 
     public Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
+        => Task.FromResult(Transform(message, cancellationToken));
+
+    // Real work lives in a synchronous helper so the `*Async` method name on the interface
+    // contract doesn't trip VSTHRD103 on XmlWriter.Flush(). The XSLT 1.0 transform is purely
+    // CPU-bound on a MemoryStream sink (no I/O), and XmlWriter.FlushAsync would throw when
+    // OutputSettings.Async is false — Flush() is the correct call here, not a code smell.
+    private IntegrationMessage Transform(IntegrationMessage message, CancellationToken cancellationToken)
     {
         if (!message.Metadata.TryGetValue(ParametersMetadataKey, out var json) || string.IsNullOrWhiteSpace(json))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         using var doc = JsonDocument.Parse(json);
         if (!doc.RootElement.TryGetProperty("stylesheet", out var stylesheetEl))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         var stylesheet = stylesheetEl.GetString();
         if (string.IsNullOrWhiteSpace(stylesheet))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -47,12 +54,10 @@ public sealed class XsltTransformStage : ITransformStage
         using var outputStream = new MemoryStream();
         using var xmlWriter = XmlWriter.Create(outputStream, transform.OutputSettings);
         transform.Transform(xmlReader, xmlWriter);
-#pragma warning disable VSTHRD103 // XslCompiledTransform.OutputSettings.Async is false; FlushAsync would throw. Sink is MemoryStream, no I/O.
         xmlWriter.Flush();
-#pragma warning restore VSTHRD103
 
         var resultBytes = outputStream.ToArray();
-        return Task.FromResult(message.CloneWithPayload(resultBytes, PayloadFormat.Utf8Text));
+        return message.CloneWithPayload(resultBytes, PayloadFormat.Utf8Text);
     }
 
     private XslCompiledTransform GetOrCompile(string stylesheet)

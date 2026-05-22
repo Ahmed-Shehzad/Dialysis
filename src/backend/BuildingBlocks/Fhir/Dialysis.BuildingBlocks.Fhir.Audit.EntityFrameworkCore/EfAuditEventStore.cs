@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,8 @@ namespace Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventStore
     where TDbContext : DbContext
 {
-    private static readonly FhirJsonSerializer _serializer = new();
+    private static readonly JsonSerializerOptions _fhirJson =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
     public async ValueTask AppendAsync(AuditEvent auditEvent, CancellationToken cancellationToken)
     {
@@ -30,9 +32,7 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
             ResourceType = resourceType,
             ResourceId = resourceId,
             Outcome = auditEvent.Outcome?.ToString() ?? "0",
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-            ResourceJson = _serializer.SerializeToString(auditEvent),
-#pragma warning restore VSTHRD103
+            ResourceJson = JsonSerializer.Serialize(auditEvent, _fhirJson),
         };
 
         db.Set<AuditEventRecord>().Add(record);

@@ -1,6 +1,8 @@
 using System.Collections.Frozen;
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 
 namespace Dialysis.SmartConnect.Ncpdp;
@@ -16,8 +18,10 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
 {
     public const string KindValue = "ncpdp-to-fhir";
 
+    private static readonly JsonSerializerOptions _fhirJson =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+
     private readonly FrozenDictionary<string, INcpdpToFhirMapper> _byTransactionCode;
-    private readonly FhirJsonSerializer _serializer = new();
 
     public NcpdpToFhirTransformStage(IEnumerable<INcpdpToFhirMapper> mappers)
     {
@@ -50,9 +54,7 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
             return Task.FromResult(message);
         }
 
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var json = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var json = JsonSerializer.Serialize(resource, resource.GetType(), _fhirJson);
         return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text));
     }
 }

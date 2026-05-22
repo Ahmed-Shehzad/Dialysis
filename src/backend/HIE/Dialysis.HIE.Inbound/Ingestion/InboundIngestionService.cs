@@ -23,7 +23,8 @@ public sealed class InboundIngestionService(
     TimeProvider timeProvider,
     ILogger<InboundIngestionService> logger)
 {
-    private static readonly FhirJsonSerializer _serializer = new();
+    private static readonly JsonSerializerOptions _fhirJson =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
     public async Task<OperationOutcome> IngestAsync(string partnerId, Resource resource, CancellationToken cancellationToken = default)
     {
@@ -67,9 +68,7 @@ public sealed class InboundIngestionService(
             return;
         }
 
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var fhirJson = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var fhirJson = JsonSerializer.Serialize(resource, _fhirJson);
         var received = new ReceivedResource(
             partnerId,
             resource.TypeName,

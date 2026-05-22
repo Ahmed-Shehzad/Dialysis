@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.Domain;
@@ -21,7 +22,8 @@ public sealed class OutboundQueueWriter(
     IOptions<OutboundOptions> options,
     ILogger<OutboundQueueWriter> logger)
 {
-    private static readonly FhirJsonSerializer _serializer = new();
+    private static readonly JsonSerializerOptions _fhirJson =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
     private readonly OutboundOptions _options = options.Value;
 
     public async Task EnqueueAsync<TEvent, TResource>(
@@ -44,9 +46,7 @@ public sealed class OutboundQueueWriter(
         }
 
         var resource = mapper.Map(integrationEvent);
-#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var fhirJson = _serializer.SerializeToString(resource);
-#pragma warning restore VSTHRD103
+        var fhirJson = JsonSerializer.Serialize(resource, _fhirJson);
 
         var bundle = new OutboundBundle(
             patientId,
