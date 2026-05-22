@@ -27,6 +27,7 @@ using Dialysis.PDMS.TreatmentSessions.Features.ListChairAssignments;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
+using Dialysis.PDMS.TreatmentSessions.Features.ListSessionsByPatient;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
 using Dialysis.PDMS.TreatmentSessions.Projections;
@@ -93,6 +94,7 @@ public static class PdmsCompositionExtensions
 
                 c.AddQueryBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>, AuthorizationPipelineBehavior<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>>();
                 c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();
+                c.AddQueryBehavior<ListSessionsByPatientQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsByPatientQuery, IReadOnlyList<DialysisSessionListItem>>>();
                 c.AddQueryBehavior<GetSessionSummaryQuery, SessionSummaryDto, AuthorizationPipelineBehavior<GetSessionSummaryQuery, SessionSummaryDto>>();
                 c.AddQueryBehavior<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>, AuthorizationPipelineBehavior<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>>>();
                 c.AddQueryBehavior<ListChairAssignmentsQuery, IReadOnlyList<ChairAssignmentDto>, AuthorizationPipelineBehavior<ListChairAssignmentsQuery, IReadOnlyList<ChairAssignmentDto>>>();

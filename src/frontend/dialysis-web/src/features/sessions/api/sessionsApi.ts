@@ -18,6 +18,22 @@ export const fetchActiveSessions = async (activeOnly = true): Promise<DialysisSe
   return response.data ?? [];
 };
 
+/**
+ * Patient-scoped recent treatments. Backs the patient-portal "Recent treatments" panel
+ * and any clinician view that needs one patient's session history.
+ */
+export const fetchSessionsByPatient = async (
+  patientId: string,
+  lookbackDays = 90,
+  take = 20,
+): Promise<DialysisSessionSummary[]> => {
+  const response = await apiClient.get<DialysisSessionSummary[]>(
+    `/api/pdms/api/v1.0/sessions/by-patient/${patientId}`,
+    { params: { lookbackDays, take } },
+  );
+  return response.data ?? [];
+};
+
 export type SessionPrescription = {
   dialyzerModel: string;
   prescribedDurationMinutes: number;

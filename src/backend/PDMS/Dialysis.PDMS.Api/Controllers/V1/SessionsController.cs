@@ -6,6 +6,7 @@ using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
 using Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
+using Dialysis.PDMS.TreatmentSessions.Features.ListSessionsByPatient;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
@@ -29,6 +30,26 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         var data = await gateway
             .SendQueryAsync<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>(
                 new ListSessionsQuery(activeOnly, take), cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(data);
+    }
+
+    /// <summary>
+    /// Patient-scoped recent treatments. Used by the patient portal "Recent treatments"
+    /// panel and by any clinician view that needs one patient's session history. Ordered
+    /// most-recent first.
+    /// </summary>
+    [HttpGet("by-patient/{patientId:guid}")]
+    [ProducesResponseType(typeof(IReadOnlyList<DialysisSessionListItem>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListByPatientAsync(
+        Guid patientId,
+        [FromQuery] int lookbackDays = 90,
+        [FromQuery] int take = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var data = await gateway
+            .SendQueryAsync<ListSessionsByPatientQuery, IReadOnlyList<DialysisSessionListItem>>(
+                new ListSessionsByPatientQuery(patientId, lookbackDays, take), cancellationToken)
             .ConfigureAwait(false);
         return Ok(data);
     }
