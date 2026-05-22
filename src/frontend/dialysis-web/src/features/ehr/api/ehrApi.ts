@@ -121,6 +121,47 @@ export const fetchPatientNotes = async (
   return response.data ?? [];
 };
 
+/** LabAbnormalFlag enum from `Dialysis.EHR.ClinicalNotes.Domain.LabAbnormalFlag`. */
+export type LabAbnormalFlag = 1 | 2 | 3 | 4 | 5; // Normal | Low | High | Critical | AbnormalNos
+
+export const labAbnormalFlagLabel = (flag: LabAbnormalFlag): string => {
+  switch (flag) {
+    case 1:
+      return "Normal";
+    case 2:
+      return "Low";
+    case 3:
+      return "High";
+    case 4:
+      return "Critical";
+    case 5:
+      return "Abnormal";
+  }
+};
+
+export type LabResultListItem = {
+  id: string;
+  labOrderId: string;
+  loincCode: string;
+  valueText: string;
+  unitCode?: string | null;
+  referenceRangeText?: string | null;
+  abnormalFlag: LabAbnormalFlag;
+  observedAtUtc: string;
+};
+
+export const fetchPatientLabResults = async (
+  patientId: string,
+  lookbackDays = 180,
+  take = 50,
+): Promise<LabResultListItem[]> => {
+  const response = await apiClient.get<LabResultListItem[]>(
+    `/api/ehr/api/v1.0/patients/${patientId}/lab-results`,
+    { params: { lookbackDays, take } },
+  );
+  return response.data ?? [];
+};
+
 export type EhrPatientDetail = {
   id: string;
   medicalRecordNumber: string;

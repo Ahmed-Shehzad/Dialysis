@@ -4,6 +4,7 @@ import { useAuth } from "@/features/auth/components/AuthProvider";
 import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { BookAppointmentDialog } from "./BookAppointmentDialog";
+import { LabResultsPanel } from "./LabResultsPanel";
 import { PatientConsentsPanel } from "./PatientConsentsPanel";
 import { RecentTreatmentsPanel } from "./RecentTreatmentsPanel";
 import { fetchPortalSummary, type PatientPortalSummary } from "./api";
@@ -138,6 +139,7 @@ export const PatientPortalPage = () => {
       {summary.data && <PortalTiles summary={summary.data} />}
 
       {patientId && <RecentTreatmentsPanel patientId={patientId} />}
+      {patientId && <LabResultsPanel patientId={patientId} />}
       {patientId && <PatientConsentsPanel patientId={patientId} />}
 
       {bookOpen && patientId && (
