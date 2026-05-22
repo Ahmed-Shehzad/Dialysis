@@ -27,7 +27,7 @@ public sealed class NcpdpToFhirMappingTests
     // Modern Firely deserializer: System.Text.Json with the FHIR contract resolver. Synchronous
     // and CPU-only by design (no VSTHRD103), unlike the legacy FhirJsonParser whose *Async
     // sibling is [Obsolete].
-    private static readonly JsonSerializerOptions FhirJsonOptions =
+    private static readonly JsonSerializerOptions _fhirJsonOptions =
         new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class NcpdpToFhirMappingTests
         var transformed = await stage.TransformAsync(message, CancellationToken.None);
 
         var json = Encoding.UTF8.GetString(transformed.Payload.Span);
-        var resource = JsonSerializer.Deserialize<Claim>(json, FhirJsonOptions)!;
+        var resource = JsonSerializer.Deserialize<Claim>(json, _fhirJsonOptions)!;
         Assert.Equal(FinancialResourceStatusCodes.Active, resource.Status);
         Assert.Equal("Patient/PT-123", resource.Patient.Reference);
     }
