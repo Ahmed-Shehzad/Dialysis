@@ -1,7 +1,6 @@
 using System.Text;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.ObjectStorage.S3;
 using Microsoft.Extensions.Options;
 using Testcontainers.Minio;
@@ -16,12 +15,14 @@ namespace Dialysis.SmartConnect.Tests;
 /// </summary>
 public sealed class S3AttachmentBlobStoreTests : IAsyncLifetime
 {
+    // Pinned image — Testcontainers' parameterless MinioBuilder() is [Obsolete] in 4.x.
+    private const string MinioImage = "minio/minio:RELEASE.2024-12-18T13-15-44Z";
     private const string Bucket = "smartconnect-attachments-test";
     private MinioContainer? _minio;
 
     public async Task InitializeAsync()
     {
-        _minio = new MinioBuilder().Build();
+        _minio = new MinioBuilder(MinioImage).Build();
         await _minio.StartAsync().ConfigureAwait(false);
         await EnsureBucketAsync(_minio).ConfigureAwait(false);
     }
@@ -111,8 +112,8 @@ public sealed class S3AttachmentBlobStoreTests : IAsyncLifetime
             BucketName = Bucket,
             ServiceUrl = minio.GetConnectionString(),
             ForcePathStyle = true,
-            AccessKey = "minioadmin",
-            SecretKey = "minioadmin",
+            AccessKey = minio.GetAccessKey(),
+            SecretKey = minio.GetSecretKey(),
             KeyPrefix = keyPrefix,
         }));
     }
@@ -124,7 +125,7 @@ public sealed class S3AttachmentBlobStoreTests : IAsyncLifetime
             ServiceURL = minio.GetConnectionString(),
             ForcePathStyle = true,
         };
-        using var client = new AmazonS3Client("minioadmin", "minioadmin", config);
+        using var client = new AmazonS3Client(minio.GetAccessKey(), minio.GetSecretKey(), config);
         try
         {
             await client.PutBucketAsync(new PutBucketRequest { BucketName = Bucket }).ConfigureAwait(false);
