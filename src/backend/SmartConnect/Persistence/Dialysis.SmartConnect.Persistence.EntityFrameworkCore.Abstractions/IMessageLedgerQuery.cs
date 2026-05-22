@@ -24,6 +24,14 @@ public sealed class MessageLedgerQueryCriteria
     /// <summary>Optional filter on ledger row status.</summary>
     public MessageLedgerStatus? Status { get; init; }
 
+    /// <summary>Slice C2: exact-match filter on the derived <c>MessageType</c> column —
+    /// e.g. <c>"ORU^R40^ORU_R40"</c>. <c>null</c> skips the predicate.</summary>
+    public string? MessageType { get; init; }
+
+    /// <summary>Slice C2: exact-match filter on the derived <c>SenderId</c> column —
+    /// e.g. <c>"MachineA@FACILITY"</c>. <c>null</c> skips the predicate.</summary>
+    public string? SenderId { get; init; }
+
     public int Skip { get; init; }
 
     public int Take { get; init; } = 50;

@@ -131,10 +131,32 @@ public sealed class MllpInboundHostedService(
         IReadOnlyDictionary<string, string>? metadata = null;
         if (sourceMap.Count > 0)
         {
-            metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+            var dict = new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["smartconnect.sourcemap.json"] = JsonSerializer.Serialize(sourceMap),
             };
+
+            // Slice C2: populate the top-level LedgerSearchKeys so the ledger's derived
+            // columns get filled without needing the sourcemap.json fallback parse.
+            if (sourceMap.TryGetValue("hl7.messageType", out var msgType) && msgType is string mt && mt.Length > 0)
+            {
+                dict[LedgerSearchKeys.MessageType] = mt;
+            }
+
+            var app = sourceMap.GetValueOrDefault("hl7.sendingApplication") as string;
+            var facility = sourceMap.GetValueOrDefault("hl7.sendingFacility") as string;
+            var senderId = (app, facility) switch
+            {
+                ({ Length: > 0 }, { Length: > 0 }) => $"{app}@{facility}",
+                ({ Length: > 0 }, _) => app,
+                _ => null,
+            };
+            if (!string.IsNullOrEmpty(senderId))
+            {
+                dict[LedgerSearchKeys.SenderId] = senderId;
+            }
+
+            metadata = dict;
         }
 
         // Slice J2: feed the §2 clock-skew monitor every time we frame a valid HL7v2

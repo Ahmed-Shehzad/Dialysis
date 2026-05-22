@@ -22,5 +22,15 @@ public sealed class MessageLedgerEntryEntity
     /// ledger append. Nullable for backward compatibility with rows written before slice C.</summary>
     public string? MetadataJson { get; set; }
 
+    /// <summary>Derived from metadata key <c>smartconnect.message-type</c> on append (slice C2).
+    /// Indexed for fast dashboard filtering — populated when the inbound transport sets the
+    /// metadata key, otherwise <c>null</c>.</summary>
+    public string? MessageType { get; set; }
+
+    /// <summary>Derived from metadata key <c>smartconnect.sender</c> on append (slice C2).
+    /// Indexed for fast dashboard filtering — populated when the inbound transport sets the
+    /// metadata key, otherwise <c>null</c>.</summary>
+    public string? SenderId { get; set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 }

@@ -50,7 +50,15 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             // outbound parameters JSON) but no hard cap so flows that stuff large blobs into
             // metadata (e.g. base64-encoded attachment refs) don't silently truncate.
             b.Property(e => e.MetadataJson);
+            // Slice C2: searchable derived columns. Bounded at 256 chars — HL7v2's longest
+            // message types (e.g. "ORU^R40^ORU_R40") + NCPDP transaction codes + FHIR
+            // resource names all fit comfortably; truncation here would silently corrupt
+            // a filter so we cap at a length nobody can hit by accident.
+            b.Property(e => e.MessageType).HasMaxLength(256);
+            b.Property(e => e.SenderId).HasMaxLength(256);
             b.HasIndex(e => new { e.FlowId, e.CreatedAtUtc });
+            b.HasIndex(e => e.MessageType);
+            b.HasIndex(e => e.SenderId);
         });
 
         modelBuilder.Entity<FlowGroupEntity>(b =>
