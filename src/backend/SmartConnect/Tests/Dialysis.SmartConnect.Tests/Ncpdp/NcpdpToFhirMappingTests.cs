@@ -27,7 +27,7 @@ public sealed class NcpdpToFhirMappingTests
         var resource = mapper.Map(parsed);
 
         var claim = Assert.IsType<Claim>(resource);
-        Assert.Equal(Claim.FinancialResourceStatusCodes.Active, claim.Status);
+        Assert.Equal(FinancialResourceStatusCodes.Active, claim.Status);
         Assert.Equal("Patient/PT-123", claim.Patient.Reference);
         Assert.Equal("Practitioner/1234567890", claim.Provider.Reference);
         Assert.Equal("RX-001", Assert.Single(claim.Identifier).Value);
@@ -45,7 +45,7 @@ public sealed class NcpdpToFhirMappingTests
         var resource = mapper.Map(parsed);
 
         var claim = Assert.IsType<Claim>(resource);
-        Assert.Equal(Claim.FinancialResourceStatusCodes.Cancelled, claim.Status);
+        Assert.Equal(FinancialResourceStatusCodes.Cancelled, claim.Status);
         Assert.Equal("RX-001", Assert.Single(claim.Identifier).Value);
     }
 
@@ -94,7 +94,7 @@ public sealed class NcpdpToFhirMappingTests
         var json = Encoding.UTF8.GetString(transformed.Payload.Span);
         var parser = new FhirJsonParser();
         var resource = parser.Parse<Claim>(json);
-        Assert.Equal(Claim.FinancialResourceStatusCodes.Active, resource.Status);
+        Assert.Equal(FinancialResourceStatusCodes.Active, resource.Status);
         Assert.Equal("Patient/PT-123", resource.Patient.Reference);
     }
 
