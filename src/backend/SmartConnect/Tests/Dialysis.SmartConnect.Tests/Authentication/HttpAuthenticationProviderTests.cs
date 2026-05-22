@@ -21,11 +21,11 @@ public sealed class HttpAuthenticationProviderTests
     {
         var provider = new BearerTokenAuthenticationProvider();
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://partner.example/api");
-        await provider.ApplyAsync(request, """{"Kind":"bearer","Token":"abc.def.ghi"}""", CancellationToken.None);
+        await provider.ApplyAsync(request, """{"Kind":"bearer","Token":"test-token-value"}""", CancellationToken.None);
 
         Assert.NotNull(request.Headers.Authorization);
         Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
-        Assert.Equal("abc.def.ghi", request.Headers.Authorization.Parameter);
+        Assert.Equal("test-token-value", request.Headers.Authorization.Parameter);
     }
 
     [Fact]
@@ -69,12 +69,12 @@ public sealed class HttpAuthenticationProviderTests
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://partner.example/api");
         await provider.ApplyAsync(
             request,
-            """{"Kind":"basic","Username":"alice","Password":"hunter2"}""",
+            """{"Kind":"basic","Username":"alice","Password":"example-pw"}""",
             CancellationToken.None);
 
         Assert.Equal("Basic", request.Headers.Authorization!.Scheme);
         var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(request.Headers.Authorization.Parameter!));
-        Assert.Equal("alice:hunter2", decoded);
+        Assert.Equal("alice:example-pw", decoded);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class HttpAuthenticationProviderTests
         var (httpClientFactory, cache) = BuildHttpInfrastructure(handler);
 
         var provider = new OAuth2ClientCredentialsAuthenticationProvider(httpClientFactory, cache);
-        const string parameters = """{"Kind":"oauth2-client-credentials","TokenEndpoint":"https://idp.example/token","ClientId":"sc","ClientSecret":"shh","Scope":"read"}""";
+        const string parameters = """{"Kind":"oauth2-client-credentials","TokenEndpoint":"https://idp.example/token","ClientId":"sc","ClientSecret":"csecret","Scope":"read"}""";
 
         using (var first = new HttpRequestMessage(HttpMethod.Post, "https://partner.example/api"))
         {
@@ -131,7 +131,7 @@ public sealed class HttpAuthenticationProviderTests
 
         await Assert.ThrowsAsync<HttpRequestException>(() => provider.ApplyAsync(
             request,
-            """{"Kind":"oauth2-client-credentials","TokenEndpoint":"https://idp.example/token","ClientId":"sc","ClientSecret":"shh"}""",
+            """{"Kind":"oauth2-client-credentials","TokenEndpoint":"https://idp.example/token","ClientId":"sc","ClientSecret":"csecret"}""",
             CancellationToken.None));
     }
 

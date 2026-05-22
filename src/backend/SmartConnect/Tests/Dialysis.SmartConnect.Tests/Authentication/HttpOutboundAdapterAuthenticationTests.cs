@@ -31,7 +31,7 @@ public sealed class HttpOutboundAdapterAuthenticationTests
             {
               "Url": "https://partner.example/api/data",
               "Method": "POST",
-              "Authentication": { "Kind": "bearer", "Token": "abc.def.ghi" }
+              "Authentication": { "Kind": "bearer", "Token": "test-token-value" }
             }
             """);
 
@@ -40,7 +40,7 @@ public sealed class HttpOutboundAdapterAuthenticationTests
         Assert.True(result.Succeeded);
         Assert.NotNull(captured);
         Assert.Equal("Bearer", captured!.Headers.Authorization!.Scheme);
-        Assert.Equal("abc.def.ghi", captured.Headers.Authorization.Parameter);
+        Assert.Equal("test-token-value", captured.Headers.Authorization.Parameter);
     }
 
     [Fact]
