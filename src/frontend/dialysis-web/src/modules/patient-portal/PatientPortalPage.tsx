@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/components/AuthProvider";
+import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { fetchPortalSummary, type PatientPortalSummary } from "./api";
 
@@ -64,6 +65,7 @@ export const PatientPortalPage = () => {
     enabled: Boolean(patientId),
     staleTime: 30_000,
   });
+  const { name: patientName } = usePatientName(patientId);
 
   if (status === "loading") {
     return <div className="text-sm text-slate-400">Loading…</div>;
@@ -72,7 +74,10 @@ export const PatientPortalPage = () => {
   return (
     <div className="space-y-4">
       <header>
-        <h2 className="text-xl font-semibold text-clinic-50">Your portal</h2>
+        <h2 className="text-xl font-semibold text-clinic-50">
+          Your portal
+          {patientName ? <span className="text-clinic-200"> · {patientName}</span> : null}
+        </h2>
         <p className="text-sm text-slate-400">
           Appointments, medications, and admissions on file with the clinic.
         </p>

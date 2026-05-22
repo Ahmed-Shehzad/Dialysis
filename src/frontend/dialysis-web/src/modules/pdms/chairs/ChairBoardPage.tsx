@@ -1,4 +1,5 @@
 import { humanizeError } from "@/lib/api/humanizeError";
+import { usePatientName } from "@/features/patients/usePatientName";
 import { useChairAssignments, type ChairAssignment } from "./chairBoardApi";
 
 const minutesSince = (iso: string): number => {
@@ -23,6 +24,8 @@ const ChairTile = ({ assignment }: { assignment: ChairAssignment }) => {
         ? "border-amber-700/70 bg-amber-950/30 text-amber-100"
         : "border-emerald-700/70 bg-emerald-950/40 text-emerald-100";
 
+  const { name, isLoading: nameLoading } = usePatientName(assignment.patientId);
+
   return (
     <article className={`rounded-xl border p-4 ${tone}`}>
       <header className="flex items-baseline justify-between gap-2">
@@ -34,7 +37,18 @@ const ChairTile = ({ assignment }: { assignment: ChairAssignment }) => {
       <dl className="mt-2 space-y-1 text-xs">
         <div>
           <dt className="opacity-70">Patient</dt>
-          <dd className="font-mono break-all">{assignment.patientId.slice(0, 8)}…</dd>
+          <dd className="truncate" title={`${name ?? "—"} · ${assignment.patientId}`}>
+            {nameLoading ? (
+              <span className="opacity-60">Resolving…</span>
+            ) : (
+              <>
+                {name ?? <span className="opacity-60">unknown patient</span>}
+                <span className="ml-1 font-mono opacity-60">
+                  ({assignment.patientId.slice(0, 8)})
+                </span>
+              </>
+            )}
+          </dd>
         </div>
         <div>
           <dt className="opacity-70">Placed</dt>
