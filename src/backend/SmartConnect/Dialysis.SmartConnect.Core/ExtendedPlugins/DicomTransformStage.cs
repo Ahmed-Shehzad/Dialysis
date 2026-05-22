@@ -59,26 +59,66 @@ public sealed class DicomTransformStage : ITransformStage
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
-            writer.WriteStartObject();
-            foreach (var item in dataset)
-            {
-                if (item.Tag == DicomTag.PixelData && !options.IncludePixelData)
-                    continue;
-                if (options.IncludeTags is { Count: > 0 } && !options.IncludeTags.Contains(item.Tag))
-                    continue;
-                if (item is not DicomElement element)
-                    continue;
-
-                var key = options.Format == DicomKeyFormat.ByTag
-                    ? FormatTagKey(item.Tag)
-                    : (item.Tag.DictionaryEntry.Keyword is { Length: > 0 } kw ? kw : FormatTagKey(item.Tag));
-                writer.WritePropertyName(key);
-                WriteValue(writer, element);
-            }
-            writer.WriteEndObject();
+            WriteDatasetObject(writer, dataset, options);
         }
         return Encoding.UTF8.GetString(stream.ToArray());
     }
+
+    /// <summary>
+    /// Slice E2: writes a DICOM dataset as a JSON object, recursing into <see cref="DicomSequence"/>
+    /// items so SQ-VR elements project as nested arrays of objects (one per sequence item) rather
+    /// than getting silently skipped. The <c>includeTags</c> filter applies at the top level only —
+    /// once an SQ is included, every element inside its items is emitted so JSONPath expressions
+    /// like <c>$.RequestAttributesSequence[0].RequestedProcedureID</c> work end-to-end.
+    /// </summary>
+    private static void WriteDatasetObject(Utf8JsonWriter writer, DicomDataset dataset, DicomTransformOptions options)
+    {
+        writer.WriteStartObject();
+        foreach (var item in dataset)
+        {
+            if (item.Tag == DicomTag.PixelData && !options.IncludePixelData)
+                continue;
+            if (options.IncludeTags is { Count: > 0 } && !options.IncludeTags.Contains(item.Tag))
+                continue;
+
+            var key = ResolveKey(item.Tag, options);
+            writer.WritePropertyName(key);
+
+            switch (item)
+            {
+                case DicomSequence sequence:
+                    writer.WriteStartArray();
+                    // Sequence items are themselves DicomDatasets; project each recursively.
+                    // Honour an <c>includeTags</c> filter that opted into the sequence by NOT
+                    // re-applying the same filter inside (otherwise an operator who passes only
+                    // the outer SQ tag would get back empty objects).
+                    var nestedOptions = options.IncludeTags is { Count: > 0 }
+                        ? options with { IncludeTags = null }
+                        : options;
+                    foreach (var nested in sequence.Items)
+                    {
+                        WriteDatasetObject(writer, nested, nestedOptions);
+                    }
+                    writer.WriteEndArray();
+                    break;
+                case DicomElement element:
+                    WriteValue(writer, element);
+                    break;
+                default:
+                    // DicomFragmentSequence (encapsulated pixel data) and any other future
+                    // item types — write null so the key still appears but downstream knows
+                    // nothing was extracted.
+                    writer.WriteNullValue();
+                    break;
+            }
+        }
+        writer.WriteEndObject();
+    }
+
+    private static string ResolveKey(DicomTag tag, DicomTransformOptions options) =>
+        options.Format == DicomKeyFormat.ByTag
+            ? FormatTagKey(tag)
+            : (tag.DictionaryEntry.Keyword is { Length: > 0 } kw ? kw : FormatTagKey(tag));
 
     private static void WriteValue(Utf8JsonWriter writer, DicomElement element)
     {
