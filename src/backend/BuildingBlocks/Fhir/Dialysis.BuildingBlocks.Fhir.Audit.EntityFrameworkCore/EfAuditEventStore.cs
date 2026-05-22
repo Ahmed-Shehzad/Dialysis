@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +12,11 @@ namespace Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventStore
     where TDbContext : DbContext
 {
-    private static readonly JsonSerializerOptions _fhirJson =
-        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+    private static readonly FhirJsonSerializer _serializer = new();
+
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static string SerializeFhirJson(AuditEvent auditEvent) => _serializer.SerializeToString(auditEvent);
 
     public async ValueTask AppendAsync(AuditEvent auditEvent, CancellationToken cancellationToken)
     {
@@ -32,9 +34,7 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
             ResourceType = resourceType,
             ResourceId = resourceId,
             Outcome = auditEvent.Outcome?.ToString() ?? "0",
-            // Serialize via the Resource base type so ForFhir's polymorphic converter writes
-            // the `resourceType` discriminator before the subclass fields.
-            ResourceJson = JsonSerializer.Serialize<Resource>(auditEvent, _fhirJson),
+            ResourceJson = SerializeFhirJson(auditEvent),
         };
 
         db.Set<AuditEventRecord>().Add(record);

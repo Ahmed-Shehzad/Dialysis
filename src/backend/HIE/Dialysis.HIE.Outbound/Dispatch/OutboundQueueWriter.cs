@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.Domain;
@@ -22,9 +21,12 @@ public sealed class OutboundQueueWriter(
     IOptions<OutboundOptions> options,
     ILogger<OutboundQueueWriter> logger)
 {
-    private static readonly JsonSerializerOptions _fhirJson =
-        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+    private static readonly FhirJsonSerializer _serializer = new();
     private readonly OutboundOptions _options = options.Value;
+
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
 
     public async Task EnqueueAsync<TEvent, TResource>(
         TEvent integrationEvent,
@@ -46,9 +48,7 @@ public sealed class OutboundQueueWriter(
         }
 
         var resource = mapper.Map(integrationEvent);
-        // Serialize via the Resource base type so ForFhir's polymorphic converter writes the
-        // `resourceType` discriminator before the subclass fields.
-        var fhirJson = JsonSerializer.Serialize<Resource>(resource, _fhirJson);
+        var fhirJson = SerializeFhirJson(resource);
 
         var bundle = new OutboundBundle(
             patientId,

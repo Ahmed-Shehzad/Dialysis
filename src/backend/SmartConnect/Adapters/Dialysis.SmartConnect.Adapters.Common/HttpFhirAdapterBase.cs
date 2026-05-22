@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 
@@ -11,8 +10,12 @@ namespace Dialysis.SmartConnect.Adapters;
 /// </summary>
 public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, IExternalEhrAuthProvider authProvider) : IExternalEhrAdapter
 {
-    private static readonly JsonSerializerOptions _fhirJson =
-        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+    private static readonly FhirJsonParser _parser = new();
+
+    // Parse is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet (its *Async
+    // sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    private static TResource ParseFhirJson<TResource>(string json) where TResource : Resource =>
+        (TResource)_parser.Parse(json, typeof(TResource));
 
     public abstract ExternalEhrAdapterDescriptor Describe();
 
@@ -24,7 +27,7 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return JsonSerializer.Deserialize<TResource>(json, _fhirJson)!;
+        return ParseFhirJson<TResource>(json);
     }
 
     public async Task<Bundle> SearchAsync(string resourceType, IDictionary<string, string> parameters, ExternalEhrContext context, CancellationToken cancellationToken)
@@ -34,7 +37,7 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
         using var response = await SendAsync(HttpMethod.Get, url, context, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        return JsonSerializer.Deserialize<Bundle>(json, _fhirJson)!;
+        return ParseFhirJson<Bundle>(json);
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, ExternalEhrContext context, CancellationToken cancellationToken)

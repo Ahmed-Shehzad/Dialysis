@@ -1,6 +1,5 @@
 using System.Collections.Frozen;
 using System.Text;
-using System.Text.Json;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -19,8 +18,7 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
 {
     public const string KindValue = "ncpdp-to-fhir";
 
-    private static readonly JsonSerializerOptions _fhirJson =
-        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+    private static readonly FhirJsonSerializer _serializer = new();
 
     private readonly FrozenDictionary<string, INcpdpToFhirMapper> _byTransactionCode;
 
@@ -35,30 +33,34 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
     public string Kind => KindValue;
 
     public Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
+        => Task.FromResult(Transform(message));
+
+    // The transform itself is purely CPU-bound (NCPDP parse + FHIR serialize on in-memory data).
+    // Splitting the work out of the *Async-named contract method lets us call Firely's
+    // synchronous SerializeToString here without VSTHRD103 — its *Async sibling is [Obsolete]
+    // (CodeQL cs/call-to-obsolete-method), so the analyzer would otherwise force us to suppress.
+    private IntegrationMessage Transform(IntegrationMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
         var text = Encoding.UTF8.GetString(message.Payload.Span);
         var parsed = NcpdpTelecomMessage.TryParse(text);
         if (parsed is null || string.IsNullOrWhiteSpace(parsed.TransactionCode))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         if (!_byTransactionCode.TryGetValue(parsed.TransactionCode, out var mapper))
         {
-            return Task.FromResult(message);
+            return message;
         }
 
         var resource = mapper.Map(parsed);
         if (resource is null)
         {
-            return Task.FromResult(message);
+            return message;
         }
 
-        // Serialize via the Resource base type so ForFhir's polymorphic converter writes the
-        // `resourceType` discriminator before the subclass fields — round-tripping via
-        // JsonSerializer.Deserialize<Resource> (or a concrete subclass) then works correctly.
-        var json = JsonSerializer.Serialize<Resource>(resource, _fhirJson);
-        return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text));
+        var json = _serializer.SerializeToString(resource);
+        return message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text);
     }
 }

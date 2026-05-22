@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
@@ -23,8 +22,11 @@ public sealed class InboundIngestionService(
     TimeProvider timeProvider,
     ILogger<InboundIngestionService> logger)
 {
-    private static readonly JsonSerializerOptions _fhirJson =
-        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+    private static readonly FhirJsonSerializer _serializer = new();
+
+    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
+    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method), so we can't take it).
+    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
 
     public async Task<OperationOutcome> IngestAsync(string partnerId, Resource resource, CancellationToken cancellationToken = default)
     {
@@ -68,7 +70,7 @@ public sealed class InboundIngestionService(
             return;
         }
 
-        var fhirJson = JsonSerializer.Serialize(resource, _fhirJson);
+        var fhirJson = SerializeFhirJson(resource);
         var received = new ReceivedResource(
             partnerId,
             resource.TypeName,

@@ -5,10 +5,8 @@ namespace Dialysis.BuildingBlocks.Verifier;
 /// </summary>
 public interface IValidator<T>
 {
-    ValidationResult<T> Validate(T instance);
-
     /// <summary>
-    /// Runs validation including async rules (for example remote checks). The default implementation delegates to <see cref="Validate"/>.
+    /// Runs validation rules (including async ones — e.g. remote uniqueness checks).
     /// </summary>
     Task<ValidationResult<T>> ValidateAsync(T instance, CancellationToken cancellationToken = default);
 }

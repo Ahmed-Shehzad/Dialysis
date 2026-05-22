@@ -32,9 +32,16 @@ public sealed class DomainEventSaveChangesInterceptor(IServiceScopeFactory scope
 
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-#pragma warning disable VSTHRD002 // Sync EF interceptor entry point — no async hook; callers using SaveChanges() opt into this bridge.
-        DispatchAsync(CancellationToken.None).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
+        if (_pending.Count > 0)
+        {
+            // Domain-event dispatch is fundamentally async (handlers may issue HTTP/DB I/O), so
+            // there is no honest sync path. Surface it loud instead of silently dropping events
+            // or bridging to async via GetAwaiter().GetResult().
+            _pending.Clear();
+            throw new NotSupportedException(
+                "Aggregates raised domain events but SaveChanges() was called synchronously. " +
+                "Use SaveChangesAsync(cancellationToken) — domain-event handlers require the async dispatch pipeline.");
+        }
         return base.SavedChanges(eventData, result);
     }
 

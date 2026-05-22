@@ -6,8 +6,6 @@ namespace Dialysis.BuildingBlocks.Verifier;
 
 internal interface IExecutableValidationRule<T>
 {
-    IEnumerable<ValidationFailure> Execute(ValidationContext<T> context);
-
     ValueTask<IReadOnlyList<ValidationFailure>> ExecuteAsync(ValidationContext<T> context, CancellationToken cancellationToken);
 }
 
@@ -353,14 +351,6 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
         return this;
     }
 
-    public IEnumerable<ValidationFailure> Execute(ValidationContext<T> context)
-    {
-        var task = ExecuteAsync(context, CancellationToken.None).AsTask();
-#pragma warning disable VSTHRD002 // Sync IExecutableValidationRule.Execute bridges to ExecuteAsync.
-        return task.GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
-    }
-
     public async ValueTask<IReadOnlyList<ValidationFailure>> ExecuteAsync(ValidationContext<T> context, CancellationToken cancellationToken)
     {
         TProperty value;
@@ -451,12 +441,11 @@ public static class VerifierRuleExtensions
             return ruleBuilder;
         }
 
-        /// <summary>Async predicate (for example a remote uniqueness check). The "Async" suffix names the
-        /// predicate's async nature, mirroring the FluentValidation API; the builder itself returns synchronously.</summary>
-#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
-        public IRuleBuilder<T, TProperty> MustAsync(
+        /// <summary>Async predicate (e.g. a remote uniqueness check). Overload of <see cref="Must"/>
+        /// distinguished by predicate arity — the builder returns synchronously, so it
+        /// doesn't carry the "Async" suffix that would mislead readers into expecting a Task.</summary>
+        public IRuleBuilder<T, TProperty> Must(
             Func<T, TProperty, CancellationToken, Task<bool>> predicate)
-#pragma warning restore VSTHRD200
         {
             ArgumentNullException.ThrowIfNull(predicate);
             Unwrap(ruleBuilder).AddAsyncValidator(
@@ -466,11 +455,9 @@ public static class VerifierRuleExtensions
             return ruleBuilder;
         }
 
-        /// <summary>Async predicate (for example a remote uniqueness check). See sibling overload for the suffix rationale.</summary>
-#pragma warning disable VSTHRD200 // Builder method returns the builder synchronously; Async suffix matches the async predicate API.
-        public IRuleBuilder<T, TProperty> MustAsync(
+        /// <summary>Async predicate (ValueTask variant). See sibling overload for the rename rationale.</summary>
+        public IRuleBuilder<T, TProperty> Must(
             Func<T, TProperty, CancellationToken, ValueTask<bool>> predicate)
-#pragma warning restore VSTHRD200
         {
             ArgumentNullException.ThrowIfNull(predicate);
             Unwrap(ruleBuilder).AddAsyncValidator(
