@@ -69,7 +69,7 @@ public sealed class AttachmentOrphanReaperTests
     }
 
     [Fact]
-    public async Task Sweep_Is_NoOp_When_Blob_Store_Is_InRow_Async()
+    public async Task Sweep_Is_No_Op_When_Blob_Store_Is_In_Row_Async()
     {
         await using var fx = new ReaperFixture(useInRowStore: true);
         // Add a metadata-less row scenario impossible for in-row, but verify the sweep returns
