@@ -6,6 +6,7 @@ using Dialysis.EHR.Billing.Features.SubmitClaim;
 using Dialysis.EHR.ClinicalNotes.Features.AttachDiagnosis;
 using Dialysis.EHR.ClinicalNotes.Features.CloseEncounter;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
+using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
@@ -86,5 +87,6 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<SearchPatientsQuery, PatientSearchResult, AuthorizationPipelineBehavior<SearchPatientsQuery, PatientSearchResult>>();
         c.AddQueryBehavior<GetPatientByIdQuery, PatientDetailDto?, AuthorizationPipelineBehavior<GetPatientByIdQuery, PatientDetailDto?>>();
         c.AddQueryBehavior<GetPatientChartQuery, PatientChartView, AuthorizationPipelineBehavior<GetPatientChartQuery, PatientChartView>>();
+        c.AddQueryBehavior<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>, AuthorizationPipelineBehavior<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>>>();
     }
 }

@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Features.GetPatientById;
@@ -57,5 +58,24 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
                 new GetPatientChartQuery(patientId), cancellationToken)
             .ConfigureAwait(false);
         return Ok(chart);
+    }
+
+    /// <summary>
+    /// Patient-scoped recent clinical notes. Backs the chart's Notes section so a
+    /// clinician can see what's been written across encounters without drilling into
+    /// each one. Ordered most-recent first.
+    /// </summary>
+    [HttpGet("{patientId:guid}/notes")]
+    [ProducesResponseType(typeof(IReadOnlyList<ClinicalNoteListItem>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListNotesAsync(
+        Guid patientId,
+        [FromQuery] int take = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var notes = await gateway
+            .SendQueryAsync<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>>(
+                new ListNotesForPatientQuery(patientId, take), cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(notes);
     }
 }

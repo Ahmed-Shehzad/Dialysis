@@ -81,6 +81,46 @@ export const fetchPatientChart = async (patientId: string): Promise<PatientChart
   return response.data;
 };
 
+/** ClinicalNote status int from `Dialysis.EHR.ClinicalNotes.Domain.ClinicalNoteStatus`. */
+export type ClinicalNoteStatus = 1 | 2 | 3 | 4; // Draft | Signed | Amended | EnteredInError
+
+export const clinicalNoteStatusLabel = (status: ClinicalNoteStatus): string => {
+  switch (status) {
+    case 1:
+      return "Draft";
+    case 2:
+      return "Signed";
+    case 3:
+      return "Amended";
+    case 4:
+      return "Entered in error";
+  }
+};
+
+export type ClinicalNoteListItem = {
+  id: string;
+  encounterId: string;
+  authoringProviderId: string;
+  status: ClinicalNoteStatus;
+  createdAtUtc: string;
+  signedAtUtc?: string | null;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+};
+
+export const fetchPatientNotes = async (
+  patientId: string,
+  take = 20,
+): Promise<ClinicalNoteListItem[]> => {
+  const response = await apiClient.get<ClinicalNoteListItem[]>(
+    `/api/ehr/api/v1.0/patients/${patientId}/notes`,
+    { params: { take } },
+  );
+  return response.data ?? [];
+};
+
 export type EhrPatientDetail = {
   id: string;
   medicalRecordNumber: string;
