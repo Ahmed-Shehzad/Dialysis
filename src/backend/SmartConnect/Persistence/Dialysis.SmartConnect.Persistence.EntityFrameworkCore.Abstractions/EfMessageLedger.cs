@@ -9,6 +9,7 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
 {
     public async Task AppendAsync(MessageLedgerEntry entry, CancellationToken cancellationToken)
     {
+        var (messageType, senderId) = DeriveSearchableColumns(entry.Metadata);
         db.MessageLedgerEntries.Add(
             new MessageLedgerEntryEntity
             {
@@ -21,6 +22,8 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
                 Detail = entry.Detail,
                 PayloadSnapshot = entry.PayloadSnapshot,
                 MetadataJson = SerializeMetadata(entry.Metadata),
+                MessageType = messageType,
+                SenderId = senderId,
                 CreatedAtUtc = entry.CreatedAtUtc,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -51,4 +54,70 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
         var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(metadataJson);
         return dict is null ? ImmutableDictionary<string, string>.Empty : dict.ToImmutableDictionary();
     }
+
+    /// <summary>
+    /// Slice C2: extract the dashboard-filterable columns from the incoming metadata bag.
+    /// Top-level <c>LedgerSearchKeys</c> wins; when absent, fall back to the legacy
+    /// <c>smartconnect.sourcemap.json</c> blob the MLLP listener used to be the only
+    /// producer of (the blob carries <c>hl7.messageType</c> / <c>hl7.sendingApplication</c>
+    /// / <c>hl7.sendingFacility</c> by convention).
+    /// </summary>
+    internal static (string? MessageType, string? SenderId) DeriveSearchableColumns(
+        ImmutableDictionary<string, string> metadata)
+    {
+        if (metadata.IsEmpty)
+            return (null, null);
+
+        metadata.TryGetValue(LedgerSearchKeys.MessageType, out var messageType);
+        metadata.TryGetValue(LedgerSearchKeys.SenderId, out var senderId);
+
+        if (!string.IsNullOrWhiteSpace(messageType) && !string.IsNullOrWhiteSpace(senderId))
+        {
+            return (messageType, senderId);
+        }
+
+        // Fall back to the legacy sourcemap.json — pre-C2 inbound transports populated only
+        // this blob. Parsing failures swallow silently (best-effort projection).
+        if (metadata.TryGetValue("smartconnect.sourcemap.json", out var blob) &&
+            !string.IsNullOrWhiteSpace(blob))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(blob);
+                if (string.IsNullOrWhiteSpace(messageType) &&
+                    doc.RootElement.TryGetProperty("hl7.messageType", out var mt) &&
+                    mt.ValueKind == JsonValueKind.String)
+                {
+                    messageType = mt.GetString();
+                }
+
+                if (string.IsNullOrWhiteSpace(senderId))
+                {
+                    var app = doc.RootElement.TryGetProperty("hl7.sendingApplication", out var a) && a.ValueKind == JsonValueKind.String
+                        ? a.GetString()
+                        : null;
+                    var facility = doc.RootElement.TryGetProperty("hl7.sendingFacility", out var f) && f.ValueKind == JsonValueKind.String
+                        ? f.GetString()
+                        : null;
+                    senderId = (app, facility) switch
+                    {
+                        ({ Length: > 0 }, { Length: > 0 }) => $"{app}@{facility}",
+                        ({ Length: > 0 }, _) => app,
+                        _ => null,
+                    };
+                }
+            }
+            catch (JsonException)
+            {
+                // Malformed blob — leave the derived columns null.
+            }
+        }
+
+        return (
+            string.IsNullOrWhiteSpace(messageType) ? null : Truncate(messageType, 256),
+            string.IsNullOrWhiteSpace(senderId) ? null : Truncate(senderId, 256));
+    }
+
+    private static string Truncate(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..maxLength];
 }

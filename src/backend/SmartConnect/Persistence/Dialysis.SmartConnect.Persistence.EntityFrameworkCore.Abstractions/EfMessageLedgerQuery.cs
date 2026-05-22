@@ -37,6 +37,18 @@ public sealed class EfMessageLedgerQuery(SmartConnectDbContext db) : IMessageLed
             q = q.Where(e => e.Status == si);
         }
 
+        if (!string.IsNullOrWhiteSpace(criteria.MessageType))
+        {
+            var mt = criteria.MessageType;
+            q = q.Where(e => e.MessageType == mt);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.SenderId))
+        {
+            var sid = criteria.SenderId;
+            q = q.Where(e => e.SenderId == sid);
+        }
+
         var total = await q.CountAsync(cancellationToken).ConfigureAwait(false);
         var take = Math.Clamp(criteria.Take, 1, 500);
         var skip = Math.Max(0, criteria.Skip);
