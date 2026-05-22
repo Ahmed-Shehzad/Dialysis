@@ -81,15 +81,15 @@ public sealed class ClockSkewMonitorTests
     }
 
     [Theory]
-    [InlineData("20260522135900", 2026, 5, 22, 13, 59, 0)]
-    [InlineData("20260522135900.123", 2026, 5, 22, 13, 59, 0)]
-    [InlineData("202605221359", 2026, 5, 22, 13, 59, 0)]
-    [InlineData("20260522", 2026, 5, 22, 0, 0, 0)]
+    [InlineData("20260522135900", 2026, 5, 22, 13, 59, 0, 0)]
+    [InlineData("20260522135900.123", 2026, 5, 22, 13, 59, 0, 123)]
+    [InlineData("202605221359", 2026, 5, 22, 13, 59, 0, 0)]
+    [InlineData("20260522", 2026, 5, 22, 0, 0, 0, 0)]
     public void Timestamp_Parser_Handles_Ig_Sample_Shapes(
-        string raw, int y, int mo, int d, int h, int mi, int s)
+        string raw, int y, int mo, int d, int h, int mi, int s, int ms)
     {
         Assert.True(Hl7V2ClockSkewProbe.TryParseHl7Timestamp(raw, out var utc));
-        Assert.Equal(new DateTime(y, mo, d, h, mi, s, DateTimeKind.Utc), utc);
+        Assert.Equal(new DateTime(y, mo, d, h, mi, s, ms, DateTimeKind.Utc), utc);
     }
 
     [Fact]
