@@ -20,6 +20,39 @@ internal sealed class HttpOutboundParameters
     /// </summary>
     [JsonConverter(typeof(AuthenticationParametersJsonConverter))]
     public AuthenticationParameters? Authentication { get; set; }
+
+    /// <summary>
+    /// Optional per-route connector tuning — timeouts, retry policy, response capture. Maps
+    /// 1:1 to the Mirth Connect Destination Connector Properties pane (UG pp. 246–252). All
+    /// properties are optional; omitted values inherit the adapter's defaults (no per-request
+    /// timeout beyond the named <c>HttpClient</c>, no retries, no response body capture).
+    /// </summary>
+    public HttpConnectorProperties? ConnectorProperties { get; set; }
+}
+
+internal sealed class HttpConnectorProperties
+{
+    /// <summary>Total deadline for the request including connect/send/receive. <c>null</c> means
+    /// fall back to the named <c>HttpClient</c>'s default timeout.</summary>
+    public int? TimeoutSeconds { get; set; }
+
+    /// <summary>Maximum retry attempts after the first failed call. Defaults to <c>0</c> when
+    /// unset, preserving the previous "send once" behaviour.</summary>
+    public int? MaxRetries { get; set; }
+
+    /// <summary>Delay between retries in milliseconds. Each retry waits <c>RetryDelayMs * attempt</c>
+    /// for a coarse linear backoff (a future slice can swap in jittered exponential backoff).</summary>
+    public int? RetryDelayMs { get; set; }
+
+    /// <summary>HTTP status codes that trigger a retry. Defaults to the standard transient set
+    /// (408 Request Timeout, 429 Too Many Requests, 500/502/503/504) when omitted.</summary>
+    public int[]? RetryOnStatusCodes { get; set; }
+
+    /// <summary>When <c>true</c>, surfaces the response body in <see cref="OutboundSendResult.ResponsePayload"/>
+    /// so downstream response-transform stages and ledger inspectors can see it. Off by default
+    /// because most partners reply with empty 200/201 bodies and the bytes would just bloat
+    /// the ledger.</summary>
+    public bool CaptureResponseBody { get; set; }
 }
 
 internal sealed class AuthenticationParameters
