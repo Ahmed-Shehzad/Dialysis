@@ -2,6 +2,7 @@ import { ehrModule } from "@/modules/ehr/manifest";
 import { hieModule } from "@/modules/hie/manifest";
 import { hisModule } from "@/modules/his/manifest";
 import { identityModule } from "@/modules/identity/manifest";
+import { patientPortalModule } from "@/modules/patient-portal/manifest";
 import { pdmsModule } from "@/modules/pdms/manifest";
 import { smartConnectModule } from "@/modules/smartconnect/manifest";
 import type { ModuleManifest } from "./types";
@@ -17,6 +18,7 @@ export const MODULE_MANIFESTS: readonly ModuleManifest[] = [
   pdmsModule,
   smartConnectModule,
   hieModule,
+  patientPortalModule,
   identityModule,
 ];
 
