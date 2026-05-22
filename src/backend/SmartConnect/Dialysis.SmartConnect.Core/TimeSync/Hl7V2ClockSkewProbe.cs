@@ -43,6 +43,81 @@ public static class Hl7V2ClockSkewProbe
     }
 
     /// <summary>
+    /// Slice J: observe + optionally correct. Always feeds the monitor with the *original*
+    /// skew (so the operator dashboard reflects reality), then — when
+    /// <paramref name="policy"/>.Mode is <see cref="ClockSkewCorrectionMode.Normalize"/> and
+    /// the absolute skew sits between
+    /// <see cref="ClockSkewCorrectionPolicy.CorrectAboveAbsSkew"/> and
+    /// <see cref="ClockSkewCorrectionPolicy.MaxAllowedAbsJump"/> — rewrites <c>MSH-7</c> to
+    /// <paramref name="serverNowUtc"/>. The returned
+    /// <see cref="ClockSkewCorrectionResult"/> carries the audit trail; callers persist it as
+    /// an integration event so we never silently retime a clinical message.
+    /// </summary>
+    public static ClockSkewCorrectionResult? TryObserveAndCorrect(
+        Hl7V2Message message,
+        DateTime serverNowUtc,
+        IClockSkewMonitor monitor,
+        ClockSkewCorrectionPolicy policy)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(monitor);
+        ArgumentNullException.ThrowIfNull(policy);
+
+        var ts = message.GetValue("MSH.7");
+        if (!TryParseHl7Timestamp(ts, out var messageTs))
+            return null;
+
+        var app = message.GetValue("MSH.3.1") ?? message.GetValue("MSH.3");
+        var facility = message.GetValue("MSH.4.1") ?? message.GetValue("MSH.4");
+        var sourceId = (app, facility) switch
+        {
+            ({ Length: > 0 }, { Length: > 0 }) => $"{app}@{facility}",
+            ({ Length: > 0 }, _) => app!,
+            _ => "(unknown)",
+        };
+
+        var skew = serverNowUtc - messageTs;
+        monitor.Record(new ClockSkewObservation(sourceId, messageTs, serverNowUtc, skew));
+
+        if (policy.Mode != ClockSkewCorrectionMode.Normalize)
+        {
+            return new ClockSkewCorrectionResult(
+                sourceId, messageTs, serverNowUtc, skew,
+                CorrectedMessageTimestampUtc: null,
+                WasCorrected: false,
+                RejectionReason: null);
+        }
+
+        var absSkew = skew.Duration();
+        if (absSkew <= policy.CorrectAboveAbsSkew)
+        {
+            return new ClockSkewCorrectionResult(
+                sourceId, messageTs, serverNowUtc, skew,
+                CorrectedMessageTimestampUtc: null,
+                WasCorrected: false,
+                RejectionReason: "below correction threshold");
+        }
+
+        if (absSkew > policy.MaxAllowedAbsJump)
+        {
+            return new ClockSkewCorrectionResult(
+                sourceId, messageTs, serverNowUtc, skew,
+                CorrectedMessageTimestampUtc: null,
+                WasCorrected: false,
+                RejectionReason: "exceeds MaxAllowedAbsJump");
+        }
+
+        // SetValue requires a component index — the parser holds the MSH-7 timestamp as a
+        // single component even when there are no '^' separators on the wire.
+        message.SetValue("MSH.7.1", serverNowUtc.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture));
+        return new ClockSkewCorrectionResult(
+            sourceId, messageTs, serverNowUtc, skew,
+            CorrectedMessageTimestampUtc: serverNowUtc,
+            WasCorrected: true,
+            RejectionReason: null);
+    }
+
+    /// <summary>
     /// HL7 v2 timestamp parser covering the IG sample shape
     /// <c>YYYYMMDDHHMMSS[.SSS][ZZZ]</c>. Accepts 8/12/14-digit prefixes (date, date+HM,
     /// date+HMS), optional fractional seconds, and an optional <c>+HHMM</c>/<c>-HHMM</c>
