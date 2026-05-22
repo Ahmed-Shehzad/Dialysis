@@ -9,6 +9,7 @@ using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
+using Dialysis.SmartConnect.Ncpdp;
 using Dialysis.SmartConnect.TimeSync;
 using Dialysis.SmartConnect.Transforms;
 using Dialysis.SmartConnect.VariableMaps;
@@ -70,6 +71,12 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<DicomTransformStage>();
             services.AddSingleton<DelimitedTextTransformStage>();
             services.AddSingleton<NcpdpTelecomTransformStage>();
+            // Slice K2: per-transaction NCPDP → FHIR mappers + dispatch stage.
+            services.AddSingleton<INcpdpToFhirMapper, NcpdpBillingToClaimMapper>();
+            services.AddSingleton<INcpdpToFhirMapper, NcpdpReversalToClaimMapper>();
+            services.AddSingleton<INcpdpToFhirMapper, NcpdpEligibilityToCoverageEligibilityRequestMapper>();
+            services.AddSingleton<INcpdpToFhirMapper, NcpdpInfoReportingToMedicationDispenseMapper>();
+            services.AddSingleton<NcpdpToFhirTransformStage>();
             services.AddSingleton<MessageBuilderTransformStage>();
             services.AddSingleton<MapperTransformStage>(sp => new MapperTransformStage(sp.GetRequiredService<JsonTransformStage>()));
             services.AddSingleton<IteratorRouteFilter>(sp => new IteratorRouteFilter(sp));
@@ -125,6 +132,7 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterTransformStage(sp.GetRequiredService<DicomTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<DelimitedTextTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<NcpdpTelecomTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<NcpdpToFhirTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());
