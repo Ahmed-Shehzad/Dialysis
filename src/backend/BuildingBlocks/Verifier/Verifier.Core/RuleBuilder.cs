@@ -441,9 +441,10 @@ public static class VerifierRuleExtensions
             return ruleBuilder;
         }
 
-        /// <summary>Async predicate (e.g. a remote uniqueness check). Overload of <see cref="Must"/>
-        /// distinguished by predicate arity — the builder returns synchronously, so it
-        /// doesn't carry the "Async" suffix that would mislead readers into expecting a Task.</summary>
+        /// <summary>Async predicate (e.g. a remote uniqueness check). Overload of the synchronous
+        /// <c>Must(Func&lt;T, TProperty, bool&gt;)</c> distinguished by predicate arity — the builder
+        /// returns synchronously, so it doesn't carry the "Async" suffix that would mislead readers
+        /// into expecting a Task.</summary>
         public IRuleBuilder<T, TProperty> Must(
             Func<T, TProperty, CancellationToken, Task<bool>> predicate)
         {
