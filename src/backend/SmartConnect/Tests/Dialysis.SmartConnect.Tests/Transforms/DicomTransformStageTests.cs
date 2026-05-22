@@ -91,6 +91,89 @@ public sealed class DicomTransformStageTests
         Assert.Equal("dicom", stage.Kind);
     }
 
+    [Fact]
+    public async Task Transform_Projects_Sequence_Items_As_Nested_Arrays_Async()
+    {
+        // Slice E2: a DicomSequence element should project as a JSON array of objects,
+        // one per sequence item. Earlier behaviour silently skipped SQ elements.
+        var sequenceItem1 = new DicomDataset
+        {
+            { DicomTag.RequestedProcedureID, "RP-001" },
+            { DicomTag.AccessionNumber, "ACC-A" },
+        };
+        var sequenceItem2 = new DicomDataset
+        {
+            { DicomTag.RequestedProcedureID, "RP-002" },
+            { DicomTag.AccessionNumber, "ACC-B" },
+        };
+        var dataset = new DicomDataset
+        {
+            { DicomTag.SOPClassUID, DicomUID.SecondaryCaptureImageStorage },
+            { DicomTag.SOPInstanceUID, DicomUID.Generate() },
+            { DicomTag.PatientID, "MRN-1" },
+            new DicomSequence(DicomTag.RequestAttributesSequence, sequenceItem1, sequenceItem2),
+        };
+        var file = new DicomFile(dataset);
+        using var ms = new MemoryStream();
+        await file.SaveAsync(ms);
+
+        var message = new IntegrationMessage
+        {
+            Id = Guid.CreateVersion7(),
+            FlowId = Guid.CreateVersion7(),
+            CorrelationId = "C",
+            Payload = ms.ToArray(),
+            PayloadFormat = PayloadFormat.Binary,
+            Metadata = ImmutableDictionary<string, string>.Empty,
+            ReceivedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        var stage = new DicomTransformStage();
+        var transformed = await stage.TransformAsync(message, CancellationToken.None);
+
+        using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(transformed.Payload.Span));
+        var sequence = doc.RootElement.GetProperty("RequestAttributesSequence");
+        Assert.Equal(JsonValueKind.Array, sequence.ValueKind);
+        Assert.Equal(2, sequence.GetArrayLength());
+        Assert.Equal("RP-001", sequence[0].GetProperty("RequestedProcedureID").GetString());
+        Assert.Equal("ACC-A", sequence[0].GetProperty("AccessionNumber").GetString());
+        Assert.Equal("RP-002", sequence[1].GetProperty("RequestedProcedureID").GetString());
+    }
+
+    [Fact]
+    public async Task Transform_Returns_Empty_Sequence_Array_When_Sequence_Has_No_Items_Async()
+    {
+        var dataset = new DicomDataset
+        {
+            { DicomTag.SOPClassUID, DicomUID.SecondaryCaptureImageStorage },
+            { DicomTag.SOPInstanceUID, DicomUID.Generate() },
+            { DicomTag.PatientID, "MRN-empty" },
+            new DicomSequence(DicomTag.RequestAttributesSequence),
+        };
+        var file = new DicomFile(dataset);
+        using var ms = new MemoryStream();
+        await file.SaveAsync(ms);
+
+        var message = new IntegrationMessage
+        {
+            Id = Guid.CreateVersion7(),
+            FlowId = Guid.CreateVersion7(),
+            CorrelationId = "C",
+            Payload = ms.ToArray(),
+            PayloadFormat = PayloadFormat.Binary,
+            Metadata = ImmutableDictionary<string, string>.Empty,
+            ReceivedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        var stage = new DicomTransformStage();
+        var transformed = await stage.TransformAsync(message, CancellationToken.None);
+
+        using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(transformed.Payload.Span));
+        var sequence = doc.RootElement.GetProperty("RequestAttributesSequence");
+        Assert.Equal(JsonValueKind.Array, sequence.ValueKind);
+        Assert.Equal(0, sequence.GetArrayLength());
+    }
+
     private static async Task<IntegrationMessage> Build_Dicom_Message_Async()
     {
         var pixelBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
