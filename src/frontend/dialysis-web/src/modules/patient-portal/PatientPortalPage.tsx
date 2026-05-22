@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { BookAppointmentDialog } from "./BookAppointmentDialog";
 import { fetchPortalSummary, type PatientPortalSummary } from "./api";
 
 const FALLBACK_DEMO_PATIENT_ID = "";
@@ -66,6 +67,7 @@ export const PatientPortalPage = () => {
     staleTime: 30_000,
   });
   const { name: patientName } = usePatientName(patientId);
+  const [bookOpen, setBookOpen] = useState(false);
 
   if (status === "loading") {
     return <div className="text-sm text-slate-400">Loading…</div>;
@@ -73,14 +75,24 @@ export const PatientPortalPage = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold text-clinic-50">
-          Your portal
-          {patientName ? <span className="text-clinic-200"> · {patientName}</span> : null}
-        </h2>
-        <p className="text-sm text-slate-400">
-          Appointments, medications, and admissions on file with the clinic.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold text-clinic-50">
+            Your portal
+            {patientName ? <span className="text-clinic-200"> · {patientName}</span> : null}
+          </h2>
+          <p className="text-sm text-slate-400">
+            Appointments, medications, and admissions on file with the clinic.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setBookOpen(true)}
+          disabled={!patientId}
+          className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          + Book appointment
+        </button>
       </header>
 
       {!claimPatientId && (
@@ -122,6 +134,10 @@ export const PatientPortalPage = () => {
       )}
 
       {summary.data && <PortalTiles summary={summary.data} />}
+
+      {bookOpen && patientId && (
+        <BookAppointmentDialog patientId={patientId} onClose={() => setBookOpen(false)} />
+      )}
     </div>
   );
 };
