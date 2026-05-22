@@ -19,7 +19,9 @@ namespace Dialysis.SmartConnect.Persistence.ObjectStorage.S3;
 /// </remarks>
 public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
 {
-    private readonly IAmazonS3 _client;
+    // AmazonS3Client (concrete) rather than IAmazonS3 to satisfy CA1859 — the interface
+    // dispatch overhead isn't justified here since we always own the concrete client.
+    private readonly AmazonS3Client _client;
     private readonly string _bucket;
     private readonly string _prefix;
 
@@ -95,9 +97,12 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
                 ContinuationToken = continuationToken,
             };
             var response = await _client.ListObjectsV2Async(request, cancellationToken).ConfigureAwait(false);
-            foreach (var obj in response.S3Objects ?? [])
+            var objects = response.S3Objects;
+            if (objects is null) continue;
+            foreach (var obj in objects)
             {
-                if (obj.Key is not { Length: > 0 } key) continue;
+                var key = obj.Key;
+                if (string.IsNullOrEmpty(key)) continue;
                 var name = key.StartsWith(_prefix, StringComparison.Ordinal)
                     ? key[_prefix.Length..]
                     : key;
@@ -109,7 +114,11 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
         while (continuationToken is not null);
     }
 
-    public void Dispose() => _client.Dispose();
+    public void Dispose()
+    {
+        _client.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     private string KeyOf(Guid id) => _prefix + id.ToString("D");
 
