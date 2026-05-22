@@ -26,4 +26,12 @@ public interface IAttachmentBlobStore
     Task<ReadOnlyMemory<byte>?> ReadAsync(Guid attachmentId, CancellationToken cancellationToken);
 
     Task DeleteAsync(Guid attachmentId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Streams metadata for every blob the backend currently holds. The orphan reaper consumes this
+    /// to find blobs without a matching metadata row and delete them after a grace window.
+    /// In-row backends can return what's in the metadata table (no orphans are possible since bytes
+    /// share the row); out-of-row backends walk their own storage (directory listing, S3 ListObjects).
+    /// </summary>
+    IAsyncEnumerable<BlobMetadata> EnumerateAsync(CancellationToken cancellationToken);
 }
