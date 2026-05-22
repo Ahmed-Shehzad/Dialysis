@@ -25,6 +25,68 @@ public sealed class HttpOutboundAdapter(
 
     public string Kind => "http";
 
+    /// <summary>Slice B2: JSON Schema describing the HTTP outbound parameters shape so
+    /// the operator-shell can render a form-driven editor instead of raw-JSON.</summary>
+    public string? GetParametersSchema() => HttpOutboundParametersSchema;
+
+    private const string HttpOutboundParametersSchema = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "title": "HttpOutboundParameters",
+          "type": "object",
+          "required": ["Url"],
+          "properties": {
+            "Url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Absolute HTTP/HTTPS endpoint of the partner system."
+            },
+            "Method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+              "default": "POST",
+              "description": "HTTP verb used for the outbound send."
+            },
+            "Headers": {
+              "type": "object",
+              "description": "Custom request headers (case-insensitive keys). Content-Type may be set here to override the default application/octet-stream.",
+              "additionalProperties": { "type": "string" }
+            },
+            "Authentication": {
+              "type": "object",
+              "description": "Per-route authentication block (slice A / A2). Kind selects the IHttpAuthenticationProvider; remaining fields are passed verbatim to the provider.",
+              "required": ["Kind"],
+              "properties": {
+                "Kind": {
+                  "type": "string",
+                  "enum": ["bearer", "api-key", "basic", "oauth2-client-credentials", "mutual-tls"]
+                }
+              },
+              "additionalProperties": true
+            },
+            "ConnectorProperties": {
+              "type": "object",
+              "description": "Slice B per-route connector tuning.",
+              "properties": {
+                "TimeoutSeconds": { "type": "integer", "minimum": 1, "description": "Per-attempt deadline." },
+                "MaxRetries": { "type": "integer", "minimum": 0, "default": 0 },
+                "RetryDelayMs": { "type": "integer", "minimum": 0, "default": 500 },
+                "RetryOnStatusCodes": {
+                  "type": "array",
+                  "items": { "type": "integer" },
+                  "description": "HTTP status codes that trigger a retry. Defaults to 408 + 429 + 500/502/503/504 when omitted."
+                },
+                "CaptureResponseBody": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Surface the response body in OutboundSendResult.ResponsePayload so response-transform stages and ledger inspectors can see it."
+                }
+              }
+            }
+          }
+        }
+        """;
+
     public async Task<OutboundSendResult> SendAsync(
         IntegrationMessage message,
         int outboundRouteOrdinal,
