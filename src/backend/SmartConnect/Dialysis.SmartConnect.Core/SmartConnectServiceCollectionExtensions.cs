@@ -9,6 +9,7 @@ using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
+using Dialysis.SmartConnect.TimeSync;
 using Dialysis.SmartConnect.Transforms;
 using Dialysis.SmartConnect.VariableMaps;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,11 @@ public static class SmartConnectServiceCollectionExtensions
         {
             services.TryAddSingleton<TimeProvider>(TimeProvider.System);
             services.TryAddSingleton<IConfiguration>(_ => new ConfigurationBuilder().Build());
+            // Slice J2: register the clock-skew monitor so the §2 probe (called from
+            // inbound transports) actually accumulates observations the operator dashboard
+            // reads. In-memory is fine for single-replica; swap for a Valkey-backed impl
+            // when SmartConnect scales out.
+            services.TryAddSingleton<IClockSkewMonitor, InMemoryClockSkewMonitor>();
             services.AddHttpClient("smartconnect-outbound");
             services.AddSingleton<AllowAllRouteFilter>();
             services.AddSingleton<PassThroughOutboundAdapter>();

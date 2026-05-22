@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Dialysis.SmartConnect.DataTypes;
+using Dialysis.SmartConnect.TimeSync;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,6 +18,8 @@ public sealed class MllpInboundHostedService(
     IOptionsMonitor<MllpInboundOptions> options,
     IInboundMessageFactory messageFactory,
     IServiceScopeFactory scopeFactory,
+    IClockSkewMonitor clockSkewMonitor,
+    TimeProvider timeProvider,
     ILogger<MllpInboundHostedService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -133,6 +137,11 @@ public sealed class MllpInboundHostedService(
             };
         }
 
+        // Slice J2: feed the §2 clock-skew monitor every time we frame a valid HL7v2
+        // message. Failure to parse MSH-7 / non-HL7v2 payloads silently skip; we never
+        // want time-sync probing to block the dispatch path.
+        TryProbeClockSkew(payload);
+
         var message = messageFactory.Create(
             opt.DefaultFlowId,
             payload,
@@ -180,5 +189,30 @@ public sealed class MllpInboundHostedService(
             map["hl7.controlId"] = fields[9];
 
         return map;
+    }
+
+    /// <summary>
+    /// Slice J2 hook: parse the payload as HL7v2, compute the skew vs. server clock, and
+    /// record it on <see cref="IClockSkewMonitor"/>. Pure observation — no correction
+    /// (that needs per-source policy storage which lands separately). Any parse failure
+    /// is swallowed so a non-HL7v2 inbound (e.g. an exception trace coming in through
+    /// the MLLP socket) never blocks dispatch.
+    /// </summary>
+    private void TryProbeClockSkew(byte[] payload)
+    {
+        try
+        {
+            var text = Encoding.UTF8.GetString(payload);
+            var message = Hl7V2Message.Parse(text);
+            Hl7V2ClockSkewProbe.TryObserve(message, timeProvider.GetUtcNow().UtcDateTime, clockSkewMonitor);
+        }
+        catch (FormatException)
+        {
+            // Not an HL7v2 message — fine, the probe is best-effort.
+        }
+        catch (ArgumentException)
+        {
+            // Empty / whitespace payload — ignore.
+        }
     }
 }
