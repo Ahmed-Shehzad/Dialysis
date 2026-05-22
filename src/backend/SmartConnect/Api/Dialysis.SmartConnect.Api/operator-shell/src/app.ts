@@ -1,4 +1,7 @@
 import "./styles.css";
+// Slice H side-effect import — the DICOM viewer self-registers with the slice I
+// viewer registry at module load.
+import "./dicom-viewer";
 import { mountAuthBar } from "./auth";
 import { Router } from "./router";
 import { renderFlows } from "./panels/flows";

@@ -206,3 +206,28 @@ main pre.json-block, main pre.code-block {
   font-size: 0.9rem;
   color: #555;
 }
+
+/* Slice H: DICOM tag-table viewer. */
+.viewer-dicom {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.viewer-dicom-tags {
+  font-size: 0.82rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+.viewer-dicom-tags th, .viewer-dicom-tags td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+.viewer-dicom-tags th {
+  background: #f0f0f3;
+  font-weight: 600;
+}
+.viewer-dicom-tags code {
+  font-size: 0.78rem;
+  color: #555;
+}
