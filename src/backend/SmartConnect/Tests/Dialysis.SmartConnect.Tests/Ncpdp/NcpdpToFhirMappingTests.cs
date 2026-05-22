@@ -98,7 +98,9 @@ public sealed class NcpdpToFhirMappingTests
 
         var json = Encoding.UTF8.GetString(transformed.Payload.Span);
         var parser = new FhirJsonParser();
+#pragma warning disable VSTHRD103 // Firely Parse is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
         var resource = parser.Parse<Claim>(json);
+#pragma warning restore VSTHRD103
         Assert.Equal(FinancialResourceStatusCodes.Active, resource.Status);
         Assert.Equal("Patient/PT-123", resource.Patient.Reference);
     }
