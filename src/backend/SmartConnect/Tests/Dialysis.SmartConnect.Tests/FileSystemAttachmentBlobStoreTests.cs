@@ -67,17 +67,21 @@ public sealed class FileSystemAttachmentBlobStoreTests
     }
 
     [Fact]
-    public async Task Sync_Write_From_Jint_Sync_Bridge_Round_Trips_Async()
+    public void Sync_Write_From_Jint_Sync_Bridge_Round_Trips()
     {
-        await using var fx = new FsFixture();
+        // Sync-bodied because the call under test is the sync `Write` overload — wrapping it in
+        // a Task.Run just to keep the test method async would defeat the analyzer's whole point.
+        // Verification reads back via plain File.ReadAllText, mirroring how the Jint binder
+        // confirms persistence (no async machinery on the script path).
+        using var fx = new FsFixture();
         var id = Guid.CreateVersion7();
         var bytes = Encoding.UTF8.GetBytes("sync-fs");
 
         fx.Store.Write(id, bytes, CancellationToken.None);
-        var read = await fx.Store.ReadAsync(id, CancellationToken.None);
 
-        Assert.NotNull(read);
-        Assert.Equal("sync-fs", Encoding.UTF8.GetString(read!.Value.Span));
+        var path = Path.Combine(fx.RootPath, id.ToString("N")[..2], id + ".bin");
+        Assert.True(File.Exists(path));
+        Assert.Equal("sync-fs", File.ReadAllText(path));
     }
 
     [Fact]

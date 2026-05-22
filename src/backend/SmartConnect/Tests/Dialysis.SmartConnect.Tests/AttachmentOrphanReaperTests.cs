@@ -1,8 +1,8 @@
 using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -38,7 +38,7 @@ public sealed class AttachmentOrphanReaperTests
         await using var fx = new ReaperFixture();
         var id = Guid.CreateVersion7();
         await fx.Blobs.WriteAsync(id, Encoding.UTF8.GetBytes("kept"), CancellationToken.None);
-        fx.Db.Attachments.Add(new Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities.AttachmentEntity
+        fx.Db.Attachments.Add(new AttachmentEntity
         {
             Id = id,
             MessageId = Guid.CreateVersion7(),

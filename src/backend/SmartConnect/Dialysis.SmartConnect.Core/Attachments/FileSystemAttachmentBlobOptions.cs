@@ -6,12 +6,17 @@ namespace Dialysis.SmartConnect.Attachments;
 /// point it at a shared NFS / SMB mount — the impl is stateless, but two replicas writing the same
 /// id will race (an outer caller is responsible for id uniqueness via <c>Guid.CreateVersion7</c>).
 /// </summary>
-public sealed record FileSystemAttachmentBlobOptions
+/// <remarks>
+/// Mutable get/set rather than init-only because the <see cref="Microsoft.Extensions.Options"/>
+/// pattern instantiates the options with no constructor args and applies configuration callbacks
+/// after the fact. The store constructor validates that <see cref="RootPath"/> is non-empty.
+/// </remarks>
+public sealed class FileSystemAttachmentBlobOptions
 {
     /// <summary>
     /// Absolute path to the directory under which blobs are stored. Sharded as
     /// <c>&lt;RootPath&gt;/&lt;first-2-hex-chars-of-id&gt;/&lt;id&gt;.bin</c> so no single directory
     /// holds more than ~256 sibling subdirectories (ext4 / NTFS stay performant past millions of files).
     /// </summary>
-    public required string RootPath { get; init; }
+    public string RootPath { get; set; } = string.Empty;
 }

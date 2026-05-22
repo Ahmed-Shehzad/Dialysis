@@ -49,7 +49,12 @@ public sealed class AttachmentOrphanReaperHostedService(
         }
     }
 
-    internal async Task SweepAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs a single sweep. Exposed so ops tooling and tests can trigger it without waiting for
+    /// the next <see cref="AttachmentOrphanReaperOptions.SweepInterval"/> tick. Skips when the
+    /// blob store is in-row (orphans impossible) and respects the safety caps regardless.
+    /// </summary>
+    public async Task SweepAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var blobs = scope.ServiceProvider.GetRequiredService<IAttachmentBlobStore>();
