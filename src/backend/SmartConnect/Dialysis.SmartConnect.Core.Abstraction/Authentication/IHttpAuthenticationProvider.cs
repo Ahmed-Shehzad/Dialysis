@@ -31,4 +31,19 @@ public interface IHttpAuthenticationProvider
         HttpRequestMessage request,
         string parametersJson,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Slice A2: lets a provider swap the <see cref="HttpClient"/> used to send the request
+    /// when the auth scheme is bound to the underlying handler rather than the request — the
+    /// canonical case is mutual TLS, where the client certificate lives on the
+    /// <see cref="System.Net.Http.SocketsHttpHandler"/>'s SSL options and can't be attached
+    /// per-request. Returning <c>null</c> tells the adapter to keep using its default
+    /// <c>smartconnect-outbound</c> named client. Default implementation is a no-op so the
+    /// four header-based providers (Bearer / API key / Basic / OAuth2) don't need to change.
+    /// </summary>
+    Task<HttpClient?> ResolveClientAsync(
+        string parametersJson,
+        HttpClient defaultClient,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<HttpClient?>(null);
 }

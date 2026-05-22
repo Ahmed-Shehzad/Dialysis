@@ -113,6 +113,17 @@ public sealed class HttpOutboundAdapter(
 
             try
             {
+                // Slice A2: handler-bound auth schemes (mutual TLS, future SPNEGO) swap the
+                // HttpClient itself rather than mutating the request. Header-based providers
+                // (Bearer / API key / Basic / OAuth2) return null and keep the named client.
+                var resolved = await provider
+                    .ResolveClientAsync(auth.ParametersJson, client, cancellationToken)
+                    .ConfigureAwait(false);
+                if (resolved is not null)
+                {
+                    client = resolved;
+                }
+
                 await provider.ApplyAsync(request, auth.ParametersJson, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is InvalidOperationException or JsonException or HttpRequestException)

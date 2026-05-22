@@ -47,6 +47,9 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<IHttpAuthenticationProvider, ApiKeyAuthenticationProvider>();
             services.AddSingleton<IHttpAuthenticationProvider, BasicAuthenticationProvider>();
             services.AddSingleton<IHttpAuthenticationProvider, OAuth2ClientCredentialsAuthenticationProvider>();
+            // Slice A2: mutual TLS provider + the per-cert HttpClient pool it borrows from.
+            services.TryAddSingleton<IMutualTlsHttpClientFactory, MutualTlsHttpClientFactory>();
+            services.AddSingleton<IHttpAuthenticationProvider, MutualTlsAuthenticationProvider>();
             services.TryAddSingleton<IHttpAuthenticationProviderRegistry, HttpAuthenticationProviderRegistry>();
 
             services.AddSingleton<HttpOutboundAdapter>();
