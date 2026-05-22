@@ -4,7 +4,14 @@ import type { ReactNode } from "react";
  * Identifier for a module's URL prefix and registry key. Backend modules each map to one
  * frontend module — adding a new one means adding a slug here and a folder under `src/modules/`.
  */
-export type ModuleSlug = "his" | "ehr" | "pdms" | "smartconnect" | "hie" | "identity";
+export type ModuleSlug =
+  | "his"
+  | "ehr"
+  | "pdms"
+  | "smartconnect"
+  | "hie"
+  | "identity"
+  | "patient-portal";
 
 /**
  * A permission string scoped to a backend module's permission catalog
