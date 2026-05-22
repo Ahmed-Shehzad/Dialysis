@@ -255,43 +255,129 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             ["smartconnect.sourcemap.json"] = JsonSerializer.Serialize(sourceMap),
         };
 
-        var message = context.MessageFactory.Create(
-            context.DefaultFlowId,
-            bytes,
-            PayloadFormat.Binary,
-            correlationId: null,
-            metadata: metadata);
+        // Slice D2: optionally split the file into per-record sub-messages, each tagged
+        // with batch context (slice D) so the operator dashboard can group + filter by the
+        // originating file. SplitMode=None preserves the historical one-message-per-file
+        // behaviour byte-for-byte.
+        var records = SplitPayload(bytes, parameters);
+        var batchId = info.FullName; // fully-qualified path uniquely identifies the source.
+        var batchSource = $"file:{info.Name}";
 
-        InboundReceiveResult result;
-        try
+        for (var i = 0; i < records.Count; i++)
         {
-            result = await context.DispatchAsync(message, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            context.Logger.LogError(ex, "FileReader '{Name}' dispatch failed for '{Path}'.", context.InstanceName, fullPath);
-            return;
-        }
+            var recordBytes = records[i];
+            var perRecordMetadata = new Dictionary<string, string>(metadata, StringComparer.Ordinal);
+            if (records.Count > 1)
+            {
+                perRecordMetadata[BatchMetadataKeys.BatchId] = batchId;
+                perRecordMetadata[BatchMetadataKeys.Sequence] = (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                perRecordMetadata[BatchMetadataKeys.Total] = records.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                perRecordMetadata[BatchMetadataKeys.Source] = batchSource;
+            }
 
-        if (!result.Succeeded)
-        {
-            context.Logger.LogWarning(
-                "FileReader '{Name}' dispatch returned {Status}: {Error} for '{Path}'.",
-                context.InstanceName,
-                result.SuggestedHttpStatus,
-                result.Error,
-                fullPath);
-            // Leave the file in place so it can be retried on the next tick or moved to quarantine
-            // if configured. We deliberately do not delete on dispatch failure.
-            QuarantineOrLeave(context, parameters, fullPath);
-            return;
+            var message = context.MessageFactory.Create(
+                context.DefaultFlowId,
+                recordBytes,
+                PayloadFormat.Binary,
+                correlationId: null,
+                metadata: perRecordMetadata);
+
+            InboundReceiveResult result;
+            try
+            {
+                result = await context.DispatchAsync(message, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                context.Logger.LogError(ex, "FileReader '{Name}' dispatch failed for '{Path}' record {Sequence}/{Total}.", context.InstanceName, fullPath, i + 1, records.Count);
+                return;
+            }
+
+            if (!result.Succeeded)
+            {
+                context.Logger.LogWarning(
+                    "FileReader '{Name}' dispatch returned {Status}: {Error} for '{Path}' record {Sequence}/{Total}.",
+                    context.InstanceName,
+                    result.SuggestedHttpStatus,
+                    result.Error,
+                    fullPath,
+                    i + 1,
+                    records.Count);
+                // Quarantine the whole file on any record's failure — partial-success
+                // semantics here would silently drop records.
+                QuarantineOrLeave(context, parameters, fullPath);
+                return;
+            }
         }
 
         ApplyAfterRead(context, parameters, fullPath);
+    }
+
+    /// <summary>
+    /// Slice D2: produces one byte array per record per the parameters' <see cref="FileReaderSplitMode"/>.
+    /// Returns a single-element list (the whole file) when split mode is <see cref="FileReaderSplitMode.None"/>.
+    /// </summary>
+    internal static IReadOnlyList<byte[]> SplitPayload(byte[] bytes, FileReaderParameters parameters)
+    {
+        if (parameters.SplitMode == FileReaderSplitMode.None || bytes.Length == 0)
+        {
+            return [bytes];
+        }
+
+        var text = System.Text.Encoding.UTF8.GetString(bytes);
+        IEnumerable<string> records = parameters.SplitMode switch
+        {
+            FileReaderSplitMode.Hl7v2 => SplitOnHl7v2(text),
+            FileReaderSplitMode.Line => text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries),
+            FileReaderSplitMode.Regex => System.Text.RegularExpressions.Regex
+                .Split(text, parameters.SplitPattern ?? string.Empty)
+                .Where(r => !string.IsNullOrWhiteSpace(r)),
+            _ => [text],
+        };
+
+        var result = records
+            .Select(r => System.Text.Encoding.UTF8.GetBytes(r))
+            .Where(b => b.Length > 0)
+            .ToArray();
+        return result.Length == 0 ? [bytes] : result;
+    }
+
+    private static IEnumerable<string> SplitOnHl7v2(string text)
+    {
+        // Each HL7v2 message starts with "MSH|"; the carriage return between messages is
+        // part of the previous message's last segment in well-formed files. Split on the
+        // boundary preceding "MSH|" while keeping that prefix on each record.
+        var anchors = new List<int>();
+        for (var i = 0; i + 3 < text.Length; i++)
+        {
+            if (text[i] == 'M' && text[i + 1] == 'S' && text[i + 2] == 'H' && text[i + 3] == '|')
+            {
+                // Only treat MSH at the start of the file or after a line break as a boundary;
+                // an MSH inside a segment value (rare but possible in free-text fields) shouldn't
+                // start a new record.
+                if (i == 0 || text[i - 1] == '\r' || text[i - 1] == '\n')
+                {
+                    anchors.Add(i);
+                }
+            }
+        }
+
+        if (anchors.Count <= 1)
+        {
+            yield return text;
+            yield break;
+        }
+
+        for (var i = 0; i < anchors.Count; i++)
+        {
+            var start = anchors[i];
+            var end = i + 1 < anchors.Count ? anchors[i + 1] : text.Length;
+            yield return text[start..end];
+        }
     }
 
     private static void ApplyAfterRead(

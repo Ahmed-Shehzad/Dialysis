@@ -13,6 +13,28 @@ public enum FileReaderAfterReadAction
     Leave = 2,
 }
 
+/// <summary>Slice D2: when the file contains multiple records, how the File Reader splits
+/// it into per-record <see cref="IntegrationMessage"/>s. <see cref="None"/> preserves the
+/// historical "whole file is one message" behaviour.</summary>
+public enum FileReaderSplitMode
+{
+    /// <summary>One message per file (default; backward compatible).</summary>
+    None = 0,
+
+    /// <summary>Split at each <c>MSH|</c> segment so each HL7v2 message in a batched file
+    /// becomes its own <see cref="IntegrationMessage"/>.</summary>
+    Hl7v2 = 1,
+
+    /// <summary>Split on newlines (<c>\r\n</c> / <c>\n</c> / <c>\r</c>); blank lines are
+    /// skipped. Useful for line-delimited JSON / CSV-row drops.</summary>
+    Line = 2,
+
+    /// <summary>Custom regex split (<see cref="FileReaderParameters.SplitPattern"/> required).
+    /// The pattern is treated as the boundary between records — capture groups are
+    /// preserved in the records, matching split semantics.</summary>
+    Regex = 3,
+}
+
 /// <summary>
 /// Strongly-typed parsed view of <see cref="SourceConnectorContext.Parameters"/> for the file reader.
 /// </summary>
@@ -33,6 +55,14 @@ public sealed class FileReaderParameters
     public bool IncludeSubdirectories { get; init; }
 
     public string? QuarantineDirectory { get; init; }
+
+    /// <summary>Slice D2: how the File Reader splits the file into per-record messages.
+    /// Defaults to <see cref="FileReaderSplitMode.None"/> (one message per file).</summary>
+    public FileReaderSplitMode SplitMode { get; init; } = FileReaderSplitMode.None;
+
+    /// <summary>Slice D2: regex boundary pattern when <see cref="SplitMode"/> is
+    /// <see cref="FileReaderSplitMode.Regex"/>. Ignored for other modes.</summary>
+    public string? SplitPattern { get; init; }
 
     /// <summary>Parses parameters with sane defaults; throws <see cref="ArgumentException"/> on invalid input.</summary>
     public static FileReaderParameters Parse(IReadOnlyDictionary<string, string> parameters)
@@ -72,6 +102,21 @@ public sealed class FileReaderParameters
 
         var quarantine = lookup.TryGetValue("QuarantineDirectory", out var q) ? q : null;
 
+        var splitMode = FileReaderSplitMode.None;
+        if (lookup.TryGetValue("SplitMode", out var sm)
+            && Enum.TryParse<FileReaderSplitMode>(sm, ignoreCase: true, out var parsedSplit))
+        {
+            splitMode = parsedSplit;
+        }
+
+        var splitPattern = lookup.TryGetValue("SplitPattern", out var sp) ? sp : null;
+        if (splitMode == FileReaderSplitMode.Regex && string.IsNullOrWhiteSpace(splitPattern))
+        {
+            throw new ArgumentException(
+                "FileReader SplitMode=Regex requires 'SplitPattern'.",
+                nameof(parameters));
+        }
+
         return new FileReaderParameters
         {
             Directory = Path.GetFullPath(dir),
@@ -82,6 +127,8 @@ public sealed class FileReaderParameters
             MaxFileSizeBytes = maxSize,
             IncludeSubdirectories = includeSub,
             QuarantineDirectory = string.IsNullOrWhiteSpace(quarantine) ? null : Path.GetFullPath(quarantine),
+            SplitMode = splitMode,
+            SplitPattern = string.IsNullOrWhiteSpace(splitPattern) ? null : splitPattern,
         };
     }
 }
