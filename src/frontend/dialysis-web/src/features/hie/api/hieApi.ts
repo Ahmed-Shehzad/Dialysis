@@ -55,3 +55,88 @@ export const patientMatch = async (query: PatientMatchQuery): Promise<unknown> =
   });
   return response.data;
 };
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Operator dashboard reads (Phase 3b)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type OutboundBundleStatus = 1 | 2 | 3; // Pending | Delivered | Failed
+
+export const outboundStatusLabel = (status: OutboundBundleStatus): string => {
+  switch (status) {
+    case 1:
+      return "Pending";
+    case 2:
+      return "Delivered";
+    case 3:
+      return "Failed";
+  }
+};
+
+export type OutboundBundleDto = {
+  id: string;
+  patientId: string;
+  resourceType: string;
+  logicalId: string;
+  partnerId: string;
+  status: OutboundBundleStatus;
+  attempts: number;
+  createdAtUtc: string;
+  nextAttemptAtUtc: string;
+  deliveredAtUtc?: string | null;
+  lastFailureReason?: string | null;
+};
+
+export const fetchOutboundBundles = async (
+  statusFilter: OutboundBundleStatus | null,
+  take = 50,
+): Promise<OutboundBundleDto[]> => {
+  const params: Record<string, string | number> = { take };
+  if (statusFilter !== null) params.status = statusFilter;
+  const response = await apiClient.get<HateoasEnvelope<OutboundBundleDto[]>>(
+    "/api/hie/api/v1.0/hie/ops/outbound",
+    { params },
+  );
+  return unwrap(response.data);
+};
+
+export const retryOutboundBundle = async (bundleId: string): Promise<void> => {
+  await apiClient.post(`/api/hie/api/v1.0/hie/ops/outbound/${bundleId}/retry`);
+};
+
+export type InboundResourceDto = {
+  id: string;
+  partnerId: string;
+  resourceType: string;
+  logicalId: string;
+  receivedAtUtc: string;
+  validationOutcome?: string | null;
+};
+
+export const fetchInboundResources = async (
+  partnerId: string | null,
+  take = 50,
+): Promise<InboundResourceDto[]> => {
+  const params: Record<string, string | number> = { take };
+  if (partnerId) params.partnerId = partnerId;
+  const response = await apiClient.get<HateoasEnvelope<InboundResourceDto[]>>(
+    "/api/hie/api/v1.0/hie/ops/inbound",
+    { params },
+  );
+  return unwrap(response.data);
+};
+
+export type PartnerStatusDto = {
+  partnerId: string;
+  baseUrl: string;
+  hasBearerToken: boolean;
+  timeoutSeconds: number;
+  isConfigured: boolean;
+};
+
+export const fetchPartners = async (): Promise<PartnerStatusDto[]> => {
+  const response = await apiClient.get<HateoasEnvelope<PartnerStatusDto[]>>(
+    "/api/hie/api/v1.0/hie/ops/partners",
+  );
+  return unwrap(response.data);
+};
