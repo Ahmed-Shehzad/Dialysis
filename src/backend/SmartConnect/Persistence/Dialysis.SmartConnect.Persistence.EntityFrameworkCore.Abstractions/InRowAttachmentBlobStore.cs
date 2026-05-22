@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.SmartConnect.Attachments;
 using Microsoft.EntityFrameworkCore;
 
@@ -49,5 +50,21 @@ public sealed class InRowAttachmentBlobStore(SmartConnectDbContext db) : IAttach
     {
         // Row removal in EfAttachmentStore already wipes the bytes column.
         return Task.CompletedTask;
+    }
+
+    // For in-row, bytes and metadata share the same row — every entity is a known blob, no
+    // orphans are possible. The reaper still calls this so it can run uniformly across backends;
+    // returning the metadata IDs lets it walk and find (correctly) zero orphans.
+    public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (var row in db.Attachments.AsNoTracking()
+            .Select(a => new { a.Id, a.CreatedUtc, a.SizeBytes })
+            .AsAsyncEnumerable()
+            .WithCancellation(cancellationToken)
+            .ConfigureAwait(false))
+        {
+            yield return new BlobMetadata(row.Id, row.CreatedUtc, row.SizeBytes);
+        }
     }
 }
