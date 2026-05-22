@@ -19,4 +19,12 @@ public interface IFlowPluginRegistry
     IAttachmentHandler? TryResolveAttachmentHandler(string kind);
 
     IAlertActionProvider? TryResolveAlertActionProvider(string kind);
+
+    /// <summary>
+    /// Slice B2: enumerates every registered outbound adapter so the Management API can
+    /// surface a list of available connector kinds + their parameter schemas. Default
+    /// implementation returns an empty sequence so a custom registry doesn't need to
+    /// implement this until it wants to be schema-introspectable.
+    /// </summary>
+    IEnumerable<IOutboundAdapter> EnumerateOutboundAdapters() => [];
 }

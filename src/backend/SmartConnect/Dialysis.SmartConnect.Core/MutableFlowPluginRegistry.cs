@@ -45,4 +45,7 @@ public sealed class MutableFlowPluginRegistry : IFlowPluginRegistry
 
     public IAlertActionProvider? TryResolveAlertActionProvider(string kind) =>
         _alertActionProviders.TryGetValue(kind, out var p) ? p : null;
+
+    public IEnumerable<IOutboundAdapter> EnumerateOutboundAdapters() =>
+        _outboundAdapters.Values;
 }
