@@ -17,15 +17,28 @@ var requireAuth = gatewayOptions.GetValue("RequireAuthentication", !builder.Envi
 
 var allowedOrigins = gatewayOptions.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
+// Security posture: never let an empty AllowedOrigins config silently fall through to a
+// permissive policy in production. The dev fallback below only fires in Development; any
+// other environment must declare its origins via Gateway:Cors:AllowedOrigins or the
+// gateway won't start. This closes the "developer forgets to tighten CORS before deploy"
+// trap before it can happen — there is no codepath where a non-Development environment
+// ends up with an unconfigured allowlist.
+if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "Gateway:Cors:AllowedOrigins must be set in non-Development environments. " +
+        $"Current environment: {builder.Environment.EnvironmentName}.");
+}
+
 builder.Services.AddCors(o => o.AddPolicy(corsPolicyName, p =>
 {
     if (allowedOrigins.Length == 0)
     {
-        // Dev fallback: allow the Vite dev server (when the SPA is opened directly during
-        // local debugging) AND the gateway origin itself (the canonical browser entry point —
-        // browsers send `Origin: http://localhost:9090` on module/fetch requests even though
-        // the destination is same-origin, so without it CORS middleware logs a rejection per
-        // asset request).
+        // Dev-only fallback (guarded above). Allow the Vite dev server (when the SPA is
+        // opened directly during local debugging) AND the gateway origin itself (the
+        // canonical browser entry point — browsers send `Origin: http://localhost:9090`
+        // on module/fetch requests even though the destination is same-origin, so
+        // without it CORS middleware logs a rejection per asset request).
         p.WithOrigins(
                 "http://localhost:5173",
                 "http://localhost:4173",
