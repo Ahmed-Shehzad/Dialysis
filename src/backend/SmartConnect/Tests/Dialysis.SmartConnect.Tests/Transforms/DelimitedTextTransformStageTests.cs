@@ -117,6 +117,43 @@ public sealed class DelimitedTextTransformStageTests
         Assert.Equal("delimited-text", new DelimitedTextTransformStage().Kind);
     }
 
+    [Fact]
+    public async Task Output_Format_Ndjson_Emits_One_Object_Per_Line_Async()
+    {
+        // Slice L2: NDJSON output mode for large-file streaming.
+        var message = Build_Message(
+            "PatientId,Value\nMRN-1,5.1\nMRN-2,4.8\n",
+            """{"outputFormat":"ndjson"}""");
+        var stage = new DelimitedTextTransformStage();
+
+        var transformed = await stage.TransformAsync(message, CancellationToken.None);
+
+        var payload = Encoding.UTF8.GetString(transformed.Payload.Span);
+        // No enclosing array characters around the records.
+        Assert.False(payload.TrimStart().StartsWith('['));
+        var lines = payload.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, lines.Length);
+        Assert.Equal("MRN-1", JsonDocument.Parse(lines[0]).RootElement.GetProperty("PatientId").GetString());
+        Assert.Equal("4.8", JsonDocument.Parse(lines[1]).RootElement.GetProperty("Value").GetString());
+    }
+
+    [Fact]
+    public async Task Output_Format_Ndjson_With_No_Header_Emits_Per_Row_Arrays_Async()
+    {
+        var message = Build_Message(
+            "MRN-1,5.1\nMRN-2,4.8\n",
+            """{"hasHeaderRow":false,"outputFormat":"ndjson"}""");
+        var stage = new DelimitedTextTransformStage();
+
+        var transformed = await stage.TransformAsync(message, CancellationToken.None);
+
+        var lines = Encoding.UTF8.GetString(transformed.Payload.Span)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, lines.Length);
+        Assert.Equal("MRN-1", JsonDocument.Parse(lines[0]).RootElement[0].GetString());
+        Assert.Equal("4.8", JsonDocument.Parse(lines[1]).RootElement[1].GetString());
+    }
+
     private static IntegrationMessage Build_Message(string payload, string? parametersJson = null)
     {
         var metadata = ImmutableDictionary<string, string>.Empty;

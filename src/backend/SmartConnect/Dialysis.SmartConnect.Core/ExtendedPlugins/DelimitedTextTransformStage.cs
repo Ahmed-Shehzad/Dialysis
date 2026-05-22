@@ -113,7 +113,16 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         return [.. fields];
     }
 
-    private static string ProjectRows(List<string[]> rows, DelimitedTextOptions options)
+    private static string ProjectRows(List<string[]> rows, DelimitedTextOptions options) =>
+        options.OutputFormat == DelimitedTextOutputFormat.Ndjson
+            ? ProjectNdjson(rows, options)
+            : ProjectArray(rows, options);
+
+    /// <summary>
+    /// Default array output — backward compatible. The whole row set materialises into a
+    /// single JSON array. Fine for partner files we've seen (≲ 10 MB).
+    /// </summary>
+    private static string ProjectArray(List<string[]> rows, DelimitedTextOptions options)
     {
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
@@ -124,14 +133,7 @@ public sealed class DelimitedTextTransformStage : ITransformStage
                 writer.WriteStartArray();
                 for (var r = 1; r < rows.Count; r++)
                 {
-                    writer.WriteStartObject();
-                    var row = rows[r];
-                    for (var c = 0; c < header.Length; c++)
-                    {
-                        writer.WritePropertyName(header[c]);
-                        writer.WriteStringValue(c < row.Length ? row[c] : string.Empty);
-                    }
-                    writer.WriteEndObject();
+                    WriteRowObject(writer, header, rows[r]);
                 }
                 writer.WriteEndArray();
             }
@@ -140,15 +142,80 @@ public sealed class DelimitedTextTransformStage : ITransformStage
                 writer.WriteStartArray();
                 foreach (var row in rows)
                 {
-                    writer.WriteStartArray();
-                    foreach (var field in row)
-                        writer.WriteStringValue(field);
-                    writer.WriteEndArray();
+                    WriteRowArray(writer, row);
                 }
                 writer.WriteEndArray();
             }
         }
         return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    /// <summary>
+    /// Slice L2 streaming-friendly output: newline-delimited JSON (NDJSON / JSON Lines).
+    /// One JSON object per row, each terminated by <c>\n</c>; no enclosing array. Downstream
+    /// transforms can stream the payload line-by-line via <c>StringReader.ReadLine</c>
+    /// without materialising the full array — useful when partner files exceed ~10 MB.
+    /// </summary>
+    private static string ProjectNdjson(List<string[]> rows, DelimitedTextOptions options)
+    {
+        var sb = new StringBuilder();
+        if (options.HasHeaderRow && rows.Count > 0)
+        {
+            var header = rows[0];
+            for (var r = 1; r < rows.Count; r++)
+            {
+                AppendRowJson(sb, header, rows[r]);
+                sb.Append('\n');
+            }
+        }
+        else
+        {
+            foreach (var row in rows)
+            {
+                AppendRowArrayJson(sb, row);
+                sb.Append('\n');
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static void WriteRowObject(Utf8JsonWriter writer, string[] header, string[] row)
+    {
+        writer.WriteStartObject();
+        for (var c = 0; c < header.Length; c++)
+        {
+            writer.WritePropertyName(header[c]);
+            writer.WriteStringValue(c < row.Length ? row[c] : string.Empty);
+        }
+        writer.WriteEndObject();
+    }
+
+    private static void WriteRowArray(Utf8JsonWriter writer, string[] row)
+    {
+        writer.WriteStartArray();
+        foreach (var field in row)
+            writer.WriteStringValue(field);
+        writer.WriteEndArray();
+    }
+
+    private static void AppendRowJson(StringBuilder sb, string[] header, string[] row)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            WriteRowObject(writer, header, row);
+        }
+        sb.Append(Encoding.UTF8.GetString(stream.ToArray()));
+    }
+
+    private static void AppendRowArrayJson(StringBuilder sb, string[] row)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            WriteRowArray(writer, row);
+        }
+        sb.Append(Encoding.UTF8.GetString(stream.ToArray()));
     }
 
     private static DelimitedTextOptions ReadOptions(IntegrationMessage message)
@@ -174,7 +241,16 @@ public sealed class DelimitedTextTransformStage : ITransformStage
             var trimWhitespace = ReadBoolean(root, "trimWhitespace", defaultValue: true);
             var skipBlankLines = ReadBoolean(root, "skipBlankLines", defaultValue: true);
 
-            return new DelimitedTextOptions(delimiter, hasHeaderRow, trimWhitespace, skipBlankLines);
+            // Slice L2: optional NDJSON output for large-file streaming. Default stays
+            // "array" so existing flows aren't disrupted.
+            var outputFormat = DelimitedTextOutputFormat.Array;
+            if (root.TryGetProperty("outputFormat", out var fmt) && fmt.ValueKind == JsonValueKind.String &&
+                string.Equals(fmt.GetString(), "ndjson", StringComparison.OrdinalIgnoreCase))
+            {
+                outputFormat = DelimitedTextOutputFormat.Ndjson;
+            }
+
+            return new DelimitedTextOptions(delimiter, hasHeaderRow, trimWhitespace, skipBlankLines, outputFormat);
         }
         catch (JsonException)
         {
@@ -209,9 +285,22 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         char Delimiter,
         bool HasHeaderRow,
         bool TrimWhitespace,
-        bool SkipBlankLines)
+        bool SkipBlankLines,
+        DelimitedTextOutputFormat OutputFormat)
     {
         public static DelimitedTextOptions Default { get; } =
-            new(',', HasHeaderRow: true, TrimWhitespace: true, SkipBlankLines: true);
+            new(',', HasHeaderRow: true, TrimWhitespace: true, SkipBlankLines: true,
+                OutputFormat: DelimitedTextOutputFormat.Array);
+    }
+
+    private enum DelimitedTextOutputFormat
+    {
+        /// <summary>Single JSON array enclosing every record (backward-compatible default).</summary>
+        Array = 0,
+
+        /// <summary>Newline-delimited JSON — one object per line, no enclosing array. Slice L2
+        /// composition pattern for large files: downstream can stream the payload via
+        /// <c>StringReader.ReadLine</c>.</summary>
+        Ndjson = 1,
     }
 }
