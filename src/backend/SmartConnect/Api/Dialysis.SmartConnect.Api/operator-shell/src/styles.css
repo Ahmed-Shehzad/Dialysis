@@ -231,3 +231,20 @@ main pre.json-block, main pre.code-block {
   font-size: 0.78rem;
   color: #555;
 }
+
+/* Slice H2: DICOM pixel-data canvas. */
+.viewer-dicom-image {
+  margin-top: 0.5rem;
+}
+.viewer-dicom-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 480px;
+  margin-top: 0.4rem;
+  background: black;
+  border: 1px solid #444;
+  border-radius: 3px;
+  /* The browser bilinear filter is fine for the "is this the right image?"
+     use case; full diagnostic viewing happens in the PACS, not here. */
+  image-rendering: auto;
+}
