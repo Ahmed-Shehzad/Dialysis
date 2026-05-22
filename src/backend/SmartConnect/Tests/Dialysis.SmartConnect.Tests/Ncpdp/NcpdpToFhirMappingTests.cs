@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
 using Dialysis.SmartConnect.Ncpdp;
 using Hl7.Fhir.Model;
@@ -22,6 +23,12 @@ public sealed class NcpdpToFhirMappingTests
 {
     private const char FS = NcpdpTelecomMessage.FieldSeparator;
     private const char SS = NcpdpTelecomMessage.SegmentSeparator;
+
+    // Modern Firely deserializer: System.Text.Json with the FHIR contract resolver. Synchronous
+    // and CPU-only by design (no VSTHRD103), unlike the legacy FhirJsonParser whose *Async
+    // sibling is [Obsolete].
+    private static readonly JsonSerializerOptions FhirJsonOptions =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
     [Fact]
     public void B1_Billing_Maps_To_Active_Claim_With_Ndc_And_Patient()
@@ -97,10 +104,7 @@ public sealed class NcpdpToFhirMappingTests
         var transformed = await stage.TransformAsync(message, CancellationToken.None);
 
         var json = Encoding.UTF8.GetString(transformed.Payload.Span);
-        var parser = new FhirJsonParser();
-#pragma warning disable VSTHRD103 // Firely Parse is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
-        var resource = parser.Parse<Claim>(json);
-#pragma warning restore VSTHRD103
+        var resource = JsonSerializer.Deserialize<Claim>(json, FhirJsonOptions)!;
         Assert.Equal(FinancialResourceStatusCodes.Active, resource.Status);
         Assert.Equal("Patient/PT-123", resource.Patient.Reference);
     }
