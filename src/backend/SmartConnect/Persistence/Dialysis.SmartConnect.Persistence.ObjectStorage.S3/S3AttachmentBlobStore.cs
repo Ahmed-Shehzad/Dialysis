@@ -97,10 +97,10 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
             var response = await _client.ListObjectsV2Async(request, cancellationToken).ConfigureAwait(false);
             foreach (var obj in response.S3Objects ?? [])
             {
-                if (obj.Key is null) continue;
-                var name = obj.Key.StartsWith(_prefix, StringComparison.Ordinal)
-                    ? obj.Key[_prefix.Length..]
-                    : obj.Key;
+                if (obj.Key is not { Length: > 0 } key) continue;
+                var name = key.StartsWith(_prefix, StringComparison.Ordinal)
+                    ? key[_prefix.Length..]
+                    : key;
                 if (!Guid.TryParse(name, out var id)) continue;
                 yield return new BlobMetadata(id, ToDateTimeOffset(obj.LastModified), obj.Size ?? 0);
             }
