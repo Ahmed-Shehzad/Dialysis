@@ -18,5 +18,9 @@ public sealed class MessageLedgerEntryEntity
 
     public byte[]? PayloadSnapshot { get; set; }
 
+    /// <summary>Serialised <see cref="IntegrationMessage.Metadata"/> snapshot at the time of this
+    /// ledger append. Nullable for backward compatibility with rows written before slice C.</summary>
+    public string? MetadataJson { get; set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 }

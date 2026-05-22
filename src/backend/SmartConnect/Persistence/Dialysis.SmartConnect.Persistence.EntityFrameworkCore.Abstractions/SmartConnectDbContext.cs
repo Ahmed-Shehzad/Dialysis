@@ -46,6 +46,10 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.HasKey(e => e.Id);
             b.Property(e => e.CorrelationId).HasMaxLength(256).IsRequired();
             b.Property(e => e.Detail).HasMaxLength(4000);
+            // MetadataJson is unbounded text — small dicts in practice (sender id, message type,
+            // outbound parameters JSON) but no hard cap so flows that stuff large blobs into
+            // metadata (e.g. base64-encoded attachment refs) don't silently truncate.
+            b.Property(e => e.MetadataJson);
             b.HasIndex(e => new { e.FlowId, e.CreatedAtUtc });
         });
 
