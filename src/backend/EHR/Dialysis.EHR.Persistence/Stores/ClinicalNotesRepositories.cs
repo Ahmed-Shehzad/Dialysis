@@ -20,6 +20,15 @@ public sealed class ClinicalNoteRepository(EhrDbContext db) : IClinicalNoteRepos
     public async Task<IReadOnlyList<ClinicalNote>> ListByEncounterAsync(Guid encounterId, CancellationToken cancellationToken = default) =>
         await db.ClinicalNotes.Where(n => n.EncounterId == encounterId).ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<ClinicalNote>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default) =>
+        await db.ClinicalNotes
+            .AsNoTracking()
+            .Where(n => n.PatientId == patientId && !n.IsDeleted)
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public void Add(ClinicalNote note) => db.ClinicalNotes.Add(note);
 }
 

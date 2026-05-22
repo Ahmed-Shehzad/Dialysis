@@ -12,6 +12,14 @@ public interface IClinicalNoteRepository
 {
     Task<ClinicalNote?> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ClinicalNote>> ListByEncounterAsync(Guid encounterId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists the most-recent <see cref="ClinicalNote"/> records authored for a patient,
+    /// ordered by created-at descending. Drives the chart's Notes section so a clinician
+    /// can see what's been written across encounters without drilling into each one.
+    /// </summary>
+    Task<IReadOnlyList<ClinicalNote>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default);
+
     void Add(ClinicalNote note);
 }
 

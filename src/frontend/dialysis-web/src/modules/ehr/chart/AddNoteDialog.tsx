@@ -53,9 +53,10 @@ export const AddNoteDialog = ({ patientId, onClose }: AddNoteDialogProps) => {
   const mutation = useMutation({
     mutationFn: submitNote,
     onSuccess: () => {
-      // Notes don't render on the chart yet, but the chart's encounter/note queries
-      // will when we add them; invalidating now keeps that future change a one-liner.
       void queryClient.invalidateQueries({ queryKey: ["ehr", "chart", patientId] });
+      // RecentNotesPanel reads from this key — invalidate so the new note appears
+      // immediately on the chart.
+      void queryClient.invalidateQueries({ queryKey: ["ehr", "notes", patientId] });
       onClose();
     },
   });

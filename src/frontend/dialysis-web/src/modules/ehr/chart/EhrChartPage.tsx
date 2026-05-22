@@ -6,6 +6,7 @@ import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
+import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
 const isActive = (item: ChartItem): boolean => {
@@ -247,6 +248,8 @@ export const EhrChartPage = () => {
               )}
             </section>
           </div>
+
+          <RecentNotesPanel patientId={patientId} />
 
           <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <h3 className="mb-2 text-sm font-medium text-slate-200">
