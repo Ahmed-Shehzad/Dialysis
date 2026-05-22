@@ -107,7 +107,9 @@ public static class Hl7V2ClockSkewProbe
                 RejectionReason: "exceeds MaxAllowedAbsJump");
         }
 
-        message.SetValue("MSH.7", serverNowUtc.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture));
+        // SetValue requires a component index — the parser holds the MSH-7 timestamp as a
+        // single component even when there are no '^' separators on the wire.
+        message.SetValue("MSH.7.1", serverNowUtc.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture));
         return new ClockSkewCorrectionResult(
             sourceId, messageTs, serverNowUtc, skew,
             CorrectedMessageTimestampUtc: serverNowUtc,
