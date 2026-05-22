@@ -1,9 +1,7 @@
 using System.Collections.Frozen;
 using System.Text;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
-using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
-using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.SmartConnect.Ncpdp;
 

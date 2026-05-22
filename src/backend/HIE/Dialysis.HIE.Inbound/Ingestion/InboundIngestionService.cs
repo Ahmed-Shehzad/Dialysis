@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
