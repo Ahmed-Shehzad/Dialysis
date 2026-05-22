@@ -11,6 +11,10 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
+    <!-- Slice J2: needs the Hl7V2ClockSkewProbe + IClockSkewMonitor port to feed the §2
+         time-sync monitor on every framed message. Pulls fo-dicom/Jint transitively;
+         acceptable for the inbound host whose runtime context already loads them. -->
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
