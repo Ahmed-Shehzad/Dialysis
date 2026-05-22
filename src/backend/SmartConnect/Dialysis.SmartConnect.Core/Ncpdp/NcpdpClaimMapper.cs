@@ -72,7 +72,7 @@ public sealed class NcpdpBillingToClaimMapper : INcpdpToFhirMapper
             if (!string.IsNullOrWhiteSpace(qtyRaw) &&
                 decimal.TryParse(qtyRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var qty))
             {
-                item.Quantity = new SimpleQuantity { Value = qty };
+                item.Quantity = new Quantity { Value = qty };
             }
 
             if (TryParseNcpdpDate(dateRaw, out var serviced))
