@@ -1,10 +1,13 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Dialysis.SmartConnect.Authentication;
 
 namespace Dialysis.SmartConnect.ExtendedPlugins;
 
 /// <summary>POST/PUT raw payload to a configured URL (JSON in <c>smartconnect.outbound.parameters</c> on the message).</summary>
-public sealed class HttpOutboundAdapter(IHttpClientFactory httpClientFactory) : IOutboundAdapter
+public sealed class HttpOutboundAdapter(
+    IHttpClientFactory httpClientFactory,
+    IHttpAuthenticationProviderRegistry authenticationRegistry) : IOutboundAdapter
 {
     public const string ParametersMetadataKey = "smartconnect.outbound.parameters";
 
@@ -51,6 +54,24 @@ public sealed class HttpOutboundAdapter(IHttpClientFactory httpClientFactory) : 
         }
 
         request.Content = body;
+
+        if (opts.Authentication is { } auth)
+        {
+            if (!authenticationRegistry.TryGet(auth.Kind, out var provider))
+            {
+                return new OutboundSendResult(false, $"Unknown HTTP authentication kind '{auth.Kind}'.");
+            }
+
+            try
+            {
+                await provider.ApplyAsync(request, auth.ParametersJson, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or JsonException or HttpRequestException)
+            {
+                return new OutboundSendResult(false, $"HTTP authentication '{auth.Kind}' failed: {ex.Message}");
+            }
+        }
+
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         return response.IsSuccessStatusCode
             ? new OutboundSendResult(true, null)
