@@ -16,7 +16,7 @@ namespace Dialysis.SmartConnect.Tests.Fhir;
 public sealed class OruR40MapperTests
 {
     private const string MinimalR40 =
-        "MSH|^~\\&|ACME Dialysis Machine^00059AFFFE3C7A00^EUI-64|FAC||||" +
+        "MSH|^~\\&|ACME Dialysis Machine^00059AFFFE3C7A00^EUI-64|FAC|||" +
         "20260522140000||ORU^R40^ORU_R40|MSG-1|P|2.6\r" +
         "PID|||MRN-1\r" +
         "OBR|1\r" +
@@ -57,7 +57,7 @@ public sealed class OruR40MapperTests
     public void Pipeline_Still_Routes_R01_When_Both_Mappers_Registered()
     {
         const string r01 =
-            "MSH|^~\\&|SOURCE|FAC||||20260522140000||ORU^R01|MSG-2|P|2.6\r" +
+            "MSH|^~\\&|SOURCE|FAC|||20260522140000||ORU^R01|MSG-2|P|2.6\r" +
             "PID|||MRN-2\r" +
             "OBX|1|NM|2823-3^Potassium^LN||5.1|mmol/L|||||F|||20260522140000\r";
         var pipeline = new Hl7V2ToFhirPipeline(
