@@ -14,16 +14,16 @@ public sealed class NcpdpBillingToClaimMapper : INcpdpToFhirMapper
 {
     public string TransactionCode => "B1";
 
-    public virtual Resource? Map(NcpdpTelecomMessage message)
+    public Resource? Map(NcpdpTelecomMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return MapInternal(message, Claim.FinancialResourceStatusCodes.Active);
+        return MapInternal(message, FinancialResourceStatusCodes.Active);
     }
 
     /// <summary>Shared field-projection helper used by the B2 reversal mapper.</summary>
     internal static Claim MapInternal(
         NcpdpTelecomMessage message,
-        Claim.FinancialResourceStatusCodes status)
+        FinancialResourceStatusCodes status)
     {
         var patientSegment = FindSegment(message, "AM01");
         var providerSegment = FindSegment(message, "AM02");
@@ -72,7 +72,7 @@ public sealed class NcpdpBillingToClaimMapper : INcpdpToFhirMapper
             if (!string.IsNullOrWhiteSpace(qtyRaw) &&
                 decimal.TryParse(qtyRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var qty))
             {
-                item.Quantity = new SimpleQuantity { Value = qty };
+                item.Quantity = new Quantity { Value = qty };
             }
 
             if (TryParseNcpdpDate(dateRaw, out var serviced))
@@ -112,6 +112,6 @@ public sealed class NcpdpReversalToClaimMapper : INcpdpToFhirMapper
     public Resource? Map(NcpdpTelecomMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return NcpdpBillingToClaimMapper.MapInternal(message, Claim.FinancialResourceStatusCodes.Cancelled);
+        return NcpdpBillingToClaimMapper.MapInternal(message, FinancialResourceStatusCodes.Cancelled);
     }
 }

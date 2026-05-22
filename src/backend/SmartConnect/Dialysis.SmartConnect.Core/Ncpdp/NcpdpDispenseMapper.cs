@@ -48,7 +48,7 @@ public sealed class NcpdpInfoReportingToMedicationDispenseMapper : INcpdpToFhirM
         if (!string.IsNullOrWhiteSpace(qtyRaw) &&
             decimal.TryParse(qtyRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var qty))
         {
-            dispense.Quantity = new SimpleQuantity { Value = qty };
+            dispense.Quantity = new Quantity { Value = qty };
         }
 
         if (!string.IsNullOrWhiteSpace(dateRaw) &&

@@ -25,7 +25,7 @@ public sealed class NcpdpEligibilityToCoverageEligibilityRequestMapper : INcpdpT
 
         var request = new CoverageEligibilityRequest
         {
-            Status = CoverageEligibilityRequest.EligibilityRequestStatus.Active,
+            Status = FinancialResourceStatusCodes.Active,
             Purpose = [CoverageEligibilityRequest.EligibilityRequestPurpose.Validation],
             Created = DateTimeOffset.UtcNow.ToString("o", CultureInfo.InvariantCulture),
         };

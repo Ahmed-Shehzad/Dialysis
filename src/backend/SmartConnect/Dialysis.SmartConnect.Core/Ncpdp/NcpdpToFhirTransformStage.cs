@@ -50,7 +50,9 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
             return Task.FromResult(message);
         }
 
+#pragma warning disable VSTHRD103 // Firely SerializeToString is CPU-only; its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)
         var json = _serializer.SerializeToString(resource);
+#pragma warning restore VSTHRD103
         return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text));
     }
 }

@@ -1,10 +1,16 @@
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
 using Dialysis.SmartConnect.Ncpdp;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Xunit;
+
+// Disambiguate System.Threading.Tasks.Task from Hl7.Fhir.Model.Task (FHIR resource type)
+// — the FHIR namespace import pulls in a Task resource we don't use here, but it collides
+// with the async return type on every [Fact] async method below.
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.SmartConnect.Tests.Ncpdp;
 
@@ -18,6 +24,12 @@ public sealed class NcpdpToFhirMappingTests
     private const char FS = NcpdpTelecomMessage.FieldSeparator;
     private const char SS = NcpdpTelecomMessage.SegmentSeparator;
 
+    // Modern Firely deserializer: System.Text.Json with the FHIR contract resolver. Synchronous
+    // and CPU-only by design (no VSTHRD103), unlike the legacy FhirJsonParser whose *Async
+    // sibling is [Obsolete].
+    private static readonly JsonSerializerOptions FhirJsonOptions =
+        new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
+
     [Fact]
     public void B1_Billing_Maps_To_Active_Claim_With_Ndc_And_Patient()
     {
@@ -27,7 +39,7 @@ public sealed class NcpdpToFhirMappingTests
         var resource = mapper.Map(parsed);
 
         var claim = Assert.IsType<Claim>(resource);
-        Assert.Equal(Claim.FinancialResourceStatusCodes.Active, claim.Status);
+        Assert.Equal(FinancialResourceStatusCodes.Active, claim.Status);
         Assert.Equal("Patient/PT-123", claim.Patient.Reference);
         Assert.Equal("Practitioner/1234567890", claim.Provider.Reference);
         Assert.Equal("RX-001", Assert.Single(claim.Identifier).Value);
@@ -45,7 +57,7 @@ public sealed class NcpdpToFhirMappingTests
         var resource = mapper.Map(parsed);
 
         var claim = Assert.IsType<Claim>(resource);
-        Assert.Equal(Claim.FinancialResourceStatusCodes.Cancelled, claim.Status);
+        Assert.Equal(FinancialResourceStatusCodes.Cancelled, claim.Status);
         Assert.Equal("RX-001", Assert.Single(claim.Identifier).Value);
     }
 
@@ -92,9 +104,8 @@ public sealed class NcpdpToFhirMappingTests
         var transformed = await stage.TransformAsync(message, CancellationToken.None);
 
         var json = Encoding.UTF8.GetString(transformed.Payload.Span);
-        var parser = new FhirJsonParser();
-        var resource = parser.Parse<Claim>(json);
-        Assert.Equal(Claim.FinancialResourceStatusCodes.Active, resource.Status);
+        var resource = JsonSerializer.Deserialize<Claim>(json, FhirJsonOptions)!;
+        Assert.Equal(FinancialResourceStatusCodes.Active, resource.Status);
         Assert.Equal("Patient/PT-123", resource.Patient.Reference);
     }
 

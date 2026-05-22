@@ -70,7 +70,7 @@ function buildGraph(pipeline: IntegrationFlowPipelineDefinition): {
   });
 
   // Filters column — each route filter slot is one node, stacked vertically.
-  const filterIds = pipeline.routeFilters.map((slot, idx) => `filter-${idx}`);
+  const filterIds = pipeline.routeFilters.map((_, idx) => `filter-${idx}`);
   pipeline.routeFilters.forEach((slot, idx) => {
     nodes.push({
       id: filterIds[idx]!,
@@ -99,7 +99,7 @@ function buildGraph(pipeline: IntegrationFlowPipelineDefinition): {
     nodes.push({
       id: outboundIds[idx]!,
       position: { x: COLUMN_X.outbound, y: idx * ROW_HEIGHT },
-      data: { label: <NodeBody kind={slot.outboundAdapterKind} role="Outbound route" /> },
+      data: { label: <NodeBody kind={slot.kind} role="Outbound route" /> },
       style: nodeStyle("#172033"),
     });
   });
