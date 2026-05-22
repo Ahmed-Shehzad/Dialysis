@@ -16,9 +16,12 @@ public sealed class ListSessionsByPatientQueryHandlerTests
         var patient = Guid.NewGuid();
         var nowUtc = DateTime.UtcNow;
 
-        var older = NewSession(patient, nowUtc.AddDays(-30));
-        var newer = NewSession(patient, nowUtc.AddDays(-2));
-        var someoneElse = NewSession(Guid.NewGuid(), nowUtc.AddDays(-1));
+        // DialysisSession.Schedule rejects starts more than 1h in the past, so schedule
+        // each session in a valid window then backdate ScheduledStartUtc via the
+        // non-public setter (matches the pattern in PdmsDialysisSessionProcedureFeederTests).
+        var older = NewSessionAt(patient, nowUtc.AddDays(-30));
+        var newer = NewSessionAt(patient, nowUtc.AddDays(-2));
+        var someoneElse = NewSessionAt(Guid.NewGuid(), nowUtc.AddDays(-1));
 
         var handler = new ListSessionsByPatientQueryHandler(
             new InMemorySessions(older, newer, someoneElse),
@@ -39,9 +42,9 @@ public sealed class ListSessionsByPatientQueryHandlerTests
     {
         var patient = Guid.NewGuid();
         var nowUtc = DateTime.UtcNow;
-        var first = NewSession(patient, nowUtc.AddDays(-1));
-        var second = NewSession(patient, nowUtc.AddDays(-2));
-        var third = NewSession(patient, nowUtc.AddDays(-3));
+        var first = NewSessionAt(patient, nowUtc.AddDays(-1));
+        var second = NewSessionAt(patient, nowUtc.AddDays(-2));
+        var third = NewSessionAt(patient, nowUtc.AddDays(-3));
 
         var handler = new ListSessionsByPatientQueryHandler(
             new InMemorySessions(first, second, third),
@@ -56,11 +59,14 @@ public sealed class ListSessionsByPatientQueryHandlerTests
         result[1].Id.ShouldBe(second.Id);
     }
 
-    private static DialysisSession NewSession(Guid patientId, DateTime scheduledStart) =>
-        DialysisSession.Schedule(
+    private static DialysisSession NewSessionAt(Guid patientId, DateTime backdatedStart)
+    {
+        // Schedule in a valid window (1 minute in the future) then backdate the
+        // ScheduledStartUtc property via its non-public setter.
+        var session = DialysisSession.Schedule(
             id: Guid.NewGuid(),
             patientId: patientId,
-            scheduledStartUtc: scheduledStart,
+            scheduledStartUtc: DateTime.UtcNow.AddMinutes(1),
             prescription: new SessionPrescription(
                 dialyzerModel: "Polyflux 17L",
                 prescribedDurationMinutes: 240,
@@ -75,6 +81,12 @@ public sealed class ListSessionsByPatientQueryHandlerTests
                 VascularAccessKind.ArteriovenousFistula,
                 "Left forearm",
                 DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-1))));
+
+        var prop = typeof(DialysisSession).GetProperty(nameof(DialysisSession.ScheduledStartUtc))
+            ?? throw new InvalidOperationException("ScheduledStartUtc not found");
+        prop.GetSetMethod(nonPublic: true)!.Invoke(session, [backdatedStart]);
+        return session;
+    }
 
     private sealed class InMemorySessions(params DialysisSession[] sessions) : IDialysisSessionRepository
     {
