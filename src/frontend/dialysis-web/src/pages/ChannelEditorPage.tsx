@@ -14,8 +14,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchFlow, updateFlow } from "@/features/smartconnect/api/flows";
-import type { IntegrationFlow } from "@/features/smartconnect/api/types";
+import type {
+  IntegrationFlow,
+  IntegrationFlowPipelineDefinition,
+} from "@/features/smartconnect/api/types";
+import { PipelineGraph } from "@/features/smartconnect/components/PipelineGraph";
 import { humanizeError } from "@/lib/api/humanizeError";
+
+type EditorView = "graph" | "json";
 
 export function ChannelEditorPage(): JSX.Element {
   const { flowId } = useParams<{ flowId: string }>();
@@ -30,6 +36,9 @@ export function ChannelEditorPage(): JSX.Element {
 
   const [pipelineJson, setPipelineJson] = useState<string>("");
   const [parseError, setParseError] = useState<string | null>(null);
+  // Slice G2: graph view is the default for visual orientation; operators can flip to
+  // raw-JSON for surgical edits the form-driven graph nodes don't surface yet.
+  const [view, setView] = useState<EditorView>("graph");
 
   // When the server response lands, seed the textarea — but keep operator edits when
   // the query refetches in the background (TanStack Query's default refetchOnFocus).
@@ -97,34 +106,43 @@ export function ChannelEditorPage(): JSX.Element {
         <code className="text-xs text-slate-400">{flow.name ?? flow.id}</code>
       </header>
 
-      <section
-        aria-labelledby="graph-editor-heading"
-        className="rounded border border-dashed border-slate-700 bg-slate-900/40 p-4"
-      >
-        <h2 id="graph-editor-heading" className="text-sm font-semibold text-slate-200">
-          Visual graph editor — planned (slice G2)
-        </h2>
-        <p className="mt-2 text-xs text-slate-400">
-          The drag-and-drop graph view lands in a follow-up PR. Planned shape:
-        </p>
-        <ul className="mt-2 list-disc pl-5 text-xs text-slate-400">
-          <li>
-            React Flow (or <code>@xyflow/react</code>) for the source → filters → transforms →
-            routes graph.
-          </li>
-          <li>
-            Per-node forms driven by the per-plugin connector-property metadata from slice B (
-            <code>ConnectorProperties</code>) so the form fields stay in sync with the runtime
-            contract.
-          </li>
-          <li>
-            Save still writes the same <code>IntegrationFlowPipelineDefinition</code> JSON below —
-            the graph is an alternative input method, not a new wire format.
-          </li>
-        </ul>
-      </section>
+      <div role="tablist" aria-label="Editor view" className="flex gap-2 text-xs">
+        {(["graph", "json"] as const).map((mode) => (
+          <button
+            key={mode}
+            role="tab"
+            type="button"
+            aria-selected={view === mode}
+            onClick={() => setView(mode)}
+            className={
+              view === mode
+                ? "rounded border border-slate-500 bg-slate-700 px-3 py-1 font-medium text-slate-100"
+                : "rounded border border-slate-700 bg-transparent px-3 py-1 text-slate-300 hover:bg-slate-800"
+            }
+          >
+            {mode === "graph" ? "Graph view" : "JSON view"}
+          </button>
+        ))}
+      </div>
 
-      <section aria-labelledby="json-editor-heading" className="flex flex-col gap-2">
+      {view === "graph" && (
+        <section aria-labelledby="graph-view-heading" className="flex flex-col gap-2">
+          <h2 id="graph-view-heading" className="text-sm font-semibold text-slate-200">
+            Pipeline graph
+          </h2>
+          <p className="text-xs text-slate-400">
+            Read-only visualisation of the source → filters → transforms → routes pipeline. Click
+            the JSON view tab above for surgical edits. Saving from this page always writes the JSON
+            the runtime consumes — the graph is an alternative input method, not a new wire format.
+          </p>
+          <ParsedPipelineGraph pipelineJson={pipelineJson} />
+        </section>
+      )}
+
+      <section
+        aria-labelledby="json-editor-heading"
+        className={view === "json" ? "flex flex-col gap-2" : "hidden"}
+      >
         <h2 id="json-editor-heading" className="text-sm font-semibold text-slate-200">
           Pipeline JSON
         </h2>
@@ -180,6 +198,30 @@ export function ChannelEditorPage(): JSX.Element {
       </section>
     </div>
   );
+}
+
+/**
+ * Slice G2: parses the in-editor JSON into the typed pipeline shape and renders the
+ * React Flow graph. Lives below ChannelEditorPage so the textarea state stays the single
+ * source of truth — saving the channel always serialises from the textarea, never from a
+ * separate parsed copy that could drift.
+ */
+function ParsedPipelineGraph({ pipelineJson }: { pipelineJson: string }): JSX.Element {
+  let pipeline: IntegrationFlowPipelineDefinition | null = null;
+  try {
+    pipeline = JSON.parse(pipelineJson) as IntegrationFlowPipelineDefinition;
+  } catch {
+    pipeline = null;
+  }
+  if (pipeline === null) {
+    return (
+      <p className="text-xs text-amber-300">
+        Pipeline JSON is currently invalid — switch to the JSON view to fix it before the graph can
+        render.
+      </p>
+    );
+  }
+  return <PipelineGraph pipeline={pipeline} />;
 }
 
 export default ChannelEditorPage;
