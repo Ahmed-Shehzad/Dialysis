@@ -8,7 +8,7 @@ public sealed class ListPartnersQueryHandler(IOptionsMonitor<HiePartnersOptions>
     : IQueryHandler<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>
 {
     public Task<IReadOnlyList<PartnerStatusDto>> HandleAsync(
-        ListPartnersQuery _,
+        ListPartnersQuery query,
         CancellationToken cancellationToken)
     {
         var partners = options.CurrentValue.Partners;
@@ -21,9 +21,11 @@ public sealed class ListPartnersQueryHandler(IOptionsMonitor<HiePartnersOptions>
                     BaseUrl: p.Value.BaseUrl,
                     HasBearerToken: !string.IsNullOrWhiteSpace(p.Value.BearerToken),
                     TimeoutSeconds: p.Value.TimeoutSeconds,
-                    IsConfigured: !string.IsNullOrWhiteSpace(p.Value.BaseUrl)
-                                  && Uri.TryCreate(p.Value.BaseUrl, UriKind.Absolute, out _))),
+                    IsConfigured: IsValidAbsoluteUri(p.Value.BaseUrl))),
         ];
         return Task.FromResult(result);
     }
+
+    private static bool IsValidAbsoluteUri(string? baseUrl) =>
+        !string.IsNullOrWhiteSpace(baseUrl) && Uri.TryCreate(baseUrl, UriKind.Absolute, out _);
 }
