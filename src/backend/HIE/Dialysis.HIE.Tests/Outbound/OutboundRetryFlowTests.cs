@@ -38,7 +38,7 @@ public sealed class OutboundRetryFlowTests
 
             var pending = new OutboundBundle(Guid.NewGuid(), "Patient", "p-3", "default", "{}", nowUtc.AddSeconds(2));
 
-            db.OutboundBundles.AddRange(delivered, failed, pending);
+            await db.OutboundBundles.AddRangeAsync(delivered, failed, pending);
             await db.SaveChangesAsync();
         }
 
@@ -65,7 +65,7 @@ public sealed class OutboundRetryFlowTests
             var failed = new OutboundBundle(Guid.NewGuid(), "Patient", "p-2", "default", "{}", nowUtc);
             failed.MarkAttemptFailed("503", nowUtc.AddSeconds(60), maxAttempts: 1);
             var pending = new OutboundBundle(Guid.NewGuid(), "Patient", "p-3", "default", "{}", nowUtc.AddSeconds(2));
-            db.OutboundBundles.AddRange(failed, pending);
+            await db.OutboundBundles.AddRangeAsync(failed, pending);
             await db.SaveChangesAsync();
         }
 
