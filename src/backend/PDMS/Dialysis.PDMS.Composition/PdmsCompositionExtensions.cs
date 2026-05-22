@@ -5,6 +5,7 @@ using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.PDMS.TreatmentSessions.Fhir;
 using Hl7.Fhir.Model;
@@ -19,8 +20,10 @@ using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
 using Dialysis.PDMS.TreatmentSessions.Features.AcknowledgeAlarm;
 using Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
 using Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
+using Dialysis.PDMS.TreatmentSessions.Features.IngestChairAssignment;
 using Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 using Dialysis.PDMS.TreatmentSessions.Features.ListActiveAlarms;
+using Dialysis.PDMS.TreatmentSessions.Features.ListChairAssignments;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
@@ -61,6 +64,7 @@ public static class PdmsCompositionExtensions
             services.AddPdmsPersistence(configurePersistence);
 
             services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
+            services.AddSingleton<ChairOccupancyProjection>();
 
             // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
             services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
@@ -69,6 +73,7 @@ public static class PdmsCompositionExtensions
             {
                 t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
                 t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
+                t.AddConsumer<PatientPlacedInChairIntegrationEvent, PatientPlacedInChairConsumer>();
 
                 if (enableFhirSubscriptions)
                     t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventSubscriptionBroadcaster>();
@@ -90,6 +95,7 @@ public static class PdmsCompositionExtensions
                 c.AddQueryBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>, AuthorizationPipelineBehavior<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>>();
                 c.AddQueryBehavior<GetSessionSummaryQuery, SessionSummaryDto, AuthorizationPipelineBehavior<GetSessionSummaryQuery, SessionSummaryDto>>();
                 c.AddQueryBehavior<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>, AuthorizationPipelineBehavior<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>>>();
+                c.AddQueryBehavior<ListChairAssignmentsQuery, IReadOnlyList<ChairAssignmentDto>, AuthorizationPipelineBehavior<ListChairAssignmentsQuery, IReadOnlyList<ChairAssignmentDto>>>();
             });
 
             if (enableOutboxRelay)
