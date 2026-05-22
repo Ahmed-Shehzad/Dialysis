@@ -35,6 +35,10 @@ public static class SmartConnectServiceCollectionExtensions
             // reads. In-memory is fine for single-replica; swap for a Valkey-backed impl
             // when SmartConnect scales out.
             services.TryAddSingleton<IClockSkewMonitor, InMemoryClockSkewMonitor>();
+            // Slice J3: clock-skew correction audit sink. The default no-op lets hosts run
+            // the corrector without crashing; production hosts swap in a Transponder-backed
+            // sink that publishes Hl7V2ClockSkewCorrectedIntegrationEvent.
+            services.TryAddSingleton<IClockSkewCorrectionEventSink, NullClockSkewCorrectionEventSink>();
             services.AddHttpClient("smartconnect-outbound");
             services.AddSingleton<AllowAllRouteFilter>();
             services.AddSingleton<PassThroughOutboundAdapter>();

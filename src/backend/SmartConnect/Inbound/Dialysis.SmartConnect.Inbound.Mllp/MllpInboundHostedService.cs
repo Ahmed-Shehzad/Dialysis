@@ -19,6 +19,7 @@ public sealed class MllpInboundHostedService(
     IInboundMessageFactory messageFactory,
     IServiceScopeFactory scopeFactory,
     IClockSkewMonitor clockSkewMonitor,
+    IClockSkewCorrectionEventSink clockSkewSink,
     TimeProvider timeProvider,
     ILogger<MllpInboundHostedService> logger) : BackgroundService
 {
@@ -137,10 +138,10 @@ public sealed class MllpInboundHostedService(
             };
         }
 
-        // Slice J2: feed the §2 clock-skew monitor every time we frame a valid HL7v2
-        // message. Failure to parse MSH-7 / non-HL7v2 payloads silently skip; we never
+        // Slice J3: feed the §2 clock-skew monitor + apply the configured correction
+        // policy. Failure to parse MSH-7 / non-HL7v2 payloads silently skip; we never
         // want time-sync probing to block the dispatch path.
-        TryProbeClockSkew(payload);
+        await TryProbeClockSkewAsync(payload, ct).ConfigureAwait(false);
 
         var message = messageFactory.Create(
             opt.DefaultFlowId,
@@ -192,19 +193,25 @@ public sealed class MllpInboundHostedService(
     }
 
     /// <summary>
-    /// Slice J2 hook: parse the payload as HL7v2, compute the skew vs. server clock, and
-    /// record it on <see cref="IClockSkewMonitor"/>. Pure observation — no correction
-    /// (that needs per-source policy storage which lands separately). Any parse failure
-    /// is swallowed so a non-HL7v2 inbound (e.g. an exception trace coming in through
-    /// the MLLP socket) never blocks dispatch.
+    /// Slice J3 hook: parse the payload as HL7v2, compute the skew vs. server clock,
+    /// record it on <see cref="IClockSkewMonitor"/>, optionally rewrite MSH-7 per the
+    /// configured policy, and publish an audit event when a correction fires. Any parse
+    /// failure is swallowed so a non-HL7v2 inbound (e.g. an exception trace coming in
+    /// through the MLLP socket) never blocks dispatch.
     /// </summary>
-    private void TryProbeClockSkew(byte[] payload)
+    private async Task TryProbeClockSkewAsync(byte[] payload, CancellationToken cancellationToken)
     {
         try
         {
             var text = Encoding.UTF8.GetString(payload);
             var message = Hl7V2Message.Parse(text);
-            Hl7V2ClockSkewProbe.TryObserve(message, timeProvider.GetUtcNow().UtcDateTime, clockSkewMonitor);
+            var policy = ResolveClockSkewPolicy();
+            var result = Hl7V2ClockSkewProbe.TryObserveAndCorrect(
+                message, timeProvider.GetUtcNow().UtcDateTime, clockSkewMonitor, policy);
+            if (result is { WasCorrected: true })
+            {
+                await clockSkewSink.PublishAsync(result, cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (FormatException)
         {
@@ -214,5 +221,17 @@ public sealed class MllpInboundHostedService(
         {
             // Empty / whitespace payload — ignore.
         }
+    }
+
+    private ClockSkewCorrectionPolicy ResolveClockSkewPolicy()
+    {
+        var opt = options.CurrentValue.ClockSkew;
+        if (string.Equals(opt.Mode, "Normalize", StringComparison.OrdinalIgnoreCase))
+        {
+            return ClockSkewCorrectionPolicy.Normalize(
+                correctAbove: TimeSpan.FromSeconds(opt.CorrectAboveAbsSkewSeconds),
+                maxAllowed: TimeSpan.FromSeconds(opt.MaxAllowedAbsJumpSeconds));
+        }
+        return ClockSkewCorrectionPolicy.ReportOnly;
     }
 }
