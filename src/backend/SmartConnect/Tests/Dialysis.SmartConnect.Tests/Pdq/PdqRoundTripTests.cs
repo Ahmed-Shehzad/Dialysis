@@ -15,7 +15,7 @@ public sealed class PdqRoundTripTests
     private static readonly DateTime _fixedNow = new(2026, 5, 22, 9, 0, 0, DateTimeKind.Utc);
 
     [Fact]
-    public void Parser_Reads_MRN_Criterion_From_Ig_Example_4_3_1()
+    public void Parser_Reads_Mrn_Criterion_From_Ig_Example_4_3_1()
     {
         const string qbp =
             "MSH|^~\\&|ACME Dialysis Machine^00059AFFFE3C7A00^EUI-64||||202204120831230000||QBP^Q22^QBP_Q21|20220412083123173|P|2.6|||AL|NE|||||\r" +
