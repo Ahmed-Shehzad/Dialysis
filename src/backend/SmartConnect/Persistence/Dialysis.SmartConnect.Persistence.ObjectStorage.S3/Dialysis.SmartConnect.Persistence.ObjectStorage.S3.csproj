@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- AWSSDK.Core is pinned to a non-vulnerable version (>= 4.0.3.3 per GHSA-9cvc-h2w8-phrp).
+         AWSSDK.S3 would otherwise resolve Core to 4.0.1.2 (the min in its dependency range) and
+         NU1901 (vulnerability audit) breaks the build under TreatWarningsAsErrors. -->
+    <PackageReference Include="AWSSDK.Core" />
     <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
