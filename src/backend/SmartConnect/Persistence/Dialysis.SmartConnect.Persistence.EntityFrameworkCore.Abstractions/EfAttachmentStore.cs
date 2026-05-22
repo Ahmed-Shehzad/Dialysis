@@ -14,35 +14,52 @@ public sealed class EfAttachmentStore(SmartConnectDbContext db, IAttachmentBlobS
 {
     public async Task<Attachment> AddAsync(Attachment attachment, CancellationToken cancellationToken)
     {
+        var (entity, prepared) = PrepareInsert(attachment);
+        db.Attachments.Add(entity);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        await blobs.WriteAsync(entity.Id, prepared.Data, cancellationToken).ConfigureAwait(false);
+        return prepared;
+    }
+
+    public Attachment Add(Attachment attachment, CancellationToken cancellationToken)
+    {
+        var (entity, prepared) = PrepareInsert(attachment);
+        db.Attachments.Add(entity);
+        db.SaveChanges();
+
+        blobs.Write(entity.Id, prepared.Data, cancellationToken);
+        return prepared;
+    }
+
+    private static (AttachmentEntity Entity, Attachment Prepared) PrepareInsert(Attachment attachment)
+    {
         ArgumentNullException.ThrowIfNull(attachment);
         var id = attachment.Id == Guid.Empty ? Guid.CreateVersion7() : attachment.Id;
         var size = attachment.SizeBytes > 0 ? attachment.SizeBytes : attachment.Data.Length;
         var createdUtc = attachment.CreatedUtc == default ? DateTimeOffset.UtcNow : attachment.CreatedUtc;
+        var mime = string.IsNullOrWhiteSpace(attachment.MimeType) ? "application/octet-stream" : attachment.MimeType;
 
         var entity = new AttachmentEntity
         {
             Id = id,
             MessageId = attachment.MessageId,
             FlowId = attachment.FlowId,
-            MimeType = string.IsNullOrWhiteSpace(attachment.MimeType) ? "application/octet-stream" : attachment.MimeType,
+            MimeType = mime,
             SizeBytes = size,
             CreatedUtc = createdUtc,
         };
-        db.Attachments.Add(entity);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        await blobs.WriteAsync(id, attachment.Data, cancellationToken).ConfigureAwait(false);
-
-        return new Attachment
+        var prepared = new Attachment
         {
             Id = id,
             MessageId = attachment.MessageId,
             FlowId = attachment.FlowId,
-            MimeType = entity.MimeType,
+            MimeType = mime,
             Data = attachment.Data,
             SizeBytes = size,
             CreatedUtc = createdUtc,
         };
+        return (entity, prepared);
     }
 
     public async Task<Attachment?> GetAsync(Guid id, CancellationToken cancellationToken)

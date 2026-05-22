@@ -18,6 +18,15 @@ public sealed class EfBytesAttachmentBlobStore(SmartConnectDbContext db) : IAtta
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public void Write(Guid attachmentId, ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var entity = db.Attachments.FirstOrDefault(a => a.Id == attachmentId)
+            ?? throw new InvalidOperationException($"Attachment {attachmentId} does not exist; metadata row must be inserted first.");
+        entity.Data = data.ToArray();
+        db.SaveChanges();
+    }
+
     public async Task<ReadOnlyMemory<byte>?> ReadAsync(Guid attachmentId, CancellationToken cancellationToken)
     {
         var bytes = await db.Attachments.AsNoTracking()
