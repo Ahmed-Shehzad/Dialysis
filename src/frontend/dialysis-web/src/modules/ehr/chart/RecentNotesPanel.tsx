@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   clinicalNoteStatusLabel,
+  DEMO_PROVIDER_ID,
   fetchPatientNotes,
+  signClinicalNote,
   type ClinicalNoteListItem,
   type ClinicalNoteStatus,
 } from "@/features/ehr/api/ehrApi";
@@ -24,20 +26,36 @@ const summary = (note: ClinicalNoteListItem): string => {
   return trimmed.length > 140 ? `${trimmed.slice(0, 137)}…` : trimmed;
 };
 
+/** Aggregate requires a non-empty Assessment to sign; surface Sign only when satisfied. */
+const canSign = (note: ClinicalNoteListItem): boolean =>
+  note.status === 1 && note.assessment.trim().length > 0;
+
 /**
  * Chart's Recent notes section. Lists the most recent clinical notes authored for the
- * patient across encounters, ordered most-recent first. Closes the loop on the
- * AddNoteDialog (#32) — notes written from the chart now show up on it.
+ * patient across encounters, ordered most-recent first. Draft rows with a non-empty
+ * assessment get a Sign action that promotes Draft → Signed through the existing
+ * `POST /api/v1.0/clinical/notes/{id}/sign` endpoint (the aggregate's Sign method
+ * enforces the assessment-required invariant).
  *
- * Status badge tone: amber draft, emerald signed, clinic amended, slate entered-in-error.
+ * Status badge tone: amber Draft, emerald Signed, clinic Amended, slate EnteredInError.
  * Each row shows the short summary (assessment preferred, then plan/subjective/objective)
  * so a clinician can scan the chart without expanding every note.
  */
 export const RecentNotesPanel = ({ patientId }: { patientId: string }) => {
+  const queryClient = useQueryClient();
+
   const notes = useQuery({
     queryKey: ["ehr", "notes", patientId],
     queryFn: () => fetchPatientNotes(patientId),
     staleTime: 30_000,
+  });
+
+  const sign = useMutation({
+    mutationFn: (noteId: string) =>
+      signClinicalNote({ noteId, signingProviderId: DEMO_PROVIDER_ID }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["ehr", "notes", patientId] });
+    },
   });
 
   return (
@@ -64,19 +82,35 @@ export const RecentNotesPanel = ({ patientId }: { patientId: string }) => {
               <span className="col-span-3 text-xs text-slate-400">
                 {formatDateTime(n.signedAtUtc ?? n.createdAtUtc)}
               </span>
-              <span className="col-span-7 text-slate-200" title={n.assessment || undefined}>
+              <span className="col-span-6 text-slate-200" title={n.assessment || undefined}>
                 {summary(n)}
               </span>
-              <span className="col-span-2 text-right">
+              <span className="col-span-3 flex items-center justify-end gap-2">
                 <span
                   className={`rounded-full border px-2 py-0.5 text-xs ${STATUS_TONE[n.status]}`}
                 >
                   {clinicalNoteStatusLabel(n.status)}
                 </span>
+                {canSign(n) && (
+                  <button
+                    type="button"
+                    onClick={() => sign.mutate(n.id)}
+                    disabled={sign.isPending}
+                    className="rounded-md border border-emerald-700/60 bg-emerald-950/30 px-2 py-0.5 text-xs text-emerald-200 transition hover:border-emerald-500 disabled:opacity-50"
+                  >
+                    Sign
+                  </button>
+                )}
               </span>
             </li>
           ))}
         </ul>
+      )}
+
+      {sign.error && (
+        <p role="alert" className="mt-2 text-xs text-rose-300">
+          {humanizeError(sign.error)}
+        </p>
       )}
     </section>
   );
