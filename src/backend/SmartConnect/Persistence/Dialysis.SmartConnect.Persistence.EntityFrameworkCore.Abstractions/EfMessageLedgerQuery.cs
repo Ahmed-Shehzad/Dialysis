@@ -70,6 +70,7 @@ public sealed class EfMessageLedgerQuery(SmartConnectDbContext db) : IMessageLed
             OutboundRouteOrdinal = e.OutboundRouteOrdinal,
             Detail = e.Detail,
             PayloadSnapshot = e.PayloadSnapshot,
+            Metadata = EfMessageLedger.DeserializeMetadata(e.MetadataJson),
             CreatedAtUtc = e.CreatedAtUtc,
         };
 }

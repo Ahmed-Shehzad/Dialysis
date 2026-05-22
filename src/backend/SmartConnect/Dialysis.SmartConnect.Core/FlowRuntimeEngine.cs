@@ -413,6 +413,7 @@ public sealed class FlowRuntimeEngine(
                 OutboundRouteOrdinal = outboundRouteOrdinal,
                 Detail = detail,
                 PayloadSnapshot = snapshot,
+                Metadata = message.Metadata,
                 CreatedAtUtc = time.GetUtcNow(),
             },
             cancellationToken);

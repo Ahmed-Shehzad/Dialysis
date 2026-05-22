@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Dialysis.SmartConnect;
 
 /// <summary>
@@ -21,6 +23,15 @@ public sealed class MessageLedgerEntry
     public string? Detail { get; init; }
 
     public byte[]? PayloadSnapshot { get; init; }
+
+    /// <summary>
+    /// Snapshot of the <see cref="IntegrationMessage.Metadata"/> dictionary as observed at this
+    /// ledger stage. Stored as a JSON object in the <c>MetadataJson</c> column so the operator
+    /// dashboard can filter on sender id / message type / trigger event without having to
+    /// re-parse the payload (Slice C of the SmartConnect ↔ Mirth alignment plan).
+    /// </summary>
+    public ImmutableDictionary<string, string> Metadata { get; init; } =
+        ImmutableDictionary<string, string>.Empty;
 
     public DateTimeOffset CreatedAtUtc { get; init; }
 }

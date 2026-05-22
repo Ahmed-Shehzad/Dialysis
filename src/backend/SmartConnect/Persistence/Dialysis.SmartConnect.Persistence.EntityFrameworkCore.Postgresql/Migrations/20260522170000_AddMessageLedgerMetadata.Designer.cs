@@ -3,6 +3,7 @@ using System;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migrations
 {
     [DbContext(typeof(SmartConnectDbContext))]
-    partial class SmartConnectDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522170000_AddMessageLedgerMetadata")]
+    partial class AddMessageLedgerMetadata
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
