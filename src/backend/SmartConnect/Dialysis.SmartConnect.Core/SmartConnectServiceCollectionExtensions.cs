@@ -62,6 +62,7 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<JsonTransformStage>();
             services.AddSingleton<XmlTransformStage>();
             services.AddSingleton<DicomTransformStage>();
+            services.AddSingleton<DelimitedTextTransformStage>();
             services.AddSingleton<MessageBuilderTransformStage>();
             services.AddSingleton<MapperTransformStage>(sp => new MapperTransformStage(sp.GetRequiredService<JsonTransformStage>()));
             services.AddSingleton<IteratorRouteFilter>(sp => new IteratorRouteFilter(sp));
@@ -115,6 +116,7 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterTransformStage(sp.GetRequiredService<JsonTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<XmlTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<DicomTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<DelimitedTextTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());
