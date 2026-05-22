@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.Registration.Domain;
@@ -77,5 +78,25 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
                 new ListNotesForPatientQuery(patientId, take), cancellationToken)
             .ConfigureAwait(false);
         return Ok(notes);
+    }
+
+    /// <summary>
+    /// Patient-scoped lab results. Backs the patient-portal Lab results panel and any
+    /// clinician view that needs a result feed. Default 180-day lookback, ordered
+    /// most-recent first.
+    /// </summary>
+    [HttpGet("{patientId:guid}/lab-results")]
+    [ProducesResponseType(typeof(IReadOnlyList<LabResultListItem>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListLabResultsAsync(
+        Guid patientId,
+        [FromQuery] int lookbackDays = 180,
+        [FromQuery] int take = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var results = await gateway
+            .SendQueryAsync<ListLabResultsForPatientQuery, IReadOnlyList<LabResultListItem>>(
+                new ListLabResultsForPatientQuery(patientId, lookbackDays, take), cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(results);
     }
 }
