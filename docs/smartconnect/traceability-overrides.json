@@ -3459,6 +3459,36 @@
       "mapping": "External Script transformer step: loads JS body from file:// or http(s):// URI (IExternalScriptLoader), evaluates via same Jint context as inline JS",
       "status": "Done",
       "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ExternalScriptTransformStage.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ExternalScriptParameters.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Scripts/DefaultExternalScriptLoader.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scripts/IExternalScriptLoader.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/Scripts/ExternalScriptOptions.cs"
+    },
+    "d9edaa4d4de8": {
+      "mapping": "Response Transformers: per-route ResponseTransformStages run after a successful SendAsync returns a non-empty ResponsePayload (gated by ConnectorProperties.CaptureResponseBody from slice B). FlowRuntimeEngine clones the message with the response bytes as payload, then chains each transform stage in order. See docs/smartconnect/response-transforms.md for the canonical patterns",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; src/backend/SmartConnect/Dialysis.SmartConnect.Core.Abstraction/IntegrationFlowPipelineDefinition.cs; docs/smartconnect/response-transforms.md"
+    },
+    "6e0704439eda": {
+      "mapping": "Modifying the Response: response transform stage receives a cloned IntegrationMessage with the response bytes as Payload; writes to message.Metadata flow through to the ledger row (slice C) and to subsequent routes. Pattern documented in docs/smartconnect/response-transforms.md § Pattern 1",
+      "status": "Done",
+      "evidence": "src/backend/SmartConnect/Dialysis.SmartConnect.Core/FlowRuntimeEngine.cs; docs/smartconnect/response-transforms.md"
+    },
+    "e6df3c9fba0e": {
+      "mapping": "Common Scenarios: the three Mirth UG response-transform recipes (parse ACK, threshold-error escalation, downstream routing) are documented with executable JSON pipeline fragments and the common pitfalls section",
+      "status": "Done",
+      "evidence": "docs/smartconnect/response-transforms.md"
+    },
+    "8b8e13cf98bb": {
+      "mapping": "Re-queue on AE ACK: documented as Pattern 1 (parse MSA-1, write smartconnect.ack.error metadata, AlertEngine consumes the metadata key)",
+      "status": "Done",
+      "evidence": "docs/smartconnect/response-transforms.md; src/backend/SmartConnect/Dialysis.SmartConnect.Core/Alerts/AlertEngine.cs"
+    },
+    "7d8754af2903": {
+      "mapping": "Threshold error: documented as Pattern 2 — combines slice B's MaxRetries with a response transform that escalates via the smartconnect.escalate metadata key after the runtime exhausts retries",
+      "status": "Done",
+      "evidence": "docs/smartconnect/response-transforms.md; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/HttpOutboundParameters.cs"
+    },
+    "d75a3391beea": {
+      "mapping": "Route response to downstream channel: documented as Pattern 3 — first route does the HTTP send + response transform; second route is a channel-writer that hands the (metadata-enriched) message to a downstream flow",
+      "status": "Done",
+      "evidence": "docs/smartconnect/response-transforms.md; src/backend/SmartConnect/Dialysis.SmartConnect.Core/ExtendedPlugins/ChannelWriterOutboundAdapter.cs"
     }
   }
 }
