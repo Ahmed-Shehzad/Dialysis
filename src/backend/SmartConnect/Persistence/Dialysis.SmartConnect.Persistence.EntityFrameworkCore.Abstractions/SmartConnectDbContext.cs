@@ -27,6 +27,8 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
 
     public DbSet<AlertEventEntity> AlertEvents => Set<AlertEventEntity>();
 
+    public DbSet<CasBlobRefEntity> CasBlobRefs => Set<CasBlobRefEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<IntegrationFlowEntity>(b =>
@@ -143,6 +145,16 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.HasIndex(e => e.RuleId);
             b.HasIndex(e => e.FlowId);
             b.HasIndex(e => e.OccurredAtUtc);
+        });
+
+        modelBuilder.Entity<CasBlobRefEntity>(b =>
+        {
+            b.ToTable("CasBlobRefs", "smartconnect");
+            b.HasKey(e => e.Id);
+            // 64 hex chars for SHA-256 — fixed-width keeps the column index dense.
+            b.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();
+            b.HasIndex(e => e.AttachmentId).IsUnique();
+            b.HasIndex(e => e.ContentHash);
         });
     }
 }

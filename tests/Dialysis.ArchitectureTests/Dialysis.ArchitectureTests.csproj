@@ -39,6 +39,7 @@
     <ProjectReference Include="../../src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob.csproj" />
+    <ProjectReference Include="../../src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable.csproj" />
     <ProjectReference Include="../../src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.S3/Dialysis.SmartConnect.Persistence.ObjectStorage.S3.csproj" />
     <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
     <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />

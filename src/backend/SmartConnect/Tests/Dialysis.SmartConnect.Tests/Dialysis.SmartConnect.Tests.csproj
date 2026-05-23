@@ -38,6 +38,7 @@
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob.csproj" />
+    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.S3/Dialysis.SmartConnect.Persistence.ObjectStorage.S3.csproj" />
     <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Epic/Dialysis.SmartConnect.Adapters.Epic.csproj" />
     <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Cerner/Dialysis.SmartConnect.Adapters.Cerner.csproj" />
