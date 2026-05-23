@@ -95,45 +95,6 @@
     ]));
   }
 
-  // src/router.ts
-  var Router = class {
-    constructor(target) {
-      this.target = target;
-    }
-    routes = [];
-    fallback;
-    add(route) {
-      this.routes.push(route);
-      return this;
-    }
-    setFallback(handler) {
-      this.fallback = handler;
-      return this;
-    }
-    start() {
-      window.addEventListener("hashchange", () => this.dispatch());
-      this.dispatch();
-    }
-    async dispatch() {
-      const raw = window.location.hash.replace(/^#/, "");
-      const segments = raw.split("/").filter(Boolean);
-      const ctx = { hash: raw, segments, target: this.target };
-      clear(this.target);
-      const match = this.routes.find((r) => r.match(segments));
-      try {
-        if (match) {
-          await match.render(ctx);
-        } else if (this.fallback) {
-          await this.fallback(ctx);
-        } else {
-          this.target.appendChild(el("p", { class: "err" }, `No panel for #${raw}.`));
-        }
-      } catch (e) {
-        this.target.appendChild(el("p", { class: "err" }, `Panel error: ${e.message ?? e}`));
-      }
-    }
-  };
-
   // src/api.ts
   function apiUrl(path) {
     return path.startsWith("/") ? path : `/${path}`;
@@ -173,6 +134,11 @@
   }
   function downloadAttachmentUrl(id) {
     return `/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`;
+  }
+  async function fetchAttachmentBytes(id) {
+    const res = await apiFetch(`/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`);
+    const buf = await res.arrayBuffer();
+    return new Uint8Array(buf);
   }
   async function deleteAttachment(id) {
     await apiFetch(`/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -223,6 +189,351 @@
   function checkHealth() {
     return apiFetch("/health");
   }
+
+  // src/viewers.ts
+  var _registry = [];
+  function registerViewer(mimePrefix, viewer) {
+    _registry.push({ prefix: mimePrefix.toLowerCase(), viewer });
+    _registry.sort((a, b) => b.prefix.length - a.prefix.length);
+  }
+  function pickViewer(mimeType) {
+    if (!mimeType) return _fallbackViewer;
+    const lower = mimeType.toLowerCase();
+    for (const entry of _registry) {
+      if (lower.startsWith(entry.prefix)) return entry.viewer;
+    }
+    return _fallbackViewer;
+  }
+  var _decoder = new TextDecoder("utf-8", { fatal: false });
+  function _textBlock(text, lang) {
+    const pre = el("pre", { class: lang ? `viewer viewer-${lang}` : "viewer" }, text);
+    return pre;
+  }
+  function _jsonViewer(bytes) {
+    const raw = _decoder.decode(bytes);
+    try {
+      const parsed = JSON.parse(raw);
+      return _textBlock(JSON.stringify(parsed, null, 2), "json");
+    } catch {
+      return _textBlock(raw, "json");
+    }
+  }
+  function _xmlViewer(bytes) {
+    const raw = _decoder.decode(bytes);
+    return _textBlock(raw, "xml");
+  }
+  function _plainTextViewer(bytes) {
+    return _textBlock(_decoder.decode(bytes), "text");
+  }
+  function _hl7v2Viewer(bytes) {
+    const raw = _decoder.decode(bytes);
+    const segments = raw.split(/\r\n|\r|\n/).filter((s) => s.length > 0);
+    const children = segments.map((seg) => {
+      const name = seg.slice(0, 3);
+      const fields = seg.split("|");
+      return el("details", { class: "viewer viewer-hl7v2-segment" }, [
+        el("summary", {}, `${name} (${fields.length - 1} fields)`),
+        _textBlock(seg, "hl7v2-raw")
+      ]);
+    });
+    return el("div", { class: "viewer viewer-hl7v2" }, children);
+  }
+  function _imageViewer(bytes, attachmentId, mimeType) {
+    const url = downloadAttachmentUrl(attachmentId);
+    return el("img", { src: url, alt: `attachment ${attachmentId}`, class: "viewer viewer-image", loading: "lazy" });
+  }
+  function _fallbackViewer(bytes, attachmentId, mimeType) {
+    return el("div", { class: "viewer viewer-fallback" }, [
+      el("p", { class: "muted" }, `No inline preview for ${mimeType || "this MIME type"}.`),
+      el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect")
+    ]);
+  }
+  registerViewer("application/json", _jsonViewer);
+  registerViewer("application/fhir+json", _jsonViewer);
+  registerViewer("application/x-ndjson", _jsonViewer);
+  registerViewer("application/xml", _xmlViewer);
+  registerViewer("application/fhir+xml", _xmlViewer);
+  registerViewer("text/xml", _xmlViewer);
+  registerViewer("text/plain", _plainTextViewer);
+  registerViewer("text/csv", _plainTextViewer);
+  registerViewer("text/tab-separated-values", _plainTextViewer);
+  registerViewer("application/x-hl7v2", _hl7v2Viewer);
+  registerViewer("application/hl7-v2", _hl7v2Viewer);
+  registerViewer("text/hl7v2", _hl7v2Viewer);
+  registerViewer("image/png", _imageViewer);
+  registerViewer("image/jpeg", _imageViewer);
+  registerViewer("image/gif", _imageViewer);
+  registerViewer("image/webp", _imageViewer);
+  registerViewer("image/svg+xml", _imageViewer);
+
+  // src/dicom-viewer.ts
+  var _wellKnownTags = {
+    "00080016": "SOPClassUID",
+    "00080018": "SOPInstanceUID",
+    "00080020": "StudyDate",
+    "00080030": "StudyTime",
+    "00080050": "AccessionNumber",
+    "00080060": "Modality",
+    "00080070": "Manufacturer",
+    "00080090": "ReferringPhysicianName",
+    "00081030": "StudyDescription",
+    "00100010": "PatientName",
+    "00100020": "PatientID",
+    "00100030": "PatientBirthDate",
+    "00100040": "PatientSex",
+    "0020000D": "StudyInstanceUID",
+    "0020000E": "SeriesInstanceUID",
+    "00200010": "StudyID",
+    "00200011": "SeriesNumber",
+    "00280010": "Rows",
+    "00280011": "Columns",
+    "7FE00010": "PixelData"
+  };
+  var _longLengthVrs = /* @__PURE__ */ new Set(["OB", "OW", "OF", "OD", "OL", "SQ", "UT", "UN"]);
+  function _parseDicom(bytes) {
+    if (bytes.length < 132) return null;
+    if (bytes[128] !== 68 || bytes[129] !== 73 || bytes[130] !== 67 || bytes[131] !== 77) {
+      return null;
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const elements = [];
+    let pos = 132;
+    while (pos + 6 <= bytes.byteLength) {
+      const group = view.getUint16(pos, true);
+      const element = view.getUint16(pos + 2, true);
+      const tag = `${group.toString(16).padStart(4, "0")}${element.toString(16).padStart(4, "0")}`.toUpperCase();
+      const vr = String.fromCharCode(bytes[pos + 4], bytes[pos + 5]);
+      let length;
+      let valueOffset;
+      if (_longLengthVrs.has(vr)) {
+        if (pos + 12 > bytes.byteLength) break;
+        length = view.getUint32(pos + 8, true);
+        valueOffset = pos + 12;
+      } else {
+        if (pos + 8 > bytes.byteLength) break;
+        length = view.getUint16(pos + 6, true);
+        valueOffset = pos + 8;
+      }
+      if (length === 4294967295) break;
+      elements.push({ tag, vr, length, valueOffset });
+      pos = valueOffset + length;
+    }
+    return elements;
+  }
+  function _decodeValue(bytes, element) {
+    if (element.tag === "7FE00010") return `${element.length} bytes (download to view)`;
+    if (element.length === 0) return "";
+    const slice = bytes.subarray(element.valueOffset, element.valueOffset + element.length);
+    switch (element.vr) {
+      case "AE":
+      case "AS":
+      case "CS":
+      case "DA":
+      case "DS":
+      case "DT":
+      case "IS":
+      case "LO":
+      case "LT":
+      case "PN":
+      case "SH":
+      case "ST":
+      case "TM":
+      case "UI":
+      case "UR":
+      case "UT": {
+        let text = new TextDecoder("utf-8", { fatal: false }).decode(slice);
+        text = text.replace(/\0+$/, "").replace(/\s+$/, "");
+        return text;
+      }
+      case "US":
+        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getUint16(0, true));
+      case "UL":
+        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getUint32(0, true));
+      case "SS":
+        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt16(0, true));
+      case "SL":
+        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt32(0, true));
+      default:
+        return `${slice.byteLength} bytes`;
+    }
+  }
+  function _readPixelDataInfo(bytes, elements) {
+    const rows = _tryReadUint16(bytes, elements, "00280010");
+    const columns = _tryReadUint16(bytes, elements, "00280011");
+    const bitsAllocated = _tryReadUint16(bytes, elements, "00280100") ?? 8;
+    const samplesPerPixel = _tryReadUint16(bytes, elements, "00280002") ?? 1;
+    const photometric = _tryReadString(bytes, elements, "00280004") ?? "MONOCHROME2";
+    const planarConfiguration = _tryReadUint16(bytes, elements, "00280006") ?? 0;
+    const pixelDataElement = elements.find((e) => e.tag === "7FE00010");
+    if (rows === null || columns === null || !pixelDataElement) return null;
+    return {
+      rows,
+      columns,
+      bitsAllocated,
+      samplesPerPixel,
+      photometric,
+      planarConfiguration,
+      pixelOffset: pixelDataElement.valueOffset,
+      pixelLength: pixelDataElement.length
+    };
+  }
+  function _tryReadUint16(bytes, elements, tag) {
+    const e = elements.find((el2) => el2.tag === tag);
+    if (!e || e.length < 2) return null;
+    return new DataView(bytes.buffer, bytes.byteOffset + e.valueOffset, e.length).getUint16(0, true);
+  }
+  function _tryReadString(bytes, elements, tag) {
+    const e = elements.find((el2) => el2.tag === tag);
+    if (!e) return null;
+    const slice = bytes.subarray(e.valueOffset, e.valueOffset + e.length);
+    return new TextDecoder("utf-8", { fatal: false }).decode(slice).replace(/\0+$/, "").trim();
+  }
+  function _renderPixelsToCanvas(bytes, info) {
+    const supported = info.bitsAllocated === 8 && info.planarConfiguration === 0 && (info.photometric === "MONOCHROME2" || info.photometric === "RGB" || info.photometric === "YBR_FULL");
+    if (!supported) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = info.columns;
+    canvas.height = info.rows;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const imageData = ctx.createImageData(info.columns, info.rows);
+    const pixelBuffer = bytes.subarray(info.pixelOffset, info.pixelOffset + info.pixelLength);
+    if (info.samplesPerPixel === 1) {
+      for (let i = 0; i < info.columns * info.rows; i++) {
+        const grey = pixelBuffer[i] ?? 0;
+        const o = i * 4;
+        imageData.data[o] = grey;
+        imageData.data[o + 1] = grey;
+        imageData.data[o + 2] = grey;
+        imageData.data[o + 3] = 255;
+      }
+    } else if (info.samplesPerPixel === 3) {
+      for (let i = 0; i < info.columns * info.rows; i++) {
+        const src = i * 3;
+        const dst = i * 4;
+        imageData.data[dst] = pixelBuffer[src] ?? 0;
+        imageData.data[dst + 1] = pixelBuffer[src + 1] ?? 0;
+        imageData.data[dst + 2] = pixelBuffer[src + 2] ?? 0;
+        imageData.data[dst + 3] = 255;
+      }
+    } else {
+      return null;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    return canvas;
+  }
+  function _dicomViewer(bytes, attachmentId, mimeType) {
+    const elements = _parseDicom(bytes);
+    if (elements === null) {
+      return el("div", { class: "viewer viewer-fallback" }, [
+        el("p", { class: "muted" }, `Not a recognisable DICOM file (no DICM preamble at offset 128).`),
+        el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect")
+      ]);
+    }
+    const tbody = el("tbody");
+    let renderedKnown = 0;
+    for (const e of elements) {
+      const keyword = _wellKnownTags[e.tag];
+      if (!keyword) continue;
+      renderedKnown++;
+      const value = _decodeValue(bytes, e);
+      tbody.appendChild(el("tr", {}, [
+        el("td", {}, keyword),
+        el("td", {}, el("code", {}, `(${e.tag.slice(0, 4)},${e.tag.slice(4)})`)),
+        el("td", {}, e.vr),
+        el("td", {}, value)
+      ]));
+    }
+    const summary = el("p", { class: "muted" }, [
+      `Parsed ${elements.length} elements; showing ${renderedKnown} well-known tags. `,
+      el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download for full PACS viewing")
+    ]);
+    const children = [summary];
+    const previewHost = el("div", { class: "viewer-dicom-image" });
+    const pixelInfo = _readPixelDataInfo(bytes, elements);
+    if (pixelInfo !== null) {
+      const showButton = el("button", { type: "button" }, "Show image");
+      showButton.addEventListener("click", () => {
+        showButton.disabled = true;
+        const canvas = _renderPixelsToCanvas(bytes, pixelInfo);
+        if (canvas === null) {
+          previewHost.appendChild(
+            el("p", { class: "muted" }, [
+              `Image preview not supported for ${pixelInfo.photometric} ${pixelInfo.bitsAllocated}-bit (planar ${pixelInfo.planarConfiguration}). `,
+              el(
+                "a",
+                { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" },
+                "Download to view in PACS"
+              )
+            ])
+          );
+          return;
+        }
+        canvas.className = "viewer viewer-dicom-canvas";
+        previewHost.appendChild(canvas);
+      });
+      children.push(showButton);
+      children.push(previewHost);
+    }
+    if (renderedKnown > 0) {
+      children.push(el("table", { class: "viewer viewer-dicom-tags" }, [
+        el("thead", {}, el("tr", {}, [
+          el("th", {}, "Tag"),
+          el("th", {}, "(group,element)"),
+          el("th", {}, "VR"),
+          el("th", {}, "Value")
+        ])),
+        tbody
+      ]));
+    } else {
+      children.push(el("p", { class: "muted" }, [
+        "No recognisable header tags in this file \u2014 likely a fragment or a private SOP class. ",
+        el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect")
+      ]));
+    }
+    return el("div", { class: "viewer viewer-dicom" }, children);
+  }
+  registerViewer("application/dicom", _dicomViewer);
+  registerViewer("image/dicom", _dicomViewer);
+
+  // src/router.ts
+  var Router = class {
+    constructor(target) {
+      this.target = target;
+    }
+    routes = [];
+    fallback;
+    add(route) {
+      this.routes.push(route);
+      return this;
+    }
+    setFallback(handler) {
+      this.fallback = handler;
+      return this;
+    }
+    start() {
+      window.addEventListener("hashchange", () => this.dispatch());
+      this.dispatch();
+    }
+    async dispatch() {
+      const raw = window.location.hash.replace(/^#/, "");
+      const segments = raw.split("/").filter(Boolean);
+      const ctx = { hash: raw, segments, target: this.target };
+      clear(this.target);
+      const match = this.routes.find((r) => r.match(segments));
+      try {
+        if (match) {
+          await match.render(ctx);
+        } else if (this.fallback) {
+          await this.fallback(ctx);
+        } else {
+          this.target.appendChild(el("p", { class: "err" }, `No panel for #${raw}.`));
+        }
+      } catch (e) {
+        this.target.appendChild(el("p", { class: "err" }, `Panel error: ${e.message ?? e}`));
+      }
+    }
+  };
 
   // src/panels/flows.ts
   async function renderFlows(ctx) {
@@ -369,20 +680,42 @@
         return;
       }
       status.remove();
+      const previewHost = el("div", { class: "attachment-preview" });
       const tbody = el("tbody");
       for (const a of attachments) {
         const delBtn = el("button", { type: "button" }, "Delete");
+        const previewBtn = el("button", { type: "button" }, "Preview");
         const row = el("tr", {}, [
           el("td", {}, el("code", {}, a.id)),
           el("td", {}, a.mimeType ?? "\u2014"),
           el("td", {}, a.sizeBytes !== void 0 ? String(a.sizeBytes) : "\u2014"),
           el("td", {}, formatDate(a.createdUtc)),
           el("td", {}, [
+            previewBtn,
+            " ",
             el("a", { href: downloadAttachmentUrl(a.id), target: "_blank", rel: "noopener" }, "download"),
             " ",
             delBtn
           ])
         ]);
+        previewBtn.addEventListener("click", async () => {
+          previewBtn.disabled = true;
+          try {
+            clear(previewHost);
+            previewHost.appendChild(el("h3", {}, [
+              "Preview ",
+              el("code", {}, a.id),
+              ` \u2014 ${a.mimeType ?? "unknown MIME"}`
+            ]));
+            const bytes = await fetchAttachmentBytes(a.id);
+            const viewer = pickViewer(a.mimeType);
+            previewHost.appendChild(viewer(bytes, a.id, a.mimeType ?? ""));
+          } catch (e) {
+            previewHost.appendChild(errBlock(`Preview failed: ${e.message ?? e}`));
+          } finally {
+            previewBtn.disabled = false;
+          }
+        });
         delBtn.addEventListener("click", async () => {
           if (!confirm(`Delete attachment ${a.id}?`)) return;
           delBtn.disabled = true;
@@ -405,6 +738,7 @@
         ])),
         tbody
       ]));
+      ctx.target.appendChild(previewHost);
     } catch (e) {
       status.remove();
       ctx.target.appendChild(errBlock(`Could not load attachments: ${e.message ?? e}`));

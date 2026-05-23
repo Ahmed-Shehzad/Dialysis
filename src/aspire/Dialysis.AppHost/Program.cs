@@ -57,11 +57,11 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
     .WithBindMount(KeycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true)
     .WithHttpEndpoint(port: KeycloakHostPort, targetPort: KeycloakContainerPort, name: "http")
     .WithHttpHealthCheck(KeycloakDiscoveryPath, statusCode: 200, endpointName: "http");
-    // Deliberately NOT Persistent: --import-realm only imports if the realm doesn't
-    // already exist, so a long-lived container makes dialysis-realm.json edits invisible
-    // (redirect_uri / client / role changes silently ignored). With KC_DB=dev-mem the
-    // in-container state is ephemeral by design, so re-creating the container each run
-    // is cheap and keeps the realm in lockstep with the file.
+// Deliberately NOT Persistent: --import-realm only imports if the realm doesn't
+// already exist, so a long-lived container makes dialysis-realm.json edits invisible
+// (redirect_uri / client / role changes silently ignored). With KC_DB=dev-mem the
+// in-container state is ephemeral by design, so re-creating the container each run
+// is cheap and keeps the realm in lockstep with the file.
 
 var keycloakRealmUri = ReferenceExpression.Create(
     $"{keycloak.GetEndpoint("http")}/realms/{KeycloakRealm}");
@@ -74,11 +74,11 @@ static IResourceBuilder<PostgresServerResource> Pg(IDistributedApplicationBuilde
         .WithDataVolume($"dialysis-{name}-data")
         .WithLifetime(ContainerLifetime.Persistent);
 
-var hisDb         = Pg(builder, "postgres-his").AddDatabase("His", databaseName: "dialysis_his");
-var ehrDb         = Pg(builder, "postgres-ehr").AddDatabase("Ehr", databaseName: "dialysis_ehr");
-var pdmsDb        = Pg(builder, "postgres-pdms").AddDatabase("Pdms", databaseName: "dialysis_pdms");
+var hisDb = Pg(builder, "postgres-his").AddDatabase("His", databaseName: "dialysis_his");
+var ehrDb = Pg(builder, "postgres-ehr").AddDatabase("Ehr", databaseName: "dialysis_ehr");
+var pdmsDb = Pg(builder, "postgres-pdms").AddDatabase("Pdms", databaseName: "dialysis_pdms");
 var smartconnectDb = Pg(builder, "postgres-smartconnect").AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
-var hieDb         = Pg(builder, "postgres-hie").AddDatabase("Hie", databaseName: "dialysis_hie");
+var hieDb = Pg(builder, "postgres-hie").AddDatabase("Hie", databaseName: "dialysis_hie");
 
 // --- SonarQube (auto-start with the AppHost) ------------------------------
 //
@@ -152,6 +152,7 @@ var sonarqube = builder.AddContainer("sonarqube", "sonarqube", "26.5.0.122743-co
 builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
     .WithBindMount("../../../tools/sonarqube/bootstrap.sh", "/bootstrap.sh", isReadOnly: true)
     .WithVolume("dialysis-sonarqube-bootstrap", "/state")
+    .WithContainerRuntimeArgs("--user", "0:0")
     .WithEnvironment("SONAR_URL", "http://sonarqube:9000")
     .WithEnvironment("SONAR_ADMIN_USER", "admin")
     // Dev-only credential; rotated by the bootstrap script on first run, then
