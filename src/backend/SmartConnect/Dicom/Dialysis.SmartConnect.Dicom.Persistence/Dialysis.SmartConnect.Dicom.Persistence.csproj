@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.SmartConnect.Dicom.Persistence</RootNamespace>
+    <Description>EF Core persistence for DICOM instance metadata and ingestion service backed by IAttachmentBlobStore.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.SmartConnect.Dicom.Core/Dialysis.SmartConnect.Dicom.Core.csproj" />
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="fo-dicom" />
+  </ItemGroup>
+
+</Project>

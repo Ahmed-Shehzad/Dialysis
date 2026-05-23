@@ -29,6 +29,8 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
 
     public DbSet<CasBlobRefEntity> CasBlobRefs => Set<CasBlobRefEntity>();
 
+    public DbSet<DicomInstanceEntity> DicomInstances => Set<DicomInstanceEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<IntegrationFlowEntity>(b =>
@@ -155,6 +157,23 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();
             b.HasIndex(e => e.AttachmentId).IsUnique();
             b.HasIndex(e => e.ContentHash);
+        });
+
+        modelBuilder.Entity<DicomInstanceEntity>(b =>
+        {
+            b.ToTable("DicomInstances", "smartconnect");
+            b.HasKey(e => e.Id);
+            // DICOM UIDs are at most 64 chars per the spec; 128 leaves headroom for vendor quirks.
+            b.Property(e => e.StudyInstanceUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.SeriesInstanceUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.SopInstanceUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.SopClassUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.PatientId).HasMaxLength(64);
+            b.Property(e => e.PatientName).HasMaxLength(256);
+            b.Property(e => e.Modality).HasMaxLength(16);
+            b.HasIndex(e => e.SopInstanceUid).IsUnique();
+            b.HasIndex(e => e.StudyInstanceUid);
+            b.HasIndex(e => new { e.PatientId, e.ReceivedUtc });
         });
     }
 }
