@@ -50,7 +50,6 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
             Key = KeyOf(attachmentId),
             InputStream = stream,
             ContentType = "application/octet-stream",
-            DisablePayloadSigning = true,
         };
         await _client.PutObjectAsync(request, cancellationToken).ConfigureAwait(false);
     }
