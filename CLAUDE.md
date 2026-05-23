@@ -121,3 +121,4 @@ The SPA mirrors the backend boundaries: one folder per module under `src/modules
 | RabbitMQ | 5672 / mgmt 15672 | same | — |
 | Valkey | 6379 | same | — |
 | OTLP collector | injected | 4317 (gRPC) / 4318 (HTTP) | — |
+| SonarQube (opt-in via dashboard) | 9000 | — | — |

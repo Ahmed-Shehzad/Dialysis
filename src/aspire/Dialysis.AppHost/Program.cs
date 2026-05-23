@@ -80,6 +80,54 @@ var pdmsDb        = Pg(builder, "postgres-pdms").AddDatabase("Pdms", databaseNam
 var smartconnectDb = Pg(builder, "postgres-smartconnect").AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
 var hieDb         = Pg(builder, "postgres-hie").AddDatabase("Hie", databaseName: "dialysis_hie");
 
+// --- SonarQube (dev-only, click-to-start) ---------------------------------
+//
+// SonarQube static-analysis server for local code-quality reviews. Registered with
+// .WithExplicitStart() so it appears in the Aspire dashboard but does NOT auto-start
+// on F5 — click "Start" when you need it. Three reasons not to start it by default:
+//   • The official image needs ~2 GB RAM at idle and pulls ~700 MB on first run;
+//     paying that on every dev launch is hostile to the inner loop.
+//   • Embedded Elasticsearch requires `sysctl -w vm.max_map_count=524288` on the
+//     host. Docker Desktop sets this automatically; bare-metal Linux often doesn't,
+//     and SonarQube exits with a clear error if the limit is too low.
+//   • First-run setup is a click-through: open http://localhost:9000, log in as
+//     admin/admin, change the password, generate a token under "My Account".
+//
+// Sonar's Postgres is dedicated — the analyzer's lifecycle is unrelated to the
+// module DBs, and mixing them would let one set of restarts blow away the other.
+// The JDBC password is pinned via an Aspire parameter (default "sonar") so devs can
+// override per-machine via user-secrets without rewriting the AppHost.
+//
+// SonarQube reaches its Postgres via the DCP-managed container network using the
+// resource name as the hostname; inside that network, Postgres listens on its
+// container target port (5432), not the random host-allocated port.
+var sonarPgPwd = builder.AddParameter("sonar-pg-password", "sonar", secret: true);
+
+var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgPwd)
+    .WithImage("postgres", "17-alpine")
+    .WithDataVolume("dialysis-sonarqube-pg-data")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithExplicitStart();
+
+builder.AddContainer("sonarqube", "sonarqube", "lts-community")
+    .WithEnvironment("SONAR_JDBC_URL", "jdbc:postgresql://postgres-sonarqube:5432/postgres")
+    .WithEnvironment("SONAR_JDBC_USERNAME", "postgres")
+    .WithEnvironment("SONAR_JDBC_PASSWORD", sonarPgPwd)
+    // Three named volumes so a `docker volume rm` to reset analysis state doesn't
+    // wipe the JVM caches or extensions (plugins) along with the index. SonarQube's
+    // own runbooks treat these as three independent backups too.
+    .WithVolume("dialysis-sonarqube-data", "/opt/sonarqube/data")
+    .WithVolume("dialysis-sonarqube-logs", "/opt/sonarqube/logs")
+    .WithVolume("dialysis-sonarqube-extensions", "/opt/sonarqube/extensions")
+    .WithHttpEndpoint(port: 9000, targetPort: 9000, name: "http")
+    // /api/system/status returns {"status":"UP"} when ready; SonarQube's startup is
+    // multi-phase (web → compute engine → search) and the port opens well before
+    // analysis is accepted, so a port-probe isn't enough.
+    .WithHttpHealthCheck("/api/system/status", statusCode: 200, endpointName: "http")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithExplicitStart()
+    .WaitFor(sonarPgServer);
+
 // --- Module hosts ----------------------------------------------------------
 //
 // Each module reads infra coordinates from module-scoped config keys
