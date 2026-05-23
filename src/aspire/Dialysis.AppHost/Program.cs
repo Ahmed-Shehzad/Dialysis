@@ -80,23 +80,31 @@ var pdmsDb        = Pg(builder, "postgres-pdms").AddDatabase("Pdms", databaseNam
 var smartconnectDb = Pg(builder, "postgres-smartconnect").AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
 var hieDb         = Pg(builder, "postgres-hie").AddDatabase("Hie", databaseName: "dialysis_hie");
 
-// --- SonarQube (dev-only, click-to-start) ---------------------------------
+// --- SonarQube (auto-start with the AppHost) ------------------------------
 //
-// SonarQube static-analysis server for local code-quality reviews. Registered with
-// .WithExplicitStart() so it appears in the Aspire dashboard but does NOT auto-start
-// on F5 — click "Start" when you need it. Three reasons not to start it by default:
-//   • The official image needs ~2 GB RAM at idle and pulls ~700 MB on first run;
-//     paying that on every dev launch is hostile to the inner loop.
+// SonarQube Community 2025.1 static-analysis server. Starts in parallel with the
+// module Postgres + RabbitMQ on every AppHost launch so devs can hit
+// http://localhost:9000 without a separate startup ritual.
+//
+// Operational caveats devs should know:
+//   • The image is ~700 MB on first pull and needs ~2 GB RAM at idle. Container
+//     lifetime is Persistent so re-launches reuse the warm cache.
 //   • Embedded Elasticsearch requires `sysctl -w vm.max_map_count=524288` on the
-//     host. Docker Desktop sets this automatically; bare-metal Linux often doesn't,
-//     and SonarQube exits with a clear error if the limit is too low.
-//   • First-run setup is a click-through: open http://localhost:9000, log in as
-//     admin/admin, change the password, generate a token under "My Account".
+//     host. Docker Desktop sets this automatically; bare-metal Linux often
+//     doesn't, and SonarQube exits with a clear error if the limit is too low.
+//   • First-boot bootstrap (admin/admin → "dialysis" project + analysis token)
+//     is automated by the sonarqube-bootstrap container; it writes the token to
+//     a named volume and logs the scan command.
+//   • Scanner runs are NOT triggered from the AppHost — analysing the full
+//     solution takes 5-10 minutes and shouldn't block dev iteration. Use
+//     `tools/sonarqube/scan.sh` to run the scanner against the live server.
+//   • GitHub integration (DevOps Platform) needs a GitHub App's credentials.
+//     See tools/sonarqube/README.md for the click-through setup.
 //
 // Sonar's Postgres is dedicated — the analyzer's lifecycle is unrelated to the
 // module DBs, and mixing them would let one set of restarts blow away the other.
-// The JDBC password is pinned via an Aspire parameter (default "sonar") so devs can
-// override per-machine via user-secrets without rewriting the AppHost.
+// The JDBC password is pinned via an Aspire parameter (default "sonar") so devs
+// can override per-machine via user-secrets without rewriting the AppHost.
 //
 // SonarQube reaches its Postgres via the DCP-managed container network using the
 // resource name as the hostname; inside that network, Postgres listens on its
@@ -106,10 +114,12 @@ var sonarPgPwd = builder.AddParameter("sonar-pg-password", "sonar", secret: true
 var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgPwd)
     .WithImage("postgres", "17-alpine")
     .WithDataVolume("dialysis-sonarqube-pg-data")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithExplicitStart();
+    .WithLifetime(ContainerLifetime.Persistent);
 
-builder.AddContainer("sonarqube", "sonarqube", "lts-community")
+// Pinned to 2025.1 community per the user's referenced release notes; bumping the
+// digest is a deliberate operator action since SonarQube reindexes on major
+// upgrades and we don't want a transparent latest-tag pull to surprise devs.
+var sonarqube = builder.AddContainer("sonarqube", "sonarqube", "2025.1-community")
     .WithEnvironment("SONAR_JDBC_URL", "jdbc:postgresql://postgres-sonarqube:5432/postgres")
     .WithEnvironment("SONAR_JDBC_USERNAME", "postgres")
     .WithEnvironment("SONAR_JDBC_PASSWORD", sonarPgPwd)
@@ -125,8 +135,32 @@ builder.AddContainer("sonarqube", "sonarqube", "lts-community")
     // analysis is accepted, so a port-probe isn't enough.
     .WithHttpHealthCheck("/api/system/status", statusCode: 200, endpointName: "http")
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithExplicitStart()
     .WaitFor(sonarPgServer);
+
+// One-shot bootstrap container: waits for SonarQube health, creates the "dialysis"
+// project (idempotent), generates an analysis token, and writes both to a named
+// volume so `tools/sonarqube/scan.sh` can read them without prompting. Uses the
+// SonarQube REST API with admin/admin (the fresh-install default) — first run
+// changes the password to a known dev value so the bootstrap stays idempotent.
+//
+// Code Quality / MQR mode: SonarQube 2025.1 defaults new projects to
+// Multi-Quality Rule (MQR) mode, which is what the user asked for as "code
+// quality mode on". No explicit toggle needed; the bootstrap script just creates
+// the project and the default profile applies.
+builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
+    .WithBindMount("../../../tools/sonarqube/bootstrap.sh", "/bootstrap.sh", isReadOnly: true)
+    .WithVolume("dialysis-sonarqube-bootstrap", "/state")
+    .WithEnvironment("SONAR_URL", "http://sonarqube:9000")
+    .WithEnvironment("SONAR_ADMIN_USER", "admin")
+    // Dev-only credential; rotated by the bootstrap script on first run, then
+    // re-used across launches. Real deployments must NOT reuse this.
+    .WithEnvironment("SONAR_ADMIN_PASSWORD", "admin")
+    .WithEnvironment("SONAR_PROJECT_KEY", "dialysis")
+    .WithEnvironment("SONAR_PROJECT_NAME", "Dialysis Modular Monolith")
+    .WithEntrypoint("/bin/sh")
+    .WithArgs("/bootstrap.sh")
+    .WithLifetime(ContainerLifetime.Session)
+    .WaitFor(sonarqube);
 
 // --- Module hosts ----------------------------------------------------------
 //
