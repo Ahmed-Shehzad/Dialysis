@@ -159,6 +159,9 @@
     <Project Path="src/backend/HIE/Dialysis.HIE.Xds/Dialysis.HIE.Xds.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Tests/Dialysis.HIE.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/SmartConnect/AvScanning/">
+    <Project Path="src/backend/SmartConnect/AvScanning/Dialysis.SmartConnect.AvScanning.ClamAv/Dialysis.SmartConnect.AvScanning.ClamAv.csproj" />
+  </Folder>
   <Folder Name="/src/backend/SmartConnect/Adapters/">
     <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Common/Dialysis.SmartConnect.Adapters.Common.csproj" />
     <Project Path="src/backend/SmartConnect/Adapters/Dialysis.SmartConnect.Adapters.Epic/Dialysis.SmartConnect.Adapters.Epic.csproj" />
