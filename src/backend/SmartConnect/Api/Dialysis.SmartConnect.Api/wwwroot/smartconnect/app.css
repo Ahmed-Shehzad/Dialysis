@@ -145,4 +145,90 @@ main pre.code-block {
   font-size: 0.82rem;
   white-space: pre;
 }
+.attachment-preview {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px dashed #bbb;
+  border-radius: 4px;
+  background: #fafbfc;
+}
+.attachment-preview h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+.viewer {
+  font-size: 0.8rem;
+  background: #f6f8fa;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 0.5rem 0.7rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.viewer-image {
+  max-width: 100%;
+  max-height: 480px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: white;
+  display: block;
+}
+.viewer-hl7v2 {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.viewer-hl7v2-segment {
+  margin-bottom: 0.3rem;
+}
+.viewer-hl7v2-segment summary {
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.4rem;
+  background: #eef;
+  border-radius: 3px;
+}
+.viewer-fallback {
+  font-size: 0.9rem;
+  color: #555;
+}
+.viewer-dicom {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.viewer-dicom-tags {
+  font-size: 0.82rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+.viewer-dicom-tags th,
+.viewer-dicom-tags td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+.viewer-dicom-tags th {
+  background: #f0f0f3;
+  font-weight: 600;
+}
+.viewer-dicom-tags code {
+  font-size: 0.78rem;
+  color: #555;
+}
+.viewer-dicom-image {
+  margin-top: 0.5rem;
+}
+.viewer-dicom-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 480px;
+  margin-top: 0.4rem;
+  background: black;
+  border: 1px solid #444;
+  border-radius: 3px;
+  image-rendering: auto;
+}
 /*# sourceMappingURL=app.css.map */
