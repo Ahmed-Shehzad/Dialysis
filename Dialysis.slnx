@@ -165,6 +165,7 @@
   <Folder Name="/src/backend/SmartConnect/Dicom/">
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Core/Dialysis.SmartConnect.Dicom.Core.csproj" />
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Persistence/Dialysis.SmartConnect.Dicom.Persistence.csproj" />
+    <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Dimse/Dialysis.SmartConnect.Dicom.Dimse.csproj" />
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Web/Dialysis.SmartConnect.Dicom.Web.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Adapters/">
