@@ -50,6 +50,9 @@ orleans.codegen.cs
 ## Claude Code (local agent state)
 .claude/
 
+## SonarQube (local scanner state)
+.sonarqube/
+
 ## Test & coverage
 TestResults/
 [Tt]est[Rr]esult*/
@@ -98,3 +101,6 @@ local.settings.json
 node_modules/
 .cache/
 
+
+# Added by ggshield
+.cache_ggshield
