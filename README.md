@@ -294,7 +294,7 @@ Dialysis/
 │   └── Dialysis.ArchitectureTests/   # NetArchTest gates: module boundaries,
 │                                     # aggregate encapsulation, event versioning
 │
-├── .github/workflows/            # Per-module CI + solution CI + frontend CI + CodeQL
+├── .github/workflows/            # Per-module CI + solution CI + frontend CI
 ├── keycloak/                     # Realm export (dialysis-realm.json)
 └── docs/                         # Source-of-truth PDFs (Tummers RA, etc.)
 ```
@@ -314,7 +314,7 @@ Dialysis/
 | Frontend | React 18 + Vite + TypeScript + TanStack Query; ESLint flat config + Prettier + Husky pre-commit |
 | Testing | xUnit + FluentAssertions + `WebApplicationFactory` + NetArchTest |
 | Architecture invariants | `tests/Dialysis.ArchitectureTests` — module boundaries, aggregate-root encapsulation, integration-event versioning |
-| CI | GitHub Actions — one workflow per module + solution-wide build + frontend + CodeQL multi-language |
+| CI | GitHub Actions — one workflow per module + solution-wide build + frontend. Static analysis runs in SonarQube (Aspire-hosted dev server, see `tools/sonarqube/`) |
 
 ## 2.7 Running locally (developer onboarding)
 
