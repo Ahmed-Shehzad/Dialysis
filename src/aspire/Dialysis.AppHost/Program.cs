@@ -116,10 +116,12 @@ var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgP
     .WithDataVolume("dialysis-sonarqube-pg-data")
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Pinned to 2025.1 community per the user's referenced release notes; bumping the
+// Pinned to the latest 26.x community image. Docker Hub tags follow YY.M.0.BUILD
+// (e.g. 26.5.0.122743-community), not the marketing "2025.x" naming in the doc
+// URLs — the prior `2025.1-community` attempt 404'd at pull time. Bumping the
 // digest is a deliberate operator action since SonarQube reindexes on major
 // upgrades and we don't want a transparent latest-tag pull to surprise devs.
-var sonarqube = builder.AddContainer("sonarqube", "sonarqube", "2025.1-community")
+var sonarqube = builder.AddContainer("sonarqube", "sonarqube", "26.5.0.122743-community")
     .WithEnvironment("SONAR_JDBC_URL", "jdbc:postgresql://postgres-sonarqube:5432/postgres")
     .WithEnvironment("SONAR_JDBC_USERNAME", "postgres")
     .WithEnvironment("SONAR_JDBC_PASSWORD", sonarPgPwd)
