@@ -1,5 +1,6 @@
 using System.Net;
 using System.Runtime.CompilerServices;
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Dialysis.SmartConnect.Attachments;
@@ -137,10 +138,17 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
         var config = new AmazonS3Config
         {
             ForcePathStyle = opts.ForcePathStyle,
+            // AWS SDK v4 defaults to WHEN_SUPPORTED, which adds CRC32 to every PUT.
+            // Older MinIO releases reject these — WHEN_REQUIRED keeps the SDK
+            // compatible with non-AWS S3 implementations.
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+            ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
         };
         if (!string.IsNullOrWhiteSpace(opts.ServiceUrl))
         {
             config.ServiceURL = opts.ServiceUrl;
+            // SigV4 still needs a region for signing even when ServiceURL is a custom endpoint.
+            config.AuthenticationRegion = opts.Region;
         }
         else
         {

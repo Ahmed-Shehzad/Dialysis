@@ -1,4 +1,5 @@
 using System.Text;
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Dialysis.SmartConnect.Persistence.ObjectStorage.S3;
@@ -124,6 +125,9 @@ public sealed class S3AttachmentBlobStoreTests : IAsyncLifetime
         {
             ServiceURL = minio.GetConnectionString(),
             ForcePathStyle = true,
+            AuthenticationRegion = "us-east-1",
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+            ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
         };
         using var client = new AmazonS3Client(minio.GetAccessKey(), minio.GetSecretKey(), config);
         try
