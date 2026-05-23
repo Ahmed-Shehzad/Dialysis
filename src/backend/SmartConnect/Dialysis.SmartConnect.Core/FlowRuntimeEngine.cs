@@ -9,6 +9,7 @@ using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Dialysis.SmartConnect.VariableMaps;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.SmartConnect;
 
@@ -24,7 +25,8 @@ public sealed class FlowRuntimeEngine(
     ChannelScriptExecutor? scriptExecutor = null,
     AttachmentExtractionPipeline? attachmentExtraction = null,
     AttachmentReattachmentService? attachmentReattachment = null,
-    IAlertSink? alertSink = null) : IFlowRuntime
+    IAlertSink? alertSink = null,
+    IServiceScopeFactory? scopeFactory = null) : IFlowRuntime
 {
     /// <summary>
     /// Optional metadata key. Source connectors may set this to a JSON object of typed values that the
@@ -442,10 +444,30 @@ public sealed class FlowRuntimeEngine(
             ErrorDetail = errorDetail,
             OccurredAtUtc = time.GetUtcNow(),
         };
-        // Fire-and-forget: alerts must never block the dispatch path.
+        // Fire-and-forget: alerts must never block the dispatch path. When a scope factory is
+        // available, the background task runs the alert sink in a fresh DI scope so its EF
+        // bookkeeping (alert-event store, rule repository) gets its own DbContext — sharing the
+        // dispatcher's scoped DbContext would race with the in-flight ledger save and surface as
+        // "Collection was modified during enumeration" inside ChangeTracker.DetectChanges.
+        //
+        // Fallback to the captured singleton-style alertSink when no scope factory is wired (legacy
+        // tests that compose the runtime by hand without a DI container). The legacy path remains
+        // safe only when the consumer doesn't share a DbContext between threads.
         _ = Task.Run(async () =>
         {
-            try { await alertSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false); }
+            try
+            {
+                if (scopeFactory is not null)
+                {
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var scopedSink = scope.ServiceProvider.GetService<IAlertSink>() ?? alertSink;
+                    await scopedSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await alertSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
+                }
+            }
             catch { /* swallowed: alert engine logs internally */ }
         }, cancellationToken);
     }
