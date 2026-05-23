@@ -58,4 +58,14 @@ public static class AttachmentBlobStoreServiceCollectionExtensions
         services.TryAddSingleton<IAttachmentBlobScanner, NullAttachmentBlobScanner>();
         return services;
     }
+
+    /// <summary>
+    /// Registers the default <see cref="NullAttachmentDownloadUrlFactory"/>. Per-store packages
+    /// (S3, AzureBlob) call <c>Use…AttachmentDownloadUrls</c> to substitute their signing impl.
+    /// </summary>
+    public static IServiceCollection AddNullAttachmentDownloadUrlFactory(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IAttachmentDownloadUrlFactory, NullAttachmentDownloadUrlFactory>();
+        return services;
+    }
 }

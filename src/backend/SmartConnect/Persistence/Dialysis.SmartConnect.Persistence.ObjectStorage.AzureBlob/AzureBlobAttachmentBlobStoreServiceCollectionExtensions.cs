@@ -29,4 +29,15 @@ public static class AzureBlobAttachmentBlobStoreServiceCollectionExtensions
         services.AddAttachmentOrphanReaper();
         return services;
     }
+
+    /// <summary>
+    /// Registers the Azure Blob SAS URL factory as the active <see cref="IAttachmentDownloadUrlFactory"/>.
+    /// Reuses the same options registered by <see cref="UseAzureBlobAttachmentBlobStore"/>; call after that.
+    /// </summary>
+    public static IServiceCollection UseAzureBlobSasAttachmentDownloadUrls(this IServiceCollection services)
+    {
+        services.RemoveAll<IAttachmentDownloadUrlFactory>();
+        services.AddSingleton<IAttachmentDownloadUrlFactory, AzureBlobSasAttachmentDownloadUrlFactory>();
+        return services;
+    }
 }
