@@ -40,6 +40,7 @@
     <ProjectReference Include="../../AvScanning/Dialysis.SmartConnect.AvScanning.ClamAv/Dialysis.SmartConnect.AvScanning.ClamAv.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable.csproj" />
+    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.Replication/Dialysis.SmartConnect.Persistence.ObjectStorage.Replication.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.S3/Dialysis.SmartConnect.Persistence.ObjectStorage.S3.csproj" />
     <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Epic/Dialysis.SmartConnect.Adapters.Epic.csproj" />
     <ProjectReference Include="../../Adapters/Dialysis.SmartConnect.Adapters.Cerner/Dialysis.SmartConnect.Adapters.Cerner.csproj" />

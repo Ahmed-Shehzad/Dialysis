@@ -196,6 +196,7 @@
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable.csproj" />
+    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.Replication/Dialysis.SmartConnect.Persistence.ObjectStorage.Replication.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.S3/Dialysis.SmartConnect.Persistence.ObjectStorage.S3.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Tests/">
