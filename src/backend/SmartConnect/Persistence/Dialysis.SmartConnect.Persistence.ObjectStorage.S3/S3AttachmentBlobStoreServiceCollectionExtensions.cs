@@ -28,4 +28,15 @@ public static class S3AttachmentBlobStoreServiceCollectionExtensions
         services.AddAttachmentOrphanReaper();
         return services;
     }
+
+    /// <summary>
+    /// Registers the S3 presigned URL factory as the active <see cref="IAttachmentDownloadUrlFactory"/>.
+    /// Reuses the same options registered by <see cref="UseS3AttachmentBlobStore"/>; call after that.
+    /// </summary>
+    public static IServiceCollection UseS3PresignedAttachmentDownloadUrls(this IServiceCollection services)
+    {
+        services.RemoveAll<IAttachmentDownloadUrlFactory>();
+        services.AddSingleton<IAttachmentDownloadUrlFactory, S3PresignedAttachmentDownloadUrlFactory>();
+        return services;
+    }
 }

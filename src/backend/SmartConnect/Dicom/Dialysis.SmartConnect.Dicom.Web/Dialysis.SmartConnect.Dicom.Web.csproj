@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.SmartConnect.Dicom.Web</RootNamespace>
+    <Description>DICOMweb endpoints: STOW-RS upload, WADO-RS retrieve, QIDO-RS query.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.SmartConnect.Dicom.Core/Dialysis.SmartConnect.Dicom.Core.csproj" />
+    <ProjectReference Include="../../Dialysis.SmartConnect.Core.Abstraction/Dialysis.SmartConnect.Core.Abstraction.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="fo-dicom" />
+  </ItemGroup>
+
+</Project>

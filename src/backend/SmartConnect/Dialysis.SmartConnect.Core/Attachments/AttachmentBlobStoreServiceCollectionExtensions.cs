@@ -47,4 +47,25 @@ public static class AttachmentBlobStoreServiceCollectionExtensions
         services.AddHostedService<AttachmentOrphanReaperHostedService>();
         return services;
     }
+
+    /// <summary>
+    /// Registers the default no-op <see cref="IAttachmentBlobScanner"/> (always-clean). Hosts wiring
+    /// a real scanner call <c>UseClamAvAttachmentBlobScanner</c> after this; the AV-adapter package
+    /// removes this registration and substitutes its own.
+    /// </summary>
+    public static IServiceCollection AddNullAttachmentBlobScanner(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IAttachmentBlobScanner, NullAttachmentBlobScanner>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the default <see cref="NullAttachmentDownloadUrlFactory"/>. Per-store packages
+    /// (S3, AzureBlob) call <c>Use…AttachmentDownloadUrls</c> to substitute their signing impl.
+    /// </summary>
+    public static IServiceCollection AddNullAttachmentDownloadUrlFactory(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IAttachmentDownloadUrlFactory, NullAttachmentDownloadUrlFactory>();
+        return services;
+    }
 }

@@ -10,8 +10,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
     <PackageReference Include="Hl7.Fhir.R4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
 </Project>

@@ -27,6 +27,10 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
 
     public DbSet<AlertEventEntity> AlertEvents => Set<AlertEventEntity>();
 
+    public DbSet<CasBlobRefEntity> CasBlobRefs => Set<CasBlobRefEntity>();
+
+    public DbSet<DicomInstanceEntity> DicomInstances => Set<DicomInstanceEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<IntegrationFlowEntity>(b =>
@@ -143,6 +147,33 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.HasIndex(e => e.RuleId);
             b.HasIndex(e => e.FlowId);
             b.HasIndex(e => e.OccurredAtUtc);
+        });
+
+        modelBuilder.Entity<CasBlobRefEntity>(b =>
+        {
+            b.ToTable("CasBlobRefs", "smartconnect");
+            b.HasKey(e => e.Id);
+            // 64 hex chars for SHA-256 — fixed-width keeps the column index dense.
+            b.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();
+            b.HasIndex(e => e.AttachmentId).IsUnique();
+            b.HasIndex(e => e.ContentHash);
+        });
+
+        modelBuilder.Entity<DicomInstanceEntity>(b =>
+        {
+            b.ToTable("DicomInstances", "smartconnect");
+            b.HasKey(e => e.Id);
+            // DICOM UIDs are at most 64 chars per the spec; 128 leaves headroom for vendor quirks.
+            b.Property(e => e.StudyInstanceUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.SeriesInstanceUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.SopInstanceUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.SopClassUid).HasMaxLength(128).IsRequired();
+            b.Property(e => e.PatientId).HasMaxLength(64);
+            b.Property(e => e.PatientName).HasMaxLength(256);
+            b.Property(e => e.Modality).HasMaxLength(16);
+            b.HasIndex(e => e.SopInstanceUid).IsUnique();
+            b.HasIndex(e => e.StudyInstanceUid);
+            b.HasIndex(e => new { e.PatientId, e.ReceivedUtc });
         });
     }
 }
