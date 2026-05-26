@@ -14,17 +14,17 @@ namespace Dialysis.SmartConnect.Tests.Transforms;
 /// </summary>
 public sealed class NcpdpTelecomTransformStageTests
 {
-    private const char FS = NcpdpTelecomMessage.FieldSeparator;
-    private const char SS = NcpdpTelecomMessage.SegmentSeparator;
+    private const char Fs = NcpdpTelecomMessage.FieldSeparator;
+    private const char Ss = NcpdpTelecomMessage.SegmentSeparator;
 
     [Fact]
     public async Task Transform_Projects_Transaction_Header_Fields_Async()
     {
         var payload = BuildPayload(
             // Transaction header: BIN A1=610515, Version A2=D0, Transaction Code A3=B1
-            $"A1610515{FS}A2D0{FS}A3B1{FS}A4PCN001",
+            $"A1610515{Fs}A2D0{Fs}A3B1{Fs}A4PCN001",
             // Patient segment: AM=01, Cardholder ID C2=PT-123
-            $"AM01{FS}C2PT-123");
+            $"AM01{Fs}C2PT-123");
         var stage = new NcpdpTelecomTransformStage();
 
         var transformed = await stage.TransformAsync(BuildMessage(payload), CancellationToken.None);
@@ -43,11 +43,11 @@ public sealed class NcpdpTelecomTransformStageTests
     public async Task Transform_Identifies_Am_Prefixed_Segment_Ids_Async()
     {
         var payload = BuildPayload(
-            $"A1610515{FS}A2D0{FS}A3B1",
+            $"A1610515{Fs}A2D0{Fs}A3B1",
             // AM01 = Patient
-            $"AM01{FS}C2PT-1",
+            $"AM01{Fs}C2PT-1",
             // AM02 = Pharmacy Provider
-            $"AM02{FS}NPI1234567890");
+            $"AM02{Fs}NPI1234567890");
         var stage = new NcpdpTelecomTransformStage();
 
         var transformed = await stage.TransformAsync(BuildMessage(payload), CancellationToken.None);
@@ -78,7 +78,7 @@ public sealed class NcpdpTelecomTransformStageTests
     public async Task Transform_Returns_Null_Transaction_Code_When_Header_Missing_A3_Async()
     {
         // Header without A3 (Transaction Code).
-        var payload = BuildPayload($"A1610515{FS}A2D0", $"AM01{FS}C2PT-1");
+        var payload = BuildPayload($"A1610515{Fs}A2D0", $"AM01{Fs}C2PT-1");
         var stage = new NcpdpTelecomTransformStage();
 
         var transformed = await stage.TransformAsync(BuildMessage(payload), CancellationToken.None);
@@ -99,8 +99,8 @@ public sealed class NcpdpTelecomTransformStageTests
     public void Try_Parse_Surfaces_Transaction_Header_Fields_On_The_Typed_Tree()
     {
         var payload = BuildPayload(
-            $"A1610515{FS}A2D0{FS}A3E1",  // E1 = Eligibility Verification
-            $"AM01{FS}C2PT-789");
+            $"A1610515{Fs}A2D0{Fs}A3E1",  // E1 = Eligibility Verification
+            $"AM01{Fs}C2PT-789");
 
         var parsed = NcpdpTelecomMessage.TryParse(payload);
 
@@ -118,7 +118,7 @@ public sealed class NcpdpTelecomTransformStageTests
     }
 
     private static string BuildPayload(params string[] segments) =>
-        string.Join(SS, segments) + SS;
+        string.Join(Ss, segments) + Ss;
 
     private static IntegrationMessage BuildMessage(string payload) => new()
     {

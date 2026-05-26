@@ -20,8 +20,8 @@ namespace Dialysis.SmartConnect.Tests.Ncpdp;
 /// </summary>
 public sealed class NcpdpToFhirMappingTests
 {
-    private const char FS = NcpdpTelecomMessage.FieldSeparator;
-    private const char SS = NcpdpTelecomMessage.SegmentSeparator;
+    private const char Fs = NcpdpTelecomMessage.FieldSeparator;
+    private const char Ss = NcpdpTelecomMessage.SegmentSeparator;
 
     private static readonly FhirJsonParser _parser = new();
 
@@ -145,11 +145,11 @@ public sealed class NcpdpToFhirMappingTests
     {
         // Header (A1 BIN, A2 Version, A3 Transaction Code) + AM01 patient (C2 cardholder)
         // + AM02 pharmacy provider (B2 NPI) + AM07 claim (D2 Rx ref, D7 NDC, E7 qty, D1 date).
-        var header = $"A1610515{FS}A2D0{FS}A3{transactionCode}";
-        var patient = $"AM01{FS}C2PT-123{FS}C4{19850101}{FS}C51";
-        var provider = $"AM02{FS}B2{1234567890}";
-        var claim = $"AM07{FS}D2RX-001{FS}D712345-6789-01{FS}E730{FS}D120260524";
-        return string.Join(SS, header, patient, provider, claim) + SS;
+        var header = $"A1610515{Fs}A2D0{Fs}A3{transactionCode}";
+        var patient = $"AM01{Fs}C2PT-123{Fs}C4{19850101}{Fs}C51";
+        var provider = $"AM02{Fs}B2{1234567890}";
+        var claim = $"AM07{Fs}D2RX-001{Fs}D712345-6789-01{Fs}E730{Fs}D120260524";
+        return string.Join(Ss, header, patient, provider, claim) + Ss;
     }
 
     private static IntegrationMessage Build_Message(string payload) => new()
