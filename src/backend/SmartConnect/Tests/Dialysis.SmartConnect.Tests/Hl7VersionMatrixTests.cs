@@ -21,6 +21,7 @@ public sealed class Hl7VersionMatrixTests
     [InlineData("2.3.1", "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|MSGID2b|P|2.3.1\rEVN|A01|20260101010101\rPID|1||MRN2b||DOE^J||19800101|M")]
     [InlineData("2.5", "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|MSGID3|P|2.5\rEVN|A01|20260101010101\rPID|1||MRN3||DOE^J||19800101|M")]
     [InlineData("2.5.1", "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|MSGID3b|P|2.5.1\rEVN|A01|20260101010101\rPID|1||MRN3b||DOE^J||19800101|M")]
+    [InlineData("2.6", "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|MSGID3c|P|2.6\rEVN|A01|20260101010101\rPID|1||MRN3c||DOE^J||19800101|M")]
     [InlineData("2.7", "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|MSGID4|P|2.7\rEVN|A01|20260101010101\rPID|1||MRN4||DOE^J||19800101|M")]
     [InlineData("2.8", "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|MSGID5|P|2.8\rEVN|A01|20260101010101\rPID|1||MRN5||DOE^J||19800101|M")]
     public void Parser_Round_Trips_Msh_Version(string version, string payload)
@@ -39,6 +40,7 @@ public sealed class Hl7VersionMatrixTests
     [InlineData("2.3.1", false)]
     [InlineData("2.5", true)]
     [InlineData("2.5.1", true)]
+    [InlineData("2.6", true)]
     [InlineData("2.7", true)]
     [InlineData("2.8", true)]
     public async Task Verify_Hl7_Min_Version_2_5_Accepts_2_5_Plus_And_Rejects_Older_Async(string version, bool shouldPass)

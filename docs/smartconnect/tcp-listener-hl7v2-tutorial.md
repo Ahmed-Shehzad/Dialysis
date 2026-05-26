@@ -38,6 +38,7 @@ Backward-compatibility notes:
 - v2.3.1 introduced extended PV1 fields (visit number, financial class) — older mappers ignore them.
 - v2.4 introduced repeating fields uniformly across segments — `GetValue("PID.3[2].1")` works against all versions.
 - v2.5+ formalises `MSH-9.3` as the message-structure code (`ADT_A01`); older messages omit it and the platform falls back to the trigger code in `MSH-9.2`.
+- v2.6 adds withholding-mode segments and the `ARV` access-restriction segment — unknown segments parse and are addressable by path; typed FHIR mappers ignore them where they don't have a US Core equivalent.
 
 ### Supported HL7 v2.x message types
 
@@ -758,7 +759,7 @@ Open it from **SmartConnect → HL7 Workbench**. Four steps:
 3. **Validate** invokes `POST /admin/workbench/validate-hl7` with the same `requiredSegments` + `minVersion` rules the `verify-hl7` route filter uses. Pass / fail + reason are reported inline.
 4. **Send** invokes `POST /admin/workbench/dispatch` against the channel you pick from the dropdown (only channels with `dataTypes` containing `HL7v2` are listed). The response shows the dispatch outcome, the response payload (for synchronous request-reply routes), and the ledger snapshot for the new message — Received → OutboundSent (or RouteFilterDropped / OutboundFailed if it broke).
 
-**Multi-version support.** The parser is encoding-driven: it reads MSH-2 to derive the field / component / repeat / escape / sub-component separators, then walks the message uniformly. As a result the Workbench (and every other consumer of `Hl7V2Message.Parse`) accepts HL7 v2.1 through v2.8+ without per-version branches. The matrix is locked in by `Hl7VersionMatrixTests` (parsing + MSH.12 round-trip across 2.1 / 2.3 / 2.3.1 / 2.5 / 2.5.1 / 2.7 / 2.8).
+**Multi-version support.** The parser is encoding-driven: it reads MSH-2 to derive the field / component / repeat / escape / sub-component separators, then walks the message uniformly. As a result the Workbench (and every other consumer of `Hl7V2Message.Parse`) accepts HL7 v2.1 through v2.8+ without per-version branches. The matrix is locked in by `Hl7VersionMatrixTests` (parsing + MSH.12 round-trip across 2.1 / 2.3 / 2.3.1 / 2.5 / 2.5.1 / 2.6 / 2.7 / 2.8).
 
 ---
 
