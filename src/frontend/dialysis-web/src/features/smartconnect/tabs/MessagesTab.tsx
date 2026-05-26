@@ -10,6 +10,7 @@ import {
   fetchMessages,
   reprocessMessage,
 } from "../api/messages";
+import { OutboundConcurrencyTimeline } from "../components/OutboundConcurrencyTimeline";
 import {
   type MessageLedgerEntry,
   MessageLedgerStatus,
@@ -61,6 +62,26 @@ const MessageDrawer = ({ entryId, onClose }: { entryId: string; onClose: () => v
     [entry.data?.payloadSnapshot],
   );
   const hasPayload = Boolean(text);
+
+  // Sibling ledger entries for the same inbound message — feeds the concurrency timeline.
+  // Heuristic fetch: pull the recent ledger window for the same flow and filter client-side.
+  // Good enough for the in-drawer Gantt; a dedicated /messages/{messageId}/timeline endpoint
+  // is a clean follow-up if usage proves heavy.
+  const siblings = useQuery({
+    enabled: entry.data !== undefined,
+    queryKey: [
+      "smartconnect",
+      "messages",
+      "siblings",
+      entry.data?.flowId,
+      entry.data?.integrationMessageId,
+    ],
+    queryFn: async () => {
+      if (!entry.data) return [];
+      const res = await fetchMessages({ flowId: entry.data.flowId, take: 200 });
+      return res.items.filter((i) => i.integrationMessageId === entry.data!.integrationMessageId);
+    },
+  });
 
   return (
     <div className="fixed inset-0 z-40 flex" role="dialog" aria-modal="true">
@@ -116,6 +137,12 @@ const MessageDrawer = ({ entryId, onClose }: { entryId: string; onClose: () => v
                 <pre className="max-h-40 overflow-auto rounded-md border border-slate-800 bg-slate-900/40 p-2 text-xs text-rose-200">
                   {entry.data.detail}
                 </pre>
+              </div>
+            )}
+
+            {siblings.data && siblings.data.length > 1 && (
+              <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3">
+                <OutboundConcurrencyTimeline entries={siblings.data} />
               </div>
             )}
 

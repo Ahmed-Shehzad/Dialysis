@@ -99,7 +99,11 @@ When `OutboundRoutesSequential = false` (the default) `FlowRuntimeEngine.Dispatc
 |---|---|---|
 | `ADT^A01` | `Patient` | `AdtA01ToPatientMapper` |
 | `ADT^A01` | `Encounter` | `AdtA01ToEncounterMapper` |
+| `ADT^A04` | `Patient` | `AdtA04ToPatientMapper` |
+| `ADT^A08` | `Patient` | `AdtA08ToPatientMapper` (tagged `patient-update`) |
+| `ADT^A40` | `Patient` | `AdtA40ToPatientMapper` (carries merge link → prior MRN) |
 | `ORU^R01` | `Observation` | `OruR01ToObservationMapper` |
+| `ORU^R30` | `Observation` | `OruR30ToObservationMapper` (tagged `POC`) |
 | `ORU^R40` | `Observation` | `OruR40ToObservationMapper` |
 | `ORM^O01` | `ServiceRequest` | `OrmO01ToServiceRequestMapper` |
 | `SIU^S12` | `Appointment` | `SiuS12ToAppointmentMapper` |
@@ -107,6 +111,28 @@ When `OutboundRoutesSequential = false` (the default) `FlowRuntimeEngine.Dispatc
 | `VXU^V04` | `Immunization` | `VxuV04ToImmunizationMapper` |
 
 Add a mapper by implementing `IFhirV2MessageMapper<TResource>`, registering it in `SmartConnectServiceCollectionExtensions.AddSmartConnectCore`, and wrapping it via `FhirV2MessageMapperWrapper<TResource>` so the pipeline picks it up.
+
+### Inbound source connectors
+
+| Kind | Project | Notes |
+|---|---|---|
+| `mllp` | `Inbound.Mllp` | TCP MLLP listener for HL7 v2 streams. |
+| `http` | `Inbound.AspNetCore` | Always-on through the API host (`POST /smartconnect/v1/flows/{flowId}/messages` + `POST /smartconnect/v1/messages` for router-driven dispatch). |
+| `file-reader` | `Inbound.FileReader` | Polls a local directory; archives / quarantines per `AfterRead`. |
+| `sftp` | `Inbound.Sftp` | Polls a remote SFTP server (password or private-key auth) via SSH.NET. Mirth-style after-read delete/move/leave. Wire with `services.AddSmartConnectSftpInbound()`. |
+| `tcp-listener` | `Inbound.TcpListener` | Raw TCP listener (no MLLP framing). |
+| `database-reader` | `Inbound.DatabaseReader` | Polls a database table; row-to-message mapping per parameter spec. |
+| `transponder` | `Inbound.Transponder` | Consumes the cross-module Transponder bus and dispatches into a SmartConnect flow. |
+
+Multiple instances can be declared per kind via `SmartConnect:SourceConnectors:[]`; `SourceConnectorHostedService` starts them concurrently and isolates failures per instance.
+
+### Named-endpoint abstraction
+
+`OutboundRouteSlot.OutboundParametersJson` accepts either inline JSON (today's behaviour) **or** `{"endpointRef":"name"}`. When the latter is supplied, the engine consults `IEndpointResolver` which looks up the named row in the `smartconnect.Endpoints` table (`EndpointEntity`) and substitutes its stored `ParametersJson`. This lets operators swap a partner URL / lab MLLP host / SFTP credential without editing every flow that targets it. Backwards-compatible: flows that already inline their parameters keep working unchanged.
+
+### Content-based message router
+
+`IMessageRouter` (in `Inbound.Abstractions`) lets source connectors fan one inbound message out to every Started flow whose `InboundSubscriptions` match. Each `InboundSubscriptionSlot` specifies an optional source-kind filter, an optional glob pattern matched against the message type (e.g. `ORU^R*`), and an optional sender id. The HTTP source's new `POST /smartconnect/v1/messages` endpoint dispatches through the router using the `X-SmartConnect-Message-Type` and `X-SmartConnect-Sender-Id` headers as the routing inputs. Other source connectors fall back to their `DefaultFlowId` until they opt in to the router.
 
 ### Living proof
 

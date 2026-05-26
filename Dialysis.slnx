@@ -187,6 +187,7 @@
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.FileReader/Dialysis.SmartConnect.Inbound.FileReader.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Hosting/Dialysis.SmartConnect.Inbound.Hosting.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Mllp/Dialysis.SmartConnect.Inbound.Mllp.csproj" />
+    <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Sftp/Dialysis.SmartConnect.Inbound.Sftp.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.TcpListener/Dialysis.SmartConnect.Inbound.TcpListener.csproj" />
     <Project Path="src/backend/SmartConnect/Inbound/Dialysis.SmartConnect.Inbound.Transponder/Dialysis.SmartConnect.Inbound.Transponder.csproj" />
   </Folder>

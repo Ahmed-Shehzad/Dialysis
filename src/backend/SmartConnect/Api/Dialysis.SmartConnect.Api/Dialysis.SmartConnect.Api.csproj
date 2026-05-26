@@ -14,7 +14,9 @@
     <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/Dialysis.SmartConnect.Inbound.AspNetCore.csproj" />
+    <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.FileReader/Dialysis.SmartConnect.Inbound.FileReader.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Mllp/Dialysis.SmartConnect.Inbound.Mllp.csproj" />
+    <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Sftp/Dialysis.SmartConnect.Inbound.Sftp.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Transponder/Dialysis.SmartConnect.Inbound.Transponder.csproj" />
     <ProjectReference Include="../../Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />

@@ -5,7 +5,9 @@ using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Contracts.Security;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.AspNetCore;
+using Dialysis.SmartConnect.Inbound.FileReader;
 using Dialysis.SmartConnect.Inbound.Mllp;
+using Dialysis.SmartConnect.Inbound.Sftp;
 using Dialysis.SmartConnect.Inbound.Transponder;
 using Dialysis.SmartConnect.Management.AspNetCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
@@ -34,6 +36,8 @@ builder.Services.AddDefaultInboundMessageFactory();
 builder.Services.AddSmartConnectInboundTransport();
 builder.Services.AddSmartConnectInboundHttpOptions();
 builder.Services.AddSmartConnectMllpInbound();
+builder.Services.AddSmartConnectFileReader();
+builder.Services.AddSmartConnectSftpInbound();
 builder.Services.AddSmartConnectTransponderInboundBridgeIfEnabled(builder.Configuration);
 builder.Services.AddHostedService<BuiltInCodeTemplatesSeeder>();
 

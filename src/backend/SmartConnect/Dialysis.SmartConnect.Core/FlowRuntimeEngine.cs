@@ -5,6 +5,7 @@ using System.Text.Json;
 using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.Endpoints;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
@@ -26,7 +27,8 @@ public sealed class FlowRuntimeEngine(
     AttachmentExtractionPipeline? attachmentExtraction = null,
     AttachmentReattachmentService? attachmentReattachment = null,
     IAlertSink? alertSink = null,
-    IServiceScopeFactory? scopeFactory = null) : IFlowRuntime
+    IServiceScopeFactory? scopeFactory = null,
+    IEndpointResolver? endpointResolver = null) : IFlowRuntime
 {
     /// <summary>
     /// Optional metadata key. Source connectors may set this to a JSON object of typed values that the
@@ -361,9 +363,16 @@ public sealed class FlowRuntimeEngine(
         }
 
         var toSend = transformed.Message!;
-        if (!string.IsNullOrWhiteSpace(route.OutboundParametersJson))
+        var resolvedParametersJson = route.OutboundParametersJson;
+        if (endpointResolver is not null && !string.IsNullOrWhiteSpace(resolvedParametersJson))
         {
-            toSend = toSend.WithMetadata("smartconnect.outbound.parameters", route.OutboundParametersJson!);
+            resolvedParametersJson = await endpointResolver
+                .ResolveParametersJsonAsync(resolvedParametersJson, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        if (!string.IsNullOrWhiteSpace(resolvedParametersJson))
+        {
+            toSend = toSend.WithMetadata("smartconnect.outbound.parameters", resolvedParametersJson!);
         }
 
         // Reattach Attachments — inflate ${ATTACH:<id>} tokens back to raw bytes if the route opted in.
