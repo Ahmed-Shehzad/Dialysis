@@ -208,17 +208,18 @@ This section is the contract that holds HIS to the DDD standard from Evans (2003
 
 ## HIPAA compliance scaffolding
 
-HIS is the reference module for [`Dialysis.BuildingBlocks.Hipaa`](../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa). The API host wires three pillars in one call:
+HIS is the reference module for [`Dialysis.BuildingBlocks.Hipaa`](../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa); the same four lines now ship in every module host (EHR, PDMS, SmartConnect, HIE). The API host wires the four pillars in one block:
 
 ```csharp
-builder.Services.AddFhirAudit();                 // IAuditEventEmitter (in-memory or EF-backed)
-builder.Services.AddHipaaCompliance("his");      // encryption + audit pipeline + safeguard registry
-builder.Services.AddHipaaAspNetCoreSafeguards(); // adds the HSTS safeguard check
+builder.Services.AddFhirAudit();                              // IAuditEventEmitter (Scoped)
+builder.Services.AddFhirAuditEntityFrameworkStore<HisDbContext>(); // EF-backed IAuditEventStore
+builder.Services.AddHipaaCompliance("his");                   // encryption + audit pipeline + safeguards
+builder.Services.AddHipaaAspNetCoreSafeguards();              // HSTS safeguard check
 …
-app.MapHipaaSafeguardsEndpoint();                // GET /admin/hipaa/safeguards
+app.MapHipaaSafeguardsEndpoint();                             // GET /admin/hipaa/safeguards
 ```
 
-- **Encryption at rest** — apply `EncryptedStringValueConverter` to any PHI column in `OnModelCreating`; the converter goes through `IPhiProtector` which delegates to ASP.NET Data Protection. With Valkey + `UseDataProtectionKeyRing=true` the key ring is persistent so encrypted columns survive a host restart.
-- **Audit log** — annotate an `IRequest<T>` with `[PhiAccess(PhiAccessAction.Read, "Patient")]` and the Intercessor pipeline emits a FHIR `AuditEvent` on every successful invocation (and a minor-failure variant when the handler throws).
-- **Compliance dashboard** — `GET /admin/hipaa/safeguards` returns the live status of every registered `IHipaaSafeguardCheck`. The operator-shell page at `/admin/hipaa` (Identity module) renders the catalog.
+- **Encryption at rest** — `RaWaitlistEntry.Notes` is the reference PHI column: encrypted via `EncryptedStringValueConverter` in `HisDbContext.OnModelCreating`. The converter goes through `IPhiProtector` which delegates to ASP.NET Data Protection. With Valkey + `UseDataProtectionKeyRing=true` the key ring is persistent so encrypted columns survive a host restart. Apply the converter to other PHI columns by following the same pattern — pick columns that are NOT used in `WHERE`/`OrderBy` (the ciphertext won't match plaintext predicates).
+- **Audit log** — annotate an `IRequest<T>` with `[PhiAccess(PhiAccessAction.Read, "Patient")]` (see `GetPatientPortalSummaryQuery` for the live example) and the Intercessor pipeline emits a FHIR `AuditEvent` on every successful invocation, plus a minor-failure variant when the handler throws. The EF-backed `IAuditEventStore` persists each row into `his.AuditEvents` so the trail survives a host restart.
+- **Compliance dashboard** — `GET /admin/hipaa/safeguards` returns the live status of every registered `IHipaaSafeguardCheck`. The operator-shell page at `/admin/hipaa` (Identity module) is federated: it queries every module host in parallel and shows a per-module status pill plus the drill-down catalog.
 - **Regulatory-change tracker** — `.github/workflows/hipaa-regulatory-feed.yml` runs `tools/hipaa/check_ocr_feed.py` daily; drift opens an issue tagged `hipaa-regulatory-change`. Refresh the snapshot via `python3 tools/hipaa/check_ocr_feed.py --refresh` after acknowledging.

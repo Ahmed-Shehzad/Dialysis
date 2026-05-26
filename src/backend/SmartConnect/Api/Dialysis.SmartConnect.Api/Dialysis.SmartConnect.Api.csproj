@@ -20,6 +20,9 @@
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Transponder/Dialysis.SmartConnect.Inbound.Transponder.csproj" />
     <ProjectReference Include="../../Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa/Dialysis.BuildingBlocks.Hipaa.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.AspNetCore/Dialysis.BuildingBlocks.Hipaa.AspNetCore.csproj" />
     <ProjectReference Include="../../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
   </ItemGroup>

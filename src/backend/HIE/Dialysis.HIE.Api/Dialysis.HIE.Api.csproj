@@ -27,6 +27,9 @@
     <ProjectReference Include="../Dialysis.HIE.Consent/Dialysis.HIE.Consent.csproj" />
     <ProjectReference Include="../Dialysis.HIE.OpenEhr/Dialysis.HIE.OpenEhr.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa/Dialysis.BuildingBlocks.Hipaa.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.AspNetCore/Dialysis.BuildingBlocks.Hipaa.AspNetCore.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
   </ItemGroup>

@@ -45,9 +45,10 @@ public sealed class PhiEncryptionEnabledSafeguardCheck(IServiceProvider services
 
 /// <summary>
 /// §164.312(b) — verifies <see cref="IAuditEventEmitter"/> is wired. Without it the audit pipeline
-/// behaviour falls through to a no-op and PHI accesses leave no trail.
+/// behaviour falls through to a no-op and PHI accesses leave no trail. Opens a fresh scope so
+/// resolving the (Scoped) emitter from the root provider doesn't trip ValidateScopes.
 /// </summary>
-public sealed class AuditEmitterConfiguredSafeguardCheck(IServiceProvider services) : IHipaaSafeguardCheck
+public sealed class AuditEmitterConfiguredSafeguardCheck(IServiceScopeFactory scopeFactory) : IHipaaSafeguardCheck
 {
     public string Id => "audit-log-emitter";
     public string Name => "Audit emitter accepts FHIR AuditEvent resources";
@@ -56,7 +57,8 @@ public sealed class AuditEmitterConfiguredSafeguardCheck(IServiceProvider servic
 
     public HipaaSafeguardReport Evaluate()
     {
-        var emitter = services.GetService<IAuditEventEmitter>();
+        using var scope = scopeFactory.CreateScope();
+        var emitter = scope.ServiceProvider.GetService<IAuditEventEmitter>();
         return emitter is null
             ? new(HipaaSafeguardStatus.Missing, "No IAuditEventEmitter registered — PHI-access pipeline emits nowhere.")
             : new(HipaaSafeguardStatus.Active, $"Resolved emitter: {emitter.GetType().Name}.");

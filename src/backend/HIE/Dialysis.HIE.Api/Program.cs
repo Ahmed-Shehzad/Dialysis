@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Fhir.Audit;
+using Dialysis.BuildingBlocks.Hipaa;
+using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIE.Composition;
 using Dialysis.HIE.Contracts.Security;
@@ -48,6 +51,11 @@ builder.Services.AddHealthInformationExchange(
             if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
         }));
 
+// HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
+builder.Services.AddFhirAudit();
+builder.Services.AddHipaaCompliance("hie");
+builder.Services.AddHipaaAspNetCoreSafeguards();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -62,6 +70,7 @@ app.MapGet(
                 : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
     .AllowAnonymous();
 app.MapGet("/", () => Results.Ok(new { module = "hie", version = "v1" }));
+app.MapHipaaSafeguardsEndpoint();
 app.MapControllers();
 
 await app.RunAsync().ConfigureAwait(false);

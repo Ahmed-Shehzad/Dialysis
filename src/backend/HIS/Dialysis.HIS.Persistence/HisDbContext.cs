@@ -29,10 +29,14 @@ namespace Dialysis.HIS.Persistence;
 /// </summary>
 public sealed class HisDbContext(
     DbContextOptions<HisDbContext> options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions)
+    IOptions<TransponderPersistenceOptions> persistenceOptions,
+    Dialysis.BuildingBlocks.Hipaa.Encryption.IPhiProtector phiProtector)
     : ModuleDbContextBase(options, persistenceOptions), IUnitOfWork
 {
     private const string RaSchema = "his_ra";
+
+    private readonly Dialysis.BuildingBlocks.Hipaa.Encryption.EncryptedStringValueConverter _phiConverter =
+        new(phiProtector);
 
     protected override string ModuleSchema => "his";
 
@@ -167,7 +171,10 @@ public sealed class HisDbContext(
             e.ToTable("RaWaitlistEntries", RaSchema);
             e.HasKey(x => x.Id);
             e.Property(x => x.ResourceKindCode).HasMaxLength(32).IsRequired();
-            e.Property(x => x.Notes).HasMaxLength(2000).IsRequired();
+            // PHI column — encrypted at rest via IPhiProtector. The column is consumed only in
+            // Select projections (see EfRaCapabilitiesReadStore) so encryption doesn't break any
+            // WHERE/OrderBy clauses. HasMaxLength widens because base64 ciphertext is ~4/3 of plaintext.
+            e.Property(x => x.Notes).HasMaxLength(3000).IsRequired().HasConversion(_phiConverter);
             e.Property(x => x.RequestedNotBeforeUtc).IsRequired();
             e.Property(x => x.EnqueuedAtUtc).IsRequired();
         });

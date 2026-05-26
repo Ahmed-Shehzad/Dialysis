@@ -11,6 +11,7 @@
     <ProjectReference Include="../Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa/Dialysis.BuildingBlocks.Hipaa.csproj" />
   </ItemGroup>
 
   <ItemGroup>
