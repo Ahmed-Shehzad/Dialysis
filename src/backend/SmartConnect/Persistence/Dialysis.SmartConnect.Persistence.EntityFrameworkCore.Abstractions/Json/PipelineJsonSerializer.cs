@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 
-internal static class PipelineJsonSerializer
+public static class PipelineJsonSerializer
 {
     private static readonly JsonSerializerOptions _options = new()
     {

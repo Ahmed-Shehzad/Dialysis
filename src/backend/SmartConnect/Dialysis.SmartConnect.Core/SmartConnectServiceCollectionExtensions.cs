@@ -5,14 +5,20 @@ using Dialysis.SmartConnect.Attachments.Handlers;
 using Dialysis.SmartConnect.Authentication;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.Endpoints;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
+using Dialysis.SmartConnect.Inbound;
+using Dialysis.SmartConnect.Routing;
+using Dialysis.SmartConnect.Fhir;
+using Dialysis.SmartConnect.Fhir.Mappers;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
 using Dialysis.SmartConnect.Ncpdp;
 using Dialysis.SmartConnect.TimeSync;
 using Dialysis.SmartConnect.Transforms;
 using Dialysis.SmartConnect.VariableMaps;
+using Hl7.Fhir.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -62,6 +68,47 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<SmtpOutboundAdapter>();
             services.AddSingleton<TcpOutboundAdapter>();
             services.AddSingleton<ChannelWriterOutboundAdapter>();
+            services.AddSingleton<TransponderBusOutboundAdapter>();
+
+            // Named-endpoint resolver — wired by default. Hosts that register an EF-backed
+            // IEndpointRepository (via persistence composition) get name lookups; others get the
+            // pass-through behaviour automatically because DefaultEndpointResolver returns the
+            // input unchanged when the repository is not present.
+            services.TryAddSingleton<IEndpointResolver, DefaultEndpointResolver>();
+
+            // Content-based message router — source connectors can dispatch through this to fan a
+            // single inbound message out to every Started flow whose InboundSubscriptions match.
+            // Backwards compatible: source connectors that don't call the router are unchanged.
+            services.TryAddSingleton<IMessageRouter, DefaultMessageRouter>();
+
+            // HL7 v2 -> FHIR R4 mappers — auto-discovered by Hl7V2ToFhirPipeline via
+            // IFhirV2MessageMapperWrapper. Each typed IFhirV2MessageMapper<TResource> is wrapped
+            // so the pipeline can hold a heterogeneous collection across resource types.
+            services.AddSingleton<AdtA01ToPatientMapper>();
+            services.AddSingleton<AdtA01ToEncounterMapper>();
+            services.AddSingleton<AdtA04ToPatientMapper>();
+            services.AddSingleton<AdtA08ToPatientMapper>();
+            services.AddSingleton<AdtA40ToPatientMapper>();
+            services.AddSingleton<OruR01ToObservationMapper>();
+            services.AddSingleton<OruR30ToObservationMapper>();
+            services.AddSingleton<OruR40ToObservationMapper>();
+            services.AddSingleton<OrmO01ToServiceRequestMapper>();
+            services.AddSingleton<SiuS12ToAppointmentMapper>();
+            services.AddSingleton<MdmT02ToDocumentReferenceMapper>();
+            services.AddSingleton<VxuV04ToImmunizationMapper>();
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Patient>(sp.GetRequiredService<AdtA01ToPatientMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Encounter>(sp.GetRequiredService<AdtA01ToEncounterMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Patient>(sp.GetRequiredService<AdtA04ToPatientMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Patient>(sp.GetRequiredService<AdtA08ToPatientMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Patient>(sp.GetRequiredService<AdtA40ToPatientMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Observation>(sp.GetRequiredService<OruR01ToObservationMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Observation>(sp.GetRequiredService<OruR30ToObservationMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Observation>(sp.GetRequiredService<OruR40ToObservationMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<ServiceRequest>(sp.GetRequiredService<OrmO01ToServiceRequestMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Appointment>(sp.GetRequiredService<SiuS12ToAppointmentMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<DocumentReference>(sp.GetRequiredService<MdmT02ToDocumentReferenceMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Immunization>(sp.GetRequiredService<VxuV04ToImmunizationMapper>()));
+            services.AddSingleton<Hl7V2ToFhirPipeline>();
             services.TryAddSingleton<IFlowExecutionContextAccessor, FlowExecutionContextAccessor>();
             services.AddSingleton<JavascriptTransformStage>(sp => new JavascriptTransformStage(sp));
             services.AddSingleton<JavascriptRouteFilter>(sp => new JavascriptRouteFilter(sp));
@@ -131,6 +178,7 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterOutboundAdapter(sp.GetRequiredService<TcpOutboundAdapter>());
                 registry.RegisterOutboundAdapter(sp.GetRequiredService<DatabaseOutboundAdapter>());
                 registry.RegisterOutboundAdapter(sp.GetRequiredService<ChannelWriterOutboundAdapter>());
+                registry.RegisterOutboundAdapter(sp.GetRequiredService<TransponderBusOutboundAdapter>());
                 registry.RegisterTransformStage(sp.GetRequiredService<JavascriptTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<ExternalScriptTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<XsltTransformStage>());

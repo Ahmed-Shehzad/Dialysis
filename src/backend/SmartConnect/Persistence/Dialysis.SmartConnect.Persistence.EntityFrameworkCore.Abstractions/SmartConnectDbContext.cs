@@ -31,6 +31,8 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
 
     public DbSet<DicomInstanceEntity> DicomInstances => Set<DicomInstanceEntity>();
 
+    public DbSet<EndpointEntity> Endpoints => Set<EndpointEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<IntegrationFlowEntity>(b =>
@@ -71,6 +73,18 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.HasKey(e => e.Id);
             b.Property(e => e.Name).HasMaxLength(256).IsRequired();
             b.Property(e => e.Description).HasMaxLength(2000);
+        });
+
+        modelBuilder.Entity<EndpointEntity>(b =>
+        {
+            b.ToTable("Endpoints", "smartconnect");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            b.Property(e => e.Kind).HasMaxLength(64).IsRequired();
+            b.Property(e => e.ParametersJson).IsRequired();
+            b.Property(e => e.Description).HasMaxLength(2000);
+            b.HasIndex(e => e.Name).IsUnique();
+            b.HasIndex(e => e.Kind);
         });
 
         modelBuilder.Entity<AuditEventEntity>(b =>

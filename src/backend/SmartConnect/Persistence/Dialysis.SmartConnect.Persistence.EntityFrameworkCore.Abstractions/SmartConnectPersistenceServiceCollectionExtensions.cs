@@ -32,6 +32,7 @@ public static class SmartConnectPersistenceServiceCollectionExtensions
             services.TryAddScoped<IAttachmentStore, EfAttachmentStore>();
             services.TryAddScoped<IAlertRuleRepository, EfAlertRuleRepository>();
             services.TryAddScoped<IAlertEventStore, EfAlertEventStore>();
+            services.TryAddScoped<IEndpointRepository, EfEndpointRepository>();
             return services;
         }
     }

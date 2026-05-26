@@ -40,6 +40,33 @@ public sealed class IntegrationFlowPipelineDefinition
     /// whose stage context matches the template's contexts. See <c>CodeTemplateLinkageService</c>.
     /// </summary>
     public List<Guid> LinkedLibraryIds { get; set; } = [];
+
+    /// <summary>
+    /// Inbound subscriptions for the content-based router. Each slot describes a class of inbound
+    /// messages this flow wants to receive (by source-connector kind and/or message type pattern).
+    /// When a source connector dispatches through <c>IMessageRouter</c>, every Started flow whose
+    /// subscriptions match the candidate message receives a copy of the dispatch.
+    ///
+    /// Empty list ⇒ this flow is only reachable via direct <c>DefaultFlowId</c> binding (legacy
+    /// behaviour preserved).
+    /// </summary>
+    public List<InboundSubscriptionSlot> InboundSubscriptions { get; set; } = [];
+}
+
+/// <summary>
+/// Content-based subscription predicate evaluated by <c>IMessageRouter</c>. Each non-null field is
+/// AND-ed; nulls mean "any". Use <c>*</c> for wildcard in <see cref="MessageTypePattern"/>.
+/// </summary>
+public sealed class InboundSubscriptionSlot
+{
+    /// <summary>Source-connector kind filter (e.g. <c>mllp</c>, <c>http</c>, <c>file-reader</c>, <c>sftp</c>). Null = any.</summary>
+    public string? SourceKind { get; set; }
+
+    /// <summary>Glob-style pattern matched against the message-type metadata (e.g. HL7 trigger <c>ORU^R*</c>). Null = any.</summary>
+    public string? MessageTypePattern { get; set; }
+
+    /// <summary>Optional sender-id exact match (e.g. HL7 MSH-3 sending application). Null = any.</summary>
+    public string? SenderId { get; set; }
 }
 
 public sealed class RouteFilterSlot
