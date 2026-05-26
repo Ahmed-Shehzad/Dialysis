@@ -189,3 +189,63 @@ export const ADAPTER_SCHEMAS: Record<string, AdapterSchema> = {
 };
 
 export const getSchema = (kind: string): AdapterSchema | undefined => ADAPTER_SCHEMAS[kind];
+
+// Route-filter and transform-stage schemas: parallel to ADAPTER_SCHEMAS but for the inbound side.
+// Today only the verify-* plugins publish editable parameters; everything else is parameter-free
+// and renders without a form.
+export const ROUTE_FILTER_SCHEMAS: Record<string, AdapterSchema> = {
+  "verify-hl7": {
+    kind: "verify-hl7",
+    description:
+      "Drop messages that don't parse as HL7 v2, that miss any of the required segments, or that are below the minimum version. Pair with verify-hl7-strict when the channel should fail loudly instead of silently dropping.",
+    fields: [
+      {
+        key: "requiredSegments",
+        label: "Required segments (JSON array)",
+        type: "json",
+        placeholder: '["MSH","PID","PV1"]',
+        hint: "Drop any HL7 v2 message that lacks one of these segments. Empty array = no segment check.",
+      },
+      {
+        key: "minVersion",
+        label: "Minimum HL7 version",
+        type: "string",
+        placeholder: "2.5",
+        hint: "Compared component-wise against MSH.12. Leave blank to allow any version.",
+      },
+    ],
+  },
+  "verify-fhir": {
+    kind: "verify-fhir",
+    description:
+      "Validate the message as FHIR R4 against the configured profile (US Core by default). Drops on any validation error.",
+    fields: [
+      {
+        key: "profileUri",
+        label: "Profile URI",
+        type: "string",
+        placeholder: "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
+        hint: "Implementation-Guide profile URI. Blank = use the host's default validator profile.",
+      },
+    ],
+  },
+};
+
+export const TRANSFORM_STAGE_SCHEMAS: Record<string, AdapterSchema> = {
+  "verify-hl7-strict": {
+    kind: "verify-hl7-strict",
+    description: "Strict variant of verify-hl7 — throws (fails the route) instead of dropping.",
+    fields: ROUTE_FILTER_SCHEMAS["verify-hl7"]!.fields,
+  },
+  "verify-fhir-strict": {
+    kind: "verify-fhir-strict",
+    description: "Strict variant of verify-fhir — throws (fails the route) on validation errors.",
+    fields: ROUTE_FILTER_SCHEMAS["verify-fhir"]!.fields,
+  },
+};
+
+export const getRouteFilterSchema = (kind: string): AdapterSchema | undefined =>
+  ROUTE_FILTER_SCHEMAS[kind];
+
+export const getTransformStageSchema = (kind: string): AdapterSchema | undefined =>
+  TRANSFORM_STAGE_SCHEMAS[kind];

@@ -36,6 +36,9 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
                 TagsJson = flow.Tags.Count > 0 ? JsonSerializer.Serialize(flow.Tags) : null,
                 GroupId = flow.GroupId,
                 Description = flow.Description,
+                DataTypesJson = flow.DataTypes.Count > 0 ? JsonSerializer.Serialize(flow.DataTypes) : null,
+                DependenciesJson = flow.Dependencies.Count > 0 ? JsonSerializer.Serialize(flow.Dependencies) : null,
+                AttachmentsJson = flow.Attachments.Count > 0 ? JsonSerializer.Serialize(flow.Attachments) : null,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -55,6 +58,9 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
         row.TagsJson = flow.Tags.Count > 0 ? JsonSerializer.Serialize(flow.Tags) : null;
         row.GroupId = flow.GroupId;
         row.Description = flow.Description;
+        row.DataTypesJson = flow.DataTypes.Count > 0 ? JsonSerializer.Serialize(flow.DataTypes) : null;
+        row.DependenciesJson = flow.Dependencies.Count > 0 ? JsonSerializer.Serialize(flow.Dependencies) : null;
+        row.AttachmentsJson = flow.Attachments.Count > 0 ? JsonSerializer.Serialize(flow.Attachments) : null;
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
@@ -96,6 +102,15 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
         var tags = string.IsNullOrWhiteSpace(row.TagsJson)
             ? []
             : JsonSerializer.Deserialize<List<string>>(row.TagsJson) ?? [];
+        var dataTypes = string.IsNullOrWhiteSpace(row.DataTypesJson)
+            ? []
+            : JsonSerializer.Deserialize<List<string>>(row.DataTypesJson) ?? [];
+        var dependencies = string.IsNullOrWhiteSpace(row.DependenciesJson)
+            ? []
+            : JsonSerializer.Deserialize<List<Guid>>(row.DependenciesJson) ?? [];
+        var attachments = string.IsNullOrWhiteSpace(row.AttachmentsJson)
+            ? []
+            : JsonSerializer.Deserialize<List<ChannelAttachmentReference>>(row.AttachmentsJson) ?? [];
         return new IntegrationFlow
         {
             Id = row.Id,
@@ -105,6 +120,9 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
             Tags = tags,
             GroupId = row.GroupId,
             Description = row.Description,
+            DataTypes = dataTypes,
+            Dependencies = dependencies,
+            Attachments = attachments,
         };
     }
 }

@@ -63,6 +63,7 @@ app.UseModuleHost();
 app.MapGet("/", () => Results.Redirect("/smartconnect/index.html", permanent: false));
 app.MapSmartConnectInboundRoutes();
 app.MapSmartConnectManagementRoutes();
+app.MapSmartConnectWorkbenchRoutes();
 app.MapHipaaSafeguardsEndpoint();
 app.MapSmartConnectGroupRoutes();
 app.MapSmartConnectLedgerRoutes();

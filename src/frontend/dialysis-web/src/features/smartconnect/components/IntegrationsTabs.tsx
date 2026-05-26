@@ -7,10 +7,18 @@ export type IntegrationsTabKey =
   | "code-templates"
   | "alerts"
   | "events"
-  | "retention";
+  | "retention"
+  | "dependency-graph"
+  | "hl7-workbench";
 
 const TAB_DEFS: Array<{ key: IntegrationsTabKey; label: string; hint: string }> = [
   { key: "flows", label: "Flows", hint: "Channels, lifecycle, statistics" },
+  { key: "dependency-graph", label: "Dependencies", hint: "Channel start-order graph" },
+  {
+    key: "hl7-workbench",
+    label: "HL7 Workbench",
+    hint: "Parse / validate / dispatch your own HL7",
+  },
   { key: "messages", label: "Messages", hint: "Message ledger with drill-down" },
   { key: "config-map", label: "Config Map", hint: "Global / per-flow variables" },
   { key: "code-templates", label: "Code Templates", hint: "Shared script libraries" },

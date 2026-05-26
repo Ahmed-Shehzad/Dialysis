@@ -6,7 +6,9 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql</RootNamespace>
     <AssemblyName>Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql</AssemblyName>
-    <Description>PostgreSQL plugin for SmartConnect EF Core.</Description>
+    <Description>EF Core Npgsql provider + migrations for SmartConnect persistence — the recommended production database backend. Activate with services.AddSmartConnectPersistenceForPostgresql(...).</Description>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

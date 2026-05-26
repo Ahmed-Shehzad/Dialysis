@@ -11,11 +11,17 @@ import { CodeTemplatesTab } from "@/features/smartconnect/tabs/CodeTemplatesTab"
 import { AlertsTab } from "@/features/smartconnect/tabs/AlertsTab";
 import { AuditEventsTab } from "@/features/smartconnect/tabs/AuditEventsTab";
 import { RetentionTab } from "@/features/smartconnect/tabs/RetentionTab";
+import { DependencyGraphTab } from "@/features/smartconnect/tabs/DependencyGraphTab";
+import { Hl7WorkbenchTab } from "@/features/smartconnect/tabs/Hl7WorkbenchTab";
 
 const renderTab = (key: IntegrationsTabKey) => {
   switch (key) {
     case "flows":
       return <FlowsTab />;
+    case "dependency-graph":
+      return <DependencyGraphTab />;
+    case "hl7-workbench":
+      return <Hl7WorkbenchTab />;
     case "messages":
       return <MessagesTab />;
     case "config-map":

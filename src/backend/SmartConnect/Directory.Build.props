@@ -1,0 +1,57 @@
+<Project>
+
+  <!--
+    MSBuild only auto-imports the *nearest* Directory.Build.props. Explicitly chain up to the
+    repository-root file so warnings-as-errors, central package management, and doc-comment
+    generation stay in force for SmartConnect projects.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!--
+    SmartConnect-tree defaults. Inherits and merges with the repository-root Directory.Build.props
+    (warnings-as-errors, central package management, doc-comment generation).
+
+    Packaging metadata is set here once so a single <Version> bump cascades to every NuGet-shippable
+    SmartConnect project. Individual csproj files opt into packing with:
+
+        <PropertyGroup>
+          <IsPackable>true</IsPackable>
+          <Description>...one-line description...</Description>
+        </PropertyGroup>
+
+    Hosts / executables (Api, Tests, internal infrastructure projects) leave IsPackable at its
+    inherited `false` default and the pack metadata stays dormant for them.
+  -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+
+    <Version>1.0.0</Version>
+    <Authors>Dialysis Platform Team</Authors>
+    <Company>Dialysis Platform</Company>
+    <Copyright>Copyright (c) Dialysis Platform Team</Copyright>
+    <PackageTags>smartconnect;hl7;fhir;mllp;integration;healthcare;dialysis</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Ahmed-Shehzad/Dialysis</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Ahmed-Shehzad/Dialysis</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <!--
+    Pack the shared README.md into every NuGet-shippable project automatically. Per-package README
+    overrides live next to the csproj as README.md; if absent, the SmartConnect-tree README.md is
+    picked up via the fallback below.
+  -->
+  <ItemGroup Condition="'$(IsPackable)' == 'true' and Exists('README.md')">
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(IsPackable)' == 'true' and !Exists('README.md') and Exists('$(MSBuildThisFileDirectory)README.md')">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

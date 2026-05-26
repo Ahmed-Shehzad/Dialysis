@@ -43,6 +43,11 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             b.Property(e => e.PipelineJson).IsRequired();
             b.Property(e => e.TagsJson).HasMaxLength(2000);
             b.Property(e => e.Description).HasMaxLength(2000);
+            b.Property(e => e.DataTypesJson).HasMaxLength(1000);
+            b.Property(e => e.DependenciesJson).HasMaxLength(8000);
+            // Channel-level attachments are capped at ~1.5 MiB total via PipelineValidation; the
+            // column accommodates several 1 MiB references plus base64 overhead.
+            b.Property(e => e.AttachmentsJson);
             b.HasIndex(e => e.GroupId);
         });
 

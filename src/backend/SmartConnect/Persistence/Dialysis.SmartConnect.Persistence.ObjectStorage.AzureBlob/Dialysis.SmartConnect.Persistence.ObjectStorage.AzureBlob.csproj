@@ -5,7 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob</RootNamespace>
-    <Description>Azure Blob Storage (and Azurite-compatible) attachment blob store for SmartConnect.</Description>
+    <Description>Azure Blob Storage attachment backend for SmartConnect (Azurite-compatible for tests). Activate with services.AddSmartConnectAzureBlobAttachmentStore(...).</Description>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
