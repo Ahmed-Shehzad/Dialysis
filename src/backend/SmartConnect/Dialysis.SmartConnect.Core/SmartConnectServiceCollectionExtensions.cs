@@ -96,6 +96,7 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<SiuS12ToAppointmentMapper>();
             services.AddSingleton<MdmT02ToDocumentReferenceMapper>();
             services.AddSingleton<VxuV04ToImmunizationMapper>();
+            services.AddSingleton<DftP03ToChargeItemMapper>();
             services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Patient>(sp.GetRequiredService<AdtA01ToPatientMapper>()));
             services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Encounter>(sp.GetRequiredService<AdtA01ToEncounterMapper>()));
             services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Patient>(sp.GetRequiredService<AdtA04ToPatientMapper>()));
@@ -108,7 +109,9 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Appointment>(sp.GetRequiredService<SiuS12ToAppointmentMapper>()));
             services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<DocumentReference>(sp.GetRequiredService<MdmT02ToDocumentReferenceMapper>()));
             services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<Immunization>(sp.GetRequiredService<VxuV04ToImmunizationMapper>()));
+            services.AddSingleton<IFhirV2MessageMapperWrapper>(sp => new FhirV2MessageMapperWrapper<ChargeItem>(sp.GetRequiredService<DftP03ToChargeItemMapper>()));
             services.AddSingleton<Hl7V2ToFhirPipeline>();
+            services.AddSingleton<Hl7V2ToFhirTransformStage>();
             services.TryAddSingleton<IFlowExecutionContextAccessor, FlowExecutionContextAccessor>();
             services.AddSingleton<JavascriptTransformStage>(sp => new JavascriptTransformStage(sp));
             services.AddSingleton<JavascriptRouteFilter>(sp => new JavascriptRouteFilter(sp));
@@ -188,6 +191,7 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterTransformStage(sp.GetRequiredService<DelimitedTextTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<NcpdpTelecomTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<NcpdpToFhirTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<Hl7V2ToFhirTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());

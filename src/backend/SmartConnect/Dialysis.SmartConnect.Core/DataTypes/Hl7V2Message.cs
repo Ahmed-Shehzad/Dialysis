@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Dialysis.SmartConnect.DataTypes;
@@ -142,6 +143,68 @@ public sealed partial class Hl7V2Message : ParsedMessage
         }
 
         return val;
+    }
+
+    /// <summary>
+    /// Number of repeats for the field addressed by <paramref name="path"/>. Returns 0 when the
+    /// segment or field is missing. Accepts the full path syntax — only the segment + field portion
+    /// is consulted; any repeat / component / subcomponent qualifiers are ignored.
+    /// </summary>
+    /// <example>
+    /// <code>msg.GetRepeatCount("PID.3")  // → 2 if PID-3 carries MRN~SSN</code>
+    /// </example>
+    public int GetRepeatCount(string path)
+    {
+        if (!TryParsePath(path, out var segName, out var fieldIndex, out _, out _, out _))
+        {
+            return 0;
+        }
+
+        var seg = _segments.FirstOrDefault(s =>
+            string.Equals(s.Name, segName, StringComparison.OrdinalIgnoreCase));
+        if (seg is null)
+        {
+            return 0;
+        }
+
+        var adjustedFieldIndex = seg.Name == "MSH" ? fieldIndex - 2 : fieldIndex - 1;
+        if (adjustedFieldIndex < 0 || adjustedFieldIndex >= seg.Fields.Count)
+        {
+            return 0;
+        }
+
+        return seg.Fields[adjustedFieldIndex].Length;
+    }
+
+    /// <summary>
+    /// Structured JSON snapshot of the message. Top-level keys are segment codes; each value is an
+    /// array (one entry per occurrence of that segment — preserving repeating segments like NTE,
+    /// OBX, DG1). Each segment object maps 1-based field index → array of repeats × array of
+    /// components. Useful for downstream consumers that want structured access without taking a
+    /// dependency on the C# parser.
+    /// </summary>
+    public string ToJson()
+    {
+        var root = new Dictionary<string, List<object>>(StringComparer.Ordinal);
+        foreach (var seg in _segments)
+        {
+            if (!root.TryGetValue(seg.Name, out var bucket))
+            {
+                bucket = new List<object>();
+                root[seg.Name] = bucket;
+            }
+
+            var fieldsBag = new Dictionary<string, object>(StringComparer.Ordinal);
+            for (var f = 0; f < seg.Fields.Count; f++)
+            {
+                // Restore 1-based path indices: MSH fields start at index 3 (1=field-sep, 2=encoding-chars).
+                var indexLabel = (seg.Name == "MSH" ? f + 2 : f + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                fieldsBag[indexLabel] = seg.Fields[f];
+            }
+            bucket.Add(fieldsBag);
+        }
+
+        return JsonSerializer.Serialize(root);
     }
 
     public override ParsedMessage SetValue(string path, string value)

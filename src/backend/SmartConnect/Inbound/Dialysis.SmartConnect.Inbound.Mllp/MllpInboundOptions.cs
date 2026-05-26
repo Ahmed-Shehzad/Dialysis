@@ -17,6 +17,13 @@ public sealed class MllpInboundOptions
     public int MaxMessageBytes { get; set; } = 8 * 1024 * 1024;
 
     /// <summary>
+    /// Maximum number of concurrent sender connections. Additional sockets accepted past the cap
+    /// are closed immediately with a warning so the listener sheds load under burst rather than
+    /// queueing unbounded work. 0 disables enforcement.
+    /// </summary>
+    public int MaxConnections { get; set; } = 100;
+
+    /// <summary>
     /// Slice J3: clock-skew correction policy applied to every framed message. Defaults
     /// to <c>ReportOnly</c> (probe runs, monitor accumulates, MSH-7 left untouched).
     /// Configure <c>SmartConnect:Mllp:ClockSkew</c> to opt into normalisation.

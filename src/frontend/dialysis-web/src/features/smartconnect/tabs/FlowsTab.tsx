@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { NewChannelDialog } from "../components/NewChannelDialog";
 import {
   deleteFlow,
   exportFlow,
@@ -186,6 +187,7 @@ export const FlowsTab = () => {
   const groups = useQuery({ queryKey: ["smartconnect", "groups"], queryFn: fetchGroups });
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [stateFilter, setStateFilter] = useState<string>("");
+  const [newChannelOpen, setNewChannelOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let items = flows.data ?? [];
@@ -231,8 +233,17 @@ export const FlowsTab = () => {
             <option value={String(FlowRuntimeState.Stopped)}>Stopped</option>
           </select>
           <ImportFlowButton />
+          <button
+            type="button"
+            onClick={() => setNewChannelOpen(true)}
+            className="rounded-md bg-clinic-600 px-3 py-1 text-xs font-medium text-white hover:bg-clinic-700"
+          >
+            + New channel
+          </button>
         </div>
       </div>
+
+      {newChannelOpen && <NewChannelDialog onClose={() => setNewChannelOpen(false)} />}
 
       {flows.isLoading && <div className="text-xs text-slate-400">Loading flows…</div>}
       {flows.error && <div className="text-xs text-rose-300">SmartConnect unavailable.</div>}
