@@ -22,6 +22,12 @@ public static class HipaaServiceCollectionExtensions
     {
         public IServiceCollection AddHipaaPhiEncryption()
         {
+            // Self-sufficient registration: if the host already wired DataProtection (e.g. via
+            // Valkey's PersistKeysToStackExchangeRedis), AddDataProtection is idempotent and the
+            // earlier persistent key-ring registration wins. If nothing wired it, we fall back
+            // to the ephemeral key ring so DI validation succeeds — the
+            // <c>data-protection-key-ring</c> safeguard flags this as Degraded for the operator.
+            services.AddDataProtection();
             services.TryAddSingleton<IPhiProtector, DataProtectionPhiProtector>();
             return services;
         }
