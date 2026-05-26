@@ -40,8 +40,9 @@ public sealed class MllpMaxConnectionsTests
         var cts = new CancellationTokenSource();
         var listenerTask = hosted.StartAsync(cts.Token);
         await listenerTask;
-        // Give the accept loop time to bind.
-        await Task.Delay(150);
+        // Generous bind wait — CI runners under contention occasionally need >300 ms before the
+        // listener's accept loop is fully ready. Local takes ~50 ms; we err on the side of stable CI.
+        await Task.Delay(500);
 
         try
         {
@@ -49,10 +50,10 @@ public sealed class MllpMaxConnectionsTests
             using var second = await Open_Client_Async(port);
             using var third = await Open_Client_Async(port);
 
-            // Two connections fit; the third should be closed by the listener almost
-            // immediately. Sense it via a zero-byte read after a brief delay.
-            await Task.Delay(200);
-            var thirdClosed = await Is_Remote_Closed_Async(third);
+            // Poll the third connection until it is closed (it will be — the listener rejects
+            // immediately on accept past the cap) rather than relying on a single fixed delay.
+            // Generous timeout so we don't flake on a busy runner.
+            var thirdClosed = await Wait_Until_Closed_Async(third, TimeSpan.FromSeconds(3));
             var firstClosed = await Is_Remote_Closed_Async(first);
             var secondClosed = await Is_Remote_Closed_Async(second);
 
@@ -81,6 +82,20 @@ public sealed class MllpMaxConnectionsTests
         var client = new TcpClient();
         await client.ConnectAsync(IPAddress.Loopback, port);
         return client;
+    }
+
+    private static async Task<bool> Wait_Until_Closed_Async(TcpClient client, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await Is_Remote_Closed_Async(client))
+            {
+                return true;
+            }
+            await Task.Delay(50);
+        }
+        return false;
     }
 
     private static async Task<bool> Is_Remote_Closed_Async(TcpClient client)
