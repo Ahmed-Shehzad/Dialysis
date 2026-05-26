@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdapterParametersForm } from "./AdapterParametersForm";
-import { createFlow } from "../api/flows";
+import { createFlow, fetchFlows } from "../api/flows";
 import { CHANNEL_TEMPLATES, type ChannelTemplateId, findTemplate } from "../api/channelTemplates";
 import {
+  CHANNEL_DATA_TYPES,
+  type ChannelAttachmentReference,
+  type ChannelDataType,
   FlowRuntimeState,
   type FlowRuntimeStateValue,
   type IntegrationFlow,
@@ -14,6 +17,15 @@ import { humanizeError } from "@/lib/api/humanizeError";
 
 type Props = {
   onClose: () => void;
+};
+
+const MAX_ATTACHMENT_BYTES = 1 * 1024 * 1024;
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+  return btoa(binary);
 };
 
 // Adapter kinds registered in MutableFlowPluginRegistry. Keeping the list inline avoids a separate
@@ -48,6 +60,28 @@ export const NewChannelDialog = ({ onClose }: Props) => {
   const [pipeline, setPipeline] = useState<IntegrationFlowPipelineDefinition>(() =>
     findTemplate("hl7-mllp").build(),
   );
+  // HL7-MLLP / HL7-File templates seed dataTypes=["HL7v2"]; Custom starts empty.
+  const [dataTypes, setDataTypes] = useState<ChannelDataType[]>(["HL7v2"]);
+  const [tagsRaw, setTagsRaw] = useState("");
+  const [dependencies, setDependencies] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<ChannelAttachmentReference[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
+  // Lookup for the dependency picker. We display "name (state)" per option so the operator can
+  // see at a glance whether starting will succeed.
+  const flows = useQuery({
+    queryKey: ["smartconnect", "flows"],
+    queryFn: fetchFlows,
+  });
+
+  const tags = useMemo(
+    () =>
+      tagsRaw
+        .split(/[,\s]+/)
+        .map((t) => t.trim())
+        .filter(Boolean),
+    [tagsRaw],
+  );
 
   const flowDraft = useMemo<IntegrationFlow>(
     () => ({
@@ -57,11 +91,14 @@ export const NewChannelDialog = ({ onClose }: Props) => {
         ? FlowRuntimeState.Started
         : FlowRuntimeState.Stopped) as FlowRuntimeStateValue,
       pipeline,
-      tags: [],
+      tags,
       groupId: null,
       description: description.trim() || null,
+      dataTypes,
+      dependencies,
+      attachments,
     }),
-    [name, description, startNow, pipeline],
+    [name, description, startNow, pipeline, tags, dataTypes, dependencies, attachments],
   );
 
   const create = useMutation({
@@ -75,6 +112,12 @@ export const NewChannelDialog = ({ onClose }: Props) => {
   const onTemplateChange = (next: ChannelTemplateId) => {
     setTemplateId(next);
     setPipeline(findTemplate(next).build());
+    // HL7 templates seed dataTypes=["HL7v2"]; Custom clears (operator picks).
+    if (next === "hl7-mllp" || next === "hl7-file") {
+      setDataTypes(["HL7v2"]);
+    } else {
+      setDataTypes([]);
+    }
   };
 
   const onSubmit = () => {
@@ -178,9 +221,167 @@ export const NewChannelDialog = ({ onClose }: Props) => {
             </div>
           </section>
 
+          <section className="space-y-3">
+            <h4 className="text-xs font-semibold uppercase text-slate-400">3 · Metadata</h4>
+
+            <div>
+              <span className="text-xs text-slate-400">Data types</span>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {CHANNEL_DATA_TYPES.map((dt) => {
+                  const selected = dataTypes.includes(dt);
+                  return (
+                    <button
+                      key={dt}
+                      type="button"
+                      onClick={() =>
+                        setDataTypes(
+                          selected ? dataTypes.filter((x) => x !== dt) : [...dataTypes, dt],
+                        )
+                      }
+                      className={`rounded-full border px-2 py-0.5 text-[11px] transition ${
+                        selected
+                          ? "border-clinic-500/60 bg-clinic-900/30 text-clinic-100"
+                          : "border-slate-700 bg-slate-900/30 text-slate-400 hover:border-slate-500"
+                      }`}
+                    >
+                      {dt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <label className="block">
+              <span className="text-xs text-slate-400">Tags (comma or space separated)</span>
+              <input
+                type="text"
+                value={tagsRaw}
+                onChange={(e) => setTagsRaw(e.target.value)}
+                placeholder="hl7 production north-hospital"
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
+              />
+              {tags.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {tags.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded bg-slate-800/70 px-1.5 py-0.5 text-[10px] text-slate-400"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </label>
+
+            <div>
+              <span className="text-xs text-slate-400">
+                Depends on (Start refuses unless every selected dependency is Started)
+              </span>
+              {flows.isLoading && (
+                <div className="mt-1 text-[11px] text-slate-500">Loading flow list…</div>
+              )}
+              {flows.data && flows.data.length === 0 && (
+                <div className="mt-1 text-[11px] text-slate-500">No other flows exist yet.</div>
+              )}
+              {flows.data && flows.data.length > 0 && (
+                <div className="mt-1 max-h-32 overflow-y-auto rounded-md border border-slate-800 bg-slate-900/40 p-1">
+                  {flows.data.map((f) => {
+                    const selected = dependencies.includes(f.id);
+                    return (
+                      <label
+                        key={f.id}
+                        className="flex cursor-pointer items-center gap-2 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={(e) =>
+                            setDependencies(
+                              e.target.checked
+                                ? [...dependencies, f.id]
+                                : dependencies.filter((x) => x !== f.id),
+                            )
+                          }
+                        />
+                        <span className="grow">{f.name}</span>
+                        <span className="text-[10px] text-slate-500">
+                          {f.runtimeState === FlowRuntimeState.Started ? "Started" : "Stopped"}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <span className="text-xs text-slate-400">
+                Attachments (reference docs &mdash; sample messages, profiles, vendor docs &mdash; ≤
+                1 MiB each)
+              </span>
+              <input
+                type="file"
+                aria-label="Upload channel attachment"
+                title="Upload channel attachment"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setAttachmentError(null);
+                  if (file.size > MAX_ATTACHMENT_BYTES) {
+                    setAttachmentError(
+                      `'${file.name}' is ${(file.size / 1024).toFixed(0)} KiB — over the 1 MiB cap.`,
+                    );
+                    e.target.value = "";
+                    return;
+                  }
+                  const buf = await file.arrayBuffer();
+                  setAttachments([
+                    ...attachments,
+                    {
+                      name: file.name,
+                      mimeType: file.type || "application/octet-stream",
+                      base64Bytes: arrayBufferToBase64(buf),
+                      description: null,
+                    },
+                  ]);
+                  e.target.value = "";
+                }}
+                className="mt-1 w-full text-xs text-slate-300"
+              />
+              {attachmentError && (
+                <div className="mt-1 text-[11px] text-rose-300">{attachmentError}</div>
+              )}
+              {attachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.map((a, i) => (
+                    <div
+                      key={`${a.name}-${i}`}
+                      className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-900/40 px-2 py-1 text-xs text-slate-200"
+                    >
+                      <div>
+                        <div>{a.name}</div>
+                        <div className="text-[10px] text-slate-500">
+                          {a.mimeType} · {Math.ceil((a.base64Bytes.length * 3) / 4 / 1024)} KiB
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}
+                        className="rounded border border-rose-700 px-1.5 py-0.5 text-[10px] text-rose-300 hover:bg-rose-900/40"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
           <section className="space-y-2">
             <h4 className="text-xs font-semibold uppercase text-slate-400">
-              3 · Outbound routes ({pipeline.outboundRoutes.length})
+              4 · Outbound routes ({pipeline.outboundRoutes.length})
             </h4>
             <label className="flex items-center gap-2 text-xs text-slate-300">
               <input
@@ -243,7 +444,7 @@ export const NewChannelDialog = ({ onClose }: Props) => {
 
           <section className="space-y-2">
             <h4 className="text-xs font-semibold uppercase text-slate-400">
-              4 · Confirm and create
+              5 · Confirm and create
             </h4>
             <label className="flex items-center gap-2 text-xs text-slate-300">
               <input

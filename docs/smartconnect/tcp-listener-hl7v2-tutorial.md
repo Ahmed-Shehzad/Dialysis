@@ -138,7 +138,16 @@ curl -X POST http://localhost:9090/api/smartconnect/smartconnect/v1/admin/flows 
   "name": "HL7 v2.x TCP Listener",
   "runtimeState": 1,
   "description": "Receives HL7 v2 over MLLP and publishes the payload onto the Transponder bus.",
-  "tags": [],
+  "tags": ["hl7", "production", "north-hospital"],
+  "dataTypes": ["HL7v2"],
+  "dependencies": [],
+  "attachments": [
+    {
+      "name": "vendor-spec.pdf",
+      "mimeType": "application/pdf",
+      "base64Bytes": "JVBERi0xLjQ..."
+    }
+  ],
   "pipeline": {
     "routeFilters": [{"kind": "allow-all"}],
     "sourceTransformStages": [],
@@ -146,8 +155,8 @@ curl -X POST http://localhost:9090/api/smartconnect/smartconnect/v1/admin/flows 
     "outboundRoutes": [
       {
         "ordinal": 0,
-        "kind": "transponder-bus",
-        "propertiesJson": "{\"routingHint\":\"ORU^R01\"}"
+        "outboundAdapterKind": "transponder-bus",
+        "outboundParametersJson": "{\"routingHint\":\"ORU^R01\"}"
       }
     ],
     "linkedLibraryIds": []
@@ -155,6 +164,33 @@ curl -X POST http://localhost:9090/api/smartconnect/smartconnect/v1/admin/flows 
 }
 JSON
 ```
+
+### Channel metadata fields (new in 1.0)
+
+The dialog's **Metadata** step (and the API body above) carry four operator-facing fields beyond the core pipeline:
+
+| Field          | Type            | Purpose                                                                                            |
+|----------------|-----------------|----------------------------------------------------------------------------------------------------|
+| `tags`         | `string[]`      | Free-text labels for filtering in the Flows list.                                                  |
+| `dataTypes`    | `string[]`      | Declared accepted formats. One of `HL7v2`, `FHIR`, `NCPDP`, `JSON`, `XML`, `Binary`, `Other`.       |
+| `dependencies` | `Guid[]`        | Other flow ids this channel needs Started before it can Start. Enforced server-side (see Section 16). |
+| `attachments`  | `Attachment[]`  | Inline reference docs (vendor specs, sample IGs). 1 MiB cap inline; bigger files use a `storageRef`. |
+
+**Inline attachments** ride on the flow row as base64 (decoded ≤ 1 MiB). For larger files (vendor PDFs, profile bundles) POST the bytes to `POST /admin/flows/{flowId}/attachments/blob` first, then add the returned ref to the channel:
+
+```json
+"attachments": [
+  {
+    "name": "us-core-bundle.zip",
+    "mimeType": "application/zip",
+    "base64Bytes": "",
+    "description": "US Core 6.1 IG bundle for reference",
+    "storageRef": { "kind": "blob", "id": "0a23...", "sizeBytes": 4521823 }
+  }
+]
+```
+
+The blob lives in the configured attachment backend (file-system content-addressable / Azure Blob / S3) and is served back via `GET /admin/flows/{flowId}/attachments/blob/{blobId}`. The server refuses GETs for blob ids not referenced by the channel — no enumeration.
 
 ---
 
@@ -251,6 +287,75 @@ return makeAck(controlId, code, null);
 ```
 
 See [`docs/smartconnect/response-transforms.md`](response-transforms.md) for the three canonical patterns (raw response, structured ACK, error propagation).
+
+---
+
+## 5a · Verify HL7 / Verify FHIR
+
+Two verification plugin pairs ship alongside the rule-builder filter — pick the one that matches your downstream payload shape. **Filter** variants drop the message (silent); **strict** variants throw (fail-loud, recorded as `OutboundFailed`).
+
+| Plugin                  | Variant     | Behaviour                                                                                                |
+|-------------------------|-------------|----------------------------------------------------------------------------------------------------------|
+| `verify-hl7`            | route filter | Parses with `Hl7V2Message.Parse`. Drops on parse failure / missing required segments / version too low. |
+| `verify-hl7-strict`     | transform   | Same checks, throws on failure.                                                                          |
+| `verify-fhir`           | route filter | Validates as FHIR R4 via `IFhirProfileValidator`. Drops on any validation error.                         |
+| `verify-fhir-strict`    | transform   | Same checks, throws on failure.                                                                          |
+
+### `verify-hl7` parameters
+
+```json
+{
+  "kind": "verify-hl7",
+  "propertiesJson": "{\"requiredSegments\":[\"MSH\",\"PID\",\"PV1\"],\"minVersion\":\"2.5\"}"
+}
+```
+
+Both `requiredSegments` and `minVersion` are optional. Bare `verify-hl7` (no params) drops only on parse failure.
+
+### `verify-fhir` parameters
+
+```json
+{
+  "kind": "verify-fhir",
+  "propertiesJson": "{\"profileUri\":\"http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient\"}"
+}
+```
+
+`profileUri` pins validation to a specific Implementation Guide profile. Blank uses the host's default validator profile (US Core out of the box).
+
+### Worked example — verify HL7 → map to FHIR → verify FHIR
+
+```jsonc
+{
+  "routeFilters": [
+    {
+      "kind": "verify-hl7",
+      "propertiesJson": "{\"requiredSegments\":[\"MSH\",\"PID\",\"OBR\",\"OBX\"],\"minVersion\":\"2.5\"}"
+    }
+  ],
+  "sourceTransformStages": [
+    { "kind": "hl7-to-fhir-pipeline" }
+  ],
+  "outboundRoutesSequential": false,
+  "outboundRoutes": [
+    {
+      "ordinal": 0,
+      "outboundAdapterKind": "transponder-bus",
+      "outboundParametersJson": "{\"routingHint\":\"observation-imported\"}",
+      "transformStages": [
+        {
+          "kind": "verify-fhir-strict",
+          "propertiesJson": "{\"profileUri\":\"http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-lab\"}"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Upstream HL7 v2 messages that aren't well-formed are silently dropped by `verify-hl7`. Anything that survives gets mapped to a FHIR Bundle by `hl7-to-fhir-pipeline`. The strict FHIR check on the outbound side raises `OutboundFailed` if the produced Bundle doesn't validate against US Core Observation Lab — so the operator sees the bad bundle in the ledger instead of it leaking to the partner.
+
+The full pipeline is covered end-to-end by `MllpToFhirEndToEndTests` (in-memory) and `MllpRealSocketEndToEndTests` (real loopback socket).
 
 ---
 
@@ -642,12 +747,29 @@ printf '\x0bMSH|^~\\&|TEST|TEST|TEST|TEST|20260526120000||ADT^A01|TEST-1|P|2.5\r
 
 ---
 
+## 11a · HL7 Workbench (your own message, end-to-end)
+
+The Workbench is a paste-your-own HL7 v2 message tool — no canned samples ship with the product. Use it to walk a real production message through the same pipeline a deployed channel sees: parse → validate → optionally dispatch through a Started channel and watch the ledger trail.
+
+Open it from **SmartConnect → HL7 Workbench**. Four steps:
+
+1. **Paste** the raw message into the textarea. The version is auto-detected from MSH-12 and shown as soon as the first line is recognisable.
+2. **Parse** invokes `POST /admin/workbench/parse-hl7`. The response shows the header (sender / receiver / trigger / control id / version) plus the structured segment tree (`MSH`, `PID`, `OBX`, …).
+3. **Validate** invokes `POST /admin/workbench/validate-hl7` with the same `requiredSegments` + `minVersion` rules the `verify-hl7` route filter uses. Pass / fail + reason are reported inline.
+4. **Send** invokes `POST /admin/workbench/dispatch` against the channel you pick from the dropdown (only channels with `dataTypes` containing `HL7v2` are listed). The response shows the dispatch outcome, the response payload (for synchronous request-reply routes), and the ledger snapshot for the new message — Received → OutboundSent (or RouteFilterDropped / OutboundFailed if it broke).
+
+**Multi-version support.** The parser is encoding-driven: it reads MSH-2 to derive the field / component / repeat / escape / sub-component separators, then walks the message uniformly. As a result the Workbench (and every other consumer of `Hl7V2Message.Parse`) accepts HL7 v2.1 through v2.8+ without per-version branches. The matrix is locked in by `Hl7VersionMatrixTests` (parsing + MSH.12 round-trip across 2.1 / 2.3 / 2.3.1 / 2.5 / 2.5.1 / 2.7 / 2.8).
+
+---
+
 ## 12 · Monitoring and validation
 
 ### Operator shell
 
 - **SmartConnect → Flows**: lifecycle controls (Start / Pause / Stop), per-flow 24h activity counts, the new `+ New channel` dialog.
 - **SmartConnect → Messages**: ledger search by `correlationId`, `flowId`, status, time window. Each row opens a drawer with the raw payload snapshot, detail, and — for an inbound message with multiple outbound rows — an **Outbound Concurrency Timeline** (Gantt-style; proves the `Task.WhenAll` guarantee live).
+- **SmartConnect → Dependencies**: SVG channel-graph laid out column-by-column by dependency depth. Edges point from each channel to the channels it depends on; node outline colour mirrors the runtime state. Useful for spotting unintended cycles before they bite at Start.
+- **SmartConnect → HL7 Workbench**: paste-your-own message walkthrough (see Section 11a).
 - **SmartConnect → Alerts**: rule + event browser for failures.
 - **Admin → HIPAA**: federated safeguard catalog across every module. SmartConnect's row reports encryption, audit-emitter, and key-ring status.
 
@@ -761,7 +883,7 @@ SmartConnect's hosting wires `AddHipaaCompliance("smartconnect")` (see [PR #100]
 - [ ] MLLP port (2575 by default, 6661 if overridden) is open through the firewall.
 - [ ] `SmartConnect:SourceConnectors:[]` declares the right kind / port / `DefaultFlowId`.
 - [ ] Channel exists (verify via `GET /smartconnect/v1/admin/flows`).
-- [ ] Channel state is `Started`.
+- [ ] Channel state is `Started`. If the channel declares `dependencies`, every dep must be Started first — or pass `?force=true` (operator override) or `?cascade=true` (walks the dep graph DFS and Starts each in order; refuses with `409` + the cycle path if it detects a cycle).
 - [ ] At least one outbound route is defined.
 - [ ] ACK generation is wired in a `ResponseTransformStage` (Section 5).
 - [ ] EF audit store is registered (`AddFhirAuditEntityFrameworkStore<SmartConnectDbContext>()`).
@@ -809,6 +931,61 @@ SEGMENT.field[repeat].component.subcomponent
 - For `MSH`, fields are 1-based but `MSH-1` is the field separator and `MSH-2` is the encoding characters — so what looks like the third pipe-delimited field is `MSH.3`, not `MSH.1`.
 - A bare path like `MSH.9` returns the whole composite; `MSH.9.1` drills to the first component.
 - Components missing in the message return empty string from C# / `null` from JS.
+
+### Channel metadata
+
+`IntegrationFlow.DataTypes` is a closed enum validated server-side at create / update time. Case-insensitive match; unknown values return `400` from `PipelineValidation.ValidateChannelMetadataOrThrow`.
+
+| Value     | Use for                                                            |
+|-----------|--------------------------------------------------------------------|
+| `HL7v2`   | HL7 versions 2.1 – 2.8+ (one parser, encoding-driven).             |
+| `FHIR`    | FHIR R4 resources / Bundles.                                       |
+| `NCPDP`   | National Council for Prescription Drug Programs script messages.   |
+| `JSON`    | Generic JSON payloads (operator-defined schemas).                  |
+| `XML`     | Generic XML payloads.                                              |
+| `Binary`  | Opaque bytes — DICOM, PDFs, vendor blobs.                          |
+| `Other`   | Anything else; documentation-only.                                 |
+
+---
+
+## NuGet packages
+
+SmartConnect distributes as eight focused NuGet packages. Reference only the ones your host actually composes — the surface stays small and the dependency cone is explicit.
+
+| Package                                                                  | Activator                                                  | Notes                                                |
+|--------------------------------------------------------------------------|------------------------------------------------------------|------------------------------------------------------|
+| `Dialysis.SmartConnect.Core.Abstraction`                                 | (n/a — pure contracts)                                    | Required transitively.                               |
+| `Dialysis.SmartConnect.Core`                                             | `services.AddSmartConnectCore()`                          | Flow engine + plugins (verify-hl7, verify-fhir, …). |
+| `Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions`     | `services.AddSmartConnectPersistence(...)`                | Provider-neutral EF base.                            |
+| `Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory`         | `services.AddSmartConnectPersistenceInMemory(...)`        | Tests / demos only.                                  |
+| `Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql`       | `services.AddSmartConnectPersistenceForPostgresql(...)`   | Recommended production DB.                           |
+| `Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable`     | `services.AddSmartConnectContentAddressableAttachmentStore(...)` | Local file-system content-addressable store.   |
+| `Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob`              | `services.AddSmartConnectAzureBlobAttachmentStore(...)`   | Azure Blob attachment backend.                       |
+| `Dialysis.SmartConnect.Persistence.ObjectStorage.S3`                     | `services.AddSmartConnectS3AttachmentStore(...)`          | AWS S3 / MinIO / Wasabi.                             |
+
+### Minimal production wire-up
+
+```csharp
+services
+    .AddSmartConnectCore()
+    .AddSmartConnectPersistenceForPostgresql(o =>
+    {
+        o.ConnectionString = builder.Configuration.GetConnectionString("SmartConnect")!;
+    })
+    .AddSmartConnectS3AttachmentStore(o =>
+    {
+        o.BucketName    = builder.Configuration["SmartConnect:S3:BucketName"]!;
+        o.Region        = builder.Configuration["SmartConnect:S3:Region"]!;
+        o.AccessKeyId   = builder.Configuration["SmartConnect:S3:AccessKeyId"]!;
+        o.SecretAccessKey = builder.Configuration["SmartConnect:S3:SecretAccessKey"]!;
+    });
+```
+
+### Production-readiness guarantees
+
+- **No sample / demo / test data** ships in any NuGet package. The existing `SmartConnectDemoSeeder` and `Hl7V2SimulatorService` live in the `Dialysis.SmartConnect.Api` host project (which is **not** NuGet-published) and are gated on `SmartConnect:Demo:Enabled=true` / `SmartConnect:Demo:Hl7Simulator=true`.
+- The **HL7 Workbench** (Section 11a) accepts operator-supplied payloads exclusively. No canned messages are hosted server-side; the empty-state UI explicitly tells the operator to bring their own message.
+- `CHANNEL_TEMPLATES` in the SPA's `channelTemplates.ts` are pipeline-shape scaffolding (HL7-MLLP / HL7-File / Custom), not sample data — they generate empty pipelines the operator fills in.
 
 ---
 

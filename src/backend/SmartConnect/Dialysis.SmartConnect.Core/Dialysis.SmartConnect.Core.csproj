@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect</RootNamespace>
+
+    <IsPackable>true</IsPackable>
+    <Description>SmartConnect runtime — flow engine, plugins (HL7v2 parsing, FHIR R4 mapping, verify-hl7 / verify-fhir, JavaScript transforms via Jint), DICOM building blocks. Activate with services.AddSmartConnectCore().</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,7 @@
     <ProjectReference Include="../Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <ProjectReference Include="../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Validation/Dialysis.BuildingBlocks.Fhir.Validation.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
   </ItemGroup>
 

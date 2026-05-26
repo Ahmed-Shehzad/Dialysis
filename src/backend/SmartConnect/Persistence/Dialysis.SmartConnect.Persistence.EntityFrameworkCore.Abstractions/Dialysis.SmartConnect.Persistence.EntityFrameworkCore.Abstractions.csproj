@@ -6,7 +6,9 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect.Persistence.EntityFrameworkCore</RootNamespace>
     <AssemblyName>Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions</AssemblyName>
-    <Description>SmartConnect EF Core model, repositories, and provider-neutral registration.</Description>
+    <Description>SmartConnect EF Core model, repositories, and provider-neutral registration. Activate with services.AddSmartConnectPersistence(...); pair with one of the InMemory / Postgresql provider packages.</Description>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

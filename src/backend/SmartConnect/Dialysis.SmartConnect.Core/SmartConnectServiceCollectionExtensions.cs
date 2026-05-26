@@ -11,6 +11,7 @@ using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Routing;
 using Dialysis.SmartConnect.Fhir;
+using Dialysis.BuildingBlocks.Fhir.Validation;
 using Dialysis.SmartConnect.Fhir.Mappers;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Scripts;
@@ -127,6 +128,17 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<XmlTransformStage>();
             services.AddSingleton<DicomTransformStage>();
             services.AddSingleton<DelimitedTextTransformStage>();
+            // Verify HL7 / FHIR plugins — route-filter variant drops on failure (silent), the
+            // *-strict transform-stage sibling throws (loud). Operators pick based on policy.
+            services.AddSingleton<VerifyHl7RouteFilter>();
+            services.AddSingleton<VerifyHl7TransformStage>();
+            services.AddSingleton<VerifyFhirRouteFilter>();
+            services.AddSingleton<VerifyFhirTransformStage>();
+
+            // Default FHIR profile validator with an empty profile map. Hosts that want to enforce
+            // a specific IG (US Core etc.) call AddFhirProfileValidation themselves before this; the
+            // TryAdd-style registration in FhirValidationServiceCollectionExtensions respects that.
+            services.AddFhirProfileValidation(_ => { });
             services.AddSingleton<NcpdpTelecomTransformStage>();
             // Slice K2: per-transaction NCPDP → FHIR mappers + dispatch stage.
             services.AddSingleton<INcpdpToFhirMapper, NcpdpBillingToClaimMapper>();
@@ -174,6 +186,8 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterRouteFilter(sp.GetRequiredService<ExternalScriptRouteFilter>());
                 registry.RegisterRouteFilter(sp.GetRequiredService<RuleBuilderRouteFilter>());
                 registry.RegisterRouteFilter(sp.GetRequiredService<IteratorRouteFilter>());
+                registry.RegisterRouteFilter(sp.GetRequiredService<VerifyHl7RouteFilter>());
+                registry.RegisterRouteFilter(sp.GetRequiredService<VerifyFhirRouteFilter>());
                 registry.RegisterOutboundAdapter(sp.GetRequiredService<PassThroughOutboundAdapter>());
                 registry.RegisterOutboundAdapter(sp.GetRequiredService<HttpOutboundAdapter>());
                 registry.RegisterOutboundAdapter(sp.GetRequiredService<FileOutboundAdapter>());
@@ -192,6 +206,8 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterTransformStage(sp.GetRequiredService<NcpdpTelecomTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<NcpdpToFhirTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<Hl7V2ToFhirTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<VerifyHl7TransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<VerifyFhirTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());

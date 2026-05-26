@@ -5,7 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable</RootNamespace>
-    <Description>Content-addressable storage decorator (SHA-256 dedupe + ref-count) wrapping any IAttachmentBlobStore.</Description>
+    <Description>Content-addressable attachment store for SmartConnect — SHA-256-dedupes and ref-counts the underlying IAttachmentBlobStore. Activate with services.AddSmartConnectContentAddressableAttachmentStore(...).</Description>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

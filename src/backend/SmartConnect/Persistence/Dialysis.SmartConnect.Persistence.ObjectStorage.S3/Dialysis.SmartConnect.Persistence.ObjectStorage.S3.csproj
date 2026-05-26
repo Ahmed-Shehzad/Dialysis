@@ -5,7 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect.Persistence.ObjectStorage.S3</RootNamespace>
-    <Description>S3-compatible (AWS S3, MinIO, Wasabi) attachment blob store for SmartConnect.</Description>
+    <Description>S3-compatible attachment backend for SmartConnect (AWS S3, MinIO, Wasabi). Activate with services.AddSmartConnectS3AttachmentStore(...).</Description>
+
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.SmartConnect</RootNamespace>
+
+    <IsPackable>true</IsPackable>
+    <Description>SmartConnect core contracts — IntegrationFlow, plugins, attachment refs, runtime interfaces. Pure-contract package; reference transitively from every SmartConnect host or plugin assembly.</Description>
   </PropertyGroup>
 
 </Project>

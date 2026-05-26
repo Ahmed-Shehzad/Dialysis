@@ -53,6 +53,26 @@ export type IntegrationFlowPipelineDefinition = {
   linkedLibraryIds: string[];
 };
 
+export type ChannelAttachmentReference = {
+  name: string;
+  mimeType: string;
+  /** Base64-encoded contents. Capped at 1 MiB (decoded) by the backend. */
+  base64Bytes: string;
+  description?: string | null;
+};
+
+/** Allowed values for {@link IntegrationFlow.dataTypes}. */
+export const CHANNEL_DATA_TYPES = [
+  "HL7v2",
+  "FHIR",
+  "NCPDP",
+  "JSON",
+  "XML",
+  "Binary",
+  "Other",
+] as const;
+export type ChannelDataType = (typeof CHANNEL_DATA_TYPES)[number];
+
 export type IntegrationFlow = {
   id: string;
   name: string;
@@ -61,6 +81,12 @@ export type IntegrationFlow = {
   tags: string[];
   groupId?: string | null;
   description?: string | null;
+  /** Declared accepted payload formats; surfaces in the channel list and dialog filter. */
+  dataTypes: string[];
+  /** Other flow ids this channel depends on; Start enforces they're all Started. */
+  dependencies: string[];
+  /** Channel-level reference docs (sample messages, profile JSON, vendor docs). */
+  attachments: ChannelAttachmentReference[];
 };
 
 // --- Messages / Ledger ---------------------------------------------------
