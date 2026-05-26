@@ -34,6 +34,13 @@ public sealed class FlowRuntimeEngine(
     /// </summary>
     public const string SourceMapMetadataKey = "smartconnect.sourcemap.json";
 
+    /// <summary>
+    /// Per-route execution result reduced by the outbound loop. Captures whether the route was
+    /// attempted (DSF did not skip it), whether it failed, and the response payload (if any) for
+    /// the lowest-ordinal-first selection rule.
+    /// </summary>
+    private sealed record RouteOutcome(int Ordinal, bool Attempted, bool Failed, string RouteName, byte[]? ResponsePayload);
+
     public async Task<FlowDispatchResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
         await AppendLedgerAsync(
@@ -140,177 +147,67 @@ public sealed class FlowRuntimeEngine(
         }
 
         var allowedRouteNames = ParseDestinationSet(workingMessage);
-        var attempted = new List<int>();
-        var anyOutboundFailed = false;
-        byte[]? responsePayload = null;
+        var routes = flow.Pipeline.OutboundRoutes;
         var sequential = flow.Pipeline.OutboundRoutesSequential;
-        for (var i = 0; i < flow.Pipeline.OutboundRoutes.Count; i++)
+        RouteOutcome[] outcomes;
+
+        if (sequential)
         {
-            ctx.SetCurrentRouteOrdinal(i);
-            var route = flow.Pipeline.OutboundRoutes[i];
-            var resolvedRouteName = ResolveRouteName(route, i);
-
-            // Destination Set Filter — skip routes the source transform excluded.
-            if (allowedRouteNames is not null)
+            // Mirth-style destination chain: routes run in list order; first failure stops later routes.
+            var list = new List<RouteOutcome>(routes.Count);
+            for (var i = 0; i < routes.Count; i++)
             {
-                var routeName = resolvedRouteName;
-                if (!allowedRouteNames.Contains(routeName))
-                {
-                    await WriteOutboundLedgerAsync(
-                        workingMessage,
-                        i,
-                        MessageLedgerStatus.RouteFilterDropped,
-                        $"Skipped by destination set filter (route '{routeName}' not in allowed set).",
-                        null,
-                        cancellationToken).ConfigureAwait(false);
-                    continue;
-                }
-            }
-
-            attempted.Add(i);
-            var outbound = plugins.TryResolveOutboundAdapter(route.OutboundAdapterKind);
-            if (outbound is null)
-            {
-                anyOutboundFailed = true;
-                var detail = $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.";
-                await WriteOutboundLedgerAsync(
-                    workingMessage,
-                    i,
-                    MessageLedgerStatus.OutboundFailed,
-                    detail,
-                    null,
-                    cancellationToken).ConfigureAwait(false);
-                PublishAlert(workingMessage, AlertErrorType.OutboundFailure, detail, cancellationToken);
-                if (sequential)
-                {
-                    break;
-                }
-
-                continue;
-            }
-
-            ctx.SetCurrentStageContext(CodeTemplateContext.DestinationTransformer);
-            var transformed = await TryTransformForRouteAsync(workingMessage, route, cancellationToken).ConfigureAwait(false);
-            if (transformed.ErrorDetail is not null)
-            {
-                anyOutboundFailed = true;
-                await WriteOutboundLedgerAsync(
-                    workingMessage,
-                    i,
-                    MessageLedgerStatus.OutboundFailed,
-                    transformed.ErrorDetail,
-                    null,
-                    cancellationToken).ConfigureAwait(false);
-                PublishAlert(workingMessage, AlertErrorType.TransformError, transformed.ErrorDetail, cancellationToken);
-                if (sequential)
-                {
-                    break;
-                }
-
-                continue;
-            }
-
-            var toSend = transformed.Message!;
-            if (!string.IsNullOrWhiteSpace(route.OutboundParametersJson))
-            {
-                toSend = toSend.WithMetadata("smartconnect.outbound.parameters", route.OutboundParametersJson!);
-            }
-
-            // Reattach Attachments — inflate ${ATTACH:<id>} tokens back to raw bytes if the route opted in.
-            if (route.ReattachAttachments && attachmentReattachment is not null)
-            {
-                var inflated = await attachmentReattachment
-                    .InflateAsync(toSend.Payload, workingMessage.Id, cancellationToken).ConfigureAwait(false);
-                if (!inflated.Equals(toSend.Payload))
-                {
-                    toSend = toSend.CloneWithPayload(inflated);
-                }
-            }
-
-            var maxAttempts = route.MaxAttempts < 1 ? 1 : route.MaxAttempts;
-            var sendSucceeded = false;
-            string? sendError = null;
-            OutboundSendResult lastSendResult = default;
-            for (var attempt = 1; attempt <= maxAttempts; attempt++)
-            {
-                lastSendResult = await outbound.SendAsync(toSend, i, cancellationToken).ConfigureAwait(false);
-                if (lastSendResult.Succeeded)
-                {
-                    sendSucceeded = true;
-                    break;
-                }
-
-                sendError = lastSendResult.ErrorDetail ?? "Outbound send failed.";
-                if (attempt < maxAttempts)
-                {
-                    var delayMs = 100 * Math.Pow(2, attempt - 1);
-                    await Task.Delay(TimeSpan.FromMilliseconds(delayMs), cancellationToken).ConfigureAwait(false);
-                }
-            }
-
-            if (!sendSucceeded)
-            {
-                anyOutboundFailed = true;
-                ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
-                {
-                    ["status"] = "failure",
-                    ["error"] = sendError,
-                };
-                await WriteOutboundLedgerAsync(
-                    workingMessage,
-                    i,
-                    MessageLedgerStatus.OutboundFailed,
-                    sendError,
-                    toSend.Payload.ToArray(),
-                    cancellationToken).ConfigureAwait(false);
-                PublishAlert(workingMessage, AlertErrorType.OutboundFailure, sendError, cancellationToken);
-                if (sequential)
+                ctx.SetCurrentRouteOrdinal(i);
+                var outcome = await ExecuteRouteAsync(workingMessage, routes[i], i, allowedRouteNames, ctx, useScopedLedger: false, cancellationToken).ConfigureAwait(false);
+                list.Add(outcome);
+                if (outcome.Failed)
                 {
                     break;
                 }
             }
-            else
+            outcomes = list.ToArray();
+        }
+        else
+        {
+            // Mirth-style parallel destinations: every route runs concurrently. Per-route side-effects
+            // (ledger writes, alert publishes) run inside a fresh DI scope when scopeFactory is available
+            // so the engine's scoped DbContext is not shared across worker tasks — same pattern as
+            // PublishAlert, fixed in PR #92 after ChangeTracker races surfaced under fire-and-forget.
+            //
+            // CurrentRouteOrdinal/CurrentStageContext are scalar AsyncLocals on FlowExecutionContext;
+            // they race meaningfully across parallel tasks. Scripts running inside per-route transform
+            // stages must read ordinal/stage from arguments handed in by the runtime, not from the
+            // accessor. Sequential mode keeps the per-route accessor semantics unchanged.
+            var tasks = new Task<RouteOutcome>[routes.Count];
+            for (var i = 0; i < routes.Count; i++)
             {
-                ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
-                {
-                    ["status"] = "success",
-                    ["payload"] = lastSendResult.ResponsePayload is { Length: > 0 } bytes
-                        ? Encoding.UTF8.GetString(bytes)
-                        : null,
-                };
-                await WriteOutboundLedgerAsync(
-                    workingMessage,
-                    i,
-                    MessageLedgerStatus.OutboundSent,
-                    null,
-                    toSend.Payload.ToArray(),
-                    cancellationToken).ConfigureAwait(false);
-
-                // Response transform: apply ResponseTransformStages if present
-                if (lastSendResult.ResponsePayload is { Length: > 0 } rawResp && route.ResponseTransformStages.Count > 0)
-                {
-                    ctx.SetCurrentStageContext(CodeTemplateContext.DestinationResponseTransformer);
-                    var respMsg = workingMessage.CloneWithPayload(rawResp);
-                    foreach (var stage in route.ResponseTransformStages)
-                    {
-                        var transformer = plugins.TryResolveTransformStage(stage.Kind);
-                        if (transformer is null) continue;
-                        var tMsg = !string.IsNullOrWhiteSpace(stage.ParametersJson)
-                            ? respMsg.WithMetadata("smartconnect.transform.parameters", stage.ParametersJson!)
-                            : respMsg;
-                        respMsg = await transformer.TransformAsync(tMsg, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    responsePayload ??= respMsg.Payload.ToArray();
-                }
-                else if (lastSendResult.ResponsePayload is { Length: > 0 } directResp)
-                {
-                    responsePayload ??= directResp;
-                }
+                var ordinal = i;
+                var route = routes[i];
+                tasks[i] = Task.Run(
+                    () => ExecuteRouteAsync(workingMessage, route, ordinal, allowedRouteNames, ctx, useScopedLedger: true, cancellationToken),
+                    cancellationToken);
             }
+            outcomes = await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         ctx.SetCurrentRouteOrdinal(-1);
+
+        var attempted = new List<int>(outcomes.Length);
+        var anyOutboundFailed = false;
+        byte[]? responsePayload = null;
+        foreach (var outcome in outcomes.OrderBy(o => o.Ordinal))
+        {
+            if (outcome.Attempted)
+            {
+                attempted.Add(outcome.Ordinal);
+            }
+            if (outcome.Failed)
+            {
+                anyOutboundFailed = true;
+            }
+            // First-wins by route ordinal (parallel has no first-in-time; ordinal preserves a stable rule).
+            responsePayload ??= outcome.ResponsePayload;
+        }
 
         await AppendLedgerAsync(
             workingMessage,
@@ -397,6 +294,169 @@ public sealed class FlowRuntimeEngine(
         return (working, null);
     }
 
+    /// <summary>
+    /// Runs one outbound route: DSF skip check, adapter resolve, per-route transforms, attachment
+    /// re-attach, retry-with-backoff send, response transform, per-route ledger writes. Returns a
+    /// <see cref="RouteOutcome"/> the dispatch loop reduces into the final <see cref="FlowDispatchResult"/>.
+    ///
+    /// When <paramref name="useScopedLedger"/> is true (parallel mode), per-route ledger writes go
+    /// through a fresh <see cref="IServiceScope"/> so the engine's scoped DbContext is not shared
+    /// across worker tasks. Same pattern as <see cref="PublishAlert"/> — see PR #92.
+    /// </summary>
+    private async Task<RouteOutcome> ExecuteRouteAsync(
+        IntegrationMessage workingMessage,
+        OutboundRouteSlot route,
+        int ordinal,
+        HashSet<string>? allowedRouteNames,
+        FlowExecutionContext ctx,
+        bool useScopedLedger,
+        CancellationToken cancellationToken)
+    {
+        var resolvedRouteName = ResolveRouteName(route, ordinal);
+
+        // Destination Set Filter — skip routes the source transform excluded.
+        if (allowedRouteNames is not null && !allowedRouteNames.Contains(resolvedRouteName))
+        {
+            await WriteOutboundLedgerScopedAsync(
+                workingMessage,
+                ordinal,
+                MessageLedgerStatus.RouteFilterDropped,
+                $"Skipped by destination set filter (route '{resolvedRouteName}' not in allowed set).",
+                null,
+                useScopedLedger,
+                cancellationToken).ConfigureAwait(false);
+            return new RouteOutcome(ordinal, Attempted: false, Failed: false, resolvedRouteName, null);
+        }
+
+        var outbound = plugins.TryResolveOutboundAdapter(route.OutboundAdapterKind);
+        if (outbound is null)
+        {
+            var detail = $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.";
+            await WriteOutboundLedgerScopedAsync(
+                workingMessage,
+                ordinal,
+                MessageLedgerStatus.OutboundFailed,
+                detail,
+                null,
+                useScopedLedger,
+                cancellationToken).ConfigureAwait(false);
+            PublishAlert(workingMessage, AlertErrorType.OutboundFailure, detail, cancellationToken);
+            return new RouteOutcome(ordinal, Attempted: true, Failed: true, resolvedRouteName, null);
+        }
+
+        ctx.SetCurrentStageContext(CodeTemplateContext.DestinationTransformer);
+        var transformed = await TryTransformForRouteAsync(workingMessage, route, cancellationToken).ConfigureAwait(false);
+        if (transformed.ErrorDetail is not null)
+        {
+            await WriteOutboundLedgerScopedAsync(
+                workingMessage,
+                ordinal,
+                MessageLedgerStatus.OutboundFailed,
+                transformed.ErrorDetail,
+                null,
+                useScopedLedger,
+                cancellationToken).ConfigureAwait(false);
+            PublishAlert(workingMessage, AlertErrorType.TransformError, transformed.ErrorDetail, cancellationToken);
+            return new RouteOutcome(ordinal, Attempted: true, Failed: true, resolvedRouteName, null);
+        }
+
+        var toSend = transformed.Message!;
+        if (!string.IsNullOrWhiteSpace(route.OutboundParametersJson))
+        {
+            toSend = toSend.WithMetadata("smartconnect.outbound.parameters", route.OutboundParametersJson!);
+        }
+
+        // Reattach Attachments — inflate ${ATTACH:<id>} tokens back to raw bytes if the route opted in.
+        if (route.ReattachAttachments && attachmentReattachment is not null)
+        {
+            var inflated = await attachmentReattachment
+                .InflateAsync(toSend.Payload, workingMessage.Id, cancellationToken).ConfigureAwait(false);
+            if (!inflated.Equals(toSend.Payload))
+            {
+                toSend = toSend.CloneWithPayload(inflated);
+            }
+        }
+
+        var maxAttempts = route.MaxAttempts < 1 ? 1 : route.MaxAttempts;
+        var sendSucceeded = false;
+        string? sendError = null;
+        OutboundSendResult lastSendResult = default;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            lastSendResult = await outbound.SendAsync(toSend, ordinal, cancellationToken).ConfigureAwait(false);
+            if (lastSendResult.Succeeded)
+            {
+                sendSucceeded = true;
+                break;
+            }
+
+            sendError = lastSendResult.ErrorDetail ?? "Outbound send failed.";
+            if (attempt < maxAttempts)
+            {
+                var delayMs = 100 * Math.Pow(2, attempt - 1);
+                await Task.Delay(TimeSpan.FromMilliseconds(delayMs), cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        if (!sendSucceeded)
+        {
+            ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["status"] = "failure",
+                ["error"] = sendError,
+            };
+            await WriteOutboundLedgerScopedAsync(
+                workingMessage,
+                ordinal,
+                MessageLedgerStatus.OutboundFailed,
+                sendError,
+                toSend.Payload.ToArray(),
+                useScopedLedger,
+                cancellationToken).ConfigureAwait(false);
+            PublishAlert(workingMessage, AlertErrorType.OutboundFailure, sendError, cancellationToken);
+            return new RouteOutcome(ordinal, Attempted: true, Failed: true, resolvedRouteName, null);
+        }
+
+        ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["status"] = "success",
+            ["payload"] = lastSendResult.ResponsePayload is { Length: > 0 } bytes
+                ? Encoding.UTF8.GetString(bytes)
+                : null,
+        };
+        await WriteOutboundLedgerScopedAsync(
+            workingMessage,
+            ordinal,
+            MessageLedgerStatus.OutboundSent,
+            null,
+            toSend.Payload.ToArray(),
+            useScopedLedger,
+            cancellationToken).ConfigureAwait(false);
+
+        byte[]? routeResponsePayload = null;
+        if (lastSendResult.ResponsePayload is { Length: > 0 } rawResp && route.ResponseTransformStages.Count > 0)
+        {
+            ctx.SetCurrentStageContext(CodeTemplateContext.DestinationResponseTransformer);
+            var respMsg = workingMessage.CloneWithPayload(rawResp);
+            foreach (var stage in route.ResponseTransformStages)
+            {
+                var transformer = plugins.TryResolveTransformStage(stage.Kind);
+                if (transformer is null) continue;
+                var tMsg = !string.IsNullOrWhiteSpace(stage.ParametersJson)
+                    ? respMsg.WithMetadata("smartconnect.transform.parameters", stage.ParametersJson!)
+                    : respMsg;
+                respMsg = await transformer.TransformAsync(tMsg, cancellationToken).ConfigureAwait(false);
+            }
+            routeResponsePayload = respMsg.Payload.ToArray();
+        }
+        else if (lastSendResult.ResponsePayload is { Length: > 0 } directResp)
+        {
+            routeResponsePayload = directResp;
+        }
+
+        return new RouteOutcome(ordinal, Attempted: true, Failed: false, resolvedRouteName, routeResponsePayload);
+    }
+
     private Task AppendLedgerAsync(
         IntegrationMessage message,
         MessageLedgerStatus status,
@@ -420,14 +480,45 @@ public sealed class FlowRuntimeEngine(
             },
             cancellationToken);
 
-    private Task WriteOutboundLedgerAsync(
+    /// <summary>
+    /// Like <see cref="WriteOutboundLedgerAsync"/> but opens a fresh DI scope and resolves the
+    /// ledger from it when <paramref name="useScopedLedger"/> is true and a <c>scopeFactory</c>
+    /// is wired. Used by parallel outbound dispatch so the engine's scoped DbContext is never
+    /// shared across worker tasks (the ChangeTracker race PR #92 fixed for alerts).
+    /// </summary>
+    private async Task WriteOutboundLedgerScopedAsync(
         IntegrationMessage message,
         int routeOrdinal,
         MessageLedgerStatus status,
         string? detail,
         byte[]? snapshot,
-        CancellationToken cancellationToken) =>
-        AppendLedgerAsync(message, status, routeOrdinal, detail, snapshot, cancellationToken);
+        bool useScopedLedger,
+        CancellationToken cancellationToken)
+    {
+        if (useScopedLedger && scopeFactory is not null)
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var scopedLedger = scope.ServiceProvider.GetService<IMessageLedger>() ?? ledger;
+            await scopedLedger.AppendAsync(
+                new MessageLedgerEntry
+                {
+                    Id = Guid.CreateVersion7(),
+                    FlowId = message.FlowId,
+                    IntegrationMessageId = message.Id,
+                    CorrelationId = message.CorrelationId,
+                    Status = status,
+                    OutboundRouteOrdinal = routeOrdinal,
+                    Detail = detail,
+                    PayloadSnapshot = snapshot,
+                    Metadata = message.Metadata,
+                    CreatedAtUtc = time.GetUtcNow(),
+                },
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        await AppendLedgerAsync(message, status, routeOrdinal, detail, snapshot, cancellationToken).ConfigureAwait(false);
+    }
 
     private static FlowDispatchResult Failure(string error) =>
         new() { Succeeded = false, Error = error, OutboundRoutesAttempted = [] };

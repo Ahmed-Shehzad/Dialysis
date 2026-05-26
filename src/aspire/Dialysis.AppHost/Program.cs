@@ -222,7 +222,20 @@ var smartConnectApi = builder.AddProject<Projects.Dialysis_SmartConnect_Api>("sm
     .WithEnvironment("SmartConnect__Authentication__Authority", keycloakRealmUri)
     .WithEnvironment("SmartConnect__Authentication__Audience", "account")
     .WithEnvironment("SmartConnect__Demo__Enabled", "true")
-    .WithEnvironment("SmartConnect__Demo__Hl7Simulator", "true");
+    .WithEnvironment("SmartConnect__Demo__Hl7Simulator", "true")
+    // Bi-directional routing demo: declare two source-connector instances so a dev sees
+    // SourceConnectorHostedService start an MLLP listener + a file-drop watcher concurrently,
+    // both dispatching into the same demo flow. The always-on HTTP source provides the third
+    // simultaneous inbound. database-reader is intentionally not wired (no demo target DB).
+    .WithEnvironment("SmartConnect__SourceConnectors__0__Name", "Hl7Mllp")
+    .WithEnvironment("SmartConnect__SourceConnectors__0__Kind", "mllp")
+    .WithEnvironment("SmartConnect__SourceConnectors__0__DefaultFlowId", "b1d10001-0001-4000-8000-000000000001")
+    .WithEnvironment("SmartConnect__SourceConnectors__0__Parameters__Port", "2575")
+    .WithEnvironment("SmartConnect__SourceConnectors__1__Name", "LocalDrop")
+    .WithEnvironment("SmartConnect__SourceConnectors__1__Kind", "file-reader")
+    .WithEnvironment("SmartConnect__SourceConnectors__1__DefaultFlowId", "b1d10001-0001-4000-8000-000000000001")
+    .WithEnvironment("SmartConnect__SourceConnectors__1__Parameters__Directory", "./tmp/smartconnect/drop")
+    .WithEnvironment("SmartConnect__SourceConnectors__1__Parameters__Pattern", "*.hl7");
 
 var hieApi = builder.AddProject<Projects.Dialysis_HIE_Api>("hie-api")
     .WithReference(hieDb).WaitFor(hieDb)

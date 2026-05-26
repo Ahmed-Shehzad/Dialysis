@@ -57,17 +57,22 @@ public sealed class FlowRuntimeEngineAttachmentTests
         var result = await runtime.DispatchAsync(msg, CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.Equal(2, capture.Sent.Count);
+        var sent = capture.Sent;
+        Assert.Equal(2, sent.Count);
+
+        // Look up by route ordinal — parallel outbound dispatch (the default) makes call order
+        // non-deterministic across routes targeting the same capture adapter.
+        var route0Payload = Encoding.UTF8.GetString(sent.Single(s => s.Ordinal == 0).Payload.Span);
+        var route1Payload = Encoding.UTF8.GetString(sent.Single(s => s.Ordinal == 1).Payload.Span);
 
         // Route 0: reattach=true → original capture-group bytes restored in place (brackets stay because
         // they were outside the capture group).
-        Assert.Equal("HEAD[PAYLOAD]TAIL", Encoding.UTF8.GetString(capture.Sent[0].Payload.Span));
+        Assert.Equal("HEAD[PAYLOAD]TAIL", route0Payload);
         // Route 1: reattach=false → token preserved between the brackets.
-        var route1 = Encoding.UTF8.GetString(capture.Sent[1].Payload.Span);
-        Assert.Contains("${ATTACH:", route1);
-        Assert.DoesNotContain("PAYLOAD", route1);
-        Assert.StartsWith("HEAD[", route1);
-        Assert.EndsWith("]TAIL", route1);
+        Assert.Contains("${ATTACH:", route1Payload);
+        Assert.DoesNotContain("PAYLOAD", route1Payload);
+        Assert.StartsWith("HEAD[", route1Payload);
+        Assert.EndsWith("]TAIL", route1Payload);
 
         // Attachment row persisted for the message.
         var store = scope.ServiceProvider.GetRequiredService<IAttachmentStore>();
