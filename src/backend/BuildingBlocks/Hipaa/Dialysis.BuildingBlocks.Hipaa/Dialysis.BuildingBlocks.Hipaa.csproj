@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Hipaa</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Hipaa</AssemblyName>
+    <Description>HIPAA Security Rule scaffolding: PHI column encryption, PHI-access audit pipeline, safeguard registry.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Fhir/Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
+    <ProjectReference Include="../../Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
+    <ProjectReference Include="../../../Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Dialysis.BuildingBlocks.Hipaa.Tests" />
+  </ItemGroup>
+
+</Project>

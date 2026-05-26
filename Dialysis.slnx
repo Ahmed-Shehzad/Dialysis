@@ -63,6 +63,11 @@
   <Folder Name="/src/backend/BuildingBlocks/Direct/">
     <Project Path="src/backend/BuildingBlocks/Direct/Dialysis.BuildingBlocks.Direct/Dialysis.BuildingBlocks.Direct.csproj" />
   </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Hipaa/">
+    <Project Path="src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa/Dialysis.BuildingBlocks.Hipaa.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.AspNetCore/Dialysis.BuildingBlocks.Hipaa.AspNetCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.Tests/Dialysis.BuildingBlocks.Hipaa.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/backend/BuildingBlocks/PlatformGateway/">
     <Project Path="src/backend/BuildingBlocks/PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway.csproj" />
   </Folder>
