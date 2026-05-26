@@ -1,6 +1,9 @@
+using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
+using Dialysis.BuildingBlocks.Hipaa;
+using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Module.Hosting;
 using Dialysis.PDMS.Api.Realtime;
@@ -96,6 +99,11 @@ if (!string.IsNullOrWhiteSpace(valkeyConnectionString))
 // Replace the default no-op broadcaster with the SignalR-backed implementation hosted alongside the hub.
 builder.Services.AddSingleton<IVitalsBroadcaster, SignalRVitalsBroadcaster>();
 
+// HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
+builder.Services.AddFhirAudit();
+builder.Services.AddHipaaCompliance("pdms");
+builder.Services.AddHipaaAspNetCoreSafeguards();
+
 var app = builder.Build();
 
 app.UseModuleHost();
@@ -104,6 +112,7 @@ if (enablePdmsSubscriptions)
 app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "pdms", version = "v1" }));
+app.MapHipaaSafeguardsEndpoint();
 app.MapControllers();
 app.MapHub<VitalsHub>(VitalsHub.Path);
 

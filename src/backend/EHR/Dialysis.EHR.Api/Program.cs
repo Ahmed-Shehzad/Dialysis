@@ -1,6 +1,9 @@
+using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
+using Dialysis.BuildingBlocks.Hipaa;
+using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.ClinicalNotes;
@@ -88,6 +91,11 @@ builder.Services.AddElectronicHealthRecord(
                 sub.Listen<LabResultReceivedIntegrationEvent>();
         }));
 
+// HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
+builder.Services.AddFhirAudit();
+builder.Services.AddHipaaCompliance("ehr");
+builder.Services.AddHipaaAspNetCoreSafeguards();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -98,6 +106,7 @@ if (enableEhrSubscriptions)
 app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
+app.MapHipaaSafeguardsEndpoint();
 app.MapControllers();
 
 if (enableEhrSmartOnFhir)

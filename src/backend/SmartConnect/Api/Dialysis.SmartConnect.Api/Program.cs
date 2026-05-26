@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Fhir.Audit;
+using Dialysis.BuildingBlocks.Hipaa;
+using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Dialysis.SmartConnect;
@@ -47,6 +50,11 @@ if (builder.Configuration.GetValue("SmartConnect:Demo:Enabled", false))
 if (builder.Configuration.GetValue("SmartConnect:Demo:Hl7Simulator", false))
     builder.Services.AddHostedService<Dialysis.SmartConnect.Api.Demo.Hl7V2SimulatorService>();
 
+// HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
+builder.Services.AddFhirAudit();
+builder.Services.AddHipaaCompliance("smartconnect");
+builder.Services.AddHipaaAspNetCoreSafeguards();
+
 var app = builder.Build();
 
 app.UseStaticFiles();
@@ -55,6 +63,7 @@ app.UseModuleHost();
 app.MapGet("/", () => Results.Redirect("/smartconnect/index.html", permanent: false));
 app.MapSmartConnectInboundRoutes();
 app.MapSmartConnectManagementRoutes();
+app.MapHipaaSafeguardsEndpoint();
 app.MapSmartConnectGroupRoutes();
 app.MapSmartConnectLedgerRoutes();
 app.MapSmartConnectConfigurationMapRoutes();

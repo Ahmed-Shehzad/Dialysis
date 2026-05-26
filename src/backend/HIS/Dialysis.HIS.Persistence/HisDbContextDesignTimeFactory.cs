@@ -1,4 +1,6 @@
+using Dialysis.BuildingBlocks.Hipaa.Encryption;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -35,7 +37,11 @@ public sealed class HisDbContextDesignTimeFactory : IDesignTimeDbContextFactory<
                 npg => npg.MigrationsHistoryTable("__ef_migrations", "his"))
             .Options;
 
-        return new HisDbContext(options, persistenceOptions);
+        // Design-time only — the protector is used to build the value converter, but EF migration
+        // generation never invokes Encrypt/Decrypt, so an ephemeral key ring is sufficient.
+        var phiProtector = new DataProtectionPhiProtector(new EphemeralDataProtectionProvider());
+
+        return new HisDbContext(options, persistenceOptions, phiProtector);
     }
 
     internal static string? ResolveConnectionString(string[] args)

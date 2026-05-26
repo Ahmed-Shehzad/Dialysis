@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-05-26T00:00:00+00:00",
+  "pages": {
+    "hhs-hipaa-summary": {
+      "title": "HHS HIPAA Privacy Rule summary",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/privacy/laws-regulations/index.html",
+      "status": "bootstrap"
+    },
+    "hhs-security-rule": {
+      "title": "HHS HIPAA Security Rule summary",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html",
+      "status": "bootstrap"
+    },
+    "hhs-breach-notification": {
+      "title": "HHS Breach Notification Rule",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/breach-notification/index.html",
+      "status": "bootstrap"
+    }
+  }
+}

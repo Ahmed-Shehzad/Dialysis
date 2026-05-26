@@ -1,8 +1,12 @@
 using System.Threading.RateLimiting;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore;
+using Dialysis.BuildingBlocks.Fhir.Audit;
+using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
+using Dialysis.BuildingBlocks.Hipaa;
+using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIS.Composition;
 using Dialysis.HIS.Contracts.Security;
@@ -82,6 +86,17 @@ builder.Services.AddHospitalInformationSystem(
             if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
         }));
 
+// HIPAA Security Rule scaffolding — PHI column encryption, PHI-access audit pipeline,
+// compliance dashboard. AddFhirAudit() supplies the IAuditEventEmitter the pipeline behaviour
+// needs; AddHipaaAspNetCoreSafeguards() adds the HSTS check that lives in the ASP.NET sibling
+// project. The /admin/hipaa/safeguards endpoint is mapped below.
+// The EF-backed audit store is wired unconditionally so PHI-access audits survive a host restart
+// — the previous conditional (FHIR-endpoints gated) left audits in memory when FHIR was off.
+builder.Services.AddFhirAudit();
+builder.Services.AddFhirAuditEntityFrameworkStore<HisDbContext>();
+builder.Services.AddHipaaCompliance("his");
+builder.Services.AddHipaaAspNetCoreSafeguards();
+
 builder.Services.AddRateLimiter(o =>
 {
     o.AddPolicy("DeviceIngest", context =>
@@ -133,6 +148,7 @@ app.MapGet(
                 : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
     .AllowAnonymous();
 app.MapGet("/", () => Results.Ok(new { module = "his", version = "v1" }));
+app.MapHipaaSafeguardsEndpoint();
 app.MapControllers();
 
 if (enableFhirEndpoints)
