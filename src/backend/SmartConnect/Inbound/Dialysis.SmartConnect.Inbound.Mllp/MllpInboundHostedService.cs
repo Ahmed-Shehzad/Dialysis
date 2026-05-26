@@ -23,6 +23,8 @@ public sealed class MllpInboundHostedService(
     TimeProvider timeProvider,
     ILogger<MllpInboundHostedService> logger) : BackgroundService
 {
+    private int _activeConnections;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var opt = options.CurrentValue;
@@ -40,10 +42,11 @@ public sealed class MllpInboundHostedService(
         using var listener = new TcpListener(address, opt.ListenPort);
         listener.Start();
         logger.LogInformation(
-            "SmartConnect MLLP inbound listening on {Address}:{Port}, flow {FlowId}.",
+            "SmartConnect MLLP inbound listening on {Address}:{Port}, flow {FlowId}, maxConnections {Max}.",
             address,
             opt.ListenPort,
-            opt.DefaultFlowId);
+            opt.DefaultFlowId,
+            opt.MaxConnections);
 
         try
         {
@@ -69,12 +72,38 @@ public sealed class MllpInboundHostedService(
                     continue;
                 }
 
-                _ = HandleClientAsync(client, stoppingToken);
+                // Enforce MaxConnections (0 = unlimited). Reject by closing the socket
+                // immediately — a queued backlog under burst hides the real capacity issue.
+                var max = opt.MaxConnections;
+                if (max > 0 && Interlocked.Increment(ref _activeConnections) > max)
+                {
+                    Interlocked.Decrement(ref _activeConnections);
+                    logger.LogWarning(
+                        "SmartConnect MLLP inbound rejecting connection from {Endpoint}: MaxConnections={Max} reached.",
+                        client.Client.RemoteEndPoint,
+                        max);
+                    try { client.Close(); } catch { /* best-effort */ }
+                    continue;
+                }
+
+                _ = HandleClientTrackedAsync(client, stoppingToken);
             }
         }
         finally
         {
             listener.Stop();
+        }
+    }
+
+    private async Task HandleClientTrackedAsync(TcpClient client, CancellationToken stoppingToken)
+    {
+        try
+        {
+            await HandleClientAsync(client, stoppingToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _activeConnections);
         }
     }
 

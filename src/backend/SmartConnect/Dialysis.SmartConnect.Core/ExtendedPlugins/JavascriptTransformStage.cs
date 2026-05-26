@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.DataTypes;
 using Dialysis.SmartConnect.Scripts;
 using Dialysis.SmartConnect.VariableMaps;
 using Jint;
@@ -53,6 +54,11 @@ public sealed class JavascriptTransformStage(IServiceProvider? services = null) 
         engine.SetValue("payloadText", payloadText);
         engine.SetValue("correlationId", message.CorrelationId);
         engine.SetValue("flowId", message.FlowId.ToString());
+
+        // Best-effort HL7 v2 parse: if the payload looks like an MSH-prefixed HL7 v2 message,
+        // expose it as `msg` so scripts can write `msg.GetValue("PID.3.1")` directly. On a parse
+        // failure we leave `msg` unset — non-HL7 transformers continue to work unchanged.
+        TryBindHl7Message(engine, payloadText);
 
         await BindVariableMapsAsync(engine, message, cancellationToken).ConfigureAwait(false);
         await BindCodeTemplatesAsync(engine, message.FlowId, cancellationToken).ConfigureAwait(false);
@@ -107,5 +113,29 @@ public sealed class JavascriptTransformStage(IServiceProvider? services = null) 
         }
         var store = services.GetService<IAttachmentStore>();
         AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
+    }
+
+    private static void TryBindHl7Message(Engine engine, string payloadText)
+    {
+        // Cheap pre-check before invoking the parser — skip non-HL7 payloads quickly so non-HL7
+        // transformer flows don't pay the parse cost. MSH at the very start is the cheapest signal.
+        if (string.IsNullOrEmpty(payloadText) || !payloadText.StartsWith("MSH", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        try
+        {
+            var parsed = Hl7V2Message.Parse(payloadText);
+            engine.SetValue("msg", parsed);
+        }
+        catch (FormatException)
+        {
+            // Looked like HL7 but didn't parse — leave `msg` unset and let the script decide.
+        }
+        catch (ArgumentException)
+        {
+            // Same — caller's payload is empty / whitespace.
+        }
     }
 }
