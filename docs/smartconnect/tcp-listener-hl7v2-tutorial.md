@@ -540,6 +540,8 @@ The `DftP03ToChargeItemMapper` extracts FT1-3 (transaction id) → identifier, F
 
 ## 8 · Parse a user-provided HL7 message
 
+> For an interactive walkthrough of the same parse-then-validate-then-send flow against an operator-pasted message, see [Section 11a — HL7 Workbench](#11a--hl7-workbench-your-own-message-end-to-end). This section is the manual checklist; the Workbench automates it.
+
 When operators paste a real production message, walk it through this checklist:
 
 1. **MLLP frame** — does the first byte = `0x0B` and the last three = `0x1C 0x0D`? Strip them before parsing.

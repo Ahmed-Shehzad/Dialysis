@@ -12,7 +12,10 @@ import {
   type IntegrationFlow,
   type IntegrationFlowPipelineDefinition,
   type OutboundRouteSlot,
+  type RouteFilterSlot,
+  type TransformStageSlot,
 } from "../api/types";
+import { getRouteFilterSchema, getTransformStageSchema } from "../api/adapterSchemas";
 import { humanizeError } from "@/lib/api/humanizeError";
 
 type Props = {
@@ -39,6 +42,23 @@ const ADAPTER_KINDS = [
   "database",
   "channel-writer",
   "pass-through",
+] as const;
+
+const ROUTE_FILTER_KINDS = [
+  "allow-all",
+  "verify-hl7",
+  "verify-fhir",
+  "javascript",
+  "rule-builder",
+  "iterator",
+  "external-script",
+] as const;
+
+const TRANSFORM_STAGE_KINDS = [
+  "verify-hl7-strict",
+  "verify-fhir-strict",
+  "hl7-to-fhir-pipeline",
+  "javascript",
 ] as const;
 
 const newGuid = (): string => {
@@ -149,6 +169,53 @@ export const NewChannelDialog = ({ onClose }: Props) => {
       ...pipeline,
       outboundRoutes: pipeline.outboundRoutes.map((r) =>
         r.ordinal === ordinal ? { ...r, ...patch } : r,
+      ),
+    });
+  };
+
+  const onAddFilter = () => {
+    setPipeline({
+      ...pipeline,
+      routeFilters: [...pipeline.routeFilters, { kind: "allow-all", propertiesJson: null }],
+    });
+  };
+
+  const onRemoveFilter = (index: number) => {
+    setPipeline({
+      ...pipeline,
+      routeFilters: pipeline.routeFilters.filter((_, i) => i !== index),
+    });
+  };
+
+  const onUpdateFilter = (index: number, patch: Partial<RouteFilterSlot>) => {
+    setPipeline({
+      ...pipeline,
+      routeFilters: pipeline.routeFilters.map((f, i) => (i === index ? { ...f, ...patch } : f)),
+    });
+  };
+
+  const onAddStage = () => {
+    setPipeline({
+      ...pipeline,
+      sourceTransformStages: [
+        ...pipeline.sourceTransformStages,
+        { kind: "verify-hl7-strict", propertiesJson: null },
+      ],
+    });
+  };
+
+  const onRemoveStage = (index: number) => {
+    setPipeline({
+      ...pipeline,
+      sourceTransformStages: pipeline.sourceTransformStages.filter((_, i) => i !== index),
+    });
+  };
+
+  const onUpdateStage = (index: number, patch: Partial<TransformStageSlot>) => {
+    setPipeline({
+      ...pipeline,
+      sourceTransformStages: pipeline.sourceTransformStages.map((s, i) =>
+        i === index ? { ...s, ...patch } : s,
       ),
     });
   };
@@ -377,6 +444,118 @@ export const NewChannelDialog = ({ onClose }: Props) => {
                 </div>
               )}
             </div>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase text-slate-400">
+              3.5 · Route filters ({pipeline.routeFilters.length})
+            </h4>
+            <p className="text-[11px] text-slate-500">
+              Filters run on every inbound message before the source transforms. Drop here, fail
+              later — pair <code>verify-hl7</code> with the strict transform stage if you want loud
+              failures instead of silent drops.
+            </p>
+            {pipeline.routeFilters.length === 0 && (
+              <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-500">
+                No route filters. Messages pass through unconditionally.
+              </div>
+            )}
+            <div className="space-y-2">
+              {pipeline.routeFilters.map((filter, i) => (
+                <div key={i} className="rounded-md border border-slate-800 bg-slate-900/40 p-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">#{i}</span>
+                    <select
+                      value={filter.kind}
+                      onChange={(e) => onUpdateFilter(i, { kind: e.target.value })}
+                      className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+                    >
+                      {ROUTE_FILTER_KINDS.map((k) => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveFilter(i)}
+                      className="rounded-md border border-rose-700 px-2 py-0.5 text-xs text-rose-300 hover:bg-rose-900/40"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <AdapterParametersForm
+                    kind={filter.kind}
+                    propertiesJson={filter.propertiesJson ?? null}
+                    onChange={(next) => onUpdateFilter(i, { propertiesJson: next })}
+                    schemaResolver={getRouteFilterSchema}
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onAddFilter}
+              className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              + Add filter
+            </button>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase text-slate-400">
+              3.7 · Source transform stages ({pipeline.sourceTransformStages.length})
+            </h4>
+            <p className="text-[11px] text-slate-500">
+              Stages run on every inbound message after the filters but before the outbound routes.
+              Use <code>hl7-to-fhir-pipeline</code> to convert HL7 v2 to FHIR R4, then{" "}
+              <code>verify-fhir-strict</code> to fail loudly on an invalid Bundle.
+            </p>
+            {pipeline.sourceTransformStages.length === 0 && (
+              <div className="rounded-md border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-500">
+                No source transform stages. Inbound payloads pass through unchanged.
+              </div>
+            )}
+            <div className="space-y-2">
+              {pipeline.sourceTransformStages.map((stage, i) => (
+                <div key={i} className="rounded-md border border-slate-800 bg-slate-900/40 p-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">#{i}</span>
+                    <select
+                      value={stage.kind}
+                      onChange={(e) => onUpdateStage(i, { kind: e.target.value })}
+                      className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+                    >
+                      {TRANSFORM_STAGE_KINDS.map((k) => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveStage(i)}
+                      className="rounded-md border border-rose-700 px-2 py-0.5 text-xs text-rose-300 hover:bg-rose-900/40"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <AdapterParametersForm
+                    kind={stage.kind}
+                    propertiesJson={stage.propertiesJson ?? null}
+                    onChange={(next) => onUpdateStage(i, { propertiesJson: next })}
+                    schemaResolver={getTransformStageSchema}
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onAddStage}
+              className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              + Add stage
+            </button>
           </section>
 
           <section className="space-y-2">
