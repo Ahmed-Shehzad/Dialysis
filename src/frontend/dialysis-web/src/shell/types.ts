@@ -26,6 +26,12 @@ export interface ModuleManifest {
   displayName: string;
   /** Short subtitle clarifying who the module is for ("Front desk", "Chairside", …). */
   tagline?: string;
+  /**
+   * One- or two-sentence plain-language "what this does" copy rendered on the module's
+   * front-door header. Targets a cold user who's never seen the module before — no jargon,
+   * no acronyms. Skipped from the nav switcher (that's `tagline`'s job).
+   */
+  description?: string;
   /** Permission required to surface this module to a user. Optional during Phase 0. */
   requires?: ModulePermission;
   /**

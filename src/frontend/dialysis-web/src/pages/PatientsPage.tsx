@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { searchEhrPatientsPage, type PatientSearchFilters } from "@/features/ehr/api/ehrApi";
+import { ModuleHeader } from "@/shell/ModuleHeader";
 
 const PAGE_SIZES = [10, 25, 50, 100];
 
@@ -100,12 +101,24 @@ export const PatientsPage = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold text-clinic-50">Patients</h2>
-        <p className="text-sm text-slate-400">
-          Search and paginate the EHR registry. Combine filters to narrow results.
-        </p>
-      </header>
+      <ModuleHeader
+        moduleSlug="ehr"
+        quickActions={[
+          {
+            label: "Workflow guide",
+            to: "/workflows/ehr",
+            hint: "Step-by-step walkthrough of the clinician's day",
+          },
+        ]}
+        tour={[
+          { title: "Search", body: "free-text by name or MRN; combine filters to narrow further" },
+          { title: "Open a patient", body: "click any row to load the longitudinal chart" },
+          {
+            title: "Notes + orders",
+            body: "write a clinical note or order labs inline on the chart page",
+          },
+        ]}
+      />
 
       <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">

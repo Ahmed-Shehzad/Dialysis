@@ -10,6 +10,8 @@ export const ehrModule: ModuleManifest = {
   slug: "ehr",
   displayName: "Chart",
   tagline: "Patient record · orders · notes",
+  description:
+    "The clinician's patient chart — search by name or MRN, review the longitudinal record, write a clinical note, or order labs without leaving the page.",
   requires: "ehr.patient_chart.view",
   enabled: true,
   home: "/patients",

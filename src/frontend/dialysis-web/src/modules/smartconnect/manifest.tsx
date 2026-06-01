@@ -11,6 +11,8 @@ export const smartConnectModule: ModuleManifest = {
   slug: "smartconnect",
   displayName: "Feeds",
   tagline: "HL7 v2 inbound · vendor adapters",
+  description:
+    "The integration operator's console — define channels that receive HL7 v2 / FHIR messages from labs, vendors, and partner sites, then route or transform them downstream.",
   requires: "smartconnect.feeds.view",
   enabled: true,
   home: "/integrations",

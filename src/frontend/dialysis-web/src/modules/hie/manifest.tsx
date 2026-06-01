@@ -10,6 +10,8 @@ export const hieModule: ModuleManifest = {
   slug: "hie",
   displayName: "Exchange",
   tagline: "FHIR partners · consent · subscriptions",
+  description:
+    "Health Information Exchange — send a FHIR Bundle to a partner organisation, look up patients by demographics, and manage the consent policies that gate what's shared.",
   requires: "hie.outbound.view",
   enabled: true,
   home: "/fhir-exchange",
