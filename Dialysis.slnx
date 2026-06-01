@@ -68,6 +68,15 @@
     <Project Path="src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.AspNetCore/Dialysis.BuildingBlocks.Hipaa.AspNetCore.csproj" />
     <Project Path="src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.Tests/Dialysis.BuildingBlocks.Hipaa.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/DataProtection/">
+    <Project Path="src/backend/BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
+    <Project Path="src/backend/BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection.AspNetCore/Dialysis.BuildingBlocks.DataProtection.AspNetCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection.Tests/Dialysis.BuildingBlocks.DataProtection.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Tefca/">
+    <Project Path="src/backend/BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti/Dialysis.BuildingBlocks.Tefca.Ti.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti.Tests/Dialysis.BuildingBlocks.Tefca.Ti.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/backend/BuildingBlocks/PlatformGateway/">
     <Project Path="src/backend/BuildingBlocks/PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway.csproj" />
   </Folder>
