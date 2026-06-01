@@ -67,9 +67,14 @@ public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext
             // a filter so we cap at a length nobody can hit by accident.
             b.Property(e => e.MessageType).HasMaxLength(256);
             b.Property(e => e.SenderId).HasMaxLength(256);
+            // Slice D2: indexed batch id mirroring the C2 pattern. BatchId is the fully-
+            // qualified source identifier the inbound transport sets (e.g. an absolute file
+            // path); 1024 covers deep-nested Windows paths comfortably.
+            b.Property(e => e.BatchId).HasMaxLength(1024);
             b.HasIndex(e => new { e.FlowId, e.CreatedAtUtc });
             b.HasIndex(e => e.MessageType);
             b.HasIndex(e => e.SenderId);
+            b.HasIndex(e => e.BatchId);
         });
 
         modelBuilder.Entity<FlowGroupEntity>(b =>

@@ -33,6 +33,14 @@ public enum FileReaderSplitMode
     /// The pattern is treated as the boundary between records — capture groups are
     /// preserved in the records, matching split semantics.</summary>
     Regex = 3,
+
+    /// <summary>Delimited-text records (CSV / TSV / pipe). Each non-blank row in the file
+    /// becomes its own <see cref="IntegrationMessage"/> via the streaming reader shared
+    /// with <c>DelimitedTextTransformStage</c> (slice L2). Reuses
+    /// <see cref="FileReaderParameters.DelimitedTextDelimiter"/> /
+    /// <see cref="FileReaderParameters.DelimitedTextHasHeaderRow"/> for the parser options;
+    /// the header row (when configured) is dropped from the dispatched records.</summary>
+    DelimitedTextRecords = 4,
 }
 
 /// <summary>
@@ -63,6 +71,17 @@ public sealed class FileReaderParameters
     /// <summary>Slice D2: regex boundary pattern when <see cref="SplitMode"/> is
     /// <see cref="FileReaderSplitMode.Regex"/>. Ignored for other modes.</summary>
     public string? SplitPattern { get; init; }
+
+    /// <summary>Slice D2 / L2 composition: field separator for
+    /// <see cref="FileReaderSplitMode.DelimitedTextRecords"/>. Defaults to <c>,</c>; symbolic
+    /// values <c>"tab"</c> / <c>"\\t"</c> / <c>"pipe"</c> are resolved like the transform
+    /// stage. Ignored for other modes.</summary>
+    public string? DelimitedTextDelimiter { get; init; }
+
+    /// <summary>Slice D2 / L2 composition: when <c>true</c> (default) the first non-blank
+    /// row of a <see cref="FileReaderSplitMode.DelimitedTextRecords"/> file is treated as
+    /// the header and dropped from the dispatched records.</summary>
+    public bool DelimitedTextHasHeaderRow { get; init; } = true;
 
     /// <summary>Parses parameters with sane defaults; throws <see cref="ArgumentException"/> on invalid input.</summary>
     public static FileReaderParameters Parse(IReadOnlyDictionary<string, string> parameters)
@@ -117,6 +136,10 @@ public sealed class FileReaderParameters
                 nameof(parameters));
         }
 
+        var delimitedDelim = lookup.TryGetValue("DelimitedTextDelimiter", out var dd) ? dd : null;
+        var delimitedHeader = !lookup.TryGetValue("DelimitedTextHasHeaderRow", out var dh)
+            || !bool.TryParse(dh, out var dhb) || dhb;
+
         return new FileReaderParameters
         {
             Directory = Path.GetFullPath(dir),
@@ -129,6 +152,8 @@ public sealed class FileReaderParameters
             QuarantineDirectory = string.IsNullOrWhiteSpace(quarantine) ? null : Path.GetFullPath(quarantine),
             SplitMode = splitMode,
             SplitPattern = string.IsNullOrWhiteSpace(splitPattern) ? null : splitPattern,
+            DelimitedTextDelimiter = string.IsNullOrWhiteSpace(delimitedDelim) ? null : delimitedDelim,
+            DelimitedTextHasHeaderRow = delimitedHeader,
         };
     }
 }

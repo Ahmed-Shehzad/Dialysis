@@ -9,7 +9,7 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
 {
     public async Task AppendAsync(MessageLedgerEntry entry, CancellationToken cancellationToken)
     {
-        var (messageType, senderId) = DeriveSearchableColumns(entry.Metadata);
+        var (messageType, senderId, batchId) = DeriveSearchableColumns(entry.Metadata);
         db.MessageLedgerEntries.Add(
             new MessageLedgerEntryEntity
             {
@@ -24,6 +24,7 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
                 MetadataJson = SerializeMetadata(entry.Metadata),
                 MessageType = messageType,
                 SenderId = senderId,
+                BatchId = batchId,
                 CreatedAtUtc = entry.CreatedAtUtc,
             });
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -56,24 +57,28 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
     }
 
     /// <summary>
-    /// Slice C2: extract the dashboard-filterable columns from the incoming metadata bag.
-    /// Top-level <c>LedgerSearchKeys</c> wins; when absent, fall back to the legacy
-    /// <c>smartconnect.sourcemap.json</c> blob the MLLP listener used to be the only
-    /// producer of (the blob carries <c>hl7.messageType</c> / <c>hl7.sendingApplication</c>
-    /// / <c>hl7.sendingFacility</c> by convention).
+    /// Slice C2 + D2: extract the dashboard-filterable columns from the incoming metadata
+    /// bag. Top-level <c>LedgerSearchKeys</c> / <c>BatchMetadataKeys</c> win; when absent for
+    /// MessageType / SenderId, fall back to the legacy <c>smartconnect.sourcemap.json</c>
+    /// blob the MLLP listener used to be the only producer of. BatchId has no legacy fallback
+    /// — it ships via <see cref="BatchMetadataKeys.BatchId"/> only.
     /// </summary>
-    internal static (string? MessageType, string? SenderId) DeriveSearchableColumns(
+    internal static (string? MessageType, string? SenderId, string? BatchId) DeriveSearchableColumns(
         ImmutableDictionary<string, string> metadata)
     {
         if (metadata.IsEmpty)
-            return (null, null);
+            return (null, null, null);
 
         metadata.TryGetValue(LedgerSearchKeys.MessageType, out var messageType);
         metadata.TryGetValue(LedgerSearchKeys.SenderId, out var senderId);
+        metadata.TryGetValue(BatchMetadataKeys.BatchId, out var batchId);
 
         if (!string.IsNullOrWhiteSpace(messageType) && !string.IsNullOrWhiteSpace(senderId))
         {
-            return (messageType, senderId);
+            return (
+                messageType,
+                senderId,
+                string.IsNullOrWhiteSpace(batchId) ? null : Truncate(batchId, 1024));
         }
 
         // Fall back to the legacy sourcemap.json — pre-C2 inbound transports populated only
@@ -115,7 +120,8 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
 
         return (
             string.IsNullOrWhiteSpace(messageType) ? null : Truncate(messageType, 256),
-            string.IsNullOrWhiteSpace(senderId) ? null : Truncate(senderId, 256));
+            string.IsNullOrWhiteSpace(senderId) ? null : Truncate(senderId, 256),
+            string.IsNullOrWhiteSpace(batchId) ? null : Truncate(batchId, 1024));
     }
 
     private static string Truncate(string value, int maxLength) =>

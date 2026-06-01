@@ -241,6 +241,33 @@ Minimal Lower Layer Protocol wraps each HL7 message in three control characters:
 
 It's not encryption — it's framing. Without it, a TCP stream is ambiguous (where does one message end and the next begin?). Every HL7 v2 sender in healthcare speaks MLLP; SmartConnect handles the framing automatically when `Kind=mllp`.
 
+### File-drop fan-out (CSV-per-row, HL7v2-per-segment)
+
+The `file-reader` source connector accepts a `SplitMode` parameter to fan one file into N inbound messages, one per record. Each record gets a shared **batch context** on the ledger (`BatchMetadataKeys.{BatchId, Sequence, Total, Source}`) so the Messages dashboard's *Batch ID* filter and the per-row `batch n/total` badge let operators triage the whole batch with one click.
+
+| `SplitMode` | Records-per-file | Use for |
+|---|---|---|
+| `None` (default) | 1 (whole file) | Backward-compatible behaviour. |
+| `Hl7v2` | N HL7 v2 messages | Batched HL7 files where each `MSH|` starts a new message. |
+| `Line` | N lines | Line-delimited JSON / one-record-per-line text. |
+| `Regex` | N matches | Custom boundary; pass `SplitPattern`. |
+| `DelimitedTextRecords` | N CSV rows | Lab-result CSV / pharmacy dispense feeds. Pass `DelimitedTextDelimiter` (default `,`; symbolic `tab` / `pipe` accepted) and `DelimitedTextHasHeaderRow` (default `true` — first row treated as the header and dropped). Reuses the L2 streaming reader; peak memory stays ~ 1× file size. |
+
+Example — a lab partner ships one CSV per day with 1000 rows; each row should produce one FHIR Observation:
+
+```
+SmartConnect__SourceConnectors__0__Name=LabResultsCsv
+SmartConnect__SourceConnectors__0__Kind=file-reader
+SmartConnect__SourceConnectors__0__DefaultFlowId=00000000-0000-4000-8000-000000000003
+SmartConnect__SourceConnectors__0__Parameters__Directory=/var/spool/lab-results
+SmartConnect__SourceConnectors__0__Parameters__FilePattern=*.csv
+SmartConnect__SourceConnectors__0__Parameters__SplitMode=DelimitedTextRecords
+SmartConnect__SourceConnectors__0__Parameters__DelimitedTextDelimiter=,
+SmartConnect__SourceConnectors__0__Parameters__DelimitedTextHasHeaderRow=true
+```
+
+After a drop, **SmartConnect → Messages** shows 1000 ledger rows, each tagged with the same `Batch ID` (the absolute file path) and `Sequence`/`Total` (`1..1000` / `1000`). Click the `batch n/total` badge on any row → the grid filters to that batch instantly.
+
 ---
 
 ## 5 · Configure HL7 validation

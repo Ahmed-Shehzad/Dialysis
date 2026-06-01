@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Dialysis.SmartConnect.DataTypes;
 
 namespace Dialysis.SmartConnect.ExtendedPlugins;
 
@@ -112,94 +113,19 @@ public sealed class DelimitedTextTransformStage : ITransformStage
     }
 
     /// <summary>
-    /// Pull the first non-blank row off the reader to serve as the header. Returns null if
-    /// the reader is empty (so the projection writer can emit an empty array gracefully).
+    /// Pull the first non-blank row off the reader to serve as the header. Delegates to the
+    /// shared <see cref="DelimitedTextStreaming"/> helper so this stage and the File Reader
+    /// (slice D2) parse via one code path.
     /// </summary>
     private static string[]? ReadFirstNonBlankRow(StreamReader reader, DelimitedTextOptions options)
-    {
-        while (reader.ReadLine() is { } rawLine)
-        {
-            if (options.SkipBlankLines && string.IsNullOrWhiteSpace(rawLine))
-                continue;
-            return MaterialiseRow(rawLine, options);
-        }
-        return null;
-    }
+        => DelimitedTextStreaming.ReadHeader(reader, options.ToHelperOptions());
 
     /// <summary>
-    /// Lazy row iterator. Reads lines until EOF, skipping blank lines per options, and
-    /// yields each parsed row. Each yielded array is freshly allocated; the caller is free
-    /// to drop the reference once it's written to the output.
+    /// Lazy row iterator delegated to the shared helper. See
+    /// <see cref="DelimitedTextStreaming.EnumerateRecords"/> for the streaming guarantees.
     /// </summary>
     private static IEnumerable<string[]> EnumerateRows(StreamReader reader, DelimitedTextOptions options)
-    {
-        while (reader.ReadLine() is { } rawLine)
-        {
-            if (options.SkipBlankLines && string.IsNullOrWhiteSpace(rawLine))
-                continue;
-            yield return MaterialiseRow(rawLine, options);
-        }
-    }
-
-    private static string[] MaterialiseRow(string rawLine, DelimitedTextOptions options)
-    {
-        var fields = SplitRespectingQuotes(rawLine, options.Delimiter);
-        if (options.TrimWhitespace)
-        {
-            for (var i = 0; i < fields.Length; i++)
-                fields[i] = fields[i].Trim();
-        }
-        return fields;
-    }
-
-    /// <summary>
-    /// Minimal RFC 4180 splitter: handles double-quoted fields with embedded delimiters and
-    /// escaped quotes (""). Doesn't try to be a full CSV library — the dialysis CSV drops
-    /// we've seen are well-formed; if a partner ships exotic CSV, swap this for CsvHelper
-    /// in a follow-up. Multi-line quoted fields are NOT supported (we split on the line
-    /// reader, which can't see across a `\n` inside a quoted cell).
-    /// </summary>
-    private static string[] SplitRespectingQuotes(string line, char delimiter)
-    {
-        var fields = new List<string>();
-        var current = new StringBuilder();
-        var inQuotes = false;
-        for (var i = 0; i < line.Length; i++)
-        {
-            var c = line[i];
-            if (inQuotes)
-            {
-                if (c == '"' && i + 1 < line.Length && line[i + 1] == '"')
-                {
-                    current.Append('"');
-                    i++;
-                    continue;
-                }
-                if (c == '"')
-                {
-                    inQuotes = false;
-                    continue;
-                }
-                current.Append(c);
-                continue;
-            }
-
-            if (c == '"')
-            {
-                inQuotes = true;
-                continue;
-            }
-            if (c == delimiter)
-            {
-                fields.Add(current.ToString());
-                current.Clear();
-                continue;
-            }
-            current.Append(c);
-        }
-        fields.Add(current.ToString());
-        return [.. fields];
-    }
+        => DelimitedTextStreaming.EnumerateRecords(reader, options.ToHelperOptions());
 
     private static void WriteRowObject(Utf8JsonWriter writer, string[] header, string[] row)
     {
@@ -236,7 +162,7 @@ public sealed class DelimitedTextTransformStage : ITransformStage
             {
                 var raw = del.GetString();
                 if (!string.IsNullOrEmpty(raw))
-                    delimiter = ResolveDelimiter(raw);
+                    delimiter = DelimitedTextStreaming.ResolveDelimiter(raw);
             }
 
             var hasHeaderRow = ReadBoolean(root, "hasHeaderRow", defaultValue: true);
@@ -271,18 +197,6 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         };
     }
 
-    /// <summary>
-    /// Accept the symbolic delimiter names operators are likely to type into a JSON config —
-    /// "\t" / "tab" → '\t', "|" / "pipe" → '|', single-char strings as-is.
-    /// </summary>
-    private static char ResolveDelimiter(string raw) => raw switch
-    {
-        "\\t" or "tab" or "TAB" => '\t',
-        "pipe" or "PIPE" => '|',
-        _ when raw.Length == 1 => raw[0],
-        _ => raw[0], // first character — defensive fallback so a stray multi-char value still parses
-    };
-
     private sealed record DelimitedTextOptions(
         char Delimiter,
         bool HasHeaderRow,
@@ -293,6 +207,11 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         public static DelimitedTextOptions Default { get; } =
             new(',', HasHeaderRow: true, TrimWhitespace: true, SkipBlankLines: true,
                 OutputFormat: DelimitedTextOutputFormat.Array);
+
+        /// <summary>Project onto the shared streaming helper's option type (no
+        /// <see cref="OutputFormat"/>: that's a transform-stage concern).</summary>
+        public DelimitedTextStreaming.Options ToHelperOptions() =>
+            new(Delimiter, HasHeaderRow, TrimWhitespace, SkipBlankLines);
     }
 
     private enum DelimitedTextOutputFormat

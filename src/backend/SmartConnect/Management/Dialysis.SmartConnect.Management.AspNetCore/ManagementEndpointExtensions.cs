@@ -503,6 +503,7 @@ public static class ManagementEndpointExtensions
                         int? status,
                         string? messageType,
                         string? senderId,
+                        string? batchId,
                         int? skip,
                         int? take,
                         CancellationToken ct) =>
@@ -520,6 +521,9 @@ public static class ManagementEndpointExtensions
                             // pick from a dropdown / type-ahead the frontend populates from the data.
                             MessageType = string.IsNullOrWhiteSpace(messageType) ? null : messageType,
                             SenderId = string.IsNullOrWhiteSpace(senderId) ? null : senderId,
+                            // Slice D2: same shape for the batch id (file path / source identifier
+                            // the inbound transport tags on every record of a fan-out).
+                            BatchId = string.IsNullOrWhiteSpace(batchId) ? null : batchId,
                             Skip = skip ?? 0,
                             Take = take ?? 50,
                         };

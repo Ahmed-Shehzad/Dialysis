@@ -32,5 +32,12 @@ public sealed class MessageLedgerEntryEntity
     /// metadata key, otherwise <c>null</c>.</summary>
     public string? SenderId { get; set; }
 
+    /// <summary>Derived from metadata key <c>smartconnect.batch.id</c> on append (slice D2).
+    /// Indexed for fast dashboard filtering — populated when the inbound transport fan-outs a
+    /// single source (e.g. a 1000-row CSV) into N messages and tags each with the same batch id,
+    /// otherwise <c>null</c>. Lets operators triage every message in a batch by clicking the
+    /// per-row "batch n/total" badge in the Messages dashboard.</summary>
+    public string? BatchId { get; set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 }
