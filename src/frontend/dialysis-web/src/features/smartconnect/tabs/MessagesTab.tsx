@@ -239,7 +239,7 @@ export const MessagesTab = () => {
 
   return (
     <section className="space-y-4">
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
         <select
           value={filters.flowId ?? ""}
           onChange={(e) => update({ flowId: e.target.value || undefined })}
@@ -275,6 +275,20 @@ export const MessagesTab = () => {
           placeholder="Correlation prefix"
           value={filters.correlationIdPrefix ?? ""}
           onChange={(e) => update({ correlationIdPrefix: e.target.value || undefined })}
+          className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500"
+        />
+        <input
+          placeholder="Message type (e.g. ORU^R01)"
+          value={filters.messageType ?? ""}
+          onChange={(e) => update({ messageType: e.target.value || undefined })}
+          title="Exact match on the derived MSH-9 ledger column"
+          className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500"
+        />
+        <input
+          placeholder="Sender (e.g. MachineA@FACILITY)"
+          value={filters.senderId ?? ""}
+          onChange={(e) => update({ senderId: e.target.value || undefined })}
+          title="Exact match on the derived sender ledger column (sendingApp@sendingFacility for HL7)"
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500"
         />
         <input
