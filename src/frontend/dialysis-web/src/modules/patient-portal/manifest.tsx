@@ -15,6 +15,8 @@ export const patientPortalModule: ModuleManifest = {
   slug: "patient-portal",
   displayName: "My portal",
   tagline: "Patient view — appointments, medications, admissions",
+  description:
+    "Your own clinical record at a glance — upcoming dialysis appointments, current medications, recent admissions, and the latest notes from your care team.",
   enabled: true,
   home: "/portal",
   renderRoutes: () => <Route path="portal" element={<PatientPortalPage />} />,

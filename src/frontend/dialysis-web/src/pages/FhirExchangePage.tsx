@@ -6,6 +6,7 @@ import { InboundFeedPanel } from "@/features/hie/components/InboundFeedPanel";
 import { OutboundQueuePanel } from "@/features/hie/components/OutboundQueuePanel";
 import { PartnerStatusPanel } from "@/features/hie/components/PartnerStatusPanel";
 import { FormField, TextInput } from "@/components/ui/FormField";
+import { ModuleHeader } from "@/shell/ModuleHeader";
 
 const SAMPLE_BUNDLE = JSON.stringify(
   {
@@ -141,13 +142,30 @@ const PatientMatchPanel = () => {
 
 export const FhirExchangePage = () => (
   <div className="space-y-4">
-    <header>
-      <h2 className="text-xl font-semibold text-clinic-50">FHIR exchange (HIE)</h2>
-      <p className="text-sm text-slate-400">
-        Inbound Bundle ingestion, outbound Patient $match, cross-organization consent, and the
-        operator dispatch queue.
-      </p>
-    </header>
+    <ModuleHeader
+      moduleSlug="hie"
+      quickActions={[
+        {
+          label: "Author FHIR",
+          to: "/fhir-authoring",
+          hint: "Build / edit a FHIR resource with the structured form authoring tool",
+        },
+        {
+          label: "Subscriptions",
+          to: "/subscriptions",
+          hint: "Manage partner subscriptions to FHIR resource topics",
+        },
+      ]}
+      tour={[
+        { title: "Partners", body: "see which exchange partners are reachable right now" },
+        {
+          title: "Bundle ingest",
+          body: "paste a partner's FHIR Bundle to ingest into the HIE inbox",
+        },
+        { title: "Patient $match", body: "look up a patient by demographics across all partners" },
+        { title: "Consent", body: "manage which partners are allowed to see which records" },
+      ]}
+    />
 
     <PartnerStatusPanel />
 

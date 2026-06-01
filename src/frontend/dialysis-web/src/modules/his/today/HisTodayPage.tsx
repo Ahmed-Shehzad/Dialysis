@@ -6,6 +6,7 @@ import { CheckInDialog } from "./CheckInDialog";
 import { QueueCard } from "./QueueCard";
 import { WalkInDialog } from "./WalkInDialog";
 import { useTodaysQueue, type QueueEntry, type QueueStatus } from "./queueApi";
+import { ModuleHeader } from "@/shell/ModuleHeader";
 
 const COLUMNS: ReadonlyArray<{ status: QueueStatus; title: string; emptyHint: string }> = [
   {
@@ -68,11 +69,36 @@ export const HisTodayPage = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Front Desk</p>
-          <h2 className="text-2xl font-semibold text-clinic-50">{todayLabel()}</h2>
-        </div>
+      <ModuleHeader
+        moduleSlug="his"
+        quickActions={[
+          {
+            label: "+ Walk-in",
+            to: "/his/today?action=walk-in",
+            hint: "Register a patient who's arrived without an appointment",
+            variant: "primary",
+          },
+          {
+            label: "Patient search",
+            to: "/patients",
+            hint: "Pull up an existing patient's record by name or MRN",
+          },
+          {
+            label: "Workflow guide",
+            to: "/workflows/his",
+            hint: "Step-by-step walkthrough of the receptionist's day",
+          },
+        ]}
+        rightSlot={<span className="text-base font-semibold text-clinic-50">{todayLabel()}</span>}
+        tour={[
+          { title: "Expected", body: "patients with an appointment but not yet here" },
+          { title: "Waiting", body: "arrived; click a card to check in or assign a chair" },
+          { title: "In treatment", body: "currently on a dialysis chair — handed off to PDMS" },
+        ]}
+      />
+      {/* The "+ Walk-in" pill in the header navigates here; the floating button below kept for
+          operators already mid-task. */}
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setWalkInOpen(true)}
@@ -80,7 +106,7 @@ export const HisTodayPage = () => {
         >
           + Walk-in
         </button>
-      </header>
+      </div>
 
       {queue.isLoading && <div className="text-slate-400">Loading today's queue…</div>}
 

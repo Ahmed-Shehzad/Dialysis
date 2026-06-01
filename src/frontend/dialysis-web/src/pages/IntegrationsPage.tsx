@@ -13,6 +13,7 @@ import { AuditEventsTab } from "@/features/smartconnect/tabs/AuditEventsTab";
 import { RetentionTab } from "@/features/smartconnect/tabs/RetentionTab";
 import { DependencyGraphTab } from "@/features/smartconnect/tabs/DependencyGraphTab";
 import { Hl7WorkbenchTab } from "@/features/smartconnect/tabs/Hl7WorkbenchTab";
+import { ModuleHeader } from "@/shell/ModuleHeader";
 
 const renderTab = (key: IntegrationsTabKey) => {
   switch (key) {
@@ -41,13 +42,36 @@ export const IntegrationsPage = () => {
   const [tab, setTab] = useIntegrationsTab();
   return (
     <div className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold text-clinic-50">Integrations (SmartConnect)</h2>
-        <p className="text-sm text-slate-400">
-          Operator console — flows, message ledger, configuration map, code templates, alerts, audit
-          events, and retention. Modelled on the Mirth Connect Administrator left rail.
-        </p>
-      </header>
+      <ModuleHeader
+        moduleSlug="smartconnect"
+        quickActions={[
+          {
+            label: "+ New channel",
+            to: "/integrations?tab=flows&action=new",
+            hint: "Create a new HL7 v2 / FHIR channel via the multi-step dialog",
+            variant: "primary",
+          },
+          {
+            label: "HL7 Workbench",
+            to: "/integrations?tab=hl7-workbench",
+            hint: "Paste a real HL7 v2 message, parse / validate / dispatch it through any channel",
+          },
+          {
+            label: "Dependency graph",
+            to: "/integrations?tab=dependency-graph",
+            hint: "Visualise which channels depend on which",
+          },
+        ]}
+        tour={[
+          { title: "Flows", body: "channels, lifecycle, statistics" },
+          { title: "Messages", body: "ledger search by flow / sender / batch" },
+          {
+            title: "HL7 Workbench",
+            body: "bring your own message and walk it through the pipeline",
+          },
+          { title: "Alerts", body: "rules + fired alert events" },
+        ]}
+      />
       <IntegrationsSummary />
       <IntegrationsTabs current={tab} onChange={setTab} />
       <div>{renderTab(tab)}</div>

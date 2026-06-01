@@ -13,6 +13,8 @@ export const pdmsModule: ModuleManifest = {
   slug: "pdms",
   displayName: "Chairside",
   tagline: "Live treatment · vitals · machine alarms",
+  description:
+    "The nurse's treatment console — live vitals from each dialysis machine, machine-alarm acknowledgement, and the schedule of who's on which chair today.",
   requires: "pdms.treatment_sessions.view",
   enabled: true,
   home: "/sessions",

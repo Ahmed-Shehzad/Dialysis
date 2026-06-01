@@ -11,6 +11,8 @@ export const hisModule: ModuleManifest = {
   slug: "his",
   displayName: "Front Desk",
   tagline: "Patient access · scheduling · queue",
+  description:
+    "Reception's workspace — check patients in, register walk-ins, and watch the live queue: who's expected, who's waiting, and who's in treatment right now.",
   requires: "his.patient_access.view",
   enabled: true,
   home: "/his/today",

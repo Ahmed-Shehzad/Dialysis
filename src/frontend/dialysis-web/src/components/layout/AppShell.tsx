@@ -46,10 +46,25 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
               </NavLink>
               {modules.map((m) => {
                 const target = m.home ?? "/";
+                // Compose tagline + description into a single screen-reader-friendly hint
+                // (rendered as a visually-hidden span below). `title=` is kept as a fallback
+                // for hover tooltips on pointer devices.
+                const describeId = `nav-describe-${m.slug}`;
+                const hint = m.description ? `${m.tagline ?? ""} — ${m.description}` : m.tagline;
                 return (
-                  <NavLink key={m.slug} to={target} title={m.tagline} className={navClass}>
-                    {m.displayName}
-                  </NavLink>
+                  <span key={m.slug} className="contents">
+                    <NavLink
+                      to={target}
+                      title={m.tagline}
+                      aria-describedby={describeId}
+                      className={navClass}
+                    >
+                      {m.displayName}
+                    </NavLink>
+                    <span id={describeId} className="sr-only">
+                      {hint}
+                    </span>
+                  </span>
                 );
               })}
             </nav>

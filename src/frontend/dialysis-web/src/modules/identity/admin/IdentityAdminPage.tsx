@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { decodeJwt, type JwtClaims } from "@/lib/auth/token";
+import { ModuleHeader } from "@/shell/ModuleHeader";
 
 const formatExpiry = (claims: JwtClaims | null): { label: string; tone: string } => {
   if (!claims?.exp) return { label: "no expiry claim", tone: "text-slate-300" };
@@ -55,12 +56,27 @@ export const IdentityAdminPage = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold text-clinic-50">Identity</h2>
-        <p className="text-sm text-slate-400">
-          Your signed-in session and the access token the SPA forwards to module APIs.
-        </p>
-      </header>
+      <ModuleHeader
+        moduleSlug="identity"
+        quickActions={[
+          {
+            label: "HIPAA safeguards",
+            to: "/admin/hipaa",
+            hint: "Federated safeguard health-check across every module",
+          },
+        ]}
+        tour={[
+          { title: "User", body: "name, roles, and the IdP they signed in through" },
+          {
+            title: "Access token",
+            body: "raw JWT claims forwarded to module APIs on every request",
+          },
+          {
+            title: "HIPAA",
+            body: "follow the badge above for the encryption / audit / key-ring rollup",
+          },
+        ]}
+      />
 
       <section className="grid gap-3 lg:grid-cols-2">
         <article className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">

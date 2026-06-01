@@ -6,6 +6,7 @@ import {
   type DialysisSessionSummary,
 } from "@/features/sessions/api/sessionsApi";
 import { ScheduleSessionDialog } from "@/features/sessions/components/ScheduleSessionDialog";
+import { ModuleHeader } from "@/shell/ModuleHeader";
 
 type StatusFilter = "all" | "active" | DialysisSessionSummary["status"];
 
@@ -63,14 +64,22 @@ export const SessionsPage = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-clinic-50">Dialysis sessions</h2>
-          <p className="text-sm text-slate-400">
-            Schedule, monitor, and review hemodialysis sessions.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <ModuleHeader
+        moduleSlug="pdms"
+        quickActions={[
+          {
+            label: "+ Schedule session",
+            to: "/sessions?action=schedule",
+            hint: "Book a new dialysis session for an existing patient",
+            variant: "primary",
+          },
+          {
+            label: "Chair board",
+            to: "/chairs",
+            hint: "See every chair's current state at a glance",
+          },
+        ]}
+        rightSlot={
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as StatusFilter)}
@@ -82,15 +91,29 @@ export const SessionsPage = () => {
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className="rounded-md bg-clinic-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-clinic-700"
-          >
-            + Schedule session
-          </button>
-        </div>
-      </header>
+        }
+        tour={[
+          { title: "Scheduled", body: "future sessions waiting for a chair" },
+          {
+            title: "In progress",
+            body: "live; click a row to drill into chairside vitals + alarms",
+          },
+          {
+            title: "Completed",
+            body: "ended sessions; click to review the post-treatment summary",
+          },
+        ]}
+      />
+      {/* Floating create button kept for operators already mid-task. */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="rounded-md bg-clinic-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-clinic-700"
+        >
+          + Schedule session
+        </button>
+      </div>
 
       {query.isLoading && <div className="text-sm text-slate-400">Loading sessions…</div>}
       {query.error && (

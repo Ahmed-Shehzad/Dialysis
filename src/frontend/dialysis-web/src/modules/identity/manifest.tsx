@@ -21,6 +21,8 @@ export const identityModule: ModuleManifest = {
   slug: "identity",
   displayName: "Admin",
   tagline: "Identity · roles · audit · HIPAA",
+  description:
+    "Platform administrator's console — inspect the signed-in user's identity claims and roles, review HIPAA safeguard status across every module, and audit who's seen what.",
   enabled: true,
   home: "/admin/identity",
   renderRoutes: () => (
