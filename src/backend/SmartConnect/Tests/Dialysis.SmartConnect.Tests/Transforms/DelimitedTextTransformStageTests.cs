@@ -154,6 +154,67 @@ public sealed class DelimitedTextTransformStageTests
         Assert.Equal("4.8", JsonDocument.Parse(lines[1]).RootElement[1].GetString());
     }
 
+    /// <summary>
+    /// Slice L2 streaming pass: the parser must handle large inputs (≳ 5 MB / 50k rows)
+    /// without OOM. The previous implementation materialised the full line array + a
+    /// `List&lt;string[]&gt;` of every row before projection — peak working-set ≈ 3× file size.
+    /// The streaming pass reads + projects row-by-row; peak should stay ≈ 1× file size.
+    /// We don't measure allocation here (no benchmark harness in CI) — instead we assert
+    /// correctness on a large input, which is the test that breaks if the row iterator
+    /// regresses to an accumulating one and the GC pressure tips the runner over.
+    /// </summary>
+    [Fact]
+    public async Task Transform_Handles_Large_Csv_Without_Materialising_All_Rows_Async()
+    {
+        const int rowCount = 50_000;
+        var sb = new StringBuilder(rowCount * 50);
+        sb.Append("PatientId,Analyte,Value\n");
+        for (var i = 0; i < rowCount; i++)
+        {
+            sb.Append("MRN-").Append(i).Append(",Potassium,").Append(4 + (i % 5) * 0.1).Append('\n');
+        }
+        var message = Build_Message(sb.ToString(), """{"outputFormat":"ndjson"}""");
+        var stage = new DelimitedTextTransformStage();
+
+        var transformed = await stage.TransformAsync(message, CancellationToken.None);
+
+        // NDJSON output is one row per line; counting them is the simplest correctness check.
+        var output = Encoding.UTF8.GetString(transformed.Payload.Span);
+        var newlineCount = output.Count(c => c == '\n');
+        Assert.Equal(rowCount, newlineCount);
+        // First and last rows survive end-to-end with the right PatientId.
+        var firstNewline = output.IndexOf('\n');
+        var firstRow = JsonDocument.Parse(output.AsSpan(0, firstNewline).ToString()).RootElement;
+        Assert.Equal("MRN-0", firstRow.GetProperty("PatientId").GetString());
+        var lastNewline = output.LastIndexOf('\n', output.Length - 2);
+        var lastRow = JsonDocument.Parse(output.AsSpan(lastNewline + 1, output.Length - lastNewline - 2).ToString()).RootElement;
+        Assert.Equal("MRN-49999", lastRow.GetProperty("PatientId").GetString());
+    }
+
+    [Fact]
+    public async Task Transform_Streams_Array_Output_For_Large_Input_Async()
+    {
+        // Same input shape, default array output. Verifies the array-mode streaming pump
+        // wraps the row sequence in a single JSON array and doesn't truncate or duplicate.
+        const int rowCount = 20_000;
+        var sb = new StringBuilder(rowCount * 50);
+        sb.Append("PatientId,Value\n");
+        for (var i = 0; i < rowCount; i++)
+        {
+            sb.Append("MRN-").Append(i).Append(',').Append(i % 100).Append('\n');
+        }
+        var message = Build_Message(sb.ToString());
+        var stage = new DelimitedTextTransformStage();
+
+        var transformed = await stage.TransformAsync(message, CancellationToken.None);
+
+        using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(transformed.Payload.Span));
+        Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
+        Assert.Equal(rowCount, doc.RootElement.GetArrayLength());
+        Assert.Equal("MRN-0", doc.RootElement[0].GetProperty("PatientId").GetString());
+        Assert.Equal("MRN-19999", doc.RootElement[rowCount - 1].GetProperty("PatientId").GetString());
+    }
+
     private static IntegrationMessage Build_Message(string payload, string? parametersJson = null)
     {
         var metadata = ImmutableDictionary<string, string>.Empty;

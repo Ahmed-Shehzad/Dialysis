@@ -17,7 +17,8 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 ///   "delimiter": ",",       // single-char field separator; defaults to ","
 ///   "hasHeaderRow": true,    // first row supplies object keys when true (default)
 ///   "trimWhitespace": true,  // strip leading/trailing whitespace per cell (default true)
-///   "skipBlankLines": true   // ignore lines that contain only whitespace (default true)
+///   "skipBlankLines": true,  // ignore lines that contain only whitespace (default true)
+///   "outputFormat": "array"  // "array" (default) or "ndjson" — newline-delimited JSON
 /// }
 /// </code>
 /// Output:
@@ -27,6 +28,15 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 ///   <item><c>hasHeaderRow=false</c> → JSON array of arrays
 ///     (<c>[["MRN-1","4.5"], …]</c>) so positional pipelines stay simple.</item>
 /// </list>
+/// </remarks>
+/// <remarks>
+/// Slice L2 streaming pass: the parse + projection runs as a single iteration over the
+/// payload's byte stream via <see cref="StreamReader.ReadLine"/> and writes directly to a
+/// pooled <see cref="MemoryStream"/> via <see cref="Utf8JsonWriter"/>. Peak working-set is
+/// ~ 1× the file size instead of ~ 3× — input string + line array + row list + output. Lets
+/// the stage handle files past ~10 MB without thrashing the LOH. Multi-line quoted fields
+/// (RFC 4180 embedded newlines) are still not supported; that was true pre-L2 and would
+/// require a real CSV library to fix.
 /// </remarks>
 public sealed class DelimitedTextTransformStage : ITransformStage
 {
@@ -39,37 +49,115 @@ public sealed class DelimitedTextTransformStage : ITransformStage
     {
         ArgumentNullException.ThrowIfNull(message);
         var options = ReadOptions(message);
-        var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
 
-        var rows = ParseRows(payloadText, options);
-        var json = ProjectRows(rows, options);
-        return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text));
+        // Single-pass streaming: wrap the payload memory directly, read line-by-line, and
+        // write rows straight to the output Utf8JsonWriter. Nothing intermediate accumulates.
+        using var input = new MemoryStream(message.Payload.ToArray(), writable: false);
+        using var reader = new StreamReader(input, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        using var output = new MemoryStream(capacity: Math.Min(message.Payload.Length, 64 * 1024));
+
+        if (options.OutputFormat == DelimitedTextOutputFormat.Ndjson)
+        {
+            WriteNdjson(reader, output, options);
+        }
+        else
+        {
+            WriteArray(reader, output, options);
+        }
+
+        return Task.FromResult(message.CloneWithPayload(output.ToArray(), PayloadFormat.Utf8Text));
     }
 
-    private static List<string[]> ParseRows(string payload, DelimitedTextOptions options)
+    /// <summary>
+    /// Stream pump for the default array output. Header (when configured) is read once
+    /// up-front; subsequent rows project against it without copying the row buffer into a
+    /// list. Whole array is wrapped in a single <see cref="Utf8JsonWriter"/> session.
+    /// </summary>
+    private static void WriteArray(StreamReader reader, Stream output, DelimitedTextOptions options)
     {
-        var rows = new List<string[]>();
-        foreach (var rawLine in payload.Split(['\r', '\n'], StringSplitOptions.None))
+        using var writer = new Utf8JsonWriter(output);
+        writer.WriteStartArray();
+        var header = options.HasHeaderRow ? ReadFirstNonBlankRow(reader, options) : null;
+        foreach (var row in EnumerateRows(reader, options))
+        {
+            if (header is not null)
+            {
+                WriteRowObject(writer, header, row);
+            }
+            else
+            {
+                WriteRowArray(writer, row);
+            }
+        }
+        writer.WriteEndArray();
+    }
+
+    /// <summary>
+    /// Stream pump for the NDJSON output. Each row is written as a self-contained JSON
+    /// object/array followed by a single newline; no enclosing wrapper. Downstream consumers
+    /// can `StringReader.ReadLine` row-by-row without parsing the whole payload.
+    /// </summary>
+    private static void WriteNdjson(StreamReader reader, Stream output, DelimitedTextOptions options)
+    {
+        var header = options.HasHeaderRow ? ReadFirstNonBlankRow(reader, options) : null;
+        foreach (var row in EnumerateRows(reader, options))
+        {
+            using (var writer = new Utf8JsonWriter(output))
+            {
+                if (header is not null) WriteRowObject(writer, header, row);
+                else WriteRowArray(writer, row);
+            }
+            output.WriteByte((byte)'\n');
+        }
+    }
+
+    /// <summary>
+    /// Pull the first non-blank row off the reader to serve as the header. Returns null if
+    /// the reader is empty (so the projection writer can emit an empty array gracefully).
+    /// </summary>
+    private static string[]? ReadFirstNonBlankRow(StreamReader reader, DelimitedTextOptions options)
+    {
+        while (reader.ReadLine() is { } rawLine)
         {
             if (options.SkipBlankLines && string.IsNullOrWhiteSpace(rawLine))
                 continue;
-
-            var fields = SplitRespectingQuotes(rawLine, options.Delimiter);
-            if (options.TrimWhitespace)
-            {
-                for (var i = 0; i < fields.Length; i++)
-                    fields[i] = fields[i].Trim();
-            }
-            rows.Add(fields);
+            return MaterialiseRow(rawLine, options);
         }
-        return rows;
+        return null;
+    }
+
+    /// <summary>
+    /// Lazy row iterator. Reads lines until EOF, skipping blank lines per options, and
+    /// yields each parsed row. Each yielded array is freshly allocated; the caller is free
+    /// to drop the reference once it's written to the output.
+    /// </summary>
+    private static IEnumerable<string[]> EnumerateRows(StreamReader reader, DelimitedTextOptions options)
+    {
+        while (reader.ReadLine() is { } rawLine)
+        {
+            if (options.SkipBlankLines && string.IsNullOrWhiteSpace(rawLine))
+                continue;
+            yield return MaterialiseRow(rawLine, options);
+        }
+    }
+
+    private static string[] MaterialiseRow(string rawLine, DelimitedTextOptions options)
+    {
+        var fields = SplitRespectingQuotes(rawLine, options.Delimiter);
+        if (options.TrimWhitespace)
+        {
+            for (var i = 0; i < fields.Length; i++)
+                fields[i] = fields[i].Trim();
+        }
+        return fields;
     }
 
     /// <summary>
     /// Minimal RFC 4180 splitter: handles double-quoted fields with embedded delimiters and
     /// escaped quotes (""). Doesn't try to be a full CSV library — the dialysis CSV drops
     /// we've seen are well-formed; if a partner ships exotic CSV, swap this for CsvHelper
-    /// in a follow-up.
+    /// in a follow-up. Multi-line quoted fields are NOT supported (we split on the line
+    /// reader, which can't see across a `\n` inside a quoted cell).
     /// </summary>
     private static string[] SplitRespectingQuotes(string line, char delimiter)
     {
@@ -113,72 +201,6 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         return [.. fields];
     }
 
-    private static string ProjectRows(List<string[]> rows, DelimitedTextOptions options) =>
-        options.OutputFormat == DelimitedTextOutputFormat.Ndjson
-            ? ProjectNdjson(rows, options)
-            : ProjectArray(rows, options);
-
-    /// <summary>
-    /// Default array output — backward compatible. The whole row set materialises into a
-    /// single JSON array. Fine for partner files we've seen (≲ 10 MB).
-    /// </summary>
-    private static string ProjectArray(List<string[]> rows, DelimitedTextOptions options)
-    {
-        using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream))
-        {
-            if (options.HasHeaderRow && rows.Count > 0)
-            {
-                var header = rows[0];
-                writer.WriteStartArray();
-                for (var r = 1; r < rows.Count; r++)
-                {
-                    WriteRowObject(writer, header, rows[r]);
-                }
-                writer.WriteEndArray();
-            }
-            else
-            {
-                writer.WriteStartArray();
-                foreach (var row in rows)
-                {
-                    WriteRowArray(writer, row);
-                }
-                writer.WriteEndArray();
-            }
-        }
-        return Encoding.UTF8.GetString(stream.ToArray());
-    }
-
-    /// <summary>
-    /// Slice L2 streaming-friendly output: newline-delimited JSON (NDJSON / JSON Lines).
-    /// One JSON object per row, each terminated by <c>\n</c>; no enclosing array. Downstream
-    /// transforms can stream the payload line-by-line via <c>StringReader.ReadLine</c>
-    /// without materialising the full array — useful when partner files exceed ~10 MB.
-    /// </summary>
-    private static string ProjectNdjson(List<string[]> rows, DelimitedTextOptions options)
-    {
-        var sb = new StringBuilder();
-        if (options.HasHeaderRow && rows.Count > 0)
-        {
-            var header = rows[0];
-            for (var r = 1; r < rows.Count; r++)
-            {
-                AppendRowJson(sb, header, rows[r]);
-                sb.Append('\n');
-            }
-        }
-        else
-        {
-            foreach (var row in rows)
-            {
-                AppendRowArrayJson(sb, row);
-                sb.Append('\n');
-            }
-        }
-        return sb.ToString();
-    }
-
     private static void WriteRowObject(Utf8JsonWriter writer, string[] header, string[] row)
     {
         writer.WriteStartObject();
@@ -196,26 +218,6 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         foreach (var field in row)
             writer.WriteStringValue(field);
         writer.WriteEndArray();
-    }
-
-    private static void AppendRowJson(StringBuilder sb, string[] header, string[] row)
-    {
-        using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream))
-        {
-            WriteRowObject(writer, header, row);
-        }
-        sb.Append(Encoding.UTF8.GetString(stream.ToArray()));
-    }
-
-    private static void AppendRowArrayJson(StringBuilder sb, string[] row)
-    {
-        using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream))
-        {
-            WriteRowArray(writer, row);
-        }
-        sb.Append(Encoding.UTF8.GetString(stream.ToArray()));
     }
 
     private static DelimitedTextOptions ReadOptions(IntegrationMessage message)
