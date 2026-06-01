@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.PDMS.Medications</RootNamespace>
+    <Description>PDMS Medications slice — chairside MAR (medication administration record), IV pump infusion telemetry (vendor-neutral + vendor drivers for BD Alaris / Baxter Sigma / Hospira Plum 360), medication inventory deduction.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
+    <ProjectReference Include="../../HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
+    <ProjectReference Include="../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>
