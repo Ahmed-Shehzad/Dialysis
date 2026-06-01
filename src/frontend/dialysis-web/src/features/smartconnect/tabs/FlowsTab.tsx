@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { NewChannelDialog } from "../components/NewChannelDialog";
 import {
   deleteFlow,
@@ -126,6 +127,13 @@ const FlowActions = ({ flow }: { flow: IntegrationFlow }) => {
       >
         Stop
       </button>
+      <Link
+        to={`/integrations/editor/${flow.id}`}
+        className="rounded-md border border-slate-700 px-2 py-0.5 text-xs text-slate-300 hover:bg-slate-800"
+        title="Open visual pipeline editor"
+      >
+        Edit
+      </Link>
       <button
         type="button"
         onClick={onExport}
