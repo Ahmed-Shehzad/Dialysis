@@ -27,6 +27,73 @@ const detectVersion = (text: string): string | null => {
   return fields[11] ?? null;
 };
 
+// HL7 ACK code → human-readable label + tone (accept / error / reject).
+// Covers both original ACKs (AA / AE / AR) and the enhanced commit-mode ACKs added in v2.4+
+// (CA / CE / CR). Anything else falls through to "Unknown" tone-neutral.
+const ACK_CODES: Record<string, { label: string; tone: "accept" | "error" | "reject" }> = {
+  AA: { label: "Application Accept", tone: "accept" },
+  AE: { label: "Application Error", tone: "error" },
+  AR: { label: "Application Reject", tone: "reject" },
+  CA: { label: "Commit Accept", tone: "accept" },
+  CE: { label: "Commit Error", tone: "error" },
+  CR: { label: "Commit Reject", tone: "reject" },
+};
+
+type ParsedAck = {
+  ackCode: string;
+  ackLabel: string;
+  tone: "accept" | "error" | "reject" | "unknown";
+  controlId: string | null;
+  textMessage: string | null;
+  errors: Array<{
+    errorCode: string | null;
+    severity: string | null;
+    text: string | null;
+  }>;
+};
+
+// Lightweight client-side ACK detector. Pure string-splitting — HL7's pipe / caret / tilde
+// encoding is read straight off MSH-2 so any of the standard delimiter sets parses. Returns
+// `null` for any payload that isn't an MSH-anchored ACK, leaving the caller to fall back to
+// the raw-text display.
+const parseAck = (text: string | null | undefined): ParsedAck | null => {
+  if (!text || !text.startsWith("MSH")) return null;
+  const lines = text.split(/\r?\n|\r/).filter((l) => l.length > 0);
+  if (lines.length === 0) return null;
+  const firstLine = lines[0]!;
+  const fieldSep = firstLine[3] ?? "|";
+  const componentSep = firstLine[4] ?? "^";
+  const mshFields = firstLine.split(fieldSep);
+  // MSH-9 lives at fields[8] (since MSH-1 = sep, MSH-2 = encoding chars stored at fields[1]).
+  const msh9 = mshFields[8] ?? "";
+  if (!msh9.startsWith("ACK")) return null;
+
+  const msaLine = lines.find((l) => l.startsWith("MSA"));
+  if (!msaLine) return null;
+  const msaFields = msaLine.split(fieldSep);
+  const ackCode = (msaFields[1] ?? "").trim();
+  const controlId = (msaFields[2] ?? "").trim() || null;
+  const textMessage = (msaFields[3] ?? "").trim() || null;
+  const known = ACK_CODES[ackCode];
+  const ackLabel = known?.label ?? "Unknown ACK code";
+  const tone: ParsedAck["tone"] = known?.tone ?? "unknown";
+
+  const errors = lines
+    .filter((l) => l.startsWith("ERR"))
+    .map((errLine) => {
+      const errFields = errLine.split(fieldSep);
+      // HL7 v2.4+: ERR-3 is the HL7 error code (composite). Older versions used ERR-1.
+      // Take whichever field is non-empty as a best-effort code; surface the first component.
+      const errorCodeField = errFields[3] || errFields[1] || "";
+      const errorCode = errorCodeField.split(componentSep)[0]?.trim() || null;
+      const severity = (errFields[4] ?? "").trim() || null;
+      const text = (errFields[5] ?? "").trim() || null;
+      return { errorCode, severity, text };
+    });
+
+  return { ackCode, ackLabel, tone, controlId, textMessage, errors };
+};
+
 export const Hl7WorkbenchTab = () => {
   const [payload, setPayload] = useState("");
   const [requiredSegments, setRequiredSegments] = useState("MSH,PID");
@@ -176,7 +243,13 @@ export const Hl7WorkbenchTab = () => {
         {dispatchMutation.isError && (
           <p className="text-xs text-rose-300">{humanizeError(dispatchMutation.error)}</p>
         )}
-        {dispatchMutation.data && <DispatchResult data={dispatchMutation.data} />}
+        {dispatchMutation.data && (
+          <DispatchResult
+            data={dispatchMutation.data}
+            onRetry={() => dispatchMutation.mutate()}
+            isRetrying={dispatchMutation.isPending}
+          />
+        )}
       </section>
     </div>
   );
@@ -244,51 +317,126 @@ const ValidateResult = ({ data }: { data: WorkbenchValidateResponse }) => (
   </div>
 );
 
-const DispatchResult = ({ data }: { data: WorkbenchDispatchResponse }) => (
-  <div
-    className={
-      "rounded border p-3 text-xs space-y-2 " +
-      (data.succeeded
-        ? "border-emerald-700/60 bg-emerald-950/40"
-        : "border-rose-700/60 bg-rose-950/40")
-    }
-  >
-    <p className={data.succeeded ? "text-emerald-200" : "text-rose-200"}>
-      {data.succeeded
-        ? `✓ Dispatched (correlation ${data.correlationId}).`
-        : `✗ ${data.error ?? "Dispatch failed."}`}
-    </p>
-    {data.responsePayload && (
-      <details className="text-slate-300">
-        <summary className="cursor-pointer">Response payload</summary>
-        <pre className="mt-1 max-h-40 overflow-auto rounded bg-slate-950 p-2 font-mono text-[11px]">
-          {data.responsePayload}
-        </pre>
-      </details>
-    )}
-    {data.ledgerSnapshot.length > 0 && (
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-[11px]">
+const DispatchResult = ({
+  data,
+  onRetry,
+  isRetrying,
+}: {
+  data: WorkbenchDispatchResponse;
+  onRetry: () => void;
+  isRetrying: boolean;
+}) => {
+  const ack = parseAck(data.responsePayload);
+  return (
+    <div
+      className={
+        "rounded border p-3 text-xs space-y-2 " +
+        (data.succeeded
+          ? "border-emerald-700/60 bg-emerald-950/40"
+          : "border-rose-700/60 bg-rose-950/40")
+      }
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className={data.succeeded ? "text-emerald-200" : "text-rose-200"}>
+          {data.succeeded
+            ? `✓ Dispatched (correlation ${data.correlationId}).`
+            : `✗ ${data.error ?? "Dispatch failed."}`}
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={isRetrying}
+          title="Re-send the same payload through the same channel"
+          className="shrink-0 rounded border border-slate-700 px-2 py-0.5 text-[11px] text-slate-200 hover:bg-slate-800 disabled:bg-slate-900 disabled:text-slate-500"
+        >
+          {isRetrying ? "Retrying…" : "Retry"}
+        </button>
+      </div>
+      {ack && <AckPanel ack={ack} />}
+      {data.responsePayload && (
+        <details className="text-slate-300">
+          <summary className="cursor-pointer">
+            {ack ? "Raw ACK payload" : "Response payload"}
+          </summary>
+          <pre className="mt-1 max-h-40 overflow-auto rounded bg-slate-950 p-2 font-mono text-[11px]">
+            {data.responsePayload}
+          </pre>
+        </details>
+      )}
+      {data.ledgerSnapshot.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-[11px]">
+            <thead className="text-slate-400">
+              <tr>
+                <th className="px-2 py-1 text-left">Status</th>
+                <th className="px-2 py-1 text-left">Route</th>
+                <th className="px-2 py-1 text-left">Detail</th>
+                <th className="px-2 py-1 text-left">At</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-200">
+              {data.ledgerSnapshot.map((row) => (
+                <tr key={row.id} className="border-t border-slate-800/60">
+                  <td className="px-2 py-1">{row.status}</td>
+                  <td className="px-2 py-1">{row.outboundRouteOrdinal ?? "—"}</td>
+                  <td className="px-2 py-1">{row.detail ?? "—"}</td>
+                  <td className="px-2 py-1">{new Date(row.createdAtUtc).toLocaleTimeString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AckPanel = ({ ack }: { ack: ParsedAck }) => {
+  const toneClass =
+    ack.tone === "accept"
+      ? "border-emerald-700/60 bg-emerald-950/30 text-emerald-200"
+      : ack.tone === "error"
+        ? "border-amber-700/60 bg-amber-950/30 text-amber-200"
+        : ack.tone === "reject"
+          ? "border-rose-700/60 bg-rose-950/30 text-rose-200"
+          : "border-slate-700/60 bg-slate-900/40 text-slate-200";
+  return (
+    <div className={`rounded border p-2 ${toneClass}`}>
+      <p className="text-[11px] font-semibold">
+        ACK · {ack.ackCode} — {ack.ackLabel}
+      </p>
+      <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-slate-300">
+        {ack.controlId && (
+          <span>
+            <span className="text-slate-500">Control ID:</span> {ack.controlId}
+          </span>
+        )}
+        {ack.textMessage && (
+          <span className="col-span-2">
+            <span className="text-slate-500">Text:</span> {ack.textMessage}
+          </span>
+        )}
+      </div>
+      {ack.errors.length > 0 && (
+        <table className="mt-1 w-full text-[11px]">
           <thead className="text-slate-400">
             <tr>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Route</th>
-              <th className="px-2 py-1 text-left">Detail</th>
-              <th className="px-2 py-1 text-left">At</th>
+              <th className="px-1 py-0.5 text-left">Error</th>
+              <th className="px-1 py-0.5 text-left">Severity</th>
+              <th className="px-1 py-0.5 text-left">Text</th>
             </tr>
           </thead>
           <tbody className="text-slate-200">
-            {data.ledgerSnapshot.map((row) => (
-              <tr key={row.id} className="border-t border-slate-800/60">
-                <td className="px-2 py-1">{row.status}</td>
-                <td className="px-2 py-1">{row.outboundRouteOrdinal ?? "—"}</td>
-                <td className="px-2 py-1">{row.detail ?? "—"}</td>
-                <td className="px-2 py-1">{new Date(row.createdAtUtc).toLocaleTimeString()}</td>
+            {ack.errors.map((err, i) => (
+              <tr key={i} className="border-t border-slate-800/60">
+                <td className="px-1 py-0.5">{err.errorCode ?? "—"}</td>
+                <td className="px-1 py-0.5">{err.severity ?? "—"}</td>
+                <td className="px-1 py-0.5">{err.text ?? "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
+};
