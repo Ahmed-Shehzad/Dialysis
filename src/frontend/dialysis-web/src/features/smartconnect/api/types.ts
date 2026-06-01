@@ -132,6 +132,10 @@ export type MessageListQuery = {
   from?: string;
   to?: string;
   status?: MessageLedgerStatusValue;
+  /** Exact-match filter on the derived MSH-9 column (e.g. `ORU^R01`). */
+  messageType?: string;
+  /** Exact-match filter on the derived sender column (e.g. `MachineA@FACILITY`). */
+  senderId?: string;
   skip?: number;
   take?: number;
 };

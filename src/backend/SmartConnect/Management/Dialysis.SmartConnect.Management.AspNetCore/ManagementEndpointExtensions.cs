@@ -501,6 +501,8 @@ public static class ManagementEndpointExtensions
                         DateTimeOffset? from,
                         DateTimeOffset? to,
                         int? status,
+                        string? messageType,
+                        string? senderId,
                         int? skip,
                         int? take,
                         CancellationToken ct) =>
@@ -513,6 +515,11 @@ public static class ManagementEndpointExtensions
                             CreatedFromUtc = from,
                             CreatedToUtc = to,
                             Status = st,
+                            // Slice C2: derived ledger columns. Filter values come from the MLLP /
+                            // HTTP source connectors (`MSH-9` and `MSH-3@MSH-4` for HL7) — operators
+                            // pick from a dropdown / type-ahead the frontend populates from the data.
+                            MessageType = string.IsNullOrWhiteSpace(messageType) ? null : messageType,
+                            SenderId = string.IsNullOrWhiteSpace(senderId) ? null : senderId,
                             Skip = skip ?? 0,
                             Take = take ?? 50,
                         };
