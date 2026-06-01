@@ -118,6 +118,10 @@ export type MessageLedgerEntry = {
   detail?: string | null;
   /** Backend may return base64-encoded bytes or null. */
   payloadSnapshot?: string | null;
+  /** Free-form metadata bag — `BATCH_METADATA_KEYS` for batch context (slice D2);
+   * `LEDGER_SEARCH_KEYS` for the C2 indexed columns; arbitrary keys for source-transport
+   * provenance. */
+  metadata?: Record<string, string>;
   createdAtUtc: string;
 };
 
@@ -136,9 +140,21 @@ export type MessageListQuery = {
   messageType?: string;
   /** Exact-match filter on the derived sender column (e.g. `MachineA@FACILITY`). */
   senderId?: string;
+  /** Exact-match filter on the derived batch-id column — the inbound transport's source
+   * identifier (e.g. a fully-qualified file path) shared by every record in a fan-out. */
+  batchId?: string;
   skip?: number;
   take?: number;
 };
+
+/** Stable metadata keys for slice D2 batch context. Mirrors `BatchMetadataKeys` on the
+ * backend so the dashboard can read batch info off a ledger entry without re-deriving it. */
+export const BATCH_METADATA_KEYS = {
+  BatchId: "smartconnect.batch.id",
+  Sequence: "smartconnect.batch.sequence",
+  Total: "smartconnect.batch.total",
+  Source: "smartconnect.batch.source",
+} as const;
 
 export type FlowStatusCount = {
   status: MessageLedgerStatusValue;

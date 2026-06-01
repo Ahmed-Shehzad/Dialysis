@@ -12,6 +12,7 @@ import {
 } from "../api/messages";
 import { OutboundConcurrencyTimeline } from "../components/OutboundConcurrencyTimeline";
 import {
+  BATCH_METADATA_KEYS,
   type MessageLedgerEntry,
   MessageLedgerStatus,
   MessageLedgerStatusLabel,
@@ -239,7 +240,7 @@ export const MessagesTab = () => {
 
   return (
     <section className="space-y-4">
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-8">
         <select
           value={filters.flowId ?? ""}
           onChange={(e) => update({ flowId: e.target.value || undefined })}
@@ -289,6 +290,13 @@ export const MessagesTab = () => {
           value={filters.senderId ?? ""}
           onChange={(e) => update({ senderId: e.target.value || undefined })}
           title="Exact match on the derived sender ledger column (sendingApp@sendingFacility for HL7)"
+          className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500"
+        />
+        <input
+          placeholder="Batch ID (e.g. file:/in/labs.csv)"
+          value={filters.batchId ?? ""}
+          onChange={(e) => update({ batchId: e.target.value || undefined })}
+          title="Exact match on the derived batch-id ledger column — every record fanned out from a single source shares one batch id"
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500"
         />
         <input
@@ -348,7 +356,10 @@ export const MessagesTab = () => {
                       {m.outboundRouteOrdinal ?? "—"}
                     </td>
                     <td className="px-3 py-2 font-mono text-xs text-slate-400">
-                      {m.correlationId}
+                      <div className="flex items-center gap-2">
+                        <span>{m.correlationId}</span>
+                        <BatchBadge entry={m} onFilter={(batchId) => update({ batchId })} />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -384,5 +395,38 @@ export const MessagesTab = () => {
 
       {drawerId && <MessageDrawer entryId={drawerId} onClose={() => setDrawerId(null)} />}
     </section>
+  );
+};
+
+/**
+ * Slice D2 affordance — compact "batch n/total" pill that surfaces batch context inline on
+ * each ledger row. Click filters the grid to every message in the same batch via the
+ * indexed `BatchId` column. Renders nothing when the row carries no batch metadata.
+ */
+const BatchBadge = ({
+  entry,
+  onFilter,
+}: {
+  entry: MessageLedgerEntry;
+  onFilter: (batchId: string) => void;
+}) => {
+  const meta = entry.metadata;
+  if (!meta) return null;
+  const batchId = meta[BATCH_METADATA_KEYS.BatchId];
+  if (!batchId) return null;
+  const sequence = meta[BATCH_METADATA_KEYS.Sequence];
+  const total = meta[BATCH_METADATA_KEYS.Total];
+  return (
+    <button
+      type="button"
+      title={`Filter to batch: ${batchId}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onFilter(batchId);
+      }}
+      className="rounded-full border border-slate-700 bg-slate-800/60 px-2 py-0.5 text-[10px] font-normal text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+    >
+      {sequence && total ? `batch ${sequence}/${total}` : "batch"}
+    </button>
   );
 };

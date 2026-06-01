@@ -328,6 +328,14 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             return [bytes];
         }
 
+        if (parameters.SplitMode == FileReaderSplitMode.DelimitedTextRecords)
+        {
+            // Slice D2 / L2: stream-parse the CSV and emit one record per data row. The shared
+            // `DelimitedTextStreaming` helper reads via `StreamReader.ReadLine`, so memory stays
+            // ~ 1× file size even for 100k-row drops. Header row (when configured) is dropped.
+            return SplitDelimitedText(bytes, parameters);
+        }
+
         var text = System.Text.Encoding.UTF8.GetString(bytes);
         IEnumerable<string> records = parameters.SplitMode switch
         {
@@ -344,6 +352,47 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             .Where(b => b.Length > 0)
             .ToArray();
         return result.Length == 0 ? [bytes] : result;
+    }
+
+    /// <summary>
+    /// Slice D2 / L2 composition: parse a delimited-text file and emit one byte array per
+    /// data row (the original line, encoded as UTF-8). The first non-blank row is treated
+    /// as the header and dropped when the parameters say so. Returns a single-element
+    /// list with the whole file when no data rows survive (so the outer loop's "fan-out
+    /// only when records.Count > 1" branch falls back to one-message-per-file behaviour
+    /// gracefully for malformed / empty inputs).
+    /// </summary>
+    private static IReadOnlyList<byte[]> SplitDelimitedText(byte[] bytes, FileReaderParameters parameters)
+    {
+        var delimiter = !string.IsNullOrEmpty(parameters.DelimitedTextDelimiter)
+            ? Dialysis.SmartConnect.DataTypes.DelimitedTextStreaming.ResolveDelimiter(parameters.DelimitedTextDelimiter!)
+            : ',';
+        var options = new Dialysis.SmartConnect.DataTypes.DelimitedTextStreaming.Options(
+            Delimiter: delimiter,
+            HasHeaderRow: parameters.DelimitedTextHasHeaderRow,
+            TrimWhitespace: true,
+            SkipBlankLines: true);
+
+        // The raw line is the natural per-record payload — preserves the on-the-wire shape
+        // operators can compare against the source file. We use the streaming reader to skip
+        // blanks + drop the header in lockstep, but reread the line from the byte buffer
+        // so the payload is bytes-faithful rather than re-serialised JSON.
+        using var input = new MemoryStream(bytes, writable: false);
+        using var reader = new StreamReader(input, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+
+        if (parameters.DelimitedTextHasHeaderRow)
+        {
+            // Consume the header row from the reader so subsequent ReadLine calls return data.
+            _ = Dialysis.SmartConnect.DataTypes.DelimitedTextStreaming.ReadHeader(reader, options);
+        }
+
+        var records = new List<byte[]>();
+        while (reader.ReadLine() is { } line)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            records.Add(System.Text.Encoding.UTF8.GetBytes(line));
+        }
+        return records.Count == 0 ? [bytes] : records;
     }
 
     private static IEnumerable<string> SplitOnHl7v2(string text)

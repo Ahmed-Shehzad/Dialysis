@@ -32,6 +32,11 @@ public sealed class MessageLedgerQueryCriteria
     /// e.g. <c>"MachineA@FACILITY"</c>. <c>null</c> skips the predicate.</summary>
     public string? SenderId { get; init; }
 
+    /// <summary>Slice D2: exact-match filter on the derived <c>BatchId</c> column — e.g. the
+    /// absolute file path the File Reader fanned out into N messages. <c>null</c> skips the
+    /// predicate.</summary>
+    public string? BatchId { get; init; }
+
     public int Skip { get; init; }
 
     public int Take { get; init; } = 50;
