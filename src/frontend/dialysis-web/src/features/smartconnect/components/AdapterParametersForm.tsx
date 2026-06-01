@@ -1,10 +1,16 @@
 import { useMemo } from "react";
-import { type AdapterField, getSchema } from "../api/adapterSchemas";
+import { type AdapterField, type AdapterSchema, getSchema } from "../api/adapterSchemas";
 
 type Props = {
   kind: string;
   propertiesJson: string | null;
   onChange: (next: string | null) => void;
+  /**
+   * Optional resolver for non-outbound-adapter slots (route filters, transform stages). Defaults
+   * to `getSchema` for the outbound-route editor. Pass `getRouteFilterSchema` /
+   * `getTransformStageSchema` from `adapterSchemas.ts` for the upstream slots.
+   */
+  schemaResolver?: (kind: string) => AdapterSchema | undefined;
 };
 
 // Best-effort parse: handles empty / invalid JSON gracefully so the form keeps rendering even
@@ -42,8 +48,13 @@ const stringify = (field: AdapterField, value: unknown): string => {
   return String(value);
 };
 
-export const AdapterParametersForm = ({ kind, propertiesJson, onChange }: Props) => {
-  const schema = useMemo(() => getSchema(kind), [kind]);
+export const AdapterParametersForm = ({
+  kind,
+  propertiesJson,
+  onChange,
+  schemaResolver = getSchema,
+}: Props) => {
+  const schema = useMemo(() => schemaResolver(kind), [schemaResolver, kind]);
   const current = useMemo(() => parseSafely(propertiesJson), [propertiesJson]);
 
   if (!schema) {
