@@ -43,17 +43,17 @@ extend selected slices.
 
 Each is a focused next-PR that builds on what landed; pick up based on partner-driven priority.
 
-| # | Slice | Why deferred |
+| # | Slice | Status / why deferred |
 |---|---|---|
-| A2 | mTLS / client-certificate auth on outbound HTTP | Needs per-cert HttpClient pool — bigger refactor than slice A's per-request providers. Promote when a partner requires mTLS |
+| ~~A2~~ | ~~mTLS / client-certificate auth on outbound HTTP~~ | **Shipped.** `MutualTlsHttpClientFactory` with concurrent thumbprint-keyed pool; `MutualTlsAuthenticationProvider` Kind `mutual-tls`; supports PEM + PKCS#12. |
 | B2 | Manifest-style schema endpoint + operator-shell form per connector kind | Connector-property shape is stable; the form generator is its own slice |
-| C2 | Derived indexed columns (`MessageType`, `SenderId`) + dashboard filters | Backend column add + Postgres migration; UI filter add. Wait until metadata key conventions stabilise across more flows |
+| C2 | Derived indexed columns (`MessageType`, `SenderId`) + dashboard filters | **Partially done** — columns exist on `MessageLedgerEntryEntity` + are populated; dashboard UI filters still TBD. Lands when an operator complains. |
 | D2 | Inbound File Reader emits one message per record + `WithBatch(…)` | Currently no transport produces multi-message fan-outs; lands when CSV-per-row or HL7v2-per-segment ingestion is wanted |
 | E2 | Nested SQ (sequence) element expansion in `DicomTransformStage` | Current output flattens SQs; wait for a partner shipping heavily nested datasets |
-| G2 | React Flow graph rendering in the channel editor | Scaffold + JSON round-trip ships in G; graph is a meaningful additional slice |
+| ~~G2~~ | ~~React Flow graph rendering in the channel editor~~ | **Shipped.** `PipelineGraph` is the interactive editor in `ChannelEditorPage`; supports add/edit/reorder/remove + a kind picker driven by the `adapterSchemas` resolvers. JSON view remains as an escape hatch. |
 | H2 | Cornerstone3D / OHIF pixel-data viewer | Megabytes of JS bundle; defer until clinical pixel review is wanted in the operator shell |
-| J3 | Per-source clock-skew correction policy storage + audit-event emission | Source-connector schema change + new integration event; lands when a partner needs auto-correction |
-| K2 | NCPDP transaction-specific FHIR mapping (Claim / MedicationRequest / CoverageEligibilityRequest) | Need real partner samples to know which transactions matter |
+| ~~J3~~ | ~~Per-source clock-skew correction policy storage + audit-event emission~~ | **Shipped.** `MllpInboundHostedService.TryObserveAndCorrect` applies `ClockSkewCorrectionPolicy`; `Normalize` mode corrects + emits to `IClockSkewSink`; `ReportOnly` observes only. |
+| K2 | NCPDP transaction-specific FHIR mapping — remaining transactions (B2 reversal, E3 eligibility response, D2 fill detail) | **Partially done** — B1 / E1 / D1 already shipped. Remaining transactions land when partner samples arrive. |
 | L2 | Streaming-iterator delimited-text mode for very large CSVs | Current synchronous parse fine for partner files we've seen; promote past ~10 MB |
 
 ## Cross-references

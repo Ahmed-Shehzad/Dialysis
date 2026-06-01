@@ -127,6 +127,8 @@ Hosts and ports:
 
 The new flow appears in the list with state `Started`. The dialog uses the same `POST /smartconnect/v1/admin/flows` endpoint as the API path below — the JSON it sends is exactly what gets persisted.
 
+> To **edit** an existing channel's pipeline visually, click the **Edit** link on its row in the Flows tab. The visual editor (slice G2) lets you add / reorder / remove route filters, source transforms, and outbound routes through the React Flow graph, then writes the same JSON back via `PUT /smartconnect/v1/admin/flows/{id}`.
+
 ### Option B — API directly
 
 ```bash

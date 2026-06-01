@@ -1,17 +1,35 @@
-// Slice G2 of the SmartConnect ↔ Mirth alignment plan: read-only React Flow rendering of
-// an IntegrationFlowPipelineDefinition. Operators see the source → filters → transforms →
-// routes shape at a glance and click an outbound node to follow the connector-property
-// schema (slice B2) into a per-route form. Edits still round-trip through the JSON view
-// that ships in slice G's scaffold; G2 is purely a visualisation pass.
+// SmartConnect ↔ Mirth alignment — slice G2 (interactive). React Flow rendering of an
+// IntegrationFlowPipelineDefinition. Read-only when `onSelectNode` is omitted (the original
+// G2 visualisation); becomes the editor surface when the caller passes selection + add-node
+// callbacks (paired with PipelineNodeDrawer for kind / parameters editing).
+//
+// Edits round-trip through the JSON the runtime consumes — the graph is an alternative
+// input method, not a new wire format.
 
-import { useMemo } from "react";
-import { Background, Controls, MarkerType, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import { useCallback, useMemo } from "react";
+import {
+  Background,
+  Controls,
+  MarkerType,
+  ReactFlow,
+  type Edge,
+  type Node,
+  type NodeMouseHandler,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import type { IntegrationFlowPipelineDefinition } from "@/features/smartconnect/api/types";
 
+export type PipelineColumn = "filter" | "transform" | "outbound";
+
 interface PipelineGraphProps {
   pipeline: IntegrationFlowPipelineDefinition;
+  /** Currently-selected node id (e.g. `filter-0`). When set, the node gets a brighter border. */
+  selectedNodeId?: string | null;
+  /** Called when the operator clicks a real node (not the `+` placeholders). `null` clears. */
+  onSelectNode?: (id: string | null) => void;
+  /** Called when the operator clicks a column's `+` placeholder. Activates the placeholders. */
+  onAddNode?: (column: PipelineColumn) => void;
 }
 
 const COLUMN_X = {
@@ -23,18 +41,56 @@ const COLUMN_X = {
 const ROW_HEIGHT = 90;
 const NODE_BASE_WIDTH = 180;
 
-const nodeStyle = (tint: string): Node["style"] => ({
+const nodeStyle = (tint: string, selected: boolean): Node["style"] => ({
   background: tint,
-  border: "1px solid #475569",
+  border: selected ? "2px solid #38bdf8" : "1px solid #475569",
   color: "#f1f5f9",
   borderRadius: 4,
   padding: 8,
   fontSize: 11,
   width: NODE_BASE_WIDTH,
+  boxShadow: selected ? "0 0 0 2px rgba(56,189,248,0.25)" : undefined,
 });
 
-export function PipelineGraph({ pipeline }: PipelineGraphProps): JSX.Element {
-  const { nodes, edges } = useMemo(() => buildGraph(pipeline), [pipeline]);
+const placeholderStyle: Node["style"] = {
+  background: "#0b1220",
+  border: "1px dashed #64748b",
+  color: "#94a3b8",
+  borderRadius: 4,
+  padding: 8,
+  fontSize: 11,
+  width: NODE_BASE_WIDTH,
+  textAlign: "center",
+};
+
+export function PipelineGraph({
+  pipeline,
+  selectedNodeId = null,
+  onSelectNode,
+  onAddNode,
+}: PipelineGraphProps): JSX.Element {
+  const { nodes, edges } = useMemo(
+    () => buildGraph(pipeline, selectedNodeId, Boolean(onAddNode)),
+    [pipeline, selectedNodeId, onAddNode],
+  );
+
+  const handleNodeClick = useCallback<NodeMouseHandler>(
+    (_event, node) => {
+      if (node.id.startsWith("add-")) {
+        if (!onAddNode) return;
+        if (node.id === "add-filter") onAddNode("filter");
+        else if (node.id === "add-transform") onAddNode("transform");
+        else if (node.id === "add-outbound") onAddNode("outbound");
+        return;
+      }
+      onSelectNode?.(node.id);
+    },
+    [onAddNode, onSelectNode],
+  );
+
+  const handlePaneClick = useCallback(() => {
+    onSelectNode?.(null);
+  }, [onSelectNode]);
 
   return (
     <div className="h-[480px] w-full rounded border border-slate-700 bg-slate-950">
@@ -45,6 +101,8 @@ export function PipelineGraph({ pipeline }: PipelineGraphProps): JSX.Element {
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable
+        onNodeClick={onSelectNode || onAddNode ? handleNodeClick : undefined}
+        onPaneClick={onSelectNode ? handlePaneClick : undefined}
         proOptions={{ hideAttribution: true }}
       >
         <Background gap={16} color="#1e293b" />
@@ -54,7 +112,11 @@ export function PipelineGraph({ pipeline }: PipelineGraphProps): JSX.Element {
   );
 }
 
-function buildGraph(pipeline: IntegrationFlowPipelineDefinition): {
+function buildGraph(
+  pipeline: IntegrationFlowPipelineDefinition,
+  selectedNodeId: string | null,
+  showPlaceholders: boolean,
+): {
   nodes: Node[];
   edges: Edge[];
 } {
@@ -66,43 +128,59 @@ function buildGraph(pipeline: IntegrationFlowPipelineDefinition): {
     id: sourceId,
     position: { x: COLUMN_X.source, y: 0 },
     data: { label: <strong>Source</strong> },
-    style: nodeStyle("#0f172a"),
+    style: nodeStyle("#0f172a", false),
   });
 
-  // Filters column — each route filter slot is one node, stacked vertically.
   const filterIds = pipeline.routeFilters.map((_, idx) => `filter-${idx}`);
   pipeline.routeFilters.forEach((slot, idx) => {
     nodes.push({
       id: filterIds[idx]!,
       position: { x: COLUMN_X.filter, y: idx * ROW_HEIGHT },
       data: { label: <NodeBody kind={slot.kind} role="Route filter" /> },
-      style: nodeStyle("#1e293b"),
+      style: nodeStyle("#1e293b", selectedNodeId === filterIds[idx]),
     });
   });
 
-  // Source-side transform stages column.
   const transformIds = pipeline.sourceTransformStages.map((_, idx) => `transform-${idx}`);
   pipeline.sourceTransformStages.forEach((slot, idx) => {
     nodes.push({
       id: transformIds[idx]!,
       position: { x: COLUMN_X.transform, y: idx * ROW_HEIGHT },
       data: { label: <NodeBody kind={slot.kind} role="Transform" /> },
-      style: nodeStyle("#1e293b"),
+      style: nodeStyle("#1e293b", selectedNodeId === transformIds[idx]),
     });
   });
 
-  // Outbound routes column — one node per route. Sequential vs. parallel is encoded by
-  // the edges (a sequential pipeline chains routes 0 → 1 → 2; parallel fans out from
-  // the last upstream node into each route).
   const outboundIds = pipeline.outboundRoutes.map((_, idx) => `outbound-${idx}`);
   pipeline.outboundRoutes.forEach((slot, idx) => {
     nodes.push({
       id: outboundIds[idx]!,
       position: { x: COLUMN_X.outbound, y: idx * ROW_HEIGHT },
       data: { label: <NodeBody kind={slot.kind} role="Outbound route" /> },
-      style: nodeStyle("#172033"),
+      style: nodeStyle("#172033", selectedNodeId === outboundIds[idx]),
     });
   });
+
+  if (showPlaceholders) {
+    nodes.push({
+      id: "add-filter",
+      position: { x: COLUMN_X.filter, y: pipeline.routeFilters.length * ROW_HEIGHT },
+      data: { label: <span>+ Add filter</span> },
+      style: placeholderStyle,
+    });
+    nodes.push({
+      id: "add-transform",
+      position: { x: COLUMN_X.transform, y: pipeline.sourceTransformStages.length * ROW_HEIGHT },
+      data: { label: <span>+ Add transform</span> },
+      style: placeholderStyle,
+    });
+    nodes.push({
+      id: "add-outbound",
+      position: { x: COLUMN_X.outbound, y: pipeline.outboundRoutes.length * ROW_HEIGHT },
+      data: { label: <span>+ Add route</span> },
+      style: placeholderStyle,
+    });
+  }
 
   // Wire edges: source → first filter → … → first transform → … → each outbound.
   let lastUpstream = sourceId;
@@ -120,7 +198,6 @@ function buildGraph(pipeline: IntegrationFlowPipelineDefinition): {
       lastUpstream = id;
     }
   } else {
-    // Parallel — every outbound branches from the last upstream node.
     for (const id of outboundIds) {
       edges.push(makeEdge(`${lastUpstream}-${id}`, lastUpstream, id));
     }
