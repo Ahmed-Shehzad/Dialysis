@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.DataProtection.AspNetCore</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.DataProtection.AspNetCore</AssemblyName>
+    <Description>ASP.NET Core endpoint extensions for GDPR / BDSG / PDSG: RoPA, data-subject rights, breach log.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
