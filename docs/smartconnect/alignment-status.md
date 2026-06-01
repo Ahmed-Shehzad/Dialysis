@@ -54,7 +54,7 @@ Each is a focused next-PR that builds on what landed; pick up based on partner-d
 | H2 | Cornerstone3D / OHIF pixel-data viewer | Megabytes of JS bundle; defer until clinical pixel review is wanted in the operator shell |
 | ~~J3~~ | ~~Per-source clock-skew correction policy storage + audit-event emission~~ | **Shipped.** `MllpInboundHostedService.TryObserveAndCorrect` applies `ClockSkewCorrectionPolicy`; `Normalize` mode corrects + emits to `IClockSkewSink`; `ReportOnly` observes only. |
 | K2 | NCPDP transaction-specific FHIR mapping — remaining transactions (B2 reversal, E3 eligibility response, D2 fill detail) | **Partially done** — B1 / E1 / D1 already shipped. Remaining transactions land when partner samples arrive. |
-| L2 | Streaming-iterator delimited-text mode for very large CSVs | Current synchronous parse fine for partner files we've seen; promote past ~10 MB |
+| ~~L2~~ | ~~Streaming-iterator delimited-text mode for very large CSVs~~ | **Shipped.** `DelimitedTextTransformStage` now reads via `StreamReader.ReadLine` and writes rows directly to a `Utf8JsonWriter` — peak working-set is ~ 1× file size instead of ~ 3×. Backed by 50k-row / 20k-row correctness tests for NDJSON + array outputs. |
 
 ## Cross-references
 
