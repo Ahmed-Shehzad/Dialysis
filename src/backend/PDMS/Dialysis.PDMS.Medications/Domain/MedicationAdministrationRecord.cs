@@ -132,6 +132,16 @@ public enum MarStatus
 /// <summary>One entry in the MAR — either an administration or a decline.</summary>
 public sealed class MedicationAdministrationEntry
 {
+    // EF Core materialises owned-type ctor params via property setters rather than the
+    // bound ctor, so we provide a private parameterless ctor and private setters on the
+    // reference-typed properties. Domain code still constructs via the factory ctor.
+    private MedicationAdministrationEntry()
+    {
+        Medication = null!;
+        Dose = null!;
+        ActorSub = null!;
+    }
+
     private MedicationAdministrationEntry(
         Guid id,
         MedicationCoding medication,
@@ -154,15 +164,15 @@ public sealed class MedicationAdministrationEntry
         RelatedOrderId = relatedOrderId;
     }
 
-    public Guid Id { get; }
-    public MedicationCoding Medication { get; }
-    public Dose Dose { get; }
-    public MedicationRoute Route { get; }
-    public DateTime OccurredAtUtc { get; }
-    public string ActorSub { get; }
-    public bool WasAdministered { get; }
-    public string? DeclineReason { get; }
-    public Guid? RelatedOrderId { get; }
+    public Guid Id { get; private set; }
+    public MedicationCoding Medication { get; private set; }
+    public Dose Dose { get; private set; }
+    public MedicationRoute Route { get; private set; }
+    public DateTime OccurredAtUtc { get; private set; }
+    public string ActorSub { get; private set; }
+    public bool WasAdministered { get; private set; }
+    public string? DeclineReason { get; private set; }
+    public Guid? RelatedOrderId { get; private set; }
 
     internal static MedicationAdministrationEntry Administered(
         Guid id,

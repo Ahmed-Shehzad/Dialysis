@@ -14,8 +14,11 @@
     <ProjectReference Include="../Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Medications/Dialysis.PDMS.Medications.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Reporting/Dialysis.PDMS.Reporting.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.OnCall/Dialysis.PDMS.OnCall.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
     <ProjectReference Include="../Persistence/Dialysis.PDMS.Core.Persistence.InMemory/Dialysis.PDMS.Core.Persistence.InMemory.csproj" />
+    <ProjectReference Include="../Persistence/Dialysis.PDMS.Core.Persistence.Postgresql/Dialysis.PDMS.Core.Persistence.Postgresql.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />

@@ -33,7 +33,7 @@ public sealed class MedicationInventoryItem : AggregateRoot<Guid>
         Threshold = threshold;
     }
 
-    public MedicationCoding Medication { get; private set; }
+    public MedicationCoding Medication { get; private set; } = null!;
     public string LotNumber { get; private set; } = null!;
     public DateTime ExpiryUtc { get; private set; }
     public int OnHandUnits { get; private set; }

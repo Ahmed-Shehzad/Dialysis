@@ -17,6 +17,6 @@ public interface IEscalationPolicyLookup
 /// <summary>Persists the <see cref="AlarmDispatch"/> audit aggregate.</summary>
 public interface IAlarmDispatchRepository
 {
-    void Add(AlarmDispatch dispatch);
+    Task AddAsync(AlarmDispatch dispatch, CancellationToken cancellationToken);
     Task<AlarmDispatch?> FindAsync(Guid dispatchId, CancellationToken cancellationToken);
 }

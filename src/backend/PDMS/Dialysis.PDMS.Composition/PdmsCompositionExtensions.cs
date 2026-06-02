@@ -6,9 +6,17 @@ using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Core.Persistence.InMemory;
+using Dialysis.PDMS.Core.Persistence.Postgresql;
+using Dialysis.BuildingBlocks.ClinicianNotification;
+using Dialysis.PDMS.Medications.Consumers;
 using Dialysis.PDMS.Medications.Domain;
 using Dialysis.PDMS.Medications.IvPumps;
+using Dialysis.PDMS.Medications.Contracts;
+using Dialysis.PDMS.OnCall.Consumers;
+using Dialysis.PDMS.OnCall.Dispatch;
+using Dialysis.PDMS.OnCall.Domain;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
 using Dialysis.PDMS.Reporting.Templating;
@@ -74,14 +82,31 @@ public static class PdmsCompositionExtensions
             services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
             services.AddSingleton<ChairOccupancyProjection>();
 
-            // Medications + Reporting slice composition. The HTTP controllers, the
-            // OnDialysisSessionCompleted reporting consumer, and the OnMedicationAdministered
-            // inventory consumer all consume these registrations.
-            services.AddPdmsInMemoryRepository<MedicationAdministrationRecord, Guid>();
-            services.AddPdmsInMemoryRepository<IvPumpInfusion, Guid>();
-            services.AddPdmsInMemoryRepository<MedicationInventoryItem, Guid>();
-            services.AddPdmsInMemoryRepository<SessionReport, Guid>();
-            services.AddPdmsInMemoryRepository<ReportTemplate, Guid>();
+            // Medications + Reporting + OnCall slice persistence. Provider is selected via
+            // `Pdms:Persistence:Provider` config — `Postgres` (default for hosted environments)
+            // backs every aggregate with EF + Postgres; `InMemory` keeps the dev-machine flow
+            // fast (no Postgres required) and is what the test fixtures use.
+            var provider = configuration["Pdms:Persistence:Provider"] ?? "Postgres";
+            var useInMemory = provider.Equals("InMemory", StringComparison.OrdinalIgnoreCase);
+
+            if (useInMemory)
+            {
+                services.AddPdmsInMemoryRepository<MedicationAdministrationRecord, Guid>();
+                services.AddPdmsInMemoryRepository<IvPumpInfusion, Guid>();
+                services.AddPdmsInMemoryRepository<MedicationInventoryItem, Guid>();
+                services.AddPdmsInMemoryRepository<SessionReport, Guid>();
+                services.AddPdmsInMemoryRepository<ReportTemplate, Guid>();
+                services.AddPdmsInMemoryRepository<OnCallRotation, Guid>();
+                services.AddPdmsInMemoryRepository<EscalationPolicy, Guid>();
+                services.AddPdmsInMemoryRepository<AlarmDispatch, Guid>();
+            }
+            else
+            {
+                // Open-generic registration — `PdmsRepository<,>` resolves whichever aggregate
+                // the controller / consumer asks for, against the same PdmsDbContext.
+                services.AddScoped<DbContext>(sp => sp.GetRequiredService<PdmsDbContext>());
+                services.AddScoped(typeof(IPdmsRepository<,>), typeof(PdmsRepository<,>));
+            }
 
             // Vendor-neutral IV pump driver registry — one ParseAsync per vendor wire shape.
             services.AddSingleton<IIvPumpDriver, BdAlarisCqiDriver>();
@@ -108,9 +133,21 @@ public static class PdmsCompositionExtensions
                 t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
                 t.AddConsumer<PatientPlacedInChairIntegrationEvent, PatientPlacedInChairConsumer>();
 
+                // Medications → inventory deduction loop.
+                t.AddConsumer<MedicationAdministeredIntegrationEvent, OnMedicationAdministered>();
+
+                // IV-pump alarm → on-call escalation loop.
+                t.AddConsumer<IvPumpAlarmRaisedIntegrationEvent, OnIvPumpAlarmRaisedConsumer>();
+
                 if (enableFhirSubscriptions)
                     t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventSubscriptionBroadcaster>();
             });
+
+            // OnCall slice ports + clinician-notification dispatcher.
+            services.AddSingleton<IOnCallRotationLookup, PdmsOnCallRotationLookup>();
+            services.AddSingleton<IEscalationPolicyLookup, PdmsEscalationPolicyLookup>();
+            services.AddSingleton<IAlarmDispatchRepository, PdmsAlarmDispatchRepository>();
+            services.AddClinicianNotification();
             configureTransponderTransport?.Invoke(services);
 
             services.AddCqrs(c =>
