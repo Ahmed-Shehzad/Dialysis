@@ -14,6 +14,7 @@
     <ProjectReference Include="../Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Medications/Dialysis.PDMS.Medications.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.OnCall/Dialysis.PDMS.OnCall.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Reporting/Dialysis.PDMS.Reporting.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
