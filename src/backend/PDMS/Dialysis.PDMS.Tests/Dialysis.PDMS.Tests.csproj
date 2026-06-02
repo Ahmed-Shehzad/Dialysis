@@ -18,12 +18,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="PDFsharp" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Medications/Dialysis.PDMS.Medications.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.OnCall/Dialysis.PDMS.OnCall.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.Reporting/Dialysis.PDMS.Reporting.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
     <ProjectReference Include="../../BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Core/Dialysis.PDMS.Core.csproj" />
     <ProjectReference Include="../../SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />

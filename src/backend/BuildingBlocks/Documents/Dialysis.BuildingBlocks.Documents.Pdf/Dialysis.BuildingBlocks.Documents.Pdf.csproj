@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Documents.Pdf</RootNamespace>
+    <Description>PDF document rendering abstraction with a QuestPDF-backed implementation. Used by PDMS Reporting and EHR Billing to produce discharge letters, shift reports, and billing documents from in-memory document models.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="PDFsharp" />
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Fonts/Lato-Regular.ttf" />
+  </ItemGroup>
+
+</Project>

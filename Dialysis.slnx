@@ -80,6 +80,10 @@
   <Folder Name="/src/backend/BuildingBlocks/ClinicianNotification/">
     <Project Path="src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.csproj" />
   </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Documents/">
+    <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract/Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract.csproj" />
+  </Folder>
   <Folder Name="/src/backend/BuildingBlocks/PlatformGateway/">
     <Project Path="src/backend/BuildingBlocks/PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway.csproj" />
   </Folder>
@@ -123,6 +127,7 @@
     <Project Path="src/backend/PDMS/Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Medications/Dialysis.PDMS.Medications.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.OnCall/Dialysis.PDMS.OnCall.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Reporting/Dialysis.PDMS.Reporting.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Composition/Dialysis.PDMS.Composition.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
