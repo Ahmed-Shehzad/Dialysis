@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dialysis.BuildingBlocks.ClinicianNotification.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Description>Tests for the ClinicianNotification dispatcher and its sender adapters.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.ClinicianNotification.Twilio/Dialysis.BuildingBlocks.ClinicianNotification.Twilio.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.ClinicianNotification.Apns/Dialysis.BuildingBlocks.ClinicianNotification.Apns.csproj" />
+  </ItemGroup>
+
+</Project>

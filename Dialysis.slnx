@@ -79,6 +79,10 @@
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/ClinicianNotification/">
     <Project Path="src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.csproj" />
+    <Project Path="src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.Twilio/Dialysis.BuildingBlocks.ClinicianNotification.Twilio.csproj" />
+    <Project Path="src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.Fcm/Dialysis.BuildingBlocks.ClinicianNotification.Fcm.csproj" />
+    <Project Path="src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.Apns/Dialysis.BuildingBlocks.ClinicianNotification.Apns.csproj" />
+    <Project Path="src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.Tests/Dialysis.BuildingBlocks.ClinicianNotification.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Documents/">
     <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />

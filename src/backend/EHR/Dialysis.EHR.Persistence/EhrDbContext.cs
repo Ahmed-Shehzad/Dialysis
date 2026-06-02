@@ -56,6 +56,8 @@ public sealed class EhrDbContext(
     public DbSet<Claim> Claims => Set<Claim>();
     public DbSet<Remittance> Remittances => Set<Remittance>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<CptFeeScheduleEntry> CptFeeSchedule => Set<CptFeeScheduleEntry>();
+    public DbSet<ChargeIdempotencyMarker> ChargeIdempotencyMarkers => Set<ChargeIdempotencyMarker>();
 
     // Integration
     public DbSet<PharmacyTransmission> PharmacyTransmissions => Set<PharmacyTransmission>();

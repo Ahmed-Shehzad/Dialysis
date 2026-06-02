@@ -13,9 +13,12 @@ using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
+using Dialysis.BuildingBlocks.DataProtection;
+using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.Billing.Consumers;
 using Dialysis.EHR.Billing.Ports;
+using Dialysis.EHR.Persistence.Billing;
 using Dialysis.EHR.Core;
 using Dialysis.EHR.Integration;
 using Dialysis.EHR.Integration.Adapters;
@@ -62,6 +65,37 @@ public static class EhrCompositionExtensions
             services.AddEhrCore();
             services.AddEhrPersistence(configurePersistence);
 
+            services.AddEuDataProtection("ehr", registry =>
+            {
+                registry.RegisterActivity(
+                    activityName: "ehr.chart.read",
+                    basis: LawfulBasis.HealthcareProvision,
+                    categories: DataCategory.Identifying | DataCategory.ClinicalHealth,
+                    purpose: "Display a patient's clinical chart to authorised clinicians.",
+                    retentionKey: "clinical.record",
+                    recipientCategories: ["Treating clinicians"]);
+                registry.RegisterActivity(
+                    activityName: "ehr.billing.charge.capture",
+                    basis: LawfulBasis.Contract,
+                    categories: DataCategory.Identifying | DataCategory.Financial,
+                    purpose: "Capture per-session billable charges following CMS / KBV coding rules.",
+                    retentionKey: "billing.record",
+                    recipientCategories: ["Payers (via clearinghouse)"]);
+                registry.RegisterActivity(
+                    activityName: "ehr.billing.claim.submit",
+                    basis: LawfulBasis.Contract,
+                    categories: DataCategory.Identifying | DataCategory.Financial,
+                    purpose: "Submit ANSI ASC X12N 837P claims to the payer clearinghouse.",
+                    retentionKey: "billing.record",
+                    recipientCategories: ["Clearinghouse", "Payer"]);
+                registry.RegisterActivity(
+                    activityName: "ehr.billing.ack.receive",
+                    basis: LawfulBasis.Contract,
+                    categories: DataCategory.Financial | DataCategory.Operational,
+                    purpose: "Receive 999 / 277CA acknowledgements from the clearinghouse and advance the claim state machine.",
+                    retentionKey: "billing.record");
+            });
+
             services.TryAddScoped<IPharmacyGateway, NoopPharmacyGateway>();
             services.TryAddScoped<ILabGateway, NoopLabGateway>();
             services.TryAddScoped<IInsurerGateway, NoopInsurerGateway>();
@@ -97,11 +131,22 @@ public static class EhrCompositionExtensions
                 EhrCommandRegistrations.RegisterAuthorizationBehaviors(c);
             });
 
-            // Billing ports — production deployments swap these for EF-backed variants
-            // via override; the configurable / in-memory defaults keep the charge bridge
-            // composable without forcing a fee-schedule table or a Postgres handle.
-            services.TryAddSingleton<ICptFeeSchedule, ConfigurableCptFeeSchedule>();
-            services.TryAddSingleton<IChargeIdempotencyStore, InMemoryChargeIdempotencyStore>();
+            // Billing ports — `EHR:Billing:Persistence:Provider` selects between the
+            // EF-backed variants (production: persistent across restarts and replicas)
+            // and the configurable / in-memory variants (dev / tests). The TryAdd*
+            // calls leave operators free to register their own implementations.
+            var billingProvider = configuration["EHR:Billing:Persistence:Provider"] ?? "Postgres";
+            if (billingProvider.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
+            {
+                services.TryAddSingleton<ICptFeeSchedule, ConfigurableCptFeeSchedule>();
+                services.TryAddSingleton<IChargeIdempotencyStore, InMemoryChargeIdempotencyStore>();
+            }
+            else
+            {
+                services.TryAddScoped<DbContext>(sp => sp.GetRequiredService<EhrDbContext>());
+                services.TryAddScoped<ICptFeeSchedule, EfCptFeeSchedule>();
+                services.TryAddScoped<IChargeIdempotencyStore, EfChargeIdempotencyStore>();
+            }
 
             if (enableOutboxRelay)
                 services.AddTransponderOutboxRelay<EhrDbContext>();
