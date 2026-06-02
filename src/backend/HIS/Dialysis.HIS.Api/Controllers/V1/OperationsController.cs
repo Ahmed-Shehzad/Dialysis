@@ -3,6 +3,7 @@ using Dialysis.CQRS;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.Operations.Features.AssignStaffRole;
 using Dialysis.HIS.Operations.Features.GetBillingExportJobById;
+using Dialysis.HIS.Operations.Features.ListBillingExportJobs;
 using Dialysis.HIS.Operations.Features.RecordInventoryMovement;
 using Dialysis.HIS.Operations.Features.SubmitBillingExportJob;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,34 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
                 cancellationToken)
             .ConfigureAwait(false);
         return dto is null ? NotFound() : OkResource(dto, LinkCapabilitiesIndex());
+    }
+
+    /// <summary>
+    /// Operator-dashboard list of recent billing export jobs. Optionally filtered to one
+    /// status (<c>Queued</c>, <c>Completed</c>, <c>Failed</c>); bounded by <paramref name="take"/>
+    /// (1–500, default 100). Newest-first by submission timestamp.
+    /// </summary>
+    [HttpGet("billing/export-jobs")]
+    [ProducesResponseType(typeof(IReadOnlyList<BillingExportJobRow>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ListBillingExportJobsAsync(
+        [FromQuery] string? status = null,
+        [FromQuery] int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var rows = await gateway
+                .SendQueryAsync<ListBillingExportJobsQuery, IReadOnlyList<BillingExportJobRow>>(
+                    new ListBillingExportJobsQuery(status, take),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Ok(rows);
+        }
+        catch (Dialysis.DomainDrivenDesign.Exceptions.DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     public sealed record AssignStaffRoleBody(string RoleCode);

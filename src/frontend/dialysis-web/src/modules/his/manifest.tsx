@@ -6,6 +6,10 @@ import type { ModuleManifest } from "@/shell/types";
 // only load when the user actually navigates into the HIS module.
 const HisTodayPage = lazyPage(() => import("@/modules/his/today/HisTodayPage"), "HisTodayPage");
 const HisWorkflowsPage = lazyPage(() => import("@/pages/HisWorkflowsPage"), "HisWorkflowsPage");
+const BillingExportsPage = lazyPage(
+  () => import("@/modules/his/admin/BillingExportsPage"),
+  "BillingExportsPage",
+);
 
 export const hisModule: ModuleManifest = {
   slug: "his",
@@ -20,6 +24,7 @@ export const hisModule: ModuleManifest = {
     <>
       <Route path="his/today" element={<HisTodayPage />} />
       <Route path="workflows/his" element={<HisWorkflowsPage />} />
+      <Route path="admin/billing/exports" element={<BillingExportsPage />} />
     </>
   ),
 };
