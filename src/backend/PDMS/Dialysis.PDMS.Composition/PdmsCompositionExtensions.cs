@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
@@ -5,6 +6,12 @@ using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.PDMS.Core.Persistence.InMemory;
+using Dialysis.PDMS.Medications.Domain;
+using Dialysis.PDMS.Medications.IvPumps;
+using Dialysis.PDMS.Reporting.Domain;
+using Dialysis.PDMS.Reporting.Generators;
+using Dialysis.PDMS.Reporting.Templating;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.PDMS.TreatmentSessions.Fhir;
@@ -66,6 +73,31 @@ public static class PdmsCompositionExtensions
 
             services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
             services.AddSingleton<ChairOccupancyProjection>();
+
+            // Medications + Reporting slice composition. The HTTP controllers, the
+            // OnDialysisSessionCompleted reporting consumer, and the OnMedicationAdministered
+            // inventory consumer all consume these registrations.
+            services.AddPdmsInMemoryRepository<MedicationAdministrationRecord, Guid>();
+            services.AddPdmsInMemoryRepository<IvPumpInfusion, Guid>();
+            services.AddPdmsInMemoryRepository<MedicationInventoryItem, Guid>();
+            services.AddPdmsInMemoryRepository<SessionReport, Guid>();
+            services.AddPdmsInMemoryRepository<ReportTemplate, Guid>();
+
+            // Vendor-neutral IV pump driver registry — one ParseAsync per vendor wire shape.
+            services.AddSingleton<IIvPumpDriver, BdAlarisCqiDriver>();
+            services.AddSingleton<IIvPumpDriver, BaxterSigmaDriver>();
+            services.AddSingleton<IIvPumpDriver, HospiraPlum360Driver>();
+            services.AddSingleton<IIvPumpDriver, Pcd04NormalisedDriver>();
+
+            // Reporting infrastructure: PDF renderer + Markdown/Mustache binder + the three
+            // generators + an in-memory blob store. Production hosts replace the blob store
+            // with S3 / Azure Blob via a host-specific override.
+            services.AddPdfDocumentRendering();
+            services.AddSingleton<MustacheMarkdownBinder>();
+            services.AddSingleton<DischargeLetterGenerator>();
+            services.AddSingleton<ShiftReportGenerator>();
+            services.AddSingleton<BillingDocumentGenerator>();
+            services.TryAddSingleton<IReportBlobStore, InMemoryReportBlobStore>();
 
             // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
             services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();

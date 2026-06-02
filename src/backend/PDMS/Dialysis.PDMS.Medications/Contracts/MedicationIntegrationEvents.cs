@@ -3,11 +3,8 @@ using Dialysis.DomainDrivenDesign.IntegrationEvents;
 namespace Dialysis.PDMS.Medications.Contracts;
 
 /// <summary>Published when a clinician records a positive medication administration.</summary>
-public sealed class MedicationAdministeredIntegrationEvent : IIntegrationEvent
+public sealed record MedicationAdministeredIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid EntryId { get; init; }
     public required Guid SessionId { get; init; }
     public required Guid PatientId { get; init; }
@@ -23,11 +20,8 @@ public sealed class MedicationAdministeredIntegrationEvent : IIntegrationEvent
 }
 
 /// <summary>Published when a clinician records a declined dose with the operator reason.</summary>
-public sealed class MedicationDeclinedIntegrationEvent : IIntegrationEvent
+public sealed record MedicationDeclinedIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid EntryId { get; init; }
     public required Guid SessionId { get; init; }
     public required Guid PatientId { get; init; }
@@ -40,11 +34,8 @@ public sealed class MedicationDeclinedIntegrationEvent : IIntegrationEvent
 }
 
 /// <summary>Published when an IV pump infusion starts (Status: Running).</summary>
-public sealed class IvPumpInfusionStartedIntegrationEvent : IIntegrationEvent
+public sealed record IvPumpInfusionStartedIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid InfusionId { get; init; }
     public required Guid SessionId { get; init; }
     public required string PumpDeviceId { get; init; }
@@ -57,11 +48,8 @@ public sealed class IvPumpInfusionStartedIntegrationEvent : IIntegrationEvent
 }
 
 /// <summary>Published when an IV pump infusion ends successfully.</summary>
-public sealed class IvPumpInfusionCompletedIntegrationEvent : IIntegrationEvent
+public sealed record IvPumpInfusionCompletedIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid InfusionId { get; init; }
     public required Guid SessionId { get; init; }
     public required decimal InfusedVolumeMl { get; init; }
@@ -69,11 +57,8 @@ public sealed class IvPumpInfusionCompletedIntegrationEvent : IIntegrationEvent
 }
 
 /// <summary>Published when an IV pump raises an alarm; consumed by the on-call notification pipeline.</summary>
-public sealed class IvPumpAlarmRaisedIntegrationEvent : IIntegrationEvent
+public sealed record IvPumpAlarmRaisedIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid InfusionId { get; init; }
     public required Guid SessionId { get; init; }
     public required Guid ChairId { get; init; }
@@ -92,11 +77,8 @@ public enum IvPumpAlarmSeverity
 }
 
 /// <summary>Published when an inventory item's on-hand count crosses below its threshold.</summary>
-public sealed class MedicationInventoryLowIntegrationEvent : IIntegrationEvent
+public sealed record MedicationInventoryLowIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid InventoryItemId { get; init; }
     public required string MedicationCodeSystem { get; init; }
     public required string MedicationCode { get; init; }

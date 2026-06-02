@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchActiveSessions } from "@/features/sessions/api/sessionsApi";
@@ -7,10 +7,14 @@ import { SessionLifecycleControls } from "@/features/sessions/components/Session
 import { TreatmentSummary } from "@/features/sessions/components/TreatmentSummary";
 import { useVitalsStream } from "@/features/vitals/hooks/useVitalsStream";
 import { VitalsChart } from "@/features/vitals/components/VitalsChart";
+import { MedicationsTab } from "@/features/medications/components/MedicationsTab";
+import { SessionReportsTab } from "@/features/reports/components/SessionReportsTab";
 import { ChairsideAlarmStrip } from "@/modules/pdms/chairside/ChairsideAlarmStrip";
 import { ChairsideHeader } from "@/modules/pdms/chairside/ChairsideHeader";
 import { KioskVitals } from "@/modules/pdms/chairside/KioskVitals";
 import { usePatientContext } from "@/shell/PatientContextProvider";
+
+type LiveTab = "vitals" | "medications" | "reports";
 
 export const SessionLivePage = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -53,6 +57,8 @@ export const SessionLivePage = () => {
     });
   }, [session, patient, select]);
 
+  const [tab, setTab] = useState<LiveTab>("vitals");
+
   if (!sessionId) {
     return <div className="text-slate-400">Missing session id.</div>;
   }
@@ -70,11 +76,44 @@ export const SessionLivePage = () => {
       <KioskVitals latest={latest} />
 
       <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-        <h3 className="mb-3 text-sm font-medium text-slate-200">
-          Hemodynamics over time ({merged.length} samples)
-        </h3>
-        <VitalsChart readings={merged} />
+        <div className="mb-3 flex items-center gap-1 border-b border-slate-800/60">
+          <TabButton active={tab === "vitals"} onClick={() => setTab("vitals")}>
+            Vitals ({merged.length})
+          </TabButton>
+          <TabButton active={tab === "medications"} onClick={() => setTab("medications")}>
+            Medications
+          </TabButton>
+          <TabButton active={tab === "reports"} onClick={() => setTab("reports")}>
+            Reports
+          </TabButton>
+        </div>
+        {tab === "vitals" && <VitalsChart readings={merged} />}
+        {tab === "medications" && <MedicationsTab sessionId={sessionId} />}
+        {tab === "reports" && <SessionReportsTab sessionId={sessionId} />}
       </section>
     </div>
   );
 };
+
+const TabButton = ({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={
+      "px-3 py-2 text-sm transition-colors " +
+      (active
+        ? "border-b-2 border-emerald-400 text-slate-100"
+        : "text-slate-400 hover:text-slate-200")
+    }
+  >
+    {children}
+  </button>
+);
