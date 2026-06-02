@@ -1,5 +1,5 @@
 using Dialysis.BuildingBlocks.Documents.Pdf;
-using Dialysis.PDMS.Reporting.Contracts;
+using Dialysis.PDMS.Contracts.Integration;
 
 namespace Dialysis.PDMS.Reporting.Generators;
 
@@ -52,15 +52,16 @@ public sealed class BillingDocumentGenerator(IPdfDocumentRenderer pdf)
                 ["cpt"] = cptCode,
             });
         var bytes = await pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
-        var chargeEvent = new DialysisSessionChargeReadyIntegrationEvent
-        {
-            SessionId = context.SessionId,
-            PatientId = context.PatientId,
-            Modality = context.Modality,
-            DurationMinutes = context.DurationMinutes,
-            CompletedAtUtc = context.CompletedAtUtc,
-            CptCode = cptCode,
-        };
+        var chargeEvent = new DialysisSessionChargeReadyIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            SessionId: context.SessionId,
+            PatientId: context.PatientId,
+            Modality: context.Modality,
+            DurationMinutes: context.DurationMinutes,
+            CompletedAtUtc: context.CompletedAtUtc,
+            CptCode: cptCode);
         return (bytes, chargeEvent);
     }
 
