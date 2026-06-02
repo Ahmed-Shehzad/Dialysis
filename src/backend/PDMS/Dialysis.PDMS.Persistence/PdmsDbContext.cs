@@ -3,6 +3,10 @@ using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.PDMS.Medications.Domain;
+using Dialysis.PDMS.OnCall.Domain;
+using Dialysis.PDMS.Persistence.Configurations;
+using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.TreatmentSessions.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -27,6 +31,17 @@ public sealed class PdmsDbContext(
     public DbSet<MdcCodeCatalogEntry> MdcCodes => Set<MdcCodeCatalogEntry>();
     public DbSet<RawHl7Message> RawHl7Messages => Set<RawHl7Message>();
 
+    // PR 6 — Medications + Reporting + OnCall persistence.
+    public DbSet<MedicationAdministrationRecord> MedicationAdministrationRecords =>
+        Set<MedicationAdministrationRecord>();
+    public DbSet<IvPumpInfusion> IvPumpInfusions => Set<IvPumpInfusion>();
+    public DbSet<MedicationInventoryItem> MedicationInventoryItems => Set<MedicationInventoryItem>();
+    public DbSet<SessionReport> SessionReports => Set<SessionReport>();
+    public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
+    public DbSet<OnCallRotation> OnCallRotations => Set<OnCallRotation>();
+    public DbSet<EscalationPolicy> EscalationPolicies => Set<EscalationPolicy>();
+    public DbSet<AlarmDispatch> AlarmDispatches => Set<AlarmDispatch>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -35,6 +50,17 @@ public sealed class PdmsDbContext(
         modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());
         modelBuilder.ApplyConfiguration(new SubscriptionRecordConfiguration());
         modelBuilder.ApplyConfiguration(new NotificationOutboxRecordConfiguration());
+
+        // PR 6 — Medications + Reporting + OnCall configurations.
+        modelBuilder.ApplyConfiguration(new MedicationAdministrationRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new MedicationAdministrationEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new IvPumpInfusionConfiguration());
+        modelBuilder.ApplyConfiguration(new MedicationInventoryItemConfiguration());
+        modelBuilder.ApplyConfiguration(new SessionReportConfiguration());
+        modelBuilder.ApplyConfiguration(new ReportTemplateConfiguration());
+        modelBuilder.ApplyConfiguration(new OnCallRotationConfiguration());
+        modelBuilder.ApplyConfiguration(new EscalationPolicyConfiguration());
+        modelBuilder.ApplyConfiguration(new AlarmDispatchConfiguration());
 
         modelBuilder.Entity<DialysisSession>(b =>
         {

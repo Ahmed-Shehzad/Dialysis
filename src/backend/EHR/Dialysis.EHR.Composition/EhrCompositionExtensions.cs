@@ -14,6 +14,8 @@ using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.EHR.Billing;
+using Dialysis.EHR.Billing.Consumers;
+using Dialysis.EHR.Billing.Ports;
 using Dialysis.EHR.Core;
 using Dialysis.EHR.Integration;
 using Dialysis.EHR.Integration.Adapters;
@@ -94,6 +96,12 @@ public static class EhrCompositionExtensions
 
                 EhrCommandRegistrations.RegisterAuthorizationBehaviors(c);
             });
+
+            // Billing ports — production deployments swap these for EF-backed variants
+            // via override; the configurable / in-memory defaults keep the charge bridge
+            // composable without forcing a fee-schedule table or a Postgres handle.
+            services.TryAddSingleton<ICptFeeSchedule, ConfigurableCptFeeSchedule>();
+            services.TryAddSingleton<IChargeIdempotencyStore, InMemoryChargeIdempotencyStore>();
 
             if (enableOutboxRelay)
                 services.AddTransponderOutboxRelay<EhrDbContext>();

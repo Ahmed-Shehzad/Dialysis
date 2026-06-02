@@ -3,11 +3,11 @@ namespace Dialysis.PDMS.Medications.Domain;
 /// <summary>
 /// Coded medication identity. Mirrors the value-object shape HIS / EHR use so cross-module
 /// projection is mechanical. Codes can come from RxNorm, NDC, or the German ATC system.
+/// Modelled as a reference record (not a struct) so EF Core can treat it as an owned type
+/// — both <see cref="MedicationAdministrationEntry"/> and <see cref="MedicationInventoryItem"/>
+/// persist their coding inline alongside the parent row.
 /// </summary>
-public readonly record struct MedicationCoding(
-    string CodeSystem,
-    string Code,
-    string DisplayName)
+public sealed record MedicationCoding(string CodeSystem, string Code, string DisplayName)
 {
     public static MedicationCoding RxNorm(string code, string displayName) =>
         new("http://www.nlm.nih.gov/research/umls/rxnorm", code, displayName);
@@ -20,7 +20,7 @@ public readonly record struct MedicationCoding(
 }
 
 /// <summary>Dose value object — quantity + unit, no derivation logic here.</summary>
-public readonly record struct Dose(decimal Quantity, string Unit)
+public sealed record Dose(decimal Quantity, string Unit)
 {
     public static Dose Milligrams(decimal mg) => new(mg, "mg");
     public static Dose Milliliters(decimal ml) => new(ml, "mL");

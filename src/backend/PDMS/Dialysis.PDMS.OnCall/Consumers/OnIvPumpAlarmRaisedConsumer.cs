@@ -53,7 +53,7 @@ public sealed class OnIvPumpAlarmRaisedConsumer(
         if (primary is null)
         {
             dispatch.MarkExhausted(now);
-            dispatches.Add(dispatch);
+            await dispatches.AddAsync(dispatch, context.CancellationToken).ConfigureAwait(false);
             await unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
             return;
         }
@@ -88,7 +88,7 @@ public sealed class OnIvPumpAlarmRaisedConsumer(
                 attemptedAtUtc: clock.GetUtcNow().UtcDateTime);
         }
 
-        dispatches.Add(dispatch);
+        await dispatches.AddAsync(dispatch, context.CancellationToken).ConfigureAwait(false);
         await unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
     }
 
