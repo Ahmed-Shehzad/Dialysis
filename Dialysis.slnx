@@ -82,6 +82,7 @@
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Documents/">
     <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract/Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/PlatformGateway/">
     <Project Path="src/backend/BuildingBlocks/PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway.csproj" />

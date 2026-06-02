@@ -19,6 +19,7 @@
     </PackageReference>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="PDFsharp" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
   </ItemGroup>
 
   <ItemGroup>

@@ -109,6 +109,67 @@ without a separate signing step.
 Coordinate convention: PDF user space (points, origin bottom-left). A4 is ~595×842 pt;
 the signable discharge letter reserves the bottom 150 pt of page 1 for the signature block.
 
+#### Editor — merge / split / extract / remove
+
+`PdfEditor` (PDFsharp-backed) handles the operations a clinical workflow needs to
+assemble or trim multi-document patient dossiers:
+
+| Operation                               | Use case                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| `Merge(IReadOnlyList<...>)`             | Concatenate per-session PDFs into one referral packet                     |
+| `SplitByPage(...)`                      | Fan a multi-page lab report into per-page records                         |
+| `ExtractPages(..., [1, 3])`             | Produce a redacted subset for a GDPR Art. 15 data-subject access request  |
+| `RemovePages(..., [2])`                 | Drop pages a clinician has flagged as incorrect                           |
+| `CountPages(...)`                       | Inspect page count without copying the document                           |
+
+All operations are byte-in / byte-out. The editor never touches the filesystem so it
+plugs into whichever blob store the host wires up.
+
+#### PDF → Markdown and PDF → Word
+
+`IPdfTextExtractor` (PdfPig-backed — pure .NET, Apache-2, no native deps) extracts
+structured text from any PDF: pages, lines, font size, bold flag, and inferred heading
+levels (driven by font-size ratios because clinical PDFs almost never tag headings
+explicitly). Control characters and unmapped-glyph nulls are stripped at the extraction
+boundary so downstream writers don't see invalid XML.
+
+Two converters consume the extractor's output:
+
+- **`PdfToMarkdownConverter`** — emits Markdown with section headings, **bold** runs, and
+  page-break horizontal rules. Deterministic byte-for-byte for the same input.
+- **`PdfToWordConverter`** — emits valid Office Open XML (.docx) via
+  `DocumentFormat.OpenXml`. Inferred headings map to the Word built-in heading styles so
+  the document is navigable via Word's document map and screen readers.
+
+#### OCR — searchable PDFs from scanned input
+
+Clinical workflows mix born-digital PDFs (our reporting output, lab-system exports) with
+scanner output (paper consent forms, faxed referrals). The OCR layer makes both
+searchable through one extractor surface:
+
+- **`IPdfRasterizer`** — rasterises a PDF page into bitmap bytes the OCR engine can
+  consume. Configurable DPI + format (PNG / JPEG / TIFF). Implementations live in
+  sibling packages so deployments without OCR avoid the native PDFium dependency.
+- **`IOcrEngine`** — takes image bytes, returns text + per-word confidence + bounding
+  boxes. Configurable language (English / German / multilingual), engine mode (legacy /
+  LSTM / both), and page segmentation.
+- **`OcrAugmentedTextExtractor`** wraps `IPdfTextExtractor`: any page with no extractable
+  text is rasterised and OCR'd; the merged result feeds the Markdown / Word converters
+  with the same shape as the pure-extraction path. If no rasterizer / OCR is registered,
+  the extractor degrades to pure extraction — no exceptions.
+
+**Tesseract sibling package**
+`Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract` ships the `IOcrEngine`
+implementation backed by Tesseract 5.x (Apache-2, the de-facto open-source OCR engine).
+Composition picks it up via `services.AddTesseractOcrEngine(configuration)`. The
+`Ocr:Tesseract:TessDataPath` configuration entry points at the directory containing the
+`*.traineddata` files Tesseract loads at runtime — production deployments mount the
+trained-data volume there.
+
+The base PDF building block stays free of any native dependency; deployments opt into
+OCR (and pay the disk / startup cost of the trained-data files + the libtesseract native
+binary) only when they actually scan paper documents.
+
 ### `Dialysis.PDMS.Reporting`
 
 - **`SessionReport`** aggregate — one per generated document. State machine:

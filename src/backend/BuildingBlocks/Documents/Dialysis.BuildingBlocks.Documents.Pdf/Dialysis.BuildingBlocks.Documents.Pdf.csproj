@@ -13,6 +13,8 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="QuestPDF" />
     <PackageReference Include="PDFsharp" />
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
   </ItemGroup>
 
   <ItemGroup>
