@@ -1,3 +1,5 @@
+using Dialysis.BuildingBlocks.DataProtection;
+using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
@@ -78,6 +80,53 @@ public static class PdmsCompositionExtensions
         {
             services.AddPdmsCore();
             services.AddPdmsPersistence(configurePersistence);
+
+            // GDPR / BDSG / PDSG compliance envelope. Every processing activity the module
+            // performs is declared here so the RoPA generator (Art. 30) can stitch the
+            // full Records-of-Processing-Activities document together, and so the audit
+            // emitter can attach the matching lawful basis to every PHI read / write.
+            services.AddEuDataProtection("pdms", registry =>
+            {
+                registry.RegisterActivity(
+                    activityName: "pdms.sessions.read",
+                    basis: LawfulBasis.HealthcareProvision,
+                    categories: DataCategory.Identifying | DataCategory.ClinicalHealth,
+                    purpose: "Display a patient's active and historical dialysis sessions.",
+                    retentionKey: "clinical.record",
+                    recipientCategories: ["Treating clinicians", "Patient (via portal)"]);
+                registry.RegisterActivity(
+                    activityName: "pdms.medications.administer",
+                    basis: LawfulBasis.HealthcareProvision,
+                    categories: DataCategory.Identifying | DataCategory.ClinicalHealth | DataCategory.Medication,
+                    purpose: "Record what was administered (or declined) at the chair.",
+                    retentionKey: "clinical.record",
+                    recipientCategories: ["EHR (MedicationStatement update)", "Pharmacy (inventory deduction)"]);
+                registry.RegisterActivity(
+                    activityName: "pdms.ivpumps.telemetry",
+                    basis: LawfulBasis.HealthcareProvision,
+                    categories: DataCategory.ClinicalHealth | DataCategory.DeviceTelemetry,
+                    purpose: "Capture infusion-pump telemetry to detect alarms and document delivery.",
+                    retentionKey: "clinical.record");
+                registry.RegisterActivity(
+                    activityName: "pdms.inventory.adjust",
+                    basis: LawfulBasis.LegalObligation,
+                    categories: DataCategory.Medication | DataCategory.Operational,
+                    purpose: "Track pharmacy stock against administered medications.",
+                    retentionKey: "inventory.ledger");
+                registry.RegisterActivity(
+                    activityName: "pdms.reports.generate",
+                    basis: LawfulBasis.HealthcareProvision,
+                    categories: DataCategory.Identifying | DataCategory.ClinicalHealth,
+                    purpose: "Generate post-session discharge letters and billing summaries.",
+                    retentionKey: "clinical.record",
+                    recipientCategories: ["Patient", "EHR (DocumentReference)", "Optional ePA upload"]);
+                registry.RegisterActivity(
+                    activityName: "pdms.oncall.dispatch",
+                    basis: LawfulBasis.VitalInterests,
+                    categories: DataCategory.Operational,
+                    purpose: "Page the on-call clinician when an IV-pump alarm fires.",
+                    retentionKey: "audit.dispatch");
+            });
 
             services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
             services.AddSingleton<ChairOccupancyProjection>();

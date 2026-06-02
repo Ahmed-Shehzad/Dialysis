@@ -95,6 +95,33 @@ internal static class BillingConfiguration
             b.OwnsOne(p => p.Amount, MapMoney);
             ModuleDbContextBase.MapAuditShadow(b);
         });
+
+        // PR 7 — per-payer / per-CPT fee schedule + idempotency markers backing
+        // EfCptFeeSchedule / EfChargeIdempotencyStore.
+        modelBuilder.Entity<CptFeeScheduleEntry>(b =>
+        {
+            b.ToTable("CptFeeSchedule", Schema);
+            b.HasKey(e => e.Id);
+            b.Property(e => e.CptCode).IsRequired().HasMaxLength(8);
+            b.Property(e => e.PayerCode).IsRequired().HasMaxLength(32);
+            b.Property(e => e.EffectiveFromUtc).IsRequired();
+            b.Property(e => e.EffectiveUntilUtc);
+            b.OwnsOne(e => e.Amount, MapMoney);
+            // Covering index for the EfCptFeeSchedule resolution query.
+            b.HasIndex(e => new { e.CptCode, e.PayerCode, e.EffectiveFromUtc });
+        });
+
+        modelBuilder.Entity<ChargeIdempotencyMarker>(b =>
+        {
+            b.ToTable("ChargeIdempotencyMarkers", Schema);
+            // Composite key + unique index gives the database-level guarantee against
+            // concurrent re-delivery from two replicas at once.
+            b.HasKey(m => new { m.SessionId, m.CptCode });
+            b.Property(m => m.CptCode).HasMaxLength(8);
+            b.Property(m => m.ChargeId).IsRequired();
+            b.Property(m => m.CapturedAtUtc).IsRequired();
+            b.HasIndex(m => m.ChargeId);
+        });
     }
 
     private static void MapMoney<TOwner>(OwnedNavigationBuilder<TOwner, Money> m)
