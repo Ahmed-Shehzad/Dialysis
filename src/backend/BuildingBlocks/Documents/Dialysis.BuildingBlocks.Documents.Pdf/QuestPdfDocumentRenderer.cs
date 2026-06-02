@@ -1,3 +1,6 @@
+using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
+using Dialysis.BuildingBlocks.Documents.Pdf.Components;
+using Dialysis.BuildingBlocks.Documents.Pdf.Macros;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -8,6 +11,11 @@ namespace Dialysis.BuildingBlocks.Documents.Pdf;
 /// QuestPDF-backed renderer. Uses the community licence by default — production deployments
 /// configure the licence via <see cref="QuestPdfLicensingOptions"/> at composition time. The
 /// renderer is stateless; one instance is safe across requests.
+///
+/// House style is owned by <see cref="ClinicalDocumentMacros"/> and the reusable
+/// <c>IComponent</c> classes under <c>Components/</c> — this renderer translates the logical
+/// <see cref="DocumentModel"/> into composed components, but never hand-rolls colours, fonts,
+/// or spacings. Rebrands edit the macros; this file stays unchanged.
 ///
 /// Design choices:
 /// <list type="bullet">
@@ -20,16 +28,33 @@ namespace Dialysis.BuildingBlocks.Documents.Pdf;
 /// </summary>
 public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
 {
+    private readonly IAcroFormProcessor _acroFormProcessor;
+
     static QuestPdfDocumentRenderer()
     {
         // Community licence is the default; production hosts flip via QuestPdfLicensingOptions.
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public Task<byte[]> RenderAsync(DocumentModel document, CancellationToken cancellationToken)
+    /// <summary>Default ctor — uses the PDFsharp-backed AcroForms processor.</summary>
+    public QuestPdfDocumentRenderer() : this(new PdfSharpAcroFormProcessor()) { }
+
+    /// <summary>Injection ctor — tests and bespoke pipelines can substitute the AcroForm processor.</summary>
+    public QuestPdfDocumentRenderer(IAcroFormProcessor acroFormProcessor)
+    {
+        ArgumentNullException.ThrowIfNull(acroFormProcessor);
+        _acroFormProcessor = acroFormProcessor;
+    }
+
+    /// <summary>
+    /// Returns the composed <see cref="IDocument"/> for <paramref name="document"/>. Used by
+    /// both <see cref="RenderAsync"/> and the Companion-app preview path so the same layout
+    /// pipeline drives PDF bytes and live preview.
+    /// </summary>
+    public IDocument Compose(DocumentModel document)
     {
         ArgumentNullException.ThrowIfNull(document);
-        var bytes = Document.Create(container =>
+        return Document.Create(container =>
         {
             container.Page(page =>
             {
@@ -39,11 +64,11 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
 
                 page.Header().Element(h =>
                 {
-                    h.Column(col =>
+                    h.ClinicalHeader().Column(col =>
                     {
                         col.Item().Text(document.Title).SemiBold().FontSize(16);
                         if (!string.IsNullOrWhiteSpace(document.Subtitle))
-                            col.Item().Text(document.Subtitle).FontSize(11).FontColor(Colors.Grey.Darken2);
+                            col.Item().Text(document.Subtitle).FontSize(11).FontColor(ClinicalDocumentMacros.MutedTextColor);
                     });
                 });
 
@@ -52,7 +77,7 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
                     col.Spacing(10);
                     foreach (var section in document.Sections)
                     {
-                        col.Item().Text(section.Heading).SemiBold().FontSize(12);
+                        col.Item().Element(c => c.SectionHeading(section.Heading));
                         foreach (var block in section.Blocks)
                         {
                             switch (block)
@@ -61,31 +86,21 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
                                     col.Item().Text(p.Text);
                                     break;
                                 case KeyValueBlock kv:
-                                    col.Item().Column(inner =>
-                                    {
-                                        foreach (var pair in kv.Pairs)
-                                            inner.Item().Row(row =>
-                                            {
-                                                row.ConstantItem(140).Text(pair.Key).SemiBold();
-                                                row.RelativeItem().Text(pair.Value);
-                                            });
-                                    });
+                                    col.Item().Component(new KeyValueGridComponent { Pairs = kv.Pairs });
                                     break;
                                 case TableBlock t:
-                                    col.Item().Table(table =>
+                                    col.Item().Component(new DataTableComponent
                                     {
-                                        table.ColumnsDefinition(c =>
-                                        {
-                                            foreach (var _ in t.Headers) c.RelativeColumn();
-                                        });
-                                        table.Header(h =>
-                                        {
-                                            foreach (var header in t.Headers)
-                                                h.Cell().Padding(3).Text(header).SemiBold();
-                                        });
-                                        foreach (var row in t.Rows)
-                                            foreach (var cell in row)
-                                                table.Cell().Padding(3).Text(cell);
+                                        Headers = t.Headers,
+                                        Rows = t.Rows,
+                                    });
+                                    break;
+                                case CalloutBlock cb:
+                                    col.Item().Component(new CalloutComponent
+                                    {
+                                        Heading = cb.Heading,
+                                        Body = cb.Body,
+                                        Kind = cb.IsAlert ? CalloutKind.Alert : CalloutKind.Info,
                                     });
                                     break;
                             }
@@ -93,16 +108,27 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
                     }
                 });
 
-                page.Footer().AlignCenter().Text(text =>
-                {
-                    text.DefaultTextStyle(t => t.FontSize(8).FontColor(Colors.Grey.Medium));
-                    text.Span("Page ");
-                    text.CurrentPageNumber();
-                    text.Span(" / ");
-                    text.TotalPages();
-                });
+                page.Footer().Element(f => f.StandardFooter());
             });
-        }).GeneratePdf();
+        });
+    }
+
+    public Task<byte[]> RenderAsync(DocumentModel document, CancellationToken cancellationToken)
+    {
+        var doc = Compose(document);
+        var bytes = doc.GeneratePdf();
         return Task.FromResult(bytes);
+    }
+
+    public async Task<byte[]> RenderWithFormsAsync(
+        DocumentModel document,
+        IReadOnlyList<AcroFormPlacement> formPlacements,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(formPlacements);
+        var baseBytes = await RenderAsync(document, cancellationToken).ConfigureAwait(false);
+        if (formPlacements.Count == 0) return baseBytes;
+        return await _acroFormProcessor.ApplyFormsAsync(baseBytes, formPlacements, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

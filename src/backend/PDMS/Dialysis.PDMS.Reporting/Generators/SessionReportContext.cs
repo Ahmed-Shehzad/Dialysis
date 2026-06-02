@@ -21,7 +21,9 @@ public sealed record SessionReportContext(
     int DurationMinutes,
     IReadOnlyList<VitalsSnapshot> Vitals,
     IReadOnlyList<MarEntrySnapshot> Medications,
-    IReadOnlyList<AlarmSnapshot> Alarms);
+    IReadOnlyList<AlarmSnapshot> Alarms,
+    IReadOnlyList<string>? DrugAllergies = null,
+    string? PendingFollowUp = null);
 
 public sealed record VitalsSnapshot(
     DateTime CapturedAtUtc,

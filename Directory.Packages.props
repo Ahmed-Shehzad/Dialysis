@@ -114,6 +114,7 @@
     <PackageVersion Include="System.Text.Json" Version="10.0.7" />
     <PackageVersion Include="TickerQ" Version="10.3.0" />
     <PackageVersion Include="QuestPDF" Version="2024.12.3" />
+    <PackageVersion Include="PDFsharp" Version="6.2.0" />
     <PackageVersion Include="Markdig" Version="0.40.0" />
     <PackageVersion Include="Stubble.Core" Version="1.10.8" />
     <PackageVersion Include="Testcontainers" Version="4.11.0" />

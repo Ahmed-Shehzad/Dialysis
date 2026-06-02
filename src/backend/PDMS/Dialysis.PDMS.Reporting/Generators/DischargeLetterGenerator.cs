@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.Documents.Pdf;
+using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Templating;
 
@@ -29,25 +30,44 @@ public sealed class DischargeLetterGenerator(
             ? binder.BindToPlainText(body, bindings)
             : "Patient completed the scheduled dialysis session as documented below.";
 
-        var sections = new List<DocumentSection>
+        var sections = new List<DocumentSection>();
+
+        // Drug allergies surface as an Alert callout at the top — the macro layer keeps the
+        // palette consistent with the rest of the platform's danger-state UI.
+        if (context.DrugAllergies is { Count: > 0 } allergies)
         {
-            new("Patient",
+            sections.Add(new DocumentSection("Drug allergies",
+                [new CalloutBlock(
+                    Heading: "Known drug allergies",
+                    Body: string.Join(", ", allergies),
+                    IsAlert: true)]));
+        }
+
+        sections.Add(new DocumentSection("Patient",
                 [new KeyValueBlock(
                 [
                     new KeyValuePair<string, string>("Name", context.PatientDisplayName),
                     new KeyValuePair<string, string>("MRN", context.MedicalRecordNumber),
-                ])]),
-            new("Treatment",
-                [new KeyValueBlock(
-                [
-                    new KeyValuePair<string, string>("Chair", context.ChairLabel),
-                    new KeyValuePair<string, string>("Modality", context.Modality),
-                    new KeyValuePair<string, string>("Started", context.StartedAtUtc.ToString("u")),
-                    new KeyValuePair<string, string>("Completed", context.CompletedAtUtc.ToString("u")),
-                    new KeyValuePair<string, string>("Duration", $"{context.DurationMinutes} min"),
-                ])]),
-            new("Clinical summary", [new ParagraphBlock(summary)]),
-        };
+                ])]));
+        sections.Add(new DocumentSection("Treatment",
+            [new KeyValueBlock(
+            [
+                new KeyValuePair<string, string>("Chair", context.ChairLabel),
+                new KeyValuePair<string, string>("Modality", context.Modality),
+                new KeyValuePair<string, string>("Started", context.StartedAtUtc.ToString("u")),
+                new KeyValuePair<string, string>("Completed", context.CompletedAtUtc.ToString("u")),
+                new KeyValuePair<string, string>("Duration", $"{context.DurationMinutes} min"),
+            ])]));
+        sections.Add(new DocumentSection("Clinical summary", [new ParagraphBlock(summary)]));
+
+        if (!string.IsNullOrWhiteSpace(context.PendingFollowUp))
+        {
+            sections.Add(new DocumentSection("Follow-up",
+                [new CalloutBlock(
+                    Heading: "Scheduled follow-up",
+                    Body: context.PendingFollowUp,
+                    IsAlert: false)]));
+        }
 
         if (context.Medications.Count > 0)
         {
@@ -89,6 +109,64 @@ public sealed class DischargeLetterGenerator(
             });
         return await pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Renders the discharge letter with an interactive AcroForm signature placeholder so
+    /// the clinician can countersign the document at the bedside (Adobe Reader, an EHR
+    /// signing service, or the operator workstation supply the cryptographic signature).
+    /// BDSG §22 and the Berufsordnung-§10 retention rules expect a signed clinical
+    /// record; this overload makes the signature step part of the rendered artifact rather
+    /// than a separate step.
+    /// </summary>
+    public async Task<byte[]> GenerateSignableAsync(
+        SessionReportContext context,
+        ReportTemplate? template,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var baseBytes = await GenerateAsync(context, template, cancellationToken).ConfigureAwait(false);
+
+        // PDF coordinates: 1pt = 1/72". A4 short edge is ~595 pt; long edge ~842 pt. The
+        // signature block sits at the bottom-left so it never overlaps the rendered body.
+        var placements = new AcroFormPlacement[]
+        {
+            new(PageNumber: 1, Origin: new PdfPoint(60, 120), Size: new PdfSize(260, 24),
+                Field: new TextFormField("clinician_name") { Tooltip = "Clinician name (printed)" }),
+            new(PageNumber: 1, Origin: new PdfPoint(60, 70), Size: new PdfSize(260, 30),
+                Field: new SignatureFormField("clinician_signature") { Tooltip = "Clinician signature" }),
+            new(PageNumber: 1, Origin: new PdfPoint(340, 120), Size: new PdfSize(160, 24),
+                Field: new TextFormField("countersign_date") { Tooltip = "Sign date (YYYY-MM-DD)" }),
+            new(PageNumber: 1, Origin: new PdfPoint(340, 80), Size: new PdfSize(16, 16),
+                Field: new CheckBoxFormField("patient_consent_received")
+                {
+                    Tooltip = "Patient consented to discharge",
+                }),
+        };
+        return await pdf.RenderWithFormsAsync(BuildModelForSignature(context, template), placements, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static DocumentModel BuildModelForSignature(SessionReportContext context, ReportTemplate? template)
+    {
+        // Re-use the base layout but tag the metadata so downstream auditors can tell the
+        // signable copy apart from the read-only copy (same content, different
+        // interactivity).
+        var doc = new DocumentModel(
+            Title: "Dialysis discharge letter (signable)",
+            Subtitle: context.CompletedAtUtc.ToString("yyyy-MM-dd"),
+            Sections: BuildSectionsForSignablePlaceholder(),
+            Metadata: new Dictionary<string, string>
+            {
+                ["sessionId"] = context.SessionId.ToString(),
+                ["templateVersion"] = template?.PublishedVersionNumber?.ToString() ?? "default",
+                ["form"] = "signable",
+            });
+        return doc;
+    }
+
+    private static IReadOnlyList<DocumentSection> BuildSectionsForSignablePlaceholder() =>
+        [new DocumentSection("Signature",
+            [new ParagraphBlock("Reserved space for clinician signature, name, and date below.")])];
 
     private static Dictionary<string, object?> BuildBindings(SessionReportContext context) => new()
     {

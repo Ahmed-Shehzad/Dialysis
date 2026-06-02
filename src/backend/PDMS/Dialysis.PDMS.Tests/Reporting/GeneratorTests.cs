@@ -98,6 +98,20 @@ public sealed class GeneratorTests
     }
 
     [Fact]
+    public async Task Discharge_Letter_Signable_Variant_Has_Acroform_Signature_Field_Async()
+    {
+        var generator = new DischargeLetterGenerator(new QuestPdfDocumentRenderer(), new MustacheMarkdownBinder());
+
+        var pdf = await generator.GenerateSignableAsync(SampleContext(), template: null, CancellationToken.None);
+
+        using var ms = new MemoryStream(pdf);
+        using var doc = PdfSharp.Pdf.IO.PdfReader.Open(ms, PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import);
+        doc.AcroForm.ShouldNotBeNull();
+        doc.AcroForm.Fields.DescendantNames.ShouldContain("clinician_signature");
+        doc.AcroForm.Fields.DescendantNames.ShouldContain("patient_consent_received");
+    }
+
+    [Fact]
     public async Task Shift_Report_Lists_Every_Session_Row_Async()
     {
         var generator = new ShiftReportGenerator(new QuestPdfDocumentRenderer());

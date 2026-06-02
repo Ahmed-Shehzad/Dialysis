@@ -15,9 +15,99 @@ and one consumer fan-out from `DialysisSessionCompletedIntegrationEvent`.
 - **`QuestPdfDocumentRenderer`** — QuestPDF-backed implementation. A4 with 1.5cm margins
   (matches the German clinical-letter standard), uses the QuestPDF-bundled **Lato** font so
   rendering is deterministic across hosts and the output PDF doesn't depend on system
-  fonts being installed.
+  fonts being installed. Exposes `Compose(DocumentModel)` for the Companion preview path
+  in addition to `RenderAsync`, so the same pipeline drives PDF bytes and live preview.
 - **`QuestPdfLicensingOptions`** — composition hook for production deployments that hold a
   commercial QuestPDF licence. The community licence is the default.
+
+#### Macros — `ClinicalDocumentMacros`
+
+Reusable `IContainer` extension methods that encapsulate the platform house style. Every
+generator composes its layout from these primitives instead of hand-rolling colours, fonts
+and spacings, so a rebrand only edits one file. Surfaces:
+
+| Macro                         | Purpose                                                |
+| ----------------------------- | ------------------------------------------------------ |
+| `.ClinicalHeader()`           | Tinted band + accent underline at the top of a report  |
+| `.SectionTitleStyle()`        | Section underline / spacing for headings               |
+| `.SectionHeading(text)`       | One-call section title (semibold 12pt + underline)     |
+| `.CalloutBox()`               | Info callout — accent stripe + tint fill               |
+| `.AlertBox()`                 | Danger callout — same shape, red palette               |
+| `.TableCell()`                | Uniform cell padding + grid line                       |
+| `.KeyValueRow(key, value)`    | One row of a clinical-letter key/value grid            |
+| `.StandardFooter()`           | Centred page x/y muted footer                          |
+
+#### Components — `IComponent` parts
+
+Typed, reusable document parts that compose multiple macros into a complete fragment:
+
+| Component                  | Used for                                                   |
+| -------------------------- | ---------------------------------------------------------- |
+| `PatientHeaderComponent`   | Top-of-document patient identification block               |
+| `KeyValueGridComponent`    | Two-column key/value grid — used for the `KeyValueBlock`   |
+| `DataTableComponent`       | Headers + rows — used for the `TableBlock`                 |
+| `CalloutComponent`         | Info / alert callouts — used for the new `CalloutBlock`    |
+
+Generators stay free of any styling code: a generator builds a `DocumentModel` from its
+aggregate inputs, and the renderer translates each block into the matching component.
+
+#### Companion App preview
+
+`PdfCompanionPreview.ShowAsync(renderer, document)` streams the composed document into the
+QuestPDF Companion desktop app for live preview. The wire defaults to port `12500` (the
+QuestPDF Companion default). Install once per workstation:
+
+```bash
+dotnet tool install --global QuestPDF.Companion
+```
+
+Then call from any dev-time entry point — a unit test, a scratch console, or an "Open in
+companion" button on the template-authoring page. The macros and components recompose on
+every change, so the template-authoring workflow gets hot-reload without any host
+restart.
+
+The companion path is dev-only. The preview wire-protocol is unauthenticated and opens a
+TCP socket on localhost; never call it from a production code path.
+
+#### AcroForms — interactive PDF form fields
+
+QuestPDF emits flat PDFs; clinical workflows often need *interactive* PDFs (clinician
+signature, operator-fillable consent acknowledgement, choice dropdowns). The PDF building
+block ships an AcroForms post-processor that takes the QuestPDF-rendered bytes and
+overlays interactive widgets:
+
+| Field type            | Use case                                                     |
+| --------------------- | ------------------------------------------------------------ |
+| `TextFormField`       | Free-text fields — clinician name, sign date, comments      |
+| `CheckBoxFormField`   | Boolean acknowledgements — "patient consent received"        |
+| `SignatureFormField`  | Cryptographic signature placeholder                          |
+| `ChoiceFormField`     | Dropdowns — modality, decline reason                         |
+
+Wire usage:
+
+```csharp
+var pdf = await renderer.RenderWithFormsAsync(documentModel, new[]
+{
+    new AcroFormPlacement(
+        PageNumber: 1,
+        Origin: new PdfPoint(60, 80),
+        Size: new PdfSize(260, 30),
+        Field: new SignatureFormField("clinician_signature")),
+}, ct);
+```
+
+`PdfSharpAcroFormProcessor` is the default implementation — uses PDFsharp 6.x to attach
+the AcroForm dictionary, register fields, and place widget annotations. An embedded Lato
+Regular TTF (Open Font Licence — same family QuestPDF bundles) is auto-registered as the
+PDFsharp font resolver so the post-processor doesn't depend on system fonts.
+
+The discharge-letter generator exposes `GenerateSignableAsync` which renders the standard
+letter plus a four-field signature block (clinician name, signature, date, patient-consent
+checkbox) — meets the **BDSG §22** and **Berufsordnung §10** signed-record requirement
+without a separate signing step.
+
+Coordinate convention: PDF user space (points, origin bottom-left). A4 is ~595×842 pt;
+the signable discharge letter reserves the bottom 150 pt of page 1 for the signature block.
 
 ### `Dialysis.PDMS.Reporting`
 
