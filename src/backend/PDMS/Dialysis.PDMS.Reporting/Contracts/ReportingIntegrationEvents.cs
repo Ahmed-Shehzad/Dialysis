@@ -3,11 +3,8 @@ using Dialysis.DomainDrivenDesign.IntegrationEvents;
 namespace Dialysis.PDMS.Reporting.Contracts;
 
 /// <summary>Published when a session report has been rendered and persisted to the blob store.</summary>
-public sealed class SessionReportGeneratedIntegrationEvent : IIntegrationEvent
+public sealed record SessionReportGeneratedIntegrationEvent : IntegrationEvent
 {
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
-    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
-    public int SchemaVersion { get; init; } = 1;
     public required Guid ReportId { get; init; }
     public required Guid SessionId { get; init; }
     public required Guid PatientId { get; init; }
