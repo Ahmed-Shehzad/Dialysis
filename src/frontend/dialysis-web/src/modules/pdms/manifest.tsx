@@ -13,6 +13,18 @@ const ReportingTemplatesPage = lazyPage(
   () => import("@/modules/pdms/admin/ReportingTemplatesPage"),
   "ReportingTemplatesPage",
 );
+const OnCallRotationPage = lazyPage(
+  () => import("@/modules/pdms/admin/OnCallRotationPage"),
+  "OnCallRotationPage",
+);
+const OnCallPoliciesPage = lazyPage(
+  () => import("@/modules/pdms/admin/OnCallPoliciesPage"),
+  "OnCallPoliciesPage",
+);
+const OnCallAuditPage = lazyPage(
+  () => import("@/modules/pdms/admin/OnCallAuditPage"),
+  "OnCallAuditPage",
+);
 
 export const pdmsModule: ModuleManifest = {
   slug: "pdms",
@@ -30,6 +42,9 @@ export const pdmsModule: ModuleManifest = {
       <Route path="chairs" element={<ChairBoardPage />} />
       <Route path="admin/inventory" element={<InventoryPage />} />
       <Route path="admin/reporting/templates" element={<ReportingTemplatesPage />} />
+      <Route path="admin/oncall/rotation" element={<OnCallRotationPage />} />
+      <Route path="admin/oncall/policies" element={<OnCallPoliciesPage />} />
+      <Route path="admin/oncall/audit" element={<OnCallAuditPage />} />
     </>
   ),
 };
