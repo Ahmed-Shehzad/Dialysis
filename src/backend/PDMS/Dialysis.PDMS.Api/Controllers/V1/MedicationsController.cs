@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Medications.Domain;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,7 @@ public sealed class MedicationsController(
     TimeProvider clock) : ControllerBase
 {
     [HttpGet]
+    [PhiAccess("pdms.medications.read", PatientIdRouteKey = "sessionId", SessionIdRouteKey = "sessionId")]
     [ProducesResponseType(typeof(IReadOnlyList<MedicationEntryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAsync(Guid sessionId, CancellationToken cancellationToken)
     {
@@ -36,6 +38,7 @@ public sealed class MedicationsController(
     }
 
     [HttpPost]
+    [PhiAccess("pdms.medications.administer", PatientIdRouteKey = "sessionId", SessionIdRouteKey = "sessionId")]
     [ProducesResponseType(typeof(MedicationEntryDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RecordAdministrationAsync(
@@ -64,6 +67,7 @@ public sealed class MedicationsController(
     }
 
     [HttpPost("{entryId:guid}/decline")]
+    [PhiAccess("pdms.medications.decline", PatientIdRouteKey = "sessionId", SessionIdRouteKey = "sessionId")]
     [ProducesResponseType(typeof(MedicationEntryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

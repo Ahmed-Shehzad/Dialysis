@@ -8,6 +8,11 @@ const ChairBoardPage = lazyPage(
   () => import("@/modules/pdms/chairs/ChairBoardPage"),
   "ChairBoardPage",
 );
+const InventoryPage = lazyPage(() => import("@/modules/pdms/admin/InventoryPage"), "InventoryPage");
+const ReportingTemplatesPage = lazyPage(
+  () => import("@/modules/pdms/admin/ReportingTemplatesPage"),
+  "ReportingTemplatesPage",
+);
 
 export const pdmsModule: ModuleManifest = {
   slug: "pdms",
@@ -23,6 +28,8 @@ export const pdmsModule: ModuleManifest = {
       <Route path="sessions" element={<SessionsPage />} />
       <Route path="sessions/:sessionId" element={<SessionLivePage />} />
       <Route path="chairs" element={<ChairBoardPage />} />
+      <Route path="admin/inventory" element={<InventoryPage />} />
+      <Route path="admin/reporting/templates" element={<ReportingTemplatesPage />} />
     </>
   ),
 };

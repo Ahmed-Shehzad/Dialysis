@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
@@ -73,7 +74,10 @@ builder.Services.AddPatientDataManagementSystem(
 builder.Services
     .AddControllers()
     .AddJsonOptions(o =>
-        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()))
+    // Emit a FHIR AuditEvent for every [PhiAccess]-tagged action — closes the audit-trail
+    // loop the GDPR / BDSG / PDSG envelope cites.
+    .AddPhiAccessAuditing();
 
 // SignalR with optional Valkey/Redis backplane for horizontal scale-out. With the backplane,
 // every PDMS replica subscribes to the same Valkey pub/sub channel, so a reading broadcast on
