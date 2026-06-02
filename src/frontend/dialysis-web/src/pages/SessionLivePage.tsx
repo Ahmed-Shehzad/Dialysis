@@ -12,6 +12,7 @@ import { SessionReportsTab } from "@/features/reports/components/SessionReportsT
 import { ChairsideAlarmStrip } from "@/modules/pdms/chairside/ChairsideAlarmStrip";
 import { ChairsideHeader } from "@/modules/pdms/chairside/ChairsideHeader";
 import { KioskVitals } from "@/modules/pdms/chairside/KioskVitals";
+import { useAuth } from "@/features/auth/components/AuthProvider";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
 type LiveTab = "vitals" | "medications" | "reports";
@@ -48,6 +49,7 @@ export const SessionLivePage = () => {
   // nurse who opened the chairside monitor from the HIS queue (or anywhere else) sees the
   // same patient surfaced in the top-of-shell context bar and can jump back to their chart.
   const { patient, select } = usePatientContext();
+  const { user } = useAuth();
   useEffect(() => {
     if (!session) return;
     if (patient?.id === session.patientId) return;
@@ -88,7 +90,13 @@ export const SessionLivePage = () => {
           </TabButton>
         </div>
         {tab === "vitals" && <VitalsChart readings={merged} />}
-        {tab === "medications" && <MedicationsTab sessionId={sessionId} />}
+        {tab === "medications" && (
+          <MedicationsTab
+            sessionId={sessionId}
+            patientId={session?.patientId}
+            actorSub={user?.username}
+          />
+        )}
         {tab === "reports" && <SessionReportsTab sessionId={sessionId} />}
       </section>
     </div>
