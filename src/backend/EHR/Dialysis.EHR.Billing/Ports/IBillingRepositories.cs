@@ -34,3 +34,15 @@ public interface IPayerRepository
     Task<Payer?> FindByCodeAsync(string payerCode, CancellationToken cancellationToken = default);
     void Add(Payer payer);
 }
+
+/// <summary>
+/// Maps (sessionId, cptCode) → existing chargeId so the
+/// <c>DialysisSessionChargeReadyConsumer</c> can stay idempotent under at-least-once
+/// delivery. The mapping is owned by the persistence layer (one row per session +
+/// CPT combination) so the consumer never has to scan the full Charge table.
+/// </summary>
+public interface IChargeIdempotencyStore
+{
+    Task<Guid?> FindChargeIdAsync(Guid sessionId, string cptCode, CancellationToken cancellationToken);
+    Task RegisterAsync(Guid sessionId, string cptCode, Guid chargeId, CancellationToken cancellationToken);
+}

@@ -13,6 +13,7 @@
     <ProjectReference Include="../Dialysis.EHR.Api/Dialysis.EHR.Api.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Core/Dialysis.EHR.Core.csproj" />
     <ProjectReference Include="../Dialysis.EHR.PatientChart/Dialysis.EHR.PatientChart.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.Billing/Dialysis.EHR.Billing.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Persistence/Dialysis.EHR.Persistence.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </ItemGroup>

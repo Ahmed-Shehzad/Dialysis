@@ -20,6 +20,7 @@ public enum ClaimStatus
 public sealed class Claim : AggregateRoot<Guid>
 {
     private readonly List<Guid> _chargeIds = new();
+    private readonly List<ClaimAcknowledgement> _acknowledgements = new();
 
     private Claim()
     {
@@ -45,7 +46,13 @@ public sealed class Claim : AggregateRoot<Guid>
 
     public DateTime? SubmittedAtUtc { get; private set; }
 
+    public DateTime? AcknowledgedAtUtc { get; private set; }
+
+    public string? PayerClaimControlNumber { get; private set; }
+
     public IReadOnlyCollection<Guid> ChargeIds => _chargeIds;
+
+    public IReadOnlyCollection<ClaimAcknowledgement> Acknowledgements => _acknowledgements;
 
     public static Claim Assemble(
         Guid id,
@@ -115,4 +122,82 @@ public sealed class Claim : AggregateRoot<Guid>
     public void MarkPartiallyPaid() => Status = ClaimStatus.PartiallyPaid;
 
     public void MarkDenied() => Status = ClaimStatus.Denied;
+
+    /// <summary>
+    /// Records a parsed clearinghouse / payer acknowledgement. The 999 reports syntactic
+    /// acceptance at the clearinghouse; the 277CA reports payer-level routing acceptance.
+    /// We retain every ack so the operator audit trail shows the full transmission story.
+    /// </summary>
+    public void RecordAcknowledgement(ClaimAcknowledgement ack)
+    {
+        ArgumentNullException.ThrowIfNull(ack);
+        _acknowledgements.Add(ack);
+        if (Status == ClaimStatus.Cancelled) return;
+
+        switch (ack.Verdict)
+        {
+            case ClaimAckVerdict.Accepted:
+                if (!AcknowledgedAtUtc.HasValue || ack.ReceivedAtUtc > AcknowledgedAtUtc.Value)
+                    AcknowledgedAtUtc = ack.ReceivedAtUtc;
+                if (Status == ClaimStatus.Submitted)
+                    Status = ClaimStatus.Acknowledged;
+                if (!string.IsNullOrWhiteSpace(ack.PayerClaimControlNumber))
+                    PayerClaimControlNumber = ack.PayerClaimControlNumber;
+                break;
+            case ClaimAckVerdict.Rejected:
+                Status = ClaimStatus.Denied;
+                break;
+            case ClaimAckVerdict.AcceptedWithWarnings:
+                if (Status == ClaimStatus.Submitted)
+                    Status = ClaimStatus.Acknowledged;
+                if (!AcknowledgedAtUtc.HasValue || ack.ReceivedAtUtc > AcknowledgedAtUtc.Value)
+                    AcknowledgedAtUtc = ack.ReceivedAtUtc;
+                break;
+        }
+    }
+}
+
+/// <summary>
+/// One acknowledgement received against a claim. The kind distinguishes syntactic
+/// (clearinghouse-level 999) from payer-level (277CA). Reason codes are surfaced
+/// verbatim so the operator UI can show the clearinghouse / payer wording without
+/// us having to maintain a code-to-string dictionary.
+/// </summary>
+public sealed class ClaimAcknowledgement
+{
+    public ClaimAcknowledgement(
+        Guid id,
+        ClaimAckKind kind,
+        ClaimAckVerdict verdict,
+        string? payerClaimControlNumber,
+        IReadOnlyList<string> reasonCodes,
+        DateTime receivedAtUtc)
+    {
+        Id = id;
+        Kind = kind;
+        Verdict = verdict;
+        PayerClaimControlNumber = payerClaimControlNumber;
+        ReasonCodes = reasonCodes;
+        ReceivedAtUtc = receivedAtUtc;
+    }
+
+    public Guid Id { get; private set; }
+    public ClaimAckKind Kind { get; private set; }
+    public ClaimAckVerdict Verdict { get; private set; }
+    public string? PayerClaimControlNumber { get; private set; }
+    public IReadOnlyList<string> ReasonCodes { get; private set; }
+    public DateTime ReceivedAtUtc { get; private set; }
+}
+
+public enum ClaimAckKind
+{
+    FunctionalAck999 = 0,
+    ClaimAck277Ca = 1,
+}
+
+public enum ClaimAckVerdict
+{
+    Accepted = 0,
+    AcceptedWithWarnings = 1,
+    Rejected = 2,
 }

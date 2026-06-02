@@ -50,3 +50,24 @@ public sealed record PaymentPostedIntegrationEvent(
     string CurrencyCode,
     string PaymentMethodCode,
     DateTime PostedAtUtc) : IIntegrationEvent;
+
+/// <summary>
+/// Carries an inbound ANSI ASC X12N ack payload (999 functional ack or 277CA claim ack)
+/// from SmartConnect into EHR.Billing. SmartConnect inspects the ISA/GS header to detect
+/// the ack kind and emits this event with the raw byte payload so the EHR side parses it
+/// the same way regardless of which clearinghouse delivered it.
+/// </summary>
+public sealed record EdiAcknowledgementReceivedIntegrationEvent(
+    Guid EventId,
+    DateTime OccurredOn,
+    int SchemaVersion,
+    EdiAckKind AckKind,
+    byte[] PayloadBytes,
+    DateTime ReceivedAtUtc,
+    string? SourceTrace) : IIntegrationEvent;
+
+public enum EdiAckKind
+{
+    FunctionalAck999 = 0,
+    ClaimAck277Ca = 1,
+}
