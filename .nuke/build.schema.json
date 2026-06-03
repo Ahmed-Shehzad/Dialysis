@@ -28,6 +28,7 @@
         "Compile",
         "Pack",
         "Publish",
+        "PublishCompose",
         "Restore",
         "Test"
       ]

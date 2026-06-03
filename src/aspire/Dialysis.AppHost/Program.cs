@@ -12,6 +12,23 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// --- Deployment publisher -------------------------------------------------
+// `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path artifacts/compose`
+// renders the full topology — every Postgres, RabbitMQ, Valkey, Keycloak,
+// SonarQube, the five module APIs, the BFF, the gateway, and the SPA — into a
+// production-ready Docker Compose project under the given output path. This is
+// the single source of truth for the deployment topology, replacing the hand-
+// maintained docker-compose.modules.yml. Run via `./build.sh PublishCompose`
+// (see the NUKE target) and commit the regenerated artefacts so reviewers can
+// diff the topology change inline with the AppHost change that produced it.
+//
+// WithDashboard(false): the Aspire dashboard is a dev-time tool — in deployment
+// the host-side OTLP collector handles telemetry, so we omit the dashboard from
+// the published compose. (Leaving it enabled also trips the compose publisher's
+// "multiple compute environments" check on the auto-attached dashboard
+// resource.)
+builder.AddDockerComposeEnvironment("compose").WithDashboard(false);
+
 // --- Constants -------------------------------------------------------------
 // Centralized so the Keycloak port, realm, and import-volume path can't drift
 // between the container definition and the consumers that build URIs from them.
