@@ -217,6 +217,77 @@
       "optionalClientScopes": ["offline_access", "launch", "launch/patient", "patient/*.read", "user/*.read", "system/*.read"]
     }
   ],
+  "identityProviders": [
+    {
+      "alias": "okta",
+      "displayName": "Okta",
+      "providerId": "oidc",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "CHANGE_ME-okta-client-id",
+        "clientSecret": "CHANGE_ME-okta-client-secret",
+        "authorizationUrl": "https://CHANGE_ME.okta.com/oauth2/v1/authorize",
+        "tokenUrl": "https://CHANGE_ME.okta.com/oauth2/v1/token",
+        "userInfoUrl": "https://CHANGE_ME.okta.com/oauth2/v1/userinfo",
+        "issuer": "https://CHANGE_ME.okta.com",
+        "defaultScope": "openid profile email",
+        "useJwksUrl": "true",
+        "jwksUrl": "https://CHANGE_ME.okta.com/oauth2/v1/keys",
+        "validateSignature": "true",
+        "syncMode": "IMPORT"
+      }
+    },
+    {
+      "alias": "auth0",
+      "displayName": "Auth0",
+      "providerId": "oidc",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "CHANGE_ME-auth0-client-id",
+        "clientSecret": "CHANGE_ME-auth0-client-secret",
+        "authorizationUrl": "https://CHANGE_ME.auth0.com/authorize",
+        "tokenUrl": "https://CHANGE_ME.auth0.com/oauth/token",
+        "userInfoUrl": "https://CHANGE_ME.auth0.com/userinfo",
+        "issuer": "https://CHANGE_ME.auth0.com/",
+        "defaultScope": "openid profile email",
+        "useJwksUrl": "true",
+        "jwksUrl": "https://CHANGE_ME.auth0.com/.well-known/jwks.json",
+        "validateSignature": "true",
+        "syncMode": "IMPORT"
+      }
+    },
+    {
+      "alias": "entra",
+      "displayName": "Microsoft Entra ID",
+      "providerId": "oidc",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "CHANGE_ME-entra-app-id",
+        "clientSecret": "CHANGE_ME-entra-client-secret",
+        "authorizationUrl": "https://login.microsoftonline.com/CHANGE_ME-tenant-id/oauth2/v2.0/authorize",
+        "tokenUrl": "https://login.microsoftonline.com/CHANGE_ME-tenant-id/oauth2/v2.0/token",
+        "userInfoUrl": "https://graph.microsoft.com/oidc/userinfo",
+        "issuer": "https://login.microsoftonline.com/CHANGE_ME-tenant-id/v2.0",
+        "defaultScope": "openid profile email",
+        "useJwksUrl": "true",
+        "jwksUrl": "https://login.microsoftonline.com/CHANGE_ME-tenant-id/discovery/v2.0/keys",
+        "validateSignature": "true",
+        "syncMode": "IMPORT"
+      }
+    }
+  ],
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
     "xContentTypeOptions": "nosniff",

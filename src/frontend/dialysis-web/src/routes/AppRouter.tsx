@@ -23,7 +23,7 @@ const AuthenticatingFallback = () => {
       {showAction && (
         <button
           type="button"
-          onClick={signIn}
+          onClick={() => signIn()}
           className="rounded bg-slate-700 px-3 py-1 text-sm text-slate-100 hover:bg-slate-600"
         >
           Stuck? Sign in

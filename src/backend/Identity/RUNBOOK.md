@@ -213,3 +213,43 @@ For the `$export` system-credentials flow add a second client:
 1. Client ID: `smart-on-fhir-system`, type **confidential**, **service accounts enabled**.
 2. Client scopes: include a `system/*.read` scope so the issued access token carries it.
 3. Use `grant_type=client_credentials` and `scope=system/*.read` to acquire bearer tokens for backend pipelines, payer integrations, and TEFCA outbound flows.
+
+## 8. Multi-IdP federation (Okta / Auth0 / Entra)
+
+Keycloak stays the only direct OIDC client of the BFF. Upstream IdPs are brokered through Keycloak's `identityProviders` array — the BFF forwards `kc_idp_hint=<alias>` on the auth-request URL, so Keycloak skips its own login page and immediately redirects to the upstream IdP. Adding a new tenant IdP is a two-config-edit operation; the SPA picks it up via `GET /identity/providers`.
+
+### 8.1 Configure the Keycloak broker
+
+The realm import (`keycloak/dialysis-realm.json`) ships **placeholder** broker definitions for `okta`, `auth0`, and `entra`, all `enabled: false` with `CHANGE_ME-*` credentials. To activate a broker:
+
+1. **Real values** — In Keycloak admin → Identity providers → pick the alias → set `Client ID`, `Client Secret`, and (for non-Discovery IdPs) the four endpoint URLs. Flip `Enabled` to **On**. The realm import file lists every config key the broker needs; treat it as a checklist.
+2. **Or by realm export** — edit `dialysis-realm.json`, set `enabled: true` and substitute the real `CHANGE_ME-*` strings, then restart the dev compose stack (the realm only re-imports when absent — see the note in `CLAUDE.md`).
+3. **Mappers** — most tenants want a role mapper that copies an upstream group claim onto the Keycloak `roles` claim that `RolePermissionMap` consumes. The `Hardcoded Role`, `External Role to Role`, and `OIDC Claim to Role` mappers cover the common shapes.
+
+### 8.2 Surface the broker to the SPA
+
+Add an entry to the BFF configuration (e.g. `appsettings.Production.json`):
+
+```json
+{
+  "Identity": {
+    "Federation": {
+      "Providers": [
+        { "Alias": "okta", "DisplayName": "Acme Okta", "IconUri": "/icons/okta.svg", "Enabled": true },
+        { "Alias": "entra", "DisplayName": "Sign in with Microsoft", "IconUri": "/icons/entra.svg", "Enabled": true }
+      ]
+    }
+  }
+}
+```
+
+`Alias` MUST match the Keycloak broker alias byte-for-byte. The BFF rejects unknown aliases at `/identity/login` (so an attacker can't probe arbitrary brokers); only entries with `Enabled: true` are listed by `/identity/providers`.
+
+### 8.3 Smoke flow
+
+```bash
+curl http://localhost:5275/identity/providers
+# → { "providers": [ { "alias": "okta", "displayName": "Acme Okta", "iconUri": "/icons/okta.svg" } ] }
+```
+
+Then open the SPA at `http://localhost:9090/` — the login page renders one button per provider, plus the local Keycloak fallback. Clicking the Okta button navigates to `/identity/login?provider=okta` → Keycloak → Okta → callback → cookie session as usual. Empty `Providers` array keeps the legacy single-button behaviour intact.

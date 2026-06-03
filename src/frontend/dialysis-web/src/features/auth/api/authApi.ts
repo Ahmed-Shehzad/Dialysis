@@ -37,8 +37,33 @@ const currentOrigin = (): string => globalThis.window?.location?.origin ?? "";
 
 const buildReturnTarget = (returnPath: string): string => currentOrigin() + returnPath;
 
-export const buildLoginUrl = (returnPath = "/"): string =>
-  "/identity/login?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
+export const buildLoginUrl = (returnPath = "/", provider?: string): string => {
+  const url = "/identity/login?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
+  return provider ? url + "&provider=" + encodeURIComponent(provider) : url;
+};
 
 export const buildLogoutUrl = (returnPath = "/"): string =>
   "/identity/logout?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
+
+export type IdentityProvider = {
+  alias: string;
+  displayName: string;
+  iconUri?: string | null;
+};
+
+// Empty array when federation is not configured — the login page then renders only the local
+// Keycloak "Sign in" button (the BFF /identity/login with no ?provider= behaves identically to
+// the pre-federation flow).
+export const fetchIdentityProviders = async (): Promise<IdentityProvider[]> => {
+  try {
+    const response = await apiClient.get<{ providers?: IdentityProvider[] }>(
+      "/identity/providers",
+      {
+        timeout: AUTH_PROBE_TIMEOUT_MS,
+      },
+    );
+    return response.data?.providers ?? [];
+  } catch {
+    return [];
+  }
+};
