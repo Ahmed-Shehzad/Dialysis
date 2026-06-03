@@ -4,24 +4,23 @@ using Hl7.Fhir.Serialization;
 namespace Dialysis.BuildingBlocks.Fhir.Serialization;
 
 /// <summary>
-/// Singleton holder for the Firely FHIR JSON serializer + parser instances. Initialising these
-/// is expensive (reflection over the FHIR model); reuse one pair per host.
+/// Singleton holder for the Firely FHIR JSON serializer + deserializer. Constructing the
+/// deserializer is expensive (reflection over the FHIR model); reuse one instance per host.
 /// </summary>
 public sealed class FhirJsonSerializerProvider
 {
-    public FhirJsonSerializerProvider()
-    {
-        Serializer = new FhirJsonSerializer(new SerializerSettings { Pretty = false });
-        PrettySerializer = new FhirJsonSerializer(new SerializerSettings { Pretty = true });
-        Parser = new FhirJsonParser(new ParserSettings { AcceptUnknownMembers = false });
-    }
+    // Recoverable mode mirrors the lenient behaviour of the pre-6.0 FhirJsonParser: it tolerates
+    // recoverable issues (e.g. unmet cardinality) instead of throwing, leaving conformance checks
+    // to the validation layer.
+    private readonly FhirJsonDeserializer _deserializer =
+        new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
-    public FhirJsonSerializer Serializer { get; }
+    /// <summary>Serializes a FHIR resource to a JSON string.</summary>
+    public string Serialize(Base resource, bool pretty = false) => resource.ToJson(pretty);
 
-    public FhirJsonSerializer PrettySerializer { get; }
+    /// <summary>Parses a FHIR JSON document into a resource of type <typeparamref name="T"/>.</summary>
+    public T Parse<T>(string json) where T : Base => _deserializer.Deserialize<T>(json);
 
-    public FhirJsonParser Parser { get; }
-
-    public string Serialize(Base resource, bool pretty = false) =>
-        pretty ? PrettySerializer.SerializeToString(resource) : Serializer.SerializeToString(resource);
+    /// <summary>Parses a FHIR JSON document into a resource.</summary>
+    public Resource Parse(string json) => _deserializer.DeserializeResource(json);
 }

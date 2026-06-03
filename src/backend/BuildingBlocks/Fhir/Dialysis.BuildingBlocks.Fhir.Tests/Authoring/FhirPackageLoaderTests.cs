@@ -81,8 +81,8 @@ public sealed class FhirPackageLoaderTests
                 "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient", out _)
             .ShouldBeTrue();
 
-        var resolved = await registry.ResolveByCanonicalUriAsync(UsCoreIgUrl);
-        resolved.ShouldNotBeNull();
+        var resolved = await registry.TryResolveByCanonicalUriAsync(UsCoreIgUrl);
+        resolved.Value.ShouldNotBeNull();
     }
 
     [Fact]

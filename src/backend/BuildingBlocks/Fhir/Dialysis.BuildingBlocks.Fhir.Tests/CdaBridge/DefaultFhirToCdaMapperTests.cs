@@ -67,7 +67,7 @@ public sealed class DefaultFhirToCdaMapperTests
         resources.OfType<Observation>().Count().ShouldBe(2);
 
         // Spot-check that coded values survived the round-trip.
-        resources.OfType<Condition>().Single().Code.Coding.ShouldContain(c => c.Code == "N18.6");
+        resources.OfType<Condition>().Single().Code!.Coding.ShouldContain(c => c.Code == "N18.6");
         resources.OfType<Immunization>().Single().VaccineCode.Coding.ShouldContain(c => c.Code == "158");
         var creatinine = resources.OfType<Observation>().Single(o => o.Code.Coding.Any(c => c.Code == "2160-0"));
         (creatinine.Value as Quantity)!.Value.ShouldBe(8.4m);

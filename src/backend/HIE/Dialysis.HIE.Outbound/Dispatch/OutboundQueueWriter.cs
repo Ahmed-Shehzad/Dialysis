@@ -21,12 +21,10 @@ public sealed class OutboundQueueWriter(
     IOptions<OutboundOptions> options,
     ILogger<OutboundQueueWriter> logger)
 {
-    private static readonly FhirJsonSerializer _serializer = new();
     private readonly OutboundOptions _options = options.Value;
 
-    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
-    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
-    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
+    // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
+    private static string SerializeFhirJson(Resource resource) => resource.ToJson();
 
     public async Task EnqueueAsync<TEvent, TResource>(
         TEvent integrationEvent,

@@ -44,11 +44,11 @@ public sealed class AllscriptsAuthProvider(IOptions<AllscriptsAdapterOptions> op
             CacheKey: $"allscripts-token::{context.TenantId}::{_options.Username}",
             FormFields:
             [
-                new("grant_type", "password"),
-                new("client_id", _options.ClientId),
-                new("username", _options.Username),
-                new("password", _options.Password),
-                new("scope", _options.Scope),
+                new KeyValuePair<string, string>("grant_type", "password"),
+                new KeyValuePair<string, string>("client_id", _options.ClientId),
+                new KeyValuePair<string, string>("username", _options.Username),
+                new KeyValuePair<string, string>("password", _options.Password),
+                new KeyValuePair<string, string>("scope", _options.Scope),
             ],
             ExtraHeaders: new Dictionary<string, string>(StringComparer.Ordinal)
             {

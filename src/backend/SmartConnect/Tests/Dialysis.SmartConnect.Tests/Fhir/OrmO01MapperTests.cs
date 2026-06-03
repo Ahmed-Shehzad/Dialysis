@@ -40,7 +40,7 @@ public sealed class OrmO01MapperTests
         var request = Assert.IsType<ServiceRequest>(Assert.Single(produced));
         Assert.Equal(RequestStatus.Active, request.Status);
         Assert.Equal(RequestIntent.Order, request.Intent);
-        Assert.Equal("24323-8", Assert.Single(request.Code.Coding).Code);
+        Assert.Equal("24323-8", Assert.Single(request.Code!.Coding).Code);
         Assert.Equal("Patient/MRN-7", request.Subject?.Reference);
         Assert.Equal("ORD-001", Assert.Single(request.Identifier).Value);
         Assert.Equal("2026-06-01", request.AuthoredOn);

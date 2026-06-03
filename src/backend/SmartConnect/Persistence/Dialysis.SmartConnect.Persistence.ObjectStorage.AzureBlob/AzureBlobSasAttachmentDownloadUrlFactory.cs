@@ -31,12 +31,12 @@ public sealed class AzureBlobSasAttachmentDownloadUrlFactory : IAttachmentDownlo
 
         if (!string.IsNullOrWhiteSpace(opts.ConnectionString))
         {
-            _container = new BlobContainerClient(opts.ConnectionString, opts.ContainerName);
+            _container = new BlobContainerClient(opts.ConnectionString, opts.ContainerName, AzureBlobClientDefaults.CreateOptions());
             _serviceClient = null;
         }
         else if (opts.ServiceUri is not null)
         {
-            _serviceClient = new BlobServiceClient(opts.ServiceUri, new DefaultAzureCredential());
+            _serviceClient = new BlobServiceClient(opts.ServiceUri, new DefaultAzureCredential(), AzureBlobClientDefaults.CreateOptions());
             _container = _serviceClient.GetBlobContainerClient(opts.ContainerName);
         }
         else

@@ -33,13 +33,13 @@ public sealed class HisAdmissionEncounterFeederTests
 
         var openOut = results.First(e => e.Id == openAdmission.Id.ToString());
         openOut.Status.ShouldBe(Encounter.EncounterStatus.InProgress);
-        openOut.Subject.Reference.ShouldBe($"Patient/{openAdmission.PatientId}");
-        openOut.Period.End.ShouldBeNull();
+        openOut.Subject!.Reference.ShouldBe($"Patient/{openAdmission.PatientId}");
+        openOut.Period!.End.ShouldBeNull();
         openOut.Location[0].Location.Reference.ShouldBe("Location/WARD-A1");
 
         var dischargedOut = results.First(e => e.Id == dischargedAdmission.Id.ToString());
         dischargedOut.Status.ShouldBe(Encounter.EncounterStatus.Finished);
-        dischargedOut.Period.End.ShouldNotBeNull();
+        dischargedOut.Period!.End.ShouldNotBeNull();
     }
 
     [Fact]

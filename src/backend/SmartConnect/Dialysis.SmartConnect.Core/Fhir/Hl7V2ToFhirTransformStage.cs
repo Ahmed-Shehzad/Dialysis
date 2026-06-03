@@ -20,8 +20,6 @@ public sealed class Hl7V2ToFhirTransformStage(Hl7V2ToFhirPipeline pipeline) : IT
 {
     public const string KindValue = "hl7-to-fhir-pipeline";
 
-    private static readonly FhirJsonSerializer _serializer = new();
-
     public string Kind => KindValue;
 
     public Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
@@ -66,9 +64,8 @@ public sealed class Hl7V2ToFhirTransformStage(Hl7V2ToFhirPipeline pipeline) : IT
             bundle.Entry.Add(new Bundle.EntryComponent { Resource = resource });
         }
 
-        // Synchronous SerializeToString — async sibling is [Obsolete], same rationale as
-        // NcpdpToFhirTransformStage.
-        var json = _serializer.SerializeToString(bundle);
+        // Synchronous ToJson kept off the async path, same rationale as NcpdpToFhirTransformStage.
+        var json = bundle.ToJson();
         return message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Json);
     }
 }

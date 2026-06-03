@@ -39,14 +39,14 @@ public sealed class MdmT02MapperTests
 
         var doc = Assert.IsType<DocumentReference>(Assert.Single(produced));
         Assert.Equal(DocumentReferenceStatus.Current, doc.Status);
-        Assert.Equal("11506-3", Assert.Single(doc.Type.Coding).Code);
+        Assert.Equal("11506-3", Assert.Single(doc.Type!.Coding).Code);
         Assert.Equal("Patient/MRN-3", doc.Subject?.Reference);
         Assert.Equal("DOC-123", Assert.Single(doc.Identifier).Value);
         var content = Assert.Single(doc.Content);
         Assert.Equal("text/plain", content.Attachment.ContentType);
         Assert.Equal(
             "Patient stable, continue current regimen.",
-            Encoding.UTF8.GetString(content.Attachment.Data));
+            Encoding.UTF8.GetString(content.Attachment.Data!));
     }
 
     private sealed class FhirMapperWrapper<TResource>(IFhirV2MessageMapper<TResource> inner) : IFhirV2MessageMapperWrapper

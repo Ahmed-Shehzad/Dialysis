@@ -24,8 +24,7 @@ public sealed class FhirController(
     IPatientIndex patientIndex,
     ILogger<FhirController> logger) : ControllerBase
 {
-    private static readonly FhirJsonParser _parser = new();
-    private static readonly FhirJsonSerializer _serializer = new();
+    private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
     [HttpPost("Bundle")]
     [Consumes("application/fhir+json", "application/json")]
@@ -33,26 +32,26 @@ public sealed class FhirController(
     {
         var partnerId = Request.Headers["X-HIE-Partner"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(partnerId))
-            return await FhirResultAsync(BadRequest(), MissingPartnerOutcome()).ConfigureAwait(false);
+            return FhirResult(BadRequest(), MissingPartnerOutcome());
 
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         Resource resource;
         try
         {
-            resource = await _parser.ParseAsync<Resource>(body);
+            resource = _parser.Deserialize<Resource>(body);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Inbound FHIR parse error");
-            return await FhirResultAsync(UnprocessableEntity(), ParseErrorOutcome(ex.Message)).ConfigureAwait(false);
+            return FhirResult(UnprocessableEntity(), ParseErrorOutcome(ex.Message));
         }
 
         var outcome = await ingestion.IngestAsync(partnerId, resource, cancellationToken).ConfigureAwait(false);
         var status = outcome.Issue.Any(i => i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal)
             ? StatusCodes.Status422UnprocessableEntity
             : StatusCodes.Status200OK;
-        return await FhirResultAsync(StatusCode(status), outcome).ConfigureAwait(false);
+        return FhirResult(StatusCode(status), outcome);
     }
 
     [HttpGet("Patient/$match")]
@@ -97,12 +96,12 @@ public sealed class FhirController(
             });
         }
 
-        return await FhirResultAsync(Ok(), bundle).ConfigureAwait(false);
+        return FhirResult(Ok(), bundle);
     }
 
-    private static async Task<IActionResult> FhirResultAsync(IActionResult fallbackStatus, Resource resource)
+    private static IActionResult FhirResult(IActionResult fallbackStatus, Resource resource)
     {
-        var json = await _serializer.SerializeToStringAsync(resource);
+        var json = resource.ToJson();
 
         var statusCode = fallbackStatus switch
         {

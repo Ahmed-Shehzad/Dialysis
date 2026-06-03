@@ -37,8 +37,8 @@ public sealed class CernerAuthProvider(IOptions<CernerAdapterOptions> options, O
             CacheKey: $"cerner-token::{context.TenantId}",
             FormFields:
             [
-                new("grant_type", "client_credentials"),
-                new("scope", _options.Scope),
+                new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                new KeyValuePair<string, string>("scope", _options.Scope),
             ],
             BasicAuth: new BasicAuthCredential(_options.ClientId, _options.ClientSecret));
         return tokenAcquirer.AcquireAsync(request, cancellationToken);

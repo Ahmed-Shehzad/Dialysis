@@ -12,11 +12,8 @@ namespace Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventStore
     where TDbContext : DbContext
 {
-    private static readonly FhirJsonSerializer _serializer = new();
-
-    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
-    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
-    private static string SerializeFhirJson(AuditEvent auditEvent) => _serializer.SerializeToString(auditEvent);
+    // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
+    private static string SerializeFhirJson(AuditEvent auditEvent) => auditEvent.ToJson();
 
     public async ValueTask AppendAsync(AuditEvent auditEvent, CancellationToken cancellationToken)
     {

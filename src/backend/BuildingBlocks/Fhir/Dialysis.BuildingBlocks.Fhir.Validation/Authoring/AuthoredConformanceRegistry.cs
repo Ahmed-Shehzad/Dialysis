@@ -98,7 +98,7 @@ public sealed class AuthoredConformanceRegistry : IFhirConformanceRegistry
             return null;
         if (_byCanonical.TryGetValue(StripVersion(uri), out var authored))
             return authored;
-        return await _core.Value.ResolveByCanonicalUriAsync(uri).ConfigureAwait(false);
+        return (await _core.Value.TryResolveByCanonicalUriAsync(uri).ConfigureAwait(false)).Value;
     }
 
     public async Task<Resource?> ResolveByUriAsync(string uri)
@@ -107,7 +107,7 @@ public sealed class AuthoredConformanceRegistry : IFhirConformanceRegistry
             return null;
         if (_byCanonical.TryGetValue(StripVersion(uri), out var authored))
             return authored;
-        return await _core.Value.ResolveByUriAsync(uri).ConfigureAwait(false);
+        return (await _core.Value.TryResolveByUriAsync(uri).ConfigureAwait(false)).Value;
     }
 
     // Canonicals may carry a |version suffix; authored artifacts are indexed without it.

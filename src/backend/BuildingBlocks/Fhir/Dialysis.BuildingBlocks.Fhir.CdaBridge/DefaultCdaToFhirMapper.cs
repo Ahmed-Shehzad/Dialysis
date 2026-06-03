@@ -35,16 +35,19 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
         var root = doc.Root ?? throw new FormatException("Empty CDA document.");
 
         var patient = ExtractPatient(root);
+        // ExtractPatient always assigns Patient.Id (identifier value or a fresh GUID); Firely 6
+        // widened Resource.Id to string?, so capture the non-null invariant once here.
+        var patientId = patient.Id!;
         var sectionRefs = new List<Composition.SectionComponent>();
         var bundle = new Bundle { Type = Bundle.BundleType.Document };
 
         // Composition is added first (a FHIR Document bundle requires it as entry[0]); its
         // section list is populated as we map each clinical section below.
-        var composition = ExtractComposition(root, patient.Id, sectionRefs);
+        var composition = ExtractComposition(root, patientId, sectionRefs);
         bundle.Entry.Add(new Bundle.EntryComponent { Resource = composition });
         bundle.Entry.Add(new Bundle.EntryComponent { Resource = patient });
 
-        MapSections(root, patient.Id, bundle, sectionRefs);
+        MapSections(root, patientId, bundle, sectionRefs);
         return bundle;
     }
 

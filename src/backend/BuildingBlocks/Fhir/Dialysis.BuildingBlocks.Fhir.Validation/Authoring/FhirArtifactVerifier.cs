@@ -88,8 +88,8 @@ public sealed class FhirArtifactVerifier(
                 continue;
             }
 
-            var resolved = await registry.ResolveByCanonicalUriAsync(dep.Uri).ConfigureAwait(false);
-            if (resolved is null)
+            var resolved = await registry.TryResolveByCanonicalUriAsync(dep.Uri).ConfigureAwait(false);
+            if (!resolved.Success)
             {
                 Add(outcome, OperationOutcome.IssueSeverity.Warning,
                     $"Dependency '{dep.Uri}' could not be resolved from the loaded conformance sources.");
@@ -159,7 +159,7 @@ public sealed class FhirArtifactVerifier(
         try
         {
             var json = serializer.Serialize(resource);
-            _ = serializer.Parser.Parse<Resource>(json);
+            _ = serializer.Parse<Resource>(json);
         }
         catch (Exception ex)
         {

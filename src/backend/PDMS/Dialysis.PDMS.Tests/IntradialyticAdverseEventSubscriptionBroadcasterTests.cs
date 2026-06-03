@@ -47,7 +47,7 @@ public sealed class IntradialyticAdverseEventSubscriptionBroadcasterTests
         dispatcher.Dispatched.Count.ShouldBe(1);
         var adverseEvent = dispatcher.Dispatched[0].ShouldBeOfType<AdverseEvent>();
         adverseEvent.Subject.Reference.ShouldBe($"Patient/{patientId}");
-        adverseEvent.Event.Coding[0].Code.ShouldBe("271594007");
+        adverseEvent.Event!.Coding[0].Code.ShouldBe("271594007");
         adverseEvent.SuspectEntity[0].Instance.Reference.ShouldBe($"Procedure/{sessionId}");
     }
 

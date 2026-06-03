@@ -14,7 +14,7 @@ public sealed class OperationOutcomeFactoryTests
         outcome.Issue.ShouldHaveSingleItem();
         outcome.Issue[0].Code.ShouldBe(OperationOutcome.IssueType.NotFound);
         outcome.Issue[0].Severity.ShouldBe(OperationOutcome.IssueSeverity.Error);
-        outcome.Issue[0].Diagnostics.ShouldContain("Patient/123");
+        outcome.Issue[0].Diagnostics!.ShouldContain("Patient/123");
     }
 
     [Fact]

@@ -33,7 +33,8 @@ public sealed class OAuth2TokenAcquirer
         }
 
         using var form = new FormUrlEncodedContent(request.FormFields);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, request.TokenEndpoint) { Content = form };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, request.TokenEndpoint);
+        httpRequest.Content = form;
         if (request.BasicAuth is { } basic)
         {
             var raw = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{basic.User}:{basic.Password}"));

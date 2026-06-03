@@ -57,8 +57,8 @@ public sealed class DefaultExportJobOrchestratorTests : IAsyncLifetime
         var lines = await File.ReadAllLinesAsync(ndjsonPath);
         lines.Length.ShouldBe(2);
 
-        var parser = new FhirJsonParser();
-        var first = await parser.ParseAsync<Patient>(lines[0]);
+        var parser = new FhirJsonDeserializer(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
+        var first = parser.Deserialize<Patient>(lines[0]);
         first.Id.ShouldBe("p1");
 
         await host.StopAsync();

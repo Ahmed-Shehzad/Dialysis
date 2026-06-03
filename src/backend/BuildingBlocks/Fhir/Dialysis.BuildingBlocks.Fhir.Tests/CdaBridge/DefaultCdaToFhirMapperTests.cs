@@ -49,16 +49,16 @@ public sealed class DefaultCdaToFhirMapperTests
     public void Parses_Problem_Into_Condition()
     {
         var condition = MapFull().Entry.Select(e => e.Resource).OfType<Condition>().Single();
-        condition.Code.Coding.ShouldContain(c => c.Code == "N18.6" && c.System == "http://hl7.org/fhir/sid/icd-10-cm");
+        condition.Code!.Coding.ShouldContain(c => c.Code == "N18.6" && c.System == "http://hl7.org/fhir/sid/icd-10-cm");
         (condition.Onset as FhirDateTime)!.Value.ShouldBe("2024-01-15");
-        condition.ClinicalStatus.Coding.ShouldContain(c => c.Code == "active");
+        condition.ClinicalStatus!.Coding.ShouldContain(c => c.Code == "active");
     }
 
     [Fact]
     public void Parses_Allergy_Substance_Into_Allergy_Intolerance()
     {
         var allergy = MapFull().Entry.Select(e => e.Resource).OfType<AllergyIntolerance>().Single();
-        allergy.Code.Coding.ShouldContain(c => c.Code == "7980" && c.Display == "Penicillin");
+        allergy.Code!.Coding.ShouldContain(c => c.Code == "7980" && c.Display == "Penicillin");
         allergy.Patient.Reference.ShouldStartWith("Patient/");
     }
 

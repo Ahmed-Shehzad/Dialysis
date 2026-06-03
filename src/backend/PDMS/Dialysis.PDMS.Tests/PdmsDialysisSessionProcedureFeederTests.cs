@@ -28,7 +28,7 @@ public sealed class PdmsDialysisSessionProcedureFeederTests
         }
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(p => p.Code.Coding[0].System == "http://snomed.info/sct" && p.Code.Coding[0].Code == "302497006");
+        results.ShouldAllBe(p => p.Code!.Coding[0].System == "http://snomed.info/sct" && p.Code!.Coding[0].Code == "302497006");
 
         var inProgressOut = results.First(p => p.Id == inProgress.Id.ToString());
         inProgressOut.Status.ShouldBe(EventStatus.InProgress);

@@ -23,12 +23,10 @@ public sealed class NcpdpToFhirMappingTests
     private const char Fs = NcpdpTelecomMessage.FieldSeparator;
     private const char Ss = NcpdpTelecomMessage.SegmentSeparator;
 
-    private static readonly FhirJsonParser _parser = new();
+    private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
-    // Parse is CPU-only; calling it from a non-Async helper keeps VSTHRD103 quiet without a
-    // pragma (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
     private static T ParseFhirJson<T>(string json) where T : Resource =>
-        (T)_parser.Parse(json, typeof(T));
+        (T)_parser.DeserializeObject(typeof(T), json);
 
     [Fact]
     public void B1_Billing_Maps_To_Active_Claim_With_Ndc_And_Patient()
@@ -44,8 +42,8 @@ public sealed class NcpdpToFhirMappingTests
         Assert.Equal("Practitioner/1234567890", claim.Provider.Reference);
         Assert.Equal("RX-001", Assert.Single(claim.Identifier).Value);
         var item = Assert.Single(claim.Item);
-        Assert.Equal("12345-6789-01", Assert.Single(item.ProductOrService.Coding).Code);
-        Assert.Equal(30m, item.Quantity.Value);
+        Assert.Equal("12345-6789-01", Assert.Single(item.ProductOrService!.Coding).Code);
+        Assert.Equal(30m, item.Quantity!.Value);
     }
 
     [Fact]
@@ -84,7 +82,7 @@ public sealed class NcpdpToFhirMappingTests
         var resource = mapper.Map(parsed);
 
         var dispense = Assert.IsType<MedicationDispense>(resource);
-        Assert.Equal("Patient/PT-123", dispense.Subject.Reference);
+        Assert.Equal("Patient/PT-123", dispense.Subject!.Reference);
         Assert.Equal(MedicationDispense.MedicationDispenseStatusCodes.Completed, dispense.Status);
         var ndc = Assert.IsType<CodeableConcept>(dispense.Medication);
         Assert.Equal("12345-6789-01", Assert.Single(ndc.Coding).Code);

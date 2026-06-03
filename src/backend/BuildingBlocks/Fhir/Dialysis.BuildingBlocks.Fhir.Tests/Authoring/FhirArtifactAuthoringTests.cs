@@ -47,8 +47,8 @@ public sealed class FhirArtifactAuthoringTests
         // Resolvable on the fly for downstream validation / profile layering.
         registry.TryGet(spec.Url, out var resolved).ShouldBeTrue();
         resolved.ShouldBeOfType<Hl7.Fhir.Model.StructureDefinition>();
-        var byCanonical = await registry.ResolveByCanonicalUriAsync(spec.Url);
-        byCanonical.ShouldNotBeNull();
+        var byCanonical = await registry.TryResolveByCanonicalUriAsync(spec.Url);
+        byCanonical.Value.ShouldNotBeNull();
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public sealed class FhirArtifactAuthoringTests
             string.Join("; ", result.Verification.Outcome.Issue.Select(i => i.Diagnostics)));
         result.Published.ShouldBeTrue();
         result.Profiles.Count.ShouldBe(1);
-        result.Guide.Definition.Resource.Count.ShouldBe(1);
+        result.Guide.Definition!.Resource.Count.ShouldBe(1);
         result.Guide.Global.Count.ShouldBe(1);
 
         // The unresolved external dependency is advisory (a Warning), never a hard failure.

@@ -15,20 +15,20 @@ var builder = DistributedApplication.CreateBuilder(args);
 // --- Constants -------------------------------------------------------------
 // Centralized so the Keycloak port, realm, and import-volume path can't drift
 // between the container definition and the consumers that build URIs from them.
-const string KeycloakRealm = "dialysis";
-const int KeycloakHostPort = 8081;
-const int KeycloakContainerPort = 8080;
+const string keycloakRealm = "dialysis";
+const int keycloakHostPort = 8081;
+const int keycloakContainerPort = 8080;
 // Bind mount is relative to this csproj (src/aspire/Dialysis.AppHost). The canonical
 // realm export lives with the Identity module so it ships next to its own docker-compose;
 // the repo-root `keycloak/` directory is intentionally empty.
-const string KeycloakRealmImportPath = "../../backend/Identity/keycloak";
-const string KeycloakDiscoveryPath = "/realms/" + KeycloakRealm + "/.well-known/openid-configuration";
+const string keycloakRealmImportPath = "../../backend/Identity/keycloak";
+const string keycloakDiscoveryPath = "/realms/" + keycloakRealm + "/.well-known/openid-configuration";
 
 // BFF + Gateway ports must be pinned (not random) so the redirect_uri the OIDC handler
 // builds matches what's registered on the dialysis-bff Keycloak client in dialysis-realm.json
 // (redirectUris: http://localhost:5275/* and http://localhost:9090/*).
-const int IdentityBffPort = 5275;
-const int GatewayPort = 9090;
+const int identityBffPort = 5275;
+const int gatewayPort = 9090;
 
 // --- Shared infrastructure -------------------------------------------------
 
@@ -54,9 +54,9 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
     .WithEnvironment("KC_DB", "dev-mem")
     .WithEnvironment("KC_HEALTH_ENABLED", "true")
     .WithEnvironment("KC_HTTP_ENABLED", "true")
-    .WithBindMount(KeycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true)
-    .WithHttpEndpoint(port: KeycloakHostPort, targetPort: KeycloakContainerPort, name: "http")
-    .WithHttpHealthCheck(KeycloakDiscoveryPath, statusCode: 200, endpointName: "http");
+    .WithBindMount(keycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true)
+    .WithHttpEndpoint(port: keycloakHostPort, targetPort: keycloakContainerPort, name: "http")
+    .WithHttpHealthCheck(keycloakDiscoveryPath, statusCode: 200, endpointName: "http");
 // Deliberately NOT Persistent: --import-realm only imports if the realm doesn't
 // already exist, so a long-lived container makes dialysis-realm.json edits invisible
 // (redirect_uri / client / role changes silently ignored). With KC_DB=dev-mem the
@@ -64,7 +64,7 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
 // is cheap and keeps the realm in lockstep with the file.
 
 var keycloakRealmUri = ReferenceExpression.Create(
-    $"{keycloak.GetEndpoint("http")}/realms/{KeycloakRealm}");
+    $"{keycloak.GetEndpoint("http")}/realms/{keycloakRealm}");
 
 // --- Per-module Postgres ---------------------------------------------------
 
@@ -258,12 +258,12 @@ var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-b
     // doesn't fully override launchSettings.
     .WithEndpoint("http", e =>
     {
-        e.Port = IdentityBffPort;
-        e.TargetPort = IdentityBffPort;
+        e.Port = identityBffPort;
+        e.TargetPort = identityBffPort;
         e.IsProxied = false;
     })
     .WithEnvironment("ASPNETCORE_URLS",
-        "http://localhost:" + IdentityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        "http://localhost:" + identityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture))
     .WaitFor(keycloak)
     .WaitFor(hisApi)
     // BFF binds Keycloak under section "Identity:Keycloak" (KeycloakBffOptions.SectionName).
@@ -282,12 +282,12 @@ var gateway = builder.AddProject<Projects.Dialysis_Module_Gateway>("gateway")
     // must be on the same origin that hosts the SPA cookies).
     .WithEndpoint("http", e =>
     {
-        e.Port = GatewayPort;
-        e.TargetPort = GatewayPort;
+        e.Port = gatewayPort;
+        e.TargetPort = gatewayPort;
         e.IsProxied = false;
     })
     .WithEnvironment("ASPNETCORE_URLS",
-        "http://localhost:" + GatewayPort.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        "http://localhost:" + gatewayPort.ToString(System.Globalization.CultureInfo.InvariantCulture))
     .WithReference(hisApi).WaitFor(hisApi)
     .WithReference(ehrApi).WaitFor(ehrApi)
     .WithReference(pdmsApi).WaitFor(pdmsApi)
@@ -300,7 +300,7 @@ var gateway = builder.AddProject<Projects.Dialysis_Module_Gateway>("gateway")
     // Pin the YARP identity cluster destination to the pinned BFF port (default in appsettings
     // already matches, but make it explicit so a future port change in one place doesn't desync).
     .WithEnvironment("ReverseProxy__Clusters__identity__Destinations__d1__Address",
-        "http://localhost:" + IdentityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/");
+        "http://localhost:" + identityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/");
 
 // --- Frontend (Vite dev server) -------------------------------------------
 //
@@ -319,7 +319,7 @@ var gateway = builder.AddProject<Projects.Dialysis_Module_Gateway>("gateway")
 // which executes `npm install`. That makes `node_modules` self-healing on every AppHost
 // start — no manual `npm install` step required, and a no-op after the first install when
 // package-lock.json is already in sync.
-const int VitePort = 5173;
+const int vitePort = 5173;
 builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
     .WithReference(gateway).WaitFor(gateway)
     .WithEnvironment("BROWSER", "none")
@@ -328,7 +328,7 @@ builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
     // Pin the Vite port so the gateway's "web" YARP cluster (Address: http://localhost:5173/)
     // can reliably reach it. isProxied:false skips DCP proxy entirely — there is no need
     // for it now that the gateway is the single browser-facing origin.
-    .WithHttpEndpoint(env: "PORT", port: VitePort, targetPort: VitePort, isProxied: false)
+    .WithHttpEndpoint(env: "PORT", port: vitePort, targetPort: vitePort, isProxied: false)
     .PublishAsDockerFile();
 
 await builder.Build().RunAsync().ConfigureAwait(false);

@@ -49,7 +49,10 @@ public sealed class VerifyFhirTransformStage(IFhirProfileValidator validator) : 
 
 internal static class VerifyFhirCore
 {
-    private static readonly FhirJsonParser _parser = new();
+    // Strict: this is a validation gate, so anything that is not well-formed, base-spec-valid FHIR
+    // (garbage, missing resourceType, unmet required cardinality) is rejected at parse time. The
+    // DeserializationFailedException it raises is caught below and reported as a parse failure.
+    private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Strict));
 
     public readonly record struct Inspection(bool IsValid, string? Reason);
 
@@ -68,13 +71,10 @@ internal static class VerifyFhirCore
         Resource resource;
         try
         {
-            // Firely's async parser sibling is [Obsolete]; the synchronous Parse is in-memory and
-            // CPU-bound, so blocking here is acceptable.
-#pragma warning disable VSTHRD103
-            resource = _parser.Parse<Resource>(json);
-#pragma warning restore VSTHRD103
+            // Firely's POCO deserializer is in-memory and CPU-bound, so calling it here is fine.
+            resource = _parser.Deserialize<Resource>(json);
         }
-        catch (Exception ex) when (ex is FormatException or DeserializationFailedException)
+        catch (Exception ex) when (ex is FormatException or DeserializationFailedException or System.Text.Json.JsonException)
         {
             return new(false, $"FHIR parse failed: {ex.Message}");
         }
