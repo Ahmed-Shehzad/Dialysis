@@ -74,7 +74,18 @@ public static class HealthInformationExchangeExtensions
             // at the host once. PDMS's IReportBlobStore continues to resolve through this same
             // IDocumentBlobStore singleton (see InMemoryReportBlobStore's adapter ctor).
             services.AddInMemoryDocumentBlobStore();
-            services.AddPdfSigning(configuration.GetSection("Documents:Signing"));
+            var signingSection = configuration.GetSection("Documents:Signing");
+            services.AddPdfSigning(signingSection);
+            // eIDAS-QES path is opt-in: the host configures a TSP only when it has a CSC v2
+            // contract. Without the BaseUri the resolver isn't registered and the SignDocument
+            // command rejects RemoteQes requests with a clean InvalidOperationException.
+            if (!string.IsNullOrWhiteSpace(signingSection.GetSection("Tsp:BaseUri").Value))
+            {
+                services.AddHttpClient(Dialysis.BuildingBlocks.Documents.Signing.Csc.CscV2Client.HttpClientName);
+                services.AddEidasQesSigning(signingSection);
+            }
+            // LTV upgrader is opt-in too — hosts toggle Documents:Signing:Ltv:AutoUpgrade.
+            services.AddHostedService<Dialysis.BuildingBlocks.Documents.Signing.Hosted.LtvUpgraderHostedService>();
 
             services.AddScoped<PatientMapper>();
             services.AddScoped<EncounterMapper>();

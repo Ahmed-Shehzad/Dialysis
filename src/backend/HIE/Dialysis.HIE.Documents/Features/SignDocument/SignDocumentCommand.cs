@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.CQRS.Commands;
@@ -12,10 +11,13 @@ using Dialysis.Module.Contracts.Authorization;
 namespace Dialysis.HIE.Documents.Features.SignDocument;
 
 /// <summary>
-/// Apply a PAdES-style digital signature to an existing document. The cert source picks
-/// between the configured platform cert and the per-user cert resolved via the Identity
-/// claim; the result is persisted as a new bytes version and a <c>DocumentReferenceSignature</c>
-/// row is appended (signatures stack — multi-sign is supported).
+/// Apply a PAdES digital signature to an existing document. The cert source picks between
+/// the configured platform cert, the per-user cert resolved via the Identity claim, and
+/// the eIDAS-QES TSP credential (<see cref="PdfSigningCertificateSource.RemoteQes"/>);
+/// the result is persisted as a new bytes version and a <c>DocumentReferenceSignature</c>
+/// row is appended (signatures stack — multi-sign is supported). The requested
+/// <see cref="PadesLevel"/> drives whether a TSA timestamp and DSS revocation evidence
+/// are embedded.
 /// </summary>
 public sealed record SignDocumentCommand(
     Guid DocumentId,
@@ -23,7 +25,9 @@ public sealed record SignDocumentCommand(
     string? UserId,
     string? Reason,
     string? Location,
-    string? ContactInfo)
+    string? ContactInfo,
+    PadesConformance Level = PadesConformance.B,
+    string? TspCredentialId = null)
     : ICommand<Guid>, IPermissionedCommand
 {
     public string RequiredPermission => HiePermissions.DocumentsSign;
@@ -33,7 +37,7 @@ public sealed class SignDocumentCommandHandler(
     IDocumentReferenceRepository repository,
     IDocumentBlobStore blobs,
     IPdfSigner signer,
-    IEnumerable<ISigningCertificateResolver> resolvers,
+    IRemoteSignatureService? remoteSignature,
     IUnitOfWork unitOfWork,
     TimeProvider clock)
     : ICommandHandler<SignDocumentCommand, Guid>
@@ -54,50 +58,66 @@ public sealed class SignDocumentCommandHandler(
             request.UserId,
             request.Reason,
             request.Location,
-            request.ContactInfo);
+            request.ContactInfo)
+        {
+            Level = request.Level,
+            TspCredentialId = request.TspCredentialId,
+        };
 
-        var signedBytes = await signer.SignAsync(bytes, signingRequest, cancellationToken).ConfigureAwait(false);
+        var result = await signer.SignAsync(bytes, signingRequest, cancellationToken).ConfigureAwait(false);
 
-        var newRef = await blobs.SaveAsync(Guid.CreateVersion7(), document.MimeType, signedBytes, cancellationToken)
+        var newRef = await blobs.SaveAsync(Guid.CreateVersion7(), document.MimeType, result.SignedPdf, cancellationToken)
             .ConfigureAwait(false);
-        var newHash = Convert.ToHexString(SHA256.HashData(signedBytes));
-        document.Revise(newRef, newHash, signedBytes.LongLength, document.HasAcroForms, document.HasJavascript);
+        var newHash = Convert.ToHexString(SHA256.HashData(result.SignedPdf));
+        document.Revise(newRef, newHash, result.SignedPdf.LongLength, document.HasAcroForms, document.HasJavascript);
 
-        var thumbprint = await ResolveThumbprintAsync(request, resolvers, cancellationToken).ConfigureAwait(false);
+        var signerKind = request.CertificateSource switch
+        {
+            PdfSigningCertificateSource.Platform => DocumentSignerKind.Platform,
+            PdfSigningCertificateSource.User => DocumentSignerKind.User,
+            PdfSigningCertificateSource.RemoteQes => DocumentSignerKind.RemoteQes,
+            _ => throw new InvalidOperationException($"Unsupported signing source '{request.CertificateSource}'."),
+        };
+
+        var padesLevel = MapLevel(result.Level);
+        var revocationFormat = MapRevocationFormat(result.Revocation?.Kind);
+        var signatureFormat = result.IsQualified ? SignatureFormat.Qes : SignatureFormat.Aes;
+
         document.RecordSignature(new DocumentReferenceSignature(
             id: Guid.CreateVersion7(),
             documentReferenceId: document.Id,
-            signerKind: request.CertificateSource == PdfSigningCertificateSource.Platform
-                ? DocumentSignerKind.Platform
-                : DocumentSignerKind.User,
-            certThumbprint: thumbprint,
+            signerKind: signerKind,
+            certThumbprint: result.CertThumbprint,
             signedAtUtc: clock.GetUtcNow().UtcDateTime,
+            padesLevel: padesLevel,
+            signatureFormat: signatureFormat,
             signerUserId: request.UserId,
-            reason: request.Reason));
+            reason: request.Reason,
+            tsaUri: result.TsaUri,
+            tsaCertThumbprint: result.TsaCertThumbprint,
+            timestampedAtUtc: result.TimestampedAtUtc,
+            revocationEvidenceFormat: revocationFormat,
+            revocationEvidenceBlob: result.Revocation?.Blob,
+            tspId: result.IsQualified ? remoteSignature?.TspId : null,
+            tspCredentialId: request.TspCredentialId));
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return document.Id;
     }
 
-    private static async Task<string> ResolveThumbprintAsync(
-        SignDocumentCommand request,
-        IEnumerable<ISigningCertificateResolver> resolvers,
-        CancellationToken cancellationToken)
+    private static PadesLevel MapLevel(PadesConformance level) => level switch
     {
-        var resolver = resolvers.FirstOrDefault(r => r.Source == request.CertificateSource);
-        if (resolver is null) return string.Empty;
-        var certificate = await resolver.ResolveAsync(
-            new PdfSigningRequest(request.CertificateSource, request.UserId, request.Reason, request.Location, request.ContactInfo),
-            cancellationToken).ConfigureAwait(false);
-        return X509CertificateExtensions.GetThumbprint(certificate);
-    }
-}
+        PadesConformance.T => PadesLevel.T,
+        PadesConformance.LT => PadesLevel.LT,
+        PadesConformance.LTA => PadesLevel.LTA,
+        _ => PadesLevel.B,
+    };
 
-internal static class X509CertificateExtensions
-{
-    public static string GetThumbprint(X509Certificate2 certificate)
+    private static RevocationEvidenceFormat MapRevocationFormat(RevocationEvidenceKind? kind) => kind switch
     {
-        ArgumentNullException.ThrowIfNull(certificate);
-        return certificate.Thumbprint;
-    }
+        RevocationEvidenceKind.Crl => RevocationEvidenceFormat.Crl,
+        RevocationEvidenceKind.Ocsp => RevocationEvidenceFormat.Ocsp,
+        RevocationEvidenceKind.Both => RevocationEvidenceFormat.Both,
+        _ => RevocationEvidenceFormat.None,
+    };
 }

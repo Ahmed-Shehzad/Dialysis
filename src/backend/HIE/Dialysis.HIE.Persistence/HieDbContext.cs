@@ -135,6 +135,13 @@ public sealed class HieDbContext(
             e.Property(s => s.SignerUserId).HasMaxLength(128);
             e.Property(s => s.CertThumbprint).HasMaxLength(128).IsRequired();
             e.Property(s => s.Reason).HasMaxLength(256);
+            e.Property(s => s.PadesLevel).HasConversion<int>();
+            e.Property(s => s.SignatureFormat).HasConversion<int>();
+            e.Property(s => s.TsaUri).HasMaxLength(512);
+            e.Property(s => s.TsaCertThumbprint).HasMaxLength(128);
+            e.Property(s => s.RevocationEvidenceFormat).HasConversion<int>();
+            e.Property(s => s.TspId).HasMaxLength(64);
+            e.Property(s => s.TspCredentialId).HasMaxLength(256);
             e.HasIndex(s => s.DocumentReferenceId).HasDatabaseName("IX_DocumentReferenceSignatures_DocRef");
         });
     }
