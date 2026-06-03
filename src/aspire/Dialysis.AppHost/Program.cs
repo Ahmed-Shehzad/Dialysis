@@ -1,33 +1,78 @@
 // Aspire orchestration for the Dialysis modular monolith.
 //
-// Mirrors the containerized deployment stack (docker-compose.modules.yml):
-//   • per-module Postgres (HIS, EHR, PDMS, SmartConnect, HIE)
-//   • shared RabbitMQ, Valkey, Keycloak (realm auto-imported)
-//   • each module API + Identity BFF + edge Gateway wired to the right infra
-//
-// Run with `dotnet run --project src/aspire/Dialysis.AppHost`. The Aspire dashboard
-// (logs / metrics / traces) opens automatically; OTLP endpoint is injected into every
-// project via OTEL_EXPORTER_OTLP_ENDPOINT (ModuleTelemetryExtensions falls back to it
-// when <Module>:Telemetry:OtlpEndpoint is unset).
+// Two modes drive this AppHost:
+//   * dev F5 loop — `dotnet run --project src/aspire/Dialysis.AppHost`
+//     brings up Postgres / RabbitMQ / Valkey / Keycloak / SonarQube + every
+//     module API + BFF + gateway + Vite SPA with hot reload.
+//   * publish — `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose`
+//     (driven by `./build.sh PublishCompose --environment <env>`) writes a
+//     self-contained `deploy/compose/<env>/docker-compose.yaml`. The same
+//     resource graph is the single source of truth for dev *and* production
+//     — production-only concerns (HSTS, host port mappings, the OTLP
+//     collector, build stanzas, replica counts) live in
+//     `ComposePublishExtensions` callbacks that only fire under
+//     `builder.ExecutionContext.IsPublishMode`.
+
+using Dialysis.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Which deployment shape are we publishing? Read once at the top so every helper sees the
+// same value. Defaults to `prod` so operators who run `./build.sh PublishCompose` without
+// arguments still get the production topology — `dev` and `staging` are opt-in.
+var deployEnv =
+    builder.Configuration[DeploymentEnvironment.EnvVarName] ?? DeploymentEnvironment.Default;
+var publishing = builder.ExecutionContext.IsPublishMode;
+
 // --- Deployment publisher -------------------------------------------------
-// `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path artifacts/compose`
-// renders the full topology — every Postgres, RabbitMQ, Valkey, Keycloak,
-// SonarQube, the five module APIs, the BFF, the gateway, and the SPA — into a
-// production-ready Docker Compose project under the given output path. This is
-// the single source of truth for the deployment topology, replacing the hand-
-// maintained docker-compose.modules.yml. Run via `./build.sh PublishCompose`
-// (see the NUKE target) and commit the regenerated artefacts so reviewers can
-// diff the topology change inline with the AppHost change that produced it.
+// `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path deploy/compose/<env>`
+// renders the full topology (every Postgres, RabbitMQ, Valkey, Keycloak, SonarQube, the
+// five module APIs, the BFF, the gateway, and the SPA) into a production-ready compose
+// project. Every overlay concern lives in the AppHost — there is no `docker-compose.override.yaml`.
 //
-// WithDashboard(false): the Aspire dashboard is a dev-time tool — in deployment
-// the host-side OTLP collector handles telemetry, so we omit the dashboard from
-// the published compose. (Leaving it enabled also trips the compose publisher's
-// "multiple compute environments" check on the auto-attached dashboard
-// resource.)
-builder.AddDockerComposeEnvironment("compose").WithDashboard(false);
+// WithDashboard(false): the Aspire dashboard is a dev-time tool — in deployment the
+// host-side OTLP collector handles telemetry, so we omit the dashboard from the published
+// compose. (Leaving it enabled also trips the publisher's "multiple compute environments"
+// check on the auto-attached dashboard resource.)
+//
+// ConfigureComposeFile: the OTEL collector + the defensive ASPNETCORE_ENVIRONMENT stamp
+// are applied here rather than per-resource because they're cross-cutting concerns.
+builder.AddDockerComposeEnvironment("compose")
+    .WithDashboard(false)
+    .ConfigureComposeFile(file =>
+    {
+        // Inject the OTEL collector as an Aspire-emitted service so the override file isn't
+        // needed. The collector's config lives at `deploy/compose/otel-collector.yaml`
+        // (already moved out of the override during #130); each compose env folder is
+        // three levels deep, so the bind mount resolves through ../../.
+        if (!DeploymentEnvironment.RequiresProductionHardening(deployEnv))
+        {
+            return;
+        }
+        file.Services["otel-collector"] =
+            new Aspire.Hosting.Docker.Resources.ComposeNodes.Service
+            {
+                Name = "otel-collector",
+                Image = "otel/opentelemetry-collector-contrib:0.110.0",
+                Command = { "--config=/etc/otel-collector.yaml" },
+                Volumes =
+                {
+                    new Aspire.Hosting.Docker.Resources.ServiceNodes.Volume
+                    {
+                        Name = "otel-collector-config",
+                        Type = "bind",
+                        Source = "../otel-collector.yaml",
+                        Target = "/etc/otel-collector.yaml",
+                        ReadOnly = true,
+                    },
+                },
+                Ports =
+                {
+                    "4317:4317",
+                    "4318:4318",
+                },
+            };
+    });
 
 // --- Constants -------------------------------------------------------------
 // Centralized so the Keycloak port, realm, and import-volume path can't drift
@@ -91,11 +136,21 @@ static IResourceBuilder<PostgresServerResource> Pg(IDistributedApplicationBuilde
         .WithDataVolume($"dialysis-{name}-data")
         .WithLifetime(ContainerLifetime.Persistent);
 
-var hisDb = Pg(builder, "postgres-his").AddDatabase("His", databaseName: "dialysis_his");
-var ehrDb = Pg(builder, "postgres-ehr").AddDatabase("Ehr", databaseName: "dialysis_ehr");
-var pdmsDb = Pg(builder, "postgres-pdms").AddDatabase("Pdms", databaseName: "dialysis_pdms");
-var smartconnectDb = Pg(builder, "postgres-smartconnect").AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
-var hieDb = Pg(builder, "postgres-hie").AddDatabase("Hie", databaseName: "dialysis_hie");
+// Keep the server builders so the publish-time decoration block at the bottom can map the
+// host-side port + healthcheck onto each one. The DB-wrapper builder (.AddDatabase) is what
+// downstream resources use for the connection string, but the host port mapping belongs on
+// the server resource.
+var hisPgServer = Pg(builder, "postgres-his");
+var ehrPgServer = Pg(builder, "postgres-ehr");
+var pdmsPgServer = Pg(builder, "postgres-pdms");
+var smartconnectPgServer = Pg(builder, "postgres-smartconnect");
+var hiePgServer = Pg(builder, "postgres-hie");
+
+var hisDb = hisPgServer.AddDatabase("His", databaseName: "dialysis_his");
+var ehrDb = ehrPgServer.AddDatabase("Ehr", databaseName: "dialysis_ehr");
+var pdmsDb = pdmsPgServer.AddDatabase("Pdms", databaseName: "dialysis_pdms");
+var smartconnectDb = smartconnectPgServer.AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
+var hieDb = hiePgServer.AddDatabase("Hie", databaseName: "dialysis_hie");
 
 // --- SonarQube (auto-start with the AppHost) ------------------------------
 //
@@ -337,7 +392,7 @@ var gateway = builder.AddProject<Projects.Dialysis_Module_Gateway>("gateway")
 // start — no manual `npm install` step required, and a no-op after the first install when
 // package-lock.json is already in sync.
 const int vitePort = 5173;
-builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
+var web = builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
     .WithReference(gateway).WaitFor(gateway)
     .WithEnvironment("BROWSER", "none")
     .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
@@ -347,5 +402,59 @@ builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
     // for it now that the gateway is the single browser-facing origin.
     .WithHttpEndpoint(env: "PORT", port: vitePort, targetPort: vitePort, isProxied: false)
     .PublishAsDockerFile();
+
+// --- Deployment-time decoration -------------------------------------------
+// Every overlay concern that used to live in `docker-compose.override.yaml` is applied
+// here as a `PublishAsDockerComposeService` callback. The block is guarded so the dev F5
+// loop bypasses it entirely (helpers themselves are no-ops at run time, but the guard
+// makes the intent obvious to a reader).
+if (publishing)
+{
+    hisApi.WithModuleDeployment(
+        projectRelativePath: "src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj",
+        assemblyDllName: "Dialysis.HIS.Api.dll",
+        moduleConfigPrefix: "His",
+        hostPort: 5288,
+        environment: deployEnv);
+    ehrApi.WithModuleDeployment(
+        projectRelativePath: "src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj",
+        assemblyDllName: "Dialysis.EHR.Api.dll",
+        moduleConfigPrefix: "Ehr",
+        hostPort: 5289,
+        environment: deployEnv);
+    pdmsApi.WithModuleDeployment(
+        projectRelativePath: "src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj",
+        assemblyDllName: "Dialysis.PDMS.Api.dll",
+        moduleConfigPrefix: "Pdms",
+        hostPort: 5290,
+        environment: deployEnv);
+    smartConnectApi.WithModuleDeployment(
+        projectRelativePath: "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj",
+        assemblyDllName: "Dialysis.SmartConnect.Api.dll",
+        moduleConfigPrefix: "SmartConnect",
+        hostPort: 5291,
+        environment: deployEnv);
+    hieApi.WithModuleDeployment(
+        projectRelativePath: "src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj",
+        assemblyDllName: "Dialysis.HIE.Api.dll",
+        moduleConfigPrefix: "Hie",
+        hostPort: 5292,
+        environment: deployEnv);
+    identityBff.WithIdentityBffDeployment(hostPort: identityBffPort, environment: deployEnv);
+    gateway.WithGatewayDeployment(hostPort: gatewayPort, identityBffHostPort: identityBffPort, environment: deployEnv);
+
+    hisPgServer.WithPublishedDatabasePort(hostPort: 5440, databaseName: "dialysis_his", environment: deployEnv);
+    smartconnectPgServer.WithPublishedDatabasePort(hostPort: 5441, databaseName: "dialysis_smartconnect", environment: deployEnv);
+    ehrPgServer.WithPublishedDatabasePort(hostPort: 5442, databaseName: "dialysis_ehr", environment: deployEnv);
+    pdmsPgServer.WithPublishedDatabasePort(hostPort: 5443, databaseName: "dialysis_pdms", environment: deployEnv);
+    hiePgServer.WithPublishedDatabasePort(hostPort: 5445, databaseName: "dialysis_hie", environment: deployEnv);
+
+    rabbit.WithPublishedPorts((5672, 5672), (15672, 15672));
+    valkey.WithPublishedPorts((6379, 6379));
+    keycloak.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
+    sonarqube.WithPublishedPorts((9000, 9000));
+
+    web.WithWebDeployment(hostPort: 8080);
+}
 
 await builder.Build().RunAsync().ConfigureAwait(false);
