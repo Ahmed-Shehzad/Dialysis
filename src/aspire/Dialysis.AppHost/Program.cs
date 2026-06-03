@@ -23,6 +23,14 @@ var builder = DistributedApplication.CreateBuilder(args);
 var deployEnv =
     builder.Configuration[DeploymentEnvironment.EnvVarName] ?? DeploymentEnvironment.Default;
 var publishing = builder.ExecutionContext.IsPublishMode;
+// Aspire validates that every compute resource is bound to exactly one compute environment.
+// We only register the environment for the publisher actually in use this run; both
+// `--publisher compose` and `--publisher k8s` are first-class outputs but they're never
+// emitted in one shot. `PublisherName` is null in dev (no environment is registered at all;
+// Aspire's own dev orchestrator handles run-time).
+var publisherName = builder.ExecutionContext.PublisherName;
+var isComposePublish = publishing && string.Equals(publisherName, "compose", StringComparison.OrdinalIgnoreCase);
+var isKubernetesPublish = publishing && string.Equals(publisherName, "k8s", StringComparison.OrdinalIgnoreCase);
 
 // --- Deployment publisher -------------------------------------------------
 // `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path deploy/compose/<env>`
@@ -37,42 +45,81 @@ var publishing = builder.ExecutionContext.IsPublishMode;
 //
 // ConfigureComposeFile: the OTEL collector + the defensive ASPNETCORE_ENVIRONMENT stamp
 // are applied here rather than per-resource because they're cross-cutting concerns.
-builder.AddDockerComposeEnvironment("compose")
-    .WithDashboard(false)
-    .ConfigureComposeFile(file =>
-    {
-        // Inject the OTEL collector as an Aspire-emitted service so the override file isn't
-        // needed. The collector's config lives at `deploy/compose/otel-collector.yaml`
-        // (already moved out of the override during #130); each compose env folder is
-        // three levels deep, so the bind mount resolves through ../../.
-        if (!DeploymentEnvironment.RequiresProductionHardening(deployEnv))
+// Aspire validates that every compute resource is bound to exactly one compute environment.
+// Both `--publisher compose` and `--publisher k8s` are first-class outputs, but they never
+// run in the same invocation — we register only the one matching the current publisher.
+// The dev F5 loop (no publisher) registers neither; Aspire's own dev orchestrator handles
+// run-time then. `k8sEnv` stays non-null only when the k8s publisher is active so the
+// Ingress block at the bottom of this file can attach a route to the gateway.
+Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.Kubernetes.KubernetesEnvironmentResource>? k8sEnv = null;
+if (isComposePublish)
+{
+    builder.AddDockerComposeEnvironment("compose")
+        .WithDashboard(false)
+        .ConfigureComposeFile(file =>
         {
-            return;
-        }
-        file.Services["otel-collector"] =
-            new Aspire.Hosting.Docker.Resources.ComposeNodes.Service
+            // Inject the OTEL collector as an Aspire-emitted service so the override file
+            // isn't needed. The collector's config lives at
+            // `deploy/compose/otel-collector.yaml` (already moved out of the override during
+            // #130); each compose env folder is three levels deep so the bind mount resolves
+            // through ../../.
+            if (!DeploymentEnvironment.RequiresProductionHardening(deployEnv))
             {
-                Name = "otel-collector",
-                Image = "otel/opentelemetry-collector-contrib:0.110.0",
-                Command = { "--config=/etc/otel-collector.yaml" },
-                Volumes =
+                return;
+            }
+            file.Services["otel-collector"] =
+                new Aspire.Hosting.Docker.Resources.ComposeNodes.Service
                 {
-                    new Aspire.Hosting.Docker.Resources.ServiceNodes.Volume
+                    Name = "otel-collector",
+                    Image = "otel/opentelemetry-collector-contrib:0.110.0",
+                    Command = { "--config=/etc/otel-collector.yaml" },
+                    Volumes =
                     {
-                        Name = "otel-collector-config",
-                        Type = "bind",
-                        Source = "../otel-collector.yaml",
-                        Target = "/etc/otel-collector.yaml",
-                        ReadOnly = true,
+                        new Aspire.Hosting.Docker.Resources.ServiceNodes.Volume
+                        {
+                            Name = "otel-collector-config",
+                            Type = "bind",
+                            Source = "../otel-collector.yaml",
+                            Target = "/etc/otel-collector.yaml",
+                            ReadOnly = true,
+                        },
                     },
-                },
-                Ports =
-                {
-                    "4317:4317",
-                    "4318:4318",
-                },
-            };
-    });
+                    Ports =
+                    {
+                        "4317:4317",
+                        "4318:4318",
+                    },
+                };
+        });
+}
+
+// --- Kubernetes / Helm publisher -----------------------------------------
+// `dotnet run --project src/aspire/Dialysis.AppHost --publisher k8s --output-path
+//  deploy/charts/dialysis-<env>` writes a complete Helm chart for the topology.
+// Operators install with:
+//   helm install dialysis deploy/charts/dialysis-prod -n dialysis --create-namespace
+//
+// The chart name + release name + namespace embed the deployment environment so
+// dev / staging / prod can co-exist on one cluster without collisions. Aspire's
+// k8s publisher renders one Deployment per project + one Service per Endpoint +
+// ConfigMap/Secret for env vars; an Ingress declared at the bottom of this file
+// covers the browser-facing surface (Gateway → cluster external).
+if (isKubernetesPublish)
+{
+    k8sEnv = builder.AddKubernetesEnvironment("k8s")
+        .WithDashboard(false)
+        .WithHelm(helm =>
+        {
+            helm.WithChartName("dialysis-" + deployEnv);
+            helm.WithChartVersion("0.1.0");
+            helm.WithChartDescription(
+                $"Dialysis modular monolith ({deployEnv}) — every module API, the BFF, the gateway, " +
+                "the SPA, plus per-module Postgres, RabbitMQ, Valkey, Keycloak. Generated from the " +
+                "Aspire AppHost; do not hand-edit the manifests, re-run the NUKE PublishKubernetes target.");
+            helm.WithNamespace("dialysis-" + deployEnv);
+            helm.WithReleaseName("dialysis");
+        });
+}
 
 // --- Constants -------------------------------------------------------------
 // Centralized so the Keycloak port, realm, and import-volume path can't drift
@@ -116,9 +163,17 @@ var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26
     .WithEnvironment("KC_DB", "dev-mem")
     .WithEnvironment("KC_HEALTH_ENABLED", "true")
     .WithEnvironment("KC_HTTP_ENABLED", "true")
-    .WithBindMount(keycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true)
     .WithHttpEndpoint(port: keycloakHostPort, targetPort: keycloakContainerPort, name: "http")
     .WithHttpHealthCheck(keycloakDiscoveryPath, statusCode: 200, endpointName: "http");
+// Realm-import bind mount is only meaningful for run-time + compose: the k8s publisher
+// rejects bind mounts (Aspire 13.4) and a production k8s deployment of Keycloak would
+// import the realm via the operator's own ConfigMap or a sidecar init container instead.
+// For k8s the chart ships Keycloak without the realm; operators wire `Authentication__Authority`
+// per-cluster via Helm values.yaml.
+if (!isKubernetesPublish)
+{
+    keycloak.WithBindMount(keycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true);
+}
 // Deliberately NOT Persistent: --import-realm only imports if the realm doesn't
 // already exist, so a long-lived container makes dialysis-realm.json edits invisible
 // (redirect_uri / client / role changes silently ignored). With KC_DB=dev-mem the
@@ -221,7 +276,14 @@ var sonarqube = builder.AddContainer("sonarqube", "sonarqube", "26.5.0.122743-co
 // Multi-Quality Rule (MQR) mode, which is what the user asked for as "code
 // quality mode on". No explicit toggle needed; the bootstrap script just creates
 // the project and the default profile applies.
-builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
+//
+// SonarQube is a dev-time analyzer, not a deployment concern — exclude it from
+// the k8s chart entirely (operators run Sonar on their own infrastructure).
+// The bind-mounted bootstrap script also can't ship to k8s (publisher rejects
+// bind mounts); skipping the registration for k8s avoids the whole branch.
+if (!isKubernetesPublish)
+{
+    builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
     .WithBindMount("../../../tools/sonarqube/bootstrap.sh", "/bootstrap.sh", isReadOnly: true)
     .WithVolume("dialysis-sonarqube-bootstrap", "/state")
     .WithContainerRuntimeArgs("--user", "0:0")
@@ -236,6 +298,7 @@ builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
     .WithArgs("/bootstrap.sh")
     .WithLifetime(ContainerLifetime.Session)
     .WaitFor(sonarqube);
+}
 
 // --- Module hosts ----------------------------------------------------------
 //
@@ -374,6 +437,16 @@ var gateway = builder.AddProject<Projects.Dialysis_Module_Gateway>("gateway")
     .WithEnvironment("ReverseProxy__Clusters__identity__Destinations__d1__Address",
         "http://localhost:" + identityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/");
 
+// The gateway is the browser-facing surface — only resource that ever crosses the cluster
+// boundary. `WithExternalHttpEndpoints` lets the k8s publisher route the Ingress to it; the
+// dev loop and the compose publisher treat it as a hint (already exposed via the pinned
+// host port). Module APIs / BFF / SPA stay internal and reach the browser only through the
+// gateway, so we deliberately don't mark them external.
+if (isKubernetesPublish)
+{
+    gateway.WithExternalHttpEndpoints();
+}
+
 // --- Frontend (Vite dev server) -------------------------------------------
 //
 // Browser entry point is the gateway at http://localhost:9090 — the gateway proxies
@@ -403,12 +476,12 @@ var web = builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
     .WithHttpEndpoint(env: "PORT", port: vitePort, targetPort: vitePort, isProxied: false)
     .PublishAsDockerFile();
 
-// --- Deployment-time decoration -------------------------------------------
+// --- Compose-publish decoration -------------------------------------------
 // Every overlay concern that used to live in `docker-compose.override.yaml` is applied
-// here as a `PublishAsDockerComposeService` callback. The block is guarded so the dev F5
-// loop bypasses it entirely (helpers themselves are no-ops at run time, but the guard
-// makes the intent obvious to a reader).
-if (publishing)
+// here as a `PublishAsDockerComposeService` callback — runs only under the compose
+// publisher. The dev F5 loop and the k8s publisher both bypass this block; the k8s
+// publisher's per-resource decoration is its own block further down.
+if (isComposePublish)
 {
     hisApi.WithModuleDeployment(
         projectRelativePath: "src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj",
@@ -455,6 +528,24 @@ if (publishing)
     sonarqube.WithPublishedPorts((9000, 9000));
 
     web.WithWebDeployment(hostPort: 8080);
+}
+
+// --- Kubernetes Ingress ---------------------------------------------------
+// Browser-facing surface for the k8s publisher. Routes the cluster's external traffic to
+// the gateway service (port 9090 inside the cluster); the gateway then fans out to
+// /identity/* (BFF), /api/* /fhir/* /hubs/* (module APIs), and /{**catch-all} (SPA) as it
+// does in dev. Operators override the hostname + TLS secret in the published Helm chart's
+// values.yaml per-cluster.
+//
+// NGINX is the default ingress class — most portable; operators on EKS swap for `alb`, on
+// AKS for `azure-application-gateway`, on bare-metal can use Traefik. Override via
+// `helm install --set ingress.className=...`.
+if (isKubernetesPublish && k8sEnv is not null)
+{
+    k8sEnv.AddIngress("dialysis")
+        .WithIngressClass("nginx")
+        .WithHostname("dialysis." + deployEnv + ".local")
+        .WithPath("/", gateway.GetEndpoint("http"), Aspire.Hosting.Kubernetes.IngressPathType.Prefix);
 }
 
 await builder.Build().RunAsync().ConfigureAwait(false);

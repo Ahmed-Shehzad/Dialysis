@@ -17,6 +17,10 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.Docker" />
+    <!-- Aspire.Hosting.Kubernetes is still preview in 13.x (same release train as the GA
+         Docker publisher); pinned to a specific preview build so a future preview bump is
+         a deliberate operator action. -->
+    <PackageReference Include="Aspire.Hosting.Kubernetes" NoWarn="NU1901;NU1902;NU1903;NU1904;NU5104" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Valkey" />

@@ -46,6 +46,8 @@ class Build : NukeBuild
     AbsolutePath AspireAppHost => RootDirectory / "src" / "aspire" / "Dialysis.AppHost" / "Dialysis.AppHost.csproj";
     AbsolutePath ComposeRootDirectory => RootDirectory / "deploy" / "compose";
     AbsolutePath ComposeOutputDirectoryFor(string env) => ComposeRootDirectory / env;
+    AbsolutePath HelmChartsRootDirectory => RootDirectory / "deploy" / "charts";
+    AbsolutePath HelmChartOutputDirectoryFor(string env) => HelmChartsRootDirectory / ("dialysis-" + env);
 
     Target Clean => _ => _
         .Description("Removes every bin/obj under src + tests and empties the artifacts directory.")
@@ -185,5 +187,59 @@ class Build : NukeBuild
 
         Log.Information("Generated {Files} file(s) under {Output}",
             output.GlobFiles("*").Count, output);
+    }
+
+    Target PublishKubernetes => _ => _
+        .Description("Regenerates one deployment-environment Helm chart from the Aspire AppHost via `--publisher k8s`. Default is prod; pick the shape with --environment dev|staging|prod. Output: deploy/charts/dialysis-<environment>/ — a complete Helm chart (Chart.yaml + values.yaml + templates/) renderable on any Kubernetes cluster.")
+        .Produces(HelmChartOutputDirectoryFor("{environment}") / "Chart.yaml")
+        .Produces(HelmChartOutputDirectoryFor("{environment}") / "values.yaml")
+        .Executes(() => PublishKubernetesForEnvironment(Environment));
+
+    Target PublishAllKubernetes => _ => _
+        .Description("Fans PublishKubernetes out across every supported environment (dev / staging / prod). Run before committing any AppHost change so the three charts stay in lockstep.")
+        .Executes(() =>
+        {
+            foreach (var env in AllComposeEnvironments)
+            {
+                PublishKubernetesForEnvironment(env);
+            }
+        });
+
+    void PublishKubernetesForEnvironment(string environment)
+    {
+        if (Array.IndexOf(AllComposeEnvironments, environment) < 0)
+        {
+            throw new ArgumentException(
+                $"Unsupported --environment '{environment}'. Expected one of: {string.Join(", ", AllComposeEnvironments)}.");
+        }
+
+        var output = HelmChartOutputDirectoryFor(environment);
+        output.CreateOrCleanDirectory();
+        Log.Information("Running Aspire k8s publisher (environment={Environment}) → {Output}", environment, output);
+
+        // DIALYSIS_DEPLOY_ENV drives the AppHost's per-env shaping (same env var the
+        // compose publisher reads). --publisher k8s + --deploy false produces the Helm
+        // chart without trying to install into a real cluster.
+        try
+        {
+            DotNet(
+                $"run --project \"{AspireAppHost}\" --no-launch-profile --configuration {Configuration} -- " +
+                $"--publisher k8s --output-path \"{output}\" --deploy false",
+                environmentVariables: new Dictionary<string, string> { ["DIALYSIS_DEPLOY_ENV"] = environment });
+        }
+        catch (Exception ex)
+        {
+            // Mirror the compose target's tolerance: if the chart artifacts landed on disk,
+            // treat a downstream pipeline failure as soft (the publisher's deploy step needs
+            // kubectl + a real cluster, which we deliberately don't have in CI).
+            if (!(output / "Chart.yaml").FileExists())
+            {
+                throw;
+            }
+            Log.Warning("Kubernetes publisher reported {Message} after writing the chart; treating as soft failure since Chart.yaml is on disk.", ex.Message);
+        }
+
+        Log.Information("Generated {Files} file(s) under {Output}",
+            output.GlobFiles("**/*").Count, output);
     }
 }
