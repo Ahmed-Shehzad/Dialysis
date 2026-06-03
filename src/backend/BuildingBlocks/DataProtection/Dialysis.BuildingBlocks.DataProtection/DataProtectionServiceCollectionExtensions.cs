@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.BuildingBlocks.DataProtection.Retention;
 using Dialysis.BuildingBlocks.DataProtection.Ropa;
@@ -55,6 +56,12 @@ public static class DataProtectionServiceCollectionExtensions
         services.TryAddSingleton<IRopaGenerator, RopaGenerator>();
         services.AddOptions<RopaOptions>();
         services.TryAddSingleton(TimeProvider.System);
+
+        // GDPR Art. 15 / 17 / 18 / 20 orchestrator. Walks every registered
+        // IModuleDataExtractor for export, every registered IPatientEraser for approval,
+        // and persists the audit-trail row through IErasureRequestStore (which the
+        // hosting module supplies — see Dialysis.HIE.Persistence).
+        services.TryAddScoped<IDataSubjectRightsService, DefaultDataSubjectRightsService>();
 
         return services;
     }

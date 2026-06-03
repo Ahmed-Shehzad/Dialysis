@@ -16,6 +16,7 @@
     <ProjectReference Include="../Dialysis.HIE.Outbound/Dialysis.HIE.Outbound.csproj" />
     <ProjectReference Include="../Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
     <ProjectReference Include="../Dialysis.HIE.Documents/Dialysis.HIE.Documents.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
     <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core/Dialysis.Domain.Driven.Design.Core.csproj" />

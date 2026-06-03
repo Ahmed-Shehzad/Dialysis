@@ -13,7 +13,7 @@ namespace Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 /// The platform's HTTP endpoints under <c>/api/v1.0/data-subject-rights/{patientId}/...</c>
 /// dispatch into this service. Implementation per-deployment plugs into the actual data
 /// stores (modules can register their own data exporter / eraser via
-/// <see cref="IModuleDataExtractor"/>).
+/// <see cref="IModuleDataExtractor"/> + <see cref="Erasure.IPatientEraser"/>).
 /// </summary>
 public interface IDataSubjectRightsService
 {
@@ -24,6 +24,25 @@ public interface IDataSubjectRightsService
     /// reviews against legal-hold and either approves or rejects.</summary>
     Task<Guid> RequestErasureAsync(
         Guid patientId, string requestedBy, string? reason, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Art. 17 — approve a pending request and run every registered
+    /// <see cref="Erasure.IPatientEraser"/> in sequence. Returns the request after the
+    /// composite outcome is persisted on it (per-module results + executed status).
+    /// </summary>
+    Task<ErasureRequest> ApproveErasureRequestAsync(
+        Guid requestId, string approvedBy, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Art. 17 — reject a pending request (legal-hold applies, request is duplicate, etc.).
+    /// The audit row captures who rejected it and why so a regulator can verify the decision.
+    /// </summary>
+    Task<ErasureRequest> RejectErasureRequestAsync(
+        Guid requestId, string rejectedBy, string reason, CancellationToken cancellationToken);
+
+    /// <summary>Operator-facing list of pending erasure requests awaiting approval.</summary>
+    Task<IReadOnlyList<ErasureRequest>> ListPendingErasureRequestsAsync(
+        int take, CancellationToken cancellationToken);
 
     /// <summary>Art. 18 — restrict processing pending resolution of a dispute.</summary>
     Task<Guid> RequestRestrictionAsync(
@@ -56,3 +75,36 @@ public sealed record DataSubjectExport(
     Guid PatientId,
     DateTimeOffset GeneratedAtUtc,
     IReadOnlyList<DataSubjectResource> Resources);
+
+/// <summary>Status of an erasure request through the approval / execution pipeline.</summary>
+public enum ErasureRequestStatus
+{
+    /// <summary>Filed by the subject; awaiting operator review.</summary>
+    Pending = 1,
+    /// <summary>Operator rejected the request (legal-hold applies, duplicate, etc.).</summary>
+    Rejected = 2,
+    /// <summary>Operator approved and every <c>IPatientEraser</c> ran to completion.</summary>
+    Executed = 3,
+}
+
+/// <summary>
+/// Audit trail row for one GDPR Art. 17 erasure request. Persisted before approval so a
+/// regulator can verify both the inbound subject claim and the operator decision.
+/// </summary>
+public sealed record ErasureRequest(
+    Guid Id,
+    Guid PatientId,
+    ErasureRequestStatus Status,
+    string RequestedBy,
+    DateTimeOffset RequestedAtUtc,
+    string? Reason,
+    string? DecisionBy,
+    DateTimeOffset? DecisionAtUtc,
+    string? DecisionReason,
+    IReadOnlyList<ErasureModuleResult> ExecutionLog);
+
+/// <summary>Per-module audit entry written when the operator approved the request.</summary>
+public sealed record ErasureModuleResult(
+    string ModuleSlug,
+    int RecordsErased,
+    IReadOnlyDictionary<string, int> ByCategory);

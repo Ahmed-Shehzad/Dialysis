@@ -5,6 +5,7 @@ using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Inbound.Domain;
 using Dialysis.HIE.OpenEhr.Domain;
 using Dialysis.HIE.Outbound.Domain;
+using Dialysis.HIE.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -29,6 +30,8 @@ public sealed class HieDbContext(
     public DbSet<Composition> Compositions => Set<Composition>();
     public DbSet<DocumentReference> DocumentReferences => Set<DocumentReference>();
     public DbSet<DocumentReferenceSignature> DocumentReferenceSignatures => Set<DocumentReferenceSignature>();
+    public DbSet<DocumentRetentionPolicy> DocumentRetentionPolicies => Set<DocumentRetentionPolicy>();
+    public DbSet<ErasureRequestRow> ErasureRequests => Set<ErasureRequestRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -143,6 +146,31 @@ public sealed class HieDbContext(
             e.Property(s => s.TspId).HasMaxLength(64);
             e.Property(s => s.TspCredentialId).HasMaxLength(256);
             e.HasIndex(s => s.DocumentReferenceId).HasDatabaseName("IX_DocumentReferenceSignatures_DocRef");
+        });
+
+        modelBuilder.Entity<DocumentRetentionPolicy>(e =>
+        {
+            e.ToTable("DocumentRetentionPolicies", "hie_documents");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Kind).HasMaxLength(64).IsRequired();
+            e.Property(p => p.UpdatedBy).HasMaxLength(128).IsRequired();
+            e.HasIndex(p => p.Kind)
+                .IsUnique()
+                .HasDatabaseName("UX_DocumentRetentionPolicies_Kind");
+        });
+
+        modelBuilder.Entity<ErasureRequestRow>(e =>
+        {
+            e.ToTable("ErasureRequests", "hie_documents");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Status).HasConversion<int>();
+            e.Property(r => r.RequestedBy).HasMaxLength(128).IsRequired();
+            e.Property(r => r.Reason).HasMaxLength(1024);
+            e.Property(r => r.DecisionBy).HasMaxLength(128);
+            e.Property(r => r.DecisionReason).HasMaxLength(1024);
+            e.Property(r => r.ExecutionLogJson).IsRequired();
+            e.HasIndex(r => r.Status).HasDatabaseName("IX_ErasureRequests_Status");
+            e.HasIndex(r => r.PatientId).HasDatabaseName("IX_ErasureRequests_PatientId");
         });
     }
 }
