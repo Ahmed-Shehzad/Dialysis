@@ -20,6 +20,9 @@ public static class HiePermissions
     public const string DocumentsDelete = "hie.documents.delete";
     public const string DocumentsRetentionView = "hie.documents.retention.view";
     public const string DocumentsRetentionAdminister = "hie.documents.retention.administer";
+    public const string TefcaPartnersView = "hie.tefca.partners.view";
+    public const string TefcaPartnersAdminister = "hie.tefca.partners.administer";
+    public const string TefcaIasJwtIssue = "hie.tefca.ias_jwt.issue";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -35,6 +38,9 @@ public static class HiePermissions
         DocumentsDelete,
         DocumentsRetentionView,
         DocumentsRetentionAdminister,
+        TefcaPartnersView,
+        TefcaPartnersAdminister,
+        TefcaIasJwtIssue,
     ];
 }
 

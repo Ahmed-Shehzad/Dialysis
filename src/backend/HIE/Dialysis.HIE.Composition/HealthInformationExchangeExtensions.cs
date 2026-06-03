@@ -96,6 +96,15 @@ public static class HealthInformationExchangeExtensions
                 Dialysis.HIE.Documents.Erasure.HieDocumentsPatientEraser>();
             services.AddHostedService<Dialysis.HIE.Documents.Hosted.RetentionPurgerHostedService>();
 
+            // TEFCA QHIN onboarding — operator-facing admin surface for trust-anchor / mTLS /
+            // IAS JWT management. The shared IDocumentBlobStore (already registered above)
+            // backs the mTLS PFX storage; the IAS issuer reads its signing key from
+            // configuration so a future RS256/cert-backed implementation slots in here.
+            services.Configure<Dialysis.HIE.Tefca.Ias.IasJwtIssuerOptions>(
+                configuration.GetSection("Tefca:IasJwtIssuer"));
+            services.AddSingleton<Dialysis.HIE.Tefca.Ias.IIasJwtIssuer,
+                Dialysis.HIE.Tefca.Ias.HmacIasJwtIssuer>();
+
             services.AddScoped<PatientMapper>();
             services.AddScoped<EncounterMapper>();
             services.AddScoped<ClinicalNoteMapper>();
