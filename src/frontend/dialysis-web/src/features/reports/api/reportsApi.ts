@@ -19,6 +19,7 @@ export type ReportTemplate = {
   slug: string;
   kind: "DischargeLetter" | "ShiftReport" | "BillingDocument";
   title: string;
+  languageCode: string | null;
   publishedVersionNumber: number | null;
   versions: ReportTemplateVersion[];
 };
@@ -53,6 +54,8 @@ export type AppendTemplateVersionRequest = {
   title: string;
   bodyMarkdown: string;
   authoredBySub: string;
+  // BCP-47 tag (e.g. "de", "en-US"); omit / empty for the language-neutral default.
+  languageCode?: string | null;
 };
 
 export const appendTemplateVersion = async (
@@ -68,10 +71,11 @@ export const appendTemplateVersion = async (
 export const publishTemplate = async (
   slug: string,
   versionNumber: number,
+  languageCode?: string | null,
 ): Promise<ReportTemplate> => {
   const response = await apiClient.post<ReportTemplate>(
     `/api/pdms/api/v1.0/reporting/templates/${encodeURIComponent(slug)}/publish`,
-    { versionNumber },
+    { versionNumber, languageCode: languageCode ?? null },
   );
   return response.data;
 };

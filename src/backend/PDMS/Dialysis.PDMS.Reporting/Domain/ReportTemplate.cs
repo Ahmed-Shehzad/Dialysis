@@ -15,20 +15,33 @@ public sealed class ReportTemplate : AggregateRoot<Guid>
 
     private ReportTemplate() { }
 
-    public ReportTemplate(Guid id, string slug, ReportKind kind, string title) : base(id)
+    public ReportTemplate(Guid id, string slug, ReportKind kind, string title, string? languageCode = null) : base(id)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(slug);
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         Slug = slug;
         Kind = kind;
         Title = title;
+        LanguageCode = NormalizeLanguageCode(languageCode);
     }
 
     public string Slug { get; private set; } = null!;
     public ReportKind Kind { get; private set; }
     public string Title { get; private set; } = null!;
+
+    /// <summary>
+    /// BCP-47 language tag the template is authored in (e.g. <c>de</c>, <c>en-US</c>), or
+    /// <c>null</c> for the operator-flagged default that applies when no language-specific
+    /// template matches the patient's preferred language. Stored lower-cased so resolution is
+    /// case-insensitive.
+    /// </summary>
+    public string? LanguageCode { get; private set; }
+
     public int? PublishedVersionNumber { get; private set; }
     public IReadOnlyCollection<ReportTemplateVersion> Versions => _versions.AsReadOnly();
+
+    private static string? NormalizeLanguageCode(string? languageCode) =>
+        string.IsNullOrWhiteSpace(languageCode) ? null : languageCode.Trim().ToLowerInvariant();
 
     /// <summary>Appends a new draft version. The new version becomes available for publish, not auto-published.</summary>
     public ReportTemplateVersion AppendVersion(

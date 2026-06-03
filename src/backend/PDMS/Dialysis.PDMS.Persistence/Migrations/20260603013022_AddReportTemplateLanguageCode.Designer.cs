@@ -3,6 +3,7 @@ using System;
 using Dialysis.PDMS.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.PDMS.Persistence.Migrations
 {
     [DbContext(typeof(PdmsDbContext))]
-    partial class PdmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603013022_AddReportTemplateLanguageCode")]
+    partial class AddReportTemplateLanguageCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

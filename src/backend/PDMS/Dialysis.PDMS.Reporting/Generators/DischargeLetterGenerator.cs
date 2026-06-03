@@ -106,6 +106,10 @@ public sealed class DischargeLetterGenerator(
             {
                 ["sessionId"] = context.SessionId.ToString(),
                 ["templateVersion"] = template?.PublishedVersionNumber?.ToString() ?? "default",
+                // The language the letter was actually rendered in: the resolved template's
+                // language when one matched, else the patient's preferred language, else the
+                // platform default. Lets the ePA upload tag the document's language part.
+                ["language"] = ResolveLanguage(context, template),
             });
         return await pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
     }
@@ -168,12 +172,24 @@ public sealed class DischargeLetterGenerator(
         [new DocumentSection("Signature",
             [new ParagraphBlock("Reserved space for clinician signature, name, and date below.")])];
 
+    /// <summary>BCP-47 default applied when neither template nor patient declares a language.</summary>
+    public const string DefaultLanguageCode = "de";
+
+    private static string ResolveLanguage(SessionReportContext context, ReportTemplate? template) =>
+        template?.LanguageCode
+            ?? (string.IsNullOrWhiteSpace(context.PreferredLanguageCode)
+                ? DefaultLanguageCode
+                : context.PreferredLanguageCode.Trim().ToLowerInvariant());
+
     private static Dictionary<string, object?> BuildBindings(SessionReportContext context) => new()
     {
         ["patient"] = new
         {
             name = context.PatientDisplayName,
             mrn = context.MedicalRecordNumber,
+            language = string.IsNullOrWhiteSpace(context.PreferredLanguageCode)
+                ? DefaultLanguageCode
+                : context.PreferredLanguageCode.Trim().ToLowerInvariant(),
         },
         ["session"] = new
         {

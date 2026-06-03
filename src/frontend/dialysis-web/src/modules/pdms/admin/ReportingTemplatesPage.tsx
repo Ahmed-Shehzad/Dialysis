@@ -70,7 +70,7 @@ export const ReportingTemplatesPage = () => {
               <div className="flex items-center justify-between">
                 <span className="font-medium text-slate-100">{t.title}</span>
                 <span className="font-mono text-xs text-slate-400">
-                  {t.slug} · {t.kind}
+                  {t.slug} · {t.kind} · {t.languageCode ?? "default"}
                 </span>
               </div>
               <div className="mt-1 text-xs text-slate-500">
@@ -118,7 +118,8 @@ const VersionDrawer = ({
   onApplied: () => void;
 }) => {
   const publish = useMutation({
-    mutationFn: (versionNumber: number) => publishTemplate(template.slug, versionNumber),
+    mutationFn: (versionNumber: number) =>
+      publishTemplate(template.slug, versionNumber, template.languageCode),
     onSuccess: onApplied,
   });
 
@@ -201,6 +202,7 @@ const NewTemplateDrawer = ({
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<ReportTemplate["kind"]>("DischargeLetter");
+  const [languageCode, setLanguageCode] = useState("");
   const [body, setBody] = useState("");
 
   const mutation = useMutation({
@@ -211,6 +213,7 @@ const NewTemplateDrawer = ({
         kind,
         bodyMarkdown: body,
         authoredBySub: actorSub,
+        languageCode: languageCode.trim() || null,
       }),
     onSuccess: onApplied,
   });
@@ -251,6 +254,15 @@ const NewTemplateDrawer = ({
               <option value="ShiftReport">ShiftReport</option>
               <option value="BillingDocument">BillingDocument</option>
             </select>
+          </label>
+          <label className="block">
+            <span className="text-slate-400">Language (BCP-47, optional)</span>
+            <input
+              className="mt-1 w-full rounded border border-slate-700 bg-slate-800/60 p-2 text-slate-100 font-mono"
+              value={languageCode}
+              onChange={(e) => setLanguageCode(e.target.value)}
+              placeholder="de · en-US · leave blank for default"
+            />
           </label>
           <label className="block">
             <span className="text-slate-400">Markdown body</span>

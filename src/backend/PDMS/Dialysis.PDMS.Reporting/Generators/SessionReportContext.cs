@@ -23,7 +23,8 @@ public sealed record SessionReportContext(
     IReadOnlyList<MarEntrySnapshot> Medications,
     IReadOnlyList<AlarmSnapshot> Alarms,
     IReadOnlyList<string>? DrugAllergies = null,
-    string? PendingFollowUp = null);
+    string? PendingFollowUp = null,
+    string? PreferredLanguageCode = null);
 
 public sealed record VitalsSnapshot(
     DateTime CapturedAtUtc,

@@ -18,9 +18,13 @@ public sealed class ReportTemplateConfiguration : IEntityTypeConfiguration<Repor
         b.Property(t => t.Slug).IsRequired().HasMaxLength(128);
         b.Property(t => t.Kind).HasConversion<int>().IsRequired();
         b.Property(t => t.Title).IsRequired().HasMaxLength(256);
+        // BCP-47 language tag (e.g. "de", "en-US"); nullable = the language-neutral default.
+        b.Property(t => t.LanguageCode).HasMaxLength(35);
         b.Property(t => t.PublishedVersionNumber);
 
-        b.HasIndex(t => new { t.Slug, t.Kind }).IsUnique();
+        // One template per (slug, kind, language). Postgres treats NULLs as distinct, so a
+        // language-neutral default coexists with locale-specific siblings of the same slug.
+        b.HasIndex(t => new { t.Slug, t.Kind, t.LanguageCode }).IsUnique();
 
         b.OwnsMany(t => t.Versions, v =>
         {
