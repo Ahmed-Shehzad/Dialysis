@@ -9,6 +9,7 @@ import {
   documentBinaryUrl,
   fetchDocumentDetail,
   signDocument,
+  type PadesLevel,
   type SignerKind,
 } from "@/features/documents/api/documentsApi";
 
@@ -33,6 +34,8 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   const [signMode, setSignMode] = useState<SignerKind>("Platform");
   const [signerUserId, setSignerUserId] = useState("");
   const [signReason, setSignReason] = useState("");
+  const [signLevel, setSignLevel] = useState<PadesLevel>("LT");
+  const [tspCredentialId, setTspCredentialId] = useState("");
 
   const detail = useQuery({
     queryKey: ["hie", "documents", documentId],
@@ -47,7 +50,9 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
     mutationFn: () =>
       signDocument(documentId, {
         certificateSource: signMode,
+        level: signLevel,
         userId: signMode === "User" ? signerUserId.trim() || undefined : undefined,
+        tspCredentialId: signMode === "RemoteQes" ? tspCredentialId.trim() || undefined : undefined,
         reason: signReason.trim() || undefined,
       }),
     onSuccess: () => invalidate(),
@@ -62,7 +67,10 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   });
 
   const doc = detail.data;
-  const canSign = signMode === "Platform" || signerUserId.trim().length > 0;
+  const canSign =
+    (signMode === "Platform" && true) ||
+    (signMode === "User" && signerUserId.trim().length > 0) ||
+    (signMode === "RemoteQes" && tspCredentialId.trim().length > 0);
 
   return (
     <div className="fixed inset-0 z-40 flex bg-slate-950/70" role="dialog">
@@ -131,9 +139,17 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                   <div>
                     <span className="font-semibold text-slate-200">{s.signerKind}</span>
                     {s.signerUserId && <span> · {s.signerUserId}</span>}
+                    {s.tspId && <span> · TSP {s.tspId}</span>}
                   </div>
                   <div className="font-mono text-[10px] text-slate-500">{s.certThumbprint}</div>
                   <div>{new Date(s.signedAtUtc).toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">
+                    PAdES-{s.padesLevel} · {s.signatureFormat}
+                    {s.timestampedAtUtc && <span> · TSA-stamped</span>}
+                    {s.revocationEvidenceFormat !== "None" && (
+                      <span> · {s.revocationEvidenceFormat}</span>
+                    )}
+                  </div>
                   {s.reason && <div className="italic text-slate-400">{s.reason}</div>}
                 </li>
               ))}
@@ -150,6 +166,20 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                 >
                   <option value="Platform">Platform / SMC-B cert</option>
                   <option value="User">Per-user cert (Identity)</option>
+                  <option value="RemoteQes">TSP / eIDAS-QES</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-slate-400">PAdES level</span>
+                <select
+                  value={signLevel}
+                  onChange={(e) => setSignLevel(e.target.value as PadesLevel)}
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-800/60 p-2 text-slate-100"
+                >
+                  <option value="B">B — baseline (no TSA)</option>
+                  <option value="T">T — TSA-stamped time</option>
+                  <option value="LT">LT — TSA + DSS (recommended)</option>
+                  <option value="LTA">LTA — LT + doc timestamp</option>
                 </select>
               </label>
               {signMode === "User" && (
@@ -160,6 +190,18 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                     value={signerUserId}
                     onChange={(e) => setSignerUserId(e.target.value)}
                     placeholder="user-sub-from-keycloak"
+                    className="mt-1 w-full rounded border border-slate-700 bg-slate-800/60 p-2 text-slate-100"
+                  />
+                </label>
+              )}
+              {signMode === "RemoteQes" && (
+                <label className="block">
+                  <span className="text-slate-400">TSP credential id</span>
+                  <input
+                    type="text"
+                    value={tspCredentialId}
+                    onChange={(e) => setTspCredentialId(e.target.value)}
+                    placeholder="csc-credential-uuid"
                     className="mt-1 w-full rounded border border-slate-700 bg-slate-800/60 p-2 text-slate-100"
                   />
                 </label>

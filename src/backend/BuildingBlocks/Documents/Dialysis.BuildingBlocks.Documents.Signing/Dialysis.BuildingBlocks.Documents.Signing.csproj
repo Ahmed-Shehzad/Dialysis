@@ -5,15 +5,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.BuildingBlocks.Documents.Signing</RootNamespace>
-    <Description>PDF digital-signing primitives. Provides IPdfSigner (PAdES-style PKCS#7 signature embedded in the PDF) backed by PDFsharp 6.2 + PdfSharp.Cryptography, plus an ISigningCertificateResolver strategy with a platform-cert resolver (single org cert, mirrors the Direct messenger config) and a per-user resolver (cert looked up from a configured local store keyed by Identity-provided thumbprint). Macros (/AA, /OpenAction, /JS) are preserved byte-for-byte.</Description>
+    <Description>PDF digital-signing primitives: PAdES-B/T/LT/LTA via PDFsharp 6.2 (local platform / per-user PKCS#7) plus an eIDAS-QES path that delegates hash signing to a CSC v2 trust service provider. Ships an ISigningCertificateResolver strategy with platform-cert, Keycloak-user-cert, and TSP-credential resolvers; a DSS-dictionary augmenter for LTV; and an optional hosted upgrader that promotes -B-T signatures to -B-LTA before TSA certs expire. Macros (/AA, /OpenAction, /JS) are preserved byte-for-byte.</Description>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="PDFsharp" />
   </ItemGroup>
 

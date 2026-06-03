@@ -2,7 +2,16 @@ import { apiClient } from "@/lib/api/apiClient";
 
 export type DocumentStatus = "Current" | "Superseded" | "EnteredInError";
 export type DocumentSource = "PdmsReporting" | "HieInbound" | "AdminUpload";
-export type SignerKind = "Platform" | "User";
+export type SignerKind = "Platform" | "User" | "RemoteQes";
+
+/** PAdES conformance level — drives whether a TSA timestamp + DSS is embedded. */
+export type PadesLevel = "B" | "T" | "LT" | "LTA";
+
+/** Whether the signature is an advanced or a qualified electronic signature. */
+export type SignatureFormat = "Aes" | "Qes";
+
+/** What revocation evidence the signature row carries in its DSS dictionary. */
+export type RevocationEvidenceFormat = "None" | "Crl" | "Ocsp" | "Both";
 
 export type DocumentRow = {
   id: string;
@@ -27,6 +36,13 @@ export type DocumentSignatureRow = {
   certThumbprint: string;
   signedAtUtc: string;
   reason?: string | null;
+  padesLevel: PadesLevel;
+  signatureFormat: SignatureFormat;
+  tsaUri?: string | null;
+  timestampedAtUtc?: string | null;
+  revocationEvidenceFormat: RevocationEvidenceFormat;
+  tspId?: string | null;
+  tspCredentialId?: string | null;
 };
 
 export type DocumentDetail = DocumentRow & {
@@ -87,6 +103,10 @@ export const uploadDocument = async (input: UploadDocumentInput): Promise<string
 
 export type SignDocumentInput = {
   certificateSource: SignerKind;
+  /** PAdES conformance level — defaults to "B" when omitted (server-side). */
+  level?: PadesLevel;
+  /** TSP credential id — required when `certificateSource === "RemoteQes"`. */
+  tspCredentialId?: string;
   userId?: string;
   reason?: string;
   location?: string;

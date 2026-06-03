@@ -31,7 +31,14 @@ public sealed record DocumentSignatureRow(
     string? SignerUserId,
     string CertThumbprint,
     DateTime SignedAtUtc,
-    string? Reason);
+    string? Reason,
+    PadesLevel PadesLevel,
+    SignatureFormat SignatureFormat,
+    string? TsaUri,
+    DateTime? TimestampedAtUtc,
+    RevocationEvidenceFormat RevocationEvidenceFormat,
+    string? TspId,
+    string? TspCredentialId);
 
 public sealed record GetDocumentQuery(Guid Id) : IQuery<DocumentDetail?>, IPermissionedCommand
 {
@@ -62,6 +69,8 @@ public sealed class GetDocumentQueryHandler(IDocumentReferenceRepository reposit
             doc.HasAcroForms,
             doc.HasJavascript,
             [.. doc.Signatures.Select(s => new DocumentSignatureRow(
-                s.Id, s.SignerKind, s.SignerUserId, s.CertThumbprint, s.SignedAtUtc, s.Reason))]);
+                s.Id, s.SignerKind, s.SignerUserId, s.CertThumbprint, s.SignedAtUtc, s.Reason,
+                s.PadesLevel, s.SignatureFormat, s.TsaUri, s.TimestampedAtUtc,
+                s.RevocationEvidenceFormat, s.TspId, s.TspCredentialId))]);
     }
 }

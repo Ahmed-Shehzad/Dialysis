@@ -100,7 +100,15 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> SignAsync(Guid id, [FromBody] SignDocumentRequest body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var command = new SignDocumentCommand(id, body.CertificateSource, body.UserId, body.Reason, body.Location, body.ContactInfo);
+        var command = new SignDocumentCommand(
+            id,
+            body.CertificateSource,
+            body.UserId,
+            body.Reason,
+            body.Location,
+            body.ContactInfo,
+            body.Level ?? PadesConformance.B,
+            body.TspCredentialId);
         var signedId = await cqrs.SendCommandAsync<SignDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{signedId}";
         return Ok(new ResourceEnvelope<UploadedDocumentDto>(
@@ -132,7 +140,9 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
         string? UserId,
         string? Reason,
         string? Location,
-        string? ContactInfo);
+        string? ContactInfo,
+        PadesConformance? Level = null,
+        string? TspCredentialId = null);
 
     public sealed record UploadedDocumentDto(Guid DocumentId);
 }
