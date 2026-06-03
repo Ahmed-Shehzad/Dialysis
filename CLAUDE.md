@@ -24,7 +24,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Deployment (containerized stack)
 
-`docker compose -f docker-compose.modules.yml up -d` builds and runs the **production-like** topology: every module as a published Release image (`Dockerfile.module`, parameterized by `MODULE_PROJECT`/`MODULE_DLL`), the YARP gateway (`Dockerfile.gateway`), and the nginx-served SPA (`src/frontend/dialysis-web/Dockerfile`), plus all infra. Production env, HSTS, forwarded headers, Keycloak authority required. Hosts: HIS `:5288`, EHR `:5289`, PDMS `:5290`, SmartConnect `:5291`, HIE `:5292`, gateway `:5000`, web `:8080`. Module hosts are stateless and scale horizontally (`--scale his-api=3`); Valkey backs the distributed cache **and** the ASP.NET Data Protection key ring, so multi-replica is safe. This compose file is self-contained — there is no separate base compose to overlay. CI (`.github/workflows/*`) uses plain `dotnet`; it does **not** build these images or use Aspire.
+The deployment topology lives under **`deploy/compose/`** and is **generated from the Aspire AppHost** via `./build.sh PublishCompose --configuration Release` (NUKE target wrapping `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path deploy/compose --deploy false`). The single source of truth for the topology is the AppHost — re-run the NUKE target after any AppHost change and commit the regenerated `deploy/compose/docker-compose.yaml` + `.env` + `aspire-manifest.json` alongside the AppHost change. `deploy/compose/docker-compose.override.yaml` is a hand-maintained overlay for the few concerns the Aspire compose publisher doesn't model yet (`build:` stanzas pointing at the repo-root Dockerfiles, host port mappings, ASP.NET production hardening — HSTS / forwarded headers / RequireAuthority, the OTLP collector). Run with:
+
+```bash
+cd deploy/compose
+docker compose -f docker-compose.yaml -f docker-compose.override.yaml up -d --build
+```
+
+This builds every host image from the repo using `Dockerfile.module` (parameterised by `MODULE_PROJECT`/`MODULE_DLL`), `Dockerfile.gateway`, and `src/frontend/dialysis-web/Dockerfile`. Hosts: HIS `:5288`, EHR `:5289`, PDMS `:5290`, SmartConnect `:5291`, HIE `:5292`, BFF `:5275`, gateway `:9090`, web `:8080`. Module hosts are stateless and scale horizontally (`docker compose ... up -d --scale his-api=3`); Valkey backs the distributed cache **and** the ASP.NET Data Protection key ring, so multi-replica is safe. See `deploy/compose/README.md` for the regenerate-vs-overlay split and the workflow for migrating overlay concerns back into the AppHost over time. CI (`.github/workflows/*`) uses plain `dotnet`; it does **not** build these images.
 
 ## Architecture
 
