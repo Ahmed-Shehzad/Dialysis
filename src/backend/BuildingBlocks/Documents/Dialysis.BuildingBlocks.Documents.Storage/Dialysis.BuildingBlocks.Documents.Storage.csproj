@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Documents.Storage</RootNamespace>
+    <Description>Module-agnostic binary-blob store for clinical documents (PDFs, CDA, images). Used by PDMS Reporting (discharge letters, billing) and HIE Documents (FHIR DocumentReference / Binary). Ships an in-memory store for dev/tests and a filesystem-backed store for single-host development; production hosts plug an S3 / Azure-Blob implementation behind the same interface.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+</Project>

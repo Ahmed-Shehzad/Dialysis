@@ -5,6 +5,7 @@ import type { ModuleManifest } from "@/shell/types";
 const FhirAuthoringPage = lazyPage(() => import("@/pages/FhirAuthoringPage"), "FhirAuthoringPage");
 const FhirExchangePage = lazyPage(() => import("@/pages/FhirExchangePage"), "FhirExchangePage");
 const SubscriptionsPage = lazyPage(() => import("@/pages/SubscriptionsPage"), "SubscriptionsPage");
+const DocumentsPage = lazyPage(() => import("@/modules/hie/admin/DocumentsPage"), "DocumentsPage");
 
 export const hieModule: ModuleManifest = {
   slug: "hie",
@@ -20,6 +21,7 @@ export const hieModule: ModuleManifest = {
       <Route path="fhir-exchange" element={<FhirExchangePage />} />
       <Route path="fhir-authoring" element={<FhirAuthoringPage />} />
       <Route path="subscriptions" element={<SubscriptionsPage />} />
+      <Route path="admin/documents" element={<DocumentsPage />} />
     </>
   ),
 };

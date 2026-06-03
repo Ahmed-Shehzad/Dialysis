@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIE.Consent.Domain;
+using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Inbound.Domain;
 using Dialysis.HIE.OpenEhr.Domain;
 using Dialysis.HIE.Outbound.Domain;
@@ -26,6 +27,8 @@ public sealed class HieDbContext(
     public DbSet<PatientIndexEntry> PatientIndexEntries => Set<PatientIndexEntry>();
     public DbSet<ConsentRecord> Consents => Set<ConsentRecord>();
     public DbSet<Composition> Compositions => Set<Composition>();
+    public DbSet<DocumentReference> DocumentReferences => Set<DocumentReference>();
+    public DbSet<DocumentReferenceSignature> DocumentReferenceSignatures => Set<DocumentReferenceSignature>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,6 +100,42 @@ public sealed class HieDbContext(
             e.HasIndex(c => new { c.PatientId, c.ArchetypeId, c.Version })
                 .IsUnique()
                 .HasDatabaseName("UX_Compositions_PatientArchetypeVersion");
+        });
+
+        modelBuilder.Entity<DocumentReference>(e =>
+        {
+            e.ToTable("DocumentReferences", "hie_documents");
+            e.HasKey(d => d.Id);
+            e.Property(d => d.Kind).HasMaxLength(64).IsRequired();
+            e.Property(d => d.Category).HasMaxLength(64);
+            e.Property(d => d.Title).HasMaxLength(256).IsRequired();
+            e.Property(d => d.MimeType).HasMaxLength(128).IsRequired();
+            e.Property(d => d.LanguageCode).HasMaxLength(35);
+            e.Property(d => d.StorageRef).HasMaxLength(512).IsRequired();
+            e.Property(d => d.ContentHash).HasMaxLength(128).IsRequired();
+            e.Property(d => d.CreatedBy).HasMaxLength(128);
+            e.Property(d => d.Status).HasConversion<int>();
+            e.Property(d => d.Source).HasConversion<int>();
+            e.HasIndex(d => d.ContentHash).HasDatabaseName("IX_DocumentReferences_ContentHash");
+            e.HasIndex(d => new { d.PatientId, d.Kind, d.CreatedAtUtc })
+                .HasDatabaseName("IX_DocumentReferences_PatientKindCreated");
+            e.HasMany(d => d.Signatures)
+                .WithOne()
+                .HasForeignKey(s => s.DocumentReferenceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Metadata.FindNavigation(nameof(DocumentReference.Signatures))!
+                .SetPropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<DocumentReferenceSignature>(e =>
+        {
+            e.ToTable("DocumentReferenceSignatures", "hie_documents");
+            e.HasKey(s => s.Id);
+            e.Property(s => s.SignerKind).HasConversion<int>();
+            e.Property(s => s.SignerUserId).HasMaxLength(128);
+            e.Property(s => s.CertThumbprint).HasMaxLength(128).IsRequired();
+            e.Property(s => s.Reason).HasMaxLength(256);
+            e.HasIndex(s => s.DocumentReferenceId).HasDatabaseName("IX_DocumentReferenceSignatures_DocRef");
         });
     }
 }

@@ -25,6 +25,7 @@ public sealed class OnDialysisSessionCompleted(
     IReportBlobStore blobs,
     ISessionReportRepository reports,
     IUnitOfWork unitOfWork,
+    ITransponderBus bus,
     TimeProvider clock,
     ILogger<OnDialysisSessionCompleted> logger)
     : IConsumer<DialysisSessionCompletedIntegrationEvent>
@@ -66,13 +67,17 @@ public sealed class OnDialysisSessionCompleted(
         CancellationToken cancellationToken)
     {
         var report = new SessionReport(Guid.CreateVersion7(), ctx.SessionId, ctx.PatientId, kind);
+        var generated = false;
+        var storageRef = string.Empty;
+        var hash = string.Empty;
         try
         {
             var bytes = await render().ConfigureAwait(false);
-            var hash = Convert.ToHexString(SHA256.HashData(bytes));
-            var storageRef = await blobs.SaveAsync(report.Id, "application/pdf", bytes, cancellationToken)
+            hash = Convert.ToHexString(SHA256.HashData(bytes));
+            storageRef = await blobs.SaveAsync(report.Id, "application/pdf", bytes, cancellationToken)
                 .ConfigureAwait(false);
             report.RecordGenerated(storageRef, hash, clock.GetUtcNow().UtcDateTime);
+            generated = true;
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -81,5 +86,26 @@ public sealed class OnDialysisSessionCompleted(
             report.RecordFailure(ex.GetType().Name);
         }
         reports.Add(report);
+
+        if (generated)
+        {
+            // HIE Documents consumes this and indexes the report as a FHIR DocumentReference
+            // pointing at the same shared blob store, so the admin Documents view, ePA upload,
+            // and partner exchange resolve through one storage ref.
+            await bus.PublishAsync(
+                new ClinicalDocumentProducedIntegrationEvent(
+                    EventId: Guid.CreateVersion7(),
+                    OccurredOn: clock.GetUtcNow().UtcDateTime,
+                    SchemaVersion: 1,
+                    ReportId: report.Id,
+                    PatientId: ctx.PatientId,
+                    Kind: kind.ToString(),
+                    MimeType: "application/pdf",
+                    Title: $"{kind} — session {ctx.SessionId:N}",
+                    StorageRef: storageRef,
+                    ContentHash: hash,
+                    LanguageCode: ctx.PreferredLanguageCode),
+                cancellationToken).ConfigureAwait(false);
+        }
     }
 }

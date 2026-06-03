@@ -13,6 +13,11 @@ public static class HiePermissions
     public const string ConsentManage = "hie.consent.manage";
     public const string OpenEhrRead = "hie.openehr.read";
     public const string PartnersAdminister = "hie.partners.administer";
+    public const string DocumentsView = "hie.documents.view";
+    public const string DocumentsUpload = "hie.documents.upload";
+    public const string DocumentsFill = "hie.documents.fill";
+    public const string DocumentsSign = "hie.documents.sign";
+    public const string DocumentsDelete = "hie.documents.delete";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -21,6 +26,11 @@ public static class HiePermissions
         ConsentManage,
         OpenEhrRead,
         PartnersAdminister,
+        DocumentsView,
+        DocumentsUpload,
+        DocumentsFill,
+        DocumentsSign,
+        DocumentsDelete,
     ];
 }
 

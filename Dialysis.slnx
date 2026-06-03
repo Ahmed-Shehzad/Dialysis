@@ -87,6 +87,9 @@
   <Folder Name="/src/backend/BuildingBlocks/Documents/">
     <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
     <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract/Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Storage/Dialysis.BuildingBlocks.Documents.Storage.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Signing/Dialysis.BuildingBlocks.Documents.Signing.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Documents/Dialysis.HIE.Documents.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/PlatformGateway/">
     <Project Path="src/backend/BuildingBlocks/PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway/Dialysis.BuildingBlocks.PlatformGateway.csproj" />
