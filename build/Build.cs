@@ -34,12 +34,18 @@ class Build : NukeBuild
     [Parameter("NuGet API key for Publish."), Secret]
     readonly string NuGetApiKey;
 
+    [Parameter("Deployment environment for PublishCompose — one of dev / staging / prod. Default: prod.")]
+    readonly string Environment = "prod";
+
+    static readonly string[] AllComposeEnvironments = ["dev", "staging", "prod"];
+
     AbsolutePath SolutionFile => RootDirectory / "Dialysis.slnx";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
     AbsolutePath TestResultsDirectory => ArtifactsDirectory / "test-results";
     AbsolutePath PackagesDirectory => ArtifactsDirectory / "packages";
     AbsolutePath AspireAppHost => RootDirectory / "src" / "aspire" / "Dialysis.AppHost" / "Dialysis.AppHost.csproj";
-    AbsolutePath ComposeOutputDirectory => RootDirectory / "deploy" / "compose";
+    AbsolutePath ComposeRootDirectory => RootDirectory / "deploy" / "compose";
+    AbsolutePath ComposeOutputDirectoryFor(string env) => ComposeRootDirectory / env;
 
     Target Clean => _ => _
         .Description("Removes every bin/obj under src + tests and empties the artifacts directory.")
@@ -126,35 +132,58 @@ class Build : NukeBuild
         });
 
     Target PublishCompose => _ => _
-        .Description("Regenerates the deployment topology (deploy/compose/docker-compose.yaml + .env) from the Aspire AppHost via `dotnet run --publisher compose`. Single source of truth for the production topology — re-run after any AppHost change and commit the regenerated files alongside the AppHost change that produced them.")
-        .Produces(ComposeOutputDirectory / "docker-compose.yaml")
-        .Produces(ComposeOutputDirectory / ".env")
+        .Description("Regenerates one deployment-environment compose project from the Aspire AppHost. Default is prod; pick the shape with --environment dev|staging|prod. Output: deploy/compose/<environment>/docker-compose.yaml + .env + aspire-manifest.json — self-contained, overlay-free.")
+        .Produces(ComposeOutputDirectoryFor("{environment}") / "docker-compose.yaml")
+        .Produces(ComposeOutputDirectoryFor("{environment}") / ".env")
+        .Executes(() => PublishComposeForEnvironment(Environment));
+
+    Target PublishAllCompose => _ => _
+        .Description("Fans PublishCompose out across every supported environment (dev / staging / prod). Use this before committing any AppHost change so the three folders stay in lockstep.")
         .Executes(() =>
         {
-            ComposeOutputDirectory.CreateOrCleanDirectory();
-            Log.Information("Running Aspire compose publisher → {Output}", ComposeOutputDirectory);
-            // --deploy false tells Aspire to skip the deploy step (which would otherwise
-            // require a running Docker daemon to `docker compose down` the previous topology
-            // and rebuild images). For artifact regeneration we only want the YAML + .env;
-            // building and pushing images is a separate CI step.
-            try
+            foreach (var env in AllComposeEnvironments)
             {
-                DotNet($"run --project \"{AspireAppHost}\" --no-launch-profile --configuration {Configuration} -- " +
-                    $"--publisher compose --output-path \"{ComposeOutputDirectory}\" --deploy false");
+                PublishComposeForEnvironment(env);
             }
-            catch (Exception ex)
-            {
-                // The publish pipeline runs the deploy step regardless of --deploy false in
-                // some Aspire 13.x versions; it fails when Docker isn't available but the
-                // compose YAML has already been written by the prior step. Treat the failure
-                // as "soft" if the expected artifacts are on disk.
-                if (!(ComposeOutputDirectory / "docker-compose.yaml").FileExists())
-                {
-                    throw;
-                }
-                Log.Warning("Compose publisher reported {Message} after writing the artifacts; treating as soft failure since docker-compose.yaml is on disk.", ex.Message);
-            }
-            Log.Information("Generated {Files} file(s) under {Output}",
-                ComposeOutputDirectory.GlobFiles("*").Count, ComposeOutputDirectory);
         });
+
+    void PublishComposeForEnvironment(string environment)
+    {
+        if (Array.IndexOf(AllComposeEnvironments, environment) < 0)
+        {
+            throw new ArgumentException(
+                $"Unsupported --environment '{environment}'. Expected one of: {string.Join(", ", AllComposeEnvironments)}.");
+        }
+
+        var output = ComposeOutputDirectoryFor(environment);
+        output.CreateOrCleanDirectory();
+        Log.Information("Running Aspire compose publisher (environment={Environment}) → {Output}", environment, output);
+
+        // The DIALYSIS_DEPLOY_ENV env var drives the AppHost's per-environment shaping
+        // (HSTS, replicas, ASPNETCORE_ENVIRONMENT, OTEL wiring). --deploy false tells Aspire
+        // to skip the deploy step (which would otherwise require a running Docker daemon to
+        // `docker compose down` the previous topology and rebuild images).
+        try
+        {
+            DotNet(
+                $"run --project \"{AspireAppHost}\" --no-launch-profile --configuration {Configuration} -- " +
+                $"--publisher compose --output-path \"{output}\" --deploy false",
+                environmentVariables: new Dictionary<string, string> { ["DIALYSIS_DEPLOY_ENV"] = environment });
+        }
+        catch (Exception ex)
+        {
+            // The publish pipeline runs the deploy step regardless of --deploy false in some
+            // Aspire 13.x versions; it fails when Docker isn't available but the compose YAML
+            // has already been written by the prior step. Treat the failure as "soft" if the
+            // expected artifacts are on disk.
+            if (!(output / "docker-compose.yaml").FileExists())
+            {
+                throw;
+            }
+            Log.Warning("Compose publisher reported {Message} after writing the artifacts; treating as soft failure since docker-compose.yaml is on disk.", ex.Message);
+        }
+
+        Log.Information("Generated {Files} file(s) under {Output}",
+            output.GlobFiles("*").Count, output);
+    }
 }
