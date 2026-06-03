@@ -46,6 +46,8 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<EhrDbContext>());
             services.AddTransponderEfOutboxAndInbox<EhrDbContext>();
             services.AddModuleIntegrationEventOutbox();
+            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IPatientEraser,
+                Dialysis.EHR.Persistence.Erasure.EhrPatientEraser>();
 
             // Registration
             services.AddScoped<IPatientRepository, PatientRepository>();

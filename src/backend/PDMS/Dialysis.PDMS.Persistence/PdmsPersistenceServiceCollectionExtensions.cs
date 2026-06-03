@@ -29,6 +29,8 @@ public static class PdmsPersistenceServiceCollectionExtensions
             services.AddTransponderEfOutboxAndInbox<PdmsDbContext>();
             services.AddScoped<IDialysisSessionRepository, DialysisSessionRepository>();
             services.AddScoped<ITreatmentAlarmRepository, TreatmentAlarmRepository>();
+            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IPatientEraser,
+                Dialysis.PDMS.Persistence.Erasure.PdmsPatientEraser>();
 
             return services;
         }
