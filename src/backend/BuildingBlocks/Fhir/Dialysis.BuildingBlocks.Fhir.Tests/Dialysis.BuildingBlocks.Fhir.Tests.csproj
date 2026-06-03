@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.CdaBridge/Dialysis.BuildingBlocks.Fhir.CdaBridge.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
