@@ -1,0 +1,5 @@
+<!-- Intentionally empty: stops the build project from inheriting the repository-root
+     Directory.Build.props (central package management, warnings-as-errors, the
+     VS-Threading analyzer). The build tool pins its own dependencies in _build.csproj. -->
+<Project>
+</Project>

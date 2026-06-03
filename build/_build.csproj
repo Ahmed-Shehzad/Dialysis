@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>annotations</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace></RootNamespace>
+    <AssemblyName>_build</AssemblyName>
+
+    <!--
+      The build project is a standalone tool, deliberately isolated from the repository's
+      product conventions: it is NOT part of Dialysis.slnx, opts out of central package
+      management (so it can pin Nuke.Common directly), and turns off warnings-as-errors +
+      XML-doc generation that the root Directory.Build.props imposes. The empty
+      Directory.Build.props / .targets siblings stop those root props from being inherited.
+    -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!-- NU190x: NUKE's MSBuild tooling dependencies carry advisories that don't affect the
+         shipped product (the build host only). CS/CA noise from generated NUKE members. -->
+    <NoWarn>$(NoWarn);NU1901;NU1902;NU1903;NU1904;CS0649;CS0169;CA1050;CA1822;CA2211;IDE1006</NoWarn>
+
+    <NukeRootDirectory>..</NukeRootDirectory>
+    <NukeScriptDirectory>..</NukeScriptDirectory>
+    <NukeTelemetryVersion>1</NukeTelemetryVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nuke.Common" Version="10.1.0" />
+  </ItemGroup>
+
+</Project>
