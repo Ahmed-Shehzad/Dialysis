@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIE.Consent.Domain;
 using Dialysis.HIE.Documents.Domain;
+using Dialysis.HIE.Tefca.Domain;
 using Dialysis.HIE.Inbound.Domain;
 using Dialysis.HIE.OpenEhr.Domain;
 using Dialysis.HIE.Outbound.Domain;
@@ -32,6 +33,8 @@ public sealed class HieDbContext(
     public DbSet<DocumentReferenceSignature> DocumentReferenceSignatures => Set<DocumentReferenceSignature>();
     public DbSet<DocumentRetentionPolicy> DocumentRetentionPolicies => Set<DocumentRetentionPolicy>();
     public DbSet<ErasureRequestRow> ErasureRequests => Set<ErasureRequestRow>();
+    public DbSet<QhinPartner> QhinPartners => Set<QhinPartner>();
+    public DbSet<QhinTrustAnchor> QhinTrustAnchors => Set<QhinTrustAnchor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -171,6 +174,38 @@ public sealed class HieDbContext(
             e.Property(r => r.ExecutionLogJson).IsRequired();
             e.HasIndex(r => r.Status).HasDatabaseName("IX_ErasureRequests_Status");
             e.HasIndex(r => r.PatientId).HasDatabaseName("IX_ErasureRequests_PatientId");
+        });
+
+        modelBuilder.Entity<QhinPartner>(e =>
+        {
+            e.ToTable("QhinPartners", "hie_tefca");
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Name).HasMaxLength(256).IsRequired();
+            e.Property(p => p.FhirBaseUrl).HasMaxLength(1024).IsRequired();
+            e.Property(p => p.IasEndpoint).HasMaxLength(1024).IsRequired();
+            e.Property(p => p.Status).HasConversion<int>();
+            e.Property(p => p.MtlsCertStorageRef).HasMaxLength(512);
+            e.Property(p => p.MtlsCertThumbprint).HasMaxLength(128);
+            e.Property(p => p.UpdatedBy).HasMaxLength(128).IsRequired();
+            e.HasMany(p => p.TrustAnchors)
+                .WithOne()
+                .HasForeignKey(a => a.QhinPartnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Metadata.FindNavigation(nameof(QhinPartner.TrustAnchors))!
+                .SetPropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<QhinTrustAnchor>(e =>
+        {
+            e.ToTable("QhinTrustAnchors", "hie_tefca");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Subject).HasMaxLength(512).IsRequired();
+            e.Property(a => a.Thumbprint).HasMaxLength(128).IsRequired();
+            e.Property(a => a.CertificatePem).IsRequired();
+            e.Property(a => a.AttachedBy).HasMaxLength(128).IsRequired();
+            e.Property(a => a.Status).HasConversion<int>();
+            e.HasIndex(a => a.QhinPartnerId).HasDatabaseName("IX_QhinTrustAnchors_PartnerId");
+            e.HasIndex(a => a.Thumbprint).HasDatabaseName("IX_QhinTrustAnchors_Thumbprint");
         });
     }
 }

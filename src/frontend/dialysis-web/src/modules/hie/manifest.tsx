@@ -6,6 +6,10 @@ const FhirAuthoringPage = lazyPage(() => import("@/pages/FhirAuthoringPage"), "F
 const FhirExchangePage = lazyPage(() => import("@/pages/FhirExchangePage"), "FhirExchangePage");
 const SubscriptionsPage = lazyPage(() => import("@/pages/SubscriptionsPage"), "SubscriptionsPage");
 const DocumentsPage = lazyPage(() => import("@/modules/hie/admin/DocumentsPage"), "DocumentsPage");
+const TefcaPartnersPage = lazyPage(
+  () => import("@/modules/hie/admin/TefcaPartnersPage"),
+  "TefcaPartnersPage",
+);
 const DocumentRetentionPage = lazyPage(
   () => import("@/modules/hie/admin/DocumentRetentionPage"),
   "DocumentRetentionPage",
@@ -27,6 +31,7 @@ export const hieModule: ModuleManifest = {
       <Route path="subscriptions" element={<SubscriptionsPage />} />
       <Route path="admin/documents" element={<DocumentsPage />} />
       <Route path="admin/documents/retention" element={<DocumentRetentionPage />} />
+      <Route path="admin/tefca/partners" element={<TefcaPartnersPage />} />
     </>
   ),
 };

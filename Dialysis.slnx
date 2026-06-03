@@ -183,6 +183,7 @@
     <Project Path="src/backend/HIE/Dialysis.HIE.Consent/Dialysis.HIE.Consent.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.OpenEhr/Dialysis.HIE.OpenEhr.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Outbound/Dialysis.HIE.Outbound.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Tefca/Dialysis.HIE.Tefca.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Persistence/Dialysis.HIE.Persistence.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Composition/Dialysis.HIE.Composition.csproj" />
