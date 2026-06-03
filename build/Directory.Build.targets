@@ -1,0 +1,4 @@
+<!-- Intentionally empty: stops the build project from inheriting a repository-root
+     Directory.Build.targets (none exists today, but this guards against one being added). -->
+<Project>
+</Project>
