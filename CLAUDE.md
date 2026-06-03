@@ -24,14 +24,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Deployment (containerized stack)
 
-The deployment topology lives under **`deploy/compose/`** and is **generated from the Aspire AppHost** via `./build.sh PublishCompose --configuration Release` (NUKE target wrapping `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path deploy/compose --deploy false`). The single source of truth for the topology is the AppHost — re-run the NUKE target after any AppHost change and commit the regenerated `deploy/compose/docker-compose.yaml` + `.env` + `aspire-manifest.json` alongside the AppHost change. `deploy/compose/docker-compose.override.yaml` is a hand-maintained overlay for the few concerns the Aspire compose publisher doesn't model yet (`build:` stanzas pointing at the repo-root Dockerfiles, host port mappings, ASP.NET production hardening — HSTS / forwarded headers / RequireAuthority, the OTLP collector). Run with:
+The deployment topology is **generated from the Aspire AppHost** — the AppHost is the single source of truth. There is **no** hand-curated overlay: every concern the Aspire publishers don't model out-of-the-box (build stanzas, host ports, ASP.NET production hardening, the OTLP collector, replica counts, healthcheck cadence) lives in `src/aspire/Dialysis.AppHost/ComposePublishExtensions.cs` and is shaped per environment by `DIALYSIS_DEPLOY_ENV`.
+
+**Two publishers, three environments.**
 
 ```bash
-cd deploy/compose
-docker compose -f docker-compose.yaml -f docker-compose.override.yaml up -d --build
+# Docker Compose — one folder per environment
+./build.sh PublishCompose      --environment prod   # → deploy/compose/prod/
+./build.sh PublishAllCompose                        # fan out across dev / staging / prod
+
+# Kubernetes / Helm — one chart per environment
+./build.sh PublishKubernetes   --environment prod   # → deploy/charts/dialysis-prod/
+./build.sh PublishAllKubernetes                     # fan out across dev / staging / prod
 ```
 
-This builds every host image from the repo using `Dockerfile.module` (parameterised by `MODULE_PROJECT`/`MODULE_DLL`), `Dockerfile.gateway`, and `src/frontend/dialysis-web/Dockerfile`. Hosts: HIS `:5288`, EHR `:5289`, PDMS `:5290`, SmartConnect `:5291`, HIE `:5292`, BFF `:5275`, gateway `:9090`, web `:8080`. Module hosts are stateless and scale horizontally (`docker compose ... up -d --scale his-api=3`); Valkey backs the distributed cache **and** the ASP.NET Data Protection key ring, so multi-replica is safe. See `deploy/compose/README.md` for the regenerate-vs-overlay split and the workflow for migrating overlay concerns back into the AppHost over time. CI (`.github/workflows/*`) uses plain `dotnet`; it does **not** build these images.
+Each NUKE target wraps `dotnet run --project src/aspire/Dialysis.AppHost --publisher {compose|k8s} --output-path … --deploy false`. Always pass `--deploy false` — without it Aspire tries to talk to a Docker daemon during publish. After **any** AppHost change, re-run the appropriate `PublishAll*` and commit the regenerated artifacts alongside the AppHost edit so the three env shapes stay in lockstep.
+
+The per-env shapes share ~90% of the topology; the diff is a small set of strings (`ASPNETCORE_ENVIRONMENT`, HSTS / `ForwardedHeaders`, `Authentication__RequireAuthorityWhenNotDevelopment`, OTLP wiring, replica counts, healthcheck cadence, host port mappings). See `deploy/compose/README.md` for the per-env matrix.
+
+Run a compose env locally:
+
+```bash
+cd deploy/compose/prod
+docker compose up -d --build
+```
+
+This builds every host image from the repo using `Dockerfile.module` (parameterised by `MODULE_PROJECT`/`MODULE_DLL`), `Dockerfile.gateway`, and `src/frontend/dialysis-web/Dockerfile`. Hosts: HIS `:5288`, EHR `:5289`, PDMS `:5290`, SmartConnect `:5291`, HIE `:5292`, BFF `:5275`, gateway `:9090`, web `:8080`. Module hosts are stateless and scale horizontally (`docker compose up -d --scale his-api=3`); Valkey backs the distributed cache **and** the ASP.NET Data Protection key ring, so multi-replica is safe. CI (`.github/workflows/*`) uses plain `dotnet`; it does **not** build these images.
+
+For Kubernetes, the Helm chart at `deploy/charts/dialysis-<env>/` is renderable on any cluster — `helm install dialysis ./deploy/charts/dialysis-prod`. The gateway endpoint is marked external so the chart emits an `Ingress` for it.
 
 ## Architecture
 
@@ -63,11 +83,13 @@ For module `X`:
 
 ### HIE module (FHIR R4 / IHE health-information exchange)
 
-`src/backend/HIE/` is the cross-organization gateway. It still obeys the module pattern (owns `HieDbContext`, schemas `hie_outbound`/`hie_inbound`/`hie_consent`/`hie_xds_registry`/`transponder`; references only other modules' `*.Contracts`). Slices:
+`src/backend/HIE/` is the cross-organization gateway. It still obeys the module pattern (owns `HieDbContext`, schemas `hie_outbound`/`hie_inbound`/`hie_consent`/`hie_xds_registry`/`hie_documents`/`hie_tefca`/`transponder`; references only other modules' `*.Contracts`). Slices:
 - **Outbound** — consumes upstream integration events, maps them to FHIR resources (Patient, Encounter, LabOrder/Result, AdverseEvent, DialysisSession, ClinicalNote), validates against US Core, dispatches to partner endpoints with Polly retry, TEFCA IAS JWT auth, FHIR `AuditEvent` trail, and Pending→Dispatching→Delivered/DeadLettered state.
 - **Inbound** — partners `POST /fhir/{Type}`; TEFCA middleware validates the IAS JWT/trust anchor, the ingestion service validates profile + consent, then enqueues `Hl7FhirResourceReceivedIntegrationEvent` for the owning module to consume.
 - **Consent** — `ConsentPolicy` aggregates + `IsResourceAccessPermittedQuery`; EHR/HIS call this as a cross-module query to gate resource visibility.
-- **Xds** (IHE XDS Registry/Repository, ITI-18/41/42/43) and **OpenEhr** (openEHR Composition ↔ FHIR).
+- **Documents** — `DocumentReference` aggregate + `IDocumentBlobStore`-backed binary content; PAdES signing, PDF viewer, audit trail. Owns the GDPR Art. 5(1)(e) retention pipeline: `DocumentRetentionPolicy` per `DocumentReference.Kind`, `RetentionPurgerHostedService` (24-hour tick, opt-in via `Documents:Retention:AutoPurge`), and the Art. 17 `HieDocumentsPatientEraser` that walks every `Current` document for the patient.
+- **Tefca** (US TEFCA QHIN onboarding — distinct from the German gematik TI building block at `BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti`, naming overlap is acronym-only) — `QhinPartner` aggregate (`Onboarding` → `Active` → `Suspended`, activation requires ≥1 trust anchor **and** mTLS material), `TrustAnchorParser` (PEM via `X509Certificate2.CreateFromPem`), `HmacIasJwtIssuer` for IAS JWT minting, admin surface at `/hie/admin/tefca/partners`.
+- **Xds** (IHE XDS Registry/Repository, ITI-18/41/42/43) and **OpenEhr** (openEHR Composition ↔ FHIR — projections are now **declarative**: JSON archetype definitions in `Dialysis.HIE.OpenEhr/Archetypes/Definitions/` are evaluated by a `ResourcePath` walker; add a new archetype by dropping a JSON file, no code change required).
 
 ### Cross-cutting building blocks (`src/backend/BuildingBlocks/`)
 
@@ -75,9 +97,17 @@ For module `X`:
 - **Verifier** — request/command validation pipeline.
 - **Transponder** — distributed messaging (`ITransponderBus`); transports (RabbitMQ, NATS, Azure Service Bus, SQS, gRPC, SignalR, SSE); EF outbox/inbox/saga persistence (`Postgresql`, `Shared`); schedulers (Hangfire / Quartz / TickerQ — exactly one per host). `enableOutboxRelay` (or `<Module>:Transponder:EnableOutboxRelay`) opts a host into background publishing. See `src/backend/BuildingBlocks/Transponder/README.md`.
 - **Fhir** — ~18 projects implementing the FHIR stack: `Core` (`IFhirResourceMapper<TEvent,TResource>`), `Validation` (US Core), `Smart` (SMART-on-FHIR), `Subscriptions`/`BulkData`/`Audit` (each with an `*.EntityFrameworkCore` persistence project), `Tefca` (IAS JWT + trust anchors), `Terminology`, `DeIdentification`, `OpenEhr`, `CdaBridge`, `AspNetCore` (middleware), `Testing`. Per-module mappers live in each slice's `Fhir/` folder; SmartConnect's `Hl7V2ToFhirPipeline` routes HL7v2 by MSH-9 trigger to per-trigger mappers.
+- **DataProtection** — GDPR/BDSG compliance surface. Mounts `/api/v1.0/data-subject-rights/...` via `MapEuDataProtectionRoutes()`. Two per-module participation hooks: `IModuleDataExtractor` (Art. 15 export) and `IPatientEraser` (Art. 17 erasure). The `DefaultDataSubjectRightsService` orchestrates request → approval → execution and writes the audit row through `IErasureRequestStore` (HIE registers a Scoped EF impl; non-HIE hosts fall back to the `InMemoryErasureRequestStore` registered via `TryAddSingleton`). Sibling concerns: consent, lawful bases, RoPA, retention, breach notification, encryption, audit.
 - **Direct** (Direct secure messaging), **PlatformGateway**, **DistributedCache.Valkey**.
 
 `DomainDrivenDesign/` holds DDD primitives + persistence base classes; `CQRS/` holds CQRS contracts and pipeline behaviors. `Shared/Dialysis.Module.{Contracts,Hosting,Hosting.Testing}` provide host scaffolding consumed by every `Program.cs` via `builder.AddModuleHost<XPermissionCatalog>(new ModuleHostingOptions { ModuleSlug = "x", HandlerAssemblies = [...] })`; `Shared/Dialysis.Module.Gateway` is the YARP edge gateway.
+
+### Compliance surfaces (GDPR / BDSG)
+
+Two distinct mechanisms; do not conflate them.
+
+- **Storage limitation (Art. 5(1)(e)) — scheduled purge.** The HIE Documents slice owns the only retention pipeline today: `DocumentRetentionPolicy` per `DocumentReference.Kind`, set via the admin UI at `/hie/admin/documents/retention`. The `RetentionPurgerHostedService` ticks every 24 h and is opt-in via `Documents:Retention:AutoPurge` (default `false`); no windows are seeded, so the purger is a no-op until the DPO adopts policies. Purged documents transition to `EnteredInError` with `StorageRef = purged://…` (tombstone, so audit replay sees deliberate purge, not data loss) and the blob is deleted via `IDocumentBlobStore.DeleteAsync`.
+- **Right to erasure (Art. 17) — approve-and-execute pipeline.** Patient files a request → DPO reviews → DPO approves via `/admin/data-protection/data-subject-rights` → `DefaultDataSubjectRightsService.ApproveErasureAsync` walks every registered `IPatientEraser` and persists the per-module breakdown to `IErasureRequestStore`. To participate, a module implements `IPatientEraser` (the contract mirrors `IModuleDataExtractor` for Art. 15 export) and registers it in its composition extension. Today only `HieDocumentsPatientEraser` is wired; other modules add one when they hold patient-linked state.
 
 ### Module boundary invariant (enforced)
 
