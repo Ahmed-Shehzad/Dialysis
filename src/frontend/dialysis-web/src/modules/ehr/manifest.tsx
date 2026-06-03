@@ -9,6 +9,10 @@ const BillingChargesPage = lazyPage(
   () => import("@/modules/ehr/admin/BillingChargesPage"),
   "BillingChargesPage",
 );
+const FeeSchedulePage = lazyPage(
+  () => import("@/modules/ehr/admin/FeeSchedulePage"),
+  "FeeSchedulePage",
+);
 
 export const ehrModule: ModuleManifest = {
   slug: "ehr",
@@ -25,6 +29,7 @@ export const ehrModule: ModuleManifest = {
       <Route path="patients/:patientId" element={<EhrChartPage />} />
       <Route path="workflows/ehr" element={<EhrWorkflowsPage />} />
       <Route path="admin/billing/dialysis-charges" element={<BillingChargesPage />} />
+      <Route path="admin/billing/fee-schedule" element={<FeeSchedulePage />} />
     </>
   ),
 };

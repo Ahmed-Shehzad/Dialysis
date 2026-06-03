@@ -27,9 +27,11 @@ public sealed class CptFeeScheduleEntry
         ArgumentException.ThrowIfNullOrWhiteSpace(cptCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(payerCode);
         ArgumentNullException.ThrowIfNull(amount);
+        if (effectiveUntilUtc.HasValue && effectiveUntilUtc.Value < effectiveFromUtc)
+            throw new ArgumentException("EffectiveUntil must be on or after EffectiveFrom.", nameof(effectiveUntilUtc));
         Id = id;
-        CptCode = cptCode;
-        PayerCode = payerCode;
+        CptCode = cptCode.Trim().ToUpperInvariant();
+        PayerCode = payerCode.Trim().ToUpperInvariant();
         Amount = amount;
         EffectiveFromUtc = effectiveFromUtc;
         EffectiveUntilUtc = effectiveUntilUtc;
@@ -44,6 +46,22 @@ public sealed class CptFeeScheduleEntry
 
     public bool CoversInstant(DateOnly atUtc) =>
         atUtc >= EffectiveFromUtc && (!EffectiveUntilUtc.HasValue || atUtc <= EffectiveUntilUtc.Value);
+
+    /// <summary>
+    /// Revises this row's rate and effective window in place. Operators use this to correct a
+    /// typo or extend an existing rate; superseding a rate with a new one (keeping the old for
+    /// audit) is done by adding a fresh row instead. CPT and payer are immutable — change those
+    /// by deleting and re-adding so the identity of "which schedule line" stays stable.
+    /// </summary>
+    public void Revise(Money amount, DateOnly effectiveFromUtc, DateOnly? effectiveUntilUtc)
+    {
+        ArgumentNullException.ThrowIfNull(amount);
+        if (effectiveUntilUtc.HasValue && effectiveUntilUtc.Value < effectiveFromUtc)
+            throw new ArgumentException("EffectiveUntil must be on or after EffectiveFrom.", nameof(effectiveUntilUtc));
+        Amount = amount;
+        EffectiveFromUtc = effectiveFromUtc;
+        EffectiveUntilUtc = effectiveUntilUtc;
+    }
 }
 
 /// <summary>

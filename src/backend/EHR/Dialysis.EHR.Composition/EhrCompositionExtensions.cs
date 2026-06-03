@@ -140,12 +140,14 @@ public static class EhrCompositionExtensions
             {
                 services.TryAddSingleton<ICptFeeSchedule, ConfigurableCptFeeSchedule>();
                 services.TryAddSingleton<IChargeIdempotencyStore, InMemoryChargeIdempotencyStore>();
+                services.TryAddSingleton<ICptFeeScheduleAdminRepository, InMemoryCptFeeScheduleAdminRepository>();
             }
             else
             {
                 services.TryAddScoped<DbContext>(sp => sp.GetRequiredService<EhrDbContext>());
                 services.TryAddScoped<ICptFeeSchedule, EfCptFeeSchedule>();
                 services.TryAddScoped<IChargeIdempotencyStore, EfChargeIdempotencyStore>();
+                services.TryAddScoped<ICptFeeScheduleAdminRepository, EfCptFeeScheduleAdminRepository>();
             }
 
             if (enableOutboxRelay)
