@@ -38,6 +38,21 @@ public interface IPayerRepository
 }
 
 /// <summary>
+/// Admin CRUD over the per-payer / per-CPT <see cref="CptFeeScheduleEntry"/> table. Distinct
+/// from <c>ICptFeeSchedule</c> (which is read-only resolution on the charge path): this port
+/// backs the operator fee-schedule management UI. Write operations are persisted by the caller
+/// via <c>IUnitOfWork.SaveChangesAsync</c>, matching the other billing repositories.
+/// </summary>
+public interface ICptFeeScheduleAdminRepository
+{
+    Task<IReadOnlyList<CptFeeScheduleEntry>> ListAsync(
+        string? cptCode, string? payerCode, CancellationToken cancellationToken = default);
+    Task<CptFeeScheduleEntry?> GetAsync(Guid id, CancellationToken cancellationToken = default);
+    void Add(CptFeeScheduleEntry entry);
+    void Remove(CptFeeScheduleEntry entry);
+}
+
+/// <summary>
 /// Maps (sessionId, cptCode) → existing chargeId so the
 /// <c>DialysisSessionChargeReadyConsumer</c> can stay idempotent under at-least-once
 /// delivery. The mapping is owned by the persistence layer (one row per session +

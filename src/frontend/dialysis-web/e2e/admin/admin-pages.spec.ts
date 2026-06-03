@@ -19,6 +19,7 @@ const PAGES: Array<{ route: string; heading: RegExp }> = [
   { route: "/admin/oncall/audit", heading: /Alarm dispatch audit/i },
   // PR 10 — Billing + DataProtection.
   { route: "/admin/billing/dialysis-charges", heading: /Dialysis charges & claims/i },
+  { route: "/admin/billing/fee-schedule", heading: /CPT fee schedule/i },
   { route: "/admin/billing/exports", heading: /Billing export jobs/i },
   { route: "/admin/data-protection/ropa", heading: /Records of Processing Activities/i },
   { route: "/admin/data-protection/consents", heading: /Patient consents/i },
