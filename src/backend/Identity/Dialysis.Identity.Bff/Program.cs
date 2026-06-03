@@ -22,6 +22,8 @@ builder.Services.Configure<IdentityFederationOptions>(builder.Configuration.GetS
 builder.Services.AddSingleton<IIdentityProviderCatalog, ConfiguredIdentityProviderCatalog>();
 builder.Services.AddHttpClient("keycloak");
 builder.Services.AddScoped<IHisAccessTokenProvider, HisAccessTokenProvider>();
+builder.Services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 var kc = builder.Configuration.GetSection(KeycloakBffOptions.SectionName).Get<KeycloakBffOptions>()
          ?? new KeycloakBffOptions();
@@ -42,6 +44,15 @@ builder.Services.AddAuthentication(options =>
     {
         o.Cookie.Name = "Dialysis.Identity.Bff";
         o.Cookie.SameSite = SameSiteMode.Lax;
+        // Hand cookie validation off to ITokenRefreshService so the cached Keycloak access
+        // token rolls forward before it expires. Without this, the BFF session cookie outlives
+        // the access token by minutes/hours and gateway-routed /api/* calls 401 silently until
+        // the user re-signs in.
+        o.Events.OnValidatePrincipal = async ctx =>
+        {
+            var refresher = ctx.HttpContext.RequestServices.GetRequiredService<ITokenRefreshService>();
+            await refresher.ValidateAsync(ctx).ConfigureAwait(false);
+        };
     })
     .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, o =>
     {
@@ -72,6 +83,10 @@ builder.Services.AddAuthentication(options =>
         o.Scope.Add("openid");
         o.Scope.Add("profile");
         o.Scope.Add("email");
+        // offline_access opts the auth-code grant into issuing a refresh_token alongside the
+        // access token; without it Keycloak omits refresh_token and the BFF can't roll the
+        // session forward when ITokenRefreshService runs.
+        o.Scope.Add("offline_access");
 
         // Multi-IdP federation through Keycloak brokering. When the /identity/login handler
         // stashes a known broker alias in AuthenticationProperties.Items["kc_idp_hint"],
@@ -174,9 +189,9 @@ app.MapGet(BffRoutes.User, async (HttpContext ctx) =>
     // SaveTokens=true on the OIDC handler stashes the access token in the auth-cookie
     // ticket. Returning it here lets the SPA's apiClient send "Authorization: Bearer ..."
     // to the gateway's /api/{module}/* routes (which require the "authenticated" policy
-    // and validate JWT bearer, not the BFF session cookie). Refresh handling is on the
-    // followup list — for now, access tokens last ~5 min before module calls start 401-ing
-    // again and the user has to re-sign in.
+    // and validate JWT bearer, not the BFF session cookie). ITokenRefreshService rolls the
+    // saved tokens forward before they expire so this stays a current access token across
+    // long-lived sessions.
     var accessToken = await ctx.GetTokenAsync("access_token").ConfigureAwait(false);
     // Group by claim type — Keycloak emits multiple `roles` claims (one per role) and may
     // also emit duplicate `aud`/`amr` entries. A plain ToDictionary(c => c.Type, ...) would
@@ -194,16 +209,61 @@ app.MapGet(BffRoutes.User, async (HttpContext ctx) =>
         .Concat(ctx.User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value))
         .Distinct(StringComparer.Ordinal)
         .ToArray();
+    // Permissions surface as one or more `dialysis_permission` claims (the realm mapper emits
+    // a JSON-typed claim; multi-valued claims arrive as repeated claims, each containing the
+    // full array literal). Flatten and parse so the SPA's PermissionGate can do a simple
+    // `permissions.includes(required)` check. If the claim is absent (no permission mapper
+    // configured for the upstream IdP), the array is empty and PermissionGate falls back to
+    // hiding any permission-gated UI.
+    var permissions = ExtractPermissions(ctx.User.FindAll("dialysis_permission").Select(c => c.Value));
     return Results.Json(new
     {
         name = ctx.User.Identity!.Name ?? ctx.User.FindFirst("preferred_username")?.Value,
         email = ctx.User.FindFirst("email")?.Value,
         roles,
         realm_access = realmAccessRoles,
+        permissions,
         claims,
         accessToken,
     });
 });
+
+static string[] ExtractPermissions(IEnumerable<string> rawValues)
+{
+    var output = new HashSet<string>(StringComparer.Ordinal);
+    foreach (var raw in rawValues)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) continue;
+        var trimmed = raw.AsSpan().Trim();
+        // Each claim value is either a JSON array literal (`["a","b"]`) when the mapper is
+        // jsonType=JSON, or a single scalar string when scope mappers add one permission per
+        // claim. Detect the array shape and parse it; otherwise treat the value as a single
+        // permission. Malformed JSON falls through to the scalar path so a misconfigured
+        // upstream IdP can't poison the principal.
+        if (trimmed.Length >= 2 && trimmed[0] == '[' && trimmed[^1] == ']')
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(raw);
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var element in doc.RootElement.EnumerateArray())
+                    {
+                        var value = element.GetString();
+                        if (!string.IsNullOrWhiteSpace(value)) output.Add(value);
+                    }
+                    continue;
+                }
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // fall through to scalar handling
+            }
+        }
+        output.Add(raw);
+    }
+    return output.ToArray();
+}
 
 if (enableHisProxy)
     app.MapReverseProxy();

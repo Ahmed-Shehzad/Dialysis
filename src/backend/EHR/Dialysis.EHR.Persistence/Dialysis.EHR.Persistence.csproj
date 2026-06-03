@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Registration/Dialysis.EHR.Registration.csproj" />
     <ProjectReference Include="../Dialysis.EHR.PatientChart/Dialysis.EHR.PatientChart.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Scheduling/Dialysis.EHR.Scheduling.csproj" />

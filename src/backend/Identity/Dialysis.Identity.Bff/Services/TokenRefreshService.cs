@@ -1,0 +1,154 @@
+using System.Globalization;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using Dialysis.Identity.Bff.Configuration;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Options;
+
+namespace Dialysis.Identity.Bff.Services;
+
+/// <summary>
+/// Refreshes the Keycloak access/refresh-token pair stashed on the BFF cookie ticket. Wired to
+/// the cookie handler's <c>OnValidatePrincipal</c> event so every authenticated request that
+/// arrives near expiry transparently rolls forward — without this, the 5-minute Keycloak access
+/// token expires while the SPA still holds a valid BFF session cookie, and gateway-routed
+/// <c>/api/*</c> calls start returning 401 until the user re-signs in.
+/// </summary>
+public interface ITokenRefreshService
+{
+    Task ValidateAsync(CookieValidatePrincipalContext context);
+}
+
+public sealed class TokenRefreshService(
+    IHttpClientFactory httpClientFactory,
+    IOptions<KeycloakBffOptions> options,
+    TimeProvider clock,
+    ILogger<TokenRefreshService> logger) : ITokenRefreshService
+{
+    private readonly KeycloakBffOptions _options = options.Value;
+
+    /// <summary>
+    /// Window before <c>expires_at</c> in which we proactively refresh. Long enough to mask the
+    /// round-trip to Keycloak; short enough that a near-idle session doesn't refresh on every
+    /// request.
+    /// </summary>
+    private static readonly TimeSpan RefreshSkew = TimeSpan.FromSeconds(60);
+
+    public async Task ValidateAsync(CookieValidatePrincipalContext context)
+    {
+        var properties = context.Properties;
+        var expiresAtRaw = properties.GetTokenValue("expires_at");
+        if (string.IsNullOrWhiteSpace(expiresAtRaw)
+            || !DateTimeOffset.TryParse(
+                expiresAtRaw,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out var expiresAt))
+        {
+            // No saved expiry → either SaveTokens was off (regression) or the ticket predates
+            // refresh wiring. Leave the principal alone; the next API call will 401 and the
+            // SPA will redirect the user through login again.
+            return;
+        }
+
+        var now = clock.GetUtcNow();
+        if (expiresAt - now > RefreshSkew)
+        {
+            return;
+        }
+
+        var refreshToken = properties.GetTokenValue("refresh_token");
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            // No refresh token (offline_access scope missing or already consumed) → force a
+            // fresh login so the SPA doesn't sit with an unrecoverable session.
+            logger.LogInformation("BFF session has no refresh_token; rejecting principal to force re-login.");
+            await RejectAsync(context).ConfigureAwait(false);
+            return;
+        }
+
+        var refreshed = await CallKeycloakAsync(refreshToken, context.HttpContext.RequestAborted)
+            .ConfigureAwait(false);
+        if (refreshed is null)
+        {
+            logger.LogInformation("Token refresh failed; rejecting principal so the SPA re-authenticates.");
+            await RejectAsync(context).ConfigureAwait(false);
+            return;
+        }
+
+        UpdateTokens(properties, refreshed, now);
+        context.ShouldRenew = true;
+    }
+
+    private async Task<RefreshedTokens?> CallKeycloakAsync(string refreshToken, CancellationToken ct)
+    {
+        var tokenEndpoint = $"{_options.Authority.TrimEnd('/')}/protocol/openid-connect/token";
+        using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint)
+        {
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "refresh_token",
+                ["refresh_token"] = refreshToken,
+            }),
+        };
+
+        var basic = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+
+        var client = httpClientFactory.CreateClient("keycloak");
+        using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            logger.LogWarning("Refresh-token grant failed {Status}: {Body}", (int)response.StatusCode, body);
+            return null;
+        }
+
+        await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
+        var root = doc.RootElement;
+        var accessToken = root.TryGetProperty("access_token", out var atEl) ? atEl.GetString() : null;
+        if (string.IsNullOrEmpty(accessToken))
+            return null;
+
+        var newRefresh = root.TryGetProperty("refresh_token", out var rtEl) ? rtEl.GetString() : null;
+        var idToken = root.TryGetProperty("id_token", out var idEl) ? idEl.GetString() : null;
+        var expiresInSec = root.TryGetProperty("expires_in", out var exEl) && exEl.TryGetInt32(out var sec) ? sec : 300;
+        return new RefreshedTokens(accessToken, newRefresh, idToken, expiresInSec);
+    }
+
+    private static void UpdateTokens(AuthenticationProperties properties, RefreshedTokens refreshed, DateTimeOffset now)
+    {
+        properties.UpdateTokenValue("access_token", refreshed.AccessToken);
+        if (!string.IsNullOrEmpty(refreshed.RefreshToken))
+            properties.UpdateTokenValue("refresh_token", refreshed.RefreshToken);
+        if (!string.IsNullOrEmpty(refreshed.IdToken))
+            properties.UpdateTokenValue("id_token", refreshed.IdToken);
+        var newExpiry = now.AddSeconds(refreshed.ExpiresInSeconds);
+        properties.UpdateTokenValue("expires_at", newExpiry.ToString("o", CultureInfo.InvariantCulture));
+    }
+
+    private static async Task RejectAsync(CookieValidatePrincipalContext context)
+    {
+        context.RejectPrincipal();
+        // SignOut belt-and-braces: tells the cookie middleware to clear the auth cookie on the
+        // response, so the next request arrives anonymously instead of presenting an
+        // already-rejected ticket. We only reach this method when IAuthenticationService is
+        // registered (every BFF request flows through UseAuthentication), so a missing service
+        // means we're in a unit-test harness — swallow the InvalidOperationException there and
+        // let the RejectPrincipal call carry the test alone.
+        try
+        {
+            await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme)
+                .ConfigureAwait(false);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private sealed record RefreshedTokens(string AccessToken, string? RefreshToken, string? IdToken, int ExpiresInSeconds);
+}

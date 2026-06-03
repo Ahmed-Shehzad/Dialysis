@@ -54,6 +54,8 @@ public static class PersistenceServiceCollectionExtensions
 
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<HisDbContext>());
             services.AddTransponderEfOutboxAndInbox<HisDbContext>();
+            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IPatientEraser,
+                Dialysis.HIS.Persistence.Erasure.HisPatientEraser>();
 
             services.AddScoped<IStaffRepository, EfStaffRepository>();
             services.AddScoped<IInventoryRepository, EfInventoryRepository>();

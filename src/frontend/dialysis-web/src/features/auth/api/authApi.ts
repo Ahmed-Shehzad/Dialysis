@@ -4,6 +4,10 @@ export type AuthenticatedUser = {
   username: string;
   email?: string;
   roles: string[];
+  // Permission strings the BFF derived from the Keycloak `dialysis_permission` claim. Empty
+  // array when the upstream IdP has no permission mapper configured; PermissionGate then
+  // hides any gated UI.
+  permissions: string[];
   claims: Record<string, unknown>;
   // BFF returns the Keycloak access token from its saved-tokens cookie ticket so the SPA
   // can forward it as `Authorization: Bearer …` on gateway-routed API calls (HIS/PDMS/etc).
@@ -20,6 +24,7 @@ export const fetchCurrentUser = async (): Promise<AuthenticatedUser> => {
     name?: string;
     email?: string;
     roles?: string[];
+    permissions?: string[];
     claims?: Record<string, unknown>;
     accessToken?: string;
   }>("/identity/user", { timeout: AUTH_PROBE_TIMEOUT_MS });
@@ -28,6 +33,7 @@ export const fetchCurrentUser = async (): Promise<AuthenticatedUser> => {
     username: data.name ?? "unknown",
     email: data.email,
     roles: data.roles ?? [],
+    permissions: data.permissions ?? [],
     claims: data.claims ?? {},
     accessToken: data.accessToken,
   };
