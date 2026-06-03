@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
+using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.BuildingBlocks.DataProtection.Retention;
 using Dialysis.BuildingBlocks.DataProtection.Ropa;
@@ -59,8 +60,11 @@ public static class DataProtectionServiceCollectionExtensions
 
         // GDPR Art. 15 / 17 / 18 / 20 orchestrator. Walks every registered
         // IModuleDataExtractor for export, every registered IPatientEraser for approval,
-        // and persists the audit-trail row through IErasureRequestStore (which the
-        // hosting module supplies — see Dialysis.HIE.Persistence).
+        // and persists the audit-trail row through IErasureRequestStore. HIE registers the
+        // EF-backed store (Scoped) before this call — `TryAdd` keeps it; non-HIE hosts fall
+        // back to the in-memory baseline below so DI validation succeeds without an erasure
+        // persistence story of their own.
+        services.TryAddSingleton<IErasureRequestStore, InMemoryErasureRequestStore>();
         services.TryAddScoped<IDataSubjectRightsService, DefaultDataSubjectRightsService>();
 
         return services;
