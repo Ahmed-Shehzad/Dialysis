@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.HIE.Documents</RootNamespace>
+    <Description>HIE Documents slice — FHIR DocumentReference / Binary surface for the admin document-management UI. Indexes PDMS-produced clinical reports, HIE-received partner documents, and admin-uploaded files into a single browsable list with AcroForm fill, PAdES digital signing, and FHIR-mapper round-trip.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Core.Abstraction/Dialysis.HIE.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Storage/Dialysis.BuildingBlocks.Documents.Storage.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Signing/Dialysis.BuildingBlocks.Documents.Signing.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
+    <ProjectReference Include="../../PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hl7.Fhir.R4" />
+  </ItemGroup>
+
+</Project>

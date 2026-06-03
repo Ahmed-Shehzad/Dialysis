@@ -1,7 +1,10 @@
+using Dialysis.BuildingBlocks.Documents.Signing;
+using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Contracts.Integration;
+using Dialysis.HIE.Documents.Consumers;
 using Dialysis.HIE.Inbound.Ingestion;
 using Dialysis.HIE.Outbound;
 using Dialysis.HIE.Outbound.Consumers;
@@ -63,8 +66,15 @@ public static class HealthInformationExchangeExtensions
                 bus.AddConsumer<ChartVitalSignProjectedAsOpenEhrIntegrationEvent, ChartVitalSignOpenEhrConsumer>();
                 bus.AddConsumer<LabResultProjectedAsOpenEhrIntegrationEvent, LabResultOpenEhrConsumer>();
                 bus.AddConsumer<HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent, HaemodialysisSessionOpenEhrConsumer>();
+                bus.AddConsumer<ClinicalDocumentProducedIntegrationEvent, OnClinicalDocumentProduced>();
             });
             configureTransponderTransport?.Invoke(services);
+
+            // Document storage + signing are shared across the modular monolith, so register them
+            // at the host once. PDMS's IReportBlobStore continues to resolve through this same
+            // IDocumentBlobStore singleton (see InMemoryReportBlobStore's adapter ctor).
+            services.AddInMemoryDocumentBlobStore();
+            services.AddPdfSigning(configuration.GetSection("Documents:Signing"));
 
             services.AddScoped<PatientMapper>();
             services.AddScoped<EncounterMapper>();

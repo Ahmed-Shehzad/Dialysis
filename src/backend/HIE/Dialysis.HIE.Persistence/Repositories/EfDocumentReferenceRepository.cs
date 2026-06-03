@@ -1,0 +1,52 @@
+using Dialysis.HIE.Documents.Domain;
+using Dialysis.HIE.Documents.Ports;
+using Microsoft.EntityFrameworkCore;
+
+namespace Dialysis.HIE.Persistence.Repositories;
+
+public sealed class EfDocumentReferenceRepository(HieDbContext db) : IDocumentReferenceRepository
+{
+    public void Add(DocumentReference document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        db.DocumentReferences.Add(document);
+    }
+
+    public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) =>
+        db.DocumentReferences
+            .Include(d => d.Signatures)
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<DocumentReference>> ListAsync(
+        Guid? patientId,
+        string? kind,
+        DocumentReferenceStatus? status,
+        DocumentReferenceSource? source,
+        int take,
+        CancellationToken cancellationToken)
+    {
+        var query = db.DocumentReferences
+            .AsNoTracking()
+            .Include(d => d.Signatures)
+            .AsQueryable();
+
+        // Default: exclude soft-deleted unless the caller explicitly asks for EnteredInError.
+        if (status is { } s)
+            query = query.Where(d => d.Status == s);
+        else
+            query = query.Where(d => d.Status != DocumentReferenceStatus.EnteredInError);
+
+        if (patientId is { } pid)
+            query = query.Where(d => d.PatientId == pid);
+        if (!string.IsNullOrWhiteSpace(kind))
+            query = query.Where(d => d.Kind == kind);
+        if (source is { } src)
+            query = query.Where(d => d.Source == src);
+
+        return await query
+            .OrderByDescending(d => d.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
