@@ -125,6 +125,8 @@ HIS is mapped to Tummers et al. (2021) — see `src/backend/HIS/README.md` and `
 
 JWT Bearer is registered only when `<Module>:Authentication:Authority` is set; in Development with no Authority, `ICurrentUser` exposes all permissions for local work. IdP role/group names map to module permission strings via `<Module>:Authentication:RolePermissionMap`. HIS portal endpoints additionally filter by patient claim (`his_patient_id` or `sub` matching route `patientId`). The Identity BFF + Keycloak realm `dialysis` are the canonical IdP — see `src/backend/Identity/RUNBOOK.md` and `ARCHITECTURE.md`.
 
+**Multi-IdP federation (Okta / Auth0 / Entra) goes through Keycloak brokering, not BFF-side IdP swapping.** Keycloak stays the only direct OIDC client; upstream IdPs are added as realm `identityProviders[]` entries (placeholders for `okta`/`auth0`/`entra` ship disabled in `dialysis-realm.json`) and surfaced to the SPA through `IIdentityProviderCatalog` + `GET /identity/providers`. The BFF forwards `kc_idp_hint=<alias>` on the OIDC auth request when the caller hits `/identity/login?provider=<alias>`, gated by an allowlist so unknown aliases can't probe Keycloak. See RUNBOOK §8.
+
 ### Frontend module-shell (`src/frontend/dialysis-web`)
 
 The SPA mirrors the backend boundaries: one folder per module under `src/modules/<slug>/`, all composed into a shared chrome.

@@ -11,6 +11,7 @@ internal static class BffRoutes
     public const string Login = Base + "/login";
     public const string Logout = Base + "/logout";
     public const string User = Base + "/user";
+    public const string Providers = Base + "/providers";
     public const string SignInCallback = Base + "/signin-oidc";
     public const string SignedOutCallback = Base + "/signout-callback-oidc";
 }

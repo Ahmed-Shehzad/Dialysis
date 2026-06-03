@@ -6,7 +6,7 @@ import { fetchCurrentUser, type AuthenticatedUser } from "../api/authApi";
 type AuthState = {
   user: AuthenticatedUser | null;
   status: "idle" | "loading" | "authenticated" | "anonymous";
-  signIn: () => void;
+  signIn: (provider?: string) => void;
   signOut: () => void;
   getAccessToken: () => string | null;
 };
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       user,
       status,
-      signIn: () => {
+      signIn: (provider?: string) => {
         // Build an absolute URL on the gateway origin (or current origin as fallback).
         // Using location.assign + console.log so we can verify in DevTools exactly which
         // URL the browser is navigating to — "the page just refreshes" usually means the
@@ -105,8 +105,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           /\/$/,
           "",
         );
-        const target = apiBase + "/identity/login?returnUrl=" + encodeURIComponent(apiBase + "/");
-        console.info("[auth] signIn → navigating to", target);
+        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/");
+        const providerParam = provider ? "&provider=" + encodeURIComponent(provider) : "";
+        const target = apiBase + "/identity/login?" + returnUrlParam + providerParam;
+        console.info(
+          "[auth] signIn → navigating to",
+          target,
+          provider ? `(provider=${provider})` : "",
+        );
         globalThis.location.assign(target);
       },
       signOut: () => {

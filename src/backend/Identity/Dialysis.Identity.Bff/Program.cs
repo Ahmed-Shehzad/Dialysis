@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Dialysis.Identity.Bff.Configuration;
+using Dialysis.Identity.Bff.Federation;
 using Dialysis.Identity.Bff.Services;
 using Dialysis.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication;
@@ -17,6 +18,8 @@ builder.Services.AddMemoryCache();
 builder.Services.AddAuthorization();
 builder.Services.Configure<KeycloakBffOptions>(builder.Configuration.GetSection(KeycloakBffOptions.SectionName));
 builder.Services.Configure<BffSpaOptions>(builder.Configuration.GetSection(BffSpaOptions.SectionName));
+builder.Services.Configure<IdentityFederationOptions>(builder.Configuration.GetSection(IdentityFederationOptions.SectionName));
+builder.Services.AddSingleton<IIdentityProviderCatalog, ConfiguredIdentityProviderCatalog>();
 builder.Services.AddHttpClient("keycloak");
 builder.Services.AddScoped<IHisAccessTokenProvider, HisAccessTokenProvider>();
 
@@ -69,6 +72,22 @@ builder.Services.AddAuthentication(options =>
         o.Scope.Add("openid");
         o.Scope.Add("profile");
         o.Scope.Add("email");
+
+        // Multi-IdP federation through Keycloak brokering. When the /identity/login handler
+        // stashes a known broker alias in AuthenticationProperties.Items["kc_idp_hint"],
+        // forward it as a parameter on the OIDC auth-request URL. Keycloak sees the hint and
+        // skips its own login page, immediately redirecting to the upstream IdP (Okta/Auth0/
+        // Entra). Unknown aliases are filtered upstream by IIdentityProviderCatalog.IsKnown,
+        // so we trust the value here.
+        o.Events.OnRedirectToIdentityProvider = ctx =>
+        {
+            if (ctx.Properties.Items.TryGetValue("kc_idp_hint", out var hint)
+                && !string.IsNullOrWhiteSpace(hint))
+            {
+                ctx.ProtocolMessage.SetParameter("kc_idp_hint", hint);
+            }
+            return Task.CompletedTask;
+        };
     });
 
 var proxySection = builder.Configuration.GetSection("ReverseProxy");
@@ -120,10 +139,24 @@ static string ResolveReturnUrl(string? requested, BffSpaOptions spa)
     return spa.DefaultReturnUrl;
 }
 
-app.MapGet(BffRoutes.Login, (string? returnUrl, Microsoft.Extensions.Options.IOptions<BffSpaOptions> spa) =>
-    Results.Challenge(
-        new AuthenticationProperties { RedirectUri = ResolveReturnUrl(returnUrl, spa.Value) },
-        [OpenIdConnectDefaults.AuthenticationScheme]));
+app.MapGet(BffRoutes.Login, (
+    string? returnUrl,
+    string? provider,
+    Microsoft.Extensions.Options.IOptions<BffSpaOptions> spa,
+    IIdentityProviderCatalog catalog) =>
+{
+    var props = new AuthenticationProperties { RedirectUri = ResolveReturnUrl(returnUrl, spa.Value) };
+    // Caller-supplied provider aliases must pass through the catalog before being forwarded as
+    // kc_idp_hint; otherwise an attacker can probe Keycloak with arbitrary broker aliases.
+    if (!string.IsNullOrWhiteSpace(provider) && catalog.IsKnown(provider))
+    {
+        props.Items["kc_idp_hint"] = provider;
+    }
+    return Results.Challenge(props, [OpenIdConnectDefaults.AuthenticationScheme]);
+});
+
+app.MapGet(BffRoutes.Providers, (IIdentityProviderCatalog catalog) =>
+    Results.Json(new { providers = catalog.List() }));
 
 app.MapGet(BffRoutes.Logout, async (string? returnUrl, HttpContext ctx, Microsoft.Extensions.Options.IOptions<BffSpaOptions> spa) =>
 {

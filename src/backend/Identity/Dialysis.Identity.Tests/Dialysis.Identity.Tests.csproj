@@ -22,7 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Dialysis.Identity.Api/Dialysis.Identity.Api.csproj" />
+    <ProjectReference Include="../Dialysis.Identity.Api/Dialysis.Identity.Api.csproj">
+      <Aliases>IdentityApi</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="../Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj" />
     <ProjectReference Include="../Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
     <ProjectReference Include="../Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
     <ProjectReference Include="../Dialysis.Identity.Contracts/Dialysis.Identity.Contracts.csproj" />
