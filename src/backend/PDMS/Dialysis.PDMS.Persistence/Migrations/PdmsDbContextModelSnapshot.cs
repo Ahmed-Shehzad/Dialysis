@@ -756,6 +756,10 @@ namespace Dialysis.PDMS.Persistence.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
+                    b.Property<string>("LanguageCode")
+                        .HasMaxLength(35)
+                        .HasColumnType("character varying(35)");
+
                     b.Property<int?>("PublishedVersionNumber")
                         .HasColumnType("integer");
 
@@ -777,7 +781,7 @@ namespace Dialysis.PDMS.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Slug", "Kind")
+                    b.HasIndex("Slug", "Kind", "LanguageCode")
                         .IsUnique();
 
                     b.ToTable("ReportTemplates", "pdms_reporting");

@@ -23,7 +23,15 @@ public interface ISessionReportRepository
 /// <summary>Repository for the operator-authored <see cref="Domain.ReportTemplate"/>.</summary>
 public interface IReportTemplateRepository
 {
-    Task<Domain.ReportTemplate?> FindActiveAsync(Domain.ReportKind kind, CancellationToken cancellationToken);
+    /// <summary>
+    /// Resolves the active published template for <paramref name="kind"/> in the patient's
+    /// <paramref name="preferredLanguageCode"/> (BCP-47), falling back to the primary subtag and
+    /// then the language-neutral default per <see cref="Domain.ReportTemplateResolver"/>.
+    /// </summary>
+    Task<Domain.ReportTemplate?> FindActiveAsync(
+        Domain.ReportKind kind,
+        string? preferredLanguageCode,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>

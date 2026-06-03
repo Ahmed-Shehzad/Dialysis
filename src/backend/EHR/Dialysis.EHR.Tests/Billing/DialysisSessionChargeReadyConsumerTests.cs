@@ -104,6 +104,9 @@ public sealed class DialysisSessionChargeReadyConsumerTests
             => Task.FromResult<Charge?>(Added.FirstOrDefault(c => c.Id == id));
         public Task<IReadOnlyList<Charge>> ListUnbilledForPatientAsync(Guid patientId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<Charge>>(Added.Where(c => c.PatientId == patientId && c.Status == ChargeStatus.Captured).ToArray());
+        public Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<Charge>>(
+                Added.Where(c => status is null || c.Status == status.Value).Take(take).ToArray());
     }
 
     private sealed class StubIdempotency : IChargeIdempotencyStore

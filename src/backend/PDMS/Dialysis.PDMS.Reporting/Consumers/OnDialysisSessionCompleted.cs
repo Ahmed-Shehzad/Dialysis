@@ -42,7 +42,11 @@ public sealed class OnDialysisSessionCompleted(
 
         await TryGenerateAsync(ctx, ReportKind.DischargeLetter, async () =>
         {
-            var template = await templates.FindActiveAsync(ReportKind.DischargeLetter, ct).ConfigureAwait(false);
+            // Resolve the discharge-letter template in the patient's preferred language, falling
+            // back to the operator-flagged language-neutral default (ReportTemplateResolver).
+            var template = await templates
+                .FindActiveAsync(ReportKind.DischargeLetter, ctx.PreferredLanguageCode, ct)
+                .ConfigureAwait(false);
             return await dischargeLetter.GenerateAsync(ctx, template, ct).ConfigureAwait(false);
         }, ct).ConfigureAwait(false);
 

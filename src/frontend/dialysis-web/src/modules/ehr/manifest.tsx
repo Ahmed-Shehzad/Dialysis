@@ -5,6 +5,14 @@ import type { ModuleManifest } from "@/shell/types";
 const EhrChartPage = lazyPage(() => import("@/modules/ehr/chart/EhrChartPage"), "EhrChartPage");
 const EhrWorkflowsPage = lazyPage(() => import("@/pages/EhrWorkflowsPage"), "EhrWorkflowsPage");
 const PatientsPage = lazyPage(() => import("@/pages/PatientsPage"), "PatientsPage");
+const BillingChargesPage = lazyPage(
+  () => import("@/modules/ehr/admin/BillingChargesPage"),
+  "BillingChargesPage",
+);
+const FeeSchedulePage = lazyPage(
+  () => import("@/modules/ehr/admin/FeeSchedulePage"),
+  "FeeSchedulePage",
+);
 
 export const ehrModule: ModuleManifest = {
   slug: "ehr",
@@ -20,6 +28,8 @@ export const ehrModule: ModuleManifest = {
       <Route path="patients" element={<PatientsPage />} />
       <Route path="patients/:patientId" element={<EhrChartPage />} />
       <Route path="workflows/ehr" element={<EhrWorkflowsPage />} />
+      <Route path="admin/billing/dialysis-charges" element={<BillingChargesPage />} />
+      <Route path="admin/billing/fee-schedule" element={<FeeSchedulePage />} />
     </>
   ),
 };

@@ -24,4 +24,23 @@ public sealed class EfBillingExportJobRepository(HisDbContext db) : IBillingExpo
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async Task<IReadOnlyList<BillingExportJob>> ListAsync(
+        BillingExportJobStatus? status,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        var bounded = Math.Clamp(take, 1, 500);
+        var query = db.BillingExportJobs.AsNoTracking();
+        if (status is not null)
+        {
+            var spec = new BillingExportJobByStatusSpecification(status);
+            query = query.Where(spec.ToExpression());
+        }
+        return await query
+            .OrderByDescending(j => j.SubmittedAtUtc)
+            .Take(bounded)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

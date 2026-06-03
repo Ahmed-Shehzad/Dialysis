@@ -14,6 +14,19 @@ public sealed class ChargeRepository(EhrDbContext db) : IChargeRepository
             .Where(c => c.PatientId == patientId && c.Status == ChargeStatus.Captured)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default)
+    {
+        var bounded = Math.Clamp(take, 1, 500);
+        var query = db.Charges.AsQueryable();
+        if (status is not null)
+            query = query.Where(c => c.Status == status.Value);
+        return await query
+            .OrderByDescending(c => c.Id)
+            .Take(bounded)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public void Add(Charge charge) => db.Charges.Add(charge);
 }
 
@@ -24,6 +37,20 @@ public sealed class ClaimRepository(EhrDbContext db) : IClaimRepository
 
     public Task<Claim?> FindByExternalControlNumberAsync(string controlNumber, CancellationToken cancellationToken = default) =>
         db.Claims.FirstOrDefaultAsync(c => c.ExternalControlNumber == controlNumber, cancellationToken);
+
+    public async Task<IReadOnlyList<Claim>> ListAsync(ClaimStatus? status, int take, CancellationToken cancellationToken = default)
+    {
+        var bounded = Math.Clamp(take, 1, 500);
+        var query = db.Claims.AsQueryable();
+        if (status is not null)
+            query = query.Where(c => c.Status == status.Value);
+        return await query
+            .OrderByDescending(c => c.SubmittedAtUtc ?? DateTime.MinValue)
+            .ThenByDescending(c => c.Id)
+            .Take(bounded)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
 
     public void Add(Claim claim) => db.Claims.Add(claim);
 }

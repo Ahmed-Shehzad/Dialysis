@@ -12,4 +12,14 @@ public interface IBillingExportJobRepository
     Task<IReadOnlyList<BillingExportJob>> ListByStatusAsync(
         BillingExportJobStatus status,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Operator-dashboard list — optionally narrowed to one status, bounded by
+    /// <paramref name="take"/> (1–500). Sorted newest-first by submission time so the
+    /// most recent jobs land at the top of the queue board.
+    /// </summary>
+    Task<IReadOnlyList<BillingExportJob>> ListAsync(
+        BillingExportJobStatus? status,
+        int take,
+        CancellationToken cancellationToken = default);
 }

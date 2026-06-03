@@ -15,13 +15,19 @@ public interface IEpaUploadService
     Task<EpaUploadResult> UploadAsync(EpaUploadRequest request, CancellationToken cancellationToken);
 }
 
+/// <param name="Language">
+/// BCP-47 language tag of the document content (e.g. <c>de</c>, <c>en-US</c>). Carried into the
+/// ePA metadata so the patient's record stores the document's language. Optional — defaults to
+/// <c>de</c> when the caller doesn't resolve a language.
+/// </param>
 public sealed record EpaUploadRequest(
     Guid PatientId,
     string DocumentTitle,
     string MimeType,
     ReadOnlyMemory<byte> Content,
     string ActorSub,
-    string Purpose);
+    string Purpose,
+    string? Language = null);
 
 public sealed record EpaUploadResult(
     bool Succeeded,

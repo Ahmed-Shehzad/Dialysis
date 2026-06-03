@@ -9,6 +9,7 @@ using Dialysis.SmartConnect.Endpoints;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 using Dialysis.SmartConnect.Inbound;
+using Dialysis.SmartConnect.Pharmacy;
 using Dialysis.SmartConnect.Routing;
 using Dialysis.SmartConnect.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Validation;
@@ -146,6 +147,12 @@ public static class SmartConnectServiceCollectionExtensions
             services.AddSingleton<INcpdpToFhirMapper, NcpdpEligibilityToCoverageEligibilityRequestMapper>();
             services.AddSingleton<INcpdpToFhirMapper, NcpdpInfoReportingToMedicationDispenseMapper>();
             services.AddSingleton<NcpdpToFhirTransformStage>();
+            // Outbound pharmacy mappers — turn PDMS medication integration events (JSON) into
+            // HL7 v2.5 RAS^O17 (administration) / RGV^O15 (decline) messages for an external
+            // pharmacy system. Decoupled from PDMS: the stages deserialise event JSON, no
+            // module reference. Dispatch via TcpOutboundAdapter (MLLP).
+            services.AddSingleton<MedicationAdministeredToHl7RasTransformStage>();
+            services.AddSingleton<MedicationDeclinedToHl7RgvTransformStage>();
             services.AddSingleton<MessageBuilderTransformStage>();
             services.AddSingleton<MapperTransformStage>(sp => new MapperTransformStage(sp.GetRequiredService<JsonTransformStage>()));
             services.AddSingleton<IteratorRouteFilter>(sp => new IteratorRouteFilter(sp));
@@ -208,6 +215,8 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterTransformStage(sp.GetRequiredService<Hl7V2ToFhirTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<VerifyHl7TransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<VerifyFhirTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<MedicationAdministeredToHl7RasTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<MedicationDeclinedToHl7RgvTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());
