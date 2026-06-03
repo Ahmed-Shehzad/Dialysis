@@ -96,6 +96,21 @@ public sealed class DocumentReference
         Status = DocumentReferenceStatus.EnteredInError;
     }
 
+    /// <summary>
+    /// Combined retention / DSR-Art.-17 purge: marks the row entered-in-error AND replaces
+    /// the storage ref with a tombstone (<c>purged://&lt;reason&gt;</c>). The caller is responsible
+    /// for the physical blob delete via <c>IDocumentBlobStore.DeleteAsync</c>; this method
+    /// captures the audit trail so a regulator can verify the row was deliberately purged
+    /// rather than silently lost.
+    /// </summary>
+    public void MarkBlobPurged(string reason)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        Status = DocumentReferenceStatus.EnteredInError;
+        StorageRef = "purged://" + reason;
+        Size = 0;
+    }
+
     public void RecordSignature(DocumentReferenceSignature signature)
     {
         ArgumentNullException.ThrowIfNull(signature);

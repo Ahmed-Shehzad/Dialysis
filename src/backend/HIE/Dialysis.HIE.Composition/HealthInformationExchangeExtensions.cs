@@ -87,6 +87,17 @@ public static class HealthInformationExchangeExtensions
             // LTV upgrader is opt-in too — hosts toggle Documents:Signing:Ltv:AutoUpgrade.
             services.AddHostedService<Dialysis.BuildingBlocks.Documents.Signing.Hosted.LtvUpgraderHostedService>();
 
+            // Document retention + DSR Art. 17 erasure ----------------------------------
+            // The purger walks every operator-defined DocumentRetentionPolicy; the eraser
+            // contributes HIE-side documents to a DPO-approved Art. 17 erasure request.
+            services.Configure<Dialysis.HIE.Documents.Hosted.RetentionPurgerOptions>(
+                configuration.GetSection("Documents:Retention"));
+            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IRetentionPurgeJob,
+                Dialysis.HIE.Documents.Hosted.HieRetentionPurgeJob>();
+            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IPatientEraser,
+                Dialysis.HIE.Documents.Erasure.HieDocumentsPatientEraser>();
+            services.AddHostedService<Dialysis.HIE.Documents.Hosted.RetentionPurgerHostedService>();
+
             services.AddScoped<PatientMapper>();
             services.AddScoped<EncounterMapper>();
             services.AddScoped<ClinicalNoteMapper>();

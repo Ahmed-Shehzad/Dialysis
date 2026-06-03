@@ -49,4 +49,28 @@ public sealed class EfDocumentReferenceRepository(HieDbContext db) : IDocumentRe
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async Task<IReadOnlyList<DocumentReference>> ListExpiredAsync(
+        string kind,
+        DateTime createdBefore,
+        int take,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(kind);
+        return await db.DocumentReferences
+            .Where(d => d.Status == DocumentReferenceStatus.Current
+                && d.Kind == kind
+                && d.CreatedAtUtc < createdBefore)
+            .OrderBy(d => d.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<DocumentReference>> ListForPatientAsync(
+        Guid patientId, CancellationToken cancellationToken) =>
+        await db.DocumentReferences
+            .Where(d => d.Status == DocumentReferenceStatus.Current && d.PatientId == patientId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

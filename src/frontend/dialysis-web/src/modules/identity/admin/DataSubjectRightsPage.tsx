@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   exportPatientData,
   requestErasure,
   requestRestriction,
   type DataSubjectExport,
 } from "@/features/data-protection/api/dataProtectionApi";
+import {
+  approveErasureRequest,
+  fetchPendingErasureRequests,
+  rejectErasureRequest,
+  type ErasureRequestRow,
+} from "@/features/data-protection/api/erasureApi";
 
 /**
  * Operator-files-on-behalf-of-data-subject UI for GDPR Art. 15 (access), Art. 17
@@ -16,7 +22,7 @@ import {
  */
 export const DataSubjectRightsPage = () => {
   const [patientId, setPatientId] = useState("");
-  const [tab, setTab] = useState<"access" | "erasure" | "restriction">("access");
+  const [tab, setTab] = useState<"access" | "erasure" | "restriction" | "approvals">("access");
 
   return (
     <div className="space-y-4">
@@ -40,7 +46,7 @@ export const DataSubjectRightsPage = () => {
       </label>
 
       <div className="flex gap-1 border-b border-slate-800">
-        {(["access", "erasure", "restriction"] as const).map((t) => (
+        {(["access", "erasure", "restriction", "approvals"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -70,7 +76,131 @@ export const DataSubjectRightsPage = () => {
           submit={(id, by, reason) => requestRestriction(id, by, reason)}
         />
       )}
+      {tab === "approvals" && <ApprovalsTab />}
     </div>
+  );
+};
+
+const ApprovalsTab = () => {
+  const queryClient = useQueryClient();
+  const [decidedBy, setDecidedBy] = useState("");
+
+  const query = useQuery({
+    queryKey: ["data-protection", "erasure", "pending"],
+    queryFn: fetchPendingErasureRequests,
+  });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({
+      queryKey: ["data-protection", "erasure", "pending"],
+      exact: false,
+    });
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-slate-300">
+        Pending Art. 17 erasure requests. Approve runs every module's eraser in sequence (HIE
+        Documents purges every <code>Current</code> document for the patient).
+      </p>
+
+      <label className="block text-sm">
+        <span className="text-slate-400">Decision recorded as</span>
+        <input
+          type="text"
+          value={decidedBy}
+          onChange={(e) => setDecidedBy(e.target.value)}
+          placeholder="DPO name"
+          className="mt-1 w-96 rounded border border-slate-700 bg-slate-800/60 p-2 text-slate-100"
+        />
+      </label>
+
+      {query.isLoading && <div className="text-sm text-slate-400">Loading pending requests…</div>}
+      {query.isError && (
+        <div className="text-sm text-rose-300">Could not load pending requests.</div>
+      )}
+      {!query.isLoading && (query.data?.length ?? 0) === 0 && (
+        <div className="rounded border border-dashed border-slate-700 p-4 text-sm text-slate-400">
+          No erasure requests pending.
+        </div>
+      )}
+
+      <ul className="space-y-2">
+        {(query.data ?? []).map((row) => (
+          <ApprovalRow key={row.id} row={row} decidedBy={decidedBy} onDecision={invalidate} />
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const ApprovalRow = ({
+  row,
+  decidedBy,
+  onDecision,
+}: {
+  row: ErasureRequestRow;
+  decidedBy: string;
+  onDecision: () => void;
+}) => {
+  const [reason, setReason] = useState("");
+
+  const approve = useMutation({
+    mutationFn: () => approveErasureRequest(row.id, decidedBy.trim()),
+    onSuccess: onDecision,
+  });
+  const reject = useMutation({
+    mutationFn: () => rejectErasureRequest(row.id, decidedBy.trim(), reason.trim()),
+    onSuccess: onDecision,
+  });
+
+  const canDecide = decidedBy.trim().length > 0;
+
+  return (
+    <li className="rounded border border-slate-800 bg-slate-900/40 p-3 text-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="font-mono text-xs text-slate-400">{row.id}</span>
+          <div className="text-slate-200">
+            Patient <span className="font-mono text-xs">{row.patientId}</span>
+          </div>
+          <div className="text-xs text-slate-500">
+            Requested by {row.requestedBy} ·{" "}
+            {new Date(row.requestedAtUtc).toISOString().replace("T", " ").slice(0, 19)}
+          </div>
+          {row.reason && <div className="mt-1 text-xs italic text-slate-400">{row.reason}</div>}
+        </div>
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={() => approve.mutate()}
+            disabled={!canDecide || approve.isPending}
+            className="rounded bg-emerald-600 px-3 py-1.5 text-xs text-slate-50 hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {approve.isPending ? "Approving…" : "Approve & execute"}
+          </button>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Reject reason (legal hold, duplicate, …)"
+          className="flex-1 rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs text-slate-100"
+        />
+        <button
+          type="button"
+          onClick={() => reject.mutate()}
+          disabled={!canDecide || reason.trim().length === 0 || reject.isPending}
+          className="rounded border border-rose-700 px-3 py-1 text-xs text-rose-200 hover:border-rose-500 disabled:opacity-50"
+        >
+          {reject.isPending ? "Rejecting…" : "Reject"}
+        </button>
+      </div>
+      {(approve.isError || reject.isError) && (
+        <div className="mt-2 text-xs text-rose-300">Decision failed — retry shortly.</div>
+      )}
+    </li>
   );
 };
 

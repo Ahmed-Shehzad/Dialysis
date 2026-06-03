@@ -14,6 +14,7 @@
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Storage/Dialysis.BuildingBlocks.Documents.Storage.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Signing/Dialysis.BuildingBlocks.Documents.Signing.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../DomainDrivenDesign/Dialysis.Domain.Driven.Design.Core.Abstraction/Dialysis.Domain.Driven.Design.Core.Abstraction.csproj" />

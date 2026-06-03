@@ -18,6 +18,8 @@ public static class HiePermissions
     public const string DocumentsFill = "hie.documents.fill";
     public const string DocumentsSign = "hie.documents.sign";
     public const string DocumentsDelete = "hie.documents.delete";
+    public const string DocumentsRetentionView = "hie.documents.retention.view";
+    public const string DocumentsRetentionAdminister = "hie.documents.retention.administer";
 
     public static IReadOnlyList<string> All { get; } =
     [
@@ -31,6 +33,8 @@ public static class HiePermissions
         DocumentsFill,
         DocumentsSign,
         DocumentsDelete,
+        DocumentsRetentionView,
+        DocumentsRetentionAdminister,
     ];
 }
 

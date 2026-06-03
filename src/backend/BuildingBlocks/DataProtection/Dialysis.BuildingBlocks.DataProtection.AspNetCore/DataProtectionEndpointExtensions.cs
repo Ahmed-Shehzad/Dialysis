@@ -72,6 +72,53 @@ public static class DataProtectionEndpointExtensions
                     })
                 .WithName("DataSubjectRights_Restriction");
 
+            // --- Operator-facing erasure pipeline ---------------------------
+            // Once a subject files an erasure request, the operator (DPO) reviews each row
+            // and either approves it (which runs every registered IPatientEraser) or
+            // rejects it (legal-hold applies / duplicate / etc.). Both branches persist the
+            // audit row so a regulator can verify the decision end-to-end.
+
+            subjects.MapGet(
+                    "/erasure/requests",
+                    async (
+                        IDataSubjectRightsService service,
+                        CancellationToken ct,
+                        int take = 50) =>
+                    {
+                        var rows = await service.ListPendingErasureRequestsAsync(take, ct)
+                            .ConfigureAwait(false);
+                        return Results.Ok(rows);
+                    })
+                .WithName("DataSubjectRights_ListPendingErasureRequests");
+
+            subjects.MapPost(
+                    "/erasure/{requestId:guid}/approve",
+                    async (
+                        Guid requestId,
+                        ErasureDecisionBody body,
+                        IDataSubjectRightsService service,
+                        CancellationToken ct) =>
+                    {
+                        var executed = await service.ApproveErasureRequestAsync(
+                            requestId, body.DecidedBy, ct).ConfigureAwait(false);
+                        return Results.Ok(executed);
+                    })
+                .WithName("DataSubjectRights_ApproveErasure");
+
+            subjects.MapPost(
+                    "/erasure/{requestId:guid}/reject",
+                    async (
+                        Guid requestId,
+                        ErasureRejectionBody body,
+                        IDataSubjectRightsService service,
+                        CancellationToken ct) =>
+                    {
+                        var rejected = await service.RejectErasureRequestAsync(
+                            requestId, body.DecidedBy, body.Reason, ct).ConfigureAwait(false);
+                        return Results.Ok(rejected);
+                    })
+                .WithName("DataSubjectRights_RejectErasure");
+
             return endpoints;
         }
     }
@@ -87,4 +134,15 @@ public sealed class RestrictionRequestBody
 {
     public string RequestedBy { get; set; } = string.Empty;
     public string? Reason { get; set; }
+}
+
+public sealed class ErasureDecisionBody
+{
+    public string DecidedBy { get; set; } = string.Empty;
+}
+
+public sealed class ErasureRejectionBody
+{
+    public string DecidedBy { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
 }

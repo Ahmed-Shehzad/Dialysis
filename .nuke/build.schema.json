@@ -28,7 +28,10 @@
         "Compile",
         "Pack",
         "Publish",
+        "PublishAllCompose",
+        "PublishAllKubernetes",
         "PublishCompose",
+        "PublishKubernetes",
         "Restore",
         "Test"
       ]
@@ -111,6 +114,10 @@
             "Debug",
             "Release"
           ]
+        },
+        "Environment": {
+          "type": "string",
+          "description": "Deployment environment for PublishCompose — one of dev / staging / prod. Default: prod"
         },
         "NuGetApiKey": {
           "type": "string",

@@ -24,4 +24,23 @@ public interface IDocumentReferenceRepository
         DocumentReferenceSource? source,
         int take,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Retention-purge read — returns every <see cref="DocumentReferenceStatus.Current"/>
+    /// document of the given kind whose <c>CreatedAtUtc</c> is strictly before
+    /// <paramref name="createdBefore"/>. Bounded by <paramref name="take"/> so the purger
+    /// processes a manageable batch per tick.
+    /// </summary>
+    Task<IReadOnlyList<DocumentReference>> ListExpiredAsync(
+        string kind,
+        DateTime createdBefore,
+        int take,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// DSR Art. 17 read — returns every <see cref="DocumentReferenceStatus.Current"/>
+    /// document owned by the patient regardless of kind / source.
+    /// </summary>
+    Task<IReadOnlyList<DocumentReference>> ListForPatientAsync(
+        Guid patientId, CancellationToken cancellationToken);
 }
