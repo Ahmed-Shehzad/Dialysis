@@ -67,6 +67,7 @@ public sealed class GematikEpaUploadService(
                 mimeType = request.MimeType,
                 purpose = request.Purpose,
                 actorSub = request.ActorSub,
+                language = string.IsNullOrWhiteSpace(request.Language) ? "de" : request.Language,
             });
             using var metadataContent = new StringContent(metadata);
             metadataContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");

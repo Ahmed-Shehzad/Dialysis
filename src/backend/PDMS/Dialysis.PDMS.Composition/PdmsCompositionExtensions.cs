@@ -172,6 +172,9 @@ public static class PdmsCompositionExtensions
             services.AddSingleton<ShiftReportGenerator>();
             services.AddSingleton<BillingDocumentGenerator>();
             services.TryAddSingleton<IReportBlobStore, InMemoryReportBlobStore>();
+            // Language-aware template resolution over the shared PDMS repository (in-memory or
+            // EF, per the provider switch above). Scoped because the underlying repository is.
+            services.AddScoped<IReportTemplateRepository, PdmsReportTemplateRepository>();
 
             // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
             services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();

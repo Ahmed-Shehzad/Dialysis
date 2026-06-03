@@ -84,12 +84,13 @@ public sealed class ReportsController(
         if (!Enum.TryParse<ReportKind>(request.Kind, ignoreCase: true, out var kind))
             return BadRequest($"Unknown report kind '{request.Kind}'.");
 
-        var existing = await FindTemplateBySlugAsync(request.Slug, cancellationToken).ConfigureAwait(false);
+        var existing = await FindTemplateBySlugAsync(request.Slug, request.LanguageCode, cancellationToken).ConfigureAwait(false);
         var template = existing ?? new ReportTemplate(
             id: Guid.CreateVersion7(),
             slug: request.Slug,
             kind: kind,
-            title: request.Title);
+            title: request.Title,
+            languageCode: request.LanguageCode);
         template.AppendVersion(request.BodyMarkdown, request.AuthoredBySub, clock.GetUtcNow().UtcDateTime);
         if (existing is null) await templates.AddAsync(template, cancellationToken).ConfigureAwait(false);
         else templates.Update(template);
@@ -106,7 +107,7 @@ public sealed class ReportsController(
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var template = await FindTemplateBySlugAsync(slug, cancellationToken).ConfigureAwait(false);
+        var template = await FindTemplateBySlugAsync(slug, request.LanguageCode, cancellationToken).ConfigureAwait(false);
         if (template is null) return NotFound();
         try { template.Publish(request.VersionNumber); }
         catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
@@ -114,10 +115,16 @@ public sealed class ReportsController(
         return Ok(ReportTemplateDto.From(template));
     }
 
-    private async Task<ReportTemplate?> FindTemplateBySlugAsync(string slug, CancellationToken cancellationToken)
+    // Templates are keyed by (slug, languageCode): the language-neutral default carries a null
+    // language, locale-specific siblings carry their BCP-47 tag. Matching is case-insensitive.
+    private async Task<ReportTemplate?> FindTemplateBySlugAsync(
+        string slug, string? languageCode, CancellationToken cancellationToken)
     {
+        var normalized = string.IsNullOrWhiteSpace(languageCode) ? null : languageCode.Trim().ToLowerInvariant();
         var all = await templates.ListAsync(null, cancellationToken).ConfigureAwait(false);
-        return all.FirstOrDefault(t => string.Equals(t.Slug, slug, StringComparison.OrdinalIgnoreCase));
+        return all.FirstOrDefault(t =>
+            string.Equals(t.Slug, slug, StringComparison.OrdinalIgnoreCase)
+            && t.LanguageCode == normalized);
     }
 }
 
@@ -126,9 +133,10 @@ public sealed record AppendTemplateVersionRequest(
     string Kind,
     string Title,
     string BodyMarkdown,
-    string AuthoredBySub);
+    string AuthoredBySub,
+    string? LanguageCode = null);
 
-public sealed record PublishTemplateRequest(int VersionNumber);
+public sealed record PublishTemplateRequest(int VersionNumber, string? LanguageCode = null);
 
 public sealed record SessionReportDto(
     Guid Id,
@@ -162,6 +170,7 @@ public sealed record ReportTemplateDto(
     string Slug,
     string Kind,
     string Title,
+    string? LanguageCode,
     int? PublishedVersionNumber,
     IReadOnlyList<ReportTemplateVersionDto> Versions)
 {
@@ -170,6 +179,7 @@ public sealed record ReportTemplateDto(
         Slug: t.Slug,
         Kind: t.Kind.ToString(),
         Title: t.Title,
+        LanguageCode: t.LanguageCode,
         PublishedVersionNumber: t.PublishedVersionNumber,
         Versions: t.Versions
             .OrderByDescending(v => v.VersionNumber)
