@@ -1,3 +1,5 @@
+using Dialysis.BuildingBlocks.DurableCommandBus;
+using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
@@ -10,7 +12,9 @@ using Dialysis.Module.Hosting;
 using Dialysis.PDMS.Api.Realtime;
 using Dialysis.PDMS.Composition;
 using Dialysis.PDMS.Contracts.Security;
+using Dialysis.PDMS.Persistence;
 using Dialysis.PDMS.TreatmentSessions;
+using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Realtime;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
@@ -108,6 +112,13 @@ builder.Services.AddFhirAudit();
 builder.Services.AddHipaaCompliance("pdms");
 builder.Services.AddHipaaAspNetCoreSafeguards();
 
+// Durable command bus. Optional — flips on per-command via the feature flag below; with the
+// flag off, controllers stay on the existing synchronous ICqrsGateway path.
+builder.Services.AddDurableCommandBus<PdmsDbContext>("pdms", b =>
+{
+    b.RegisterCommand<RecordReadingCommand, Guid>(requiredPermission: PdmsPermissions.ReadingRecord);
+});
+
 var app = builder.Build();
 
 app.UseModuleHost();
@@ -117,6 +128,7 @@ app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "pdms", version = "v1" }));
 app.MapHipaaSafeguardsEndpoint();
+app.MapDurableCommandStatusEndpoint();
 app.MapControllers();
 app.MapHub<VitalsHub>(VitalsHub.Path);
 

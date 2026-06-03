@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
     <ProjectReference Include="../../BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.TreatmentSessions/Dialysis.PDMS.TreatmentSessions.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Medications/Dialysis.PDMS.Medications.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Reporting/Dialysis.PDMS.Reporting.csproj" />

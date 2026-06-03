@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
     <ProjectReference Include="../../HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <ProjectReference Include="../../SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />

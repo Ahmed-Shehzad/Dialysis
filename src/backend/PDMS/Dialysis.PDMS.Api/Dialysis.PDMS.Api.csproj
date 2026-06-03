@@ -18,6 +18,8 @@
     <ProjectReference Include="../Dialysis.PDMS.Reporting/Dialysis.PDMS.Reporting.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
