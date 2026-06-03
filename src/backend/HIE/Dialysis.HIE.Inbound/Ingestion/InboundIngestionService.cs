@@ -23,11 +23,8 @@ public sealed class InboundIngestionService(
     TimeProvider timeProvider,
     ILogger<InboundIngestionService> logger)
 {
-    private static readonly FhirJsonSerializer _serializer = new();
-
-    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
-    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method), so we can't take it).
-    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
+    // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
+    private static string SerializeFhirJson(Resource resource) => resource.ToJson();
 
     public async Task<OperationOutcome> IngestAsync(string partnerId, Resource resource, CancellationToken cancellationToken = default)
     {

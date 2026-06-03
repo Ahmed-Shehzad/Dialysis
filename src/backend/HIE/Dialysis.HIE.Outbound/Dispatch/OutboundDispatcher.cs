@@ -22,7 +22,7 @@ public sealed class OutboundDispatcher(
     IOptions<OutboundOptions> options,
     ILogger<OutboundDispatcher> logger) : IOutboundDispatcher
 {
-    private static readonly FhirJsonParser _parser = new();
+    private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
     private readonly OutboundOptions _options = options.Value;
 
     public async Task<int> TickAsync(CancellationToken cancellationToken = default)
@@ -57,7 +57,7 @@ public sealed class OutboundDispatcher(
         Resource resource;
         try
         {
-            resource = await _parser.ParseAsync<Resource>(bundle.FhirJson);
+            resource = _parser.Deserialize<Resource>(bundle.FhirJson);
         }
         catch (Exception ex)
         {

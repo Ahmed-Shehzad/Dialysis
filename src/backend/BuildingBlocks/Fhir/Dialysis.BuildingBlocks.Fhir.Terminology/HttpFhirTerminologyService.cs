@@ -17,7 +17,7 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
 {
     public const string HttpClientName = "Dialysis.Fhir.Terminology";
 
-    private static readonly FhirJsonParser _parser = new();
+    private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
     private readonly HttpClient _http;
     private readonly ILogger<HttpFhirTerminologyService> _logger;
@@ -105,9 +105,9 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
 
         try
         {
-            return await _parser.ParseAsync<TResource>(body);
+            return _parser.Deserialize<TResource>(body);
         }
-        catch (FormatException ex)
+        catch (Exception ex) when (ex is FormatException or DeserializationFailedException or System.Text.Json.JsonException)
         {
             _logger.LogError(ex, "Failed to parse FHIR response from {Url}", relativeUrl);
             return null;

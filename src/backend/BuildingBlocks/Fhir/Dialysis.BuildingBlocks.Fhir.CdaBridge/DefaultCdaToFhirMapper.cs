@@ -19,7 +19,9 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
         var root = doc.Root ?? throw new FormatException("Empty CDA document.");
 
         var patient = ExtractPatient(root);
-        var composition = ExtractComposition(root, patient.Id);
+        // ExtractPatient always assigns Patient.Id (falls back to a fresh GUID); Firely 6 widened
+        // Resource.Id to string?, so assert the invariant here.
+        var composition = ExtractComposition(root, patient.Id!);
 
         var bundle = new Bundle { Type = Bundle.BundleType.Document };
         bundle.Entry.Add(new Bundle.EntryComponent { Resource = composition });

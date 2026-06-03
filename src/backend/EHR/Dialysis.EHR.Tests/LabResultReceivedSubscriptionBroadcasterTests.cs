@@ -49,7 +49,7 @@ public sealed class LabResultReceivedSubscriptionBroadcasterTests
         dispatcher.Dispatched.Count.ShouldBe(1);
         var observation = dispatcher.Dispatched[0].ShouldBeOfType<Observation>();
         observation.Code.Coding[0].Code.ShouldBe("2345-7");
-        observation.Subject.Reference.ShouldBe($"Patient/{patientId}");
+        observation.Subject!.Reference.ShouldBe($"Patient/{patientId}");
         observation.Value.ShouldBeOfType<Quantity>().Value.ShouldBe(210);
     }
 

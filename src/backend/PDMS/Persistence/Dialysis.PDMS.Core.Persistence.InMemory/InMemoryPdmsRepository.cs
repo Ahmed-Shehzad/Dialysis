@@ -11,7 +11,7 @@ public class InMemoryPdmsRepository<TAggregate, TId> : IPdmsRepository<TAggregat
     private readonly ConcurrentDictionary<TId, TAggregate> _store = new();
 
     public Task<TAggregate?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
-        => Task.FromResult(_store.TryGetValue(id, out var aggregate) ? aggregate : null);
+        => Task.FromResult(_store.GetValueOrDefault(id));
 
     public Task<IReadOnlyList<TAggregate>> ListAsync(
         ISpecification<TAggregate>? specification = null,

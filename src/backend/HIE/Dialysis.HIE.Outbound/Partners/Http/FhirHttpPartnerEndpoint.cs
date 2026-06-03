@@ -16,11 +16,8 @@ namespace Dialysis.HIE.Outbound.Partners.Http;
 /// </summary>
 public sealed class FhirHttpPartnerEndpoint : IPartnerEndpoint
 {
-    private static readonly FhirJsonSerializer _serializer = new();
-
-    // SerializeToString is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet
-    // (its *Async sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
-    private static string SerializeFhirJson(Resource resource) => _serializer.SerializeToString(resource);
+    // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
+    private static string SerializeFhirJson(Resource resource) => resource.ToJson();
 
     private readonly HttpClient _httpClient;
     private readonly PartnerHttpOptions _options;

@@ -69,7 +69,7 @@ public sealed class VerifyFhirTests
         Assert.Equal(input.Payload.ToArray(), output.Payload.ToArray());
     }
 
-    private static string Serialize(Resource resource) => new FhirJsonSerializer().SerializeToString(resource);
+    private static string Serialize(Resource resource) => resource.ToJson();
 
     private static IntegrationMessage NewMessage(string payload) => new()
     {

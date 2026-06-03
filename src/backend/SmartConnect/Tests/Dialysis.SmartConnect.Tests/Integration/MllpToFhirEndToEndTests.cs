@@ -48,10 +48,8 @@ public sealed class MllpToFhirEndToEndTests
 
         var captured = capture.Sent.Single();
         var json = Encoding.UTF8.GetString(captured.Payload.Span);
-#pragma warning disable VSTHRD103
-        var bundle = new FhirJsonParser().Parse<Bundle>(json);
-#pragma warning restore VSTHRD103
-        Assert.Contains(bundle.Entry, e => e.Resource.TypeName == expectedResourceType);
+        var bundle = new FhirJsonDeserializer(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable)).Deserialize<Bundle>(json);
+        Assert.Contains(bundle.Entry, e => e.Resource!.TypeName == expectedResourceType);
     }
 
     [Fact]

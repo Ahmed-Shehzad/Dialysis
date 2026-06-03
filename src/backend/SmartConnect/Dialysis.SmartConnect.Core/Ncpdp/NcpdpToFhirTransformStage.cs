@@ -16,8 +16,6 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
 {
     public const string KindValue = "ncpdp-to-fhir";
 
-    private static readonly FhirJsonSerializer _serializer = new();
-
     private readonly FrozenDictionary<string, INcpdpToFhirMapper> _byTransactionCode;
 
     public NcpdpToFhirTransformStage(IEnumerable<INcpdpToFhirMapper> mappers)
@@ -34,9 +32,8 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
         => Task.FromResult(Transform(message));
 
     // The transform itself is purely CPU-bound (NCPDP parse + FHIR serialize on in-memory data).
-    // Splitting the work out of the *Async-named contract method lets us call Firely's
-    // synchronous SerializeToString here without VSTHRD103 — its *Async sibling is [Obsolete]
-    // (CodeQL cs/call-to-obsolete-method), so the analyzer would otherwise force us to suppress.
+    // Splitting the work out of the *Async-named contract method keeps Firely's synchronous
+    // ToJson() call off the async path so VSTHRD103 stays quiet.
     private IntegrationMessage Transform(IntegrationMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -58,7 +55,7 @@ public sealed class NcpdpToFhirTransformStage : ITransformStage
             return message;
         }
 
-        var json = _serializer.SerializeToString(resource);
+        var json = resource.ToJson();
         return message.CloneWithPayload(Encoding.UTF8.GetBytes(json), PayloadFormat.Utf8Text);
     }
 }

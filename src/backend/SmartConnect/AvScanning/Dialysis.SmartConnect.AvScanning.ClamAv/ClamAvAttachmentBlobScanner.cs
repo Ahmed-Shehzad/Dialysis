@@ -18,8 +18,8 @@ namespace Dialysis.SmartConnect.AvScanning.ClamAv;
 /// </remarks>
 public sealed class ClamAvAttachmentBlobScanner : IAttachmentBlobScanner
 {
-    private static readonly byte[] InstreamCommand = "zINSTREAM\0"u8.ToArray();
-    private static readonly byte[] EndOfStream = [0, 0, 0, 0];
+    private static readonly byte[] _instreamCommand = "zINSTREAM\0"u8.ToArray();
+    private static readonly byte[] _endOfStream = [0, 0, 0, 0];
     private readonly ClamAvScannerOptions _options;
     private readonly ILogger<ClamAvAttachmentBlobScanner> _logger;
 
@@ -45,9 +45,9 @@ public sealed class ClamAvAttachmentBlobScanner : IAttachmentBlobScanner
             await client.ConnectAsync(_options.Host, _options.Port, cts.Token).ConfigureAwait(false);
             var stream = client.GetStream();
 
-            await stream.WriteAsync(InstreamCommand, cts.Token).ConfigureAwait(false);
+            await stream.WriteAsync(_instreamCommand, cts.Token).ConfigureAwait(false);
             await StreamChunksAsync(stream, data, cts.Token).ConfigureAwait(false);
-            await stream.WriteAsync(EndOfStream, cts.Token).ConfigureAwait(false);
+            await stream.WriteAsync(_endOfStream, cts.Token).ConfigureAwait(false);
             await stream.FlushAsync(cts.Token).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(stream, cts.Token).ConfigureAwait(false);

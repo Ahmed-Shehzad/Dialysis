@@ -53,8 +53,8 @@ public sealed class EhrPatientFhirFeeder(IPatientRepository patients) : INdjsonR
                     Given = string.IsNullOrEmpty(source.Name.MiddleName)
                         ? [source.Name.GivenName]
                         : [source.Name.GivenName, source.Name.MiddleName!],
-                    Prefix = string.IsNullOrEmpty(source.Name.PrefixName) ? null : [source.Name.PrefixName!],
-                    Suffix = string.IsNullOrEmpty(source.Name.SuffixName) ? null : [source.Name.SuffixName!],
+                    Prefix = string.IsNullOrEmpty(source.Name.PrefixName) ? [] : [source.Name.PrefixName!],
+                    Suffix = string.IsNullOrEmpty(source.Name.SuffixName) ? [] : [source.Name.SuffixName!],
                 },
             ],
             BirthDate = source.DateOfBirth.ToString("yyyy-MM-dd"),

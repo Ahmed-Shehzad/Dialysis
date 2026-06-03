@@ -16,7 +16,7 @@ public sealed class AzureBlobAttachmentBlobStoreTests : IAsyncLifetime
 {
     // Pinned image — Testcontainers' parameterless AzuriteBuilder() may move to [Obsolete] in
     // future releases, mirroring how MinioBuilder did. Explicit-image construction is stable.
-    private const string AzuriteImage = "mcr.microsoft.com/azure-storage/azurite:3.34.0";
+    private const string AzuriteImage = "mcr.microsoft.com/azure-storage/azurite:3.35.0";
     private const string Container = "smartconnect-attachments-test";
     private AzuriteContainer? _azurite;
 

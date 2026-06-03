@@ -10,12 +10,11 @@ namespace Dialysis.SmartConnect.Adapters;
 /// </summary>
 public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, IExternalEhrAuthProvider authProvider) : IExternalEhrAdapter
 {
-    private static readonly FhirJsonParser _parser = new();
+    private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
-    // Parse is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet (its *Async
-    // sibling is [Obsolete] (CodeQL cs/call-to-obsolete-method)).
+    // Deserialize is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
     private static TResource ParseFhirJson<TResource>(string json) where TResource : Resource =>
-        (TResource)_parser.Parse(json, typeof(TResource));
+        (TResource)_parser.DeserializeObject(typeof(TResource), json);
 
     public abstract ExternalEhrAdapterDescriptor Describe();
 

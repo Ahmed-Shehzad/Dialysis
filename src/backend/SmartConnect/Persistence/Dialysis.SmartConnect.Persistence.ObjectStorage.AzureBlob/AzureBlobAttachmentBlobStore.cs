@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Azure;
 using Azure.Identity;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Dialysis.SmartConnect.Attachments;
 using Microsoft.Extensions.Options;
 
@@ -82,7 +83,7 @@ public sealed class AzureBlobAttachmentBlobStore : IAttachmentBlobStore
     public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var item in _container.GetBlobsAsync(prefix: _prefix, cancellationToken: cancellationToken)
+        await foreach (var item in _container.GetBlobsAsync(traits: BlobTraits.None, states: BlobStates.None, prefix: _prefix, cancellationToken: cancellationToken)
             .ConfigureAwait(false))
         {
             var name = item.Name;
@@ -108,9 +109,9 @@ public sealed class AzureBlobAttachmentBlobStore : IAttachmentBlobStore
     {
         if (!string.IsNullOrWhiteSpace(opts.ConnectionString))
         {
-            return new BlobContainerClient(opts.ConnectionString, opts.ContainerName);
+            return new BlobContainerClient(opts.ConnectionString, opts.ContainerName, AzureBlobClientDefaults.CreateOptions());
         }
-        var serviceClient = new BlobServiceClient(opts.ServiceUri, new DefaultAzureCredential());
+        var serviceClient = new BlobServiceClient(opts.ServiceUri, new DefaultAzureCredential(), AzureBlobClientDefaults.CreateOptions());
         return serviceClient.GetBlobContainerClient(opts.ContainerName);
     }
 }

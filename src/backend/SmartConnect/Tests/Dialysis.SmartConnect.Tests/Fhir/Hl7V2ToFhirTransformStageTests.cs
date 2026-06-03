@@ -99,8 +99,8 @@ public sealed class Hl7V2ToFhirTransformStageTests
     private static Bundle DeserializeBundle(ReadOnlyMemory<byte> payload)
     {
         var json = Encoding.UTF8.GetString(payload.Span);
-        var parser = new FhirJsonParser();
-        return parser.Parse<Bundle>(json);
+        var parser = new FhirJsonDeserializer(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
+        return parser.Deserialize<Bundle>(json);
     }
 
     private sealed class MapperWrapper<TResource>(IFhirV2MessageMapper<TResource> inner) : IFhirV2MessageMapperWrapper
