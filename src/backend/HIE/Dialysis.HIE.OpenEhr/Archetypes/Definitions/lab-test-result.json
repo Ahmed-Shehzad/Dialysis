@@ -1,0 +1,18 @@
+{
+  "archetypeId": "openEHR-EHR-OBSERVATION.lab_test_result.v1",
+  "fhirResourceType": "Observation",
+  "description": "Lab test result observation — code, value, units, range, interpretation, time.",
+  "fields": [
+    { "key": "code.code",            "path": "Code.Coding[0].Code" },
+    { "key": "code.system",          "path": "Code.Coding[0].System" },
+    { "key": "code.display",         "path": "Code.Coding[0].Display" },
+    { "key": "value.magnitude",      "path": "Value as Quantity.Value" },
+    { "key": "value.unit",           "path": "Value as Quantity.Unit" },
+    { "key": "value.unit_system",    "path": "Value as Quantity.System" },
+    { "key": "value.text",           "path": "Value as FhirString.Value" },
+    { "key": "reference_range",      "path": "ReferenceRange[?].Text" },
+    { "key": "interpretation",       "path": "Interpretation[?].Coding[?].Code" },
+    { "key": "effective_time",       "path": "Effective as FhirDateTime.Value" },
+    { "key": "status",               "path": "Status" }
+  ]
+}

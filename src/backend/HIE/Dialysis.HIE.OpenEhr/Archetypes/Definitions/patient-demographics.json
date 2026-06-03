@@ -1,0 +1,16 @@
+{
+  "archetypeId": "openEHR-DEMOGRAPHIC-PERSON.person.v1",
+  "fhirResourceType": "Patient",
+  "description": "Patient demographics — identifier, name, birth, gender, links.",
+  "fields": [
+    { "key": "identifier.issuer",  "path": "Identifier[0].System" },
+    { "key": "identifier.value",   "path": "Identifier[0].Value" },
+    { "key": "identifier.type",    "path": "Identifier[0].Type.Coding[0].Code" },
+    { "key": "name.family",        "path": "Name[0].Family" },
+    { "key": "name.given",         "path": "Name[0].Given[0]" },
+    { "key": "birth.date",         "path": "BirthDate" },
+    { "key": "gender",             "path": "Gender" },
+    { "key": "links.types",        "path": "Link[?].Type" },
+    { "key": "links.references",   "path": "Link[?].Other.Reference" }
+  ]
+}
