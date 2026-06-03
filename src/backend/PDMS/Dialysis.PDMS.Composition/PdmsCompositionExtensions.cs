@@ -195,10 +195,11 @@ public static class PdmsCompositionExtensions
                     t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventSubscriptionBroadcaster>();
             });
 
-            // OnCall slice ports + clinician-notification dispatcher.
-            services.AddSingleton<IOnCallRotationLookup, PdmsOnCallRotationLookup>();
-            services.AddSingleton<IEscalationPolicyLookup, PdmsEscalationPolicyLookup>();
-            services.AddSingleton<IAlarmDispatchRepository, PdmsAlarmDispatchRepository>();
+            // OnCall slice ports + clinician-notification dispatcher. These adapters wrap the
+            // scoped IPdmsRepository<,> (DbContext-backed), so they must be scoped too.
+            services.AddScoped<IOnCallRotationLookup, PdmsOnCallRotationLookup>();
+            services.AddScoped<IEscalationPolicyLookup, PdmsEscalationPolicyLookup>();
+            services.AddScoped<IAlarmDispatchRepository, PdmsAlarmDispatchRepository>();
             services.AddClinicianNotification();
             configureTransponderTransport?.Invoke(services);
 
