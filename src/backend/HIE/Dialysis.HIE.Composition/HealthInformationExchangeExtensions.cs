@@ -13,12 +13,10 @@ using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.HIE.Outbound.Partners;
 using Dialysis.HIE.Outbound.Partners.Http;
 using Dialysis.BuildingBlocks.Fhir.Terminology;
-using Dialysis.HIE.Core.Abstraction.OpenEhr;
 using Dialysis.HIE.Core.Coding;
 using Dialysis.HIE.OpenEhr;
-using Dialysis.HIE.OpenEhr.Archetypes;
+using Dialysis.HIE.OpenEhr.Archetypes.Declarative;
 using Dialysis.HIE.OpenEhr.Consumers;
-using Hl7.Fhir.Model;
 using Dialysis.HIE.Persistence;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
@@ -113,9 +111,10 @@ public static class HealthInformationExchangeExtensions
             services.AddHostedService<OutboundDispatcherHostedService>();
 
             services.AddScoped<CompositionWriter>();
-            services.AddScoped<IArchetypeProjection<Patient>, PatientArchetypeProjection>();
-            services.AddScoped<IArchetypeProjection<Procedure>, ProcedureArchetypeProjection>();
-            services.AddScoped<IArchetypeProjection<Observation>, ObservationArchetypeProjection>();
+            // Archetype projections are loaded from the embedded mapping catalog at
+            // src/backend/HIE/Dialysis.HIE.OpenEhr/Archetypes/Definitions/*.json. Adding a
+            // new archetype is a one-file change — no recompile of the hard-coded projections.
+            services.AddArchetypeMappingCatalog();
             services.AddScoped<InboundIngestionService>();
 
             services.AddHieCqrsAuthorization();

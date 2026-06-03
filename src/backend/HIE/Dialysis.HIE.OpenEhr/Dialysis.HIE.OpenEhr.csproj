@@ -18,7 +18,16 @@
 
   <ItemGroup>
     <PackageReference Include="Hl7.Fhir.R4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Archetype mapping catalog — shipped as embedded resources so the catalog loader
+         can stream them at startup without any filesystem dependency on the host. Partner
+         clinics can override / extend by registering additional definitions through
+         AddArchetypeMappingDefinition(...) before the catalog auto-registers. -->
+    <EmbeddedResource Include="Archetypes/Definitions/*.json" />
   </ItemGroup>
 
 </Project>

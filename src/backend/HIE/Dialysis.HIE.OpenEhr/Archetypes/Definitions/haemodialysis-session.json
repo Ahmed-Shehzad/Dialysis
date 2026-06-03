@@ -1,0 +1,16 @@
+{
+  "archetypeId": "openEHR-EHR-COMPOSITION.haemodialysis_session.v1",
+  "fhirResourceType": "Procedure",
+  "description": "Haemodialysis session — code, status, period, outcome, notes.",
+  "fields": [
+    { "key": "procedure.code",    "path": "Code.Coding[0].Code" },
+    { "key": "procedure.system",  "path": "Code.Coding[0].System" },
+    { "key": "procedure.display", "path": "Code.Coding[0].Display" },
+    { "key": "status",            "path": "Status" },
+    { "key": "period.start",      "path": "Performed as Period.Start" },
+    { "key": "period.end",        "path": "Performed as Period.End" },
+    { "key": "outcome",           "path": "Outcome.Coding[0].Code" },
+    { "key": "status_reason",     "path": "StatusReason.Coding[0].Code" },
+    { "key": "notes",             "path": "Note[?].Text" }
+  ]
+}
