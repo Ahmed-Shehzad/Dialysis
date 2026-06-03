@@ -6,6 +6,7 @@ public interface IChargeRepository
 {
     Task<Charge?> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Charge>> ListUnbilledForPatientAsync(Guid patientId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default);
     void Add(Charge charge);
 }
 
@@ -13,6 +14,7 @@ public interface IClaimRepository
 {
     Task<Claim?> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Claim?> FindByExternalControlNumberAsync(string controlNumber, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Claim>> ListAsync(ClaimStatus? status, int take, CancellationToken cancellationToken = default);
     void Add(Claim claim);
 }
 
