@@ -27,9 +27,12 @@ const PAGES: Array<{ route: string; heading: RegExp }> = [
   // Existing admin surfaces these specs also guard.
   { route: "/admin/inventory", heading: /Medication inventory/i },
   { route: "/admin/reporting/templates", heading: /Reporting templates/i },
-  // PR — Document retention + DSR Art. 17 erasure pipeline.
+  // Documents admin board — list / preview / fill / sign surface (own deep specs in
+  // documents.spec.ts + documents-signing.spec.ts; here we just guard the route loads).
+  { route: "/hie/admin/documents", heading: /^Documents$/i },
+  // Document retention + DSR Art. 17 erasure pipeline.
   { route: "/hie/admin/documents/retention", heading: /Document retention/i },
-  // PR — TEFCA QHIN onboarding.
+  // TEFCA QHIN onboarding.
   { route: "/hie/admin/tefca/partners", heading: /TEFCA QHIN partners/i },
 ];
 
