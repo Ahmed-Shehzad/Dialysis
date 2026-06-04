@@ -31,8 +31,37 @@ namespace Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 /// }
 /// </code>
 /// </remarks>
-public sealed class MutualTlsAuthenticationProvider(IMutualTlsHttpClientFactory factory) : IHttpAuthenticationProvider
+public sealed class MutualTlsAuthenticationProvider : IHttpAuthenticationProvider
 {
+    private readonly IMutualTlsHttpClientFactory _factory;
+    /// <summary>
+    /// Slice A2: mutual-TLS provider (<c>Kind = "mutual-tls"</c>). Unlike the four header-based
+    /// providers from slice A, mTLS isn't a request-level mutation — the client certificate is
+    /// bound to the underlying <see cref="System.Net.Http.SocketsHttpHandler"/>. This provider
+    /// implements <see cref="ResolveClientAsync"/> instead, returning a pooled
+    /// <see cref="HttpClient"/> from <see cref="IMutualTlsHttpClientFactory"/> that already has
+    /// the cert attached. <see cref="ApplyAsync"/> is a no-op.
+    /// </summary>
+    /// <remarks>
+    /// Parameter shape (any one of <c>CertPath</c> / <c>PfxPath</c> required):
+    /// <code>
+    /// {
+    ///   "Kind": "mutual-tls",
+    ///   "CertPath": "/run/secrets/cerner-client.crt",      // PEM cert
+    ///   "KeyPath":  "/run/secrets/cerner-client.key",      // PEM private key (matches CertPath)
+    ///   "Password": "..."                                   // optional, when KeyPath is encrypted
+    /// }
+    /// </code>
+    /// Or, for PKCS#12 / PFX:
+    /// <code>
+    /// {
+    ///   "Kind": "mutual-tls",
+    ///   "PfxPath": "/run/secrets/epic-mtls.pfx",
+    ///   "Password": "..."
+    /// }
+    /// </code>
+    /// </remarks>
+    public MutualTlsAuthenticationProvider(IMutualTlsHttpClientFactory factory) => _factory = factory;
     public string Kind => "mutual-tls";
 
     public Task ApplyAsync(HttpRequestMessage request, string parametersJson, CancellationToken cancellationToken) =>
@@ -48,7 +77,7 @@ public sealed class MutualTlsAuthenticationProvider(IMutualTlsHttpClientFactory 
             ?? throw new InvalidOperationException("Mutual TLS authentication parameters must be a JSON object.");
 
         var cert = LoadCertificate(options);
-        return Task.FromResult<HttpClient?>(factory.GetClient(cert));
+        return Task.FromResult<HttpClient?>(_factory.GetClient(cert));
     }
 
     private static X509Certificate2 LoadCertificate(MutualTlsOptions options)

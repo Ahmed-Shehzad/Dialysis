@@ -7,8 +7,15 @@ namespace Dialysis.SmartConnect.Attachments;
 /// Invoked from <c>FlowRuntimeEngine</c> immediately before a route's <c>SendAsync</c> when that route
 /// has <see cref="OutboundRouteSlot.ReattachAttachments"/> = true.
 /// </summary>
-public sealed class AttachmentReattachmentService(IAttachmentStore store)
+public sealed class AttachmentReattachmentService
 {
+    private readonly IAttachmentStore _store;
+    /// <summary>
+    /// Inflates <c>${ATTACH:&lt;id&gt;}</c> tokens in an outbound payload back to the stored bytes.
+    /// Invoked from <c>FlowRuntimeEngine</c> immediately before a route's <c>SendAsync</c> when that route
+    /// has <see cref="OutboundRouteSlot.ReattachAttachments"/> = true.
+    /// </summary>
+    public AttachmentReattachmentService(IAttachmentStore store) => _store = store;
     public async Task<ReadOnlyMemory<byte>> InflateAsync(
         ReadOnlyMemory<byte> payload,
         Guid messageId,
@@ -28,7 +35,7 @@ public sealed class AttachmentReattachmentService(IAttachmentStore store)
         foreach (var (_, _, id) in tokens)
         {
             if (resolved.ContainsKey(id)) continue;
-            var att = await store.GetAsync(id, cancellationToken).ConfigureAwait(false);
+            var att = await _store.GetAsync(id, cancellationToken).ConfigureAwait(false);
             if (att is not null) resolved[id] = att;
         }
 

@@ -53,4 +53,22 @@ public enum LedgerClaim
 /// Carries the claim outcome plus the pre-existing entry when it's not a first claim. The
 /// consumer needs the previous result to ack a redelivery without re-running the handler.
 /// </summary>
-public sealed record LedgerClaimResult(LedgerClaim Outcome, CommandLedgerEntry? Existing);
+public sealed record LedgerClaimResult
+{
+    /// <summary>
+    /// Carries the claim outcome plus the pre-existing entry when it's not a first claim. The
+    /// consumer needs the previous result to ack a redelivery without re-running the handler.
+    /// </summary>
+    public LedgerClaimResult(LedgerClaim Outcome, CommandLedgerEntry? Existing)
+    {
+        this.Outcome = Outcome;
+        this.Existing = Existing;
+    }
+    public LedgerClaim Outcome { get; init; }
+    public CommandLedgerEntry? Existing { get; init; }
+    public void Deconstruct(out LedgerClaim Outcome, out CommandLedgerEntry? Existing)
+    {
+        Outcome = this.Outcome;
+        Existing = this.Existing;
+    }
+}

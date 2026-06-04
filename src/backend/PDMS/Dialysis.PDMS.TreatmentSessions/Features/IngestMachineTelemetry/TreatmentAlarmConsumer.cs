@@ -24,18 +24,39 @@ namespace Dialysis.PDMS.TreatmentSessions.Features.IngestMachineTelemetry;
 /// Same serial always resolves to the same machine id across processes and restarts, so
 /// subsequent alarms for the same machine collapse onto the existing aggregate.
 /// </remarks>
-public sealed class TreatmentAlarmConsumer(
-    ITreatmentAlarmRepository alarms,
-    IUnitOfWork unitOfWork,
-    ILogger<TreatmentAlarmConsumer> logger)
-    : IConsumer<DialysisMachineAlarmIntegrationEvent>
+public sealed class TreatmentAlarmConsumer : IConsumer<DialysisMachineAlarmIntegrationEvent>
 {
+    private readonly ITreatmentAlarmRepository _alarms;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<TreatmentAlarmConsumer> _logger;
+    /// <summary>
+    /// SmartConnect → PDMS boundary consumer. The translator
+    /// (<see cref="SmartConnectAlarmTranslator"/>, the Anticorruption Layer at Evans pp. 258–260)
+    /// upcasts the upstream wire event into a PDMS-local <see cref="IncomingAlarm"/>; this
+    /// consumer then resolves-or-raises the matching <see cref="TreatmentAlarm"/> aggregate and
+    /// applies the state transition.
+    /// </summary>
+    /// <remarks>
+    /// The aggregate identifies a machine by <see cref="Guid"/>, but the wire event carries a
+    /// serial string. Until a real Machine catalog aggregate exists we synthesise a deterministic
+    /// id from the serial via MD5 — this is not a security hash, just a stable serial → Guid map.
+    /// Same serial always resolves to the same machine id across processes and restarts, so
+    /// subsequent alarms for the same machine collapse onto the existing aggregate.
+    /// </remarks>
+    public TreatmentAlarmConsumer(ITreatmentAlarmRepository alarms,
+        IUnitOfWork unitOfWork,
+        ILogger<TreatmentAlarmConsumer> logger)
+    {
+        _alarms = alarms;
+        _unitOfWork = unitOfWork;
+        _logger = logger;
+    }
     public async Task HandleAsync(ConsumeContext<DialysisMachineAlarmIntegrationEvent> context)
     {
         var translated = SmartConnectAlarmTranslator.Translate(context.Message);
         var machineId = SynthesiseMachineId(translated.MachineSerial);
 
-        var existing = await alarms
+        var existing = await _alarms
             .FindLiveAsync(machineId, translated.AlarmCode, context.CancellationToken)
             .ConfigureAwait(false);
 
@@ -45,7 +66,7 @@ public sealed class TreatmentAlarmConsumer(
             // late state-change for an aggregate we never saw, so drop it with a log line.
             if (translated.State != TreatmentAlarmState.Present)
             {
-                logger.LogInformation(
+                _logger.LogInformation(
                     "[ACL] Dropping {State} for unknown alarm: machine {Serial} code {AlarmCode}.",
                     translated.State, translated.MachineSerial, translated.AlarmCode);
                 return;
@@ -59,7 +80,7 @@ public sealed class TreatmentAlarmConsumer(
                 alarmSource: translated.AlarmSource,
                 alarmPhase: translated.AlarmPhase,
                 observedAtUtc: translated.ObservedAtUtc);
-            alarms.Add(raised);
+            _alarms.Add(raised);
         }
         else
         {
@@ -79,7 +100,7 @@ public sealed class TreatmentAlarmConsumer(
             }
         }
 
-        await unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

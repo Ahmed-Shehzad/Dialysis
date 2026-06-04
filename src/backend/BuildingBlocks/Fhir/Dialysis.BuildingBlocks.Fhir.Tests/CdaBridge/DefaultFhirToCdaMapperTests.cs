@@ -87,10 +87,7 @@ public sealed class DefaultFhirToCdaMapperTests
     }
 
     [Fact]
-    public void Null_Bundle_Throws()
-    {
-        Should.Throw<ArgumentNullException>(() => _emitter.Map(null!));
-    }
+    public void Null_Bundle_Throws() => Should.Throw<ArgumentNullException>(() => _emitter.Map(null!));
 
     private static Bundle.EntryComponent Entry(Resource resource) => new() { Resource = resource };
 

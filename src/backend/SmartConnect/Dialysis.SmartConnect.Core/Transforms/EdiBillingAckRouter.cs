@@ -17,8 +17,23 @@ namespace Dialysis.SmartConnect.Transforms;
 /// The stage hands the payload through untouched (no mutation), so the downstream message
 /// store still has the unaltered EDI for the operator audit trail.
 /// </summary>
-public sealed class EdiBillingAckRouter(ITransponderBus bus) : ITransformStage
+public sealed class EdiBillingAckRouter : ITransformStage
 {
+    private readonly ITransponderBus _bus;
+    /// <summary>
+    /// Inbound transform stage that classifies an ANSI ASC X12N acknowledgement payload as
+    /// either a 999 (functional ack) or a 277CA (claim ack) and republishes it as an
+    /// <see cref="EdiAcknowledgementReceivedIntegrationEvent"/> for EHR.Billing to consume.
+    ///
+    /// Classification reads the ST01 transaction-set identifier in the second segment after
+    /// ISA/GS — 999 vs 277. We deliberately don't parse the body in SmartConnect; the parser
+    /// lives in EHR.Billing because the parsed shape feeds directly into the Claim aggregate's
+    /// state machine, and SmartConnect should stay free of EHR domain coupling.
+    ///
+    /// The stage hands the payload through untouched (no mutation), so the downstream message
+    /// store still has the unaltered EDI for the operator audit trail.
+    /// </summary>
+    public EdiBillingAckRouter(ITransponderBus bus) => _bus = bus;
     public string Kind => "edi.billing.ack-router";
 
     public async Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
@@ -40,7 +55,7 @@ public sealed class EdiBillingAckRouter(ITransponderBus bus) : ITransformStage
             PayloadBytes: bytes.ToArray(),
             ReceivedAtUtc: receivedAt,
             SourceTrace: trace);
-        await bus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+        await _bus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
         return message;
     }
 

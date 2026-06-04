@@ -38,10 +38,7 @@ public sealed class IteratorRouteFilter : IRouteFilter
     /// the registry singleton's factory registers this filter, so the registry isn't yet built at construction time.
     /// We resolve the registry lazily on each evaluation.
     /// </summary>
-    public IteratorRouteFilter(IServiceProvider services)
-    {
-        _services = services ?? throw new ArgumentNullException(nameof(services));
-    }
+    public IteratorRouteFilter(IServiceProvider services) => _services = services ?? throw new ArgumentNullException(nameof(services));
 
     public string Kind => KindValue;
 

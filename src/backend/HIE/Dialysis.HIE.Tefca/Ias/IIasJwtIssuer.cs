@@ -23,9 +23,37 @@ public interface IIasJwtIssuer
 /// platform is calling. Scope follows the IAS scope catalogue
 /// (<c>patient.read</c> for read-only, <c>patient.exchange</c> for cross-org push).
 /// </summary>
-public sealed record IasJwtRequest(
-    string Issuer,
-    string Audience,
-    string Subject,
-    string Scope,
-    TimeSpan Lifetime);
+public sealed record IasJwtRequest
+{
+    /// <summary>
+    /// Inputs to one IAS JWT mint. The audience is the partner QHIN's IAS endpoint host (or
+    /// its TEFCA-published Participant ID); the subject is the patient on whose behalf the
+    /// platform is calling. Scope follows the IAS scope catalogue
+    /// (<c>patient.read</c> for read-only, <c>patient.exchange</c> for cross-org push).
+    /// </summary>
+    public IasJwtRequest(string Issuer,
+        string Audience,
+        string Subject,
+        string Scope,
+        TimeSpan Lifetime)
+    {
+        this.Issuer = Issuer;
+        this.Audience = Audience;
+        this.Subject = Subject;
+        this.Scope = Scope;
+        this.Lifetime = Lifetime;
+    }
+    public string Issuer { get; init; }
+    public string Audience { get; init; }
+    public string Subject { get; init; }
+    public string Scope { get; init; }
+    public TimeSpan Lifetime { get; init; }
+    public void Deconstruct(out string Issuer, out string Audience, out string Subject, out string Scope, out TimeSpan Lifetime)
+    {
+        Issuer = this.Issuer;
+        Audience = this.Audience;
+        Subject = this.Subject;
+        Scope = this.Scope;
+        Lifetime = this.Lifetime;
+    }
+}

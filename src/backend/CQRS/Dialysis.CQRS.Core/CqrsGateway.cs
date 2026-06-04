@@ -4,19 +4,21 @@ using Dialysis.CQRS.Queries;
 
 namespace Dialysis.CQRS;
 
-internal sealed class CqrsGateway(IIntercessor intercessor) : ICqrsGateway
+internal sealed class CqrsGateway : ICqrsGateway
 {
+    private readonly IIntercessor _intercessor;
+    public CqrsGateway(IIntercessor intercessor) => _intercessor = intercessor;
     public Task<TResponse> SendQueryAsync<TQuery, TResponse>(TQuery query, CancellationToken cancellationToken = default)
         where TQuery : IQuery<TResponse>
     {
         ArgumentNullException.ThrowIfNull(query);
-        return intercessor.SendAsync<TQuery, TResponse>(query, cancellationToken);
+        return _intercessor.SendAsync<TQuery, TResponse>(query, cancellationToken);
     }
 
     public Task<TResponse> SendCommandAsync<TCommand, TResponse>(TCommand command, CancellationToken cancellationToken = default)
         where TCommand : ICommand<TResponse>
     {
         ArgumentNullException.ThrowIfNull(command);
-        return intercessor.SendAsync<TCommand, TResponse>(command, cancellationToken);
+        return _intercessor.SendAsync<TCommand, TResponse>(command, cancellationToken);
     }
 }

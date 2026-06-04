@@ -4,9 +4,10 @@ using Dialysis.HIS.Operations.Ports;
 
 namespace Dialysis.HIS.Operations.Features.ListBillingExportJobs;
 
-public sealed class ListBillingExportJobsQueryHandler(IBillingExportJobRepository jobs)
-    : IQueryHandler<ListBillingExportJobsQuery, IReadOnlyList<BillingExportJobRow>>
+public sealed class ListBillingExportJobsQueryHandler : IQueryHandler<ListBillingExportJobsQuery, IReadOnlyList<BillingExportJobRow>>
 {
+    private readonly IBillingExportJobRepository _jobs;
+    public ListBillingExportJobsQueryHandler(IBillingExportJobRepository jobs) => _jobs = jobs;
     public async Task<IReadOnlyList<BillingExportJobRow>> HandleAsync(
         ListBillingExportJobsQuery request, CancellationToken cancellationToken)
     {
@@ -14,8 +15,8 @@ public sealed class ListBillingExportJobsQueryHandler(IBillingExportJobRepositor
             ? null
             : BillingExportJobStatus.FromName(request.Status);
 
-        var rows = await jobs.ListAsync(status, request.Take, cancellationToken).ConfigureAwait(false);
-        return rows
+        var rows = await _jobs.ListAsync(status, request.Take, cancellationToken).ConfigureAwait(false);
+        return [.. rows
             .Select(j => new BillingExportJobRow(
                 j.Id,
                 j.PayerCode.Value,
@@ -24,7 +25,6 @@ public sealed class ListBillingExportJobsQueryHandler(IBillingExportJobRepositor
                 j.Period.End,
                 j.SubmittedAtUtc,
                 j.CompletedAtUtc,
-                j.Notes))
-            .ToArray();
+                j.Notes))];
     }
 }

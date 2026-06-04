@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventStore
+public sealed class EfAuditEventStore : IAuditEventStore
 {
+    private readonly SmartConnectDbContext _db;
+    public EfAuditEventStore(SmartConnectDbContext db) => _db = db;
     public async Task RecordAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default)
     {
-        db.AuditEvents.Add(new AuditEventEntity
+        _db.AuditEvents.Add(new AuditEventEntity
         {
             Id = auditEvent.Id,
             Timestamp = auditEvent.Timestamp,
@@ -18,7 +20,7 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
             Summary = auditEvent.Summary,
             AttributesJson = auditEvent.AttributesJson,
         });
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyList<AuditEvent>> QueryAsync(
@@ -31,7 +33,7 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
         int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var query = db.AuditEvents.AsQueryable();
+        var query = _db.AuditEvents.AsQueryable();
         if (category is { } cat)
             query = query.Where(e => e.Category == (int)cat);
         if (level is { } lvl)
@@ -65,7 +67,7 @@ public sealed class EfAuditEventStore(SmartConnectDbContext db) : IAuditEventSto
 
     public async Task<AuditEvent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var e = await db.AuditEvents.FindAsync([id], cancellationToken).ConfigureAwait(false);
+        var e = await _db.AuditEvents.FindAsync([id], cancellationToken).ConfigureAwait(false);
         if (e is null)
             return null;
         return new AuditEvent

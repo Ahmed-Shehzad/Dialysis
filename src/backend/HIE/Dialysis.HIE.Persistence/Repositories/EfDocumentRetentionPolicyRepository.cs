@@ -4,25 +4,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIE.Persistence.Repositories;
 
-public sealed class EfDocumentRetentionPolicyRepository(HieDbContext db) : IDocumentRetentionPolicyRepository
+public sealed class EfDocumentRetentionPolicyRepository : IDocumentRetentionPolicyRepository
 {
+    private readonly HieDbContext _db;
+    public EfDocumentRetentionPolicyRepository(HieDbContext db) => _db = db;
     public void Add(DocumentRetentionPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        db.DocumentRetentionPolicies.Add(policy);
+        _db.DocumentRetentionPolicies.Add(policy);
     }
 
     public void Remove(DocumentRetentionPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        db.DocumentRetentionPolicies.Remove(policy);
+        _db.DocumentRetentionPolicies.Remove(policy);
     }
 
     public Task<DocumentRetentionPolicy?> FindByKindAsync(string kind, CancellationToken cancellationToken) =>
-        db.DocumentRetentionPolicies.FirstOrDefaultAsync(p => p.Kind == kind, cancellationToken);
+        _db.DocumentRetentionPolicies.FirstOrDefaultAsync(p => p.Kind == kind, cancellationToken);
 
     public async Task<IReadOnlyList<DocumentRetentionPolicy>> ListAsync(CancellationToken cancellationToken) =>
-        await db.DocumentRetentionPolicies
+        await _db.DocumentRetentionPolicies
             .AsNoTracking()
             .OrderBy(p => p.Kind)
             .ToListAsync(cancellationToken)

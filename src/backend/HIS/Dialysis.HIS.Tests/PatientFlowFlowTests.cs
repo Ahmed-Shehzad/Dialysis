@@ -8,12 +8,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class PatientFlowFlowTests(HisApiWebApplicationFactory factory)
+public sealed class PatientFlowFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public PatientFlowFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Admitpatient_Persists_Admission_With_Ward_And_No_Discharge_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 

@@ -13,8 +13,20 @@ namespace Dialysis.PDMS.Reporting.Generators;
 /// peritoneal dialysis 90945 / 90947. The generator picks the code based on the modality
 /// and the per-session evaluation count; the EHR billing module owns the eventual claim.
 /// </summary>
-public sealed class BillingDocumentGenerator(IPdfDocumentRenderer pdf)
+public sealed class BillingDocumentGenerator
 {
+    private readonly IPdfDocumentRenderer _pdf;
+    /// <summary>
+    /// Renders the human-readable billing summary that pairs with the
+    /// <see cref="DialysisSessionChargeReadyIntegrationEvent"/> emitted to EHR.Billing. The PDF is
+    /// what the operator stores in the patient chart; the integration event is what drives
+    /// the EDI 837 generation downstream (PR 4).
+    ///
+    /// CPT mapping: in-centre haemodialysis 90935 (single eval) / 90937 (multi eval),
+    /// peritoneal dialysis 90945 / 90947. The generator picks the code based on the modality
+    /// and the per-session evaluation count; the EHR billing module owns the eventual claim.
+    /// </summary>
+    public BillingDocumentGenerator(IPdfDocumentRenderer pdf) => _pdf = pdf;
     public async Task<(byte[] Pdf, DialysisSessionChargeReadyIntegrationEvent ChargeEvent)> GenerateAsync(
         SessionReportContext context,
         int evaluationCount,
@@ -51,7 +63,7 @@ public sealed class BillingDocumentGenerator(IPdfDocumentRenderer pdf)
             {
                 ["cpt"] = cptCode,
             });
-        var bytes = await pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
+        var bytes = await _pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
         var chargeEvent = new DialysisSessionChargeReadyIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,

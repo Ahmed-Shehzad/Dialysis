@@ -3,9 +3,10 @@ using Dialysis.EHR.Registration.Ports;
 
 namespace Dialysis.EHR.Registration.Features.SearchPatients;
 
-public sealed class SearchPatientsQueryHandler(IPatientRepository patients)
-    : IQueryHandler<SearchPatientsQuery, PatientSearchResult>
+public sealed class SearchPatientsQueryHandler : IQueryHandler<SearchPatientsQuery, PatientSearchResult>
 {
+    private readonly IPatientRepository _patients;
+    public SearchPatientsQueryHandler(IPatientRepository patients) => _patients = patients;
     public async Task<PatientSearchResult> HandleAsync(
         SearchPatientsQuery request,
         CancellationToken cancellationToken)
@@ -13,7 +14,7 @@ public sealed class SearchPatientsQueryHandler(IPatientRepository patients)
         var skip = Math.Max(0, request.Skip);
         var take = Math.Clamp(request.Take, 1, 200);
 
-        var page = await patients
+        var page = await _patients
             .SearchAsync(
                 new PatientSearchCriteria(
                     request.Query,

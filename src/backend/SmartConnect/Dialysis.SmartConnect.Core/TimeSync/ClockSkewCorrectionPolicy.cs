@@ -8,14 +8,32 @@ namespace Dialysis.SmartConnect.TimeSync;
 /// external lab gateway stays <see cref="ClockSkewCorrectionMode.ReportOnly"/> because its
 /// timestamps are downstream-meaningful (e.g. specimen-draw time).
 /// </summary>
-public sealed record ClockSkewCorrectionPolicy(
-    ClockSkewCorrectionMode Mode,
-    TimeSpan CorrectAboveAbsSkew,
-    TimeSpan MaxAllowedAbsJump)
+public sealed record ClockSkewCorrectionPolicy
 {
+    /// <summary>
+    /// Per-source rule that <see cref="Hl7V2ClockSkewProbe.TryObserveAndCorrect"/> consults to
+    /// decide whether (and how aggressively) to rewrite <c>MSH-7</c>. Lives on the flow source
+    /// connector so operators can dial in a different posture per partner — e.g. a chair-side
+    /// PCD machine might run in <see cref="ClockSkewCorrectionMode.Normalize"/> while an
+    /// external lab gateway stays <see cref="ClockSkewCorrectionMode.ReportOnly"/> because its
+    /// timestamps are downstream-meaningful (e.g. specimen-draw time).
+    /// </summary>
+    public ClockSkewCorrectionPolicy(ClockSkewCorrectionMode Mode,
+        TimeSpan CorrectAboveAbsSkew,
+        TimeSpan MaxAllowedAbsJump)
+    {
+        this.Mode = Mode;
+        this.CorrectAboveAbsSkew = CorrectAboveAbsSkew;
+        this.MaxAllowedAbsJump = MaxAllowedAbsJump;
+    }
+
     /// <summary>The default the §2 probe has always used: observe only, never rewrite.</summary>
     public static ClockSkewCorrectionPolicy ReportOnly { get; } =
         new(ClockSkewCorrectionMode.ReportOnly, TimeSpan.Zero, TimeSpan.Zero);
+
+    public ClockSkewCorrectionMode Mode { get; init; }
+    public TimeSpan CorrectAboveAbsSkew { get; init; }
+    public TimeSpan MaxAllowedAbsJump { get; init; }
 
     /// <summary>
     /// Normalise drift between <paramref name="correctAbove"/> and <paramref name="maxAllowed"/>.
@@ -27,4 +45,10 @@ public sealed record ClockSkewCorrectionPolicy(
     /// </summary>
     public static ClockSkewCorrectionPolicy Normalize(TimeSpan correctAbove, TimeSpan maxAllowed) =>
         new(ClockSkewCorrectionMode.Normalize, correctAbove, maxAllowed);
+    public void Deconstruct(out ClockSkewCorrectionMode Mode, out TimeSpan CorrectAboveAbsSkew, out TimeSpan MaxAllowedAbsJump)
+    {
+        Mode = this.Mode;
+        CorrectAboveAbsSkew = this.CorrectAboveAbsSkew;
+        MaxAllowedAbsJump = this.MaxAllowedAbsJump;
+    }
 }

@@ -6,13 +6,22 @@ using Dialysis.EHR.Integration.Ports;
 
 namespace Dialysis.EHR.Integration.Consumers;
 
-public sealed class LabOrderPlacedConsumer(
-    ILabTransmissionRepository transmissions,
-    ILabGateway gateway,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : IConsumer<LabOrderPlacedIntegrationEvent>
+public sealed class LabOrderPlacedConsumer : IConsumer<LabOrderPlacedIntegrationEvent>
 {
+    private readonly ILabTransmissionRepository _transmissions;
+    private readonly ILabGateway _gateway;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public LabOrderPlacedConsumer(ILabTransmissionRepository transmissions,
+        ILabGateway gateway,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _transmissions = transmissions;
+        _gateway = gateway;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task HandleAsync(ConsumeContext<LabOrderPlacedIntegrationEvent> context)
     {
         var message = context.Message;
@@ -27,15 +36,15 @@ public sealed class LabOrderPlacedConsumer(
 
         try
         {
-            var controlNumber = await gateway.TransmitAsync(transmission, context.CancellationToken).ConfigureAwait(false);
-            transmission.RecordSent(controlNumber, timeProvider.GetUtcNow().UtcDateTime);
+            var controlNumber = await _gateway.TransmitAsync(transmission, context.CancellationToken).ConfigureAwait(false);
+            transmission.RecordSent(controlNumber, _timeProvider.GetUtcNow().UtcDateTime);
         }
         catch (Exception ex)
         {
-            transmission.RecordFailure(ex.GetType().Name, timeProvider.GetUtcNow().UtcDateTime);
+            transmission.RecordFailure(ex.GetType().Name, _timeProvider.GetUtcNow().UtcDateTime);
         }
 
-        transmissions.Add(transmission);
-        await unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
+        _transmissions.Add(transmission);
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
     }
 }

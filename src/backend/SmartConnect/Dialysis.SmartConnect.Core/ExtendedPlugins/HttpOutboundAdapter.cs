@@ -6,14 +6,21 @@ using Dialysis.SmartConnect.Authentication;
 namespace Dialysis.SmartConnect.ExtendedPlugins;
 
 /// <summary>POST/PUT raw payload to a configured URL (JSON in <c>smartconnect.outbound.parameters</c> on the message).</summary>
-public sealed class HttpOutboundAdapter(
-    IHttpClientFactory httpClientFactory,
-    IHttpAuthenticationProviderRegistry authenticationRegistry) : IOutboundAdapter
+public sealed class HttpOutboundAdapter : IOutboundAdapter
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpAuthenticationProviderRegistry _authenticationRegistry;
+    /// <summary>POST/PUT raw payload to a configured URL (JSON in <c>smartconnect.outbound.parameters</c> on the message).</summary>
+    public HttpOutboundAdapter(IHttpClientFactory httpClientFactory,
+        IHttpAuthenticationProviderRegistry authenticationRegistry)
+    {
+        _httpClientFactory = httpClientFactory;
+        _authenticationRegistry = authenticationRegistry;
+    }
     public const string ParametersMetadataKey = "smartconnect.outbound.parameters";
 
     /// <summary>Standard transient set per Mirth UG retry guidance — request timeout, throttle, and 5xx server errors.</summary>
-    private static readonly int[] DefaultRetryStatusCodes =
+    private static readonly int[] _defaultRetryStatusCodes =
     [
         (int)HttpStatusCode.RequestTimeout,
         (int)HttpStatusCode.TooManyRequests,
@@ -103,13 +110,13 @@ public sealed class HttpOutboundAdapter(
             return new OutboundSendResult(false, "HTTP outbound parameters must include Url.");
         }
 
-        var client = httpClientFactory.CreateClient("smartconnect-outbound");
+        var client = _httpClientFactory.CreateClient("smartconnect-outbound");
         var connector = opts.ConnectorProperties ?? new HttpConnectorProperties();
         var maxRetries = Math.Max(0, connector.MaxRetries ?? 0);
         var retryDelayMs = Math.Max(0, connector.RetryDelayMs ?? 500);
         var retryStatusCodes = connector.RetryOnStatusCodes is { Length: > 0 }
             ? connector.RetryOnStatusCodes
-            : DefaultRetryStatusCodes;
+            : _defaultRetryStatusCodes;
 
         OutboundSendResult lastResult = default;
         for (var attempt = 0; attempt <= maxRetries; attempt++)
@@ -167,7 +174,7 @@ public sealed class HttpOutboundAdapter(
 
         if (opts.Authentication is { } auth)
         {
-            if (!authenticationRegistry.TryGet(auth.Kind, out var provider))
+            if (!_authenticationRegistry.TryGet(auth.Kind, out var provider))
             {
                 // Misconfiguration — no amount of retry will fix it; mark terminal.
                 return (new OutboundSendResult(false, $"Unknown HTTP authentication kind '{auth.Kind}'."), null, true);

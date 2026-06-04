@@ -107,10 +107,35 @@ public enum AlarmDispatchStatus
     Exhausted = 3,
 }
 
-public sealed record AlarmDispatchAttempt(
-    int ChainLinkIndex,
-    NotificationChannel Channel,
-    string Address,
-    bool Delivered,
-    string? FailureReason,
-    DateTime AttemptedAtUtc);
+public sealed record AlarmDispatchAttempt
+{
+    public AlarmDispatchAttempt(int ChainLinkIndex,
+        NotificationChannel Channel,
+        string Address,
+        bool Delivered,
+        string? FailureReason,
+        DateTime AttemptedAtUtc)
+    {
+        this.ChainLinkIndex = ChainLinkIndex;
+        this.Channel = Channel;
+        this.Address = Address;
+        this.Delivered = Delivered;
+        this.FailureReason = FailureReason;
+        this.AttemptedAtUtc = AttemptedAtUtc;
+    }
+    public int ChainLinkIndex { get; init; }
+    public NotificationChannel Channel { get; init; }
+    public string Address { get; init; }
+    public bool Delivered { get; init; }
+    public string? FailureReason { get; init; }
+    public DateTime AttemptedAtUtc { get; init; }
+    public void Deconstruct(out int ChainLinkIndex, out NotificationChannel Channel, out string Address, out bool Delivered, out string? FailureReason, out DateTime AttemptedAtUtc)
+    {
+        ChainLinkIndex = this.ChainLinkIndex;
+        Channel = this.Channel;
+        Address = this.Address;
+        Delivered = this.Delivered;
+        FailureReason = this.FailureReason;
+        AttemptedAtUtc = this.AttemptedAtUtc;
+    }
+}

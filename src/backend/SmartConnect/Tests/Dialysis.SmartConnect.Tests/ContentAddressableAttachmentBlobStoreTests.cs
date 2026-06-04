@@ -97,10 +97,7 @@ public sealed class ContentAddressableAttachmentBlobStoreTests
         public RecordingBlobStore Inner { get; }
         public ContentAddressableAttachmentBlobStore Store { get; }
 
-        public async ValueTask DisposeAsync()
-        {
-            await _services.DisposeAsync().ConfigureAwait(false);
-        }
+        public async ValueTask DisposeAsync() => await _services.DisposeAsync().ConfigureAwait(false);
     }
 
     private sealed class RecordingBlobStore : IAttachmentBlobStore
@@ -128,7 +125,8 @@ public sealed class ContentAddressableAttachmentBlobStoreTests
 
         public Task DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
-            if (_data.Remove(id)) DeleteCount++;
+            if (_data.Remove(id))
+                DeleteCount++;
             return Task.CompletedTask;
         }
 

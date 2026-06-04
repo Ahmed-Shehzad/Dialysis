@@ -180,5 +180,22 @@ public static class ResourcePath
     }
 
     private enum SegmentOpKind { Index, Wildcard, Cast }
-    private sealed record SegmentOp(SegmentOpKind Kind, int IndexValue, string? Argument);
+    private sealed record SegmentOp
+    {
+        public SegmentOp(SegmentOpKind Kind, int IndexValue, string? Argument)
+        {
+            this.Kind = Kind;
+            this.IndexValue = IndexValue;
+            this.Argument = Argument;
+        }
+        public SegmentOpKind Kind { get; init; }
+        public int IndexValue { get; init; }
+        public string? Argument { get; init; }
+        public void Deconstruct(out SegmentOpKind Kind, out int IndexValue, out string? Argument)
+        {
+            Kind = this.Kind;
+            IndexValue = this.IndexValue;
+            Argument = this.Argument;
+        }
+    }
 }

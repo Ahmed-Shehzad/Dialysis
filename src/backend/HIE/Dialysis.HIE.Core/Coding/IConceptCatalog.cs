@@ -18,4 +18,25 @@ public interface IConceptCatalog
 }
 
 /// <summary>One catalog entry: system URI, code value, fallback display.</summary>
-public sealed record ConceptCatalogEntry(string Name, string System, string Code, string FallbackDisplay);
+public sealed record ConceptCatalogEntry
+{
+    /// <summary>One catalog entry: system URI, code value, fallback display.</summary>
+    public ConceptCatalogEntry(string Name, string System, string Code, string FallbackDisplay)
+    {
+        this.Name = Name;
+        this.System = System;
+        this.Code = Code;
+        this.FallbackDisplay = FallbackDisplay;
+    }
+    public string Name { get; init; }
+    public string System { get; init; }
+    public string Code { get; init; }
+    public string FallbackDisplay { get; init; }
+    public void Deconstruct(out string Name, out string System, out string Code, out string FallbackDisplay)
+    {
+        Name = this.Name;
+        System = this.System;
+        Code = this.Code;
+        FallbackDisplay = this.FallbackDisplay;
+    }
+}

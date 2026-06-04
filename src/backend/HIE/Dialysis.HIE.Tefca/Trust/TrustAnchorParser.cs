@@ -31,9 +31,31 @@ public static class TrustAnchorParser
     }
 }
 
-public sealed record ParsedTrustAnchor(
-    string Subject,
-    string Thumbprint,
-    DateTime NotBefore,
-    DateTime NotAfter,
-    string CertificatePem);
+public sealed record ParsedTrustAnchor
+{
+    public ParsedTrustAnchor(string Subject,
+        string Thumbprint,
+        DateTime NotBefore,
+        DateTime NotAfter,
+        string CertificatePem)
+    {
+        this.Subject = Subject;
+        this.Thumbprint = Thumbprint;
+        this.NotBefore = NotBefore;
+        this.NotAfter = NotAfter;
+        this.CertificatePem = CertificatePem;
+    }
+    public string Subject { get; init; }
+    public string Thumbprint { get; init; }
+    public DateTime NotBefore { get; init; }
+    public DateTime NotAfter { get; init; }
+    public string CertificatePem { get; init; }
+    public void Deconstruct(out string Subject, out string Thumbprint, out DateTime NotBefore, out DateTime NotAfter, out string CertificatePem)
+    {
+        Subject = this.Subject;
+        Thumbprint = this.Thumbprint;
+        NotBefore = this.NotBefore;
+        NotAfter = this.NotAfter;
+        CertificatePem = this.CertificatePem;
+    }
+}

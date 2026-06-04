@@ -16,8 +16,11 @@ public interface IFhirProfileFactory
 }
 
 /// <inheritdoc cref="IFhirProfileFactory" />
-public sealed class FhirProfileFactory(IFhirConformanceRegistry registry) : IFhirProfileFactory
+public sealed class FhirProfileFactory : IFhirProfileFactory
 {
+    private readonly IFhirConformanceRegistry _registry;
+    /// <inheritdoc cref="IFhirProfileFactory" />
+    public FhirProfileFactory(IFhirConformanceRegistry registry) => _registry = registry;
     public async Task<StructureDefinition> BuildAsync(FhirProfileSpec spec, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(spec);
@@ -127,7 +130,7 @@ public sealed class FhirProfileFactory(IFhirConformanceRegistry registry) : IFhi
     private async Task GenerateSnapshotAsync(StructureDefinition sd)
     {
         var settings = SnapshotGeneratorSettings.CreateDefault();
-        var generator = new SnapshotGenerator(registry, settings);
+        var generator = new SnapshotGenerator(_registry, settings);
         await generator.UpdateAsync(sd).ConfigureAwait(false);
     }
 }

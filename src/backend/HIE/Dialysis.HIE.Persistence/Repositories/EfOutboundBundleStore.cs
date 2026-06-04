@@ -4,13 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIE.Persistence.Repositories;
 
-public sealed class EfOutboundBundleStore(HieDbContext db) : IOutboundBundleStore
+public sealed class EfOutboundBundleStore : IOutboundBundleStore
 {
+    private readonly HieDbContext _db;
+    public EfOutboundBundleStore(HieDbContext db) => _db = db;
     public Task AddAsync(OutboundBundle bundle, CancellationToken cancellationToken = default) =>
-        db.OutboundBundles.AddAsync(bundle, cancellationToken).AsTask();
+        _db.OutboundBundles.AddAsync(bundle, cancellationToken).AsTask();
 
     public async Task<IReadOnlyList<OutboundBundle>> ClaimPendingAsync(int batchSize, DateTime asOfUtc, CancellationToken cancellationToken = default) =>
-        await db.OutboundBundles
+        await _db.OutboundBundles
             .Where(b => b.Status == OutboundBundleStatus.Pending && b.NextAttemptAtUtc <= asOfUtc)
             .OrderBy(b => b.NextAttemptAtUtc)
             .Take(batchSize)
@@ -19,7 +21,7 @@ public sealed class EfOutboundBundleStore(HieDbContext db) : IOutboundBundleStor
 
     public async Task<IReadOnlyList<OutboundBundle>> ListAsync(OutboundBundleStatus? statusFilter, int take, CancellationToken cancellationToken = default)
     {
-        var query = db.OutboundBundles.AsNoTracking().AsQueryable();
+        var query = _db.OutboundBundles.AsNoTracking().AsQueryable();
         if (statusFilter.HasValue)
             query = query.Where(b => b.Status == statusFilter.Value);
         return await query
@@ -30,8 +32,8 @@ public sealed class EfOutboundBundleStore(HieDbContext db) : IOutboundBundleStor
     }
 
     public Task<OutboundBundle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.OutboundBundles.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+        _db.OutboundBundles.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        db.SaveChangesAsync(cancellationToken);
+        _db.SaveChangesAsync(cancellationToken);
 }

@@ -68,9 +68,11 @@ public sealed class EpicAuthProviderTests
         }
     }
 
-    private sealed class SingleClientHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class SingleClientHttpClientFactory : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+        private readonly HttpMessageHandler _handler;
+        public SingleClientHttpClientFactory(HttpMessageHandler handler) => _handler = handler;
+        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
     }
 
     private sealed class TempPemFile : IDisposable

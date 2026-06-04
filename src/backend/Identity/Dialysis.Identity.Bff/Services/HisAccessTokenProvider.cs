@@ -15,18 +15,30 @@ public interface IHisAccessTokenProvider
 }
 
 /// <summary>Exchanges the current user's Keycloak access token for an access token scoped to the HIS API audience.</summary>
-public sealed class HisAccessTokenProvider(
-    IHttpContextAccessor httpContextAccessor,
-    IHttpClientFactory httpClientFactory,
-    IOptions<KeycloakBffOptions> options,
-    IMemoryCache cache,
-    ILogger<HisAccessTokenProvider> logger) : IHisAccessTokenProvider
+public sealed class HisAccessTokenProvider : IHisAccessTokenProvider
 {
-    private readonly KeycloakBffOptions _options = options.Value;
+    private readonly KeycloakBffOptions _options;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IMemoryCache _cache;
+    private readonly ILogger<HisAccessTokenProvider> _logger;
+    /// <summary>Exchanges the current user's Keycloak access token for an access token scoped to the HIS API audience.</summary>
+    public HisAccessTokenProvider(IHttpContextAccessor httpContextAccessor,
+        IHttpClientFactory httpClientFactory,
+        IOptions<KeycloakBffOptions> options,
+        IMemoryCache cache,
+        ILogger<HisAccessTokenProvider> logger)
+    {
+        _httpContextAccessor = httpContextAccessor;
+        _httpClientFactory = httpClientFactory;
+        _cache = cache;
+        _logger = logger;
+        _options = options.Value;
+    }
 
     public async Task<string?> GetAccessTokenForHisAsync(CancellationToken cancellationToken)
     {
-        var http = httpContextAccessor.HttpContext;
+        var http = _httpContextAccessor.HttpContext;
         if (http is null || http.User.Identity?.IsAuthenticated != true)
             return null;
 
@@ -38,7 +50,7 @@ public sealed class HisAccessTokenProvider(
             ?? http.User.FindFirst("sub")?.Value
             ?? "anonymous";
         var cacheKey = $"his-exchanged:{sub}:{subjectToken.GetHashCode(StringComparison.Ordinal)}";
-        if (cache.TryGetValue(cacheKey, out string? hit) && !string.IsNullOrEmpty(hit))
+        if (_cache.TryGetValue(cacheKey, out string? hit) && !string.IsNullOrEmpty(hit))
             return hit;
 
         var tokenEndpoint = $"{_options.Authority.TrimEnd('/')}/protocol/openid-connect/token";
@@ -58,12 +70,12 @@ public sealed class HisAccessTokenProvider(
             Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
 
-        var client = httpClientFactory.CreateClient("keycloak");
+        var client = _httpClientFactory.CreateClient("keycloak");
         using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             var err = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            logger.LogWarning("Token exchange failed {Status}: {Body}", (int)response.StatusCode, err);
+            _logger.LogWarning("Token exchange failed {Status}: {Body}", (int)response.StatusCode, err);
             return null;
         }
 
@@ -80,7 +92,7 @@ public sealed class HisAccessTokenProvider(
         if (doc.RootElement.TryGetProperty("expires_in", out var expEl) && expEl.TryGetInt32(out var sec) && sec > 60)
             ttl = TimeSpan.FromSeconds(Math.Min(sec - 30, 600));
 
-        cache.Set(cacheKey, exchanged, ttl);
+        _cache.Set(cacheKey, exchanged, ttl);
         return exchanged;
     }
 }

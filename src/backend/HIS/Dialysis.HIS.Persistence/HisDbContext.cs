@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Hipaa.Encryption;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.DataServices.Domain;
@@ -28,16 +29,22 @@ namespace Dialysis.HIS.Persistence;
 /// telemetry, data import) plus the RA reference-architecture sub-capabilities. Inherits
 /// <see cref="ModuleDbContextBase"/> for the per-module schema convention and audit-shadow plumbing.
 /// </summary>
-public sealed class HisDbContext(
-    DbContextOptions<HisDbContext> options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions,
-    Dialysis.BuildingBlocks.Hipaa.Encryption.IPhiProtector phiProtector)
-    : ModuleDbContextBase(options, persistenceOptions), IUnitOfWork
+public sealed class HisDbContext : ModuleDbContextBase, IUnitOfWork
 {
     private const string RaSchema = "his_ra";
 
-    private readonly Dialysis.BuildingBlocks.Hipaa.Encryption.EncryptedStringValueConverter _phiConverter =
-        new(phiProtector);
+    private readonly Dialysis.BuildingBlocks.Hipaa.Encryption.EncryptedStringValueConverter _phiConverter;
+
+    /// <summary>
+    /// HIS facility-operations DbContext. Patient registration, scheduling, clinical notes, prescribing, and billing
+    /// are owned by the EHR module; this context covers only dialysis-center operations (staff, inventory, device
+    /// telemetry, data import) plus the RA reference-architecture sub-capabilities. Inherits
+    /// <see cref="ModuleDbContextBase"/> for the per-module schema convention and audit-shadow plumbing.
+    /// </summary>
+    public HisDbContext(DbContextOptions<HisDbContext> options,
+        IOptions<TransponderPersistenceOptions> persistenceOptions,
+        Dialysis.BuildingBlocks.Hipaa.Encryption.IPhiProtector phiProtector) : base(options, persistenceOptions) =>
+        _phiConverter = new EncryptedStringValueConverter(phiProtector);
 
     protected override string ModuleSchema => "his";
 

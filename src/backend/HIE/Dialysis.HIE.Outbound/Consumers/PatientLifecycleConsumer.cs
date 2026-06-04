@@ -8,38 +8,56 @@ using Hl7.Fhir.Model;
 
 namespace Dialysis.HIE.Outbound.Consumers;
 
-public sealed class PatientRegisteredConsumer(OutboundQueueWriter writer, PatientMapper mapper)
-    : IConsumer<PatientRegisteredIntegrationEvent>
+public sealed class PatientRegisteredConsumer : IConsumer<PatientRegisteredIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly PatientMapper _mapper;
+    public PatientRegisteredConsumer(OutboundQueueWriter writer, PatientMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<PatientRegisteredIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<PatientRegisteredIntegrationEvent, Patient>)mapper,
+            (IFhirResourceMapper<PatientRegisteredIntegrationEvent, Patient>)_mapper,
             ConsentScopes.Demographics,
             context.CancellationToken);
 }
 
-public sealed class PatientDemographicsUpdatedConsumer(OutboundQueueWriter writer, PatientMapper mapper)
-    : IConsumer<PatientDemographicsUpdatedIntegrationEvent>
+public sealed class PatientDemographicsUpdatedConsumer : IConsumer<PatientDemographicsUpdatedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly PatientMapper _mapper;
+    public PatientDemographicsUpdatedConsumer(OutboundQueueWriter writer, PatientMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<PatientDemographicsUpdatedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<PatientDemographicsUpdatedIntegrationEvent, Patient>)mapper,
+            (IFhirResourceMapper<PatientDemographicsUpdatedIntegrationEvent, Patient>)_mapper,
             ConsentScopes.Demographics,
             context.CancellationToken);
 }
 
-public sealed class PatientsMergedConsumer(OutboundQueueWriter writer, PatientMapper mapper)
-    : IConsumer<PatientsMergedIntegrationEvent>
+public sealed class PatientsMergedConsumer : IConsumer<PatientsMergedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly PatientMapper _mapper;
+    public PatientsMergedConsumer(OutboundQueueWriter writer, PatientMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<PatientsMergedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.SurvivingPatientId,
-            (IFhirResourceMapper<PatientsMergedIntegrationEvent, Patient>)mapper,
+            (IFhirResourceMapper<PatientsMergedIntegrationEvent, Patient>)_mapper,
             ConsentScopes.Demographics,
             context.CancellationToken);
 }

@@ -5,20 +5,29 @@ using Dialysis.PDMS.TreatmentSessions.Realtime;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 
-public sealed class RecordReadingCommandHandler(
-    IDialysisSessionRepository sessions,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider,
-    IVitalsBroadcaster broadcaster)
-    : ICommandHandler<RecordReadingCommand, Guid>
+public sealed class RecordReadingCommandHandler : ICommandHandler<RecordReadingCommand, Guid>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    private readonly IVitalsBroadcaster _broadcaster;
+    public RecordReadingCommandHandler(IDialysisSessionRepository sessions,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider,
+        IVitalsBroadcaster broadcaster)
+    {
+        _sessions = sessions;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+        _broadcaster = broadcaster;
+    }
     public async Task<Guid> HandleAsync(RecordReadingCommand request, CancellationToken cancellationToken)
     {
-        var session = await sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
+        var session = await _sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Session '{request.SessionId}' not found.");
 
         var reading = session.RecordReading(
-            timeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             request.SystolicBloodPressure,
             request.DiastolicBloodPressure,
             request.HeartRateBpm,
@@ -29,9 +38,9 @@ public sealed class RecordReadingCommandHandler(
             request.Notes,
             explicitReadingId: request.ReadingId == Guid.Empty ? null : request.ReadingId);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        await broadcaster.BroadcastAsync(
+        await _broadcaster.BroadcastAsync(
             new VitalsReadingSnapshot(
                 reading.Id,
                 reading.SessionId,

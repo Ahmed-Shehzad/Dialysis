@@ -339,7 +339,7 @@ public sealed class FileReaderSourceConnector : ISourceConnector
         var text = System.Text.Encoding.UTF8.GetString(bytes);
         IEnumerable<string> records = parameters.SplitMode switch
         {
-            FileReaderSplitMode.Hl7v2 => SplitOnHl7v2(text),
+            FileReaderSplitMode.Hl7V2 => SplitOnHl7v2(text),
             FileReaderSplitMode.Line => text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries),
             FileReaderSplitMode.Regex => System.Text.RegularExpressions.Regex
                 .Split(text, parameters.SplitPattern ?? string.Empty)

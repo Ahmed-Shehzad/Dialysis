@@ -4,15 +4,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.PDMS.Persistence.Stores;
 
-public sealed class TreatmentAlarmRepository(PdmsDbContext db) : ITreatmentAlarmRepository
+public sealed class TreatmentAlarmRepository : ITreatmentAlarmRepository
 {
-    public void Add(TreatmentAlarm alarm) => db.TreatmentAlarms.Add(alarm);
+    private readonly PdmsDbContext _db;
+    public TreatmentAlarmRepository(PdmsDbContext db) => _db = db;
+    public void Add(TreatmentAlarm alarm) => _db.TreatmentAlarms.Add(alarm);
 
     public Task<TreatmentAlarm?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.TreatmentAlarms.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        _db.TreatmentAlarms.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public Task<TreatmentAlarm?> FindLiveAsync(Guid machineId, long alarmCode, CancellationToken cancellationToken = default) =>
-        db.TreatmentAlarms
+        _db.TreatmentAlarms
             .Where(a =>
                 a.MachineId == machineId &&
                 a.AlarmCode == alarmCode &&
@@ -21,7 +23,7 @@ public sealed class TreatmentAlarmRepository(PdmsDbContext db) : ITreatmentAlarm
             .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<TreatmentAlarm>> ListActiveAsync(CancellationToken cancellationToken = default) =>
-        await db.TreatmentAlarms
+        await _db.TreatmentAlarms
             .AsNoTracking()
             .Where(a => a.State != TreatmentAlarmState.Resolved)
             .OrderBy(a => a.FirstObservedUtc)

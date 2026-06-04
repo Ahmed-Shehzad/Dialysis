@@ -94,9 +94,10 @@ public sealed class IdentityProviderCatalogTests
         return new ConfiguredIdentityProviderCatalog(monitor);
     }
 
-    private sealed class StaticOptionsMonitor<T>(T value) : IOptionsMonitor<T>
+    private sealed class StaticOptionsMonitor<T> : IOptionsMonitor<T>
     {
-        public T CurrentValue { get; } = value;
+        public StaticOptionsMonitor(T value) => CurrentValue = value;
+        public T CurrentValue { get; }
         public T Get(string? name) => CurrentValue;
         public IDisposable? OnChange(Action<T, string?> listener) => null;
     }

@@ -21,20 +21,29 @@ public interface ITokenRefreshService
     Task ValidateAsync(CookieValidatePrincipalContext context);
 }
 
-public sealed class TokenRefreshService(
-    IHttpClientFactory httpClientFactory,
-    IOptions<KeycloakBffOptions> options,
-    TimeProvider clock,
-    ILogger<TokenRefreshService> logger) : ITokenRefreshService
+public sealed class TokenRefreshService : ITokenRefreshService
 {
-    private readonly KeycloakBffOptions _options = options.Value;
+    private readonly KeycloakBffOptions _options;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly TimeProvider _clock;
+    private readonly ILogger<TokenRefreshService> _logger;
+    public TokenRefreshService(IHttpClientFactory httpClientFactory,
+        IOptions<KeycloakBffOptions> options,
+        TimeProvider clock,
+        ILogger<TokenRefreshService> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _clock = clock;
+        _logger = logger;
+        _options = options.Value;
+    }
 
     /// <summary>
     /// Window before <c>expires_at</c> in which we proactively refresh. Long enough to mask the
     /// round-trip to Keycloak; short enough that a near-idle session doesn't refresh on every
     /// request.
     /// </summary>
-    private static readonly TimeSpan RefreshSkew = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan _refreshSkew = TimeSpan.FromSeconds(60);
 
     public async Task ValidateAsync(CookieValidatePrincipalContext context)
     {
@@ -53,8 +62,8 @@ public sealed class TokenRefreshService(
             return;
         }
 
-        var now = clock.GetUtcNow();
-        if (expiresAt - now > RefreshSkew)
+        var now = _clock.GetUtcNow();
+        if (expiresAt - now > _refreshSkew)
         {
             return;
         }
@@ -64,7 +73,7 @@ public sealed class TokenRefreshService(
         {
             // No refresh token (offline_access scope missing or already consumed) → force a
             // fresh login so the SPA doesn't sit with an unrecoverable session.
-            logger.LogInformation("BFF session has no refresh_token; rejecting principal to force re-login.");
+            _logger.LogInformation("BFF session has no refresh_token; rejecting principal to force re-login.");
             await RejectAsync(context).ConfigureAwait(false);
             return;
         }
@@ -73,7 +82,7 @@ public sealed class TokenRefreshService(
             .ConfigureAwait(false);
         if (refreshed is null)
         {
-            logger.LogInformation("Token refresh failed; rejecting principal so the SPA re-authenticates.");
+            _logger.LogInformation("Token refresh failed; rejecting principal so the SPA re-authenticates.");
             await RejectAsync(context).ConfigureAwait(false);
             return;
         }
@@ -98,12 +107,12 @@ public sealed class TokenRefreshService(
             Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
 
-        var client = httpClientFactory.CreateClient("keycloak");
+        var client = _httpClientFactory.CreateClient("keycloak");
         using var response = await client.SendAsync(request, ct).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            logger.LogWarning("Refresh-token grant failed {Status}: {Body}", (int)response.StatusCode, body);
+            _logger.LogWarning("Refresh-token grant failed {Status}: {Body}", (int)response.StatusCode, body);
             return null;
         }
 
@@ -150,5 +159,25 @@ public sealed class TokenRefreshService(
         }
     }
 
-    private sealed record RefreshedTokens(string AccessToken, string? RefreshToken, string? IdToken, int ExpiresInSeconds);
+    private sealed record RefreshedTokens
+    {
+        public RefreshedTokens(string AccessToken, string? RefreshToken, string? IdToken, int ExpiresInSeconds)
+        {
+            this.AccessToken = AccessToken;
+            this.RefreshToken = RefreshToken;
+            this.IdToken = IdToken;
+            this.ExpiresInSeconds = ExpiresInSeconds;
+        }
+        public string AccessToken { get; init; }
+        public string? RefreshToken { get; init; }
+        public string? IdToken { get; init; }
+        public int ExpiresInSeconds { get; init; }
+        public void Deconstruct(out string accessToken, out string? refreshToken, out string? idToken, out int expiresInSeconds)
+        {
+            accessToken = this.AccessToken;
+            refreshToken = this.RefreshToken;
+            idToken = this.IdToken;
+            expiresInSeconds = this.ExpiresInSeconds;
+        }
+    }
 }

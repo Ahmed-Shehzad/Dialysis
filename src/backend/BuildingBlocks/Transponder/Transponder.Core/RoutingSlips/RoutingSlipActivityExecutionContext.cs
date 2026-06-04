@@ -1,25 +1,33 @@
 namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
-internal sealed class RoutingSlipActivityExecutionContext(
-    string slipId,
-    ConsumeContext<TransponderRoutingSlipContinue>? consumeContext,
-    ITransponderBus bus,
-    TransponderRoutingSlipActivityRef currentActivity,
-    Dictionary<string, string> variables) : IRoutingSlipActivityContext
+internal sealed class RoutingSlipActivityExecutionContext : IRoutingSlipActivityContext
 {
-    public string SlipId { get; } = slipId;
+    private readonly Dictionary<string, string> _variables;
+    public RoutingSlipActivityExecutionContext(string slipId,
+        ConsumeContext<TransponderRoutingSlipContinue>? consumeContext,
+        ITransponderBus bus,
+        TransponderRoutingSlipActivityRef currentActivity,
+        Dictionary<string, string> variables)
+    {
+        _variables = variables;
+        SlipId = slipId;
+        ConsumeContext = consumeContext;
+        Bus = bus;
+        CurrentActivity = currentActivity;
+    }
+    public string SlipId { get; }
 
-    public ConsumeContext<TransponderRoutingSlipContinue>? ConsumeContext { get; } = consumeContext;
+    public ConsumeContext<TransponderRoutingSlipContinue>? ConsumeContext { get; }
 
-    public ITransponderBus Bus { get; } = bus;
+    public ITransponderBus Bus { get; }
 
-    public TransponderRoutingSlipActivityRef CurrentActivity { get; } = currentActivity;
+    public TransponderRoutingSlipActivityRef CurrentActivity { get; }
 
-    public IReadOnlyDictionary<string, string> Variables => variables;
+    public IReadOnlyDictionary<string, string> Variables => _variables;
 
     public void SetVariable(string key, string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        variables[key] = value ?? string.Empty;
+        _variables[key] = value ?? string.Empty;
     }
 }

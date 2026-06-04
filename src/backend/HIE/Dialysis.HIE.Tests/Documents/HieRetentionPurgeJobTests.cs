@@ -72,25 +72,29 @@ public sealed class HieRetentionPurgeJobTests
         return (job, uow);
     }
 
-    private sealed class StubPolicyRepository(IReadOnlyList<DocumentRetentionPolicy> policies) : IDocumentRetentionPolicyRepository
+    private sealed class StubPolicyRepository : IDocumentRetentionPolicyRepository
     {
+        private readonly IReadOnlyList<DocumentRetentionPolicy> _policies;
+        public StubPolicyRepository(IReadOnlyList<DocumentRetentionPolicy> policies) => _policies = policies;
         public void Add(DocumentRetentionPolicy policy) { }
         public void Remove(DocumentRetentionPolicy policy) { }
         public Task<DocumentRetentionPolicy?> FindByKindAsync(string kind, CancellationToken cancellationToken) =>
-            Task.FromResult(policies.FirstOrDefault(p => p.Kind == kind));
+            Task.FromResult(_policies.FirstOrDefault(p => p.Kind == kind));
         public Task<IReadOnlyList<DocumentRetentionPolicy>> ListAsync(CancellationToken cancellationToken) =>
-            Task.FromResult(policies);
+            Task.FromResult(_policies);
     }
 
-    private sealed class StubDocumentRepository(IReadOnlyList<DocumentReference> documents) : IDocumentReferenceRepository
+    private sealed class StubDocumentRepository : IDocumentReferenceRepository
     {
+        private readonly IReadOnlyList<DocumentReference> _documents;
+        public StubDocumentRepository(IReadOnlyList<DocumentReference> documents) => _documents = documents;
         public void Add(DocumentReference document) { }
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<DocumentReference?>(null);
         public Task<IReadOnlyList<DocumentReference>> ListAsync(Guid? patientId, string? kind, DocumentReferenceStatus? status, DocumentReferenceSource? source, int take, CancellationToken cancellationToken) =>
-            Task.FromResult(documents);
+            Task.FromResult(_documents);
         public Task<IReadOnlyList<DocumentReference>> ListExpiredAsync(string kind, DateTime createdBefore, int take, CancellationToken cancellationToken)
         {
-            IReadOnlyList<DocumentReference> filtered = [.. documents
+            IReadOnlyList<DocumentReference> filtered = [.. _documents
                 .Where(d => d.Status == DocumentReferenceStatus.Current
                     && d.Kind == kind
                     && d.CreatedAtUtc < createdBefore)
@@ -98,7 +102,7 @@ public sealed class HieRetentionPurgeJobTests
             return Task.FromResult(filtered);
         }
         public Task<IReadOnlyList<DocumentReference>> ListForPatientAsync(Guid patientId, CancellationToken cancellationToken) =>
-            Task.FromResult(documents);
+            Task.FromResult(_documents);
     }
 
     private sealed class StubUnitOfWork : IUnitOfWork
@@ -107,8 +111,10 @@ public sealed class HieRetentionPurgeJobTests
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) { Saves++; return Task.FromResult(0); }
     }
 
-    private sealed class FixedClock(DateTime now) : TimeProvider
+    private sealed class FixedClock : TimeProvider
     {
-        public override DateTimeOffset GetUtcNow() => new(now, TimeSpan.Zero);
+        private readonly DateTime _now;
+        public FixedClock(DateTime now) => _now = now;
+        public override DateTimeOffset GetUtcNow() => new(_now, TimeSpan.Zero);
     }
 }

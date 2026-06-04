@@ -51,7 +51,7 @@ var isKubernetesPublish = publishing && string.Equals(publisherName, "k8s", Stri
 // The dev F5 loop (no publisher) registers neither; Aspire's own dev orchestrator handles
 // run-time then. `k8sEnv` stays non-null only when the k8s publisher is active so the
 // Ingress block at the bottom of this file can attach a route to the gateway.
-Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.Kubernetes.KubernetesEnvironmentResource>? k8sEnv = null;
+Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.Kubernetes.KubernetesEnvironmentResource>? k8SEnv = null;
 if (isComposePublish)
 {
     builder.AddDockerComposeEnvironment("compose")
@@ -106,7 +106,7 @@ if (isComposePublish)
 // covers the browser-facing surface (Gateway → cluster external).
 if (isKubernetesPublish)
 {
-    k8sEnv = builder.AddKubernetesEnvironment("k8s")
+    k8SEnv = builder.AddKubernetesEnvironment("k8s")
         .WithDashboard(false)
         .WithHelm(helm =>
         {
@@ -550,9 +550,9 @@ if (isComposePublish)
 // NGINX is the default ingress class — most portable; operators on EKS swap for `alb`, on
 // AKS for `azure-application-gateway`, on bare-metal can use Traefik. Override via
 // `helm install --set ingress.className=...`.
-if (isKubernetesPublish && k8sEnv is not null)
+if (isKubernetesPublish && k8SEnv is not null)
 {
-    k8sEnv.AddIngress("dialysis")
+    k8SEnv.AddIngress("dialysis")
         .WithIngressClass("nginx")
         .WithHostname("dialysis." + deployEnv + ".local")
         .WithPath("/", gateway.GetEndpoint("http"), Aspire.Hosting.Kubernetes.IngressPathType.Prefix);

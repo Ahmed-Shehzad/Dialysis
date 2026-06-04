@@ -58,10 +58,12 @@ public sealed record ListAnalyticsExportJobsQuery
     public string RequiredPermission => HisPermissions.RaCapabilitiesRead;
 }
 
-public sealed record ListFullTextSearchEntriesQuery(string? SearchTextContains = null)
-    : IQuery<IReadOnlyList<RaFullTextSearchEntryRow>>, IPermissionedCommand
+public sealed record ListFullTextSearchEntriesQuery : IQuery<IReadOnlyList<RaFullTextSearchEntryRow>>, IPermissionedCommand
 {
+    public ListFullTextSearchEntriesQuery(string? SearchTextContains = null) => this.SearchTextContains = SearchTextContains;
     public string RequiredPermission => HisPermissions.RaCapabilitiesRead;
+    public string? SearchTextContains { get; init; }
+    public void Deconstruct(out string? searchTextContains) => searchTextContains = this.SearchTextContains;
 }
 
 public sealed record ListSecurityMechanismHardeningsQuery

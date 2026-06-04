@@ -17,13 +17,48 @@ public interface IRopaGenerator
     RopaDocument Generate();
 }
 
-public sealed record RopaDocument(
-    string ControllerName,
-    string ControllerContact,
-    DateTimeOffset GeneratedAtUtc,
-    IReadOnlyList<RopaModuleSection> Modules,
-    IReadOnlyList<RetentionWindowRegistration> Retention);
+public sealed record RopaDocument
+{
+    public RopaDocument(string ControllerName,
+        string ControllerContact,
+        DateTimeOffset GeneratedAtUtc,
+        IReadOnlyList<RopaModuleSection> Modules,
+        IReadOnlyList<RetentionWindowRegistration> Retention)
+    {
+        this.ControllerName = ControllerName;
+        this.ControllerContact = ControllerContact;
+        this.GeneratedAtUtc = GeneratedAtUtc;
+        this.Modules = Modules;
+        this.Retention = Retention;
+    }
+    public string ControllerName { get; init; }
+    public string ControllerContact { get; init; }
+    public DateTimeOffset GeneratedAtUtc { get; init; }
+    public IReadOnlyList<RopaModuleSection> Modules { get; init; }
+    public IReadOnlyList<RetentionWindowRegistration> Retention { get; init; }
+    public void Deconstruct(out string ControllerName, out string ControllerContact, out DateTimeOffset GeneratedAtUtc, out IReadOnlyList<RopaModuleSection> Modules, out IReadOnlyList<RetentionWindowRegistration> Retention)
+    {
+        ControllerName = this.ControllerName;
+        ControllerContact = this.ControllerContact;
+        GeneratedAtUtc = this.GeneratedAtUtc;
+        Modules = this.Modules;
+        Retention = this.Retention;
+    }
+}
 
-public sealed record RopaModuleSection(
-    string ModuleSlug,
-    IReadOnlyList<ProcessingActivity> Activities);
+public sealed record RopaModuleSection
+{
+    public RopaModuleSection(string ModuleSlug,
+        IReadOnlyList<ProcessingActivity> Activities)
+    {
+        this.ModuleSlug = ModuleSlug;
+        this.Activities = Activities;
+    }
+    public string ModuleSlug { get; init; }
+    public IReadOnlyList<ProcessingActivity> Activities { get; init; }
+    public void Deconstruct(out string ModuleSlug, out IReadOnlyList<ProcessingActivity> Activities)
+    {
+        ModuleSlug = this.ModuleSlug;
+        Activities = this.Activities;
+    }
+}

@@ -12,22 +12,38 @@ namespace Dialysis.SmartConnect.Api.Demo;
 /// (<see cref="DemoAdtFlowId"/> / <see cref="DemoOruFlowId"/>) keep their well-known ids because
 /// <see cref="Hl7V2SimulatorService"/> dispatches into them by id. Idempotent.
 /// </summary>
-public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<SmartConnectDemoSeeder> logger) : IHostedService
+public sealed class SmartConnectDemoSeeder : IHostedService
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<SmartConnectDemoSeeder> _logger;
+    /// <summary>
+    /// Development-only seeder for the SPA Integrations console. Creates a catalogue of grouped
+    /// integration flows that mirror the real hub use-cases (HL7 v2 inbound feeds, v2 → FHIR bridging,
+    /// FHIR/HIE outbound, clinical notifications, ETL, and legacy MLLP/file drops) so the operator
+    /// view is populated without external clients. The two simulator-driven flows
+    /// (<see cref="DemoAdtFlowId"/> / <see cref="DemoOruFlowId"/>) keep their well-known ids because
+    /// <see cref="Hl7V2SimulatorService"/> dispatches into them by id. Idempotent.
+    /// </summary>
+    public SmartConnectDemoSeeder(IServiceProvider services, ILogger<SmartConnectDemoSeeder> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
+
     // Simulator-driven flows — ids are a contract with Hl7V2SimulatorService, do not change.
     public static readonly Guid DemoAdtFlowId = new("9d2b1a00-0000-0000-0000-00000000ad01");
     public static readonly Guid DemoOruFlowId = new("9d2b1a00-0000-0000-0000-00000000ad02");
 
     // Channel groups (Mirth-style organisational rail).
-    private static readonly Guid GroupInbound = new("9d2b1a00-0000-0000-0000-0000000060a1");
-    private static readonly Guid GroupFhir = new("9d2b1a00-0000-0000-0000-0000000060a2");
-    private static readonly Guid GroupNotify = new("9d2b1a00-0000-0000-0000-0000000060a3");
-    private static readonly Guid GroupEtl = new("9d2b1a00-0000-0000-0000-0000000060a4");
-    private static readonly Guid GroupLegacy = new("9d2b1a00-0000-0000-0000-0000000060a5");
+    private static readonly Guid _groupInbound = new("9d2b1a00-0000-0000-0000-0000000060a1");
+    private static readonly Guid _groupFhir = new("9d2b1a00-0000-0000-0000-0000000060a2");
+    private static readonly Guid _groupNotify = new("9d2b1a00-0000-0000-0000-0000000060a3");
+    private static readonly Guid _groupEtl = new("9d2b1a00-0000-0000-0000-0000000060a4");
+    private static readonly Guid _groupLegacy = new("9d2b1a00-0000-0000-0000-0000000060a5");
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
+        using var scope = _services.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<IIntegrationFlowRepository>();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();
 
@@ -42,7 +58,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
             seeded++;
         }
 
-        logger.LogInformation(
+        _logger.LogInformation(
             "SmartConnect demo seeder: ensured 5 channel groups and {Seeded} new integration flows.",
             seeded);
     }
@@ -53,11 +69,11 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
     {
         (Guid Id, string Name, string Description)[] groups =
         [
-            (GroupInbound, "Inbound HL7 v2 Feeds", "MLLP/HTTP listeners accepting ADT, ORU, ORM, SIU, VXU and MDM trigger events from hospital systems."),
-            (GroupFhir, "FHIR Exchange", "HL7 v2 → FHIR R4 bridging and outbound FHIR Bundle delivery to the regional HIE / partner endpoints."),
-            (GroupNotify, "Clinical Notifications", "Threshold-driven alerting: critical labs, adverse events and discharge notifications to care teams."),
-            (GroupEtl, "ETL & Persistence", "Scheduled extracts and message archival into the analytics warehouse and cold storage."),
-            (GroupLegacy, "Legacy & File Drops", "Legacy MLLP partners and filesystem-based batch interfaces kept stopped until cut-over."),
+            (_groupInbound, "Inbound HL7 v2 Feeds", "MLLP/HTTP listeners accepting ADT, ORU, ORM, SIU, VXU and MDM trigger events from hospital systems."),
+            (_groupFhir, "FHIR Exchange", "HL7 v2 → FHIR R4 bridging and outbound FHIR Bundle delivery to the regional HIE / partner endpoints."),
+            (_groupNotify, "Clinical Notifications", "Threshold-driven alerting: critical labs, adverse events and discharge notifications to care teams."),
+            (_groupEtl, "ETL & Persistence", "Scheduled extracts and message archival into the analytics warehouse and cold storage."),
+            (_groupLegacy, "Legacy & File Drops", "Legacy MLLP partners and filesystem-based batch interfaces kept stopped until cut-over."),
         ];
 
         foreach (var (id, name, description) in groups)
@@ -76,7 +92,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             DemoAdtFlowId, "Demo ADT^A01 inbound (HL7 v2)",
             "Patient admit/transfer/discharge feed. Driven by the in-process HL7 v2 simulator.",
-            FlowRuntimeState.Started, GroupInbound, ["demo", "hl7v2", "adt"],
+            FlowRuntimeState.Started, _groupInbound, ["demo", "hl7v2", "adt"],
             Pipeline(
                 filters: [RuleContains("ADT^")],
                 outbound: [Route("pass-through")]));
@@ -84,7 +100,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             DemoOruFlowId, "Demo ORU^R01 inbound (HL7 v2)",
             "Unsolicited lab observation results. Driven by the in-process HL7 v2 simulator.",
-            FlowRuntimeState.Started, GroupInbound, ["demo", "hl7v2", "oru", "lab"],
+            FlowRuntimeState.Started, _groupInbound, ["demo", "hl7v2", "oru", "lab"],
             Pipeline(
                 filters: [RuleContains("ORU^")],
                 outbound: [Route("pass-through")]));
@@ -92,26 +108,26 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("ad03"), "SIU^S12 scheduling inbound (HL7 v2)",
             "Appointment booking notifications from the scheduling system, normalised to the flow ledger.",
-            FlowRuntimeState.Started, GroupInbound, ["hl7v2", "siu", "scheduling"],
+            FlowRuntimeState.Started, _groupInbound, ["hl7v2", "siu", "scheduling"],
             Pipeline(filters: [RuleContains("SIU^")], outbound: [Route("pass-through")]));
 
         yield return Flow(
             Id("ad04"), "ORM^O01 order inbound (HL7 v2)",
             "Lab and imaging order messages accepted from the order-entry system.",
-            FlowRuntimeState.Started, GroupInbound, ["hl7v2", "orm", "orders"],
+            FlowRuntimeState.Started, _groupInbound, ["hl7v2", "orm", "orders"],
             Pipeline(filters: [RuleContains("ORM^")], outbound: [Route("pass-through")]));
 
         yield return Flow(
             Id("ad05"), "VXU^V04 immunization inbound (HL7 v2)",
             "Immunization history submissions. Paused pending registry credential rotation.",
-            FlowRuntimeState.Paused, GroupInbound, ["hl7v2", "vxu", "immunization"],
+            FlowRuntimeState.Paused, _groupInbound, ["hl7v2", "vxu", "immunization"],
             Pipeline(filters: [RuleContains("VXU^")], outbound: [Route("pass-through")]));
 
         // ---- FHIR Exchange -------------------------------------------------------------------
         yield return Flow(
             Id("fb01"), "ADT → FHIR Patient bridge",
             "Maps admit events to a FHIR R4 Patient and POSTs it to the HIS FHIR facade.",
-            FlowRuntimeState.Started, GroupFhir, ["fhir", "bridge", "patient"],
+            FlowRuntimeState.Started, _groupFhir, ["fhir", "bridge", "patient"],
             Pipeline(
                 filters: [RuleContains("ADT^A01")],
                 transforms: [Js("// map ADT PID → FHIR Patient\nreturn payloadText;")],
@@ -123,7 +139,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("fb02"), "ORU → FHIR Observation bridge",
             "Maps lab OBX segments to FHIR Observations and POSTs them to the EHR FHIR facade.",
-            FlowRuntimeState.Started, GroupFhir, ["fhir", "bridge", "observation", "lab"],
+            FlowRuntimeState.Started, _groupFhir, ["fhir", "bridge", "observation", "lab"],
             Pipeline(
                 filters: [RuleContains("ORU^R01")],
                 transforms: [Js("// map OBX → FHIR Observation\nreturn payloadText;")],
@@ -135,7 +151,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("fb03"), "Outbound FHIR Bundle → Regional HIE",
             "Forwards a transaction Bundle to the regional Health Information Exchange partner endpoint.",
-            FlowRuntimeState.Started, GroupFhir, ["fhir", "outbound", "hie", "partner"],
+            FlowRuntimeState.Started, _groupFhir, ["fhir", "outbound", "hie", "partner"],
             Pipeline(
                 filters: [AllowAll()],
                 outbound:
@@ -146,7 +162,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("fb04"), "FHIR Subscription fan-out → care team",
             "Re-dispatches subscription-notification Bundles to the care-team WebSocket/SSE delivery flow.",
-            FlowRuntimeState.Started, GroupFhir, ["fhir", "subscriptions", "real-time"],
+            FlowRuntimeState.Started, _groupFhir, ["fhir", "subscriptions", "real-time"],
             Pipeline(
                 filters: [AllowAll()],
                 outbound: [Route("channel-writer", $$"""{"TargetFlowId":"{{Id("nt01")}}","PreserveCorrelationId":true}""")]));
@@ -155,7 +171,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("nt01"), "Critical lab result → on-call email",
             "Rule-builder threshold on potassium/creatinine OBX values; pages the on-call nephrologist by email.",
-            FlowRuntimeState.Started, GroupNotify, ["alerting", "lab", "email"],
+            FlowRuntimeState.Started, _groupNotify, ["alerting", "lab", "email"],
             Pipeline(
                 filters: [RuleContains("OBX|")],
                 outbound:
@@ -166,7 +182,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("nt02"), "Adverse event → care-team SMS gateway",
             "Intradialytic adverse events posted to the SMS gateway webhook for immediate care-team paging.",
-            FlowRuntimeState.Started, GroupNotify, ["alerting", "adverse-event", "sms"],
+            FlowRuntimeState.Started, _groupNotify, ["alerting", "adverse-event", "sms"],
             Pipeline(
                 filters: [AllowAll()],
                 outbound:
@@ -177,7 +193,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("nt03"), "ADT discharge → bed-management webhook",
             "Notifies the bed-management board on A03 discharge. Paused while the board API is upgraded.",
-            FlowRuntimeState.Paused, GroupNotify, ["adt", "discharge", "webhook"],
+            FlowRuntimeState.Paused, _groupNotify, ["adt", "discharge", "webhook"],
             Pipeline(
                 filters: [RuleContains("ADT^A03")],
                 outbound:
@@ -189,7 +205,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("et01"), "Nightly census → analytics warehouse",
             "Scheduled census extract written to the analytics Postgres warehouse. Paused outside the nightly window.",
-            FlowRuntimeState.Paused, GroupEtl, ["etl", "analytics", "database"],
+            FlowRuntimeState.Paused, _groupEtl, ["etl", "analytics", "database"],
             Pipeline(
                 filters: [AllowAll()],
                 outbound:
@@ -200,7 +216,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("et02"), "Message archive → cold storage",
             "Appends every accepted message to the daily NDJSON archive on the cold-storage volume.",
-            FlowRuntimeState.Started, GroupEtl, ["archive", "compliance", "file"],
+            FlowRuntimeState.Started, _groupEtl, ["archive", "compliance", "file"],
             Pipeline(
                 filters: [AllowAll()],
                 outbound:
@@ -212,7 +228,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("lg01"), "Legacy A19 query → MLLP partner",
             "Patient query (QRY^A19) forwarded over MLLP to the legacy registry. Stopped until cut-over.",
-            FlowRuntimeState.Stopped, GroupLegacy, ["legacy", "mllp", "tcp"],
+            FlowRuntimeState.Stopped, _groupLegacy, ["legacy", "mllp", "tcp"],
             Pipeline(
                 filters: [RuleContains("QRY^A19")],
                 outbound:
@@ -223,7 +239,7 @@ public sealed class SmartConnectDemoSeeder(IServiceProvider services, ILogger<Sm
         yield return Flow(
             Id("lg02"), "Lab CSV drop → folder ingest",
             "Watches a partner SFTP landing folder for batch lab CSVs. Stopped pending partner go-live.",
-            FlowRuntimeState.Stopped, GroupLegacy, ["legacy", "batch", "file"],
+            FlowRuntimeState.Stopped, _groupLegacy, ["legacy", "batch", "file"],
             Pipeline(
                 filters: [AllowAll()],
                 outbound: [Route("file", """{"Path":"/var/smartconnect/ingest/processed.log","Append":true}""")]));

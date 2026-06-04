@@ -5,17 +5,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfLocalUserRepository(HisDbContext db) : ILocalUserRepository
+public sealed class EfLocalUserRepository : ILocalUserRepository
 {
-    public void Add(LocalUser user) => db.LocalUsers.Add(user);
+    private readonly HisDbContext _db;
+    public EfLocalUserRepository(HisDbContext db) => _db = db;
+    public void Add(LocalUser user) => _db.LocalUsers.Add(user);
 
     public Task<LocalUser?> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.LocalUsers.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        => _db.LocalUsers.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
     public Task<bool> LoginNameExistsAsync(string loginName, CancellationToken cancellationToken = default)
     {
         var ln = new LoginName(loginName);
-        return db.LocalUsers.AsNoTracking()
+        return _db.LocalUsers.AsNoTracking()
                   .AnyAsync(u => u.LoginName == ln, cancellationToken);
     }
 }

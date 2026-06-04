@@ -10,14 +10,23 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.ServerSentEvents;
 /// <summary>
 /// HTTP client: POST JSON to publish, GET <c>text/event-stream</c> for subscribe (see <see cref="TransponderSseServerExtensions"/>).
 /// </summary>
-public sealed class ServerSentEventsTransponderTransport(
-    IOptions<TransponderSseClientOptions> options,
-    ILogger<ServerSentEventsTransponderTransport> logger) : ITransponderTransport
+public sealed class ServerSentEventsTransponderTransport : ITransponderTransport
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private HttpClient? _http;
+    private readonly IOptions<TransponderSseClientOptions> _options;
+    private readonly ILogger<ServerSentEventsTransponderTransport> _logger;
+    /// <summary>
+    /// HTTP client: POST JSON to publish, GET <c>text/event-stream</c> for subscribe (see <see cref="TransponderSseServerExtensions"/>).
+    /// </summary>
+    public ServerSentEventsTransponderTransport(IOptions<TransponderSseClientOptions> options,
+        ILogger<ServerSentEventsTransponderTransport> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -27,13 +36,13 @@ public sealed class ServerSentEventsTransponderTransport(
             if (_http is not null)
                 return;
 
-            var o = options.Value;
+            var o = _options.Value;
             if (string.IsNullOrWhiteSpace(o.BaseAddress))
                 throw new InvalidOperationException("Transponder SSE: BaseAddress is required (e.g. https://localhost:5001/).");
 
             var client = new HttpClient { BaseAddress = new Uri(o.BaseAddress.TrimEnd('/') + "/", UriKind.Absolute) };
             _http = client;
-            logger.LogInformation("Transponder SSE client base address {BaseAddress}", client.BaseAddress);
+            _logger.LogInformation("Transponder SSE client base address {BaseAddress}", client.BaseAddress);
         }
         finally
         {
@@ -45,7 +54,7 @@ public sealed class ServerSentEventsTransponderTransport(
     {
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
         var http = _http ?? throw new InvalidOperationException("HTTP client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
 
         var dto = ToDto(message);
         using var request = new HttpRequestMessage(HttpMethod.Post, o.PublishPath.TrimStart('/'));
@@ -63,7 +72,7 @@ public sealed class ServerSentEventsTransponderTransport(
         ArgumentNullException.ThrowIfNull(onMessage);
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
         var http = _http ?? throw new InvalidOperationException("HTTP client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
 
         using var request = new HttpRequestMessage(HttpMethod.Get, o.SubscribePath.TrimStart('/'));
         await ApplyAuthAsync(request, cancellationToken).ConfigureAwait(false);
@@ -131,7 +140,7 @@ public sealed class ServerSentEventsTransponderTransport(
 
     private async Task ApplyAuthAsync(HttpRequestMessage request, CancellationToken _)
     {
-        var provider = options.Value.AccessTokenProvider;
+        var provider = _options.Value.AccessTokenProvider;
         if (provider is null)
             return;
 
@@ -149,7 +158,7 @@ public sealed class ServerSentEventsTransponderTransport(
         }
         catch (JsonException ex)
         {
-            logger.LogWarning(ex, "Transponder SSE: invalid JSON in event");
+            _logger.LogWarning(ex, "Transponder SSE: invalid JSON in event");
             return null;
         }
 

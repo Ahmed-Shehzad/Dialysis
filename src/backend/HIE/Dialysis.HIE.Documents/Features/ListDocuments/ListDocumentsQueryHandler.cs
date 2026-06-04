@@ -3,13 +3,14 @@ using Dialysis.HIE.Documents.Ports;
 
 namespace Dialysis.HIE.Documents.Features.ListDocuments;
 
-public sealed class ListDocumentsQueryHandler(IDocumentReferenceRepository repository)
-    : IQueryHandler<ListDocumentsQuery, IReadOnlyList<DocumentRow>>
+public sealed class ListDocumentsQueryHandler : IQueryHandler<ListDocumentsQuery, IReadOnlyList<DocumentRow>>
 {
+    private readonly IDocumentReferenceRepository _repository;
+    public ListDocumentsQueryHandler(IDocumentReferenceRepository repository) => _repository = repository;
     public async Task<IReadOnlyList<DocumentRow>> HandleAsync(ListDocumentsQuery request, CancellationToken cancellationToken)
     {
         var take = Math.Clamp(request.Take, 1, 500);
-        var rows = await repository
+        var rows = await _repository
             .ListAsync(request.PatientId, request.Kind, request.Status, request.Source, take, cancellationToken)
             .ConfigureAwait(false);
         return [.. rows.Select(r => new DocumentRow(

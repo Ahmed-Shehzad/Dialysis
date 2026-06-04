@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
     <ProjectReference Include="../../BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection/Dialysis.BuildingBlocks.DataProtection.csproj" />
     <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Operations/Dialysis.HIS.Operations.csproj" />

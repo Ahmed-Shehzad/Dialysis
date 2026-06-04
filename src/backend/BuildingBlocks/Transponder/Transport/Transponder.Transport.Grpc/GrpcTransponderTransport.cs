@@ -8,13 +8,22 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.Grpc;
 /// <summary>
 /// gRPC client to a <see cref="TransponderGrpcIngressService"/> relay: unary publish and server-streaming subscribe.
 /// </summary>
-public sealed class GrpcTransponderTransport(
-    IOptions<TransponderGrpcClientOptions> options,
-    ILogger<GrpcTransponderTransport> logger) : ITransponderTransport
+public sealed class GrpcTransponderTransport : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private GrpcChannel? _channel;
     private TransponderIngress.TransponderIngressClient? _client;
+    private readonly IOptions<TransponderGrpcClientOptions> _options;
+    private readonly ILogger<GrpcTransponderTransport> _logger;
+    /// <summary>
+    /// gRPC client to a <see cref="TransponderGrpcIngressService"/> relay: unary publish and server-streaming subscribe.
+    /// </summary>
+    public GrpcTransponderTransport(IOptions<TransponderGrpcClientOptions> options,
+        ILogger<GrpcTransponderTransport> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -26,7 +35,7 @@ public sealed class GrpcTransponderTransport(
 
             await DisposeCoreAsync().ConfigureAwait(false);
 
-            var o = options.Value;
+            var o = _options.Value;
             if (string.IsNullOrWhiteSpace(o.Address))
                 throw new InvalidOperationException("Transponder gRPC: Address is required (e.g. https://localhost:7123).");
 
@@ -46,7 +55,7 @@ public sealed class GrpcTransponderTransport(
                     MaxSendMessageSize = o.MaxSendMessageSizeBytes,
                 });
             _client = new TransponderIngress.TransponderIngressClient(_channel);
-            logger.LogInformation("Transponder gRPC client connected to {Address}", address);
+            _logger.LogInformation("Transponder gRPC client connected to {Address}", address);
         }
         finally
         {
@@ -71,13 +80,13 @@ public sealed class GrpcTransponderTransport(
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         var client = _client ?? throw new InvalidOperationException("gRPC client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
 
         using var streamingCall = client.Subscribe(
             new SubscribeRequest { ClientName = o.ClientName ?? string.Empty },
             cancellationToken: cancellationToken);
 
-        logger.LogInformation("Transponder gRPC subscribe stream open");
+        _logger.LogInformation("Transponder gRPC subscribe stream open");
 
         var stream = streamingCall.ResponseStream;
         try
@@ -88,7 +97,7 @@ public sealed class GrpcTransponderTransport(
                 var transport = ToTransportMessage(env);
                 if (transport is null)
                 {
-                    logger.LogWarning("Transponder gRPC: envelope missing routing_key; skipping");
+                    _logger.LogWarning("Transponder gRPC: envelope missing routing_key; skipping");
                     continue;
                 }
 

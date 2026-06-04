@@ -10,9 +10,21 @@ namespace Dialysis.SmartConnect.Api.Demo;
 /// endpoint by calling <see cref="IInboundTransport"/> in-process so the integration ledger fills
 /// up during a client demo with no external clients.
 /// </summary>
-public sealed class Hl7V2SimulatorService(IServiceProvider services, ILogger<Hl7V2SimulatorService> logger)
-    : BackgroundService
+public sealed class Hl7V2SimulatorService : BackgroundService
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<Hl7V2SimulatorService> _logger;
+    /// <summary>
+    /// Development-only background service that periodically dispatches synthetic ADT^A01 and ORU^R01
+    /// messages into the demo flows seeded by <see cref="SmartConnectDemoSeeder"/>. Bypasses the HTTP
+    /// endpoint by calling <see cref="IInboundTransport"/> in-process so the integration ledger fills
+    /// up during a client demo with no external clients.
+    /// </summary>
+    public Hl7V2SimulatorService(IServiceProvider services, ILogger<Hl7V2SimulatorService> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(7);
     private static readonly Random _rng = new(20251115);
     private static readonly string[] _wards = ["3W-NEPH", "ICU-A", "ER", "DIALYSIS-1"];
@@ -22,7 +34,7 @@ public sealed class Hl7V2SimulatorService(IServiceProvider services, ILogger<Hl7
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("HL7 v2 simulator started (every {Seconds}s).", _interval.TotalSeconds);
+        _logger.LogInformation("HL7 v2 simulator started (every {Seconds}s).", _interval.TotalSeconds);
         try { await Task.Delay(TimeSpan.FromSeconds(12), stoppingToken).ConfigureAwait(false); }
         catch (TaskCanceledException) { return; }
 
@@ -34,7 +46,7 @@ public sealed class Hl7V2SimulatorService(IServiceProvider services, ILogger<Hl7
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "HL7 v2 simulator tick failed.");
+                _logger.LogWarning(ex, "HL7 v2 simulator tick failed.");
             }
             try { await Task.Delay(_interval, stoppingToken).ConfigureAwait(false); }
             catch (TaskCanceledException) { return; }
@@ -43,7 +55,7 @@ public sealed class Hl7V2SimulatorService(IServiceProvider services, ILogger<Hl7
 
     private async Task DispatchOneAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
+        using var scope = _services.CreateScope();
         var transport = scope.ServiceProvider.GetRequiredService<IInboundTransport>();
         var factory = scope.ServiceProvider.GetRequiredService<IInboundMessageFactory>();
 

@@ -16,8 +16,20 @@ namespace Dialysis.SmartConnect.Fhir;
 /// passes through unchanged so a downstream route can handle the unexpected shape — mirrors the
 /// fail-soft behaviour of <c>NcpdpToFhirTransformStage</c>.
 /// </summary>
-public sealed class Hl7V2ToFhirTransformStage(Hl7V2ToFhirPipeline pipeline) : ITransformStage
+public sealed class Hl7V2ToFhirTransformStage : ITransformStage
 {
+    private readonly Hl7V2ToFhirPipeline _pipeline;
+    /// <summary>
+    /// Source-transform stage that parses an HL7 v2.x payload, runs it through
+    /// <see cref="Hl7V2ToFhirPipeline"/> (12 registered mappers as of writing — ADT^A01/A04/A08/A40,
+    /// ORU^R01/R30/R40, ORM^O01, SIU^S12, MDM^T02, VXU^V04), and replaces the payload with a FHIR R4
+    /// <c>Bundle</c> (type = collection) containing every resource the matching mappers produced.
+    ///
+    /// When the payload is not an HL7 v2 message (or no mapper matches its trigger), the message
+    /// passes through unchanged so a downstream route can handle the unexpected shape — mirrors the
+    /// fail-soft behaviour of <c>NcpdpToFhirTransformStage</c>.
+    /// </summary>
+    public Hl7V2ToFhirTransformStage(Hl7V2ToFhirPipeline pipeline) => _pipeline = pipeline;
     public const string KindValue = "hl7-to-fhir-pipeline";
 
     public string Kind => KindValue;
@@ -48,7 +60,7 @@ public sealed class Hl7V2ToFhirTransformStage(Hl7V2ToFhirPipeline pipeline) : IT
             return message;
         }
 
-        var resources = pipeline.Transform(parsed);
+        var resources = _pipeline.Transform(parsed);
         if (resources.Count == 0)
         {
             return message;

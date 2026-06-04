@@ -77,18 +77,20 @@ public sealed class HisAdmissionEncounterFeederTests
         Outputs: Array.Empty<ExportJobOutput>(),
         Error: null);
 
-    private sealed class InMemoryAdmissions(params Admission[] admissions) : IAdmissionRepository
+    private sealed class InMemoryAdmissions : IAdmissionRepository
     {
+        private readonly Admission[] _admissions;
+        public InMemoryAdmissions(params Admission[] admissions) => _admissions = admissions;
         public void Add(Admission admission) => throw new NotSupportedException();
 
         public Task<Admission?> GetAsync(Guid id, CancellationToken cancellationToken = default)
-            => Task.FromResult(admissions.FirstOrDefault(a => a.Id == id));
+            => Task.FromResult(_admissions.FirstOrDefault(a => a.Id == id));
 
         public async IAsyncEnumerable<Admission> StreamAllAsync(
             DateTimeOffset? since,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            foreach (var admission in admissions)
+            foreach (var admission in _admissions)
             {
                 if (since is { } cutoff)
                 {
@@ -105,7 +107,7 @@ public sealed class HisAdmissionEncounterFeederTests
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var seen = new HashSet<Guid>();
-            foreach (var admission in admissions)
+            foreach (var admission in _admissions)
             {
                 if (since is { } cutoff)
                 {

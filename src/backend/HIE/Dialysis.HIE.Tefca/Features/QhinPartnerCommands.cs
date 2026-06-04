@@ -15,38 +15,140 @@ namespace Dialysis.HIE.Tefca.Features;
 
 // -------- Row / detail DTOs --------
 
-public sealed record QhinPartnerRow(
-    Guid Id,
-    string Name,
-    string FhirBaseUrl,
-    string IasEndpoint,
-    QhinPartnerStatus Status,
-    string? MtlsCertThumbprint,
-    int TrustAnchorCount,
-    DateTime UpdatedAtUtc,
-    string UpdatedBy);
+public sealed record QhinPartnerRow
+{
+    public QhinPartnerRow(Guid Id,
+        string Name,
+        string FhirBaseUrl,
+        string IasEndpoint,
+        QhinPartnerStatus Status,
+        string? MtlsCertThumbprint,
+        int TrustAnchorCount,
+        DateTime UpdatedAtUtc,
+        string UpdatedBy)
+    {
+        this.Id = Id;
+        this.Name = Name;
+        this.FhirBaseUrl = FhirBaseUrl;
+        this.IasEndpoint = IasEndpoint;
+        this.Status = Status;
+        this.MtlsCertThumbprint = MtlsCertThumbprint;
+        this.TrustAnchorCount = TrustAnchorCount;
+        this.UpdatedAtUtc = UpdatedAtUtc;
+        this.UpdatedBy = UpdatedBy;
+    }
+    public Guid Id { get; init; }
+    public string Name { get; init; }
+    public string FhirBaseUrl { get; init; }
+    public string IasEndpoint { get; init; }
+    public QhinPartnerStatus Status { get; init; }
+    public string? MtlsCertThumbprint { get; init; }
+    public int TrustAnchorCount { get; init; }
+    public DateTime UpdatedAtUtc { get; init; }
+    public string UpdatedBy { get; init; }
+    public void Deconstruct(out Guid id, out string name, out string fhirBaseUrl, out string iasEndpoint, out QhinPartnerStatus status, out string? mtlsCertThumbprint, out int trustAnchorCount, out DateTime updatedAtUtc, out string updatedBy)
+    {
+        id = this.Id;
+        name = this.Name;
+        fhirBaseUrl = this.FhirBaseUrl;
+        iasEndpoint = this.IasEndpoint;
+        status = this.Status;
+        mtlsCertThumbprint = this.MtlsCertThumbprint;
+        trustAnchorCount = this.TrustAnchorCount;
+        updatedAtUtc = this.UpdatedAtUtc;
+        updatedBy = this.UpdatedBy;
+    }
+}
 
-public sealed record QhinTrustAnchorRow(
-    Guid Id,
-    string Subject,
-    string Thumbprint,
-    DateTime NotBefore,
-    DateTime NotAfter,
-    TrustAnchorStatus Status,
-    DateTime AttachedAtUtc,
-    string AttachedBy);
+public sealed record QhinTrustAnchorRow
+{
+    public QhinTrustAnchorRow(Guid Id,
+        string Subject,
+        string Thumbprint,
+        DateTime NotBefore,
+        DateTime NotAfter,
+        TrustAnchorStatus Status,
+        DateTime AttachedAtUtc,
+        string AttachedBy)
+    {
+        this.Id = Id;
+        this.Subject = Subject;
+        this.Thumbprint = Thumbprint;
+        this.NotBefore = NotBefore;
+        this.NotAfter = NotAfter;
+        this.Status = Status;
+        this.AttachedAtUtc = AttachedAtUtc;
+        this.AttachedBy = AttachedBy;
+    }
+    public Guid Id { get; init; }
+    public string Subject { get; init; }
+    public string Thumbprint { get; init; }
+    public DateTime NotBefore { get; init; }
+    public DateTime NotAfter { get; init; }
+    public TrustAnchorStatus Status { get; init; }
+    public DateTime AttachedAtUtc { get; init; }
+    public string AttachedBy { get; init; }
+    public void Deconstruct(out Guid id, out string subject, out string thumbprint, out DateTime notBefore, out DateTime notAfter, out TrustAnchorStatus status, out DateTime attachedAtUtc, out string attachedBy)
+    {
+        id = this.Id;
+        subject = this.Subject;
+        thumbprint = this.Thumbprint;
+        notBefore = this.NotBefore;
+        notAfter = this.NotAfter;
+        status = this.Status;
+        attachedAtUtc = this.AttachedAtUtc;
+        attachedBy = this.AttachedBy;
+    }
+}
 
-public sealed record QhinPartnerDetail(
-    Guid Id,
-    string Name,
-    string FhirBaseUrl,
-    string IasEndpoint,
-    QhinPartnerStatus Status,
-    string? MtlsCertThumbprint,
-    DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc,
-    string UpdatedBy,
-    IReadOnlyList<QhinTrustAnchorRow> TrustAnchors);
+public sealed record QhinPartnerDetail
+{
+    public QhinPartnerDetail(Guid Id,
+        string Name,
+        string FhirBaseUrl,
+        string IasEndpoint,
+        QhinPartnerStatus Status,
+        string? MtlsCertThumbprint,
+        DateTime CreatedAtUtc,
+        DateTime UpdatedAtUtc,
+        string UpdatedBy,
+        IReadOnlyList<QhinTrustAnchorRow> TrustAnchors)
+    {
+        this.Id = Id;
+        this.Name = Name;
+        this.FhirBaseUrl = FhirBaseUrl;
+        this.IasEndpoint = IasEndpoint;
+        this.Status = Status;
+        this.MtlsCertThumbprint = MtlsCertThumbprint;
+        this.CreatedAtUtc = CreatedAtUtc;
+        this.UpdatedAtUtc = UpdatedAtUtc;
+        this.UpdatedBy = UpdatedBy;
+        this.TrustAnchors = TrustAnchors;
+    }
+    public Guid Id { get; init; }
+    public string Name { get; init; }
+    public string FhirBaseUrl { get; init; }
+    public string IasEndpoint { get; init; }
+    public QhinPartnerStatus Status { get; init; }
+    public string? MtlsCertThumbprint { get; init; }
+    public DateTime CreatedAtUtc { get; init; }
+    public DateTime UpdatedAtUtc { get; init; }
+    public string UpdatedBy { get; init; }
+    public IReadOnlyList<QhinTrustAnchorRow> TrustAnchors { get; init; }
+    public void Deconstruct(out Guid id, out string name, out string fhirBaseUrl, out string iasEndpoint, out QhinPartnerStatus status, out string? mtlsCertThumbprint, out DateTime createdAtUtc, out DateTime updatedAtUtc, out string updatedBy, out IReadOnlyList<QhinTrustAnchorRow> trustAnchors)
+    {
+        id = this.Id;
+        name = this.Name;
+        fhirBaseUrl = this.FhirBaseUrl;
+        iasEndpoint = this.IasEndpoint;
+        status = this.Status;
+        mtlsCertThumbprint = this.MtlsCertThumbprint;
+        createdAtUtc = this.CreatedAtUtc;
+        updatedAtUtc = this.UpdatedAtUtc;
+        updatedBy = this.UpdatedBy;
+        trustAnchors = this.TrustAnchors;
+    }
+}
 
 // -------- List --------
 
@@ -56,13 +158,14 @@ public sealed record ListQhinPartnersQuery
     public string RequiredPermission => HiePermissions.TefcaPartnersView;
 }
 
-public sealed class ListQhinPartnersQueryHandler(IQhinPartnerRepository repository)
-    : IQueryHandler<ListQhinPartnersQuery, IReadOnlyList<QhinPartnerRow>>
+public sealed class ListQhinPartnersQueryHandler : IQueryHandler<ListQhinPartnersQuery, IReadOnlyList<QhinPartnerRow>>
 {
+    private readonly IQhinPartnerRepository _repository;
+    public ListQhinPartnersQueryHandler(IQhinPartnerRepository repository) => _repository = repository;
     public async Task<IReadOnlyList<QhinPartnerRow>> HandleAsync(
         ListQhinPartnersQuery request, CancellationToken cancellationToken)
     {
-        var partners = await repository.ListAsync(cancellationToken).ConfigureAwait(false);
+        var partners = await _repository.ListAsync(cancellationToken).ConfigureAwait(false);
         return [.. partners.Select(p => new QhinPartnerRow(
             p.Id, p.Name, p.FhirBaseUrl, p.IasEndpoint, p.Status,
             p.MtlsCertThumbprint, p.TrustAnchors.Count, p.UpdatedAtUtc, p.UpdatedBy))];
@@ -71,17 +174,21 @@ public sealed class ListQhinPartnersQueryHandler(IQhinPartnerRepository reposito
 
 // -------- Get --------
 
-public sealed record GetQhinPartnerQuery(Guid Id) : IQuery<QhinPartnerDetail?>, IPermissionedCommand
+public sealed record GetQhinPartnerQuery : IQuery<QhinPartnerDetail?>, IPermissionedCommand
 {
+    public GetQhinPartnerQuery(Guid Id) => this.Id = Id;
     public string RequiredPermission => HiePermissions.TefcaPartnersView;
+    public Guid Id { get; init; }
+    public void Deconstruct(out Guid id) => id = this.Id;
 }
 
-public sealed class GetQhinPartnerQueryHandler(IQhinPartnerRepository repository)
-    : IQueryHandler<GetQhinPartnerQuery, QhinPartnerDetail?>
+public sealed class GetQhinPartnerQueryHandler : IQueryHandler<GetQhinPartnerQuery, QhinPartnerDetail?>
 {
+    private readonly IQhinPartnerRepository _repository;
+    public GetQhinPartnerQueryHandler(IQhinPartnerRepository repository) => _repository = repository;
     public async Task<QhinPartnerDetail?> HandleAsync(GetQhinPartnerQuery request, CancellationToken cancellationToken)
     {
-        var partner = await repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        var partner = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
         if (partner is null) return null;
         return new QhinPartnerDetail(
             partner.Id, partner.Name, partner.FhirBaseUrl, partner.IasEndpoint,
@@ -94,151 +201,295 @@ public sealed class GetQhinPartnerQueryHandler(IQhinPartnerRepository repository
 
 // -------- Onboard / Revise --------
 
-public sealed record OnboardQhinPartnerCommand(string Name, string FhirBaseUrl, string IasEndpoint, string UpdatedBy)
-    : ICommand<Guid>, IPermissionedCommand
+public sealed record OnboardQhinPartnerCommand : ICommand<Guid>, IPermissionedCommand
 {
+    public OnboardQhinPartnerCommand(string Name, string FhirBaseUrl, string IasEndpoint, string UpdatedBy)
+    {
+        this.Name = Name;
+        this.FhirBaseUrl = FhirBaseUrl;
+        this.IasEndpoint = IasEndpoint;
+        this.UpdatedBy = UpdatedBy;
+    }
     public string RequiredPermission => HiePermissions.TefcaPartnersAdminister;
+    public string Name { get; init; }
+    public string FhirBaseUrl { get; init; }
+    public string IasEndpoint { get; init; }
+    public string UpdatedBy { get; init; }
+    public void Deconstruct(out string name, out string fhirBaseUrl, out string iasEndpoint, out string updatedBy)
+    {
+        name = this.Name;
+        fhirBaseUrl = this.FhirBaseUrl;
+        iasEndpoint = this.IasEndpoint;
+        updatedBy = this.UpdatedBy;
+    }
 }
 
-public sealed class OnboardQhinPartnerCommandHandler(
-    IQhinPartnerRepository repository,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<OnboardQhinPartnerCommand, Guid>
+public sealed class OnboardQhinPartnerCommandHandler : ICommandHandler<OnboardQhinPartnerCommand, Guid>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public OnboardQhinPartnerCommandHandler(IQhinPartnerRepository repository,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<Guid> HandleAsync(OnboardQhinPartnerCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var partner = new QhinPartner(
             Guid.CreateVersion7(), request.Name, request.FhirBaseUrl, request.IasEndpoint,
-            clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
-        repository.Add(partner);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            _clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
+        _repository.Add(partner);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return partner.Id;
     }
 }
 
-public sealed record ReviseQhinPartnerCommand(Guid Id, string Name, string FhirBaseUrl, string IasEndpoint, string UpdatedBy)
-    : ICommand, IPermissionedCommand
+public sealed record ReviseQhinPartnerCommand : ICommand, IPermissionedCommand
 {
+    public ReviseQhinPartnerCommand(Guid Id, string Name, string FhirBaseUrl, string IasEndpoint, string UpdatedBy)
+    {
+        this.Id = Id;
+        this.Name = Name;
+        this.FhirBaseUrl = FhirBaseUrl;
+        this.IasEndpoint = IasEndpoint;
+        this.UpdatedBy = UpdatedBy;
+    }
     public string RequiredPermission => HiePermissions.TefcaPartnersAdminister;
+    public Guid Id { get; init; }
+    public string Name { get; init; }
+    public string FhirBaseUrl { get; init; }
+    public string IasEndpoint { get; init; }
+    public string UpdatedBy { get; init; }
+    public void Deconstruct(out Guid id, out string name, out string fhirBaseUrl, out string iasEndpoint, out string updatedBy)
+    {
+        id = this.Id;
+        name = this.Name;
+        fhirBaseUrl = this.FhirBaseUrl;
+        iasEndpoint = this.IasEndpoint;
+        updatedBy = this.UpdatedBy;
+    }
 }
 
-public sealed class ReviseQhinPartnerCommandHandler(
-    IQhinPartnerRepository repository,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<ReviseQhinPartnerCommand>
+public sealed class ReviseQhinPartnerCommandHandler : ICommandHandler<ReviseQhinPartnerCommand>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public ReviseQhinPartnerCommandHandler(IQhinPartnerRepository repository,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<Unit> HandleAsync(ReviseQhinPartnerCommand request, CancellationToken cancellationToken)
     {
-        var partner = await repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false)
+        var partner = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"QHIN partner '{request.Id}' not found.");
-        partner.Revise(request.Name, request.FhirBaseUrl, request.IasEndpoint, clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        partner.Revise(request.Name, request.FhirBaseUrl, request.IasEndpoint, _clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }
 
 // -------- Status transition --------
 
-public sealed record TransitionQhinPartnerStatusCommand(Guid Id, QhinPartnerStatus Next, string UpdatedBy)
-    : ICommand, IPermissionedCommand
+public sealed record TransitionQhinPartnerStatusCommand : ICommand, IPermissionedCommand
 {
+    public TransitionQhinPartnerStatusCommand(Guid Id, QhinPartnerStatus Next, string UpdatedBy)
+    {
+        this.Id = Id;
+        this.Next = Next;
+        this.UpdatedBy = UpdatedBy;
+    }
     public string RequiredPermission => HiePermissions.TefcaPartnersAdminister;
+    public Guid Id { get; init; }
+    public QhinPartnerStatus Next { get; init; }
+    public string UpdatedBy { get; init; }
+    public void Deconstruct(out Guid id, out QhinPartnerStatus next, out string updatedBy)
+    {
+        id = this.Id;
+        next = this.Next;
+        updatedBy = this.UpdatedBy;
+    }
 }
 
-public sealed class TransitionQhinPartnerStatusCommandHandler(
-    IQhinPartnerRepository repository,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<TransitionQhinPartnerStatusCommand>
+public sealed class TransitionQhinPartnerStatusCommandHandler : ICommandHandler<TransitionQhinPartnerStatusCommand>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public TransitionQhinPartnerStatusCommandHandler(IQhinPartnerRepository repository,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<Unit> HandleAsync(TransitionQhinPartnerStatusCommand request, CancellationToken cancellationToken)
     {
-        var partner = await repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false)
+        var partner = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"QHIN partner '{request.Id}' not found.");
-        partner.TransitionStatus(request.Next, clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        partner.TransitionStatus(request.Next, _clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }
 
 // -------- Attach trust anchor --------
 
-public sealed record AttachTrustAnchorCommand(Guid PartnerId, string CertificatePem, string AttachedBy)
-    : ICommand<Guid>, IPermissionedCommand
+public sealed record AttachTrustAnchorCommand : ICommand<Guid>, IPermissionedCommand
 {
+    public AttachTrustAnchorCommand(Guid PartnerId, string CertificatePem, string AttachedBy)
+    {
+        this.PartnerId = PartnerId;
+        this.CertificatePem = CertificatePem;
+        this.AttachedBy = AttachedBy;
+    }
     public string RequiredPermission => HiePermissions.TefcaPartnersAdminister;
+    public Guid PartnerId { get; init; }
+    public string CertificatePem { get; init; }
+    public string AttachedBy { get; init; }
+    public void Deconstruct(out Guid partnerId, out string certificatePem, out string attachedBy)
+    {
+        partnerId = this.PartnerId;
+        certificatePem = this.CertificatePem;
+        attachedBy = this.AttachedBy;
+    }
 }
 
-public sealed class AttachTrustAnchorCommandHandler(
-    IQhinPartnerRepository repository,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<AttachTrustAnchorCommand, Guid>
+public sealed class AttachTrustAnchorCommandHandler : ICommandHandler<AttachTrustAnchorCommand, Guid>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public AttachTrustAnchorCommandHandler(IQhinPartnerRepository repository,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<Guid> HandleAsync(AttachTrustAnchorCommand request, CancellationToken cancellationToken)
     {
-        var partner = await repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
+        var partner = await _repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"QHIN partner '{request.PartnerId}' not found.");
         var parsed = TrustAnchorParser.Parse(request.CertificatePem);
         var anchor = new QhinTrustAnchor(
             Guid.CreateVersion7(), partner.Id,
             parsed.Subject, parsed.Thumbprint, parsed.CertificatePem,
             parsed.NotBefore, parsed.NotAfter,
-            clock.GetUtcNow().UtcDateTime, request.AttachedBy);
+            _clock.GetUtcNow().UtcDateTime, request.AttachedBy);
         partner.AttachTrustAnchor(anchor);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return anchor.Id;
     }
 }
 
 // -------- Revoke trust anchor --------
 
-public sealed record RevokeTrustAnchorCommand(Guid PartnerId, Guid AnchorId) : ICommand, IPermissionedCommand
+public sealed record RevokeTrustAnchorCommand : ICommand, IPermissionedCommand
 {
+    public RevokeTrustAnchorCommand(Guid PartnerId, Guid AnchorId)
+    {
+        this.PartnerId = PartnerId;
+        this.AnchorId = AnchorId;
+    }
     public string RequiredPermission => HiePermissions.TefcaPartnersAdminister;
+    public Guid PartnerId { get; init; }
+    public Guid AnchorId { get; init; }
+    public void Deconstruct(out Guid partnerId, out Guid anchorId)
+    {
+        partnerId = this.PartnerId;
+        anchorId = this.AnchorId;
+    }
 }
 
-public sealed class RevokeTrustAnchorCommandHandler(
-    IQhinPartnerRepository repository,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<RevokeTrustAnchorCommand>
+public sealed class RevokeTrustAnchorCommandHandler : ICommandHandler<RevokeTrustAnchorCommand>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public RevokeTrustAnchorCommandHandler(IQhinPartnerRepository repository,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<Unit> HandleAsync(RevokeTrustAnchorCommand request, CancellationToken cancellationToken)
     {
-        var partner = await repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
+        var partner = await _repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"QHIN partner '{request.PartnerId}' not found.");
-        partner.RevokeTrustAnchor(request.AnchorId, clock.GetUtcNow().UtcDateTime);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        partner.RevokeTrustAnchor(request.AnchorId, _clock.GetUtcNow().UtcDateTime);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 }
 
 // -------- Rotate mTLS PFX --------
 
-public sealed record RotateMtlsCertificateCommand(Guid PartnerId, string Base64Pfx, string PfxPassword, string UpdatedBy)
-    : ICommand<string>, IPermissionedCommand
+public sealed record RotateMtlsCertificateCommand : ICommand<string>, IPermissionedCommand
 {
+    public RotateMtlsCertificateCommand(Guid PartnerId, string Base64Pfx, string PfxPassword, string UpdatedBy)
+    {
+        this.PartnerId = PartnerId;
+        this.Base64Pfx = Base64Pfx;
+        this.PfxPassword = PfxPassword;
+        this.UpdatedBy = UpdatedBy;
+    }
     public string RequiredPermission => HiePermissions.TefcaPartnersAdminister;
+    public Guid PartnerId { get; init; }
+    public string Base64Pfx { get; init; }
+    public string PfxPassword { get; init; }
+    public string UpdatedBy { get; init; }
+    public void Deconstruct(out Guid partnerId, out string base64Pfx, out string pfxPassword, out string updatedBy)
+    {
+        partnerId = this.PartnerId;
+        base64Pfx = this.Base64Pfx;
+        pfxPassword = this.PfxPassword;
+        updatedBy = this.UpdatedBy;
+    }
 }
 
-public sealed class RotateMtlsCertificateCommandHandler(
-    IQhinPartnerRepository repository,
-    IDocumentBlobStore blobStore,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock) : ICommandHandler<RotateMtlsCertificateCommand, string>
+public sealed class RotateMtlsCertificateCommandHandler : ICommandHandler<RotateMtlsCertificateCommand, string>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IDocumentBlobStore _blobStore;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public RotateMtlsCertificateCommandHandler(IQhinPartnerRepository repository,
+        IDocumentBlobStore blobStore,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _blobStore = blobStore;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<string> HandleAsync(RotateMtlsCertificateCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var partner = await repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
+        var partner = await _repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"QHIN partner '{request.PartnerId}' not found.");
         var pfxBytes = Convert.FromBase64String(request.Base64Pfx);
         var thumbprint = ResolveThumbprint(pfxBytes, request.PfxPassword);
         var blobId = Guid.CreateVersion7();
-        var storageRef = await blobStore
+        var storageRef = await _blobStore
             .SaveAsync(blobId, "application/x-pkcs12", pfxBytes, cancellationToken)
             .ConfigureAwait(false);
-        partner.RotateMtls(storageRef, thumbprint, clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        partner.RotateMtls(storageRef, thumbprint, _clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return thumbprint;
     }
 
@@ -259,20 +510,43 @@ public sealed class RotateMtlsCertificateCommandHandler(
 
 // -------- Issue test IAS JWT --------
 
-public sealed record IssueIasJwtCommand(Guid PartnerId, string SubjectPatientId, string Scope, int LifetimeSeconds)
-    : ICommand<string>, IPermissionedCommand
+public sealed record IssueIasJwtCommand : ICommand<string>, IPermissionedCommand
 {
+    public IssueIasJwtCommand(Guid PartnerId, string SubjectPatientId, string Scope, int LifetimeSeconds)
+    {
+        this.PartnerId = PartnerId;
+        this.SubjectPatientId = SubjectPatientId;
+        this.Scope = Scope;
+        this.LifetimeSeconds = LifetimeSeconds;
+    }
     public string RequiredPermission => HiePermissions.TefcaIasJwtIssue;
+    public Guid PartnerId { get; init; }
+    public string SubjectPatientId { get; init; }
+    public string Scope { get; init; }
+    public int LifetimeSeconds { get; init; }
+    public void Deconstruct(out Guid partnerId, out string subjectPatientId, out string scope, out int lifetimeSeconds)
+    {
+        partnerId = this.PartnerId;
+        subjectPatientId = this.SubjectPatientId;
+        scope = this.Scope;
+        lifetimeSeconds = this.LifetimeSeconds;
+    }
 }
 
-public sealed class IssueIasJwtCommandHandler(IQhinPartnerRepository repository, IIasJwtIssuer issuer)
-    : ICommandHandler<IssueIasJwtCommand, string>
+public sealed class IssueIasJwtCommandHandler : ICommandHandler<IssueIasJwtCommand, string>
 {
+    private readonly IQhinPartnerRepository _repository;
+    private readonly IIasJwtIssuer _issuer;
+    public IssueIasJwtCommandHandler(IQhinPartnerRepository repository, IIasJwtIssuer issuer)
+    {
+        _repository = repository;
+        _issuer = issuer;
+    }
     public async Task<string> HandleAsync(IssueIasJwtCommand request, CancellationToken cancellationToken)
     {
-        var partner = await repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
+        var partner = await _repository.FindAsync(request.PartnerId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"QHIN partner '{request.PartnerId}' not found.");
-        return issuer.Issue(new IasJwtRequest(
+        return _issuer.Issue(new IasJwtRequest(
             Issuer: "DialysisPlatform.Tefca",
             Audience: partner.IasEndpoint,
             Subject: request.SubjectPatientId,

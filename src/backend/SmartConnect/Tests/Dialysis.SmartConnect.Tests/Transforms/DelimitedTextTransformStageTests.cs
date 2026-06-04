@@ -112,10 +112,7 @@ public sealed class DelimitedTextTransformStageTests
     }
 
     [Fact]
-    public void Transform_Advertises_Delimited_Text_Kind()
-    {
-        Assert.Equal("delimited-text", new DelimitedTextTransformStage().Kind);
-    }
+    public void Transform_Advertises_Delimited_Text_Kind() => Assert.Equal("delimited-text", new DelimitedTextTransformStage().Kind);
 
     [Fact]
     public async Task Output_Format_Ndjson_Emits_One_Object_Per_Line_Async()

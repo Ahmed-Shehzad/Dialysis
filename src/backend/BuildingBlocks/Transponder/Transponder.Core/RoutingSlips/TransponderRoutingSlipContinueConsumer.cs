@@ -7,14 +7,28 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
-internal sealed class TransponderRoutingSlipContinueConsumer(
-    ITransponderSagaStore store,
-    IMessageSerializer serializer,
-    IOptions<TransponderRoutingSlipOptions> options,
-    IServiceProvider serviceProvider,
-    TransponderRoutingSlipEventPublisher events,
-    ILogger<TransponderRoutingSlipContinueConsumer> logger) : IConsumer<TransponderRoutingSlipContinue>
+internal sealed class TransponderRoutingSlipContinueConsumer : IConsumer<TransponderRoutingSlipContinue>
 {
+    private readonly ITransponderSagaStore _store;
+    private readonly IMessageSerializer _serializer;
+    private readonly IOptions<TransponderRoutingSlipOptions> _options;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly TransponderRoutingSlipEventPublisher _events;
+    private readonly ILogger<TransponderRoutingSlipContinueConsumer> _logger;
+    public TransponderRoutingSlipContinueConsumer(ITransponderSagaStore store,
+        IMessageSerializer serializer,
+        IOptions<TransponderRoutingSlipOptions> options,
+        IServiceProvider serviceProvider,
+        TransponderRoutingSlipEventPublisher events,
+        ILogger<TransponderRoutingSlipContinueConsumer> logger)
+    {
+        _store = store;
+        _serializer = serializer;
+        _options = options;
+        _serviceProvider = serviceProvider;
+        _events = events;
+        _logger = logger;
+    }
     private static readonly string _sagaKind = TransponderRoutingSlipPersistenceKind.SagaKind;
 
     public async Task HandleAsync(ConsumeContext<TransponderRoutingSlipContinue> context)
@@ -29,23 +43,23 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
         await gate.WaitAsync(context.CancellationToken).ConfigureAwait(false);
         try
         {
-            var record = await store.GetAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+            var record = await _store.GetAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
             if (record is null)
             {
-                logger.LogWarning("[RoutingSlip] No persisted slip for {SlipId}; ignoring continue.", slipId);
+                _logger.LogWarning("[RoutingSlip] No persisted slip for {SlipId}; ignoring continue.", slipId);
                 return;
             }
 
             if (record.IsCompleted)
             {
-                logger.LogDebug("[RoutingSlip] Slip {SlipId} already completed; ignoring continue.", slipId);
+                _logger.LogDebug("[RoutingSlip] Slip {SlipId} already completed; ignoring continue.", slipId);
                 return;
             }
 
             var state = DeserializeState(record.StateJson);
             if (state is null)
             {
-                logger.LogWarning("[RoutingSlip] Slip {SlipId} has empty state; ignoring continue.", slipId);
+                _logger.LogWarning("[RoutingSlip] Slip {SlipId} has empty state; ignoring continue.", slipId);
                 return;
             }
 
@@ -53,7 +67,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
             if (context.Message.StepIndex != state.CurrentIndex)
             {
-                logger.LogDebug(
+                _logger.LogDebug(
                     "[RoutingSlip] Slip {SlipId} continue step {StepIndex} does not match current index {CurrentIndex}; treating as duplicate.",
                     slipId,
                     context.Message.StepIndex,
@@ -63,19 +77,19 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
             if (state.CurrentIndex >= state.Itinerary.Count)
             {
-                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await _store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 return;
             }
 
             var step = state.Itinerary[state.CurrentIndex];
-            if (!options.Value.ActivitiesByName.TryGetValue(step.Name, out var activityType))
+            if (!_options.Value.ActivitiesByName.TryGetValue(step.Name, out var activityType))
             {
-                logger.LogError("[RoutingSlip] Unknown activity '{Activity}' for slip {SlipId}.", step.Name, slipId);
-                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                _logger.LogError("[RoutingSlip] Unknown activity '{Activity}' for slip {SlipId}.", step.Name, slipId);
+                await _store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 var idx = state.CurrentIndex;
                 var corr = state.CorrelationId;
                 pending.Add(() =>
-                    events.PublishActivityFaultedAsync(
+                    _events.PublishActivityFaultedAsync(
                         slipId,
                         step.Name,
                         idx,
@@ -85,7 +99,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                         corr,
                         context.CancellationToken));
                 pending.Add(() =>
-                    events.PublishSlipFaultedAsync(
+                    _events.PublishSlipFaultedAsync(
                         slipId,
                         $"Routing slip faulted: activity '{step.Name}' is not registered.",
                         null,
@@ -96,7 +110,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                 goto DispatchPending;
             }
 
-            var activity = (IRoutingSlipActivity)ActivatorUtilities.CreateInstance(serviceProvider, activityType);
+            var activity = (IRoutingSlipActivity)ActivatorUtilities.CreateInstance(_serviceProvider, activityType);
             var activityContext = new RoutingSlipActivityExecutionContext(slipId, context, context.Bus, step, state.Variables);
 
             try
@@ -109,7 +123,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                 var variablesCopy = new Dictionary<string, string>(state.Variables, StringComparer.Ordinal);
                 var failedIndex = state.CurrentIndex;
                 var corr = state.CorrelationId;
-                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await _store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 pending.Add(() =>
                     PublishExecuteFaultAndCompensationAsync(
                         slipId,
@@ -139,17 +153,17 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
             if (state.CurrentIndex >= state.Itinerary.Count)
             {
-                await store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
+                await _store.DeleteAsync(_sagaKind, slipId, context.CancellationToken).ConfigureAwait(false);
                 pending.Add(() =>
-                    events.PublishActivityCompletedAsync(
+                    _events.PublishActivityCompletedAsync(
                         slipId,
                         completedIndex,
                         step.Name,
                         step.ArgumentsJson,
                         correlationId,
                         context.CancellationToken));
-                pending.Add(() => events.PublishSlipCompletedAsync(slipId, correlationId, context.CancellationToken));
-                logger.LogInformation("[RoutingSlip] Completed slip {SlipId}.", slipId);
+                pending.Add(() => _events.PublishSlipCompletedAsync(slipId, correlationId, context.CancellationToken));
+                _logger.LogInformation("[RoutingSlip] Completed slip {SlipId}.", slipId);
                 goto DispatchPending;
             }
 
@@ -163,11 +177,11 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                 IsCompleted = false,
             };
 
-            if (!await store.TryUpdateAsync(next, version, context.CancellationToken).ConfigureAwait(false))
+            if (!await _store.TryUpdateAsync(next, version, context.CancellationToken).ConfigureAwait(false))
                 throw new InvalidOperationException($"[RoutingSlip] Concurrency conflict for slip '{slipId}' (expected version {version}).");
 
             pending.Add(() =>
-                events.PublishActivityCompletedAsync(
+                _events.PublishActivityCompletedAsync(
                     slipId,
                     completedIndex,
                     step.Name,
@@ -207,7 +221,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
         ConsumeContext<TransponderRoutingSlipContinue> context,
         CancellationToken cancellationToken)
     {
-        await events
+        await _events
             .PublishActivityFaultedAsync(
                 trackingNumber,
                 failedActivityName,
@@ -225,10 +239,10 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
         foreach (var entry in completedSnapshot.OrderByDescending(static e => e.Index))
         {
-            if (!options.Value.ActivitiesByName.TryGetValue(entry.Name, out var activityType))
+            if (!_options.Value.ActivitiesByName.TryGetValue(entry.Name, out var activityType))
                 continue;
 
-            var instance = ActivatorUtilities.CreateInstance(serviceProvider, activityType);
+            var instance = ActivatorUtilities.CreateInstance(_serviceProvider, activityType);
             if (instance is not IRoutingSlipCompensatableActivity compensatable)
                 continue;
 
@@ -241,7 +255,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                     entry,
                     variables);
                 await compensatable.CompensateAsync(compCtx, cancellationToken).ConfigureAwait(false);
-                await events
+                await _events
                     .PublishActivityCompensatedAsync(trackingNumber, entry.Name, entry.Index, correlationId, cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -250,7 +264,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                 compensationFailed = true;
                 lastFailedName = entry.Name;
                 lastFailedIndex = entry.Index;
-                await events
+                await _events
                     .PublishActivityCompensationFailedAsync(
                         trackingNumber,
                         entry.Name,
@@ -265,7 +279,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
 
         if (compensationFailed)
         {
-            await events
+            await _events
                 .PublishSlipCompensationFailedAsync(
                     trackingNumber,
                     "One or more compensation steps failed.",
@@ -276,7 +290,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
                 .ConfigureAwait(false);
         }
 
-        await events
+        await _events
             .PublishSlipFaultedAsync(
                 trackingNumber,
                 $"Activity '{failedActivityName}' faulted: {exception.Message}",
@@ -296,7 +310,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
         if (string.IsNullOrWhiteSpace(stateJson))
             return null;
         var bytes = Encoding.UTF8.GetBytes(stateJson);
-        var deserialized = serializer.Deserialize(typeof(TransponderRoutingSlipState), bytes.AsMemory()) as TransponderRoutingSlipState;
+        var deserialized = _serializer.Deserialize(typeof(TransponderRoutingSlipState), bytes.AsMemory()) as TransponderRoutingSlipState;
         if (deserialized is not null)
             NormalizeState(deserialized);
         return deserialized;
@@ -305,7 +319,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer(
     private string SerializeState(TransponderRoutingSlipState state)
     {
         NormalizeState(state);
-        var bytes = serializer.Serialize(state);
+        var bytes = _serializer.Serialize(state);
         return Encoding.UTF8.GetString(bytes.Span);
     }
 }

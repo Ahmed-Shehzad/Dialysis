@@ -4,11 +4,20 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.SignalR;
 
 /// <summary>Publishes JSON payloads through a SignalR ingress hub.</summary>
-public sealed class SignalRTransponderBus(
-    ITransponderTransport transport,
-    IMessageSerializer serializer,
-    ILogger<SignalRTransponderBus> logger) : ITransponderBus
+public sealed class SignalRTransponderBus : ITransponderBus
 {
+    private readonly ITransponderTransport _transport;
+    private readonly IMessageSerializer _serializer;
+    private readonly ILogger<SignalRTransponderBus> _logger;
+    /// <summary>Publishes JSON payloads through a SignalR ingress hub.</summary>
+    public SignalRTransponderBus(ITransponderTransport transport,
+        IMessageSerializer serializer,
+        ILogger<SignalRTransponderBus> logger)
+    {
+        _transport = transport;
+        _serializer = serializer;
+        _logger = logger;
+    }
     public Task PublishAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
         where TMessage : class =>
         PublishAsync(message, default, cancellationToken);
@@ -17,10 +26,10 @@ public sealed class SignalRTransponderBus(
         where TMessage : class
     {
         ArgumentNullException.ThrowIfNull(message);
-        await transport.EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        await _transport.EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         var routingKey = typeof(TMessage).FullName ?? typeof(TMessage).Name;
-        var payload = serializer.Serialize(message);
+        var payload = _serializer.Serialize(message);
         var correlation = options.CorrelationId ?? Guid.NewGuid().ToString("N");
         var deduplicationId = string.IsNullOrEmpty(options.DeduplicationId) ? correlation : options.DeduplicationId;
         var envelope = new TransportMessage(
@@ -30,8 +39,8 @@ public sealed class SignalRTransponderBus(
             ContentType: "application/json",
             DeduplicationId: deduplicationId);
 
-        await transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
-        logger.LogDebug("Published {MessageType} via SignalR with correlation {CorrelationId}", typeof(TMessage).Name, correlation);
+        await _transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("Published {MessageType} via SignalR with correlation {CorrelationId}", typeof(TMessage).Name, correlation);
     }
 
     public async Task PublishPreparedAsync(
@@ -41,9 +50,9 @@ public sealed class SignalRTransponderBus(
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message);
-        await transport.EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        await _transport.EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
-        var payload = serializer.Serialize(message.GetType(), message);
+        var payload = _serializer.Serialize(message.GetType(), message);
         var correlation = options.CorrelationId ?? Guid.NewGuid().ToString("N");
         var deduplicationId = string.IsNullOrEmpty(options.DeduplicationId) ? correlation : options.DeduplicationId;
         var envelope = new TransportMessage(
@@ -53,11 +62,11 @@ public sealed class SignalRTransponderBus(
             ContentType: "application/json",
             DeduplicationId: deduplicationId);
 
-        await transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
-        logger.LogDebug("Published {RoutingKey} via SignalR with correlation {CorrelationId}", routingKey, correlation);
+        await _transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("Published {RoutingKey} via SignalR with correlation {CorrelationId}", routingKey, correlation);
     }
 
     public Task PublishLargeAsync<TMessage>(TMessage message, TransponderLargeMessageOptions? options = null, CancellationToken cancellationToken = default)
         where TMessage : class =>
-        TransponderLargeMessagePublisher.PublishAsync(this, serializer, message, options, cancellationToken);
+        TransponderLargeMessagePublisher.PublishAsync(this, _serializer, message, options, cancellationToken);
 }

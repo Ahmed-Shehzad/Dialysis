@@ -45,4 +45,18 @@ public enum HipaaSafeguardStatus
     NotApplicable,
 }
 
-public sealed record HipaaSafeguardReport(HipaaSafeguardStatus Status, string Evidence);
+public sealed record HipaaSafeguardReport
+{
+    public HipaaSafeguardReport(HipaaSafeguardStatus Status, string Evidence)
+    {
+        this.Status = Status;
+        this.Evidence = Evidence;
+    }
+    public HipaaSafeguardStatus Status { get; init; }
+    public string Evidence { get; init; }
+    public void Deconstruct(out HipaaSafeguardStatus Status, out string Evidence)
+    {
+        Status = this.Status;
+        Evidence = this.Evidence;
+    }
+}

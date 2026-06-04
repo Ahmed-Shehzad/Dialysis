@@ -32,11 +32,9 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
     private readonly IAcroFormProcessor _acroFormProcessor;
     private readonly IDocumentGraphicsRenderer _graphicsRenderer;
 
-    static QuestPdfDocumentRenderer()
-    {
+    static QuestPdfDocumentRenderer() =>
         // Community licence is the default; production hosts flip via QuestPdfLicensingOptions.
         QuestPDF.Settings.License = LicenseType.Community;
-    }
 
     /// <summary>Default ctor — uses the PDFsharp-backed AcroForms processor + SkiaSharp graphics.</summary>
     public QuestPdfDocumentRenderer()
@@ -167,7 +165,8 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
     {
         ArgumentNullException.ThrowIfNull(formPlacements);
         var baseBytes = await RenderAsync(document, cancellationToken).ConfigureAwait(false);
-        if (formPlacements.Count == 0) return baseBytes;
+        if (formPlacements.Count == 0)
+            return baseBytes;
         return await _acroFormProcessor.ApplyFormsAsync(baseBytes, formPlacements, cancellationToken)
             .ConfigureAwait(false);
     }

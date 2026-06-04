@@ -14,23 +14,42 @@ namespace Dialysis.SmartConnect.Inbound.Mllp;
 /// <summary>
 /// Listens for TCP connections, parses MLLP frames, and dispatches each payload via <see cref="IInboundTransport"/>.
 /// </summary>
-public sealed class MllpInboundHostedService(
-    IOptionsMonitor<MllpInboundOptions> options,
-    IInboundMessageFactory messageFactory,
-    IServiceScopeFactory scopeFactory,
-    IClockSkewMonitor clockSkewMonitor,
-    IClockSkewCorrectionEventSink clockSkewSink,
-    TimeProvider timeProvider,
-    ILogger<MllpInboundHostedService> logger) : BackgroundService
+public sealed class MllpInboundHostedService : BackgroundService
 {
     private int _activeConnections;
+    private readonly IOptionsMonitor<MllpInboundOptions> _options;
+    private readonly IInboundMessageFactory _messageFactory;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IClockSkewMonitor _clockSkewMonitor;
+    private readonly IClockSkewCorrectionEventSink _clockSkewSink;
+    private readonly TimeProvider _timeProvider;
+    private readonly ILogger<MllpInboundHostedService> _logger;
+    /// <summary>
+    /// Listens for TCP connections, parses MLLP frames, and dispatches each payload via <see cref="IInboundTransport"/>.
+    /// </summary>
+    public MllpInboundHostedService(IOptionsMonitor<MllpInboundOptions> options,
+        IInboundMessageFactory messageFactory,
+        IServiceScopeFactory scopeFactory,
+        IClockSkewMonitor clockSkewMonitor,
+        IClockSkewCorrectionEventSink clockSkewSink,
+        TimeProvider timeProvider,
+        ILogger<MllpInboundHostedService> logger)
+    {
+        _options = options;
+        _messageFactory = messageFactory;
+        _scopeFactory = scopeFactory;
+        _clockSkewMonitor = clockSkewMonitor;
+        _clockSkewSink = clockSkewSink;
+        _timeProvider = timeProvider;
+        _logger = logger;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var opt = options.CurrentValue;
+        var opt = _options.CurrentValue;
         if (opt.DefaultFlowId == Guid.Empty)
         {
-            logger.LogWarning("SmartConnect MLLP inbound is not listening because DefaultFlowId is empty.");
+            _logger.LogWarning("SmartConnect MLLP inbound is not listening because DefaultFlowId is empty.");
             return;
         }
 
@@ -41,7 +60,7 @@ public sealed class MllpInboundHostedService(
 
         using var listener = new TcpListener(address, opt.ListenPort);
         listener.Start();
-        logger.LogInformation(
+        _logger.LogInformation(
             "SmartConnect MLLP inbound listening on {Address}:{Port}, flow {FlowId}, maxConnections {Max}.",
             address,
             opt.ListenPort,
@@ -68,7 +87,7 @@ public sealed class MllpInboundHostedService(
                         break;
                     }
 
-                    logger.LogDebug(ex, "MLLP accept failed.");
+                    _logger.LogDebug(ex, "MLLP accept failed.");
                     continue;
                 }
 
@@ -78,7 +97,7 @@ public sealed class MllpInboundHostedService(
                 if (max > 0 && Interlocked.Increment(ref _activeConnections) > max)
                 {
                     Interlocked.Decrement(ref _activeConnections);
-                    logger.LogWarning(
+                    _logger.LogWarning(
                         "SmartConnect MLLP inbound rejecting connection from {Endpoint}: MaxConnections={Max} reached.",
                         client.Client.RemoteEndPoint,
                         max);
@@ -114,7 +133,7 @@ public sealed class MllpInboundHostedService(
             using (client)
             {
                 var stream = client.GetStream();
-                var opt = options.CurrentValue;
+                var opt = _options.CurrentValue;
                 var decoder = new MllpFrameDecoder(opt.MaxMessageBytes);
                 var ioBuffer = new byte[8192];
                 while (!stoppingToken.IsCancellationRequested)
@@ -131,7 +150,7 @@ public sealed class MllpInboundHostedService(
                     }
                     catch (Exception ex)
                     {
-                        logger.LogDebug(ex, "MLLP read ended.");
+                        _logger.LogDebug(ex, "MLLP read ended.");
                         break;
                     }
 
@@ -150,13 +169,13 @@ public sealed class MllpInboundHostedService(
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "MLLP client handler finished.");
+            _logger.LogDebug(ex, "MLLP client handler finished.");
         }
     }
 
     private async Task DispatchOneAsync(byte[] payload, CancellationToken ct)
     {
-        var opt = options.CurrentValue;
+        var opt = _options.CurrentValue;
         var sourceMap = ParseHl7Msh(payload);
         IReadOnlyDictionary<string, string>? metadata = null;
         if (sourceMap.Count > 0)
@@ -194,19 +213,19 @@ public sealed class MllpInboundHostedService(
         // want time-sync probing to block the dispatch path.
         await TryProbeClockSkewAsync(payload, ct).ConfigureAwait(false);
 
-        var message = messageFactory.Create(
+        var message = _messageFactory.Create(
             opt.DefaultFlowId,
             payload,
             PayloadFormat.Utf8Text,
             correlationId: null,
             metadata: metadata);
 
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var transport = scope.ServiceProvider.GetRequiredService<IInboundTransport>();
         var result = await transport.DispatchAsync(message, ct).ConfigureAwait(false);
         if (!result.Succeeded)
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 "MLLP dispatch failed: {Error} (suggested HTTP {Status}).",
                 result.Error,
                 result.SuggestedHttpStatus);
@@ -258,10 +277,10 @@ public sealed class MllpInboundHostedService(
             var message = Hl7V2Message.Parse(text);
             var policy = ResolveClockSkewPolicy();
             var result = Hl7V2ClockSkewProbe.TryObserveAndCorrect(
-                message, timeProvider.GetUtcNow().UtcDateTime, clockSkewMonitor, policy);
+                message, _timeProvider.GetUtcNow().UtcDateTime, _clockSkewMonitor, policy);
             if (result is { WasCorrected: true })
             {
-                await clockSkewSink.PublishAsync(result, cancellationToken).ConfigureAwait(false);
+                await _clockSkewSink.PublishAsync(result, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (FormatException)
@@ -276,7 +295,7 @@ public sealed class MllpInboundHostedService(
 
     private ClockSkewCorrectionPolicy ResolveClockSkewPolicy()
     {
-        var opt = options.CurrentValue.ClockSkew;
+        var opt = _options.CurrentValue.ClockSkew;
         if (string.Equals(opt.Mode, "Normalize", StringComparison.OrdinalIgnoreCase))
         {
             return ClockSkewCorrectionPolicy.Normalize(

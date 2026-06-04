@@ -11,11 +11,23 @@ namespace Dialysis.PDMS.Composition.Demo;
 /// <c>TreatmentSnapshotConsumer</c> and <c>TreatmentAlarmConsumer</c> are already wired,
 /// so this exercises the full inbound-bridge → consumer path during a demo.
 /// </summary>
-public sealed class MachineTelemetrySimulatorService(
-    IServiceProvider services,
-    Microsoft.Extensions.Logging.ILogger<MachineTelemetrySimulatorService> logger)
-    : Microsoft.Extensions.Hosting.BackgroundService
+public sealed class MachineTelemetrySimulatorService : Microsoft.Extensions.Hosting.BackgroundService
 {
+    private readonly IServiceProvider _services;
+    private readonly Microsoft.Extensions.Logging.ILogger<MachineTelemetrySimulatorService> _logger;
+    /// <summary>
+    /// Development-only background service that publishes synthetic
+    /// <see cref="DialysisMachineTreatmentSnapshotIntegrationEvent"/> and occasional
+    /// <see cref="DialysisMachineAlarmIntegrationEvent"/> via Transponder. The PDMS
+    /// <c>TreatmentSnapshotConsumer</c> and <c>TreatmentAlarmConsumer</c> are already wired,
+    /// so this exercises the full inbound-bridge → consumer path during a demo.
+    /// </summary>
+    public MachineTelemetrySimulatorService(IServiceProvider services,
+        Microsoft.Extensions.Logging.ILogger<MachineTelemetrySimulatorService> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(9);
     private static readonly string[] _machineSerials = ["FX-80-A001", "FX-80-A002", "FX-80-A003"];
     private static readonly long[] _mdcSnapshot = [150020, 150021, 150022, 150023]; // synthetic MDC codes
@@ -24,7 +36,7 @@ public sealed class MachineTelemetrySimulatorService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Machine telemetry simulator started (every {Seconds}s).", _interval.TotalSeconds);
+        _logger.LogInformation("Machine telemetry simulator started (every {Seconds}s).", _interval.TotalSeconds);
         try { await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken).ConfigureAwait(false); }
         catch (TaskCanceledException) { return; }
 
@@ -36,7 +48,7 @@ public sealed class MachineTelemetrySimulatorService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Machine telemetry simulator tick failed.");
+                _logger.LogWarning(ex, "Machine telemetry simulator tick failed.");
             }
             try { await Task.Delay(_interval, stoppingToken).ConfigureAwait(false); }
             catch (TaskCanceledException) { return; }
@@ -45,7 +57,7 @@ public sealed class MachineTelemetrySimulatorService(
 
     private async Task TickAsync(CancellationToken cancellationToken)
     {
-        using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateScope(services);
+        using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateScope(_services);
         var bus = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
             .GetRequiredService<ITransponderBus>(scope.ServiceProvider);
 

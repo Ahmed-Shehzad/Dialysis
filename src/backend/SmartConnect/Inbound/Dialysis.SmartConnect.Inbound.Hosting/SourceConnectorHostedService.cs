@@ -10,28 +10,49 @@ namespace Dialysis.SmartConnect.Inbound.Hosting;
 /// <see cref="ISourceConnectorRegistry"/> and runs each <see cref="ISourceConnector"/> until host shutdown.
 /// One instance failing or returning early does not affect peers.
 /// </summary>
-public sealed class SourceConnectorHostedService(
-    IOptionsMonitor<SourceConnectorHostOptions> options,
-    ISourceConnectorRegistry registry,
-    IEnumerable<ISourceConnector> registeredConnectors,
-    IInboundMessageFactory messageFactory,
-    IServiceScopeFactory scopeFactory,
-    ILoggerFactory loggerFactory,
-    ILogger<SourceConnectorHostedService> logger) : BackgroundService
+public sealed class SourceConnectorHostedService : BackgroundService
 {
+    private readonly IOptionsMonitor<SourceConnectorHostOptions> _options;
+    private readonly ISourceConnectorRegistry _registry;
+    private readonly IEnumerable<ISourceConnector> _registeredConnectors;
+    private readonly IInboundMessageFactory _messageFactory;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<SourceConnectorHostedService> _logger;
+    /// <summary>
+    /// Resolves configured <see cref="SourceConnectorInstanceOptions"/> entries against the
+    /// <see cref="ISourceConnectorRegistry"/> and runs each <see cref="ISourceConnector"/> until host shutdown.
+    /// One instance failing or returning early does not affect peers.
+    /// </summary>
+    public SourceConnectorHostedService(IOptionsMonitor<SourceConnectorHostOptions> options,
+        ISourceConnectorRegistry registry,
+        IEnumerable<ISourceConnector> registeredConnectors,
+        IInboundMessageFactory messageFactory,
+        IServiceScopeFactory scopeFactory,
+        ILoggerFactory loggerFactory,
+        ILogger<SourceConnectorHostedService> logger)
+    {
+        _options = options;
+        _registry = registry;
+        _registeredConnectors = registeredConnectors;
+        _messageFactory = messageFactory;
+        _scopeFactory = scopeFactory;
+        _loggerFactory = loggerFactory;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Eagerly resolve every registered ISourceConnector so that AddSourceConnector<T>'s
         // factory lambda runs and inserts the connector into the registry before lookup.
-        foreach (var connector in registeredConnectors)
+        foreach (var connector in _registeredConnectors)
         {
             _ = connector;
         }
 
-        var instances = options.CurrentValue.Instances;
+        var instances = _options.CurrentValue.Instances;
         if (instances.Count == 0)
         {
-            logger.LogInformation("SmartConnect SourceConnectorHostedService has no instances configured.");
+            _logger.LogInformation("SmartConnect SourceConnectorHostedService has no instances configured.");
             return;
         }
 
@@ -40,29 +61,29 @@ public sealed class SourceConnectorHostedService(
         {
             if (!instance.Enabled)
             {
-                logger.LogInformation("Source connector instance '{Name}' is disabled.", instance.Name);
+                _logger.LogInformation("Source connector instance '{Name}' is disabled.", instance.Name);
                 continue;
             }
 
             if (string.IsNullOrWhiteSpace(instance.Kind))
             {
-                logger.LogWarning("Source connector instance '{Name}' has empty Kind; skipping.", instance.Name);
+                _logger.LogWarning("Source connector instance '{Name}' has empty Kind; skipping.", instance.Name);
                 continue;
             }
 
             if (instance.DefaultFlowId == Guid.Empty)
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "Source connector instance '{Name}' (kind {Kind}) has empty DefaultFlowId; skipping.",
                     instance.Name,
                     instance.Kind);
                 continue;
             }
 
-            var connector = registry.TryResolve(instance.Kind);
+            var connector = _registry.TryResolve(instance.Kind);
             if (connector is null)
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "Source connector kind '{Kind}' (instance '{Name}') is not registered; skipping.",
                     instance.Kind,
                     instance.Name);
@@ -86,12 +107,12 @@ public sealed class SourceConnectorHostedService(
         CancellationToken stoppingToken)
     {
         var instanceName = string.IsNullOrWhiteSpace(instance.Name) ? connector.Kind : instance.Name;
-        var instanceLogger = loggerFactory.CreateLogger($"SmartConnect.SourceConnectors.{connector.Kind}.{instanceName}");
+        var instanceLogger = _loggerFactory.CreateLogger($"SmartConnect.SourceConnectors.{connector.Kind}.{instanceName}");
         var ctx = new SourceConnectorContext(
             instanceName,
             instance.DefaultFlowId,
             instance.Parameters,
-            messageFactory,
+            _messageFactory,
             DispatchAsync,
             instanceLogger);
 
@@ -128,7 +149,7 @@ public sealed class SourceConnectorHostedService(
 
     private async Task<InboundReceiveResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var transport = scope.ServiceProvider.GetRequiredService<IInboundTransport>();
         return await transport.DispatchAsync(message, cancellationToken).ConfigureAwait(false);
     }

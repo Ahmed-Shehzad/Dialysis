@@ -19,11 +19,29 @@ namespace Dialysis.HIE.Xds.Consumers;
 /// This keeps a single source of truth for attachment bytes while letting partner organizations
 /// discover them through the standard XDS query path.
 /// </remarks>
-public sealed class AttachmentRegisteredConsumer(
-    IXdsRegistry registry,
-    ILogger<AttachmentRegisteredConsumer> logger)
-    : IConsumer<AttachmentRegisteredIntegrationEvent>
+public sealed class AttachmentRegisteredConsumer : IConsumer<AttachmentRegisteredIntegrationEvent>
 {
+    private readonly IXdsRegistry _registry;
+    private readonly ILogger<AttachmentRegisteredConsumer> _logger;
+    /// <summary>
+    /// Bridges SmartConnect attachment writes into the IHE XDS Registry. Subscribes to
+    /// <see cref="AttachmentRegisteredIntegrationEvent"/> over Transponder; for each event, builds an
+    /// XDS <see cref="DocumentEntry"/> from the attachment metadata and submits it via
+    /// <see cref="IXdsRegistry.RegisterAsync"/> (ITI-42).
+    /// </summary>
+    /// <remarks>
+    /// The bytes themselves stay in SmartConnect's blob store — the XDS Registry holds a reference
+    /// (via <see cref="DocumentEntry.RepositoryUniqueId"/> + <see cref="DocumentEntry.UniqueId"/>),
+    /// and the SmartConnect signed-URL factory mints time-bounded fetch URLs when consumers query.
+    /// This keeps a single source of truth for attachment bytes while letting partner organizations
+    /// discover them through the standard XDS query path.
+    /// </remarks>
+    public AttachmentRegisteredConsumer(IXdsRegistry registry,
+        ILogger<AttachmentRegisteredConsumer> logger)
+    {
+        _registry = registry;
+        _logger = logger;
+    }
     private const string SmartConnectRepositoryId = "urn:dialysis:smartconnect:attachments";
 
     public async Task HandleAsync(ConsumeContext<AttachmentRegisteredIntegrationEvent> context)
@@ -55,8 +73,8 @@ public sealed class AttachmentRegisteredConsumer(
             SubmissionTime: msg.OccurredOn,
             DocumentUniqueIds: [entry.UniqueId]);
 
-        await registry.RegisterAsync(submission, [entry], context.CancellationToken).ConfigureAwait(false);
-        logger.LogInformation(
+        await _registry.RegisterAsync(submission, [entry], context.CancellationToken).ConfigureAwait(false);
+        _logger.LogInformation(
             "Registered attachment {AttachmentId} in XDS for patient {PatientId}",
             msg.AttachmentId, entry.PatientId);
     }

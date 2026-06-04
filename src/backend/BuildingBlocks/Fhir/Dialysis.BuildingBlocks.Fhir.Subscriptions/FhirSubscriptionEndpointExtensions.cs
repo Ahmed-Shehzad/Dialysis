@@ -328,30 +328,73 @@ public static class FhirSubscriptionEndpointExtensions
         }
     }
 
-    private sealed record SubscriptionCreateRequest(
-        string Topic,
-        string ChannelType,
-        string ChannelEndpoint,
-        string? Secret,
-        Dictionary<string, string>? Filters);
+    private sealed record SubscriptionCreateRequest
+    {
+        public SubscriptionCreateRequest(string Topic,
+            string ChannelType,
+            string ChannelEndpoint,
+            string? Secret,
+            Dictionary<string, string>? Filters)
+        {
+            this.Topic = Topic;
+            this.ChannelType = ChannelType;
+            this.ChannelEndpoint = ChannelEndpoint;
+            this.Secret = Secret;
+            this.Filters = Filters;
+        }
+        public string Topic { get; init; }
+        public string ChannelType { get; init; }
+        public string ChannelEndpoint { get; init; }
+        public string? Secret { get; init; }
+        public Dictionary<string, string>? Filters { get; init; }
+        public void Deconstruct(out string Topic, out string ChannelType, out string ChannelEndpoint, out string? Secret, out Dictionary<string, string>? Filters)
+        {
+            Topic = this.Topic;
+            ChannelType = this.ChannelType;
+            ChannelEndpoint = this.ChannelEndpoint;
+            Secret = this.Secret;
+            Filters = this.Filters;
+        }
+    }
 
-    private sealed record SubscriptionSimulateRequest(
-        string Topic,
-        Dictionary<string, string>? Attributes,
-        string? Subject,
-        string? Note);
+    private sealed record SubscriptionSimulateRequest
+    {
+        public SubscriptionSimulateRequest(string Topic,
+            Dictionary<string, string>? Attributes,
+            string? Subject,
+            string? Note)
+        {
+            this.Topic = Topic;
+            this.Attributes = Attributes;
+            this.Subject = Subject;
+            this.Note = Note;
+        }
+        public string Topic { get; init; }
+        public Dictionary<string, string>? Attributes { get; init; }
+        public string? Subject { get; init; }
+        public string? Note { get; init; }
+        public void Deconstruct(out string Topic, out Dictionary<string, string>? Attributes, out string? Subject, out string? Note)
+        {
+            Topic = this.Topic;
+            Attributes = this.Attributes;
+            Subject = this.Subject;
+            Note = this.Note;
+        }
+    }
 
-    private sealed class ResponseStreamSink(Stream body) : IFhirSubscriptionSink
+    private sealed class ResponseStreamSink : IFhirSubscriptionSink
     {
         private readonly SemaphoreSlim _write = new(1, 1);
+        private readonly Stream _body;
+        public ResponseStreamSink(Stream body) => _body = body;
 
         public async ValueTask SendAsync(ReadOnlyMemory<byte> payload, CancellationToken cancellationToken)
         {
             await _write.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                await body.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
-                await body.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await _body.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
+                await _body.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -360,16 +403,18 @@ public static class FhirSubscriptionEndpointExtensions
         }
     }
 
-    private sealed class WebSocketSink(WebSocket socket) : IFhirSubscriptionSink
+    private sealed class WebSocketSink : IFhirSubscriptionSink
     {
         private readonly SemaphoreSlim _write = new(1, 1);
+        private readonly WebSocket _socket;
+        public WebSocketSink(WebSocket socket) => _socket = socket;
 
         public async ValueTask SendAsync(ReadOnlyMemory<byte> payload, CancellationToken cancellationToken)
         {
             await _write.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                await socket.SendAsync(payload, WebSocketMessageType.Text, endOfMessage: true, cancellationToken).ConfigureAwait(false);
+                await _socket.SendAsync(payload, WebSocketMessageType.Text, endOfMessage: true, cancellationToken).ConfigureAwait(false);
             }
             finally
             {

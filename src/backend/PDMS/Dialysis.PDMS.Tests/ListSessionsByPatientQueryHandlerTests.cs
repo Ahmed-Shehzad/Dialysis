@@ -88,14 +88,16 @@ public sealed class ListSessionsByPatientQueryHandlerTests
         return session;
     }
 
-    private sealed class InMemorySessions(params DialysisSession[] sessions) : IDialysisSessionRepository
+    private sealed class InMemorySessions : IDialysisSessionRepository
     {
+        private readonly DialysisSession[] _sessions;
+        public InMemorySessions(params DialysisSession[] sessions) => _sessions = sessions;
         public Task<DialysisSession?> GetAsync(Guid id, CancellationToken cancellationToken = default)
-            => Task.FromResult(sessions.FirstOrDefault(s => s.Id == id));
+            => Task.FromResult(_sessions.FirstOrDefault(s => s.Id == id));
 
         public Task<IReadOnlyList<DialysisSession>> ListByPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<DialysisSession>>(
-                [.. sessions.Where(s => s.PatientId == patientId && s.ScheduledStartUtc >= sinceUtc)]);
+                [.. _sessions.Where(s => s.PatientId == patientId && s.ScheduledStartUtc >= sinceUtc)]);
 
         public Task<IReadOnlyList<DialysisSession>> ListRecentAsync(DateTime sinceUtc, int take, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<DialysisSession>>([]);
@@ -109,7 +111,7 @@ public sealed class ListSessionsByPatientQueryHandlerTests
             DateTimeOffset? since,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            foreach (var session in sessions)
+            foreach (var session in _sessions)
             {
                 yield return session;
                 await Task.Yield();
@@ -117,9 +119,10 @@ public sealed class ListSessionsByPatientQueryHandlerTests
         }
     }
 
-    private sealed class FakeTimeProvider(DateTime utcNow) : TimeProvider
+    private sealed class FakeTimeProvider : TimeProvider
     {
-        private readonly DateTime _utcNow = utcNow;
+        private readonly DateTime _utcNow;
+        public FakeTimeProvider(DateTime utcNow) => _utcNow = utcNow;
         public override DateTimeOffset GetUtcNow() => new(_utcNow, TimeSpan.Zero);
     }
 }

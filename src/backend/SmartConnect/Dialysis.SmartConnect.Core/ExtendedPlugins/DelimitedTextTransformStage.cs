@@ -197,21 +197,42 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         };
     }
 
-    private sealed record DelimitedTextOptions(
-        char Delimiter,
-        bool HasHeaderRow,
-        bool TrimWhitespace,
-        bool SkipBlankLines,
-        DelimitedTextOutputFormat OutputFormat)
+    private sealed record DelimitedTextOptions
     {
-        public static DelimitedTextOptions Default { get; } =
-            new(',', HasHeaderRow: true, TrimWhitespace: true, SkipBlankLines: true,
-                OutputFormat: DelimitedTextOutputFormat.Array);
+        public DelimitedTextOptions(char Delimiter,
+            bool HasHeaderRow,
+            bool TrimWhitespace,
+            bool SkipBlankLines,
+            DelimitedTextOutputFormat OutputFormat)
+        {
+            this.Delimiter = Delimiter;
+            this.HasHeaderRow = HasHeaderRow;
+            this.TrimWhitespace = TrimWhitespace;
+            this.SkipBlankLines = SkipBlankLines;
+            this.OutputFormat = OutputFormat;
+        }
+
+        public static DelimitedTextOptions Default { get; } = new(',', HasHeaderRow: true, TrimWhitespace: true, SkipBlankLines: true,
+            OutputFormat: DelimitedTextOutputFormat.Array);
+
+        public char Delimiter { get; init; }
+        public bool HasHeaderRow { get; init; }
+        public bool TrimWhitespace { get; init; }
+        public bool SkipBlankLines { get; init; }
+        public DelimitedTextOutputFormat OutputFormat { get; init; }
 
         /// <summary>Project onto the shared streaming helper's option type (no
         /// <see cref="OutputFormat"/>: that's a transform-stage concern).</summary>
         public DelimitedTextStreaming.Options ToHelperOptions() =>
             new(Delimiter, HasHeaderRow, TrimWhitespace, SkipBlankLines);
+        public void Deconstruct(out char Delimiter, out bool HasHeaderRow, out bool TrimWhitespace, out bool SkipBlankLines, out DelimitedTextOutputFormat OutputFormat)
+        {
+            Delimiter = this.Delimiter;
+            HasHeaderRow = this.HasHeaderRow;
+            TrimWhitespace = this.TrimWhitespace;
+            SkipBlankLines = this.SkipBlankLines;
+            OutputFormat = this.OutputFormat;
+        }
     }
 
     private enum DelimitedTextOutputFormat

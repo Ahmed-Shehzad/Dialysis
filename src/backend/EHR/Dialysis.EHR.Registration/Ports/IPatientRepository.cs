@@ -2,19 +2,70 @@ using Dialysis.EHR.Registration.Domain;
 
 namespace Dialysis.EHR.Registration.Ports;
 
-public sealed record PatientSearchCriteria(
-    string? Query,
-    string? FamilyName,
-    string? GivenName,
-    string? MedicalRecordNumber,
-    DateOnly? DateOfBirthFrom,
-    DateOnly? DateOfBirthTo,
-    string? SexAtBirthCode,
-    PatientStatus? Status,
-    int Skip,
-    int Take);
+public sealed record PatientSearchCriteria
+{
+    public PatientSearchCriteria(string? Query,
+        string? FamilyName,
+        string? GivenName,
+        string? MedicalRecordNumber,
+        DateOnly? DateOfBirthFrom,
+        DateOnly? DateOfBirthTo,
+        string? SexAtBirthCode,
+        PatientStatus? Status,
+        int Skip,
+        int Take)
+    {
+        this.Query = Query;
+        this.FamilyName = FamilyName;
+        this.GivenName = GivenName;
+        this.MedicalRecordNumber = MedicalRecordNumber;
+        this.DateOfBirthFrom = DateOfBirthFrom;
+        this.DateOfBirthTo = DateOfBirthTo;
+        this.SexAtBirthCode = SexAtBirthCode;
+        this.Status = Status;
+        this.Skip = Skip;
+        this.Take = Take;
+    }
+    public string? Query { get; init; }
+    public string? FamilyName { get; init; }
+    public string? GivenName { get; init; }
+    public string? MedicalRecordNumber { get; init; }
+    public DateOnly? DateOfBirthFrom { get; init; }
+    public DateOnly? DateOfBirthTo { get; init; }
+    public string? SexAtBirthCode { get; init; }
+    public PatientStatus? Status { get; init; }
+    public int Skip { get; init; }
+    public int Take { get; init; }
+    public void Deconstruct(out string? Query, out string? FamilyName, out string? GivenName, out string? MedicalRecordNumber, out DateOnly? DateOfBirthFrom, out DateOnly? DateOfBirthTo, out string? SexAtBirthCode, out PatientStatus? Status, out int Skip, out int Take)
+    {
+        Query = this.Query;
+        FamilyName = this.FamilyName;
+        GivenName = this.GivenName;
+        MedicalRecordNumber = this.MedicalRecordNumber;
+        DateOfBirthFrom = this.DateOfBirthFrom;
+        DateOfBirthTo = this.DateOfBirthTo;
+        SexAtBirthCode = this.SexAtBirthCode;
+        Status = this.Status;
+        Skip = this.Skip;
+        Take = this.Take;
+    }
+}
 
-public sealed record PatientSearchPage(IReadOnlyList<Patient> Items, int TotalCount);
+public sealed record PatientSearchPage
+{
+    public PatientSearchPage(IReadOnlyList<Patient> Items, int TotalCount)
+    {
+        this.Items = Items;
+        this.TotalCount = TotalCount;
+    }
+    public IReadOnlyList<Patient> Items { get; init; }
+    public int TotalCount { get; init; }
+    public void Deconstruct(out IReadOnlyList<Patient> Items, out int TotalCount)
+    {
+        Items = this.Items;
+        TotalCount = this.TotalCount;
+    }
+}
 
 public interface IPatientRepository
 {

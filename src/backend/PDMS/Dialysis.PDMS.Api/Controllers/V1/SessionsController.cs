@@ -19,8 +19,10 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/sessions")]
-public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
+public sealed class SessionsController : ControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    public SessionsController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<DialysisSessionListItem>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAsync(
@@ -28,7 +30,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var data = await gateway
+        var data = await _gateway
             .SendQueryAsync<ListSessionsQuery, IReadOnlyList<DialysisSessionListItem>>(
                 new ListSessionsQuery(activeOnly, take), cancellationToken)
             .ConfigureAwait(false);
@@ -48,7 +50,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         [FromQuery] int take = 20,
         CancellationToken cancellationToken = default)
     {
-        var data = await gateway
+        var data = await _gateway
             .SendQueryAsync<ListSessionsByPatientQuery, IReadOnlyList<DialysisSessionListItem>>(
                 new ListSessionsByPatientQuery(patientId, lookbackDays, take), cancellationToken)
             .ConfigureAwait(false);
@@ -64,7 +66,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
     {
         try
         {
-            var summary = await gateway
+            var summary = await _gateway
                 .SendQueryAsync<GetSessionSummaryQuery, SessionSummaryDto>(
                     new GetSessionSummaryQuery(sessionId), cancellationToken)
                 .ConfigureAwait(false);
@@ -83,7 +85,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         [FromQuery] int limit = 200,
         CancellationToken cancellationToken = default)
     {
-        var readings = await gateway
+        var readings = await _gateway
             .SendQueryAsync<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>(
                 new ListSessionReadingsQuery(sessionId, limit), cancellationToken)
             .ConfigureAwait(false);
@@ -96,7 +98,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         [FromBody] ScheduleSessionRequest body,
         CancellationToken cancellationToken)
     {
-        var id = await gateway
+        var id = await _gateway
             .SendCommandAsync<ScheduleSessionCommand, Guid>(
                 new ScheduleSessionCommand(
                     body.PatientId,
@@ -122,7 +124,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> StartAsync(Guid sessionId, CancellationToken cancellationToken)
     {
-        await gateway
+        await _gateway
             .SendCommandAsync<StartSessionCommand, Unit>(new StartSessionCommand(sessionId), cancellationToken)
             .ConfigureAwait(false);
         return NoContent();
@@ -135,7 +137,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         [FromBody] CompleteSessionRequest body,
         CancellationToken cancellationToken)
     {
-        await gateway
+        await _gateway
             .SendCommandAsync<CompleteSessionCommand, Unit>(
                 new CompleteSessionCommand(sessionId, body.AchievedUfVolumeLiters), cancellationToken)
             .ConfigureAwait(false);
@@ -149,7 +151,7 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
         [FromBody] AbortSessionRequest body,
         CancellationToken cancellationToken)
     {
-        await gateway
+        await _gateway
             .SendCommandAsync<AbortSessionCommand, Unit>(
                 new AbortSessionCommand(sessionId, body.ReasonCode), cancellationToken)
             .ConfigureAwait(false);
@@ -211,39 +213,129 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
             }
         }
 
-        var id = await gateway
+        var id = await _gateway
             .SendCommandAsync<RecordReadingCommand, Guid>(command, cancellationToken)
             .ConfigureAwait(false);
         return Created($"/api/v1.0/sessions/{sessionId}/readings/{id}", new { id });
     }
 
-    public sealed record ScheduleSessionRequest(
-        Guid PatientId,
-        DateTime ScheduledStartUtc,
-        string DialyzerModel,
-        int PrescribedDurationMinutes,
-        int BloodFlowRateMlPerMin,
-        int DialysateFlowRateMlPerMin,
-        decimal DialysatePotassiumMmolPerL,
-        decimal DialysateCalciumMmolPerL,
-        decimal DialysateSodiumMmolPerL,
-        decimal TargetUfVolumeLiters,
-        string AnticoagulationProtocolCode,
-        VascularAccessKind AccessKind,
-        string AccessSite,
-        DateOnly AccessEstablishedOn);
+    public sealed record ScheduleSessionRequest
+    {
+        public ScheduleSessionRequest(Guid PatientId,
+            DateTime ScheduledStartUtc,
+            string DialyzerModel,
+            int PrescribedDurationMinutes,
+            int BloodFlowRateMlPerMin,
+            int DialysateFlowRateMlPerMin,
+            decimal DialysatePotassiumMmolPerL,
+            decimal DialysateCalciumMmolPerL,
+            decimal DialysateSodiumMmolPerL,
+            decimal TargetUfVolumeLiters,
+            string AnticoagulationProtocolCode,
+            VascularAccessKind AccessKind,
+            string AccessSite,
+            DateOnly AccessEstablishedOn)
+        {
+            this.PatientId = PatientId;
+            this.ScheduledStartUtc = ScheduledStartUtc;
+            this.DialyzerModel = DialyzerModel;
+            this.PrescribedDurationMinutes = PrescribedDurationMinutes;
+            this.BloodFlowRateMlPerMin = BloodFlowRateMlPerMin;
+            this.DialysateFlowRateMlPerMin = DialysateFlowRateMlPerMin;
+            this.DialysatePotassiumMmolPerL = DialysatePotassiumMmolPerL;
+            this.DialysateCalciumMmolPerL = DialysateCalciumMmolPerL;
+            this.DialysateSodiumMmolPerL = DialysateSodiumMmolPerL;
+            this.TargetUfVolumeLiters = TargetUfVolumeLiters;
+            this.AnticoagulationProtocolCode = AnticoagulationProtocolCode;
+            this.AccessKind = AccessKind;
+            this.AccessSite = AccessSite;
+            this.AccessEstablishedOn = AccessEstablishedOn;
+        }
+        public Guid PatientId { get; init; }
+        public DateTime ScheduledStartUtc { get; init; }
+        public string DialyzerModel { get; init; }
+        public int PrescribedDurationMinutes { get; init; }
+        public int BloodFlowRateMlPerMin { get; init; }
+        public int DialysateFlowRateMlPerMin { get; init; }
+        public decimal DialysatePotassiumMmolPerL { get; init; }
+        public decimal DialysateCalciumMmolPerL { get; init; }
+        public decimal DialysateSodiumMmolPerL { get; init; }
+        public decimal TargetUfVolumeLiters { get; init; }
+        public string AnticoagulationProtocolCode { get; init; }
+        public VascularAccessKind AccessKind { get; init; }
+        public string AccessSite { get; init; }
+        public DateOnly AccessEstablishedOn { get; init; }
+        public void Deconstruct(out Guid patientId, out DateTime scheduledStartUtc, out string dialyzerModel, out int prescribedDurationMinutes, out int bloodFlowRateMlPerMin, out int dialysateFlowRateMlPerMin, out decimal dialysatePotassiumMmolPerL, out decimal dialysateCalciumMmolPerL, out decimal dialysateSodiumMmolPerL, out decimal targetUfVolumeLiters, out string anticoagulationProtocolCode, out VascularAccessKind accessKind, out string accessSite, out DateOnly accessEstablishedOn)
+        {
+            patientId = this.PatientId;
+            scheduledStartUtc = this.ScheduledStartUtc;
+            dialyzerModel = this.DialyzerModel;
+            prescribedDurationMinutes = this.PrescribedDurationMinutes;
+            bloodFlowRateMlPerMin = this.BloodFlowRateMlPerMin;
+            dialysateFlowRateMlPerMin = this.DialysateFlowRateMlPerMin;
+            dialysatePotassiumMmolPerL = this.DialysatePotassiumMmolPerL;
+            dialysateCalciumMmolPerL = this.DialysateCalciumMmolPerL;
+            dialysateSodiumMmolPerL = this.DialysateSodiumMmolPerL;
+            targetUfVolumeLiters = this.TargetUfVolumeLiters;
+            anticoagulationProtocolCode = this.AnticoagulationProtocolCode;
+            accessKind = this.AccessKind;
+            accessSite = this.AccessSite;
+            accessEstablishedOn = this.AccessEstablishedOn;
+        }
+    }
 
-    public sealed record CompleteSessionRequest(decimal AchievedUfVolumeLiters);
+    public sealed record CompleteSessionRequest
+    {
+        public CompleteSessionRequest(decimal AchievedUfVolumeLiters) => this.AchievedUfVolumeLiters = AchievedUfVolumeLiters;
+        public decimal AchievedUfVolumeLiters { get; init; }
+        public void Deconstruct(out decimal achievedUfVolumeLiters) => achievedUfVolumeLiters = this.AchievedUfVolumeLiters;
+    }
 
-    public sealed record AbortSessionRequest(string ReasonCode);
+    public sealed record AbortSessionRequest
+    {
+        public AbortSessionRequest(string ReasonCode) => this.ReasonCode = ReasonCode;
+        public string ReasonCode { get; init; }
+        public void Deconstruct(out string reasonCode) => reasonCode = this.ReasonCode;
+    }
 
-    public sealed record RecordReadingRequest(
-        int SystolicBloodPressure,
-        int DiastolicBloodPressure,
-        int HeartRateBpm,
-        decimal ArterialPressureMmHg,
-        decimal VenousPressureMmHg,
-        decimal UltrafiltrationRateMlPerHour,
-        decimal ConductivityMsPerCm,
-        string? Notes);
+    public sealed record RecordReadingRequest
+    {
+        public RecordReadingRequest(int SystolicBloodPressure,
+            int DiastolicBloodPressure,
+            int HeartRateBpm,
+            decimal ArterialPressureMmHg,
+            decimal VenousPressureMmHg,
+            decimal UltrafiltrationRateMlPerHour,
+            decimal ConductivityMsPerCm,
+            string? Notes)
+        {
+            this.SystolicBloodPressure = SystolicBloodPressure;
+            this.DiastolicBloodPressure = DiastolicBloodPressure;
+            this.HeartRateBpm = HeartRateBpm;
+            this.ArterialPressureMmHg = ArterialPressureMmHg;
+            this.VenousPressureMmHg = VenousPressureMmHg;
+            this.UltrafiltrationRateMlPerHour = UltrafiltrationRateMlPerHour;
+            this.ConductivityMsPerCm = ConductivityMsPerCm;
+            this.Notes = Notes;
+        }
+        public int SystolicBloodPressure { get; init; }
+        public int DiastolicBloodPressure { get; init; }
+        public int HeartRateBpm { get; init; }
+        public decimal ArterialPressureMmHg { get; init; }
+        public decimal VenousPressureMmHg { get; init; }
+        public decimal UltrafiltrationRateMlPerHour { get; init; }
+        public decimal ConductivityMsPerCm { get; init; }
+        public string? Notes { get; init; }
+        public void Deconstruct(out int systolicBloodPressure, out int diastolicBloodPressure, out int heartRateBpm, out decimal arterialPressureMmHg, out decimal venousPressureMmHg, out decimal ultrafiltrationRateMlPerHour, out decimal conductivityMsPerCm, out string? notes)
+        {
+            systolicBloodPressure = this.SystolicBloodPressure;
+            diastolicBloodPressure = this.DiastolicBloodPressure;
+            heartRateBpm = this.HeartRateBpm;
+            arterialPressureMmHg = this.ArterialPressureMmHg;
+            venousPressureMmHg = this.VenousPressureMmHg;
+            ultrafiltrationRateMlPerHour = this.UltrafiltrationRateMlPerHour;
+            conductivityMsPerCm = this.ConductivityMsPerCm;
+            notes = this.Notes;
+        }
+    }
 }

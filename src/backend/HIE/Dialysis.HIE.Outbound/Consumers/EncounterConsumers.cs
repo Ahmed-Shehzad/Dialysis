@@ -8,38 +8,56 @@ using Hl7.Fhir.Model;
 
 namespace Dialysis.HIE.Outbound.Consumers;
 
-public sealed class EncounterOpenedConsumer(OutboundQueueWriter writer, EncounterMapper mapper)
-    : IConsumer<EncounterOpenedIntegrationEvent>
+public sealed class EncounterOpenedConsumer : IConsumer<EncounterOpenedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly EncounterMapper _mapper;
+    public EncounterOpenedConsumer(OutboundQueueWriter writer, EncounterMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<EncounterOpenedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<EncounterOpenedIntegrationEvent, Encounter>)mapper,
+            (IFhirResourceMapper<EncounterOpenedIntegrationEvent, Encounter>)_mapper,
             ConsentScopes.Encounters,
             context.CancellationToken);
 }
 
-public sealed class EncounterClosedConsumer(OutboundQueueWriter writer, EncounterMapper mapper)
-    : IConsumer<EncounterClosedIntegrationEvent>
+public sealed class EncounterClosedConsumer : IConsumer<EncounterClosedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly EncounterMapper _mapper;
+    public EncounterClosedConsumer(OutboundQueueWriter writer, EncounterMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<EncounterClosedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<EncounterClosedIntegrationEvent, Encounter>)mapper,
+            (IFhirResourceMapper<EncounterClosedIntegrationEvent, Encounter>)_mapper,
             ConsentScopes.Encounters,
             context.CancellationToken);
 }
 
-public sealed class ClinicalNoteSignedConsumer(OutboundQueueWriter writer, ClinicalNoteMapper mapper)
-    : IConsumer<ClinicalNoteSignedIntegrationEvent>
+public sealed class ClinicalNoteSignedConsumer : IConsumer<ClinicalNoteSignedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly ClinicalNoteMapper _mapper;
+    public ClinicalNoteSignedConsumer(OutboundQueueWriter writer, ClinicalNoteMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<ClinicalNoteSignedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<ClinicalNoteSignedIntegrationEvent, DocumentReference>)mapper,
+            (IFhirResourceMapper<ClinicalNoteSignedIntegrationEvent, DocumentReference>)_mapper,
             ConsentScopes.ClinicalNotes,
             context.CancellationToken);
 }

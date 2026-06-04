@@ -4,14 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIE.Persistence.Repositories;
 
-public sealed class EfCompositionStore(HieDbContext db) : ICompositionStore
+public sealed class EfCompositionStore : ICompositionStore
 {
+    private readonly HieDbContext _db;
+    public EfCompositionStore(HieDbContext db) => _db = db;
     public Task AddAsync(Composition composition, CancellationToken cancellationToken = default) =>
-        db.Compositions.AddAsync(composition, cancellationToken).AsTask();
+        _db.Compositions.AddAsync(composition, cancellationToken).AsTask();
 
     public async Task<int> NextVersionAsync(Guid patientId, string archetypeId, CancellationToken cancellationToken = default)
     {
-        var max = await db.Compositions
+        var max = await _db.Compositions
             .Where(c => c.PatientId == patientId && c.ArchetypeId == archetypeId)
             .Select(c => (int?)c.Version)
             .MaxAsync(cancellationToken)

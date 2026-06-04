@@ -118,10 +118,11 @@ public sealed class MllpMaxConnectionsTests
         }
     }
 
-    private sealed class TestOptionsMonitor<T>(T value) : IOptionsMonitor<T>
+    private sealed class TestOptionsMonitor<T> : IOptionsMonitor<T>
         where T : class
     {
-        public T CurrentValue { get; } = value;
+        public TestOptionsMonitor(T value) => CurrentValue = value;
+        public T CurrentValue { get; }
         public T Get(string? name) => CurrentValue;
         public IDisposable? OnChange(Action<T, string?> listener) => null;
     }

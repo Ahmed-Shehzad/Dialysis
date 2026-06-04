@@ -5,10 +5,7 @@ namespace Dialysis.BuildingBlocks.Verifier;
 /// </summary>
 public sealed class ValidationContext<T>
 {
-    public ValidationContext(T instanceToValidate)
-    {
-        InstanceToValidate = instanceToValidate;
-    }
+    public ValidationContext(T instanceToValidate) => InstanceToValidate = instanceToValidate;
 
     public T InstanceToValidate { get; }
 }

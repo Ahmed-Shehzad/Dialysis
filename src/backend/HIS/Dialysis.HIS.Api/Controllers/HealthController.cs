@@ -8,10 +8,14 @@ namespace Dialysis.HIS.Api.Controllers;
 /// <summary>Host probe; not versioned so load balancers stay stable.</summary>
 [ApiController]
 [ApiVersionNeutral]
-public sealed class HealthController(IOptions<ApiVersioningOptions> apiVersioningOptions) : ControllerBase
+public sealed class HealthController : ControllerBase
 {
+    private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions;
+    /// <summary>Host probe; not versioned so load balancers stay stable.</summary>
+    public HealthController(IOptions<ApiVersioningOptions> apiVersioningOptions) => _apiVersioningOptions = apiVersioningOptions;
+
     private string DefaultApiVersionUrlSegment =>
-        apiVersioningOptions.Value.DefaultApiVersion.ToString();
+        _apiVersioningOptions.Value.DefaultApiVersion.ToString();
 
     [HttpGet("/health")]
     [ProducesResponseType(typeof(ResourceEnvelope<HealthStatusDto>), StatusCodes.Status200OK)]
@@ -28,5 +32,19 @@ public sealed class HealthController(IOptions<ApiVersioningOptions> apiVersionin
         return Ok(new ResourceEnvelope<HealthStatusDto>(data, links));
     }
 
-    public sealed record HealthStatusDto(string Status, string Module);
+    public sealed record HealthStatusDto
+    {
+        public HealthStatusDto(string Status, string Module)
+        {
+            this.Status = Status;
+            this.Module = Module;
+        }
+        public string Status { get; init; }
+        public string Module { get; init; }
+        public void Deconstruct(out string status, out string module)
+        {
+            status = this.Status;
+            module = this.Module;
+        }
+    }
 }

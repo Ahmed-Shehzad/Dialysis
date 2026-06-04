@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIE.Persistence.Repositories;
 
-public sealed class EfConsentRepository(HieDbContext db) : IConsentRepository
+public sealed class EfConsentRepository : IConsentRepository
 {
+    private readonly HieDbContext _db;
+    public EfConsentRepository(HieDbContext db) => _db = db;
     public async Task<ConsentRecord?> FindActiveAsync(Guid patientId, string partnerId, string scope, ConsentDirection direction, DateTime atUtc, CancellationToken cancellationToken = default)
     {
-        return await db.Consents
+        return await _db.Consents
             .Where(c => c.PatientId == patientId
                 && c.PartnerId == partnerId
                 && c.Scope == scope
@@ -25,7 +27,7 @@ public sealed class EfConsentRepository(HieDbContext db) : IConsentRepository
     {
         // v1: inbound consents are issued against an internal patient id; partners that haven't been matched
         // yet are allowed if a wildcard consent with PatientId = Guid.Empty exists for the (partner, scope).
-        return await db.Consents
+        return await _db.Consents
             .Where(c => c.PatientId == Guid.Empty
                 && c.PartnerId == partnerId
                 && c.Scope == scope
@@ -39,13 +41,13 @@ public sealed class EfConsentRepository(HieDbContext db) : IConsentRepository
     }
 
     public Task<ConsentRecord?> GetAsync(Guid consentId, CancellationToken cancellationToken = default) =>
-        db.Consents.FirstOrDefaultAsync(c => c.Id == consentId, cancellationToken);
+        _db.Consents.FirstOrDefaultAsync(c => c.Id == consentId, cancellationToken);
 
     public Task AddAsync(ConsentRecord consent, CancellationToken cancellationToken = default) =>
-        db.Consents.AddAsync(consent, cancellationToken).AsTask();
+        _db.Consents.AddAsync(consent, cancellationToken).AsTask();
 
     public async Task<IReadOnlyList<ConsentRecord>> ListForPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
-        await db.Consents
+        await _db.Consents
             .Where(c => c.PatientId == patientId)
             .OrderByDescending(c => c.EffectiveFromUtc)
             .ToListAsync(cancellationToken)

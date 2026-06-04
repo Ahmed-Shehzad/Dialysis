@@ -18,8 +18,15 @@ namespace Dialysis.HIS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/operations")]
-public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasControllerBase
+public sealed class OperationsController : HisHateoasControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    /// <summary>
+    /// RA: <em>Generic MIS</em> — staff, inventory, and billing-export queue at the dialysis facility.
+    /// Billing claims execute in the EHR module; HIS owns the queue/export-job trigger that fires
+    /// <c>BillingExportJobQueuedIntegrationEvent</c> for EHR to consume.
+    /// </summary>
+    public OperationsController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpPost("staff/{staffMemberId:guid}/primary-role")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> AssignStaffPrimaryRoleAsync(
@@ -27,7 +34,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
         [FromBody] AssignStaffRoleBody body,
         CancellationToken cancellationToken)
     {
-        await gateway
+        await _gateway
             .SendCommandAsync<AssignStaffPrimaryRoleCommand, Unit>(
                 new AssignStaffPrimaryRoleCommand(staffMemberId, body.RoleCode),
                 cancellationToken)
@@ -42,7 +49,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
         [FromBody] InventoryMovementBody body,
         CancellationToken cancellationToken)
     {
-        await gateway
+        await _gateway
             .SendCommandAsync<RecordInventoryMovementCommand, Unit>(
                 new RecordInventoryMovementCommand(inventoryItemId, body.DeltaQuantity),
                 cancellationToken)
@@ -57,7 +64,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
         [FromBody] SubmitBillingExportJobCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await gateway
+        var id = await _gateway
             .SendCommandAsync<SubmitBillingExportJobCommand, Guid>(command, cancellationToken)
             .ConfigureAwait(false);
         return CreatedResource(
@@ -71,7 +78,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBillingExportJobAsync(Guid id, CancellationToken cancellationToken)
     {
-        var dto = await gateway
+        var dto = await _gateway
             .SendQueryAsync<GetBillingExportJobByIdQuery, BillingExportJobStatusDto?>(
                 new GetBillingExportJobByIdQuery(id),
                 cancellationToken)
@@ -94,7 +101,7 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
     {
         try
         {
-            var rows = await gateway
+            var rows = await _gateway
                 .SendQueryAsync<ListBillingExportJobsQuery, IReadOnlyList<BillingExportJobRow>>(
                     new ListBillingExportJobsQuery(status, take),
                     cancellationToken)
@@ -107,9 +114,24 @@ public sealed class OperationsController(ICqrsGateway gateway) : HisHateoasContr
         }
     }
 
-    public sealed record AssignStaffRoleBody(string RoleCode);
+    public sealed record AssignStaffRoleBody
+    {
+        public AssignStaffRoleBody(string RoleCode) => this.RoleCode = RoleCode;
+        public string RoleCode { get; init; }
+        public void Deconstruct(out string roleCode) => roleCode = this.RoleCode;
+    }
 
-    public sealed record InventoryMovementBody(int DeltaQuantity);
+    public sealed record InventoryMovementBody
+    {
+        public InventoryMovementBody(int DeltaQuantity) => this.DeltaQuantity = DeltaQuantity;
+        public int DeltaQuantity { get; init; }
+        public void Deconstruct(out int deltaQuantity) => deltaQuantity = this.DeltaQuantity;
+    }
 
-    public sealed record SubmitBillingExportJobResponse(Guid Id);
+    public sealed record SubmitBillingExportJobResponse
+    {
+        public SubmitBillingExportJobResponse(Guid Id) => this.Id = Id;
+        public Guid Id { get; init; }
+        public void Deconstruct(out Guid id) => id = this.Id;
+    }
 }

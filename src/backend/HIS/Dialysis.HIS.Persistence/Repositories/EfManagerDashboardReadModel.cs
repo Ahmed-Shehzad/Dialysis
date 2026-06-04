@@ -8,25 +8,30 @@ namespace Dialysis.HIS.Persistence.Repositories;
 /// <summary>
 /// RA Fig. 6 — Generic MIS → Reporting. Aggregates facility-operations counts across the HIS DbContext.
 /// </summary>
-public sealed class EfManagerDashboardReadModel(HisDbContext db) : IManagerDashboardReadModel
+public sealed class EfManagerDashboardReadModel : IManagerDashboardReadModel
 {
+    private readonly HisDbContext _db;
+    /// <summary>
+    /// RA Fig. 6 — Generic MIS → Reporting. Aggregates facility-operations counts across the HIS DbContext.
+    /// </summary>
+    public EfManagerDashboardReadModel(HisDbContext db) => _db = db;
     public async Task<ManagerDashboardSnapshotDto> SnapshotAsync(string? reportFocus, CancellationToken cancellationToken = default)
     {
         var since = DateTime.UtcNow.AddHours(-24);
 
         var queuedSpec = new BillingExportJobByStatusSpecification(BillingExportJobStatus.Queued);
-        var queuedBilling = await db.BillingExportJobs
+        var queuedBilling = await _db.BillingExportJobs
             .AsNoTracking()
             .Where(queuedSpec.ToExpression())
             .CountAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var openQuality = await db.RaQualityWorkflowTasks
+        var openQuality = await _db.RaQualityWorkflowTasks
             .AsNoTracking()
             .CountAsync(t => t.ClosedAtUtc == null, cancellationToken)
             .ConfigureAwait(false);
 
-        var recentImports = await db.DataImportJobs
+        var recentImports = await _db.DataImportJobs
             .AsNoTracking()
             .CountAsync(j => j.SubmittedAtUtc >= since, cancellationToken)
             .ConfigureAwait(false);

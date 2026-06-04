@@ -4,7 +4,12 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.BuildingBlocks.Fhir.Smart;
 
-public sealed record SmartScopeRequirement(string Scope) : IAuthorizationRequirement;
+public sealed record SmartScopeRequirement : IAuthorizationRequirement
+{
+    public SmartScopeRequirement(string Scope) => this.Scope = Scope;
+    public string Scope { get; init; }
+    public void Deconstruct(out string Scope) => Scope = this.Scope;
+}
 
 /// <summary>
 /// Authorization handler that validates the caller JWT carries the required SMART scope. Optionally
@@ -45,9 +50,10 @@ public sealed class SmartScopeAuthorizationHandler : AuthorizationHandler<SmartS
     }
 }
 
-public sealed class SmartScopePolicyProvider(IOptions<SmartOnFhirOptions> options) : IAuthorizationPolicyProvider
+public sealed class SmartScopePolicyProvider : IAuthorizationPolicyProvider
 {
-    private readonly SmartOnFhirOptions _options = options.Value;
+    private readonly SmartOnFhirOptions _options;
+    public SmartScopePolicyProvider(IOptions<SmartOnFhirOptions> options) => _options = options.Value;
 
     public Task<AuthorizationPolicy> GetDefaultPolicyAsync()
         => Task.FromResult(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());

@@ -9,11 +9,22 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 /// none is registered. SMS cannot carry a Bundle, so a concise alert text is sent — the resource
 /// type + id and the topic, enough for the subscriber to fetch detail out-of-band.
 /// </summary>
-public sealed class SmsNotificationDispatcher(
-    IServiceProvider services,
-    ILogger<SmsNotificationDispatcher> logger) : ISubscriptionChannelDispatcher
+public sealed class SmsNotificationDispatcher : ISubscriptionChannelDispatcher
 {
     private int _missingNotifierLogged;
+    private readonly IServiceProvider _services;
+    private readonly ILogger<SmsNotificationDispatcher> _logger;
+    /// <summary>
+    /// SMS channel dispatcher. Delegates to a host-supplied <see cref="ISmsNotifier"/>; inert when
+    /// none is registered. SMS cannot carry a Bundle, so a concise alert text is sent — the resource
+    /// type + id and the topic, enough for the subscriber to fetch detail out-of-band.
+    /// </summary>
+    public SmsNotificationDispatcher(IServiceProvider services,
+        ILogger<SmsNotificationDispatcher> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
 
     public SubscriptionChannelType Channel => SubscriptionChannelType.Sms;
 
@@ -26,11 +37,11 @@ public sealed class SmsNotificationDispatcher(
         if (subscription.ChannelType != SubscriptionChannelType.Sms)
             return;
 
-        var notifier = services.GetService<ISmsNotifier>();
+        var notifier = _services.GetService<ISmsNotifier>();
         if (notifier is null)
         {
             if (Interlocked.Exchange(ref _missingNotifierLogged, 1) == 0)
-                logger.LogWarning("SMS subscription channel is inert: no ISmsNotifier is registered.");
+                _logger.LogWarning("SMS subscription channel is inert: no ISmsNotifier is registered.");
             return;
         }
 

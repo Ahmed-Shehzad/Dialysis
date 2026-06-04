@@ -81,13 +81,39 @@ public sealed class EmailAlertActionProvider : IAlertActionProvider
     }
 
     /// <summary>Per-message SMTP transport settings: host, port, TLS, optional credentials, timeout.</summary>
-    public sealed record SmtpTransportOptions(
-        string Host,
-        int Port,
-        bool EnableSsl,
-        string? Username,
-        string? Password,
-        int TimeoutSeconds);
+    public sealed record SmtpTransportOptions
+    {
+        /// <summary>Per-message SMTP transport settings: host, port, TLS, optional credentials, timeout.</summary>
+        public SmtpTransportOptions(string Host,
+            int Port,
+            bool EnableSsl,
+            string? Username,
+            string? Password,
+            int TimeoutSeconds)
+        {
+            this.Host = Host;
+            this.Port = Port;
+            this.EnableSsl = EnableSsl;
+            this.Username = Username;
+            this.Password = Password;
+            this.TimeoutSeconds = TimeoutSeconds;
+        }
+        public string Host { get; init; }
+        public int Port { get; init; }
+        public bool EnableSsl { get; init; }
+        public string? Username { get; init; }
+        public string? Password { get; init; }
+        public int TimeoutSeconds { get; init; }
+        public void Deconstruct(out string Host, out int Port, out bool EnableSsl, out string? Username, out string? Password, out int TimeoutSeconds)
+        {
+            Host = this.Host;
+            Port = this.Port;
+            EnableSsl = this.EnableSsl;
+            Username = this.Username;
+            Password = this.Password;
+            TimeoutSeconds = this.TimeoutSeconds;
+        }
+    }
 
     /// <summary>Indirection so tests can substitute a fake deliverer instead of opening a real SMTP socket.</summary>
     public interface ISmtpDeliverer

@@ -59,28 +59,30 @@ public sealed class EhrPatientFhirFeederTests
         Outputs: Array.Empty<ExportJobOutput>(),
         Error: null);
 
-    private sealed class InMemoryPatients(params Patient[] patients) : IPatientRepository
+    private sealed class InMemoryPatients : IPatientRepository
     {
+        private readonly Patient[] _patients;
+        public InMemoryPatients(params Patient[] patients) => _patients = patients;
         public void Add(Patient patient) => throw new NotSupportedException();
 
         public Task<Patient?> GetAsync(Guid id, CancellationToken cancellationToken = default)
-            => Task.FromResult(patients.FirstOrDefault(p => p.Id == id));
+            => Task.FromResult(_patients.FirstOrDefault(p => p.Id == id));
 
         public Task<Patient?> FindByMedicalRecordNumberAsync(string medicalRecordNumber, CancellationToken cancellationToken = default)
-            => Task.FromResult(patients.FirstOrDefault(p => p.MedicalRecordNumber == medicalRecordNumber));
+            => Task.FromResult(_patients.FirstOrDefault(p => p.MedicalRecordNumber == medicalRecordNumber));
 
         public Task<IReadOnlyList<Patient>> SearchAsync(string? nameFragment, int take, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<Patient>>([.. patients.Take(take)]);
+            => Task.FromResult<IReadOnlyList<Patient>>([.. _patients.Take(take)]);
 
         public Task<PatientSearchPage> SearchAsync(PatientSearchCriteria criteria, CancellationToken cancellationToken = default)
-            => Task.FromResult(new PatientSearchPage([.. patients], patients.Length));
+            => Task.FromResult(new PatientSearchPage([.. _patients], _patients.Length));
 
         public async IAsyncEnumerable<Patient> StreamAllAsync(
             DateTimeOffset? since,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             _ = since;
-            foreach (var p in patients)
+            foreach (var p in _patients)
             {
                 yield return p;
                 await Task.Yield();

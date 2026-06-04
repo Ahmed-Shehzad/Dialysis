@@ -14,27 +14,69 @@ namespace Dialysis.HIE.Documents.Features.UploadDocument;
 /// front end can stay on the existing application/json content-type (mirrors the file
 /// upload pattern already used by <c>NewChannelDialog</c>).
 /// </summary>
-public sealed record UploadDocumentCommand(
-    Guid PatientId,
-    string Kind,
-    string Title,
-    string MimeType,
-    string Base64Content,
-    string? LanguageCode,
-    string? Category,
-    string? CreatedBy)
-    : ICommand<Guid>, IPermissionedCommand
+public sealed record UploadDocumentCommand : ICommand<Guid>, IPermissionedCommand
 {
+    /// <summary>
+    /// Operator-driven admin upload of a clinical document. Payload is base64-encoded so the
+    /// front end can stay on the existing application/json content-type (mirrors the file
+    /// upload pattern already used by <c>NewChannelDialog</c>).
+    /// </summary>
+    public UploadDocumentCommand(Guid PatientId,
+        string Kind,
+        string Title,
+        string MimeType,
+        string Base64Content,
+        string? LanguageCode,
+        string? Category,
+        string? CreatedBy)
+    {
+        this.PatientId = PatientId;
+        this.Kind = Kind;
+        this.Title = Title;
+        this.MimeType = MimeType;
+        this.Base64Content = Base64Content;
+        this.LanguageCode = LanguageCode;
+        this.Category = Category;
+        this.CreatedBy = CreatedBy;
+    }
     public string RequiredPermission => HiePermissions.DocumentsUpload;
+    public Guid PatientId { get; init; }
+    public string Kind { get; init; }
+    public string Title { get; init; }
+    public string MimeType { get; init; }
+    public string Base64Content { get; init; }
+    public string? LanguageCode { get; init; }
+    public string? Category { get; init; }
+    public string? CreatedBy { get; init; }
+    public void Deconstruct(out Guid PatientId, out string Kind, out string Title, out string MimeType, out string Base64Content, out string? LanguageCode, out string? Category, out string? CreatedBy)
+    {
+        PatientId = this.PatientId;
+        Kind = this.Kind;
+        Title = this.Title;
+        MimeType = this.MimeType;
+        Base64Content = this.Base64Content;
+        LanguageCode = this.LanguageCode;
+        Category = this.Category;
+        CreatedBy = this.CreatedBy;
+    }
 }
 
-public sealed class UploadDocumentCommandHandler(
-    IDocumentReferenceRepository repository,
-    IDocumentBlobStore blobs,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock)
-    : ICommandHandler<UploadDocumentCommand, Guid>
+public sealed class UploadDocumentCommandHandler : ICommandHandler<UploadDocumentCommand, Guid>
 {
+    private readonly IDocumentReferenceRepository _repository;
+    private readonly IDocumentBlobStore _blobs;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    public UploadDocumentCommandHandler(IDocumentReferenceRepository repository,
+        IDocumentBlobStore blobs,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock)
+    {
+        _repository = repository;
+        _blobs = blobs;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+    }
     public async Task<Guid> HandleAsync(UploadDocumentCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -42,7 +84,7 @@ public sealed class UploadDocumentCommandHandler(
 
         var bytes = Convert.FromBase64String(request.Base64Content);
         var documentId = Guid.CreateVersion7();
-        var storageRef = await blobs.SaveAsync(documentId, request.MimeType, bytes, cancellationToken).ConfigureAwait(false);
+        var storageRef = await _blobs.SaveAsync(documentId, request.MimeType, bytes, cancellationToken).ConfigureAwait(false);
         var hash = Convert.ToHexString(SHA256.HashData(bytes));
 
         var pdfFlags = DetectPdfFlags(request.MimeType, bytes);
@@ -57,15 +99,15 @@ public sealed class UploadDocumentCommandHandler(
             contentHash: hash,
             size: bytes.LongLength,
             source: DocumentReferenceSource.AdminUpload,
-            createdAtUtc: clock.GetUtcNow().UtcDateTime,
+            createdAtUtc: _clock.GetUtcNow().UtcDateTime,
             createdBy: request.CreatedBy,
             category: request.Category,
             languageCode: request.LanguageCode,
             hasAcroForms: pdfFlags.acroForms,
             hasJavascript: pdfFlags.javascript);
 
-        repository.Add(document);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _repository.Add(document);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return document.Id;
     }
 

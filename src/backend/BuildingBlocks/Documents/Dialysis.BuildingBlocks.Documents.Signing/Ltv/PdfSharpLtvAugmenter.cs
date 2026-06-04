@@ -69,7 +69,7 @@ public sealed class PdfSharpLtvAugmenter
 
         if (evidence.ChainCertificates.Count > 0)
         {
-            dss.Elements["/Certs"] = BuildStreamArray(owner, evidence.ChainCertificates.Select(c => c.RawData).ToList());
+            dss.Elements["/Certs"] = BuildStreamArray(owner, [.. evidence.ChainCertificates.Select(c => c.RawData)]);
         }
         if (evidence.Crls.Count > 0)
         {

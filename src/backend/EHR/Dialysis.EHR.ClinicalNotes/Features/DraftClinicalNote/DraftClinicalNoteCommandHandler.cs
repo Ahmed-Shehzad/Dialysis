@@ -5,11 +5,16 @@ using Dialysis.EHR.ClinicalNotes.Ports;
 
 namespace Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 
-public sealed class DraftClinicalNoteCommandHandler(
-    IClinicalNoteRepository notes,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<DraftClinicalNoteCommand, Guid>
+public sealed class DraftClinicalNoteCommandHandler : ICommandHandler<DraftClinicalNoteCommand, Guid>
 {
+    private readonly IClinicalNoteRepository _notes;
+    private readonly IUnitOfWork _unitOfWork;
+    public DraftClinicalNoteCommandHandler(IClinicalNoteRepository notes,
+        IUnitOfWork unitOfWork)
+    {
+        _notes = notes;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(DraftClinicalNoteCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
@@ -22,8 +27,8 @@ public sealed class DraftClinicalNoteCommandHandler(
             request.Objective,
             request.Assessment,
             request.Plan);
-        notes.Add(note);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _notes.Add(note);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

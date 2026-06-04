@@ -139,10 +139,13 @@ app.MapGet(BffRoutes.Root, () => Results.Text(
 
 static string ResolveReturnUrl(string? requested, BffSpaOptions spa)
 {
-    if (string.IsNullOrWhiteSpace(requested)) return spa.DefaultReturnUrl;
+    if (string.IsNullOrWhiteSpace(requested))
+        return spa.DefaultReturnUrl;
     // Relative paths are always safe.
-    if (Uri.IsWellFormedUriString(requested, UriKind.Relative)) return requested;
-    if (!Uri.TryCreate(requested, UriKind.Absolute, out _)) return spa.DefaultReturnUrl;
+    if (Uri.IsWellFormedUriString(requested, UriKind.Relative))
+        return requested;
+    if (!Uri.TryCreate(requested, UriKind.Absolute, out _))
+        return spa.DefaultReturnUrl;
     foreach (var allowed in spa.AllowedReturnUrlPrefixes)
     {
         if (!string.IsNullOrWhiteSpace(allowed)
@@ -233,7 +236,8 @@ static string[] ExtractPermissions(IEnumerable<string> rawValues)
     var output = new HashSet<string>(StringComparer.Ordinal);
     foreach (var raw in rawValues)
     {
-        if (string.IsNullOrWhiteSpace(raw)) continue;
+        if (string.IsNullOrWhiteSpace(raw))
+            continue;
         var trimmed = raw.AsSpan().Trim();
         // Each claim value is either a JSON array literal (`["a","b"]`) when the mapper is
         // jsonType=JSON, or a single scalar string when scope mappers add one permission per
@@ -250,7 +254,8 @@ static string[] ExtractPermissions(IEnumerable<string> rawValues)
                     foreach (var element in doc.RootElement.EnumerateArray())
                     {
                         var value = element.GetString();
-                        if (!string.IsNullOrWhiteSpace(value)) output.Add(value);
+                        if (!string.IsNullOrWhiteSpace(value))
+                            output.Add(value);
                     }
                     continue;
                 }
@@ -262,7 +267,7 @@ static string[] ExtractPermissions(IEnumerable<string> rawValues)
         }
         output.Add(raw);
     }
-    return output.ToArray();
+    return [.. output];
 }
 
 if (enableHisProxy)

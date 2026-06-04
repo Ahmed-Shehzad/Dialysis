@@ -6,19 +6,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfBillingExportJobRepository(HisDbContext db) : IBillingExportJobRepository
+public sealed class EfBillingExportJobRepository : IBillingExportJobRepository
 {
-    public void Add(BillingExportJob job) => db.BillingExportJobs.Add(job);
+    private readonly HisDbContext _db;
+    public EfBillingExportJobRepository(HisDbContext db) => _db = db;
+    public void Add(BillingExportJob job) => _db.BillingExportJobs.Add(job);
 
     public Task<BillingExportJob?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.BillingExportJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
+        _db.BillingExportJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<BillingExportJob>> ListByStatusAsync(
         BillingExportJobStatus status,
         CancellationToken cancellationToken = default)
     {
         var spec = new BillingExportJobByStatusSpecification(status);
-        return await db.BillingExportJobs
+        return await _db.BillingExportJobs
             .AsNoTracking()
             .Where(spec.ToExpression())
             .ToListAsync(cancellationToken)
@@ -31,7 +33,7 @@ public sealed class EfBillingExportJobRepository(HisDbContext db) : IBillingExpo
         CancellationToken cancellationToken = default)
     {
         var bounded = Math.Clamp(take, 1, 500);
-        var query = db.BillingExportJobs.AsNoTracking();
+        var query = _db.BillingExportJobs.AsNoTracking();
         if (status is not null)
         {
             var spec = new BillingExportJobByStatusSpecification(status);

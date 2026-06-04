@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfInventoryRepository(HisDbContext db) : IInventoryRepository
+public sealed class EfInventoryRepository : IInventoryRepository
 {
+    private readonly HisDbContext _db;
+    public EfInventoryRepository(HisDbContext db) => _db = db;
     public Task<InventoryItem?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.InventoryItems.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        _db.InventoryItems.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
-    public void Update(InventoryItem item) => db.InventoryItems.Update(item);
+    public void Update(InventoryItem item) => _db.InventoryItems.Update(item);
 }

@@ -8,14 +8,22 @@ namespace Dialysis.DomainDrivenDesign.DomainEvents;
 /// in registration order. Failures are collected and re-thrown as <see cref="AggregateException"/>
 /// so one failing handler does not silently skip its siblings.
 /// </summary>
-public sealed class InMemoryDomainEventDispatcher(IServiceProvider serviceProvider) : IDomainEventDispatcher
+public sealed class InMemoryDomainEventDispatcher : IDomainEventDispatcher
 {
+    private readonly IServiceProvider _serviceProvider;
+    /// <summary>
+    /// Default <see cref="IDomainEventDispatcher"/> that resolves every registered
+    /// <see cref="IDomainEventHandler{TEvent}"/> for the runtime type of the event and invokes them
+    /// in registration order. Failures are collected and re-thrown as <see cref="AggregateException"/>
+    /// so one failing handler does not silently skip its siblings.
+    /// </summary>
+    public InMemoryDomainEventDispatcher(IServiceProvider serviceProvider) => _serviceProvider = serviceProvider;
     public async Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
 
         var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(domainEvent.GetType());
-        var handlers = serviceProvider.GetServices(handlerType);
+        var handlers = _serviceProvider.GetServices(handlerType);
 
         List<Exception>? failures = null;
         foreach (var handler in handlers)

@@ -21,15 +21,34 @@ namespace Dialysis.PDMS.Composition.Demo;
 /// committed. Adding readings as their own DbSet entries sidesteps that change-tracking edge
 /// case and keeps the ticker writing at 1Hz.
 /// </summary>
-public sealed class VitalsTickerService(IServiceProvider services, ILogger<VitalsTickerService> logger)
-    : BackgroundService
+public sealed class VitalsTickerService : BackgroundService
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<VitalsTickerService> _logger;
+    /// <summary>
+    /// Development-only background service. Every <see cref="_interval"/>, walks every in-progress
+    /// dialysis session and records a synthetic reading, then broadcasts via the SignalR broadcaster
+    /// so the live-vitals SPA chart moves during demos without human input. Bypasses the CQRS
+    /// authorization pipeline by design — the ticker is system automation, not a user action.
+    ///
+    /// Writes go directly to the <c>IntradialyticReadings</c> DbSet (not through the
+    /// <see cref="DialysisSession"/> aggregate's <c>RecordReading</c>). Mutating the eager-loaded
+    /// readings navigation triggers a spurious UPDATE on the parent row in EF Core's batch save
+    /// path that Npgsql reports as "0 rows affected", so every tick fails before any INSERT is
+    /// committed. Adding readings as their own DbSet entries sidesteps that change-tracking edge
+    /// case and keeps the ticker writing at 1Hz.
+    /// </summary>
+    public VitalsTickerService(IServiceProvider services, ILogger<VitalsTickerService> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(1);
     private static readonly Random _rng = new(8675309);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Vitals ticker started (every {Seconds}s).", _interval.TotalSeconds);
+        _logger.LogInformation("Vitals ticker started (every {Seconds}s).", _interval.TotalSeconds);
 
         try
         {
@@ -45,7 +64,7 @@ public sealed class VitalsTickerService(IServiceProvider services, ILogger<Vital
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Vitals ticker tick failed.");
+                _logger.LogWarning(ex, "Vitals ticker tick failed.");
             }
 
             try
@@ -58,7 +77,7 @@ public sealed class VitalsTickerService(IServiceProvider services, ILogger<Vital
 
     private async Task TickAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
+        using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PdmsDbContext>();
         var broadcaster = scope.ServiceProvider.GetRequiredService<IVitalsBroadcaster>();
         var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();

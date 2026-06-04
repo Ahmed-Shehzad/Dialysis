@@ -17,12 +17,20 @@ namespace Dialysis.HIS.Tests;
 /// abstract DbContext.
 /// </summary>
 [Collection(nameof(HisFixtureCollection))]
-public sealed class HisPatientEraserTests(HisApiWebApplicationFactory factory)
+public sealed class HisPatientEraserTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    /// <summary>
+    /// End-to-end smoke for the HIS contribution to the GDPR Art. 17 erasure pipeline. Exercises the
+    /// real <c>ExecuteUpdateAsync</c> path on Postgres (via the Testcontainer factory) so the
+    /// soft-delete shadow-column shape is verified against the actual provider, not just an
+    /// abstract DbContext.
+    /// </summary>
+    public HisPatientEraserTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Erase_Async_Soft_Deletes_Patient_Appointments_And_Reports_The_Count_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var patientId = Guid.CreateVersion7();
         var otherPatient = Guid.CreateVersion7();
@@ -59,7 +67,7 @@ public sealed class HisPatientEraserTests(HisApiWebApplicationFactory factory)
     [Fact]
     public async Task Erase_Async_Is_Idempotent_Returning_Zero_On_A_Second_Pass_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var patientId = Guid.CreateVersion7();
         var providerId = Guid.CreateVersion7();
@@ -81,7 +89,7 @@ public sealed class HisPatientEraserTests(HisApiWebApplicationFactory factory)
     [Fact]
     public async Task Erase_Async_Returns_Zero_For_A_Patient_With_No_State_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var sut = new HisPatientEraser(db, TimeProvider.System, NullLogger<HisPatientEraser>.Instance);
 

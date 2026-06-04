@@ -8,26 +8,38 @@ using Hl7.Fhir.Model;
 
 namespace Dialysis.HIE.Outbound.Consumers;
 
-public sealed class LabOrderPlacedConsumer(OutboundQueueWriter writer, LabOrderMapper mapper)
-    : IConsumer<LabOrderPlacedIntegrationEvent>
+public sealed class LabOrderPlacedConsumer : IConsumer<LabOrderPlacedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly LabOrderMapper _mapper;
+    public LabOrderPlacedConsumer(OutboundQueueWriter writer, LabOrderMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<LabOrderPlacedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<LabOrderPlacedIntegrationEvent, ServiceRequest>)mapper,
+            (IFhirResourceMapper<LabOrderPlacedIntegrationEvent, ServiceRequest>)_mapper,
             ConsentScopes.Labs,
             context.CancellationToken);
 }
 
-public sealed class LabResultReceivedConsumer(OutboundQueueWriter writer, LabResultMapper mapper)
-    : IConsumer<LabResultReceivedIntegrationEvent>
+public sealed class LabResultReceivedConsumer : IConsumer<LabResultReceivedIntegrationEvent>
 {
+    private readonly OutboundQueueWriter _writer;
+    private readonly LabResultMapper _mapper;
+    public LabResultReceivedConsumer(OutboundQueueWriter writer, LabResultMapper mapper)
+    {
+        _writer = writer;
+        _mapper = mapper;
+    }
     public System.Threading.Tasks.Task HandleAsync(ConsumeContext<LabResultReceivedIntegrationEvent> context) =>
-        writer.EnqueueAsync(
+        _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<LabResultReceivedIntegrationEvent, Observation>)mapper,
+            (IFhirResourceMapper<LabResultReceivedIntegrationEvent, Observation>)_mapper,
             ConsentScopes.Labs,
             context.CancellationToken);
 }

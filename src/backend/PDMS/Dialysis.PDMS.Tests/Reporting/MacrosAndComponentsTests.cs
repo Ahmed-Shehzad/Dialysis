@@ -61,12 +61,10 @@ public sealed class MacrosAndComponentsTests
     }
 
     [Fact]
-    public void Companion_Preview_Default_Port_Is_Stable()
-    {
+    public void Companion_Preview_Default_Port_Is_Stable() =>
         // QuestPDF.Companion ships listening on a fixed port; tests pin the default so a
         // bump in the underlying package is surfaced by the suite before it lands in dev.
         PdfCompanionPreview.DefaultPort.ShouldBe(12500);
-    }
 
     [Fact]
     public async Task Discharge_Letter_Surfaces_Drug_Allergies_As_Alert_Callout_Async()

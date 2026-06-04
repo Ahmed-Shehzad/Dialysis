@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class SmartConnectDbContext(DbContextOptions<SmartConnectDbContext> options)
-    : DbContext(options), IUnitOfWork
+public sealed class SmartConnectDbContext : DbContext, IUnitOfWork
 {
+    public SmartConnectDbContext(DbContextOptions<SmartConnectDbContext> options) : base(options)
+    {
+    }
     public DbSet<IntegrationFlowEntity> IntegrationFlows => Set<IntegrationFlowEntity>();
 
     public DbSet<MessageLedgerEntryEntity> MessageLedgerEntries => Set<MessageLedgerEntryEntity>();

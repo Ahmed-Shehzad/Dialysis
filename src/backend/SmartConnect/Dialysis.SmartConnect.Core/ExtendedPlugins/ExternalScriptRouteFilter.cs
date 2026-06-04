@@ -17,8 +17,24 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// match <see cref="JavascriptRouteFilter"/> so external scripts are drop-in equivalents
 /// of inline JS scripts.
 /// </summary>
-public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader, IServiceProvider? services = null) : IRouteFilter
+public sealed class ExternalScriptRouteFilter : IRouteFilter
 {
+    private readonly IExternalScriptLoader _scriptLoader;
+    private readonly IServiceProvider? _services;
+    /// <summary>
+    /// Route filter that loads its JavaScript body from an external URI (Mirth UG p279
+    /// "External Script Filter Rule"). Properties JSON:
+    /// <c>{"scriptUri":"file:///... | https://...","cacheTtlSeconds":60}</c>. Falls through to
+    /// <see cref="RouteFilterResult.Allow"/> when no <c>scriptUri</c> is set. Context bindings
+    /// (payloadText, metadata, correlationId, flowId, variable maps, $() walker, addAttachment)
+    /// match <see cref="JavascriptRouteFilter"/> so external scripts are drop-in equivalents
+    /// of inline JS scripts.
+    /// </summary>
+    public ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader, IServiceProvider? services = null)
+    {
+        _scriptLoader = scriptLoader;
+        _services = services;
+    }
     public const string KindValue = "external-script";
     public const string ParametersMetadataKey = JavascriptRouteFilter.ParametersMetadataKey;
 
@@ -37,7 +53,7 @@ public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader
             return RouteFilterResult.Allow();
         }
 
-        var script = await scriptLoader.LoadAsync(uri, ttl, cancellationToken).ConfigureAwait(false);
+        var script = await _scriptLoader.LoadAsync(uri, ttl, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(script))
         {
             return RouteFilterResult.Allow();
@@ -87,11 +103,11 @@ public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (services is null) return;
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        if (_services is null) return;
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
 
-        var store = services.GetService<IVariableMapStore>();
+        var store = _services.GetService<IVariableMapStore>();
         IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
@@ -106,10 +122,10 @@ public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        if (services is null) return;
-        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        if (_services is null) return;
+        var repo = _services.GetService<ICodeTemplateLibraryRepository>();
         if (repo is null) return;
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var current = accessor?.Current?.CurrentStageContext;
         var context = current == CodeTemplateContext.DestinationFilter
             ? CodeTemplateContext.DestinationFilter
@@ -119,7 +135,7 @@ public sealed class ExternalScriptRouteFilter(IExternalScriptLoader scriptLoader
 
     private void BindAddAttachment(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        var store = services?.GetService<IAttachmentStore>();
+        var store = _services?.GetService<IAttachmentStore>();
         AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
     }
 }

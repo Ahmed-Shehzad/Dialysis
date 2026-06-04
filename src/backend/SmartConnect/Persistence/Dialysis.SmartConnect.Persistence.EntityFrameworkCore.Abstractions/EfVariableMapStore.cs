@@ -3,12 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class EfVariableMapStore(SmartConnectDbContext db) : IVariableMapStore
+public sealed class EfVariableMapStore : IVariableMapStore
 {
+    private readonly SmartConnectDbContext _db;
+    public EfVariableMapStore(SmartConnectDbContext db) => _db = db;
     public async Task<string?> GetAsync(VariableMapScope scope, Guid? flowId, string key, CancellationToken cancellationToken = default)
     {
         var fid = flowId ?? Guid.Empty;
-        return await db.VariableMapEntries
+        return await _db.VariableMapEntries
             .Where(e => e.Scope == (int)scope && e.FlowId == fid && e.Key == key)
             .Select(e => e.Value)
             .FirstOrDefaultAsync(cancellationToken)
@@ -18,7 +20,7 @@ public sealed class EfVariableMapStore(SmartConnectDbContext db) : IVariableMapS
     public async Task SetAsync(VariableMapScope scope, Guid? flowId, string key, string value, CancellationToken cancellationToken = default)
     {
         var fid = flowId ?? Guid.Empty;
-        var existing = await db.VariableMapEntries
+        var existing = await _db.VariableMapEntries
             .FirstOrDefaultAsync(e => e.Scope == (int)scope && e.FlowId == fid && e.Key == key, cancellationToken)
             .ConfigureAwait(false);
 
@@ -28,7 +30,7 @@ public sealed class EfVariableMapStore(SmartConnectDbContext db) : IVariableMapS
         }
         else
         {
-            db.VariableMapEntries.Add(new VariableMapEntry
+            _db.VariableMapEntries.Add(new VariableMapEntry
             {
                 Id = Guid.NewGuid(),
                 Scope = (int)scope,
@@ -38,13 +40,13 @@ public sealed class EfVariableMapStore(SmartConnectDbContext db) : IVariableMapS
             });
         }
 
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyDictionary<string, string>> GetAllAsync(VariableMapScope scope, Guid? flowId, CancellationToken cancellationToken = default)
     {
         var fid = flowId ?? Guid.Empty;
-        return await db.VariableMapEntries
+        return await _db.VariableMapEntries
             .Where(e => e.Scope == (int)scope && e.FlowId == fid)
             .ToDictionaryAsync(e => e.Key, e => e.Value, cancellationToken)
             .ConfigureAwait(false);
@@ -53,7 +55,7 @@ public sealed class EfVariableMapStore(SmartConnectDbContext db) : IVariableMapS
     public async Task RemoveAsync(VariableMapScope scope, Guid? flowId, string key, CancellationToken cancellationToken = default)
     {
         var fid = flowId ?? Guid.Empty;
-        await db.VariableMapEntries
+        await _db.VariableMapEntries
             .Where(e => e.Scope == (int)scope && e.FlowId == fid && e.Key == key)
             .ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);

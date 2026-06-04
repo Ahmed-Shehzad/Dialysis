@@ -165,9 +165,15 @@ public sealed class HttpAuthenticationProviderTests
     /// Hand-rolled <see cref="HttpMessageHandler"/> so individual tests can script the response per
     /// request without dragging in a mocking library.
     /// </summary>
-    private sealed class ScriptedHandler(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> script) : HttpMessageHandler
+    private sealed class ScriptedHandler : HttpMessageHandler
     {
+        private readonly Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> _script;
+        /// <summary>
+        /// Hand-rolled <see cref="HttpMessageHandler"/> so individual tests can script the response per
+        /// request without dragging in a mocking library.
+        /// </summary>
+        public ScriptedHandler(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> script) => _script = script;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(script(request, cancellationToken));
+            Task.FromResult(_script(request, cancellationToken));
     }
 }

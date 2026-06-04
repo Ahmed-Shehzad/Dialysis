@@ -27,15 +27,47 @@ namespace Dialysis.EHR.Billing.Consumers;
 /// Both ack kinds are idempotent — re-delivery is detected by inspecting the existing
 /// claim's <see cref="Claim.Acknowledgements"/> history before appending.
 /// </summary>
-public sealed class Claim837AckConsumer(
-    IClaimRepository claims,
-    Edi999FunctionalAckParser ack999Parser,
-    Edi277CaAckParser ack277Parser,
-    IUnitOfWork unitOfWork,
-    TimeProvider clock,
-    ILogger<Claim837AckConsumer> logger)
-    : IConsumer<EdiAcknowledgementReceivedIntegrationEvent>
+public sealed class Claim837AckConsumer : IConsumer<EdiAcknowledgementReceivedIntegrationEvent>
 {
+    private readonly IClaimRepository _claims;
+    private readonly Edi999FunctionalAckParser _ack999Parser;
+    private readonly Edi277CaAckParser _ack277Parser;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _clock;
+    private readonly ILogger<Claim837AckConsumer> _logger;
+    /// <summary>
+    /// Listens for inbound EDI 837 acknowledgement payloads. SmartConnect routes both 999
+    /// functional acks and 277CA claim acks here via a single
+    /// <see cref="Hl7FhirResourceReceivedIntegrationEvent"/>-style envelope that carries the
+    /// raw byte payload plus a hint about which ack kind it represents.
+    ///
+    /// Routing decisions:
+    /// <list type="bullet">
+    ///   <item>The 999 carries the original group + transaction control numbers — we look the
+    ///         claim up by ExternalControlNumber (which we set to the GS control number on
+    ///         submit) and record a <see cref="ClaimAckKind.FunctionalAck999"/> row.</item>
+    ///   <item>The 277CA carries the original CLM01 — we look the claim up by its
+    ///         <see cref="Claim.Id"/> (CLM01 = claim id in N format) and record a
+    ///         <see cref="ClaimAckKind.ClaimAck277Ca"/> row per claim status block.</item>
+    /// </list>
+    ///
+    /// Both ack kinds are idempotent — re-delivery is detected by inspecting the existing
+    /// claim's <see cref="Claim.Acknowledgements"/> history before appending.
+    /// </summary>
+    public Claim837AckConsumer(IClaimRepository claims,
+        Edi999FunctionalAckParser ack999Parser,
+        Edi277CaAckParser ack277Parser,
+        IUnitOfWork unitOfWork,
+        TimeProvider clock,
+        ILogger<Claim837AckConsumer> logger)
+    {
+        _claims = claims;
+        _ack999Parser = ack999Parser;
+        _ack277Parser = ack277Parser;
+        _unitOfWork = unitOfWork;
+        _clock = clock;
+        _logger = logger;
+    }
     public async Task HandleAsync(ConsumeContext<EdiAcknowledgementReceivedIntegrationEvent> context)
     {
         var message = context.Message;
@@ -49,25 +81,25 @@ public sealed class Claim837AckConsumer(
                 await Handle277CaAsync(message, ct).ConfigureAwait(false);
                 break;
             default:
-                logger.LogWarning("Unknown ack kind {Kind}; ignoring.", message.AckKind);
+                _logger.LogWarning("Unknown ack kind {Kind}; ignoring.", message.AckKind);
                 return;
         }
-        await unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
     private async Task Handle999Async(EdiAcknowledgementReceivedIntegrationEvent message, CancellationToken ct)
     {
-        var parsed = ack999Parser.Parse(message.PayloadBytes);
+        var parsed = _ack999Parser.Parse(message.PayloadBytes);
         var controlNumber = parsed.OriginalGroupControlNumber ?? parsed.OriginalTransactionControlNumber;
         if (string.IsNullOrWhiteSpace(controlNumber))
         {
-            logger.LogWarning("999 ack {EventId} carries no control number; cannot correlate to a claim.", message.EventId);
+            _logger.LogWarning("999 ack {EventId} carries no control number; cannot correlate to a claim.", message.EventId);
             return;
         }
-        var claim = await claims.FindByExternalControlNumberAsync(controlNumber, ct).ConfigureAwait(false);
+        var claim = await _claims.FindByExternalControlNumberAsync(controlNumber, ct).ConfigureAwait(false);
         if (claim is null)
         {
-            logger.LogWarning("999 ack references control number {Control} but no matching claim was found.", controlNumber);
+            _logger.LogWarning("999 ack references control number {Control} but no matching claim was found.", controlNumber);
             return;
         }
         var verdict = parsed.Verdict switch
@@ -76,7 +108,7 @@ public sealed class Claim837AckConsumer(
             Edi999Verdict.AcceptedWithErrors => ClaimAckVerdict.AcceptedWithWarnings,
             _ => ClaimAckVerdict.Rejected,
         };
-        var receivedAt = clock.GetUtcNow().UtcDateTime;
+        var receivedAt = _clock.GetUtcNow().UtcDateTime;
         claim.RecordAcknowledgement(new ClaimAcknowledgement(
             id: Guid.CreateVersion7(),
             kind: ClaimAckKind.FunctionalAck999,
@@ -88,19 +120,19 @@ public sealed class Claim837AckConsumer(
 
     private async Task Handle277CaAsync(EdiAcknowledgementReceivedIntegrationEvent message, CancellationToken ct)
     {
-        var parsed = ack277Parser.Parse(message.PayloadBytes);
-        var receivedAt = clock.GetUtcNow().UtcDateTime;
+        var parsed = _ack277Parser.Parse(message.PayloadBytes);
+        var receivedAt = _clock.GetUtcNow().UtcDateTime;
         foreach (var status in parsed.ClaimStatuses)
         {
             if (!Guid.TryParseExact(status.OriginalClaimControlNumber, "N", out var claimId))
             {
-                logger.LogWarning("277CA references unparseable claim control number {Control}.", status.OriginalClaimControlNumber);
+                _logger.LogWarning("277CA references unparseable claim control number {Control}.", status.OriginalClaimControlNumber);
                 continue;
             }
-            var claim = await claims.GetAsync(claimId, ct).ConfigureAwait(false);
+            var claim = await _claims.GetAsync(claimId, ct).ConfigureAwait(false);
             if (claim is null)
             {
-                logger.LogWarning("277CA references claim {ClaimId} but it does not exist.", claimId);
+                _logger.LogWarning("277CA references claim {ClaimId} but it does not exist.", claimId);
                 continue;
             }
             var verdict = status.Verdict switch

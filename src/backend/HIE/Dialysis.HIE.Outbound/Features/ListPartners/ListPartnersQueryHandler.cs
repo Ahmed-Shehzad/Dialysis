@@ -4,14 +4,15 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.HIE.Outbound.Features.ListPartners;
 
-public sealed class ListPartnersQueryHandler(IOptionsMonitor<HiePartnersOptions> options)
-    : IQueryHandler<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>
+public sealed class ListPartnersQueryHandler : IQueryHandler<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>
 {
+    private readonly IOptionsMonitor<HiePartnersOptions> _options;
+    public ListPartnersQueryHandler(IOptionsMonitor<HiePartnersOptions> options) => _options = options;
     public Task<IReadOnlyList<PartnerStatusDto>> HandleAsync(
         ListPartnersQuery query,
         CancellationToken cancellationToken)
     {
-        var partners = options.CurrentValue.Partners;
+        var partners = _options.CurrentValue.Partners;
         IReadOnlyList<PartnerStatusDto> result =
         [
             .. partners

@@ -3,12 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfDeviceReadingRepository(HisDbContext db) : IDeviceReadingRepository
+public sealed class EfDeviceReadingRepository : IDeviceReadingRepository
 {
-    public void Add(DeviceReadingRecord record) => db.DeviceReadings.Add(record);
+    private readonly HisDbContext _db;
+    public EfDeviceReadingRepository(HisDbContext db) => _db = db;
+    public void Add(DeviceReadingRecord record) => _db.DeviceReadings.Add(record);
 
     public Task<Guid?> FindIdByExternalMessageIdAsync(string externalMessageId, CancellationToken cancellationToken = default) =>
-        db.DeviceReadings.AsNoTracking()
+        _db.DeviceReadings.AsNoTracking()
             .Where(d => d.ExternalMessageId == externalMessageId)
             .Select(d => (Guid?)d.Id)
             .FirstOrDefaultAsync(cancellationToken);

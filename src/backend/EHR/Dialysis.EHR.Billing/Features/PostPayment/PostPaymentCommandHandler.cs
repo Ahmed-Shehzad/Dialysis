@@ -5,12 +5,19 @@ using Dialysis.EHR.Billing.Ports;
 
 namespace Dialysis.EHR.Billing.Features.PostPayment;
 
-public sealed class PostPaymentCommandHandler(
-    IPaymentRepository payments,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : ICommandHandler<PostPaymentCommand, Guid>
+public sealed class PostPaymentCommandHandler : ICommandHandler<PostPaymentCommand, Guid>
 {
+    private readonly IPaymentRepository _payments;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public PostPaymentCommandHandler(IPaymentRepository payments,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _payments = payments;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(PostPaymentCommand request, CancellationToken cancellationToken)
     {
         var amount = new Money(request.Amount, request.CurrencyCode);
@@ -21,10 +28,10 @@ public sealed class PostPaymentCommandHandler(
             request.ClaimId,
             amount,
             request.Method,
-            timeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             request.ExternalReference);
-        payments.Add(payment);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _payments.Add(payment);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

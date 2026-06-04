@@ -14,12 +14,29 @@ namespace Dialysis.BuildingBlocks.ClinicianNotification.Senders;
 /// multiple webhook senders against multiple targets by adding distinct <see cref="WebhookSenderOptions"/>
 /// instances via keyed registration.
 /// </summary>
-public sealed class WebhookClinicianNotificationSender(
-    IHttpClientFactory httpClientFactory,
-    IOptions<WebhookSenderOptions> options,
-    ILogger<WebhookClinicianNotificationSender> logger) : IClinicianNotificationSender
+public sealed class WebhookClinicianNotificationSender : IClinicianNotificationSender
 {
-    private readonly WebhookSenderOptions _options = options.Value;
+    private readonly WebhookSenderOptions _options;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<WebhookClinicianNotificationSender> _logger;
+    /// <summary>
+    /// HTTP-webhook sender — POSTs the notification JSON to a configured endpoint. Every facility
+    /// has at least HTTPS egress, so this is the platform's always-on fallback channel: operators
+    /// can wire it to a paging service, a Slack / Teams incoming webhook, an in-house SMS gateway,
+    /// or any other webhook-compatible receiver without bringing in a heavy vendor SDK.
+    ///
+    /// Channel-code is fixed to <c>"webhook"</c> at composition. A single facility can register
+    /// multiple webhook senders against multiple targets by adding distinct <see cref="WebhookSenderOptions"/>
+    /// instances via keyed registration.
+    /// </summary>
+    public WebhookClinicianNotificationSender(IHttpClientFactory httpClientFactory,
+        IOptions<WebhookSenderOptions> options,
+        ILogger<WebhookClinicianNotificationSender> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _options = options.Value;
+    }
 
     public string ChannelCode => "webhook";
 
@@ -34,7 +51,7 @@ public sealed class WebhookClinicianNotificationSender(
 
         try
         {
-            using var client = httpClientFactory.CreateClient("clinician-notification-webhook");
+            using var client = _httpClientFactory.CreateClient("clinician-notification-webhook");
             using var response = await client.PostAsJsonAsync(_options.Url, new
             {
                 channel = request.Channel,
@@ -55,7 +72,7 @@ public sealed class WebhookClinicianNotificationSender(
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Clinician-notification webhook POST failed.");
+            _logger.LogWarning(ex, "Clinician-notification webhook POST failed.");
             return new ClinicianNotificationResult(false, null, ex.GetType().Name);
         }
     }

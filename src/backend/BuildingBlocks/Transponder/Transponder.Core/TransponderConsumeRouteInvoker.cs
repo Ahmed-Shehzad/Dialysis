@@ -2,9 +2,10 @@ using Dialysis.BuildingBlocks.Transponder.Serialization;
 
 namespace Dialysis.BuildingBlocks.Transponder;
 
-internal sealed class TransponderConsumeRouteInvoker(IEnumerable<IConsumeRouteContributor> contributors) : ITransponderConsumeRouteInvoker
+internal sealed class TransponderConsumeRouteInvoker : ITransponderConsumeRouteInvoker
 {
-    private readonly Dictionary<string, TransponderConsumeRouteEntry> _routes = Build(contributors);
+    private readonly Dictionary<string, TransponderConsumeRouteEntry> _routes;
+    public TransponderConsumeRouteInvoker(IEnumerable<IConsumeRouteContributor> contributors) => _routes = Build(contributors);
 
     private static Dictionary<string, TransponderConsumeRouteEntry> Build(IEnumerable<IConsumeRouteContributor> contributors)
     {

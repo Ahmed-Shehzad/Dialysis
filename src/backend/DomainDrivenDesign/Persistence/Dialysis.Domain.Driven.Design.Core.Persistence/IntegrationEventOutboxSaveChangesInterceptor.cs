@@ -23,9 +23,25 @@ namespace Dialysis.DomainDrivenDesign.Persistence;
 /// A separate hosted relay (<c>TransponderOutboxRelayHostedService</c>) drains unpublished rows
 /// and pushes them to the bus.
 /// </summary>
-public sealed class IntegrationEventOutboxSaveChangesInterceptor(
-    IMessageSerializer serializer) : SaveChangesInterceptor
+public sealed class IntegrationEventOutboxSaveChangesInterceptor : SaveChangesInterceptor
 {
+    private readonly IMessageSerializer _serializer;
+    /// <summary>
+    /// EF Core interceptor that drains <see cref="IIntegrationEvent"/> instances raised by tracked
+    /// aggregates and writes them as <see cref="TransponderOutboxMessageEntity"/> rows on the SAME
+    /// DbContext, BEFORE SaveChanges executes. Because the outbox rows go through the same transaction
+    /// as the aggregate writes, an aggregate is either committed alongside its integration events or
+    /// neither persists — the well-known transactional-outbox guarantee.
+    ///
+    /// Writes outbox rows by adding entities directly via <c>context.Set&lt;TransponderOutboxMessageEntity&gt;()</c>
+    /// rather than going through <c>ITransponderOutbox</c>. The latter would constructor-inject the
+    /// DbContext, which creates a DI cycle when the interceptor itself is resolved by the DbContext
+    /// options factory.
+    ///
+    /// A separate hosted relay (<c>TransponderOutboxRelayHostedService</c>) drains unpublished rows
+    /// and pushes them to the bus.
+    /// </summary>
+    public IntegrationEventOutboxSaveChangesInterceptor(IMessageSerializer serializer) => _serializer = serializer;
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -80,7 +96,7 @@ public sealed class IntegrationEventOutboxSaveChangesInterceptor(
         foreach (var integrationEvent in pending)
         {
             var type = integrationEvent.GetType();
-            var payload = serializer.Serialize(type, integrationEvent);
+            var payload = _serializer.Serialize(type, integrationEvent);
             outboxSet.Add(new TransponderOutboxMessageEntity
             {
                 Id = Guid.NewGuid(),

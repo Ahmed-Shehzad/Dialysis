@@ -5,12 +5,19 @@ using Dialysis.EHR.PatientPortal.Ports;
 
 namespace Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
 
-public sealed class SendSecureMessageCommandHandler(
-    ISecureMessageRepository messages,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : ICommandHandler<SendSecureMessageCommand, Guid>
+public sealed class SendSecureMessageCommandHandler : ICommandHandler<SendSecureMessageCommand, Guid>
 {
+    private readonly ISecureMessageRepository _messages;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public SendSecureMessageCommandHandler(ISecureMessageRepository messages,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _messages = messages;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(SendSecureMessageCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
@@ -22,9 +29,9 @@ public sealed class SendSecureMessageCommandHandler(
             request.Direction,
             request.Subject,
             request.Body,
-            timeProvider.GetUtcNow().UtcDateTime);
-        messages.Add(message);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            _timeProvider.GetUtcNow().UtcDateTime);
+        _messages.Add(message);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

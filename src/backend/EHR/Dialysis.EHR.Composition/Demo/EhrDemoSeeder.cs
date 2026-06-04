@@ -3,6 +3,7 @@ using Dialysis.EHR.PatientChart.Ports;
 using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Ports;
+using Dialysis.Module.Contracts.Demo;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,34 +17,36 @@ namespace Dialysis.EHR.Composition.Demo;
 /// to render. Runs only when <c>Ehr:Demo:Enabled=true</c>. Idempotent — re-running is a no-op
 /// once the well-known demo MRNs are present.
 /// </summary>
-public sealed class EhrDemoSeeder(IServiceProvider services, ILogger<EhrDemoSeeder> logger) : IHostedService
+public sealed class EhrDemoSeeder : IHostedService
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<EhrDemoSeeder> _logger;
+    /// <summary>
+    /// Development-only seeder. Populates the EHR DB with a small set of representative patients,
+    /// problems, allergies, medications, vitals and immunizations so the SPA demo has something
+    /// to render. Runs only when <c>Ehr:Demo:Enabled=true</c>. Idempotent — re-running is a no-op
+    /// once the well-known demo MRNs are present.
+    /// </summary>
+    public EhrDemoSeeder(IServiceProvider services, ILogger<EhrDemoSeeder> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
+
     /// <summary>
     /// Stable demo provider id surfaced to the SPA as the authoring provider for notes / encounters.
-    /// Kept fixed across restarts so existing notes keep their author.
+    /// Forwards to the shared <see cref="DemoDataCatalog"/> so every module agrees on the value.
     /// </summary>
-    public static readonly Guid DemoProviderId = new("00000000-0000-0000-0000-000000000001");
-
-    /// <summary>10-digit NPI carrying no real meaning; required to pass <see cref="Provider.Register"/> validation.</summary>
-    private const string DemoProviderNpi = "0000000001";
-
-    private static readonly (string Mrn, string Family, string Given, DateOnly Dob, string Sex)[] _demoPatients =
-    [
-        ("MRN-0001", "Khan",     "Aisha",    new DateOnly(1976, 4, 12),  "female"),
-        ("MRN-0002", "Schmidt",  "Daniel",   new DateOnly(1962, 9, 30),  "male"),
-        ("MRN-0003", "Okafor",   "Ngozi",    new DateOnly(1989, 1, 7),   "female"),
-        ("MRN-0004", "Tanaka",   "Hiroshi",  new DateOnly(1955, 11, 18), "male"),
-        ("MRN-0005", "Rivera",   "Sofia",    new DateOnly(1971, 6, 23),  "female"),
-    ];
+    public static Guid DemoProviderId => DemoDataCatalog.DemoProviderId;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
+        using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<EhrDbContext>();
 
         if (!await db.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false))
         {
-            logger.LogWarning("EHR demo seeder: database not reachable, skipping.");
+            _logger.LogWarning("EHR demo seeder: database not reachable, skipping.");
             return;
         }
 
@@ -53,7 +56,7 @@ public sealed class EhrDemoSeeder(IServiceProvider services, ILogger<EhrDemoSeed
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "EHR demo seeder: migrations failed, attempting seed against existing schema.");
+            _logger.LogWarning(ex, "EHR demo seeder: migrations failed, attempting seed against existing schema.");
         }
 
         var patients = scope.ServiceProvider.GetRequiredService<IPatientRepository>();
@@ -67,37 +70,38 @@ public sealed class EhrDemoSeeder(IServiceProvider services, ILogger<EhrDemoSeed
         // the authoring provider until real auth-claim → provider-id mapping lands. Stable
         // across restarts so existing notes / encounters keep their author.
         var demoProvider = await providers
-            .FindByNpiAsync(DemoProviderNpi, cancellationToken)
+            .FindByNpiAsync(DemoDataCatalog.DemoProviderNpi, cancellationToken)
             .ConfigureAwait(false);
         if (demoProvider is null)
         {
             providers.Add(Provider.Register(
-                DemoProviderId,
-                DemoProviderNpi,
+                DemoDataCatalog.DemoProviderId,
+                DemoDataCatalog.DemoProviderNpi,
                 new HumanName("Demo", "Provider"),
                 ProviderKind.Physician,
                 specialtyCode: "163WN0300X",
                 licenseNumber: null));
         }
 
+        var demoPatients = DemoDataCatalog.Patients;
         var existing = await db.Patients
-            .Where(p => _demoPatients.Select(d => d.Mrn).Contains(p.MedicalRecordNumber))
+            .Where(p => demoPatients.Select(d => d.Mrn).Contains(p.MedicalRecordNumber))
             .Select(p => p.MedicalRecordNumber)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var seededAny = demoProvider is null;
-        foreach (var (mrn, family, given, dob, sex) in _demoPatients)
+        foreach (var demo in demoPatients)
         {
-            if (existing.Contains(mrn)) continue;
+            if (existing.Contains(demo.Mrn)) continue;
 
             var patient = Patient.Register(
-                Guid.CreateVersion7(),
-                mrn,
-                new HumanName(family, given),
-                dob,
-                sex,
-                preferredLanguageCode: "en-US");
+                demo.Id,
+                demo.Mrn,
+                new HumanName(demo.Family, demo.Given),
+                demo.Dob,
+                demo.Sex,
+                preferredLanguageCode: demo.Language);
             patients.Add(patient);
 
             problems.Add(ProblemListItem.Record(
@@ -134,7 +138,7 @@ public sealed class EhrDemoSeeder(IServiceProvider services, ILogger<EhrDemoSeed
         if (seededAny)
         {
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            logger.LogInformation("EHR demo seeder: seeded {Count} demo patients.", _demoPatients.Length - existing.Count);
+            _logger.LogInformation("EHR demo seeder: seeded {Count} demo patients.", demoPatients.Count - existing.Count);
         }
     }
 

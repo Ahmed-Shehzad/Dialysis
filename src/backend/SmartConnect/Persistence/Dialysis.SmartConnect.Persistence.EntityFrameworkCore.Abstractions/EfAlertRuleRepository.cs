@@ -9,26 +9,32 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 /// EF Core <see cref="IAlertRuleRepository"/>. Each rule's <c>EnabledFlowIds</c>, error patterns and
 /// action slots live as JSON columns — low cardinality and admin-only, so no relational decomposition.
 /// </summary>
-public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRuleRepository
+public sealed class EfAlertRuleRepository : IAlertRuleRepository
 {
+    private readonly SmartConnectDbContext _db;
+    /// <summary>
+    /// EF Core <see cref="IAlertRuleRepository"/>. Each rule's <c>EnabledFlowIds</c>, error patterns and
+    /// action slots live as JSON columns — low cardinality and admin-only, so no relational decomposition.
+    /// </summary>
+    public EfAlertRuleRepository(SmartConnectDbContext db) => _db = db;
     private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = null };
 
     public async Task<IReadOnlyList<AlertRule>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var rows = await db.AlertRules.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await _db.AlertRules.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         return [.. rows.Select(ToDomain)];
     }
 
     public async Task<AlertRule?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var row = await db.AlertRules.AsNoTracking()
+        var row = await _db.AlertRules.AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken).ConfigureAwait(false);
         return row is null ? null : ToDomain(row);
     }
 
     public async Task<IReadOnlyList<AlertRule>> GetEnabledAsync(CancellationToken cancellationToken = default)
     {
-        var rows = await db.AlertRules.AsNoTracking()
+        var rows = await _db.AlertRules.AsNoTracking()
             .Where(r => r.Enabled)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return [.. rows.Select(ToDomain)];
@@ -38,7 +44,7 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
     {
         ArgumentNullException.ThrowIfNull(rule);
 
-        var existing = await db.AlertRules.FirstOrDefaultAsync(r => r.Id == rule.Id, cancellationToken).ConfigureAwait(false);
+        var existing = await _db.AlertRules.FirstOrDefaultAsync(r => r.Id == rule.Id, cancellationToken).ConfigureAwait(false);
         var enabledFlowIdsJson = JsonSerializer.Serialize(rule.EnabledFlowIds ?? (IReadOnlyList<Guid>)Array.Empty<Guid>(), _jsonOpts);
         var patternsJson = JsonSerializer.Serialize(rule.ErrorPatterns, _jsonOpts);
         var actionsJson = JsonSerializer.Serialize(rule.Actions, _jsonOpts);
@@ -47,7 +53,7 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
 
         if (existing is null)
         {
-            db.AlertRules.Add(new AlertRuleEntity
+            _db.AlertRules.Add(new AlertRuleEntity
             {
                 Id = rule.Id,
                 Name = rule.Name,
@@ -73,16 +79,16 @@ public sealed class EfAlertRuleRepository(SmartConnectDbContext db) : IAlertRule
             existing.Revision = rule.Revision;
             existing.LastModifiedUtc = modifiedUtc;
         }
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var existing = await db.AlertRules.FirstOrDefaultAsync(r => r.Id == id, cancellationToken).ConfigureAwait(false);
+        var existing = await _db.AlertRules.FirstOrDefaultAsync(r => r.Id == id, cancellationToken).ConfigureAwait(false);
         if (existing is null)
             return;
-        db.AlertRules.Remove(existing);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.AlertRules.Remove(existing);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static AlertRule ToDomain(AlertRuleEntity entity)

@@ -5,14 +5,20 @@ using Dialysis.HIS.RaCapabilities.Ports;
 
 namespace Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
 
-public sealed class RegisterEhrDocumentExchangeCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
-    : ICommandHandler<RegisterEhrDocumentExchangeCommand, Guid>
+public sealed class RegisterEhrDocumentExchangeCommandHandler : ICommandHandler<RegisterEhrDocumentExchangeCommand, Guid>
 {
+    private readonly IRaCapabilityCommandStore _store;
+    private readonly IUnitOfWork _unitOfWork;
+    public RegisterEhrDocumentExchangeCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
+    {
+        _store = store;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RegisterEhrDocumentExchangeCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
         var at = request.ExchangedAtUtc ?? DateTime.UtcNow;
-        store.AddEhrDocumentExchangeRecord(
+        _store.AddEhrDocumentExchangeRecord(
             new RaEhrDocumentExchangeRecord
             {
                 Id = id,
@@ -22,7 +28,7 @@ public sealed class RegisterEhrDocumentExchangeCommandHandler(IRaCapabilityComma
                 ExternalUri = request.ExternalUri.Trim(),
                 ExchangedAtUtc = at,
             });
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

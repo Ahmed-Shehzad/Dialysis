@@ -64,16 +64,25 @@ public sealed class ClinicianNotificationDispatcherTests
         Priority: NotificationPriority.Critical,
         Metadata: new Dictionary<string, string>());
 
-    private sealed class StubSender(string channel, bool succeed, string name) : IClinicianNotificationSender
+    private sealed class StubSender : IClinicianNotificationSender
     {
-        public string ChannelCode => channel;
+        private readonly string _channel;
+        private readonly bool _succeed;
+        private readonly string _name;
+        public StubSender(string channel, bool succeed, string name)
+        {
+            _channel = channel;
+            _succeed = succeed;
+            _name = name;
+        }
+        public string ChannelCode => _channel;
         public bool WasCalled { get; private set; }
         public Task<ClinicianNotificationResult> SendAsync(ClinicianNotificationRequest request, CancellationToken cancellationToken)
         {
             WasCalled = true;
-            return Task.FromResult(succeed
-                ? new ClinicianNotificationResult(true, $"{name}-id", null)
-                : new ClinicianNotificationResult(false, null, $"{name}-failed"));
+            return Task.FromResult(_succeed
+                ? new ClinicianNotificationResult(true, $"{_name}-id", null)
+                : new ClinicianNotificationResult(false, null, $"{_name}-failed"));
         }
     }
 }

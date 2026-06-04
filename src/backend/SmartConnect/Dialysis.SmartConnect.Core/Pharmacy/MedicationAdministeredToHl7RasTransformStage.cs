@@ -17,8 +17,24 @@ namespace Dialysis.SmartConnect.Pharmacy;
 /// passes through unchanged so a downstream route can handle it — mirroring
 /// <c>Hl7V2ToFhirTransformStage</c>.
 /// </summary>
-public sealed class MedicationAdministeredToHl7RasTransformStage(TimeProvider clock) : ITransformStage
+public sealed class MedicationAdministeredToHl7RasTransformStage : ITransformStage
 {
+    private readonly TimeProvider _clock;
+    /// <summary>
+    /// Transform stage that turns an upstream <c>MedicationAdministeredIntegrationEvent</c> (carried
+    /// as a JSON payload) into an HL7 v2.5 <c>RAS^O17</c> pharmacy-administration message, ready for
+    /// MLLP dispatch through <c>TcpOutboundAdapter</c> to an external pharmacy system.
+    ///
+    /// Decoupling note: the stage deserialises into a local <see cref="EventDto"/> rather than
+    /// referencing the PDMS contracts assembly — SmartConnect ships as a standalone NuGet package and
+    /// must not take a module dependency. Property matching is case-insensitive so it tolerates either
+    /// the PascalCase Transponder envelope or a camelCase re-serialisation.
+    ///
+    /// Fail-soft: a payload that isn't the expected JSON shape (missing medication code, unparseable)
+    /// passes through unchanged so a downstream route can handle it — mirroring
+    /// <c>Hl7V2ToFhirTransformStage</c>.
+    /// </summary>
+    public MedicationAdministeredToHl7RasTransformStage(TimeProvider clock) => _clock = clock;
     public const string KindValue = "medication.administered.to.hl7-ras";
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -69,7 +85,7 @@ public sealed class MedicationAdministeredToHl7RasTransformStage(TimeProvider cl
             ? Guid.NewGuid().ToString("N")
             : message.CorrelationId;
 
-        var wire = Hl7V2RasO17Builder.Build(frame, controlId, clock.GetUtcNow().UtcDateTime);
+        var wire = Hl7V2RasO17Builder.Build(frame, controlId, _clock.GetUtcNow().UtcDateTime);
         return message.CloneWithPayload(Encoding.UTF8.GetBytes(wire), PayloadFormat.Utf8Text);
     }
 

@@ -57,14 +57,49 @@ public sealed class ReferenceArchitectureController : HisHateoasControllerBase
         return OkResource(catalog);
     }
 
-    public sealed record ReferenceArchitectureCatalogDto(
-        string Paper,
-        string Doi,
-        IReadOnlyList<RaModuleDto> Modules);
+    public sealed record ReferenceArchitectureCatalogDto
+    {
+        public ReferenceArchitectureCatalogDto(string Paper,
+            string Doi,
+            IReadOnlyList<RaModuleDto> Modules)
+        {
+            this.Paper = Paper;
+            this.Doi = Doi;
+            this.Modules = Modules;
+        }
+        public string Paper { get; init; }
+        public string Doi { get; init; }
+        public IReadOnlyList<RaModuleDto> Modules { get; init; }
+        public void Deconstruct(out string Paper, out string Doi, out IReadOnlyList<RaModuleDto> Modules)
+        {
+            Paper = this.Paper;
+            Doi = this.Doi;
+            Modules = this.Modules;
+        }
+    }
 
-    public sealed record RaModuleDto(
-        string Code,
-        string Summary,
-        string ApiRoutePrefix,
-        bool Implemented);
+    public sealed record RaModuleDto
+    {
+        public RaModuleDto(string Code,
+            string Summary,
+            string ApiRoutePrefix,
+            bool Implemented)
+        {
+            this.Code = Code;
+            this.Summary = Summary;
+            this.ApiRoutePrefix = ApiRoutePrefix;
+            this.Implemented = Implemented;
+        }
+        public string Code { get; init; }
+        public string Summary { get; init; }
+        public string ApiRoutePrefix { get; init; }
+        public bool Implemented { get; init; }
+        public void Deconstruct(out string Code, out string Summary, out string ApiRoutePrefix, out bool Implemented)
+        {
+            Code = this.Code;
+            Summary = this.Summary;
+            ApiRoutePrefix = this.ApiRoutePrefix;
+            Implemented = this.Implemented;
+        }
+    }
 }

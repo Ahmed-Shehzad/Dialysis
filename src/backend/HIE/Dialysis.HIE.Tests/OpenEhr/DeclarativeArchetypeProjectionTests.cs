@@ -140,10 +140,11 @@ public sealed class DeclarativeArchetypeProjectionTests
         string Project(TResource resource);
     }
 
-    private sealed class ProjectionAdapter<TResource>(DeclarativeArchetypeProjection<TResource> inner)
-        : IArchetypeProjectionWrapper<TResource>
+    private sealed class ProjectionAdapter<TResource> : IArchetypeProjectionWrapper<TResource>
         where TResource : Resource
     {
-        public string Project(TResource resource) => inner.Project(resource);
+        private readonly DeclarativeArchetypeProjection<TResource> _inner;
+        public ProjectionAdapter(DeclarativeArchetypeProjection<TResource> inner) => _inner = inner;
+        public string Project(TResource resource) => _inner.Project(resource);
     }
 }

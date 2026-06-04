@@ -8,12 +8,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class BillingExportJobQueuedDomainEventHandlerTests(HisApiWebApplicationFactory factory)
+public sealed class BillingExportJobQueuedDomainEventHandlerTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public BillingExportJobQueuedDomainEventHandlerTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Submitbillingexportjob_Records_Audit_Via_Domain_Event_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 

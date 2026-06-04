@@ -37,7 +37,30 @@ public interface IAcroFormProcessor
 /// applied. Callers persist the bytes and surface the unknowns in the UI so the operator
 /// knows their input was partially ignored.
 /// </summary>
-public sealed record AcroFormFillResult(
-    byte[] FilledBytes,
-    IReadOnlyList<string> FilledFieldNames,
-    IReadOnlyList<string> UnknownFields);
+public sealed record AcroFormFillResult
+{
+    /// <summary>
+    /// Returned by <see cref="IAcroFormProcessor.FillFormValuesAsync"/>. <see cref="FilledBytes"/>
+    /// is the new PDF; <see cref="UnknownFields"/> lists keys from the caller's dictionary that
+    /// don't exist in the PDF; <see cref="FilledFieldNames"/> lists the keys that were actually
+    /// applied. Callers persist the bytes and surface the unknowns in the UI so the operator
+    /// knows their input was partially ignored.
+    /// </summary>
+    public AcroFormFillResult(byte[] FilledBytes,
+        IReadOnlyList<string> FilledFieldNames,
+        IReadOnlyList<string> UnknownFields)
+    {
+        this.FilledBytes = FilledBytes;
+        this.FilledFieldNames = FilledFieldNames;
+        this.UnknownFields = UnknownFields;
+    }
+    public byte[] FilledBytes { get; init; }
+    public IReadOnlyList<string> FilledFieldNames { get; init; }
+    public IReadOnlyList<string> UnknownFields { get; init; }
+    public void Deconstruct(out byte[] FilledBytes, out IReadOnlyList<string> FilledFieldNames, out IReadOnlyList<string> UnknownFields)
+    {
+        FilledBytes = this.FilledBytes;
+        FilledFieldNames = this.FilledFieldNames;
+        UnknownFields = this.UnknownFields;
+    }
+}

@@ -84,11 +84,30 @@ public enum Edi999Verdict
     Rejected = 2,
 }
 
-public sealed record Edi999AckResult(
-    Edi999Verdict Verdict,
-    string? OriginalGroupControlNumber,
-    string? OriginalTransactionControlNumber,
-    IReadOnlyList<string> Errors);
+public sealed record Edi999AckResult
+{
+    public Edi999AckResult(Edi999Verdict Verdict,
+        string? OriginalGroupControlNumber,
+        string? OriginalTransactionControlNumber,
+        IReadOnlyList<string> Errors)
+    {
+        this.Verdict = Verdict;
+        this.OriginalGroupControlNumber = OriginalGroupControlNumber;
+        this.OriginalTransactionControlNumber = OriginalTransactionControlNumber;
+        this.Errors = Errors;
+    }
+    public Edi999Verdict Verdict { get; init; }
+    public string? OriginalGroupControlNumber { get; init; }
+    public string? OriginalTransactionControlNumber { get; init; }
+    public IReadOnlyList<string> Errors { get; init; }
+    public void Deconstruct(out Edi999Verdict Verdict, out string? OriginalGroupControlNumber, out string? OriginalTransactionControlNumber, out IReadOnlyList<string> Errors)
+    {
+        Verdict = this.Verdict;
+        OriginalGroupControlNumber = this.OriginalGroupControlNumber;
+        OriginalTransactionControlNumber = this.OriginalTransactionControlNumber;
+        Errors = this.Errors;
+    }
+}
 
 /// <summary>
 /// X12 declares its delimiters in the first ISA segment: position 4 = element separator,
@@ -96,8 +115,20 @@ public sealed record Edi999AckResult(
 /// honour the actual declared delimiters rather than hard-coding <c>~</c> / <c>*</c>
 /// because some clearinghouses send different conventions.
 /// </summary>
-internal readonly record struct Edi999Delimiters(char ElementSeparator, char CompositeSeparator, char SegmentTerminator)
+internal readonly record struct Edi999Delimiters
 {
+    /// <summary>
+    /// X12 declares its delimiters in the first ISA segment: position 4 = element separator,
+    /// position 105 = component-element separator, position 106 = segment terminator. We
+    /// honour the actual declared delimiters rather than hard-coding <c>~</c> / <c>*</c>
+    /// because some clearinghouses send different conventions.
+    /// </summary>
+    public Edi999Delimiters(char ElementSeparator, char CompositeSeparator, char SegmentTerminator)
+    {
+        this.ElementSeparator = ElementSeparator;
+        this.CompositeSeparator = CompositeSeparator;
+        this.SegmentTerminator = SegmentTerminator;
+    }
     public static Edi999Delimiters Probe(string text)
     {
         if (text.Length < 106 || !text.StartsWith("ISA", StringComparison.Ordinal))
@@ -109,4 +140,13 @@ internal readonly record struct Edi999Delimiters(char ElementSeparator, char Com
     }
 
     public static Edi999Delimiters Default { get; } = new('*', ':', '~');
+    public char ElementSeparator { get; init; }
+    public char CompositeSeparator { get; init; }
+    public char SegmentTerminator { get; init; }
+    public void Deconstruct(out char ElementSeparator, out char CompositeSeparator, out char SegmentTerminator)
+    {
+        ElementSeparator = this.ElementSeparator;
+        CompositeSeparator = this.CompositeSeparator;
+        SegmentTerminator = this.SegmentTerminator;
+    }
 }

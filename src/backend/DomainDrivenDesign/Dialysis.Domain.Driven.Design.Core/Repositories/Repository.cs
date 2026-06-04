@@ -9,11 +9,16 @@ namespace Dialysis.DomainDrivenDesign.Repositories;
 /// EF Core implementation of <see cref="IRepository{TAggregate,TId}"/>.
 /// Per-module repositories inherit from this and add module-specific query helpers.
 /// </summary>
-public abstract class Repository<TAggregate, TId>(DbContext dbContext) : IRepository<TAggregate, TId>
+public abstract class Repository<TAggregate, TId> : IRepository<TAggregate, TId>
     where TAggregate : AggregateRoot<TId>
     where TId : notnull
 {
-    protected DbContext DbContext { get; } = dbContext;
+    /// <summary>
+    /// EF Core implementation of <see cref="IRepository{TAggregate,TId}"/>.
+    /// Per-module repositories inherit from this and add module-specific query helpers.
+    /// </summary>
+    protected Repository(DbContext dbContext) => DbContext = dbContext;
+    protected DbContext DbContext { get; }
 
     protected DbSet<TAggregate> Set => DbContext.Set<TAggregate>();
 

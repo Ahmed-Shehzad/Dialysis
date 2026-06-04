@@ -5,12 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
+public sealed class EfMessageLedger : IMessageLedger
 {
+    private readonly SmartConnectDbContext _db;
+    public EfMessageLedger(SmartConnectDbContext db) => _db = db;
     public async Task AppendAsync(MessageLedgerEntry entry, CancellationToken cancellationToken)
     {
         var (messageType, senderId, batchId) = DeriveSearchableColumns(entry.Metadata);
-        db.MessageLedgerEntries.Add(
+        _db.MessageLedgerEntries.Add(
             new MessageLedgerEntryEntity
             {
                 Id = entry.Id,
@@ -27,12 +29,12 @@ public sealed class EfMessageLedger(SmartConnectDbContext db) : IMessageLedger
                 BatchId = batchId,
                 CreatedAtUtc = entry.CreatedAtUtc,
             });
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<int> PruneAsync(DateTimeOffset olderThan, Guid? flowId = null, CancellationToken cancellationToken = default)
     {
-        var query = db.MessageLedgerEntries.Where(e => e.CreatedAtUtc < olderThan);
+        var query = _db.MessageLedgerEntries.Where(e => e.CreatedAtUtc < olderThan);
         if (flowId is { } fid)
         {
             query = query.Where(e => e.FlowId == fid);

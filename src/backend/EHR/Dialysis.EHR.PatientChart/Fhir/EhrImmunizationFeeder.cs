@@ -15,15 +15,24 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// <c>UpdatedAtUtc</c> audit timestamp drives <c>Meta.lastUpdated</c> and the incremental
 /// (<c>_since</c>) export filter.
 /// </summary>
-public sealed class EhrImmunizationFeeder(IImmunizationRepository immunizations) : INdjsonResourceFeeder<FhirImmunization>
+public sealed class EhrImmunizationFeeder : INdjsonResourceFeeder<FhirImmunization>
 {
+    private readonly IImmunizationRepository _immunizations;
+    /// <summary>
+    /// Streams every <c>Immunization</c> aggregate as a FHIR R4 <c>Immunization</c>. Vaccine code
+    /// (typically CVX), administered date, lot, manufacturer, and site are forwarded onto the FHIR
+    /// resource; the administering provider becomes a <c>performer</c> reference. The aggregate's
+    /// <c>UpdatedAtUtc</c> audit timestamp drives <c>Meta.lastUpdated</c> and the incremental
+    /// (<c>_since</c>) export filter.
+    /// </summary>
+    public EhrImmunizationFeeder(IImmunizationRepository immunizations) => _immunizations = immunizations;
     public async IAsyncEnumerable<FhirImmunization> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var immunization in immunizations.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var immunization in _immunizations.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(immunization);
         }

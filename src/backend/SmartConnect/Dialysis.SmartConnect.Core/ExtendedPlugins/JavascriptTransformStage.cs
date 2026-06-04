@@ -16,8 +16,16 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// variable map binding (sourceMap, channelMap, connectorMap, responseMap, globalChannelMap, globalMap,
 /// configurationMap) and the <c>$(key)</c> walker.
 /// </summary>
-public sealed class JavascriptTransformStage(IServiceProvider? services = null) : ITransformStage
+public sealed class JavascriptTransformStage : ITransformStage
 {
+    private readonly IServiceProvider? _services;
+    /// <summary>
+    /// Sandboxed JavaScript via Jint; parameters JSON must include <c>script</c> returning a string (new UTF-8 payload).
+    /// Exposes <c>payloadText</c> for UTF-8/PlainText/Json payloads, or Base64 for binary, plus the full Mirth-style
+    /// variable map binding (sourceMap, channelMap, connectorMap, responseMap, globalChannelMap, globalMap,
+    /// configurationMap) and the <c>$(key)</c> walker.
+    /// </summary>
+    public JavascriptTransformStage(IServiceProvider? services = null) => _services = services;
     public const string ParametersMetadataKey = "smartconnect.transform.parameters";
 
     public string Kind => "javascript";
@@ -71,12 +79,12 @@ public sealed class JavascriptTransformStage(IServiceProvider? services = null) 
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (services is null) return;
+        if (_services is null) return;
 
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
 
-        var store = services.GetService<IVariableMapStore>();
+        var store = _services.GetService<IVariableMapStore>();
         IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
@@ -96,22 +104,22 @@ public sealed class JavascriptTransformStage(IServiceProvider? services = null) 
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        if (services is null) return;
-        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        if (_services is null) return;
+        var repo = _services.GetService<ICodeTemplateLibraryRepository>();
         if (repo is null) return;
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var context = accessor?.Current?.CurrentStageContext ?? CodeTemplateContext.SourceTransformer;
         await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, context, ct).ConfigureAwait(false);
     }
 
     private void BindAddAttachment(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (services is null)
+        if (_services is null)
         {
             AttachmentJsBinder.Bind(engine, store: null, message.FlowId, message.Id, "application/octet-stream", ct);
             return;
         }
-        var store = services.GetService<IAttachmentStore>();
+        var store = _services.GetService<IAttachmentStore>();
         AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
     }
 

@@ -10,12 +10,14 @@ using Xunit;
 namespace Dialysis.EHR.Tests;
 
 [Collection(nameof(EhrFixtureCollection))]
-public sealed class RegistrationPatientFlowTests(EhrApiWebApplicationFactory factory)
+public sealed class RegistrationPatientFlowTests
 {
+    private readonly EhrApiWebApplicationFactory _factory;
+    public RegistrationPatientFlowTests(EhrApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Registerpatient_Persists_To_Postgres_And_Raises_Integration_Event_Async()
     {
-        await using var scope = factory.Services.CreateAsyncScope();
+        await using var scope = _factory.Services.CreateAsyncScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var patientId = await gateway.SendCommandAsync<RegisterPatientCommand, Guid>(

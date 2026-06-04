@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Dialysis.PDMS.Api.Realtime;
 
-public sealed class SignalRVitalsBroadcaster(IHubContext<VitalsHub> hub) : IVitalsBroadcaster
+public sealed class SignalRVitalsBroadcaster : IVitalsBroadcaster
 {
+    private readonly IHubContext<VitalsHub> _hub;
+    public SignalRVitalsBroadcaster(IHubContext<VitalsHub> hub) => _hub = hub;
     public Task BroadcastAsync(VitalsReadingSnapshot reading, CancellationToken cancellationToken)
-        => hub.Clients
+        => _hub.Clients
             .Group(VitalsHub.GroupName(reading.SessionId))
             .SendAsync("reading", reading, cancellationToken);
 }

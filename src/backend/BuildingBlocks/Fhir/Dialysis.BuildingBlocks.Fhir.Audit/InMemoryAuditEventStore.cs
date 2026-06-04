@@ -7,10 +7,15 @@ namespace Dialysis.BuildingBlocks.Fhir.Audit;
 /// In-memory ring buffer of recent audit events. Suitable for development; production should swap in
 /// the EF-Core-backed store from <c>Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore</c>.
 /// </summary>
-public sealed class InMemoryAuditEventStore(int capacity = 10_000) : IAuditEventStore
+public sealed class InMemoryAuditEventStore : IAuditEventStore
 {
     private readonly ConcurrentQueue<AuditEvent> _events = new();
-    private readonly int _capacity = capacity;
+    private readonly int _capacity;
+    /// <summary>
+    /// In-memory ring buffer of recent audit events. Suitable for development; production should swap in
+    /// the EF-Core-backed store from <c>Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore</c>.
+    /// </summary>
+    public InMemoryAuditEventStore(int capacity = 10_000) => _capacity = capacity;
 
     public ValueTask AppendAsync(AuditEvent auditEvent, CancellationToken cancellationToken)
     {

@@ -29,10 +29,19 @@ public sealed class AllscriptsAdapterOptions
 /// Veradigm / Allscripts uses an OAuth2 <c>password</c> grant (resource-owner) flow with the
 /// vendor-issued <c>AppName</c> carried as an HTTP header. Tokens are cached per-tenant + username.
 /// </summary>
-public sealed class AllscriptsAuthProvider(IOptions<AllscriptsAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
-    : IExternalEhrAuthProvider
+public sealed class AllscriptsAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly AllscriptsAdapterOptions _options = options.Value;
+    private readonly AllscriptsAdapterOptions _options;
+    private readonly OAuth2TokenAcquirer _tokenAcquirer;
+    /// <summary>
+    /// Veradigm / Allscripts uses an OAuth2 <c>password</c> grant (resource-owner) flow with the
+    /// vendor-issued <c>AppName</c> carried as an HTTP header. Tokens are cached per-tenant + username.
+    /// </summary>
+    public AllscriptsAuthProvider(IOptions<AllscriptsAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
+    {
+        _tokenAcquirer = tokenAcquirer;
+        _options = options.Value;
+    }
 
     public string VendorName => "Allscripts";
 
@@ -54,17 +63,17 @@ public sealed class AllscriptsAuthProvider(IOptions<AllscriptsAdapterOptions> op
             {
                 ["AppName"] = _options.AppName,
             });
-        return tokenAcquirer.AcquireAsync(request, cancellationToken);
+        return _tokenAcquirer.AcquireAsync(request, cancellationToken);
     }
 }
 
-public sealed class AllscriptsFhirAdapter(
-    IHttpClientFactory httpClientFactory,
-    AllscriptsAuthProvider authProvider,
-    IOptions<AllscriptsAdapterOptions> options)
-    : HttpFhirAdapterBase(httpClientFactory, authProvider)
+public sealed class AllscriptsFhirAdapter : HttpFhirAdapterBase
 {
-    private readonly AllscriptsAdapterOptions _options = options.Value;
+    private readonly AllscriptsAdapterOptions _options;
+    public AllscriptsFhirAdapter(IHttpClientFactory httpClientFactory,
+        AllscriptsAuthProvider authProvider,
+        IOptions<AllscriptsAdapterOptions> options) : base(httpClientFactory, authProvider) =>
+        _options = options.Value;
 
     public override ExternalEhrAdapterDescriptor Describe() => new("Allscripts", FhirVersion: "4.0.1", BaseUrl: _options.BaseUrl);
 }

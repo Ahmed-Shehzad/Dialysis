@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfMedicationOrderRepository(HisDbContext db) : IMedicationOrderRepository
+public sealed class EfMedicationOrderRepository : IMedicationOrderRepository
 {
-    public void Add(MedicationOrder order) => db.MedicationOrders.Add(order);
+    private readonly HisDbContext _db;
+    public EfMedicationOrderRepository(HisDbContext db) => _db = db;
+    public void Add(MedicationOrder order) => _db.MedicationOrders.Add(order);
 
     public Task<MedicationOrder?> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.MedicationOrders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+        => _db.MedicationOrders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 }

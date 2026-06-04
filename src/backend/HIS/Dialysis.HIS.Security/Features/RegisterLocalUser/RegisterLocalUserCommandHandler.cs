@@ -7,22 +7,27 @@ using Dialysis.HIS.Security.Ports;
 
 namespace Dialysis.HIS.Security.Features.RegisterLocalUser;
 
-public sealed class RegisterLocalUserCommandHandler(
-    ILocalUserRepository users,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<RegisterLocalUserCommand, Guid>
+public sealed class RegisterLocalUserCommandHandler : ICommandHandler<RegisterLocalUserCommand, Guid>
 {
+    private readonly ILocalUserRepository _users;
+    private readonly IUnitOfWork _unitOfWork;
+    public RegisterLocalUserCommandHandler(ILocalUserRepository users,
+        IUnitOfWork unitOfWork)
+    {
+        _users = users;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RegisterLocalUserCommand request, CancellationToken cancellationToken)
     {
         var loginName = new LoginName(request.LoginName);
 
-        if (await users.LoginNameExistsAsync(loginName.Value, cancellationToken).ConfigureAwait(false))
+        if (await _users.LoginNameExistsAsync(loginName.Value, cancellationToken).ConfigureAwait(false))
             throw new DomainException($"LocalUser with login '{loginName.Value}' already exists.");
 
         var user = LocalUser.Register(loginName, request.DisplayName, DateTime.UtcNow);
-        users.Add(user);
+        _users.Add(user);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return user.Id;
     }
 }

@@ -10,10 +10,22 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 /// Connection-scoped: if no client is currently bound the notification is dropped (the client
 /// receives subsequent events after it reconnects and re-binds), so no failure is recorded.
 /// </summary>
-public sealed class WebSocketNotificationDispatcher(
-    FhirJsonSerializerProvider serializer,
-    FhirSubscriptionConnectionManager connections) : ISubscriptionChannelDispatcher
+public sealed class WebSocketNotificationDispatcher : ISubscriptionChannelDispatcher
 {
+    private readonly FhirJsonSerializerProvider _serializer;
+    private readonly FhirSubscriptionConnectionManager _connections;
+    /// <summary>
+    /// WebSocket channel dispatcher. Pushes the Backport IG notification Bundle to every WebSocket
+    /// connection bound to the subscription via <see cref="FhirSubscriptionConnectionManager"/>.
+    /// Connection-scoped: if no client is currently bound the notification is dropped (the client
+    /// receives subsequent events after it reconnects and re-binds), so no failure is recorded.
+    /// </summary>
+    public WebSocketNotificationDispatcher(FhirJsonSerializerProvider serializer,
+        FhirSubscriptionConnectionManager connections)
+    {
+        _serializer = serializer;
+        _connections = connections;
+    }
     public SubscriptionChannelType Channel => SubscriptionChannelType.WebSocket;
 
     public async ValueTask DispatchAsync(
@@ -26,7 +38,7 @@ public sealed class WebSocketNotificationDispatcher(
             return;
 
         var bundle = SubscriptionNotificationBundleFactory.Build(subscription, payloadResource);
-        var bytes = Encoding.UTF8.GetBytes(serializer.Serialize(bundle));
-        await connections.PushAsync(subscription.Id, bytes, cancellationToken).ConfigureAwait(false);
+        var bytes = Encoding.UTF8.GetBytes(_serializer.Serialize(bundle));
+        await _connections.PushAsync(subscription.Id, bytes, cancellationToken).ConfigureAwait(false);
     }
 }

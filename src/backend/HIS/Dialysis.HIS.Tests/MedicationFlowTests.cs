@@ -8,12 +8,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class MedicationFlowTests(HisApiWebApplicationFactory factory)
+public sealed class MedicationFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public MedicationFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Placemedicationorder_Persists_Order_And_Enqueues_Event_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 

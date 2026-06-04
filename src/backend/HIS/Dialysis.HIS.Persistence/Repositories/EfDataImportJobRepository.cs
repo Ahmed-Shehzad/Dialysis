@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfDataImportJobRepository(HisDbContext db) : IDataImportJobRepository
+public sealed class EfDataImportJobRepository : IDataImportJobRepository
 {
-    public void Add(DataImportJob job) => db.DataImportJobs.Add(job);
+    private readonly HisDbContext _db;
+    public EfDataImportJobRepository(HisDbContext db) => _db = db;
+    public void Add(DataImportJob job) => _db.DataImportJobs.Add(job);
 
     public Task<DataImportJob?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.DataImportJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
+        _db.DataImportJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
 }

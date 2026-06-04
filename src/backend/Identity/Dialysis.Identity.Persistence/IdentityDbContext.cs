@@ -6,11 +6,12 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.Identity.Persistence;
 
-public sealed class IdentityDbContext(
-    DbContextOptions<IdentityDbContext> options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions)
-    : ModuleDbContextBase(options, persistenceOptions)
+public sealed class IdentityDbContext : ModuleDbContextBase
 {
+    public IdentityDbContext(DbContextOptions<IdentityDbContext> options,
+        IOptions<TransponderPersistenceOptions> persistenceOptions) : base(options, persistenceOptions)
+    {
+    }
     private const string ProvisioningSchema = "identity_provisioning";
 
     protected override string ModuleSchema => "identity";

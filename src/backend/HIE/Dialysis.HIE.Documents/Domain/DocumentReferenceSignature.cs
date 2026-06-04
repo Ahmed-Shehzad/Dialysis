@@ -64,7 +64,7 @@ public sealed class DocumentReferenceSignature
             throw new ArgumentException("QES signatures must use the RemoteQes signer kind.", nameof(signerKind));
         if (padesLevel >= PadesLevel.T && string.IsNullOrWhiteSpace(tsaUri))
             throw new ArgumentException("PAdES-T and higher require a TsaUri.", nameof(tsaUri));
-        if (padesLevel >= PadesLevel.LT && revocationEvidenceFormat == RevocationEvidenceFormat.None)
+        if (padesLevel >= PadesLevel.Lt && revocationEvidenceFormat == RevocationEvidenceFormat.None)
             throw new ArgumentException("PAdES-LT and higher require revocation evidence.", nameof(revocationEvidenceFormat));
 
         Id = id == Guid.Empty ? Guid.CreateVersion7() : id;

@@ -9,37 +9,45 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 /// <see cref="ISubscriptionRegistry"/> and <see cref="ISubscriptionMatcher"/> so a single durable
 /// component replaces the in-memory default.
 /// </summary>
-public sealed class EfSubscriptionRegistry<TDbContext>(TDbContext db) : ISubscriptionRegistry, ISubscriptionMatcher
+public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, ISubscriptionMatcher
     where TDbContext : DbContext
 {
+    private readonly TDbContext _db;
+    /// <summary>
+    /// Persists <see cref="FhirSubscriptionRegistration"/> entries on the host module's
+    /// <typeparamref name="TDbContext"/> under the <c>fhir_subscriptions</c> schema. Implements both
+    /// <see cref="ISubscriptionRegistry"/> and <see cref="ISubscriptionMatcher"/> so a single durable
+    /// component replaces the in-memory default.
+    /// </summary>
+    public EfSubscriptionRegistry(TDbContext db) => _db = db;
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<FhirSubscriptionRegistration> RegisterAsync(FhirSubscriptionRegistration registration, CancellationToken cancellationToken)
     {
-        var existing = await db.Set<SubscriptionRecord>()
+        var existing = await _db.Set<SubscriptionRecord>()
             .FirstOrDefaultAsync(r => r.Id == registration.Id, cancellationToken).ConfigureAwait(false);
         if (existing is null)
         {
-            db.Set<SubscriptionRecord>().Add(ToRecord(registration));
+            _db.Set<SubscriptionRecord>().Add(ToRecord(registration));
         }
         else
         {
             ApplyTo(existing, registration);
         }
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return registration;
     }
 
     public async ValueTask<FhirSubscriptionRegistration?> GetAsync(string subscriptionId, CancellationToken cancellationToken)
     {
-        var record = await db.Set<SubscriptionRecord>().AsNoTracking()
+        var record = await _db.Set<SubscriptionRecord>().AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == subscriptionId, cancellationToken).ConfigureAwait(false);
         return record is null ? null : ToDomain(record);
     }
 
     public async ValueTask<IReadOnlyList<FhirSubscriptionRegistration>> ListActiveForTopicAsync(string topicUrl, CancellationToken cancellationToken)
     {
-        var records = await db.Set<SubscriptionRecord>().AsNoTracking()
+        var records = await _db.Set<SubscriptionRecord>().AsNoTracking()
             .Where(r => r.TopicUrl == topicUrl && r.Status == SubscriptionStatus.Active)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return records.ConvertAll(ToDomain);
@@ -47,16 +55,16 @@ public sealed class EfSubscriptionRegistry<TDbContext>(TDbContext db) : ISubscri
 
     public async ValueTask DeleteAsync(string subscriptionId, CancellationToken cancellationToken)
     {
-        var record = await db.Set<SubscriptionRecord>()
+        var record = await _db.Set<SubscriptionRecord>()
             .FirstOrDefaultAsync(r => r.Id == subscriptionId, cancellationToken).ConfigureAwait(false);
         if (record is null) return;
-        db.Set<SubscriptionRecord>().Remove(record);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.Set<SubscriptionRecord>().Remove(record);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask UpdateStatusAsync(string subscriptionId, SubscriptionStatus status, int consecutiveFailures, CancellationToken cancellationToken)
     {
-        var record = await db.Set<SubscriptionRecord>()
+        var record = await _db.Set<SubscriptionRecord>()
             .FirstOrDefaultAsync(r => r.Id == subscriptionId, cancellationToken).ConfigureAwait(false);
         if (record is null) return;
         record.Status = status;
@@ -65,7 +73,7 @@ public sealed class EfSubscriptionRegistry<TDbContext>(TDbContext db) : ISubscri
         {
             record.LastNotificationAt = DateTimeOffset.UtcNow;
         }
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<IReadOnlyList<FhirSubscriptionRegistration>> MatchAsync(

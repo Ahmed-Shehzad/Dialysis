@@ -17,7 +17,7 @@ namespace Dialysis.BuildingBlocks.Documents.Signing.Hosted;
 /// </summary>
 public sealed class LtvUpgraderHostedService : BackgroundService
 {
-    private static readonly TimeSpan TickInterval = TimeSpan.FromHours(24);
+    private static readonly TimeSpan _tickInterval = TimeSpan.FromHours(24);
 
     private readonly IServiceProvider _serviceProvider;
     private readonly LtvOptions _options;
@@ -68,7 +68,7 @@ public sealed class LtvUpgraderHostedService : BackgroundService
 
             try
             {
-                await Task.Delay(TickInterval, stoppingToken).ConfigureAwait(false);
+                await Task.Delay(_tickInterval, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
         }

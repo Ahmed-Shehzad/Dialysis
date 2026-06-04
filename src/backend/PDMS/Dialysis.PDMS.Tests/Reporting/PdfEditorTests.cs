@@ -85,7 +85,7 @@ public sealed class PdfEditorTests
         var editor = new PdfEditor();
         var totalPages = editor.CountPages(a);
 
-        Should.Throw<InvalidOperationException>(() => editor.RemovePages(a, Enumerable.Range(1, totalPages).ToArray()));
+        Should.Throw<InvalidOperationException>(() => editor.RemovePages(a, [.. Enumerable.Range(1, totalPages)]));
     }
 
     [Fact]

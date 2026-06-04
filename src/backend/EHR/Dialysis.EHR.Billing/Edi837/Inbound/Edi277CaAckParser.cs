@@ -36,7 +36,8 @@ public sealed class Edi277CaAckParser
         foreach (var segment in segments)
         {
             var elements = segment.Split(delimiters.ElementSeparator);
-            if (elements.Length == 0) continue;
+            if (elements.Length == 0)
+                continue;
             switch (elements[0])
             {
                 case "TRN":
@@ -46,7 +47,7 @@ public sealed class Edi277CaAckParser
                             currentControlNumber,
                             currentPayerClaimNumber,
                             currentVerdict,
-                            currentReasons.ToArray()));
+                            [.. currentReasons]));
                     currentControlNumber = elements.Length > 2 ? elements[2] : null;
                     currentPayerClaimNumber = null;
                     currentVerdict = Edi277Verdict.Pending;
@@ -77,7 +78,7 @@ public sealed class Edi277CaAckParser
                 currentControlNumber,
                 currentPayerClaimNumber,
                 currentVerdict,
-                currentReasons.ToArray()));
+                [.. currentReasons]));
 
         return new Edi277CaAckResult(rows);
     }
@@ -104,10 +105,34 @@ public enum Edi277Verdict
     Rejected = 2,
 }
 
-public sealed record Edi277CaAckResult(IReadOnlyList<Edi277CaClaimStatus> ClaimStatuses);
+public sealed record Edi277CaAckResult
+{
+    public Edi277CaAckResult(IReadOnlyList<Edi277CaClaimStatus> ClaimStatuses) => this.ClaimStatuses = ClaimStatuses;
+    public IReadOnlyList<Edi277CaClaimStatus> ClaimStatuses { get; init; }
+    public void Deconstruct(out IReadOnlyList<Edi277CaClaimStatus> ClaimStatuses) => ClaimStatuses = this.ClaimStatuses;
+}
 
-public sealed record Edi277CaClaimStatus(
-    string OriginalClaimControlNumber,
-    string? PayerClaimControlNumber,
-    Edi277Verdict Verdict,
-    IReadOnlyList<string> ReasonCodes);
+public sealed record Edi277CaClaimStatus
+{
+    public Edi277CaClaimStatus(string OriginalClaimControlNumber,
+        string? PayerClaimControlNumber,
+        Edi277Verdict Verdict,
+        IReadOnlyList<string> ReasonCodes)
+    {
+        this.OriginalClaimControlNumber = OriginalClaimControlNumber;
+        this.PayerClaimControlNumber = PayerClaimControlNumber;
+        this.Verdict = Verdict;
+        this.ReasonCodes = ReasonCodes;
+    }
+    public string OriginalClaimControlNumber { get; init; }
+    public string? PayerClaimControlNumber { get; init; }
+    public Edi277Verdict Verdict { get; init; }
+    public IReadOnlyList<string> ReasonCodes { get; init; }
+    public void Deconstruct(out string OriginalClaimControlNumber, out string? PayerClaimControlNumber, out Edi277Verdict Verdict, out IReadOnlyList<string> ReasonCodes)
+    {
+        OriginalClaimControlNumber = this.OriginalClaimControlNumber;
+        PayerClaimControlNumber = this.PayerClaimControlNumber;
+        Verdict = this.Verdict;
+        ReasonCodes = this.ReasonCodes;
+    }
+}

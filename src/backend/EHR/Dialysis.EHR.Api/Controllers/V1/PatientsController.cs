@@ -13,8 +13,10 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/patients")]
-public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
+public sealed class PatientsController : ControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    public PatientsController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpGet]
     [ProducesResponseType(typeof(PatientSearchResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchAsync(
@@ -30,7 +32,7 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
         [FromQuery] int take = 25,
         CancellationToken cancellationToken = default)
     {
-        var results = await gateway
+        var results = await _gateway
             .SendQueryAsync<SearchPatientsQuery, PatientSearchResult>(
                 new SearchPatientsQuery(q, familyName, givenName, mrn, dobFrom, dobTo, sex, status, skip, take),
                 cancellationToken)
@@ -43,7 +45,7 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByIdAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        var detail = await gateway
+        var detail = await _gateway
             .SendQueryAsync<GetPatientByIdQuery, PatientDetailDto?>(
                 new GetPatientByIdQuery(patientId), cancellationToken)
             .ConfigureAwait(false);
@@ -54,7 +56,7 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
     [ProducesResponseType(typeof(PatientChartView), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetChartAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        var chart = await gateway
+        var chart = await _gateway
             .SendQueryAsync<GetPatientChartQuery, PatientChartView>(
                 new GetPatientChartQuery(patientId), cancellationToken)
             .ConfigureAwait(false);
@@ -73,7 +75,7 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
         [FromQuery] int take = 20,
         CancellationToken cancellationToken = default)
     {
-        var notes = await gateway
+        var notes = await _gateway
             .SendQueryAsync<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>>(
                 new ListNotesForPatientQuery(patientId, take), cancellationToken)
             .ConfigureAwait(false);
@@ -93,7 +95,7 @@ public sealed class PatientsController(ICqrsGateway gateway) : ControllerBase
         [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var results = await gateway
+        var results = await _gateway
             .SendQueryAsync<ListLabResultsForPatientQuery, IReadOnlyList<LabResultListItem>>(
                 new ListLabResultsForPatientQuery(patientId, lookbackDays, take), cancellationToken)
             .ConfigureAwait(false);

@@ -4,23 +4,34 @@ using Dialysis.EHR.PatientChart.Ports;
 
 namespace Dialysis.EHR.PatientChart.Features.GetPatientChart;
 
-public sealed class GetPatientChartQueryHandler(
-    IAllergyRepository allergies,
-    IProblemListRepository problems,
-    IMedicationStatementRepository medications,
-    IVitalSignRepository vitals,
-    IImmunizationRepository immunizations)
-    : IQueryHandler<GetPatientChartQuery, PatientChartView>
+public sealed class GetPatientChartQueryHandler : IQueryHandler<GetPatientChartQuery, PatientChartView>
 {
+    private readonly IAllergyRepository _allergies;
+    private readonly IProblemListRepository _problems;
+    private readonly IMedicationStatementRepository _medications;
+    private readonly IVitalSignRepository _vitals;
+    private readonly IImmunizationRepository _immunizations;
+    public GetPatientChartQueryHandler(IAllergyRepository allergies,
+        IProblemListRepository problems,
+        IMedicationStatementRepository medications,
+        IVitalSignRepository vitals,
+        IImmunizationRepository immunizations)
+    {
+        _allergies = allergies;
+        _problems = problems;
+        _medications = medications;
+        _vitals = vitals;
+        _immunizations = immunizations;
+    }
     public async Task<PatientChartView> HandleAsync(GetPatientChartQuery request, CancellationToken cancellationToken)
     {
         var since = DateTime.UtcNow.AddYears(-5);
 
-        var allergyList = await allergies.ListByPatientAsync(request.PatientId, cancellationToken).ConfigureAwait(false);
-        var problemList = await problems.ListByPatientAsync(request.PatientId, false, cancellationToken).ConfigureAwait(false);
-        var medList = await medications.ListByPatientAsync(request.PatientId, false, cancellationToken).ConfigureAwait(false);
-        var vitalsList = await vitals.ListByPatientAsync(request.PatientId, since, cancellationToken).ConfigureAwait(false);
-        var immunList = await immunizations.ListByPatientAsync(request.PatientId, cancellationToken).ConfigureAwait(false);
+        var allergyList = await _allergies.ListByPatientAsync(request.PatientId, cancellationToken).ConfigureAwait(false);
+        var problemList = await _problems.ListByPatientAsync(request.PatientId, false, cancellationToken).ConfigureAwait(false);
+        var medList = await _medications.ListByPatientAsync(request.PatientId, false, cancellationToken).ConfigureAwait(false);
+        var vitalsList = await _vitals.ListByPatientAsync(request.PatientId, since, cancellationToken).ConfigureAwait(false);
+        var immunList = await _immunizations.ListByPatientAsync(request.PatientId, cancellationToken).ConfigureAwait(false);
 
         return new PatientChartView(
             request.PatientId,

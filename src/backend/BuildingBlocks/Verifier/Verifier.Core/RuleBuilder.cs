@@ -80,40 +80,60 @@ internal sealed class EnumerableNotEmptyValidator<T, TCollection> : IPropertyVal
     }
 }
 
-internal sealed class LengthRangeValidator<T>(int min, int max) : IPropertyValidator<T, string?>
+internal sealed class LengthRangeValidator<T> : IPropertyValidator<T, string?>
 {
+    private readonly int _min;
+    private readonly int _max;
+    public LengthRangeValidator(int min, int max)
+    {
+        _min = min;
+        _max = max;
+    }
     public IEnumerable<ValidationFailure> Evaluate(ValidationContext<T> context, string? value, string propertyName)
     {
-        if (value is null || (value.Length >= min && value.Length <= max))
+        if (value is null || (value.Length >= _min && value.Length <= _max))
             yield break;
 
         yield return new ValidationFailure(
             propertyName,
-            $"'{propertyName}' must be between {min} and {max} characters. You entered {value?.Length ?? 0} characters.",
+            $"'{propertyName}' must be between {_min} and {_max} characters. You entered {value?.Length ?? 0} characters.",
             value);
     }
 }
 
-internal sealed class PredicateValidator<T, TProperty>(Func<T, TProperty, bool> predicate, string message)
-    : IPropertyValidator<T, TProperty>
+internal sealed class PredicateValidator<T, TProperty> : IPropertyValidator<T, TProperty>
 {
+    private readonly Func<T, TProperty, bool> _predicate;
+    private readonly string _message;
+    public PredicateValidator(Func<T, TProperty, bool> predicate, string message)
+    {
+        _predicate = predicate;
+        _message = message;
+    }
     public IEnumerable<ValidationFailure> Evaluate(ValidationContext<T> context, TProperty value, string propertyName)
     {
-        if (predicate(context.InstanceToValidate!, value!))
+        if (_predicate(context.InstanceToValidate!, value!))
             yield break;
 
-        yield return new ValidationFailure(propertyName, message.Replace("{PropertyName}", propertyName, StringComparison.Ordinal), value);
+        yield return new ValidationFailure(propertyName, _message.Replace("{PropertyName}", propertyName, StringComparison.Ordinal), value);
     }
 }
 
-internal sealed class RegularExpressionValidator<T>(Regex regex, string message) : IPropertyValidator<T, string?>
+internal sealed class RegularExpressionValidator<T> : IPropertyValidator<T, string?>
 {
+    private readonly Regex _regex;
+    private readonly string _message;
+    public RegularExpressionValidator(Regex regex, string message)
+    {
+        _regex = regex;
+        _message = message;
+    }
     public IEnumerable<ValidationFailure> Evaluate(ValidationContext<T> context, string? value, string propertyName)
     {
-        if (string.IsNullOrEmpty(value) || regex.IsMatch(value))
+        if (string.IsNullOrEmpty(value) || _regex.IsMatch(value))
             yield break;
 
-        var text = message.Replace("{PropertyName}", propertyName, StringComparison.Ordinal);
+        var text = _message.Replace("{PropertyName}", propertyName, StringComparison.Ordinal);
         yield return new ValidationFailure(propertyName, text, value);
     }
 }
@@ -127,9 +147,17 @@ internal enum ComparableKind
     BetweenInclusive
 }
 
-internal sealed class NullableComparableValidator<T, TComparable>(ComparableKind kind, TComparable low, TComparable high)
-    : IPropertyValidator<T, TComparable?> where TComparable : struct, IComparable<TComparable>
+internal sealed class NullableComparableValidator<T, TComparable> : IPropertyValidator<T, TComparable?> where TComparable : struct, IComparable<TComparable>
 {
+    private readonly ComparableKind _kind;
+    private readonly TComparable _low;
+    private readonly TComparable _high;
+    public NullableComparableValidator(ComparableKind kind, TComparable low, TComparable high)
+    {
+        _kind = kind;
+        _low = low;
+        _high = high;
+    }
     public IEnumerable<ValidationFailure> Evaluate(ValidationContext<T> context, TComparable? value, string propertyName)
     {
         if (value is null)
@@ -144,34 +172,42 @@ internal sealed class NullableComparableValidator<T, TComparable>(ComparableKind
 
     private bool Passes(TComparable v)
     {
-        if (kind == ComparableKind.GreaterThan)
-            return v.CompareTo(low) > 0;
-        if (kind == ComparableKind.GreaterThanOrEqual)
-            return v.CompareTo(low) >= 0;
-        if (kind == ComparableKind.LessThan)
-            return v.CompareTo(low) < 0;
-        if (kind == ComparableKind.LessThanOrEqual)
-            return v.CompareTo(low) <= 0;
-        return v.CompareTo(low) >= 0 && v.CompareTo(high) <= 0;
+        if (_kind == ComparableKind.GreaterThan)
+            return v.CompareTo(_low) > 0;
+        if (_kind == ComparableKind.GreaterThanOrEqual)
+            return v.CompareTo(_low) >= 0;
+        if (_kind == ComparableKind.LessThan)
+            return v.CompareTo(_low) < 0;
+        if (_kind == ComparableKind.LessThanOrEqual)
+            return v.CompareTo(_low) <= 0;
+        return v.CompareTo(_low) >= 0 && v.CompareTo(_high) <= 0;
     }
 
     private string BuildMessage(string propertyName, TComparable v)
     {
-        if (kind == ComparableKind.GreaterThan)
-            return $"'{propertyName}' must be greater than '{low}'.";
-        if (kind == ComparableKind.GreaterThanOrEqual)
-            return $"'{propertyName}' must be greater than or equal to '{low}'.";
-        if (kind == ComparableKind.LessThan)
-            return $"'{propertyName}' must be less than '{low}'.";
-        if (kind == ComparableKind.LessThanOrEqual)
-            return $"'{propertyName}' must be less than or equal to '{low}'.";
-        return $"'{propertyName}' must be between {low} and {high}. You entered {v}.";
+        if (_kind == ComparableKind.GreaterThan)
+            return $"'{propertyName}' must be greater than '{_low}'.";
+        if (_kind == ComparableKind.GreaterThanOrEqual)
+            return $"'{propertyName}' must be greater than or equal to '{_low}'.";
+        if (_kind == ComparableKind.LessThan)
+            return $"'{propertyName}' must be less than '{_low}'.";
+        if (_kind == ComparableKind.LessThanOrEqual)
+            return $"'{propertyName}' must be less than or equal to '{_low}'.";
+        return $"'{propertyName}' must be between {_low} and {_high}. You entered {v}.";
     }
 }
 
-internal sealed class NonNullComparableValidator<T, TComparable>(ComparableKind kind, TComparable low, TComparable high)
-    : IPropertyValidator<T, TComparable> where TComparable : struct, IComparable<TComparable>
+internal sealed class NonNullComparableValidator<T, TComparable> : IPropertyValidator<T, TComparable> where TComparable : struct, IComparable<TComparable>
 {
+    private readonly ComparableKind _kind;
+    private readonly TComparable _low;
+    private readonly TComparable _high;
+    public NonNullComparableValidator(ComparableKind kind, TComparable low, TComparable high)
+    {
+        _kind = kind;
+        _low = low;
+        _high = high;
+    }
     public IEnumerable<ValidationFailure> Evaluate(ValidationContext<T> context, TComparable value, string propertyName)
     {
         if (Passes(value))
@@ -182,47 +218,53 @@ internal sealed class NonNullComparableValidator<T, TComparable>(ComparableKind 
 
     private bool Passes(TComparable v)
     {
-        if (kind == ComparableKind.GreaterThan)
-            return v.CompareTo(low) > 0;
-        if (kind == ComparableKind.GreaterThanOrEqual)
-            return v.CompareTo(low) >= 0;
-        if (kind == ComparableKind.LessThan)
-            return v.CompareTo(low) < 0;
-        if (kind == ComparableKind.LessThanOrEqual)
-            return v.CompareTo(low) <= 0;
-        return v.CompareTo(low) >= 0 && v.CompareTo(high) <= 0;
+        if (_kind == ComparableKind.GreaterThan)
+            return v.CompareTo(_low) > 0;
+        if (_kind == ComparableKind.GreaterThanOrEqual)
+            return v.CompareTo(_low) >= 0;
+        if (_kind == ComparableKind.LessThan)
+            return v.CompareTo(_low) < 0;
+        if (_kind == ComparableKind.LessThanOrEqual)
+            return v.CompareTo(_low) <= 0;
+        return v.CompareTo(_low) >= 0 && v.CompareTo(_high) <= 0;
     }
 
     private string BuildMessage(string propertyName, TComparable v)
     {
-        if (kind == ComparableKind.GreaterThan)
-            return $"'{propertyName}' must be greater than '{low}'.";
-        if (kind == ComparableKind.GreaterThanOrEqual)
-            return $"'{propertyName}' must be greater than or equal to '{low}'.";
-        if (kind == ComparableKind.LessThan)
-            return $"'{propertyName}' must be less than '{low}'.";
-        if (kind == ComparableKind.LessThanOrEqual)
-            return $"'{propertyName}' must be less than or equal to '{low}'.";
-        return $"'{propertyName}' must be between {low} and {high}. You entered {v}.";
+        if (_kind == ComparableKind.GreaterThan)
+            return $"'{propertyName}' must be greater than '{_low}'.";
+        if (_kind == ComparableKind.GreaterThanOrEqual)
+            return $"'{propertyName}' must be greater than or equal to '{_low}'.";
+        if (_kind == ComparableKind.LessThan)
+            return $"'{propertyName}' must be less than '{_low}'.";
+        if (_kind == ComparableKind.LessThanOrEqual)
+            return $"'{propertyName}' must be less than or equal to '{_low}'.";
+        return $"'{propertyName}' must be between {_low} and {_high}. You entered {v}.";
     }
 }
 
-internal sealed class AsyncPredicateValidator<T, TProperty>(
-    Func<T, TProperty, CancellationToken, ValueTask<bool>> predicate,
-    string message) : IAsyncPropertyValidator<T, TProperty>
+internal sealed class AsyncPredicateValidator<T, TProperty> : IAsyncPropertyValidator<T, TProperty>
 {
+    private readonly Func<T, TProperty, CancellationToken, ValueTask<bool>> _predicate;
+    private readonly string _message;
+    public AsyncPredicateValidator(Func<T, TProperty, CancellationToken, ValueTask<bool>> predicate,
+        string message)
+    {
+        _predicate = predicate;
+        _message = message;
+    }
     public async IAsyncEnumerable<ValidationFailure> EvaluateAsync(
         ValidationContext<T> context,
         TProperty value,
         string propertyName,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        if (await predicate(context.InstanceToValidate!, value!, cancellationToken).ConfigureAwait(false))
+        if (await _predicate(context.InstanceToValidate!, value!, cancellationToken).ConfigureAwait(false))
             yield break;
 
         yield return new ValidationFailure(
             propertyName,
-            message.Replace("{PropertyName}", propertyName, StringComparison.Ordinal),
+            _message.Replace("{PropertyName}", propertyName, StringComparison.Ordinal),
             value);
     }
 }
@@ -258,10 +300,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
         });
     }
 
-    internal void AddAsyncValidator(IAsyncPropertyValidator<T, TProperty> validator)
-    {
-        _evaluators.Add(async (ctx, value, path, ct) => await CollectAsync(validator, ctx, value!, path, ct).ConfigureAwait(false));
-    }
+    internal void AddAsyncValidator(IAsyncPropertyValidator<T, TProperty> validator) => _evaluators.Add(async (ctx, value, path, ct) => await CollectAsync(validator, ctx, value!, path, ct).ConfigureAwait(false));
 
     internal void AddNestedValidator(IValidator<TProperty> childValidator)
     {

@@ -103,10 +103,10 @@ public sealed class DialysisSessionChargeReadyConsumerTests
         public Task<Charge?> GetAsync(Guid id, CancellationToken cancellationToken = default)
             => Task.FromResult<Charge?>(Added.FirstOrDefault(c => c.Id == id));
         public Task<IReadOnlyList<Charge>> ListUnbilledForPatientAsync(Guid patientId, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<Charge>>(Added.Where(c => c.PatientId == patientId && c.Status == ChargeStatus.Captured).ToArray());
+            => Task.FromResult<IReadOnlyList<Charge>>([.. Added.Where(c => c.PatientId == patientId && c.Status == ChargeStatus.Captured)]);
         public Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<Charge>>(
-                Added.Where(c => status is null || c.Status == status.Value).Take(take).ToArray());
+                [.. Added.Where(c => status is null || c.Status == status.Value).Take(take)]);
     }
 
     private sealed class StubIdempotency : IChargeIdempotencyStore
@@ -121,9 +121,11 @@ public sealed class DialysisSessionChargeReadyConsumerTests
         }
     }
 
-    private sealed class StubFeeSchedule(Money amount) : ICptFeeSchedule
+    private sealed class StubFeeSchedule : ICptFeeSchedule
     {
-        public Task<Money> LookupAsync(string cptCode, CancellationToken cancellationToken) => Task.FromResult(amount);
+        private readonly Money _amount;
+        public StubFeeSchedule(Money amount) => _amount = amount;
+        public Task<Money> LookupAsync(string cptCode, CancellationToken cancellationToken) => Task.FromResult(_amount);
     }
 
     private sealed class StubUnitOfWork : IUnitOfWork

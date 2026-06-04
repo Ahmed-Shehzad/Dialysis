@@ -36,7 +36,7 @@ internal static class CdaSectionEmitters
                         new XElement(_hl7 + "observation",
                             CdaEmitting.CodeElement("value", c.Code),
                             CdaEmitting.EffectiveTimePoint("effectiveTime", c.Onset as DataType))))));
-        return Section(CdaConstants.ProblemsTemplateId, CdaConstants.ProblemsSectionLoinc, "Problems", entries.ToArray());
+        return Section(CdaConstants.ProblemsTemplateId, CdaConstants.ProblemsSectionLoinc, "Problems", [.. entries]);
     }
 
     public static XElement Allergies(IEnumerable<AllergyIntolerance> allergies)
@@ -53,7 +53,7 @@ internal static class CdaSectionEmitters
                                 new XElement(_hl7 + "participantRole",
                                     new XElement(_hl7 + "playingEntity",
                                         CdaEmitting.CodeElement("code", a.Code)))))))));
-        return Section(CdaConstants.AllergiesTemplateId, CdaConstants.AllergiesSectionLoinc, "Allergies", entries.ToArray());
+        return Section(CdaConstants.AllergiesTemplateId, CdaConstants.AllergiesSectionLoinc, "Allergies", [.. entries]);
     }
 
     public static XElement Medications(IEnumerable<MedicationStatement> medications)
@@ -66,7 +66,7 @@ internal static class CdaSectionEmitters
                         new XElement(_hl7 + "manufacturedProduct",
                             new XElement(_hl7 + "manufacturedMaterial",
                                 CdaEmitting.CodeElement("code", m.Medication as CodeableConcept)))))));
-        return Section(CdaConstants.MedicationsTemplateId, CdaConstants.MedicationsSectionLoinc, "Medications", entries.ToArray());
+        return Section(CdaConstants.MedicationsTemplateId, CdaConstants.MedicationsSectionLoinc, "Medications", [.. entries]);
     }
 
     public static XElement Observations(
@@ -79,7 +79,7 @@ internal static class CdaSectionEmitters
                     CdaEmitting.EffectiveTimePoint("effectiveTime", o.Effective as DataType),
                     CdaEmitting.ValueElement(o.Value))));
         var entry = new XElement(_hl7 + "entry",
-            new XElement(_hl7 + "organizer", components.Cast<object>().ToArray()));
+            new XElement(_hl7 + "organizer", [.. components.Cast<object>()]));
         return Section(templateId, loinc, title, entry);
     }
 
@@ -99,6 +99,6 @@ internal static class CdaSectionEmitters
                 admin.SetAttributeValue("negationInd", "true");
             return new XElement(_hl7 + "entry", admin);
         });
-        return Section(CdaConstants.ImmunizationsTemplateId, CdaConstants.ImmunizationsSectionLoinc, "Immunizations", entries.ToArray());
+        return Section(CdaConstants.ImmunizationsTemplateId, CdaConstants.ImmunizationsSectionLoinc, "Immunizations", [.. entries]);
     }
 }

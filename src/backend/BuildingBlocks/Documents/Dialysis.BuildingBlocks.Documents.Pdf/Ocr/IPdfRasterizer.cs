@@ -18,9 +18,24 @@ public interface IPdfRasterizer
         CancellationToken cancellationToken);
 }
 
-public sealed record RasterizationOptions(int DpiX = 300, int DpiY = 300, RasterImageFormat Format = RasterImageFormat.Png)
+public sealed record RasterizationOptions
 {
+    public RasterizationOptions(int DpiX = 300, int DpiY = 300, RasterImageFormat Format = RasterImageFormat.Png)
+    {
+        this.DpiX = DpiX;
+        this.DpiY = DpiY;
+        this.Format = Format;
+    }
     public static RasterizationOptions OcrDefault { get; } = new(300, 300, RasterImageFormat.Png);
+    public int DpiX { get; init; }
+    public int DpiY { get; init; }
+    public RasterImageFormat Format { get; init; }
+    public void Deconstruct(out int DpiX, out int DpiY, out RasterImageFormat Format)
+    {
+        DpiX = this.DpiX;
+        DpiY = this.DpiY;
+        Format = this.Format;
+    }
 }
 
 public enum RasterImageFormat
@@ -30,9 +45,31 @@ public enum RasterImageFormat
     Tiff = 2,
 }
 
-public sealed record RasterizedPage(
-    int PageNumber,
-    int Width,
-    int Height,
-    RasterImageFormat Format,
-    ReadOnlyMemory<byte> Bytes);
+public sealed record RasterizedPage
+{
+    public RasterizedPage(int PageNumber,
+        int Width,
+        int Height,
+        RasterImageFormat Format,
+        ReadOnlyMemory<byte> Bytes)
+    {
+        this.PageNumber = PageNumber;
+        this.Width = Width;
+        this.Height = Height;
+        this.Format = Format;
+        this.Bytes = Bytes;
+    }
+    public int PageNumber { get; init; }
+    public int Width { get; init; }
+    public int Height { get; init; }
+    public RasterImageFormat Format { get; init; }
+    public ReadOnlyMemory<byte> Bytes { get; init; }
+    public void Deconstruct(out int PageNumber, out int Width, out int Height, out RasterImageFormat Format, out ReadOnlyMemory<byte> Bytes)
+    {
+        PageNumber = this.PageNumber;
+        Width = this.Width;
+        Height = this.Height;
+        Format = this.Format;
+        Bytes = this.Bytes;
+    }
+}

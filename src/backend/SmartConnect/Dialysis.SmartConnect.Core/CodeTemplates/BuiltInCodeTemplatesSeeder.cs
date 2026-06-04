@@ -8,10 +8,20 @@ namespace Dialysis.SmartConnect.CodeTemplates;
 /// Idempotent first-run seeder for the built-in <see cref="CodeTemplateLibrary"/>. Writes the well-known library
 /// at startup if it doesn't already exist. Templates are JS helpers that work in Jint (no Node/browser globals).
 /// </summary>
-public sealed class BuiltInCodeTemplatesSeeder(
-    IServiceScopeFactory scopeFactory,
-    ILogger<BuiltInCodeTemplatesSeeder> logger) : IHostedService
+public sealed class BuiltInCodeTemplatesSeeder : IHostedService
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<BuiltInCodeTemplatesSeeder> _logger;
+    /// <summary>
+    /// Idempotent first-run seeder for the built-in <see cref="CodeTemplateLibrary"/>. Writes the well-known library
+    /// at startup if it doesn't already exist. Templates are JS helpers that work in Jint (no Node/browser globals).
+    /// </summary>
+    public BuiltInCodeTemplatesSeeder(IServiceScopeFactory scopeFactory,
+        ILogger<BuiltInCodeTemplatesSeeder> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
     public static readonly Guid BuiltInLibraryId = Guid.Parse("00000000-0000-4000-8000-000000c0de01");
     public const string BuiltInLibraryName = "SmartConnect Built-In";
 
@@ -19,28 +29,28 @@ public sealed class BuiltInCodeTemplatesSeeder(
     {
         try
         {
-            await using var scope = scopeFactory.CreateAsyncScope();
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var repo = scope.ServiceProvider.GetService<ICodeTemplateLibraryRepository>();
             if (repo is null)
             {
-                logger.LogDebug("ICodeTemplateLibraryRepository not registered; skipping built-in seed.");
+                _logger.LogDebug("ICodeTemplateLibraryRepository not registered; skipping built-in seed.");
                 return;
             }
 
             var existing = await repo.GetByIdAsync(BuiltInLibraryId, cancellationToken).ConfigureAwait(false);
             if (existing is not null)
             {
-                logger.LogDebug("Built-in code template library already seeded; skipping.");
+                _logger.LogDebug("Built-in code template library already seeded; skipping.");
                 return;
             }
 
             var library = BuildBuiltInLibrary();
             await repo.UpsertAsync(library, cancellationToken).ConfigureAwait(false);
-            logger.LogInformation("Seeded built-in code template library with {Count} templates.", library.Templates.Count);
+            _logger.LogInformation("Seeded built-in code template library with {Count} templates.", library.Templates.Count);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to seed built-in code template library; SmartConnect will continue without it.");
+            _logger.LogWarning(ex, "Failed to seed built-in code template library; SmartConnect will continue without it.");
         }
     }
 

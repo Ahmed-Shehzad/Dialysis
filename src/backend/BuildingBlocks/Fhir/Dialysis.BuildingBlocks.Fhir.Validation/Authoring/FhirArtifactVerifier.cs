@@ -6,7 +6,22 @@ using Task = System.Threading.Tasks.Task;
 namespace Dialysis.BuildingBlocks.Fhir.Validation.Authoring;
 
 /// <summary>Outcome of verifying an authored artifact's correctness.</summary>
-public sealed record FhirArtifactVerification(bool IsValid, OperationOutcome Outcome);
+public sealed record FhirArtifactVerification
+{
+    /// <summary>Outcome of verifying an authored artifact's correctness.</summary>
+    public FhirArtifactVerification(bool IsValid, OperationOutcome Outcome)
+    {
+        this.IsValid = IsValid;
+        this.Outcome = Outcome;
+    }
+    public bool IsValid { get; init; }
+    public OperationOutcome Outcome { get; init; }
+    public void Deconstruct(out bool IsValid, out OperationOutcome Outcome)
+    {
+        IsValid = this.IsValid;
+        Outcome = this.Outcome;
+    }
+}
 
 /// <summary>
 /// Independently verifies that an authored profile / IG is correct: required metadata is present,
@@ -25,10 +40,17 @@ public interface IFhirArtifactVerifier
 }
 
 /// <inheritdoc cref="IFhirArtifactVerifier" />
-public sealed class FhirArtifactVerifier(
-    IFhirConformanceRegistry registry,
-    FhirJsonSerializerProvider serializer) : IFhirArtifactVerifier
+public sealed class FhirArtifactVerifier : IFhirArtifactVerifier
 {
+    private readonly IFhirConformanceRegistry _registry;
+    private readonly FhirJsonSerializerProvider _serializer;
+    /// <inheritdoc cref="IFhirArtifactVerifier" />
+    public FhirArtifactVerifier(IFhirConformanceRegistry registry,
+        FhirJsonSerializerProvider serializer)
+    {
+        _registry = registry;
+        _serializer = serializer;
+    }
     public async Task<FhirArtifactVerification> VerifyProfileAsync(
         StructureDefinition profile, CancellationToken cancellationToken)
     {
@@ -88,7 +110,7 @@ public sealed class FhirArtifactVerifier(
                 continue;
             }
 
-            var resolved = await registry.TryResolveByCanonicalUriAsync(dep.Uri).ConfigureAwait(false);
+            var resolved = await _registry.TryResolveByCanonicalUriAsync(dep.Uri).ConfigureAwait(false);
             if (!resolved.Success)
             {
                 Add(outcome, OperationOutcome.IssueSeverity.Warning,
@@ -124,7 +146,7 @@ public sealed class FhirArtifactVerifier(
         // Re-generate onto a clone so a malformed differential surfaces here independently of how
         // the artifact was built. A clean snapshot is the strongest proof the profile is computable.
         var clone = (StructureDefinition)sd.DeepCopy();
-        var generator = new SnapshotGenerator(registry, SnapshotGeneratorSettings.CreateDefault());
+        var generator = new SnapshotGenerator(_registry, SnapshotGeneratorSettings.CreateDefault());
 
         try
         {
@@ -158,8 +180,8 @@ public sealed class FhirArtifactVerifier(
     {
         try
         {
-            var json = serializer.Serialize(resource);
-            _ = serializer.Parse<Resource>(json);
+            var json = _serializer.Serialize(resource);
+            _ = _serializer.Parse<Resource>(json);
         }
         catch (Exception ex)
         {

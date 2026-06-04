@@ -24,12 +24,28 @@ public interface IFhirSubscriptionSink
 /// The buffer is in-memory and bounded (oldest dropped past capacity); durable cross-restart
 /// redelivery remains the job of the EF-Core-backed <c>NotificationOutbox</c> follow-up.
 /// </remarks>
-public sealed class FhirSubscriptionConnectionManager(int replayCapacity = 50)
+public sealed class FhirSubscriptionConnectionManager
 {
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, IFhirSubscriptionSink>> _bindings =
         new(StringComparer.Ordinal);
 
     private readonly ConcurrentDictionary<string, ReplayBuffer> _replay = new(StringComparer.Ordinal);
+    private readonly int _replayCapacity;
+    /// <summary>
+    /// Tracks live WebSocket / SSE connections keyed by subscription id so the WebSocket and SSE
+    /// channel dispatchers push a notification only to the clients bound to that subscription —
+    /// unlike the Transponder bus transports, which fan out every envelope to every connection.
+    /// Connection lifetime mirrors <c>TransponderSseIngressRelay</c>: a concurrent registry plus a
+    /// per-sink write lock, with registration disposed when the request aborts.
+    /// </summary>
+    /// <remarks>
+    /// A bounded per-subscription replay buffer holds notifications that were pushed while no
+    /// connection was bound. When a client (re)connects, <see cref="FlushReplayAsync"/> drains the
+    /// buffer to it, so a WebSocket/SSE subscriber that briefly drops does not silently miss events.
+    /// The buffer is in-memory and bounded (oldest dropped past capacity); durable cross-restart
+    /// redelivery remains the job of the EF-Core-backed <c>NotificationOutbox</c> follow-up.
+    /// </remarks>
+    public FhirSubscriptionConnectionManager(int replayCapacity = 50) => _replayCapacity = replayCapacity;
 
     public IDisposable Register(string subscriptionId, IFhirSubscriptionSink sink)
     {
@@ -86,9 +102,9 @@ public sealed class FhirSubscriptionConnectionManager(int replayCapacity = 50)
             }
         }
 
-        if (delivered == 0 && replayCapacity > 0)
+        if (delivered == 0 && _replayCapacity > 0)
         {
-            var buffer = _replay.GetOrAdd(subscriptionId, _ => new ReplayBuffer(replayCapacity));
+            var buffer = _replay.GetOrAdd(subscriptionId, _ => new ReplayBuffer(_replayCapacity));
             buffer.Add(payload.ToArray());
         }
 
@@ -105,23 +121,33 @@ public sealed class FhirSubscriptionConnectionManager(int replayCapacity = 50)
         }
     }
 
-    private sealed class Registration(FhirSubscriptionConnectionManager owner, string subscriptionId, Guid connectionId)
-        : IDisposable
+    private sealed class Registration : IDisposable
     {
-        public void Dispose() => owner.Unregister(subscriptionId, connectionId);
+        private readonly FhirSubscriptionConnectionManager _owner;
+        private readonly string _subscriptionId;
+        private readonly Guid _connectionId;
+        public Registration(FhirSubscriptionConnectionManager owner, string subscriptionId, Guid connectionId)
+        {
+            _owner = owner;
+            _subscriptionId = subscriptionId;
+            _connectionId = connectionId;
+        }
+        public void Dispose() => _owner.Unregister(_subscriptionId, _connectionId);
     }
 
-    private sealed class ReplayBuffer(int capacity)
+    private sealed class ReplayBuffer
     {
         private readonly Lock _gate = new();
         private readonly Queue<byte[]> _items = new();
+        private readonly int _capacity;
+        public ReplayBuffer(int capacity) => _capacity = capacity;
 
         public void Add(byte[] payload)
         {
             lock (_gate)
             {
                 _items.Enqueue(payload);
-                while (_items.Count > capacity)
+                while (_items.Count > _capacity)
                     _items.Dequeue();
             }
         }

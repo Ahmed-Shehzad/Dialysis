@@ -149,8 +149,10 @@ public sealed class DatabaseOutboundAdapterTests
         Assert.False(result.Succeeded);
     }
 
-    private sealed class RecordingFactory(RecordingConnection connection) : IDatabaseOutboundConnectionFactory
+    private sealed class RecordingFactory : IDatabaseOutboundConnectionFactory
     {
+        private readonly RecordingConnection _connection;
+        public RecordingFactory(RecordingConnection connection) => _connection = connection;
         public DatabaseProvider LastProvider { get; private set; }
 
         public string? LastConnectionStringName { get; private set; }
@@ -159,8 +161,8 @@ public sealed class DatabaseOutboundAdapterTests
         {
             LastProvider = provider;
             LastConnectionStringName = connectionStringName;
-            connection.OpenedTimes++;
-            return Task.FromResult<DbConnection>(connection);
+            _connection.OpenedTimes++;
+            return Task.FromResult<DbConnection>(_connection);
         }
     }
 

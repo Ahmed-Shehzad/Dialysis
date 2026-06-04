@@ -16,11 +16,12 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.EHR.Persistence;
 
-public sealed class EhrDbContext(
-    DbContextOptions<EhrDbContext> options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions)
-    : ModuleDbContextBase(options, persistenceOptions)
+public sealed class EhrDbContext : ModuleDbContextBase
 {
+    public EhrDbContext(DbContextOptions<EhrDbContext> options,
+        IOptions<TransponderPersistenceOptions> persistenceOptions) : base(options, persistenceOptions)
+    {
+    }
     protected override string ModuleSchema => "ehr";
 
     // Registration

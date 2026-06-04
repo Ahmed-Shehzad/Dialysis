@@ -130,20 +130,23 @@ public sealed class PdqRoundTripTests
         Assert.Equal("MRN-9001", resolver.LastCriteria?.MedicalRecordNumber);
     }
 
-    private sealed class StubResolver(params PdqMatch[] rows) : IPatientDemographicsResolver
+    private sealed class StubResolver : IPatientDemographicsResolver
     {
+        private readonly PdqMatch[] _rows;
+        public StubResolver(params PdqMatch[] rows) => _rows = rows;
         public PdqCriteria? LastCriteria { get; private set; }
 
         public Task<IReadOnlyList<PdqMatch>> ResolveAsync(PdqCriteria criteria, CancellationToken cancellationToken = default)
         {
             LastCriteria = criteria;
-            return Task.FromResult<IReadOnlyList<PdqMatch>>(rows);
+            return Task.FromResult<IReadOnlyList<PdqMatch>>(_rows);
         }
     }
 
-    private sealed class FakeTimeProvider(DateTime utcNow) : TimeProvider
+    private sealed class FakeTimeProvider : TimeProvider
     {
-        private readonly DateTime _utcNow = utcNow;
+        private readonly DateTime _utcNow;
+        public FakeTimeProvider(DateTime utcNow) => _utcNow = utcNow;
         public override DateTimeOffset GetUtcNow() => new(_utcNow, TimeSpan.Zero);
     }
 }

@@ -4,16 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIE.Persistence.Repositories;
 
-public sealed class EfPatientIndex(HieDbContext db) : IPatientIndex
+public sealed class EfPatientIndex : IPatientIndex
 {
+    private readonly HieDbContext _db;
+    public EfPatientIndex(HieDbContext db) => _db = db;
     public async Task UpsertAsync(PatientIndexEntry entry, CancellationToken cancellationToken = default)
     {
-        var existing = await db.PatientIndexEntries
+        var existing = await _db.PatientIndexEntries
             .FirstOrDefaultAsync(p => p.PartnerId == entry.PartnerId && p.ExternalLogicalId == entry.ExternalLogicalId, cancellationToken)
             .ConfigureAwait(false);
         if (existing is null)
         {
-            await db.PatientIndexEntries.AddAsync(entry, cancellationToken).ConfigureAwait(false);
+            await _db.PatientIndexEntries.AddAsync(entry, cancellationToken).ConfigureAwait(false);
             return;
         }
         existing.Refresh(entry.MedicalRecordNumber, entry.FamilyName, entry.GivenName, entry.DateOfBirth, entry.SexAtBirthCode, entry.UpdatedAtUtc);
@@ -27,7 +29,7 @@ public sealed class EfPatientIndex(HieDbContext db) : IPatientIndex
         int take,
         CancellationToken cancellationToken = default)
     {
-        var query = db.PatientIndexEntries.AsQueryable();
+        var query = _db.PatientIndexEntries.AsQueryable();
         if (!string.IsNullOrWhiteSpace(medicalRecordNumber))
             query = query.Where(p => p.MedicalRecordNumber == medicalRecordNumber);
         if (!string.IsNullOrWhiteSpace(familyName))

@@ -9,12 +9,9 @@ namespace Dialysis.SmartConnect.Tests;
 public sealed class ChannelScriptExecutorTests
 {
     private readonly InMemoryVariableMapStore _maps = new();
-    private readonly ChannelScriptExecutor _executor ;
+    private readonly ChannelScriptExecutor _executor;
 
-    public ChannelScriptExecutorTests()
-    {
-        _executor = new ChannelScriptExecutor(_maps, NullLogger<ChannelScriptExecutor>.Instance);
-    }
+    public ChannelScriptExecutorTests() => _executor = new ChannelScriptExecutor(_maps, NullLogger<ChannelScriptExecutor>.Instance);
 
     [Fact]
     public async Task Preprocessor_Return_False_Drops_Async()

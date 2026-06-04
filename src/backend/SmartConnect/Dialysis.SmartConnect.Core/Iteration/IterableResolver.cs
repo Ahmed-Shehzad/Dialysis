@@ -7,7 +7,22 @@ using System.Xml.XPath;
 namespace Dialysis.SmartConnect.Iteration;
 
 /// <summary>One element produced by <see cref="IterableResolver"/>.</summary>
-public readonly record struct IterableElement(int Index, string Value);
+public readonly record struct IterableElement
+{
+    /// <summary>One element produced by <see cref="IterableResolver"/>.</summary>
+    public IterableElement(int Index, string Value)
+    {
+        this.Index = Index;
+        this.Value = Value;
+    }
+    public int Index { get; init; }
+    public string Value { get; init; }
+    public void Deconstruct(out int Index, out string Value)
+    {
+        Index = this.Index;
+        Value = this.Value;
+    }
+}
 
 /// <summary>
 /// Evaluates an iterable expression against an <see cref="IntegrationMessage"/> payload and yields

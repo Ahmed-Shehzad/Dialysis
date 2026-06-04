@@ -9,8 +9,16 @@ namespace Dialysis.SmartConnect.Fhir;
 /// FHIR resources (zero or more, depending on which mappers are registered) — callers may build a
 /// transaction Bundle or fan them out to integration events.
 /// </summary>
-public sealed class Hl7V2ToFhirPipeline(IEnumerable<IFhirV2MessageMapperWrapper> mappers)
+public sealed class Hl7V2ToFhirPipeline
 {
+    private readonly IEnumerable<IFhirV2MessageMapperWrapper> _mappers;
+    /// <summary>
+    /// Dispatches a parsed <see cref="Hl7V2Message"/> to all registered <see cref="IFhirV2MessageMapper{T}"/>
+    /// implementations whose <c>TriggerEvent</c> matches <c>MSH-9</c> on the message. Returns the produced
+    /// FHIR resources (zero or more, depending on which mappers are registered) — callers may build a
+    /// transaction Bundle or fan them out to integration events.
+    /// </summary>
+    public Hl7V2ToFhirPipeline(IEnumerable<IFhirV2MessageMapperWrapper> mappers) => _mappers = mappers;
     public IReadOnlyList<Resource> Transform(Hl7V2Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -20,7 +28,7 @@ public sealed class Hl7V2ToFhirPipeline(IEnumerable<IFhirV2MessageMapperWrapper>
             return Array.Empty<Resource>();
 
         var produced = new List<Resource>();
-        foreach (var wrapper in mappers)
+        foreach (var wrapper in _mappers)
         {
             if (string.Equals(wrapper.TriggerEvent, trigger, StringComparison.OrdinalIgnoreCase))
                 produced.Add(wrapper.Map(message));
@@ -53,10 +61,12 @@ public interface IFhirV2MessageMapperWrapper
     Resource Map(Hl7V2Message message);
 }
 
-internal sealed class FhirV2MessageMapperWrapper<TResource>(IFhirV2MessageMapper<TResource> inner) : IFhirV2MessageMapperWrapper
+internal sealed class FhirV2MessageMapperWrapper<TResource> : IFhirV2MessageMapperWrapper
     where TResource : Resource
 {
-    public string TriggerEvent => inner.TriggerEvent;
+    private readonly IFhirV2MessageMapper<TResource> _inner;
+    public FhirV2MessageMapperWrapper(IFhirV2MessageMapper<TResource> inner) => _inner = inner;
+    public string TriggerEvent => _inner.TriggerEvent;
 
-    public Resource Map(Hl7V2Message message) => inner.Map(message);
+    public Resource Map(Hl7V2Message message) => _inner.Map(message);
 }

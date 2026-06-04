@@ -10,14 +10,20 @@ namespace Dialysis.HIS.Operations.Domain.Services;
 /// Domain service: rejects a new export-job submission when an open (Queued) job already exists for the
 /// same payer + reporting period. Coordinates across the repository because the rule sits between aggregates.
 /// </summary>
-public sealed class BillingExportEligibilityService(IBillingExportJobRepository repository) : IDomainService
+public sealed class BillingExportEligibilityService : IDomainService
 {
+    private readonly IBillingExportJobRepository _repository;
+    /// <summary>
+    /// Domain service: rejects a new export-job submission when an open (Queued) job already exists for the
+    /// same payer + reporting period. Coordinates across the repository because the rule sits between aggregates.
+    /// </summary>
+    public BillingExportEligibilityService(IBillingExportJobRepository repository) => _repository = repository;
     public async Task EnsureNoQueuedDuplicateAsync(
         PayerCode payer,
         BillingPeriod period,
         CancellationToken cancellationToken = default)
     {
-        var queued = await repository.ListByStatusAsync(BillingExportJobStatus.Queued, cancellationToken).ConfigureAwait(false);
+        var queued = await _repository.ListByStatusAsync(BillingExportJobStatus.Queued, cancellationToken).ConfigureAwait(false);
         if (queued.Any(j => j.PayerCode == payer && j.Period == period))
         {
             throw new DomainException(

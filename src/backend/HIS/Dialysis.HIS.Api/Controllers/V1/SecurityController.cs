@@ -9,19 +9,26 @@ namespace Dialysis.HIS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/security")]
-public sealed class SecurityController(ICqrsGateway gateway) : HisHateoasControllerBase
+public sealed class SecurityController : HisHateoasControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    public SecurityController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpPost("local-users")]
     [ProducesResponseType(typeof(ResourceEnvelope<RegisterLocalUserResponse>), StatusCodes.Status201Created)]
     public async Task<IActionResult> RegisterLocalUserAsync(
         [FromBody] RegisterLocalUserCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await gateway.SendCommandAsync<RegisterLocalUserCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        var id = await _gateway.SendCommandAsync<RegisterLocalUserCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return CreatedResource(
             $"/api/v{ApiVersionSegment}/security/local-users/{id}",
             new RegisterLocalUserResponse(id));
     }
 
-    public sealed record RegisterLocalUserResponse(Guid Id);
+    public sealed record RegisterLocalUserResponse
+    {
+        public RegisterLocalUserResponse(Guid Id) => this.Id = Id;
+        public Guid Id { get; init; }
+        public void Deconstruct(out Guid id) => id = this.Id;
+    }
 }

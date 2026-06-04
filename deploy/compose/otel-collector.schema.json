@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dialysis.local/schemas/otel-collector-config.json",
+  "title": "OpenTelemetry Collector configuration",
+  "description": "Minimal schema for an OpenTelemetry *Collector* pipeline config (receivers/processors/exporters/extensions/service). This is NOT the OpenTelemetry SDK declarative-configuration schema, so it deliberately has no top-level 'file_format' property — referencing it via an inline yaml-language-server modeline stops editors from matching the SDK schema by filename.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "receivers": { "type": "object" },
+    "processors": { "type": "object" },
+    "exporters": { "type": "object" },
+    "extensions": { "type": "object" },
+    "connectors": { "type": "object" },
+    "service": {
+      "type": "object",
+      "properties": {
+        "extensions": { "type": "array", "items": { "type": "string" } },
+        "pipelines": { "type": "object" },
+        "telemetry": { "type": "object" }
+      }
+    }
+  }
+}

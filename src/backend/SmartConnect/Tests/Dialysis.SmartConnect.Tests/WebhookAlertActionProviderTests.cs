@@ -75,8 +75,10 @@ public sealed class WebhookAlertActionProviderTests
         }
     }
 
-    private sealed class StubFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class StubFactory : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+        private readonly HttpMessageHandler _handler;
+        public StubFactory(HttpMessageHandler handler) => _handler = handler;
+        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
     }
 }

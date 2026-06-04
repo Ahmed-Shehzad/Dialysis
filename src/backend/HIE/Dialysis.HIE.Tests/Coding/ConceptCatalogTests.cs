@@ -25,16 +25,10 @@ public sealed class ConceptCatalogTests
     }
 
     [Fact]
-    public void Get_Throws_For_Unknown_Concept()
-    {
-        Should.Throw<KeyNotFoundException>(() => Make_Sut().Get("nonexistent"));
-    }
+    public void Get_Throws_For_Unknown_Concept() => Should.Throw<KeyNotFoundException>(() => Make_Sut().Get("nonexistent"));
 
     [Fact]
-    public void Tryget_Returns_Null_For_Unknown_Concept()
-    {
-        Make_Sut().TryGet("nonexistent").ShouldBeNull();
-    }
+    public void Tryget_Returns_Null_For_Unknown_Concept() => Make_Sut().TryGet("nonexistent").ShouldBeNull();
 
     [Fact]
     public void Updatedisplay_Replaces_Display_On_Subsequent_Get()

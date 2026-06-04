@@ -90,11 +90,13 @@ public sealed class GetDocumentPreviewQueryTests
         return (repo, blobs, doc);
     }
 
-    private sealed class InMemoryDocumentReferenceRepository(DocumentReference doc) : IDocumentReferenceRepository
+    private sealed class InMemoryDocumentReferenceRepository : IDocumentReferenceRepository
     {
+        private readonly DocumentReference _doc;
+        public InMemoryDocumentReferenceRepository(DocumentReference doc) => _doc = doc;
         public void Add(DocumentReference document) => throw new NotSupportedException();
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) =>
-            Task.FromResult<DocumentReference?>(doc.Id == id ? doc : null);
+            Task.FromResult<DocumentReference?>(_doc.Id == id ? _doc : null);
         public Task<IReadOnlyList<DocumentReference>> ListAsync(
             Guid? patientId, string? kind, DocumentReferenceStatus? status,
             DocumentReferenceSource? source, int take, CancellationToken cancellationToken) =>

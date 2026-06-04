@@ -20,7 +20,7 @@ public sealed class CapturingOutboundAdapter : IOutboundAdapter
         {
             lock (_sent)
             {
-                return _sent.ToArray();
+                return [.. _sent];
             }
         }
     }

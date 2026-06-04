@@ -85,7 +85,7 @@ public sealed class S3AttachmentBlobStoreTests : IAsyncLifetime
             Assert.True(blob.SizeBytes > 0);
         }
 
-        Assert.Equal(ids.ToHashSet(), enumerated);
+        Assert.Equal([.. ids], enumerated);
     }
 
     [Fact]

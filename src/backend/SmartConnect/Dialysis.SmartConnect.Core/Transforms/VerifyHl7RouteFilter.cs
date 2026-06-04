@@ -60,7 +60,22 @@ public sealed class VerifyHl7TransformStage : ITransformStage
 public static class VerifyHl7Core
 {
     /// <summary>Verdict returned by <see cref="Inspect"/>.</summary>
-    public readonly record struct Inspection(bool IsValid, string? Reason);
+    public readonly record struct Inspection
+    {
+        /// <summary>Verdict returned by <see cref="Inspect"/>.</summary>
+        public Inspection(bool IsValid, string? Reason)
+        {
+            this.IsValid = IsValid;
+            this.Reason = Reason;
+        }
+        public bool IsValid { get; init; }
+        public string? Reason { get; init; }
+        public void Deconstruct(out bool IsValid, out string? Reason)
+        {
+            IsValid = this.IsValid;
+            Reason = this.Reason;
+        }
+    }
 
     /// <summary>
     /// Parses <paramref name="payloadText"/> and applies the operator-supplied rules carried in

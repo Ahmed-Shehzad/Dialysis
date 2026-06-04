@@ -32,7 +32,35 @@ public sealed class HelpController : HisHateoasControllerBase
             LinkCapabilitiesIndex());
     }
 
-    public sealed record HelpDiscoveryDto(string Title, IReadOnlyList<DocumentationRefDto> Documentation);
+    public sealed record HelpDiscoveryDto
+    {
+        public HelpDiscoveryDto(string Title, IReadOnlyList<DocumentationRefDto> Documentation)
+        {
+            this.Title = Title;
+            this.Documentation = Documentation;
+        }
+        public string Title { get; init; }
+        public IReadOnlyList<DocumentationRefDto> Documentation { get; init; }
+        public void Deconstruct(out string Title, out IReadOnlyList<DocumentationRefDto> Documentation)
+        {
+            Title = this.Title;
+            Documentation = this.Documentation;
+        }
+    }
 
-    public sealed record DocumentationRefDto(string Title, string RepositoryRelativePath);
+    public sealed record DocumentationRefDto
+    {
+        public DocumentationRefDto(string Title, string RepositoryRelativePath)
+        {
+            this.Title = Title;
+            this.RepositoryRelativePath = RepositoryRelativePath;
+        }
+        public string Title { get; init; }
+        public string RepositoryRelativePath { get; init; }
+        public void Deconstruct(out string Title, out string RepositoryRelativePath)
+        {
+            Title = this.Title;
+            RepositoryRelativePath = this.RepositoryRelativePath;
+        }
+    }
 }

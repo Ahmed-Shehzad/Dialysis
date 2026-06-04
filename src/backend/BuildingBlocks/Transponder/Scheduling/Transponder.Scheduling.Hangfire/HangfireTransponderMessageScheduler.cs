@@ -5,11 +5,20 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Scheduling.Hangfire;
 
 /// <summary>Maps <see cref="ITransponderMessageScheduler"/> to Hangfire delayed and recurring jobs.</summary>
-public sealed class HangfireTransponderMessageScheduler(
-    IBackgroundJobClient backgroundJobs,
-    IMessageSerializer serializer,
-    ILogger<HangfireTransponderMessageScheduler> logger) : ITransponderMessageScheduler
+public sealed class HangfireTransponderMessageScheduler : ITransponderMessageScheduler
 {
+    private readonly IBackgroundJobClient _backgroundJobs;
+    private readonly IMessageSerializer _serializer;
+    private readonly ILogger<HangfireTransponderMessageScheduler> _logger;
+    /// <summary>Maps <see cref="ITransponderMessageScheduler"/> to Hangfire delayed and recurring jobs.</summary>
+    public HangfireTransponderMessageScheduler(IBackgroundJobClient backgroundJobs,
+        IMessageSerializer serializer,
+        ILogger<HangfireTransponderMessageScheduler> logger)
+    {
+        _backgroundJobs = backgroundJobs;
+        _serializer = serializer;
+        _logger = logger;
+    }
     public Task<string> ScheduleOnceAsync<TMessage>(
         TMessage message,
         DateTimeOffset runAt,
@@ -18,11 +27,11 @@ public sealed class HangfireTransponderMessageScheduler(
         where TMessage : class
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var envelope = TransponderScheduledEnvelopeFactory.Create(message, serializer, publishOptions);
-        var id = backgroundJobs.Schedule<TransponderHangfirePublishJob>(
+        var envelope = TransponderScheduledEnvelopeFactory.Create(message, _serializer, publishOptions);
+        var id = _backgroundJobs.Schedule<TransponderHangfirePublishJob>(
             j => j.ExecuteAsync(envelope),
             runAt);
-        logger.LogDebug("Scheduled one-time Transponder publish {JobId} for {RunAt}", id, runAt);
+        _logger.LogDebug("Scheduled one-time Transponder publish {JobId} for {RunAt}", id, runAt);
         return Task.FromResult(id);
     }
 
@@ -37,14 +46,14 @@ public sealed class HangfireTransponderMessageScheduler(
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(cronExpression);
-        var envelope = TransponderScheduledEnvelopeFactory.Create(message, serializer, publishOptions);
+        var envelope = TransponderScheduledEnvelopeFactory.Create(message, _serializer, publishOptions);
         var id = string.IsNullOrWhiteSpace(scheduleId) ? $"transponder:{typeof(TMessage).FullName}:{Guid.NewGuid():N}" : scheduleId!;
         RecurringJob.AddOrUpdate<TransponderHangfirePublishJob>(
             id,
             j => j.ExecuteAsync(envelope),
             cronExpression,
             new RecurringJobOptions { TimeZone = timeZone ?? TimeZoneInfo.Utc });
-        logger.LogDebug("Registered recurring Transponder publish {RecurringJobId} with cron {Cron}", id, cronExpression);
+        _logger.LogDebug("Registered recurring Transponder publish {RecurringJobId} with cron {Cron}", id, cronExpression);
         return Task.FromResult(id);
     }
 

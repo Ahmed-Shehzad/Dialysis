@@ -8,29 +8,36 @@ namespace Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 /// under the <c>fhir_export</c> schema. Modules add <see cref="ExportJobRecordConfiguration"/> to
 /// their <c>OnModelCreating</c> override to enable this store.
 /// </summary>
-public sealed class EfExportJobStore<TDbContext>(TDbContext db) : IExportJobStore
+public sealed class EfExportJobStore<TDbContext> : IExportJobStore
     where TDbContext : DbContext
 {
+    private readonly TDbContext _db;
+    /// <summary>
+    /// Persists <see cref="ExportJob"/> records on the host module's <typeparamref name="TDbContext"/>
+    /// under the <c>fhir_export</c> schema. Modules add <see cref="ExportJobRecordConfiguration"/> to
+    /// their <c>OnModelCreating</c> override to enable this store.
+    /// </summary>
+    public EfExportJobStore(TDbContext db) => _db = db;
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<ExportJob> CreateAsync(ExportJob job, CancellationToken cancellationToken)
     {
         var record = ToRecord(job);
-        db.Set<ExportJobRecord>().Add(record);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.Set<ExportJobRecord>().Add(record);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return job;
     }
 
     public async ValueTask<ExportJob?> GetAsync(string jobId, CancellationToken cancellationToken)
     {
-        var record = await db.Set<ExportJobRecord>().AsNoTracking()
+        var record = await _db.Set<ExportJobRecord>().AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == jobId, cancellationToken).ConfigureAwait(false);
         return record is null ? null : ToDomain(record);
     }
 
     public async ValueTask UpdateAsync(ExportJob job, CancellationToken cancellationToken)
     {
-        var record = await db.Set<ExportJobRecord>()
+        var record = await _db.Set<ExportJobRecord>()
             .FirstOrDefaultAsync(r => r.Id == job.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Export job '{job.Id}' not found.");
         record.Scope = job.Scope;
@@ -43,12 +50,12 @@ public sealed class EfExportJobStore<TDbContext>(TDbContext db) : IExportJobStor
         record.CompletedAt = job.CompletedAt;
         record.Error = job.Error;
         record.OutputsJson = JsonSerializer.Serialize(job.Outputs, _json);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<IReadOnlyList<ExportJob>> ListActiveAsync(CancellationToken cancellationToken)
     {
-        var records = await db.Set<ExportJobRecord>().AsNoTracking()
+        var records = await _db.Set<ExportJobRecord>().AsNoTracking()
             .Where(r => r.Status == ExportJobStatus.Queued || r.Status == ExportJobStatus.InProgress)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         return records.ConvertAll(ToDomain);

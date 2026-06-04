@@ -30,8 +30,32 @@ public sealed class SubscriptionTopicCatalog
 /// parameter names a subscriber may use when registering interest. Filter values are matched
 /// case-sensitively against payload attributes by <see cref="ISubscriptionMatcher"/>.
 /// </summary>
-public sealed record SubscriptionTopicDescriptor(
-    string Url,
-    string Title,
-    string Description,
-    IReadOnlyList<string> FilterParameterNames);
+public sealed record SubscriptionTopicDescriptor
+{
+    /// <summary>
+    /// Topic metadata: canonical URL, human-readable title, description, and the set of filter
+    /// parameter names a subscriber may use when registering interest. Filter values are matched
+    /// case-sensitively against payload attributes by <see cref="ISubscriptionMatcher"/>.
+    /// </summary>
+    public SubscriptionTopicDescriptor(string Url,
+        string Title,
+        string Description,
+        IReadOnlyList<string> FilterParameterNames)
+    {
+        this.Url = Url;
+        this.Title = Title;
+        this.Description = Description;
+        this.FilterParameterNames = FilterParameterNames;
+    }
+    public string Url { get; init; }
+    public string Title { get; init; }
+    public string Description { get; init; }
+    public IReadOnlyList<string> FilterParameterNames { get; init; }
+    public void Deconstruct(out string Url, out string Title, out string Description, out IReadOnlyList<string> FilterParameterNames)
+    {
+        Url = this.Url;
+        Title = this.Title;
+        Description = this.Description;
+        FilterParameterNames = this.FilterParameterNames;
+    }
+}

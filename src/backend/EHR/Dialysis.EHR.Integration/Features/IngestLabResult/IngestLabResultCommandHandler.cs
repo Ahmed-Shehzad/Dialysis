@@ -6,17 +6,26 @@ using Dialysis.EHR.Integration.Projections;
 
 namespace Dialysis.EHR.Integration.Features.IngestLabResult;
 
-public sealed class IngestLabResultCommandHandler(
-    ITransponderBus bus,
-    IUnitOfWork unitOfWork,
-    LabResultOpenEhrProjector openEhrProjector,
-    TimeProvider timeProvider)
-    : ICommandHandler<IngestLabResultCommand, Guid>
+public sealed class IngestLabResultCommandHandler : ICommandHandler<IngestLabResultCommand, Guid>
 {
+    private readonly ITransponderBus _bus;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly LabResultOpenEhrProjector _openEhrProjector;
+    private readonly TimeProvider _timeProvider;
+    public IngestLabResultCommandHandler(ITransponderBus bus,
+        IUnitOfWork unitOfWork,
+        LabResultOpenEhrProjector openEhrProjector,
+        TimeProvider timeProvider)
+    {
+        _bus = bus;
+        _unitOfWork = unitOfWork;
+        _openEhrProjector = openEhrProjector;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(IngestLabResultCommand request, CancellationToken cancellationToken)
     {
         var resultId = Guid.CreateVersion7();
-        var occurredOn = timeProvider.GetUtcNow().UtcDateTime;
+        var occurredOn = _timeProvider.GetUtcNow().UtcDateTime;
 
         var integrationEvent = new LabResultReceivedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
@@ -32,9 +41,9 @@ public sealed class IngestLabResultCommandHandler(
             AbnormalFlag: request.AbnormalFlagCode,
             ObservedAtUtc: request.ObservedAtUtc);
 
-        await bus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+        await _bus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
 
-        var projection = openEhrProjector.Project(request, resultId);
+        var projection = _openEhrProjector.Project(request, resultId);
         var openEhrEvent = new LabResultProjectedAsOpenEhrIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: occurredOn,
@@ -45,9 +54,9 @@ public sealed class IngestLabResultCommandHandler(
             ArchetypeId: projection.ArchetypeId,
             CompositionJson: projection.CompositionJson,
             ObservedAtUtc: request.ObservedAtUtc);
-        await bus.PublishAsync(openEhrEvent, cancellationToken).ConfigureAwait(false);
+        await _bus.PublishAsync(openEhrEvent, cancellationToken).ConfigureAwait(false);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return resultId;
     }
 }

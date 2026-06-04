@@ -13,15 +13,17 @@ namespace Dialysis.HIS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/patient-flow")]
-public sealed class PatientFlowController(ICqrsGateway gateway) : HisHateoasControllerBase
+public sealed class PatientFlowController : HisHateoasControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    public PatientFlowController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpPost("admissions")]
     [ProducesResponseType(typeof(ResourceEnvelope<AdmitPatientResponse>), StatusCodes.Status201Created)]
     public async Task<IActionResult> AdmitPatientAsync(
         [FromBody] AdmitPatientCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await gateway.SendCommandAsync<AdmitPatientCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        var id = await _gateway.SendCommandAsync<AdmitPatientCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return CreatedResource(
             $"/api/v{ApiVersionSegment}/patient-flow/admissions/{id}",
             new AdmitPatientResponse(id));
@@ -31,7 +33,7 @@ public sealed class PatientFlowController(ICqrsGateway gateway) : HisHateoasCont
     [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<PatientQueueEntryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTodaysQueueAsync(CancellationToken cancellationToken)
     {
-        var entries = await gateway.SendQueryAsync<GetTodaysQueueQuery, IReadOnlyList<PatientQueueEntryDto>>(
+        var entries = await _gateway.SendQueryAsync<GetTodaysQueueQuery, IReadOnlyList<PatientQueueEntryDto>>(
             new GetTodaysQueueQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(entries);
     }
@@ -42,7 +44,7 @@ public sealed class PatientFlowController(ICqrsGateway gateway) : HisHateoasCont
         [FromBody] CheckInPatientCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await gateway.SendCommandAsync<CheckInPatientCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        var id = await _gateway.SendCommandAsync<CheckInPatientCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return OkResource(new QueueActionResponse(id));
     }
 
@@ -52,7 +54,7 @@ public sealed class PatientFlowController(ICqrsGateway gateway) : HisHateoasCont
         [FromBody] AssignChairCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await gateway.SendCommandAsync<AssignChairCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        var id = await _gateway.SendCommandAsync<AssignChairCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         return OkResource(new QueueActionResponse(id));
     }
 
@@ -62,12 +64,23 @@ public sealed class PatientFlowController(ICqrsGateway gateway) : HisHateoasCont
         [FromBody] RegisterWalkInCommand command,
         CancellationToken cancellationToken)
     {
-        var entry = await gateway.SendCommandAsync<RegisterWalkInCommand, PatientQueueEntryDto>(command, cancellationToken).ConfigureAwait(false);
+        var entry = await _gateway.SendCommandAsync<RegisterWalkInCommand, PatientQueueEntryDto>(command, cancellationToken).ConfigureAwait(false);
         return CreatedResource(
             $"/api/v{ApiVersionSegment}/patient-flow/queue/{entry.Id}",
             entry);
     }
 
-    public sealed record AdmitPatientResponse(Guid Id);
-    public sealed record QueueActionResponse(Guid Id);
+    public sealed record AdmitPatientResponse
+    {
+        public AdmitPatientResponse(Guid Id) => this.Id = Id;
+        public Guid Id { get; init; }
+        public void Deconstruct(out Guid id) => id = this.Id;
+    }
+
+    public sealed record QueueActionResponse
+    {
+        public QueueActionResponse(Guid Id) => this.Id = Id;
+        public Guid Id { get; init; }
+        public void Deconstruct(out Guid id) => id = this.Id;
+    }
 }

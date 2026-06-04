@@ -83,7 +83,7 @@ public sealed class AzureBlobAttachmentBlobStoreTests : IAsyncLifetime
             Assert.True(blob.SizeBytes > 0);
         }
 
-        Assert.Equal(ids.ToHashSet(), enumerated);
+        Assert.Equal([.. ids], enumerated);
     }
 
     [Fact]

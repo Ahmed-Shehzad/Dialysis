@@ -96,12 +96,14 @@ public sealed class FlowRuntimeEngineAlertSinkTests
         await db.SaveChangesAsync();
     }
 
-    private sealed class RecordingAlertActionProvider(List<string> invocations) : IAlertActionProvider
+    private sealed class RecordingAlertActionProvider : IAlertActionProvider
     {
+        private readonly List<string> _invocations;
+        public RecordingAlertActionProvider(List<string> invocations) => _invocations = invocations;
         public string Kind => "test-record";
         public Task<AlertActionResult> ExecuteAsync(AlertEvent evt, AlertRule rule, AlertActionSlot slot, CancellationToken ct)
         {
-            invocations.Add(rule.Name);
+            _invocations.Add(rule.Name);
             return Task.FromResult(AlertActionResult.Success("recorded"));
         }
     }

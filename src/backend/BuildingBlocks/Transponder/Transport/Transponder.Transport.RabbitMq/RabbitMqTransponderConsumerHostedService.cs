@@ -7,26 +7,41 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 /// <summary>
 /// Hosts the RabbitMQ consumer loop and dispatches to registered <see cref="IConsumer{T}"/> handlers.
 /// </summary>
-public sealed class RabbitMqTransponderConsumerHostedService(
-    ITransponderTransport transport,
-    TransponderConsumeDispatcher dispatcher,
-    IMessageSerializer serializer,
-    ITransponderBus bus,
-    ILogger<RabbitMqTransponderConsumerHostedService> logger) : BackgroundService
+public sealed class RabbitMqTransponderConsumerHostedService : BackgroundService
 {
+    private readonly ITransponderTransport _transport;
+    private readonly TransponderConsumeDispatcher _dispatcher;
+    private readonly IMessageSerializer _serializer;
+    private readonly ITransponderBus _bus;
+    private readonly ILogger<RabbitMqTransponderConsumerHostedService> _logger;
+    /// <summary>
+    /// Hosts the RabbitMQ consumer loop and dispatches to registered <see cref="IConsumer{T}"/> handlers.
+    /// </summary>
+    public RabbitMqTransponderConsumerHostedService(ITransponderTransport transport,
+        TransponderConsumeDispatcher dispatcher,
+        IMessageSerializer serializer,
+        ITransponderBus bus,
+        ILogger<RabbitMqTransponderConsumerHostedService> logger)
+    {
+        _transport = transport;
+        _dispatcher = dispatcher;
+        _serializer = serializer;
+        _bus = bus;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await transport
+            await _transport
                 .RunConsumerAsync(
-                    (msg, ct) => dispatcher.DispatchAsync(
+                    (msg, ct) => _dispatcher.DispatchAsync(
                         msg.RoutingKey,
                         msg.Payload,
                         msg.CorrelationId,
                         msg.DeduplicationId,
-                        serializer,
-                        bus,
+                        _serializer,
+                        _bus,
                         ct),
                     stoppingToken)
                 .ConfigureAwait(false);
@@ -37,7 +52,7 @@ public sealed class RabbitMqTransponderConsumerHostedService(
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Transponder RabbitMQ consumer terminated unexpectedly");
+            _logger.LogCritical(ex, "Transponder RabbitMQ consumer terminated unexpectedly");
             throw;
         }
     }

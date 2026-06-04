@@ -10,12 +10,25 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 /// is registered the channel is inert (logged once per process), per the plan's "interfaces only,
 /// modules supply their own" rule.
 /// </summary>
-public sealed class EmailNotificationDispatcher(
-    FhirJsonSerializerProvider serializer,
-    IServiceProvider services,
-    ILogger<EmailNotificationDispatcher> logger) : ISubscriptionChannelDispatcher
+public sealed class EmailNotificationDispatcher : ISubscriptionChannelDispatcher
 {
     private int _missingNotifierLogged;
+    private readonly FhirJsonSerializerProvider _serializer;
+    private readonly IServiceProvider _services;
+    private readonly ILogger<EmailNotificationDispatcher> _logger;
+    /// <summary>
+    /// Email channel dispatcher. Delegates to a host-supplied <see cref="IEmailNotifier"/>; when none
+    /// is registered the channel is inert (logged once per process), per the plan's "interfaces only,
+    /// modules supply their own" rule.
+    /// </summary>
+    public EmailNotificationDispatcher(FhirJsonSerializerProvider serializer,
+        IServiceProvider services,
+        ILogger<EmailNotificationDispatcher> logger)
+    {
+        _serializer = serializer;
+        _services = services;
+        _logger = logger;
+    }
 
     public SubscriptionChannelType Channel => SubscriptionChannelType.Email;
 
@@ -28,16 +41,16 @@ public sealed class EmailNotificationDispatcher(
         if (subscription.ChannelType != SubscriptionChannelType.Email)
             return;
 
-        var notifier = services.GetService<IEmailNotifier>();
+        var notifier = _services.GetService<IEmailNotifier>();
         if (notifier is null)
         {
             if (Interlocked.Exchange(ref _missingNotifierLogged, 1) == 0)
-                logger.LogWarning("Email subscription channel is inert: no IEmailNotifier is registered.");
+                _logger.LogWarning("Email subscription channel is inert: no IEmailNotifier is registered.");
             return;
         }
 
         var bundle = SubscriptionNotificationBundleFactory.Build(subscription, payloadResource);
-        var json = serializer.Serialize(bundle);
+        var json = _serializer.Serialize(bundle);
         await notifier.SendAsync(
             new SubscriptionEmailNotification(
                 ToAddress: subscription.ChannelEndpoint,

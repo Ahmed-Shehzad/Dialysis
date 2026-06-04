@@ -5,13 +5,19 @@ using Dialysis.HIS.RaCapabilities.Ports;
 
 namespace Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 
-public sealed class PostOrganizationalCommunicationCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
-    : ICommandHandler<PostOrganizationalCommunicationCommand, Guid>
+public sealed class PostOrganizationalCommunicationCommandHandler : ICommandHandler<PostOrganizationalCommunicationCommand, Guid>
 {
+    private readonly IRaCapabilityCommandStore _store;
+    private readonly IUnitOfWork _unitOfWork;
+    public PostOrganizationalCommunicationCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
+    {
+        _store = store;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(PostOrganizationalCommunicationCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
-        store.AddOrganizationalCommunication(
+        _store.AddOrganizationalCommunication(
             new RaOrgCommunication
             {
                 Id = id,
@@ -20,7 +26,7 @@ public sealed class PostOrganizationalCommunicationCommandHandler(IRaCapabilityC
                 Body = request.Body.Trim(),
                 SentAtUtc = DateTime.UtcNow,
             });
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

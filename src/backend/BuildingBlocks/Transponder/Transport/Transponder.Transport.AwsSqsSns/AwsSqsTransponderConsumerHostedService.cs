@@ -5,26 +5,39 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.AwsSqsSns;
 
 /// <summary>Hosts the SQS long-poll loop and dispatches to <see cref="TransponderConsumeDispatcher"/>.</summary>
-public sealed class AwsSqsTransponderConsumerHostedService(
-    ITransponderTransport transport,
-    TransponderConsumeDispatcher dispatcher,
-    IMessageSerializer serializer,
-    ITransponderBus bus,
-    ILogger<AwsSqsTransponderConsumerHostedService> logger) : BackgroundService
+public sealed class AwsSqsTransponderConsumerHostedService : BackgroundService
 {
+    private readonly ITransponderTransport _transport;
+    private readonly TransponderConsumeDispatcher _dispatcher;
+    private readonly IMessageSerializer _serializer;
+    private readonly ITransponderBus _bus;
+    private readonly ILogger<AwsSqsTransponderConsumerHostedService> _logger;
+    /// <summary>Hosts the SQS long-poll loop and dispatches to <see cref="TransponderConsumeDispatcher"/>.</summary>
+    public AwsSqsTransponderConsumerHostedService(ITransponderTransport transport,
+        TransponderConsumeDispatcher dispatcher,
+        IMessageSerializer serializer,
+        ITransponderBus bus,
+        ILogger<AwsSqsTransponderConsumerHostedService> logger)
+    {
+        _transport = transport;
+        _dispatcher = dispatcher;
+        _serializer = serializer;
+        _bus = bus;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await transport
+            await _transport
                 .RunConsumerAsync(
-                    (msg, ct) => dispatcher.DispatchAsync(
+                    (msg, ct) => _dispatcher.DispatchAsync(
                         msg.RoutingKey,
                         msg.Payload,
                         msg.CorrelationId,
                         msg.DeduplicationId,
-                        serializer,
-                        bus,
+                        _serializer,
+                        _bus,
                         ct),
                     stoppingToken)
                 .ConfigureAwait(false);
@@ -35,7 +48,7 @@ public sealed class AwsSqsTransponderConsumerHostedService(
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Transponder AWS SQS consumer terminated unexpectedly");
+            _logger.LogCritical(ex, "Transponder AWS SQS consumer terminated unexpectedly");
             throw;
         }
     }

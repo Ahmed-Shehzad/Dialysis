@@ -8,9 +8,15 @@ namespace Dialysis.HIS.Operations.Domain.Events.Handlers;
 /// job is queued. Driven by the EF SaveChanges interceptor post-commit so audit only lands when the
 /// aggregate write durably succeeded.
 /// </summary>
-public sealed class BillingExportJobQueuedDomainEventHandler(IBillingExportJobAuditRepository audits)
-    : IDomainEventHandler<BillingExportJobQueuedDomainEvent>
+public sealed class BillingExportJobQueuedDomainEventHandler : IDomainEventHandler<BillingExportJobQueuedDomainEvent>
 {
+    private readonly IBillingExportJobAuditRepository _audits;
+    /// <summary>
+    /// First production <see cref="IDomainEventHandler{TEvent}"/>: writes an audit row when a billing export
+    /// job is queued. Driven by the EF SaveChanges interceptor post-commit so audit only lands when the
+    /// aggregate write durably succeeded.
+    /// </summary>
+    public BillingExportJobQueuedDomainEventHandler(IBillingExportJobAuditRepository audits) => _audits = audits;
     public async Task HandleAsync(BillingExportJobQueuedDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
         var audit = new BillingExportJobAudit
@@ -24,6 +30,6 @@ public sealed class BillingExportJobQueuedDomainEventHandler(IBillingExportJobAu
             RecordedAtUtc = DateTime.UtcNow,
         };
 
-        await audits.RecordAsync(audit, cancellationToken).ConfigureAwait(false);
+        await _audits.RecordAsync(audit, cancellationToken).ConfigureAwait(false);
     }
 }

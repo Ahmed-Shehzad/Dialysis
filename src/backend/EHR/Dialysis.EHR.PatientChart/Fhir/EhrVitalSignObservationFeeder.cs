@@ -10,15 +10,22 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// LOINC-coded observation type maps to <c>Observation.code</c>; the value + unit form a
 /// UCUM-coded <c>Quantity</c>.
 /// </summary>
-public sealed class EhrVitalSignObservationFeeder(IVitalSignRepository readings) : INdjsonResourceFeeder<Observation>
+public sealed class EhrVitalSignObservationFeeder : INdjsonResourceFeeder<Observation>
 {
+    private readonly IVitalSignRepository _readings;
+    /// <summary>
+    /// Streams every <c>VitalSignReading</c> as a FHIR R4 <c>Observation</c>. The reading's
+    /// LOINC-coded observation type maps to <c>Observation.code</c>; the value + unit form a
+    /// UCUM-coded <c>Quantity</c>.
+    /// </summary>
+    public EhrVitalSignObservationFeeder(IVitalSignRepository readings) => _readings = readings;
     public async IAsyncEnumerable<Observation> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var reading in readings.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var reading in _readings.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new Observation
             {

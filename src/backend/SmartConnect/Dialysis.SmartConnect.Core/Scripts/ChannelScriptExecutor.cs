@@ -10,13 +10,28 @@ namespace Dialysis.SmartConnect.Scripts;
 /// <summary>
 /// Executes channel lifecycle JavaScript scripts in a sandboxed Jint engine.
 /// </summary>
-public sealed class ChannelScriptExecutor(
-    IVariableMapStore variableMapStore,
-    ILogger<ChannelScriptExecutor> logger,
-    IFlowExecutionContextAccessor? contextAccessor = null,
-    ICodeTemplateLibraryRepository? codeTemplateRepository = null,
-    IAttachmentStore? attachmentStore = null)
+public sealed class ChannelScriptExecutor
 {
+    private readonly IVariableMapStore _variableMapStore;
+    private readonly ILogger<ChannelScriptExecutor> _logger;
+    private readonly IFlowExecutionContextAccessor? _contextAccessor;
+    private readonly ICodeTemplateLibraryRepository? _codeTemplateRepository;
+    private readonly IAttachmentStore? _attachmentStore;
+    /// <summary>
+    /// Executes channel lifecycle JavaScript scripts in a sandboxed Jint engine.
+    /// </summary>
+    public ChannelScriptExecutor(IVariableMapStore variableMapStore,
+        ILogger<ChannelScriptExecutor> logger,
+        IFlowExecutionContextAccessor? contextAccessor = null,
+        ICodeTemplateLibraryRepository? codeTemplateRepository = null,
+        IAttachmentStore? attachmentStore = null)
+    {
+        _variableMapStore = variableMapStore;
+        _logger = logger;
+        _contextAccessor = contextAccessor;
+        _codeTemplateRepository = codeTemplateRepository;
+        _attachmentStore = attachmentStore;
+    }
     private static readonly TimeSpan _scriptTimeout = TimeSpan.FromSeconds(3);
     private const int MaxRecursionDepth = 64;
 
@@ -30,29 +45,29 @@ public sealed class ChannelScriptExecutor(
     {
         var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
 
-        var globalChannel = await variableMapStore
+        var globalChannel = await _variableMapStore
             .GetAllAsync(VariableMapScope.GlobalChannel, message.FlowId, cancellationToken)
             .ConfigureAwait(false);
-        var global = await variableMapStore
+        var global = await _variableMapStore
             .GetAllAsync(VariableMapScope.Global, null, cancellationToken)
             .ConfigureAwait(false);
-        var configuration = await variableMapStore
+        var configuration = await _variableMapStore
             .GetAllAsync(VariableMapScope.Configuration, null, cancellationToken)
             .ConfigureAwait(false);
 
-        var ctx = contextAccessor?.Current ?? new FlowExecutionContext();
+        var ctx = _contextAccessor?.Current ?? new FlowExecutionContext();
 
         try
         {
             var engine = CreateEngine();
             engine.SetValue("msg", payloadText);
-            engine.SetValue("logger", new ScriptLogger(logger));
+            engine.SetValue("logger", new ScriptLogger(_logger));
             engine.SetValue("flowId", message.FlowId.ToString());
             engine.SetValue("correlationId", message.CorrelationId);
 
             var bound = VariableMapsJsBinder.BindAll(engine, ctx, globalChannel, global, configuration);
             await BindCodeTemplatesAsync(engine, message.FlowId, CodeTemplateContext.ChannelPreprocessor, cancellationToken).ConfigureAwait(false);
-            AttachmentJsBinder.Bind(engine, attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
+            AttachmentJsBinder.Bind(engine, _attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
 
             var result = engine.Evaluate(script);
 
@@ -75,12 +90,12 @@ public sealed class ChannelScriptExecutor(
         }
         catch (TimeoutException)
         {
-            logger.LogWarning("PreProcessor script timed out for flow {FlowId}.", message.FlowId);
+            _logger.LogWarning("PreProcessor script timed out for flow {FlowId}.", message.FlowId);
             return PreProcessorResult.PassThrough();
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "PreProcessor script error for flow {FlowId}.", message.FlowId);
+            _logger.LogWarning(ex, "PreProcessor script error for flow {FlowId}.", message.FlowId);
             return PreProcessorResult.PassThrough();
         }
     }
@@ -96,30 +111,30 @@ public sealed class ChannelScriptExecutor(
     {
         var payloadText = Encoding.UTF8.GetString(message.Payload.Span);
 
-        var globalChannel = await variableMapStore
+        var globalChannel = await _variableMapStore
             .GetAllAsync(VariableMapScope.GlobalChannel, message.FlowId, cancellationToken)
             .ConfigureAwait(false);
-        var global = await variableMapStore
+        var global = await _variableMapStore
             .GetAllAsync(VariableMapScope.Global, null, cancellationToken)
             .ConfigureAwait(false);
-        var configuration = await variableMapStore
+        var configuration = await _variableMapStore
             .GetAllAsync(VariableMapScope.Configuration, null, cancellationToken)
             .ConfigureAwait(false);
 
-        var ctx = contextAccessor?.Current ?? new FlowExecutionContext();
+        var ctx = _contextAccessor?.Current ?? new FlowExecutionContext();
 
         try
         {
             var engine = CreateEngine();
             engine.SetValue("msg", payloadText);
-            engine.SetValue("logger", new ScriptLogger(logger));
+            engine.SetValue("logger", new ScriptLogger(_logger));
             engine.SetValue("flowId", message.FlowId.ToString());
             engine.SetValue("correlationId", message.CorrelationId);
             engine.SetValue("succeeded", succeeded);
 
             var bound = VariableMapsJsBinder.BindAll(engine, ctx, globalChannel, global, configuration);
             await BindCodeTemplatesAsync(engine, message.FlowId, CodeTemplateContext.ChannelPostprocessor, cancellationToken).ConfigureAwait(false);
-            AttachmentJsBinder.Bind(engine, attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
+            AttachmentJsBinder.Bind(engine, _attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
 
             engine.Execute(script);
 
@@ -127,7 +142,7 @@ public sealed class ChannelScriptExecutor(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "PostProcessor script error for flow {FlowId}.", message.FlowId);
+            _logger.LogWarning(ex, "PostProcessor script error for flow {FlowId}.", message.FlowId);
         }
     }
 
@@ -138,12 +153,12 @@ public sealed class ChannelScriptExecutor(
         {
             var engine = CreateEngine();
             engine.SetValue("flowId", flowId.ToString());
-            engine.SetValue("logger", new ScriptLogger(logger));
+            engine.SetValue("logger", new ScriptLogger(_logger));
             engine.Execute(script);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Lifecycle script error for flow {FlowId}.", flowId);
+            _logger.LogWarning(ex, "Lifecycle script error for flow {FlowId}.", flowId);
         }
     }
 
@@ -155,8 +170,8 @@ public sealed class ChannelScriptExecutor(
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CodeTemplateContext context, CancellationToken ct)
     {
-        if (codeTemplateRepository is null) return;
-        await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, codeTemplateRepository, flowId, context, ct).ConfigureAwait(false);
+        if (_codeTemplateRepository is null) return;
+        await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, _codeTemplateRepository, flowId, context, ct).ConfigureAwait(false);
     }
 
     private async Task PersistBackAsync(
@@ -166,7 +181,7 @@ public sealed class ChannelScriptExecutor(
     {
         foreach (var kvp in bound.GlobalChannel)
         {
-            await variableMapStore.SetAsync(
+            await _variableMapStore.SetAsync(
                 VariableMapScope.GlobalChannel,
                 flowId,
                 kvp.Key,
@@ -176,7 +191,7 @@ public sealed class ChannelScriptExecutor(
 
         foreach (var kvp in bound.Global)
         {
-            await variableMapStore.SetAsync(
+            await _variableMapStore.SetAsync(
                 VariableMapScope.Global,
                 null,
                 kvp.Key,
@@ -185,11 +200,13 @@ public sealed class ChannelScriptExecutor(
         }
     }
 
-    public sealed class ScriptLogger(ILogger logger)
+    public sealed class ScriptLogger
     {
-        public void Info(string msg) => logger.LogInformation("[Script] {Message}", msg);
-        public void Warn(string msg) => logger.LogWarning("[Script] {Message}", msg);
-        public void Error(string msg) => logger.LogError("[Script] {Message}", msg);
+        private readonly ILogger _logger1;
+        public ScriptLogger(ILogger logger) => _logger1 = logger;
+        public void Info(string msg) => _logger1.LogInformation("[Script] {Message}", msg);
+        public void Warn(string msg) => _logger1.LogWarning("[Script] {Message}", msg);
+        public void Error(string msg) => _logger1.LogError("[Script] {Message}", msg);
     }
 }
 

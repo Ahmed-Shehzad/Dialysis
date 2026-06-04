@@ -1,3 +1,7 @@
+# yaml-language-server: $schema=./otel-collector.schema.json
+# ^ This is an OpenTelemetry *Collector* config, not an SDK declarative-config file.
+#   The modeline pins the schema so editors don't match the SDK schema by filename
+#   (which would wrongly demand a top-level 'file_format' property).
 receivers:
   otlp:
     protocols:

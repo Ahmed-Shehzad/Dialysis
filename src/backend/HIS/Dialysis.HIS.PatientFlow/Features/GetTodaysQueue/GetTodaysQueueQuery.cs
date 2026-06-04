@@ -3,7 +3,10 @@ using Dialysis.HIS.Contracts.Security;
 
 namespace Dialysis.HIS.PatientFlow.Features.GetTodaysQueue;
 
-public sealed record GetTodaysQueueQuery() : IQuery<IReadOnlyList<PatientQueueEntryDto>>, IPermissionedCommand
+public sealed record GetTodaysQueueQuery : IQuery<IReadOnlyList<PatientQueueEntryDto>>, IPermissionedCommand
 {
+    public GetTodaysQueueQuery()
+    {
+    }
     public string RequiredPermission => HisPermissions.PatientFlowQueueRead;
 }

@@ -7,12 +7,23 @@ using TickerQ.Utilities.Interfaces.Managers;
 namespace Dialysis.BuildingBlocks.Transponder.Scheduling.TickerQ;
 
 /// <summary>Maps <see cref="ITransponderMessageScheduler"/> to TickerQ time and cron tickers.</summary>
-public sealed class TickerQTransponderMessageScheduler(
-    ITimeTickerManager<TimeTickerEntity> timeTickers,
-    ICronTickerManager<CronTickerEntity> cronTickers,
-    IMessageSerializer serializer,
-    ILogger<TickerQTransponderMessageScheduler> logger) : ITransponderMessageScheduler
+public sealed class TickerQTransponderMessageScheduler : ITransponderMessageScheduler
 {
+    private readonly ITimeTickerManager<TimeTickerEntity> _timeTickers;
+    private readonly ICronTickerManager<CronTickerEntity> _cronTickers;
+    private readonly IMessageSerializer _serializer;
+    private readonly ILogger<TickerQTransponderMessageScheduler> _logger;
+    /// <summary>Maps <see cref="ITransponderMessageScheduler"/> to TickerQ time and cron tickers.</summary>
+    public TickerQTransponderMessageScheduler(ITimeTickerManager<TimeTickerEntity> timeTickers,
+        ICronTickerManager<CronTickerEntity> cronTickers,
+        IMessageSerializer serializer,
+        ILogger<TickerQTransponderMessageScheduler> logger)
+    {
+        _timeTickers = timeTickers;
+        _cronTickers = cronTickers;
+        _serializer = serializer;
+        _logger = logger;
+    }
     public async Task<string> ScheduleOnceAsync<TMessage>(
         TMessage message,
         DateTimeOffset runAt,
@@ -20,7 +31,7 @@ public sealed class TickerQTransponderMessageScheduler(
         CancellationToken cancellationToken = default)
         where TMessage : class
     {
-        var envelope = TransponderScheduledEnvelopeFactory.Create(message, serializer, publishOptions);
+        var envelope = TransponderScheduledEnvelopeFactory.Create(message, _serializer, publishOptions);
         var id = Guid.NewGuid();
         var entity = new TimeTickerEntity
         {
@@ -31,8 +42,8 @@ public sealed class TickerQTransponderMessageScheduler(
             Request = JsonSerializer.SerializeToUtf8Bytes(envelope),
         };
 
-        await timeTickers.AddAsync(entity, cancellationToken).ConfigureAwait(false);
-        logger.LogDebug("TickerQ time ticker {Id} scheduled for {RunAt}", id, runAt);
+        await _timeTickers.AddAsync(entity, cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("TickerQ time ticker {Id} scheduled for {RunAt}", id, runAt);
         return id.ToString("N");
     }
 
@@ -46,7 +57,7 @@ public sealed class TickerQTransponderMessageScheduler(
         where TMessage : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cronExpression);
-        var envelope = TransponderScheduledEnvelopeFactory.Create(message, serializer, publishOptions);
+        var envelope = TransponderScheduledEnvelopeFactory.Create(message, _serializer, publishOptions);
         Guid id;
         if (string.IsNullOrWhiteSpace(scheduleId))
             id = Guid.NewGuid();
@@ -67,8 +78,8 @@ public sealed class TickerQTransponderMessageScheduler(
             IsEnabled = true,
         };
 
-        await cronTickers.AddAsync(entity, cancellationToken).ConfigureAwait(false);
-        logger.LogDebug("TickerQ cron ticker {Id} registered with {Cron}", id, cronExpression);
+        await _cronTickers.AddAsync(entity, cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("TickerQ cron ticker {Id} registered with {Cron}", id, cronExpression);
         return id.ToString("N");
     }
 
@@ -76,7 +87,7 @@ public sealed class TickerQTransponderMessageScheduler(
     {
         if (!Guid.TryParse(scheduleId, out var id))
             return false;
-        await timeTickers.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
+        await _timeTickers.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
         return true;
     }
 
@@ -84,7 +95,7 @@ public sealed class TickerQTransponderMessageScheduler(
     {
         if (!Guid.TryParse(scheduleId, out var id))
             return false;
-        await cronTickers.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
+        await _cronTickers.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
         return true;
     }
 }

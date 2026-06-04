@@ -9,12 +9,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class BillingExportJobFlowTests(HisApiWebApplicationFactory factory)
+public sealed class BillingExportJobFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public BillingExportJobFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Submitting_A_Job_Persists_Status_Queued_And_Enqueues_Outbox_Event_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 
@@ -49,7 +51,7 @@ public sealed class BillingExportJobFlowTests(HisApiWebApplicationFactory factor
     [Fact]
     public async Task Getting_A_Missing_Job_Returns_Null_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var dto = await gateway.SendQueryAsync<GetBillingExportJobByIdQuery, BillingExportJobStatusDto?>(

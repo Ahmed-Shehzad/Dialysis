@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Http;
 namespace Dialysis.Module.Hosting.Middleware;
 
 /// <summary>Propagates or assigns <c>X-Correlation-Id</c> for request tracing (ingress may set the header).</summary>
-public sealed class CorrelationIdMiddleware(RequestDelegate next)
+public sealed class CorrelationIdMiddleware
 {
+    private readonly RequestDelegate _next;
+    /// <summary>Propagates or assigns <c>X-Correlation-Id</c> for request tracing (ingress may set the header).</summary>
+    public CorrelationIdMiddleware(RequestDelegate next) => _next = next;
     public const string HeaderName = "X-Correlation-Id";
 
     public Task InvokeAsync(HttpContext context)
@@ -13,6 +16,6 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
             context.Response.Headers.Append(HeaderName, Guid.CreateVersion7().ToString("D"));
         else
             context.Response.Headers.Append(HeaderName, incoming.ToString());
-        return next(context);
+        return _next(context);
     }
 }

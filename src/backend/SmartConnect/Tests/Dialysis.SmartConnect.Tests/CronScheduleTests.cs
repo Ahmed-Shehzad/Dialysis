@@ -58,8 +58,5 @@ public sealed class CronScheduleTests
     [InlineData("* *")]
     [InlineData("* * * *")]
     [InlineData("* * * * * * *")]
-    public void Invalid_Field_Count_Throws(string expression)
-    {
-        Assert.Throws<ArgumentException>(() => new CronSchedule(expression));
-    }
+    public void Invalid_Field_Count_Throws(string expression) => Assert.Throws<ArgumentException>(() => new CronSchedule(expression));
 }

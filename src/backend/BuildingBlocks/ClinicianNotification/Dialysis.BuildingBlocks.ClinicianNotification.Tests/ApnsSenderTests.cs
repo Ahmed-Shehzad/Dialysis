@@ -108,9 +108,11 @@ public sealed class ApnsSenderTests
         return Convert.FromBase64String(p);
     }
 
-    private sealed class SingleClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class SingleClientFactory : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+        private readonly HttpMessageHandler _handler;
+        public SingleClientFactory(HttpMessageHandler handler) => _handler = handler;
+        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
     }
 
     private sealed class StubHandler : HttpMessageHandler

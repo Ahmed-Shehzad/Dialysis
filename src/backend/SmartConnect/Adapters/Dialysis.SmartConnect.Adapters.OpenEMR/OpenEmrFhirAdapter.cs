@@ -23,10 +23,20 @@ public sealed class OpenEmrAdapterOptions
 /// the secret as form fields (<c>client_id</c>/<c>client_secret</c>) rather than HTTP Basic — this
 /// matches the OpenEMR API gateway documentation.
 /// </summary>
-public sealed class OpenEmrAuthProvider(IOptions<OpenEmrAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
-    : IExternalEhrAuthProvider
+public sealed class OpenEmrAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly OpenEmrAdapterOptions _options = options.Value;
+    private readonly OpenEmrAdapterOptions _options;
+    private readonly OAuth2TokenAcquirer _tokenAcquirer;
+    /// <summary>
+    /// OpenEMR FHIR R4 backend-services auth via OAuth2 <c>client_credentials</c> grant. OpenEMR accepts
+    /// the secret as form fields (<c>client_id</c>/<c>client_secret</c>) rather than HTTP Basic — this
+    /// matches the OpenEMR API gateway documentation.
+    /// </summary>
+    public OpenEmrAuthProvider(IOptions<OpenEmrAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
+    {
+        _tokenAcquirer = tokenAcquirer;
+        _options = options.Value;
+    }
 
     public string VendorName => "OpenEMR";
 
@@ -43,17 +53,17 @@ public sealed class OpenEmrAuthProvider(IOptions<OpenEmrAdapterOptions> options,
                 new("client_secret", _options.ClientSecret),
                 new("scope", _options.Scope),
             ]);
-        return tokenAcquirer.AcquireAsync(request, cancellationToken);
+        return _tokenAcquirer.AcquireAsync(request, cancellationToken);
     }
 }
 
-public sealed class OpenEmrFhirAdapter(
-    IHttpClientFactory httpClientFactory,
-    OpenEmrAuthProvider authProvider,
-    IOptions<OpenEmrAdapterOptions> options)
-    : HttpFhirAdapterBase(httpClientFactory, authProvider)
+public sealed class OpenEmrFhirAdapter : HttpFhirAdapterBase
 {
-    private readonly OpenEmrAdapterOptions _options = options.Value;
+    private readonly OpenEmrAdapterOptions _options;
+    public OpenEmrFhirAdapter(IHttpClientFactory httpClientFactory,
+        OpenEmrAuthProvider authProvider,
+        IOptions<OpenEmrAdapterOptions> options) : base(httpClientFactory, authProvider) =>
+        _options = options.Value;
 
     public override ExternalEhrAdapterDescriptor Describe() => new("OpenEMR", FhirVersion: "4.0.1", BaseUrl: _options.BaseUrl);
 }

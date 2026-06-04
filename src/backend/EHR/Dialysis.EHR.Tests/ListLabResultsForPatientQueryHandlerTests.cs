@@ -88,9 +88,10 @@ public sealed class ListLabResultsForPatientQueryHandlerTests
         result[0].Id.ShouldBe(within.Id);
     }
 
-    private sealed class InMemoryResults(params LabResult[] seed) : ILabResultRepository
+    private sealed class InMemoryResults : ILabResultRepository
     {
-        private readonly IReadOnlyList<LabResult> _results = [.. seed];
+        private readonly IReadOnlyList<LabResult> _results;
+        public InMemoryResults(params LabResult[] seed) => _results = [.. seed];
 
         public Task<IReadOnlyList<LabResult>> ListByOrderAsync(Guid labOrderId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<LabResult>>([.. _results.Where(r => r.LabOrderId == labOrderId)]);
@@ -102,9 +103,10 @@ public sealed class ListLabResultsForPatientQueryHandlerTests
         public void Add(LabResult result) => throw new NotSupportedException();
     }
 
-    private sealed class FakeTimeProvider(DateTime utcNow) : TimeProvider
+    private sealed class FakeTimeProvider : TimeProvider
     {
-        private readonly DateTime _utcNow = utcNow;
+        private readonly DateTime _utcNow;
+        public FakeTimeProvider(DateTime utcNow) => _utcNow = utcNow;
         public override DateTimeOffset GetUtcNow() => new(_utcNow, TimeSpan.Zero);
     }
 }

@@ -134,9 +134,11 @@ public sealed class HttpOutboundAdapterAuthenticationTests
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 
-    private sealed class InlineHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
+    private sealed class InlineHandler : HttpMessageHandler
     {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _respond;
+        public InlineHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) => _respond = respond;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(respond(request));
+            Task.FromResult(_respond(request));
     }
 }

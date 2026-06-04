@@ -48,7 +48,7 @@ public sealed class FileReaderSplitTests
             "MSH|^~\\&|MachineA|FAC|||20260524100100||ORU^R40|MSG-2|P|2.6\r" +
             "PID|||MRN-2\r";
         var bytes = Encoding.UTF8.GetBytes(a + b);
-        var parameters = Build_Parameters(FileReaderSplitMode.Hl7v2);
+        var parameters = Build_Parameters(FileReaderSplitMode.Hl7V2);
 
         var records = FileReaderSourceConnector.SplitPayload(bytes, parameters);
 
@@ -62,7 +62,7 @@ public sealed class FileReaderSplitTests
     {
         const string single = "MSH|^~\\&|MachineA|FAC|||20260524100000||ORU^R40|MSG-1|P|2.6\rPID|||MRN-1\r";
         var bytes = Encoding.UTF8.GetBytes(single);
-        var parameters = Build_Parameters(FileReaderSplitMode.Hl7v2);
+        var parameters = Build_Parameters(FileReaderSplitMode.Hl7V2);
 
         var records = FileReaderSourceConnector.SplitPayload(bytes, parameters);
 

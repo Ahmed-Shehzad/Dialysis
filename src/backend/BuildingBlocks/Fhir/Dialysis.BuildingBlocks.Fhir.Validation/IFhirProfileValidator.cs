@@ -9,7 +9,21 @@ public enum FhirProfileEnforcementMode
     Strict,
 }
 
-public sealed record FhirProfileValidationResult(bool IsValid, OperationOutcome Outcome);
+public sealed record FhirProfileValidationResult
+{
+    public FhirProfileValidationResult(bool IsValid, OperationOutcome Outcome)
+    {
+        this.IsValid = IsValid;
+        this.Outcome = Outcome;
+    }
+    public bool IsValid { get; init; }
+    public OperationOutcome Outcome { get; init; }
+    public void Deconstruct(out bool IsValid, out OperationOutcome Outcome)
+    {
+        IsValid = this.IsValid;
+        Outcome = this.Outcome;
+    }
+}
 
 public interface IFhirProfileValidator
 {

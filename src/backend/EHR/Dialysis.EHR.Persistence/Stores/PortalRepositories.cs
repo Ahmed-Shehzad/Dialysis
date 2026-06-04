@@ -4,30 +4,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Stores;
 
-public sealed class PortalAppointmentRequestRepository(EhrDbContext db) : IPortalAppointmentRequestRepository
+public sealed class PortalAppointmentRequestRepository : IPortalAppointmentRequestRepository
 {
+    private readonly EhrDbContext _db;
+    public PortalAppointmentRequestRepository(EhrDbContext db) => _db = db;
     public Task<PortalAppointmentRequest?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.PortalAppointmentRequests.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        _db.PortalAppointmentRequests.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<PortalAppointmentRequest>> ListByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
-        await db.PortalAppointmentRequests
+        await _db.PortalAppointmentRequests
             .Where(r => r.PatientId == patientId)
             .OrderByDescending(r => r.EarliestPreferredUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
-    public void Add(PortalAppointmentRequest request) => db.PortalAppointmentRequests.Add(request);
+    public void Add(PortalAppointmentRequest request) => _db.PortalAppointmentRequests.Add(request);
 }
 
-public sealed class SecureMessageRepository(EhrDbContext db) : ISecureMessageRepository
+public sealed class SecureMessageRepository : ISecureMessageRepository
 {
+    private readonly EhrDbContext _db;
+    public SecureMessageRepository(EhrDbContext db) => _db = db;
     public Task<SecureMessage?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.SecureMessages.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+        _db.SecureMessages.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<SecureMessage>> ListByThreadAsync(Guid threadId, CancellationToken cancellationToken = default) =>
-        await db.SecureMessages
+        await _db.SecureMessages
             .Where(m => m.ThreadId == threadId)
             .OrderBy(m => m.SentAtUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
-    public void Add(SecureMessage message) => db.SecureMessages.Add(message);
+    public void Add(SecureMessage message) => _db.SecureMessages.Add(message);
 }

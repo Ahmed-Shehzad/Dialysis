@@ -12,8 +12,19 @@ namespace Dialysis.SmartConnect.Pharmacy;
 /// <see cref="MedicationAdministeredToHl7RasTransformStage"/>: deserialises into a local DTO (no
 /// PDMS reference), and a payload that isn't the expected JSON shape passes through unchanged.
 /// </summary>
-public sealed class MedicationDeclinedToHl7RgvTransformStage(TimeProvider clock) : ITransformStage
+public sealed class MedicationDeclinedToHl7RgvTransformStage : ITransformStage
 {
+    private readonly TimeProvider _clock;
+    /// <summary>
+    /// Transform stage that turns an upstream <c>MedicationDeclinedIntegrationEvent</c> (carried as a
+    /// JSON payload) into an HL7 v2.5 <c>RGV^O15</c> pharmacy-give message with an NTE refusal note,
+    /// communicating to an external pharmacy system that an ordered dose was declined and not given.
+    ///
+    /// Decoupling + fail-soft behaviour matches
+    /// <see cref="MedicationAdministeredToHl7RasTransformStage"/>: deserialises into a local DTO (no
+    /// PDMS reference), and a payload that isn't the expected JSON shape passes through unchanged.
+    /// </summary>
+    public MedicationDeclinedToHl7RgvTransformStage(TimeProvider clock) => _clock = clock;
     public const string KindValue = "medication.declined.to.hl7-rgv";
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -62,7 +73,7 @@ public sealed class MedicationDeclinedToHl7RgvTransformStage(TimeProvider clock)
             ? Guid.NewGuid().ToString("N")
             : message.CorrelationId;
 
-        var wire = Hl7V2RgvO15Builder.Build(frame, controlId, clock.GetUtcNow().UtcDateTime);
+        var wire = Hl7V2RgvO15Builder.Build(frame, controlId, _clock.GetUtcNow().UtcDateTime);
         return message.CloneWithPayload(Encoding.UTF8.GetBytes(wire), PayloadFormat.Utf8Text);
     }
 

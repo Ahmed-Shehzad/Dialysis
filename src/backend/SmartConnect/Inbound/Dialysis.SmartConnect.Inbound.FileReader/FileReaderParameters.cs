@@ -23,7 +23,7 @@ public enum FileReaderSplitMode
 
     /// <summary>Split at each <c>MSH|</c> segment so each HL7v2 message in a batched file
     /// becomes its own <see cref="IntegrationMessage"/>.</summary>
-    Hl7v2 = 1,
+    Hl7V2 = 1,
 
     /// <summary>Split on newlines (<c>\r\n</c> / <c>\n</c> / <c>\r</c>); blank lines are
     /// skipped. Useful for line-delimited JSON / CSV-row drops.</summary>

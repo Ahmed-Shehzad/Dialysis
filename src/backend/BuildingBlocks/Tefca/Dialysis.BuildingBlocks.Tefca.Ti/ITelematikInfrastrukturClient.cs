@@ -22,9 +22,31 @@ public interface ITelematikInfrastrukturClient
     Task<TiHandshakeResult> HandshakeAsync(CancellationToken cancellationToken);
 }
 
-public sealed record TiHandshakeResult(
-    bool Succeeded,
-    DateTimeOffset CheckedAtUtc,
-    string? FailureReason,
-    string? IdpIssuer,
-    string? SmcBChainFingerprintSha256);
+public sealed record TiHandshakeResult
+{
+    public TiHandshakeResult(bool Succeeded,
+        DateTimeOffset CheckedAtUtc,
+        string? FailureReason,
+        string? IdpIssuer,
+        string? SmcBChainFingerprintSha256)
+    {
+        this.Succeeded = Succeeded;
+        this.CheckedAtUtc = CheckedAtUtc;
+        this.FailureReason = FailureReason;
+        this.IdpIssuer = IdpIssuer;
+        this.SmcBChainFingerprintSha256 = SmcBChainFingerprintSha256;
+    }
+    public bool Succeeded { get; init; }
+    public DateTimeOffset CheckedAtUtc { get; init; }
+    public string? FailureReason { get; init; }
+    public string? IdpIssuer { get; init; }
+    public string? SmcBChainFingerprintSha256 { get; init; }
+    public void Deconstruct(out bool Succeeded, out DateTimeOffset CheckedAtUtc, out string? FailureReason, out string? IdpIssuer, out string? SmcBChainFingerprintSha256)
+    {
+        Succeeded = this.Succeeded;
+        CheckedAtUtc = this.CheckedAtUtc;
+        FailureReason = this.FailureReason;
+        IdpIssuer = this.IdpIssuer;
+        SmcBChainFingerprintSha256 = this.SmcBChainFingerprintSha256;
+    }
+}

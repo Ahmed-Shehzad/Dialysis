@@ -5,16 +5,25 @@ using Dialysis.EHR.Billing.Ports;
 
 namespace Dialysis.EHR.Billing.Features.RecordRemittance;
 
-public sealed class RecordRemittanceCommandHandler(
-    IClaimRepository claims,
-    IRemittanceRepository remittances,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : ICommandHandler<RecordRemittanceCommand, Guid>
+public sealed class RecordRemittanceCommandHandler : ICommandHandler<RecordRemittanceCommand, Guid>
 {
+    private readonly IClaimRepository _claims;
+    private readonly IRemittanceRepository _remittances;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public RecordRemittanceCommandHandler(IClaimRepository claims,
+        IRemittanceRepository remittances,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _claims = claims;
+        _remittances = remittances;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(RecordRemittanceCommand request, CancellationToken cancellationToken)
     {
-        var claim = await claims.GetAsync(request.ClaimId, cancellationToken).ConfigureAwait(false)
+        var claim = await _claims.GetAsync(request.ClaimId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Claim '{request.ClaimId}' not found.");
 
         var paid = new Money(request.PaidAmount, request.CurrencyCode);
@@ -27,7 +36,7 @@ public sealed class RecordRemittanceCommandHandler(
             paid,
             adjustment,
             request.AdjudicationStatus,
-            timeProvider.GetUtcNow().UtcDateTime);
+            _timeProvider.GetUtcNow().UtcDateTime);
 
         switch (request.AdjudicationStatus)
         {
@@ -42,8 +51,8 @@ public sealed class RecordRemittanceCommandHandler(
                 break;
         }
 
-        remittances.Add(remittance);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _remittances.Add(remittance);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

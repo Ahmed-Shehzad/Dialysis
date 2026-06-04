@@ -18,7 +18,23 @@ public interface IPartnerEndpoint
     Task<PartnerDeliveryResult> DeliverAsync(Resource resource, CancellationToken cancellationToken = default);
 }
 
-public readonly record struct PartnerDeliveryResult(
-    bool Succeeded,
-    int StatusCode,
-    string? FailureReason);
+public readonly record struct PartnerDeliveryResult
+{
+    public PartnerDeliveryResult(bool Succeeded,
+        int StatusCode,
+        string? FailureReason)
+    {
+        this.Succeeded = Succeeded;
+        this.StatusCode = StatusCode;
+        this.FailureReason = FailureReason;
+    }
+    public bool Succeeded { get; init; }
+    public int StatusCode { get; init; }
+    public string? FailureReason { get; init; }
+    public void Deconstruct(out bool Succeeded, out int StatusCode, out string? FailureReason)
+    {
+        Succeeded = this.Succeeded;
+        StatusCode = this.StatusCode;
+        FailureReason = this.FailureReason;
+    }
+}

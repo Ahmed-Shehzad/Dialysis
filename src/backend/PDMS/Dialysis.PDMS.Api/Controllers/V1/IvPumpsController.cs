@@ -21,12 +21,29 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/iv-pumps")]
-public sealed class IvPumpsController(
-    IEnumerable<IIvPumpDriver> drivers,
-    IPdmsRepository<IvPumpInfusion, Guid> infusions) : ControllerBase
+public sealed class IvPumpsController : ControllerBase
 {
-    private readonly Dictionary<string, IIvPumpDriver> _byVendor =
-        drivers.ToDictionary(d => d.VendorCode, d => d, StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, IIvPumpDriver> _byVendor;
+
+    private readonly IPdmsRepository<IvPumpInfusion, Guid> _infusions;
+    /// <summary>
+    /// Vendor-agnostic IV-pump telemetry inbound. Vendor edge agents POST raw payloads at
+    /// <c>/iv-pumps/telemetry?vendor=bd-alaris</c> (or baxter-sigma, plum-360, pcd04); the
+    /// driver registry dispatches to the matching <see cref="IIvPumpDriver"/> which
+    /// normalises the payload into a unified <see cref="IvPumpReading"/>. The reading is
+    /// then applied to the matching <see cref="IvPumpInfusion"/> aggregate — created lazily
+    /// on the first Start reading and updated on subsequent Progress / Pause / Resume /
+    /// Alarm / Complete readings.
+    ///
+    /// Operators read back per-session infusion history via
+    /// <c>GET /sessions/{id}/iv-pumps/infusions</c>.
+    /// </summary>
+    public IvPumpsController(IEnumerable<IIvPumpDriver> drivers,
+        IPdmsRepository<IvPumpInfusion, Guid> infusions)
+    {
+        _infusions = infusions;
+        _byVendor = drivers.ToDictionary(d => d.VendorCode, d => d, StringComparer.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// Inbound telemetry — vendor edge agents POST here. The body is the raw vendor
@@ -78,20 +95,20 @@ public sealed class IvPumpsController(
                         programmedRateMlPerHour: reading.ProgrammedRateMlPerHour ?? 0m,
                         programmedVolumeMl: reading.ProgrammedVolumeMl ?? 0m,
                         startedAtUtc: reading.CapturedAtUtc);
-                    await infusions.AddAsync(fresh, cancellationToken).ConfigureAwait(false);
+                    await _infusions.AddAsync(fresh, cancellationToken).ConfigureAwait(false);
                     break;
                 }
             case IvPumpReadingKind.Progress when infusion is not null:
                 infusion.RecordReading(reading.ActualRateMlPerHour ?? 0m, reading.InfusedVolumeMl ?? 0m);
-                infusions.Update(infusion);
+                _infusions.Update(infusion);
                 break;
             case IvPumpReadingKind.Pause when infusion is not null:
                 infusion.Pause();
-                infusions.Update(infusion);
+                _infusions.Update(infusion);
                 break;
             case IvPumpReadingKind.Resume when infusion is not null:
                 infusion.Resume();
-                infusions.Update(infusion);
+                _infusions.Update(infusion);
                 break;
             case IvPumpReadingKind.Alarm when infusion is not null:
                 infusion.MarkAlarm(
@@ -99,11 +116,11 @@ public sealed class IvPumpsController(
                     alarmText: reading.AlarmText ?? "Pump raised an alarm.",
                     severity: reading.AlarmSeverity ?? Dialysis.PDMS.Medications.Contracts.IvPumpAlarmSeverity.Warning,
                     raisedAtUtc: reading.CapturedAtUtc);
-                infusions.Update(infusion);
+                _infusions.Update(infusion);
                 break;
             case IvPumpReadingKind.Complete when infusion is not null:
                 infusion.Complete(reading.InfusedVolumeMl ?? 0m, reading.CapturedAtUtc);
-                infusions.Update(infusion);
+                _infusions.Update(infusion);
                 break;
         }
 
@@ -119,14 +136,14 @@ public sealed class IvPumpsController(
     [ProducesResponseType(typeof(IReadOnlyList<InfusionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListInfusionsForSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
-        var all = await infusions.ListAsync(null, cancellationToken).ConfigureAwait(false);
+        var all = await _infusions.ListAsync(null, cancellationToken).ConfigureAwait(false);
         var rows = all.Where(i => i.SessionId == sessionId).Select(InfusionDto.From).ToArray();
         return Ok(rows);
     }
 
     private async Task<IvPumpInfusion?> FindActiveInfusionAsync(Guid sessionId, string pumpDeviceId, CancellationToken cancellationToken)
     {
-        var all = await infusions.ListAsync(null, cancellationToken).ConfigureAwait(false);
+        var all = await _infusions.ListAsync(null, cancellationToken).ConfigureAwait(false);
         return all.FirstOrDefault(i =>
             i.SessionId == sessionId
             && string.Equals(i.PumpDeviceId, pumpDeviceId, StringComparison.OrdinalIgnoreCase)
@@ -134,23 +151,58 @@ public sealed class IvPumpsController(
     }
 }
 
-public sealed record IvPumpReadingDto(string VendorCode, string PumpDeviceId, string Kind, DateTime CapturedAtUtc);
-
-public sealed record InfusionDto(
-    Guid InfusionId,
-    Guid SessionId,
-    string PumpDeviceId,
-    string VendorCode,
-    string Status,
-    decimal ProgrammedRateMlPerHour,
-    decimal ActualRateMlPerHour,
-    decimal ProgrammedVolumeMl,
-    decimal InfusedVolumeMl,
-    DateTime StartedAtUtc,
-    DateTime? EndedAtUtc,
-    string? MedicationCodeSystem,
-    string? MedicationCode)
+public sealed record IvPumpReadingDto
 {
+    public IvPumpReadingDto(string VendorCode, string PumpDeviceId, string Kind, DateTime CapturedAtUtc)
+    {
+        this.VendorCode = VendorCode;
+        this.PumpDeviceId = PumpDeviceId;
+        this.Kind = Kind;
+        this.CapturedAtUtc = CapturedAtUtc;
+    }
+    public string VendorCode { get; init; }
+    public string PumpDeviceId { get; init; }
+    public string Kind { get; init; }
+    public DateTime CapturedAtUtc { get; init; }
+    public void Deconstruct(out string VendorCode, out string PumpDeviceId, out string Kind, out DateTime CapturedAtUtc)
+    {
+        VendorCode = this.VendorCode;
+        PumpDeviceId = this.PumpDeviceId;
+        Kind = this.Kind;
+        CapturedAtUtc = this.CapturedAtUtc;
+    }
+}
+
+public sealed record InfusionDto
+{
+    public InfusionDto(Guid InfusionId,
+        Guid SessionId,
+        string PumpDeviceId,
+        string VendorCode,
+        string Status,
+        decimal ProgrammedRateMlPerHour,
+        decimal ActualRateMlPerHour,
+        decimal ProgrammedVolumeMl,
+        decimal InfusedVolumeMl,
+        DateTime StartedAtUtc,
+        DateTime? EndedAtUtc,
+        string? MedicationCodeSystem,
+        string? MedicationCode)
+    {
+        this.InfusionId = InfusionId;
+        this.SessionId = SessionId;
+        this.PumpDeviceId = PumpDeviceId;
+        this.VendorCode = VendorCode;
+        this.Status = Status;
+        this.ProgrammedRateMlPerHour = ProgrammedRateMlPerHour;
+        this.ActualRateMlPerHour = ActualRateMlPerHour;
+        this.ProgrammedVolumeMl = ProgrammedVolumeMl;
+        this.InfusedVolumeMl = InfusedVolumeMl;
+        this.StartedAtUtc = StartedAtUtc;
+        this.EndedAtUtc = EndedAtUtc;
+        this.MedicationCodeSystem = MedicationCodeSystem;
+        this.MedicationCode = MedicationCode;
+    }
     public static InfusionDto From(IvPumpInfusion i) => new(
         InfusionId: i.Id,
         SessionId: i.SessionId,
@@ -165,4 +217,33 @@ public sealed record InfusionDto(
         EndedAtUtc: i.EndedAtUtc,
         MedicationCodeSystem: i.Medication?.CodeSystem,
         MedicationCode: i.Medication?.Code);
+    public Guid InfusionId { get; init; }
+    public Guid SessionId { get; init; }
+    public string PumpDeviceId { get; init; }
+    public string VendorCode { get; init; }
+    public string Status { get; init; }
+    public decimal ProgrammedRateMlPerHour { get; init; }
+    public decimal ActualRateMlPerHour { get; init; }
+    public decimal ProgrammedVolumeMl { get; init; }
+    public decimal InfusedVolumeMl { get; init; }
+    public DateTime StartedAtUtc { get; init; }
+    public DateTime? EndedAtUtc { get; init; }
+    public string? MedicationCodeSystem { get; init; }
+    public string? MedicationCode { get; init; }
+    public void Deconstruct(out Guid InfusionId, out Guid SessionId, out string PumpDeviceId, out string VendorCode, out string Status, out decimal ProgrammedRateMlPerHour, out decimal ActualRateMlPerHour, out decimal ProgrammedVolumeMl, out decimal InfusedVolumeMl, out DateTime StartedAtUtc, out DateTime? EndedAtUtc, out string? MedicationCodeSystem, out string? MedicationCode)
+    {
+        InfusionId = this.InfusionId;
+        SessionId = this.SessionId;
+        PumpDeviceId = this.PumpDeviceId;
+        VendorCode = this.VendorCode;
+        Status = this.Status;
+        ProgrammedRateMlPerHour = this.ProgrammedRateMlPerHour;
+        ActualRateMlPerHour = this.ActualRateMlPerHour;
+        ProgrammedVolumeMl = this.ProgrammedVolumeMl;
+        InfusedVolumeMl = this.InfusedVolumeMl;
+        StartedAtUtc = this.StartedAtUtc;
+        EndedAtUtc = this.EndedAtUtc;
+        MedicationCodeSystem = this.MedicationCodeSystem;
+        MedicationCode = this.MedicationCode;
+    }
 }

@@ -26,11 +26,37 @@ namespace Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 /// Failures inside this filter never block the response — audit emission is logged on
 /// error and the controller's response goes through unchanged.
 /// </summary>
-public sealed class PhiAccessAuditFilter(
-    IAuditEventEmitter emitter,
-    TimeProvider clock,
-    ILogger<PhiAccessAuditFilter> logger) : IAsyncActionFilter
+public sealed class PhiAccessAuditFilter : IAsyncActionFilter
 {
+    private readonly IAuditEventEmitter _emitter;
+    private readonly TimeProvider _clock;
+    private readonly ILogger<PhiAccessAuditFilter> _logger;
+    /// <summary>
+    /// Action filter that emits a FHIR <see cref="AuditEvent"/> for every controller action
+    /// tagged with <see cref="PhiAccessAttribute"/>. Runs <em>after</em> the action so the
+    /// filter can record the HTTP status code (success / 4xx / 5xx) on the audit row.
+    ///
+    /// The emitted event uses the FHIR R4 IHE BALP profile shape:
+    /// <list type="bullet">
+    ///   <item><c>Type</c> = <c>rest</c> / <c>execute</c> — REST operation.</item>
+    ///   <item><c>SubType</c> = the route's HTTP verb (read / create / update / delete).</item>
+    ///   <item><c>Action</c> = R/C/U/D mapped from the verb.</item>
+    ///   <item><c>Agent[0]</c> = the operator (sub from the JWT bearer).</item>
+    ///   <item><c>Entity</c> contains the patient id; optionally the session id when the
+    ///         attribute declares <c>SessionIdRouteKey</c>.</item>
+    /// </list>
+    ///
+    /// Failures inside this filter never block the response — audit emission is logged on
+    /// error and the controller's response goes through unchanged.
+    /// </summary>
+    public PhiAccessAuditFilter(IAuditEventEmitter emitter,
+        TimeProvider clock,
+        ILogger<PhiAccessAuditFilter> logger)
+    {
+        _emitter = emitter;
+        _clock = clock;
+        _logger = logger;
+    }
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var executed = await next().ConfigureAwait(false);
@@ -40,11 +66,11 @@ public sealed class PhiAccessAuditFilter(
         try
         {
             var auditEvent = BuildAuditEvent(executed, attribute);
-            await emitter.EmitAsync(auditEvent, context.HttpContext.RequestAborted).ConfigureAwait(false);
+            await _emitter.EmitAsync(auditEvent, context.HttpContext.RequestAborted).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex,
+            _logger.LogWarning(ex,
                 "Failed to emit AuditEvent for activity {Activity}; the controller response is unaffected.",
                 attribute.ActivityName);
         }
@@ -72,7 +98,7 @@ public sealed class PhiAccessAuditFilter(
         var verb = request.Method.ToUpperInvariant();
         var auditEvent = new AuditEvent
         {
-            Recorded = clock.GetUtcNow().UtcDateTime,
+            Recorded = _clock.GetUtcNow().UtcDateTime,
             Type = new Coding("http://terminology.hl7.org/CodeSystem/audit-event-type", "rest", "RESTful Operation"),
             Action = MapAction(verb),
             Outcome = statusCode is >= 200 and < 400 ? AuditEvent.AuditEventOutcome.N0 : AuditEvent.AuditEventOutcome.N4,

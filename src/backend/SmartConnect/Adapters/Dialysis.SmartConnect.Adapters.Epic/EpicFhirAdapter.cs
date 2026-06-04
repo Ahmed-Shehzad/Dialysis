@@ -31,11 +31,22 @@ public sealed class EpicAdapterOptions
 /// is exchanged at the token endpoint for a bearer access token; tokens are cached per-tenant until
 /// shortly before expiry.
 /// </summary>
-public sealed class EpicAuthProvider(IOptions<EpicAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
-    : IExternalEhrAuthProvider
+public sealed class EpicAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly EpicAdapterOptions _options = options.Value;
-    private readonly Lazy<RsaSecurityKey> _signingKey = new(() => LoadRsaSigningKey(options.Value), LazyThreadSafetyMode.ExecutionAndPublication);
+    private readonly EpicAdapterOptions _options;
+    private readonly Lazy<RsaSecurityKey> _signingKey;
+    private readonly OAuth2TokenAcquirer _tokenAcquirer;
+    /// <summary>
+    /// Epic-on-FHIR backend-services auth via signed JWT client assertion (RS384). The signed assertion
+    /// is exchanged at the token endpoint for a bearer access token; tokens are cached per-tenant until
+    /// shortly before expiry.
+    /// </summary>
+    public EpicAuthProvider(IOptions<EpicAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
+    {
+        _tokenAcquirer = tokenAcquirer;
+        _options = options.Value;
+        _signingKey = new Lazy<RsaSecurityKey>(() => LoadRsaSigningKey(options.Value), LazyThreadSafetyMode.ExecutionAndPublication);
+    }
 
     public string VendorName => "Epic";
 
@@ -53,7 +64,7 @@ public sealed class EpicAuthProvider(IOptions<EpicAdapterOptions> options, OAuth
                 new("client_assertion", assertion),
                 new("scope", _options.Scope),
             ]);
-        return tokenAcquirer.AcquireAsync(request, cancellationToken);
+        return _tokenAcquirer.AcquireAsync(request, cancellationToken);
     }
 
     private string BuildClientAssertion()
@@ -83,13 +94,13 @@ public sealed class EpicAuthProvider(IOptions<EpicAdapterOptions> options, OAuth
     }
 }
 
-public sealed class EpicFhirAdapter(
-    IHttpClientFactory httpClientFactory,
-    EpicAuthProvider authProvider,
-    IOptions<EpicAdapterOptions> options)
-    : HttpFhirAdapterBase(httpClientFactory, authProvider)
+public sealed class EpicFhirAdapter : HttpFhirAdapterBase
 {
-    private readonly EpicAdapterOptions _options = options.Value;
+    private readonly EpicAdapterOptions _options;
+    public EpicFhirAdapter(IHttpClientFactory httpClientFactory,
+        EpicAuthProvider authProvider,
+        IOptions<EpicAdapterOptions> options) : base(httpClientFactory, authProvider) =>
+        _options = options.Value;
 
     public override ExternalEhrAdapterDescriptor Describe() => new("Epic", FhirVersion: "4.0.1", BaseUrl: _options.BaseUrl);
 }

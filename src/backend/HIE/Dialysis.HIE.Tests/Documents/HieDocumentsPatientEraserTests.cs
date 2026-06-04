@@ -67,16 +67,18 @@ public sealed class HieDocumentsPatientEraserTests
         source: source,
         createdAtUtc: DateTime.UtcNow);
 
-    private sealed class StubRepository(IReadOnlyList<DocumentReference> docs) : IDocumentReferenceRepository
+    private sealed class StubRepository : IDocumentReferenceRepository
     {
+        private readonly IReadOnlyList<DocumentReference> _docs;
+        public StubRepository(IReadOnlyList<DocumentReference> docs) => _docs = docs;
         public void Add(DocumentReference document) { }
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<DocumentReference?>(null);
         public Task<IReadOnlyList<DocumentReference>> ListAsync(Guid? patientId, string? kind, DocumentReferenceStatus? status, DocumentReferenceSource? source, int take, CancellationToken cancellationToken) =>
-            Task.FromResult(docs);
+            Task.FromResult(_docs);
         public Task<IReadOnlyList<DocumentReference>> ListExpiredAsync(string kind, DateTime createdBefore, int take, CancellationToken cancellationToken) =>
-            Task.FromResult(docs);
+            Task.FromResult(_docs);
         public Task<IReadOnlyList<DocumentReference>> ListForPatientAsync(Guid patientId, CancellationToken cancellationToken) =>
-            Task.FromResult(docs);
+            Task.FromResult(_docs);
     }
 
     private sealed class StubUnitOfWork : IUnitOfWork

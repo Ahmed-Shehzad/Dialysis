@@ -160,11 +160,9 @@ public static class ComposePublishExtensions
         };
     }
 
-    private static void ApplyHostPort(Service service, int host, int container)
-    {
+    private static void ApplyHostPort(Service service, int host, int container) =>
         // Service.Ports is a List<string> using compose's short syntax "host:container".
         service.Ports.Add(host + ":" + container);
-    }
 
     private static void ApplyAspNetEnvironment(Service service, string environment, int port)
     {

@@ -21,32 +21,58 @@ public interface IIdentityProviderCatalog
 }
 
 /// <summary>Public projection of an <see cref="IdentityProviderEntry"/>.</summary>
-public sealed record IdentityProviderDescriptor(string Alias, string DisplayName, string? IconUri);
+public sealed record IdentityProviderDescriptor
+{
+    /// <summary>Public projection of an <see cref="IdentityProviderEntry"/>.</summary>
+    public IdentityProviderDescriptor(string Alias, string DisplayName, string? IconUri)
+    {
+        this.Alias = Alias;
+        this.DisplayName = DisplayName;
+        this.IconUri = IconUri;
+    }
+    public string Alias { get; init; }
+    public string DisplayName { get; init; }
+    public string? IconUri { get; init; }
+    public void Deconstruct(out string alias, out string displayName, out string? iconUri)
+    {
+        alias = this.Alias;
+        displayName = this.DisplayName;
+        iconUri = this.IconUri;
+    }
+}
 
 /// <summary>
 /// Resolves the catalog from configuration. Uses <see cref="IOptionsMonitor{T}"/> so live config
 /// reloads land without a host restart — useful in environments where the IdP roster changes
 /// independently of deployments.
 /// </summary>
-public sealed class ConfiguredIdentityProviderCatalog(IOptionsMonitor<IdentityFederationOptions> options)
-    : IIdentityProviderCatalog
+public sealed class ConfiguredIdentityProviderCatalog : IIdentityProviderCatalog
 {
+    private readonly IOptionsMonitor<IdentityFederationOptions> _options;
+    /// <summary>
+    /// Resolves the catalog from configuration. Uses <see cref="IOptionsMonitor{T}"/> so live config
+    /// reloads land without a host restart — useful in environments where the IdP roster changes
+    /// independently of deployments.
+    /// </summary>
+    public ConfiguredIdentityProviderCatalog(IOptionsMonitor<IdentityFederationOptions> options) => _options = options;
     public IReadOnlyList<IdentityProviderDescriptor> List() =>
-        options.CurrentValue.Providers
+        [.. _options.CurrentValue.Providers
             .Where(p => p.Enabled && !string.IsNullOrWhiteSpace(p.Alias))
             .Select(p => new IdentityProviderDescriptor(
                 p.Alias,
                 string.IsNullOrWhiteSpace(p.DisplayName) ? p.Alias : p.DisplayName,
-                string.IsNullOrWhiteSpace(p.IconUri) ? null : p.IconUri))
-            .ToList();
+                string.IsNullOrWhiteSpace(p.IconUri) ? null : p.IconUri))];
 
     public bool IsKnown(string alias)
     {
-        if (string.IsNullOrWhiteSpace(alias)) return false;
-        foreach (var entry in options.CurrentValue.Providers)
+        if (string.IsNullOrWhiteSpace(alias))
+            return false;
+        foreach (var entry in _options.CurrentValue.Providers)
         {
-            if (!entry.Enabled || string.IsNullOrWhiteSpace(entry.Alias)) continue;
-            if (string.Equals(entry.Alias, alias, StringComparison.OrdinalIgnoreCase)) return true;
+            if (!entry.Enabled || string.IsNullOrWhiteSpace(entry.Alias))
+                continue;
+            if (string.Equals(entry.Alias, alias, StringComparison.OrdinalIgnoreCase))
+                return true;
         }
         return false;
     }

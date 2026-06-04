@@ -5,11 +5,16 @@ using Dialysis.EHR.ClinicalNotes.Ports;
 
 namespace Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 
-public sealed class OrderLabTestCommandHandler(
-    ILabOrderRepository labOrders,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<OrderLabTestCommand, Guid>
+public sealed class OrderLabTestCommandHandler : ICommandHandler<OrderLabTestCommand, Guid>
 {
+    private readonly ILabOrderRepository _labOrders;
+    private readonly IUnitOfWork _unitOfWork;
+    public OrderLabTestCommandHandler(ILabOrderRepository labOrders,
+        IUnitOfWork unitOfWork)
+    {
+        _labOrders = labOrders;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(OrderLabTestCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
@@ -21,8 +26,8 @@ public sealed class OrderLabTestCommandHandler(
             request.LabFacilityCode,
             request.LoincPanelCodes,
             request.TransmissionFormat);
-        labOrders.Add(order);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _labOrders.Add(order);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

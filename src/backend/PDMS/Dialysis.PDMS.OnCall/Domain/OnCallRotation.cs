@@ -62,8 +62,16 @@ public sealed class OnCallRotation : AggregateRoot<Guid>
 }
 
 /// <summary>Clinical shift the rotation covers. Times are local to the facility's timezone.</summary>
-public sealed record OnCallShift(string Code, TimeOnly StartLocal, TimeOnly EndLocal)
+public sealed record OnCallShift
 {
+    /// <summary>Clinical shift the rotation covers. Times are local to the facility's timezone.</summary>
+    public OnCallShift(string Code, TimeOnly StartLocal, TimeOnly EndLocal)
+    {
+        this.Code = Code;
+        this.StartLocal = StartLocal;
+        this.EndLocal = EndLocal;
+    }
+
     /// <summary>Morning, 06:00–14:00.</summary>
     public static OnCallShift Morning => new("morning", new TimeOnly(6, 0), new TimeOnly(14, 0));
 
@@ -73,12 +81,22 @@ public sealed record OnCallShift(string Code, TimeOnly StartLocal, TimeOnly EndL
     /// <summary>Night, 22:00–06:00 (wraps midnight).</summary>
     public static OnCallShift Night => new("night", new TimeOnly(22, 0), new TimeOnly(6, 0));
 
+    public string Code { get; init; }
+    public TimeOnly StartLocal { get; init; }
+    public TimeOnly EndLocal { get; init; }
+
     public bool Covers(DateTime atUtc)
     {
         var t = TimeOnly.FromDateTime(atUtc);
         if (StartLocal <= EndLocal)
             return t >= StartLocal && t < EndLocal;
         return t >= StartLocal || t < EndLocal;
+    }
+    public void Deconstruct(out string Code, out TimeOnly StartLocal, out TimeOnly EndLocal)
+    {
+        Code = this.Code;
+        StartLocal = this.StartLocal;
+        EndLocal = this.EndLocal;
     }
 }
 
@@ -87,13 +105,49 @@ public sealed record OnCallShift(string Code, TimeOnly StartLocal, TimeOnly EndL
 /// and contact handles. Channels are tried in order until acknowledged or the escalation
 /// policy's delay elapses.
 /// </summary>
-public sealed record OnCallChainLink(
-    string ClinicianSub,
-    string DisplayName,
-    IReadOnlyList<NotificationChannelTarget> Channels);
+public sealed record OnCallChainLink
+{
+    /// <summary>
+    /// One step in the escalation chain — the clinician identifier, their preferred channels,
+    /// and contact handles. Channels are tried in order until acknowledged or the escalation
+    /// policy's delay elapses.
+    /// </summary>
+    public OnCallChainLink(string ClinicianSub,
+        string DisplayName,
+        IReadOnlyList<NotificationChannelTarget> Channels)
+    {
+        this.ClinicianSub = ClinicianSub;
+        this.DisplayName = DisplayName;
+        this.Channels = Channels;
+    }
+    public string ClinicianSub { get; init; }
+    public string DisplayName { get; init; }
+    public IReadOnlyList<NotificationChannelTarget> Channels { get; init; }
+    public void Deconstruct(out string ClinicianSub, out string DisplayName, out IReadOnlyList<NotificationChannelTarget> Channels)
+    {
+        ClinicianSub = this.ClinicianSub;
+        DisplayName = this.DisplayName;
+        Channels = this.Channels;
+    }
+}
 
 /// <summary>One channel handle for a clinician — e.g. an SMS phone number or an APNs device token.</summary>
-public sealed record NotificationChannelTarget(NotificationChannel Channel, string Address);
+public sealed record NotificationChannelTarget
+{
+    /// <summary>One channel handle for a clinician — e.g. an SMS phone number or an APNs device token.</summary>
+    public NotificationChannelTarget(NotificationChannel Channel, string Address)
+    {
+        this.Channel = Channel;
+        this.Address = Address;
+    }
+    public NotificationChannel Channel { get; init; }
+    public string Address { get; init; }
+    public void Deconstruct(out NotificationChannel Channel, out string Address)
+    {
+        Channel = this.Channel;
+        Address = this.Address;
+    }
+}
 
 public enum NotificationChannel
 {

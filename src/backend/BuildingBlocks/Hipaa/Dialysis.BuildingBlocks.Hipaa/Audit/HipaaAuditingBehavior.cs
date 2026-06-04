@@ -17,12 +17,33 @@ namespace Dialysis.BuildingBlocks.Hipaa.Audit;
 /// host wires to either an in-memory store (dev / tests) or the EF-backed
 /// <c>Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore</c> persistence.
 /// </summary>
-public sealed class HipaaAuditingBehavior<TRequest, TResponse>(
-    IAuditEventEmitter emitter,
-    IHipaaAuditContext context,
-    ILogger<HipaaAuditingBehavior<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
+public sealed class HipaaAuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
+    private readonly IAuditEventEmitter _emitter;
+    private readonly IHipaaAuditContext _context;
+    private readonly ILogger<HipaaAuditingBehavior<TRequest, TResponse>> _logger;
+    /// <summary>
+    /// Intercessor pipeline behaviour that emits a FHIR <c>AuditEvent</c> for every request whose type
+    /// carries <see cref="PhiAccessAttribute"/>. Handlers cannot forget the audit because the pipeline
+    /// runs unconditionally — opting out requires removing the attribute, which is reviewable in code.
+    ///
+    /// Failure semantics: when the handler throws the behaviour emits a minor-failure audit before
+    /// rethrowing, so a 500 to the operator still leaves an attempted-access trail.
+    ///
+    /// Side-effect safety: the audit emission goes through <see cref="IAuditEventEmitter"/>, which the
+    /// host wires to either an in-memory store (dev / tests) or the EF-backed
+    /// <c>Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore</c> persistence.
+    /// </summary>
+    public HipaaAuditingBehavior(IAuditEventEmitter emitter,
+        IHipaaAuditContext context,
+        ILogger<HipaaAuditingBehavior<TRequest, TResponse>> logger)
+    {
+        _emitter = emitter;
+        _context = context;
+        _logger = logger;
+    }
+
     private static readonly PhiAccessAttribute? _attribute =
         (PhiAccessAttribute?)Attribute.GetCustomAttribute(typeof(TRequest), typeof(PhiAccessAttribute), inherit: false);
 
@@ -58,17 +79,17 @@ public sealed class HipaaAuditingBehavior<TRequest, TResponse>(
             OutcomeDesc = errorDetail,
             Source = new AuditEvent.SourceComponent
             {
-                Site = context.ModuleSlug,
-                Observer = new ResourceReference($"Device/{context.ModuleSlug}-host"),
+                Site = _context.ModuleSlug,
+                Observer = new ResourceReference($"Device/{_context.ModuleSlug}-host"),
             },
         };
 
         ev.Agent.Add(new AuditEvent.AgentComponent
         {
             Requestor = true,
-            Who = string.IsNullOrEmpty(context.CurrentUserId)
+            Who = string.IsNullOrEmpty(_context.CurrentUserId)
                 ? null
-                : new ResourceReference($"Practitioner/{context.CurrentUserId}"),
+                : new ResourceReference($"Practitioner/{_context.CurrentUserId}"),
         });
 
         ev.Entity.Add(new AuditEvent.EntityComponent
@@ -79,14 +100,14 @@ public sealed class HipaaAuditingBehavior<TRequest, TResponse>(
 
         try
         {
-            await emitter.EmitAsync(ev, cancellationToken).ConfigureAwait(false);
+            await _emitter.EmitAsync(ev, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             // The audit emitter is best-effort within a request scope — losing one event must not
             // break the handler. The compliance dashboard surfaces emitter failures via its own
             // safeguard check, and the framework log keeps a record for postmortem.
-            logger.LogWarning(ex, "HipaaAuditingBehavior failed to emit AuditEvent for {Request}", typeof(TRequest).Name);
+            _logger.LogWarning(ex, "HipaaAuditingBehavior failed to emit AuditEvent for {Request}", typeof(TRequest).Name);
         }
     }
 

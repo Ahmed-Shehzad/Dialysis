@@ -16,10 +16,7 @@ public sealed class DatabaseReaderSourceConnector : ISourceConnector
 
     private readonly IDatabaseOutboundConnectionFactory _connectionFactory;
 
-    public DatabaseReaderSourceConnector(IDatabaseOutboundConnectionFactory connectionFactory)
-    {
-        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
-    }
+    public DatabaseReaderSourceConnector(IDatabaseOutboundConnectionFactory connectionFactory) => _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
     public string Kind => KindValue;
 

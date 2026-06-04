@@ -11,13 +11,23 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.Nats;
 /// NATS <see cref="ITransponderTransport"/> using a single ingress subject and Transponder headers for routing keys.
 /// Supports core NATS or JetStream (durable consumer with explicit ack).
 /// </summary>
-public sealed class NatsTransponderTransport(
-    IOptions<TransponderNatsOptions> options,
-    ILogger<NatsTransponderTransport> logger) : ITransponderTransport
+public sealed class NatsTransponderTransport : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private NatsClient? _client;
     private INatsJSContext? _jetStream;
+    private readonly IOptions<TransponderNatsOptions> _options;
+    private readonly ILogger<NatsTransponderTransport> _logger;
+    /// <summary>
+    /// NATS <see cref="ITransponderTransport"/> using a single ingress subject and Transponder headers for routing keys.
+    /// Supports core NATS or JetStream (durable consumer with explicit ack).
+    /// </summary>
+    public NatsTransponderTransport(IOptions<TransponderNatsOptions> options,
+        ILogger<NatsTransponderTransport> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -27,7 +37,7 @@ public sealed class NatsTransponderTransport(
             if (_client is not null)
                 return;
 
-            var o = options.Value;
+            var o = _options.Value;
             ValidateJetStreamOptions(o);
 
             _client = new NatsClient(new NatsOpts { Url = o.Url, Name = o.ClientName });
@@ -40,7 +50,7 @@ public sealed class NatsTransponderTransport(
                     await ProvisionJetStreamStreamAsync(o, cancellationToken).ConfigureAwait(false);
             }
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Transponder NATS connected to {Url} ({Mode})",
                 o.Url,
                 o.DeliveryMode == NatsDeliveryMode.JetStream ? "JetStream" : "core");
@@ -55,7 +65,7 @@ public sealed class NatsTransponderTransport(
     {
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
         var client = _client ?? throw new InvalidOperationException("NATS client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
         var headers = BuildHeaders(message);
         var payload = message.Payload.ToArray();
         var serializer = NatsClientDefaultSerializerRegistry.Default.GetSerializer<byte[]>();
@@ -89,7 +99,7 @@ public sealed class NatsTransponderTransport(
     public Task RunConsumerAsync(
         Func<TransportMessage, CancellationToken, Task> onMessage,
         CancellationToken cancellationToken) =>
-        options.Value.DeliveryMode == NatsDeliveryMode.JetStream
+        _options.Value.DeliveryMode == NatsDeliveryMode.JetStream
             ? RunJetStreamConsumerAsync(onMessage, cancellationToken)
             : RunCoreConsumerAsync(onMessage, cancellationToken);
 
@@ -140,7 +150,7 @@ public sealed class NatsTransponderTransport(
         await js
             .CreateOrUpdateStreamAsync(new StreamConfig(o.JetStreamStream!, subjects), cancellationToken)
             .ConfigureAwait(false);
-        logger.LogInformation(
+        _logger.LogInformation(
             "Transponder NATS JetStream stream {Stream} subjects: {Subjects}",
             o.JetStreamStream,
             string.Join(", ", subjects));
@@ -154,7 +164,7 @@ public sealed class NatsTransponderTransport(
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         var client = _client ?? throw new InvalidOperationException("NATS client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
         var deserializer = NatsClientDefaultSerializerRegistry.Default.GetDeserializer<byte[]>();
 
         await foreach (var msg in client
@@ -181,7 +191,7 @@ public sealed class NatsTransponderTransport(
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         var js = _jetStream ?? throw new InvalidOperationException("JetStream context is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
         var deserializer = NatsClientDefaultSerializerRegistry.Default.GetDeserializer<byte[]>();
 
         var consumerConfig = new ConsumerConfig(o.JetStreamDurable!)
@@ -216,13 +226,13 @@ public sealed class NatsTransponderTransport(
             {
                 if (o.PoisonMessagePolicy == NatsPoisonMessagePolicy.Republish)
                 {
-                    logger.LogError(ex, "Transponder NATS JetStream handler failed; republishing to poison subject {Poison}", o.PoisonSubject);
+                    _logger.LogError(ex, "Transponder NATS JetStream handler failed; republishing to poison subject {Poison}", o.PoisonSubject);
                     await PublishPoisonJetStreamAsync(js, o, transportMessage.Value, cancellationToken).ConfigureAwait(false);
                     await msg.AckAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    logger.LogError(ex, "Transponder NATS JetStream handler failed; ack to discard");
+                    _logger.LogError(ex, "Transponder NATS JetStream handler failed; ack to discard");
                     await msg.AckAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -244,12 +254,12 @@ public sealed class NatsTransponderTransport(
         {
             if (o.PoisonMessagePolicy == NatsPoisonMessagePolicy.Republish)
             {
-                logger.LogError(ex, "Transponder NATS handler failed; republishing to poison subject {Poison}", o.PoisonSubject);
+                _logger.LogError(ex, "Transponder NATS handler failed; republishing to poison subject {Poison}", o.PoisonSubject);
                 await PublishPoisonCoreAsync(client, o, transportMessage, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                logger.LogError(ex, "Transponder NATS handler failed; message dropped (core NATS has no broker ack)");
+                _logger.LogError(ex, "Transponder NATS handler failed; message dropped (core NATS has no broker ack)");
             }
         }
     }

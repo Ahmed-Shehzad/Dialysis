@@ -5,15 +5,24 @@ namespace Dialysis.SmartConnect.Inbound;
 /// <summary>
 /// Default <see cref="IInboundTransport"/>: preflight flow existence/state when possible, then <see cref="IFlowRuntime.DispatchAsync"/>.
 /// </summary>
-public sealed class InboundTransport(
-    IFlowRuntime flowRuntime,
-    IIntegrationFlowRepository? flows) : IInboundTransport
+public sealed class InboundTransport : IInboundTransport
 {
+    private readonly IFlowRuntime _flowRuntime;
+    private readonly IIntegrationFlowRepository? _flows;
+    /// <summary>
+    /// Default <see cref="IInboundTransport"/>: preflight flow existence/state when possible, then <see cref="IFlowRuntime.DispatchAsync"/>.
+    /// </summary>
+    public InboundTransport(IFlowRuntime flowRuntime,
+        IIntegrationFlowRepository? flows)
+    {
+        _flowRuntime = flowRuntime;
+        _flows = flows;
+    }
     public async Task<InboundReceiveResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
-        if (flows is not null)
+        if (_flows is not null)
         {
-            var flow = await flows.GetByIdAsync(message.FlowId, cancellationToken).ConfigureAwait(false);
+            var flow = await _flows.GetByIdAsync(message.FlowId, cancellationToken).ConfigureAwait(false);
             if (flow is null)
             {
                 return new InboundReceiveResult
@@ -37,7 +46,7 @@ public sealed class InboundTransport(
             }
         }
 
-        var result = await flowRuntime.DispatchAsync(message, cancellationToken).ConfigureAwait(false);
+        var result = await _flowRuntime.DispatchAsync(message, cancellationToken).ConfigureAwait(false);
         if (!result.Succeeded)
         {
             var status = result.Error switch

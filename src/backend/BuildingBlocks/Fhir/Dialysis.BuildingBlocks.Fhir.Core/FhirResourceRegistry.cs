@@ -68,13 +68,46 @@ public delegate ValueTask<Bundle> FhirSearchDispatcher(
     FhirSearchRequest request,
     CancellationToken cancellationToken);
 
-public sealed record FhirReadDispatchResult(Resource? Resource, string? VersionId, DateTimeOffset? LastModified);
-
-public sealed record FhirResourceCapability(
-    string TypeName,
-    bool SupportsRead = false,
-    bool SupportsSearch = false,
-    IReadOnlyList<string>? SupportedProfiles = null)
+public sealed record FhirReadDispatchResult
 {
-    public IReadOnlyList<string> SupportedProfiles { get; init; } = SupportedProfiles ?? Array.Empty<string>();
+    public FhirReadDispatchResult(Resource? Resource, string? VersionId, DateTimeOffset? LastModified)
+    {
+        this.Resource = Resource;
+        this.VersionId = VersionId;
+        this.LastModified = LastModified;
+    }
+    public Resource? Resource { get; init; }
+    public string? VersionId { get; init; }
+    public DateTimeOffset? LastModified { get; init; }
+    public void Deconstruct(out Resource? Resource, out string? VersionId, out DateTimeOffset? LastModified)
+    {
+        Resource = this.Resource;
+        VersionId = this.VersionId;
+        LastModified = this.LastModified;
+    }
+}
+
+public sealed record FhirResourceCapability
+{
+    public FhirResourceCapability(string TypeName,
+        bool SupportsRead = false,
+        bool SupportsSearch = false,
+        IReadOnlyList<string>? SupportedProfiles = null)
+    {
+        this.TypeName = TypeName;
+        this.SupportsRead = SupportsRead;
+        this.SupportsSearch = SupportsSearch;
+        this.SupportedProfiles = SupportedProfiles ?? Array.Empty<string>();
+    }
+    public IReadOnlyList<string> SupportedProfiles { get; init; }
+    public string TypeName { get; init; }
+    public bool SupportsRead { get; init; }
+    public bool SupportsSearch { get; init; }
+    public void Deconstruct(out string TypeName, out bool SupportsRead, out bool SupportsSearch, out IReadOnlyList<string>? SupportedProfiles)
+    {
+        TypeName = this.TypeName;
+        SupportsRead = this.SupportsRead;
+        SupportsSearch = this.SupportsSearch;
+        SupportedProfiles = this.SupportedProfiles;
+    }
 }

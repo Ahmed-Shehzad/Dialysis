@@ -96,14 +96,16 @@ public sealed class ExternalScriptRouteFilterTests
         };
     }
 
-    private sealed class StubLoader(string body) : IExternalScriptLoader
+    private sealed class StubLoader : IExternalScriptLoader
     {
+        private readonly string _body;
+        public StubLoader(string body) => _body = body;
         public List<(Uri uri, TimeSpan? ttl)> Requests { get; } = new();
 
         public Task<string> LoadAsync(Uri uri, TimeSpan? cacheTtl, CancellationToken cancellationToken)
         {
             Requests.Add((uri, cacheTtl));
-            return Task.FromResult(body);
+            return Task.FromResult(_body);
         }
     }
 }

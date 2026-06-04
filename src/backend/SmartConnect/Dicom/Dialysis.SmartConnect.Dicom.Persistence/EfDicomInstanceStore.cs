@@ -8,12 +8,18 @@ namespace Dialysis.SmartConnect.Dicom.Persistence;
 /// EF-backed implementation of <see cref="IDicomInstanceStore"/>. Reads + writes
 /// <see cref="DicomInstanceEntity"/> rows in the SmartConnect DbContext.
 /// </summary>
-public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInstanceStore
+public sealed class EfDicomInstanceStore : IDicomInstanceStore
 {
+    private readonly SmartConnectDbContext _db;
+    /// <summary>
+    /// EF-backed implementation of <see cref="IDicomInstanceStore"/>. Reads + writes
+    /// <see cref="DicomInstanceEntity"/> rows in the SmartConnect DbContext.
+    /// </summary>
+    public EfDicomInstanceStore(SmartConnectDbContext db) => _db = db;
     public async Task AddAsync(DicomInstanceMetadata metadata, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(metadata);
-        db.DicomInstances.Add(new DicomInstanceEntity
+        _db.DicomInstances.Add(new DicomInstanceEntity
         {
             Id = Guid.CreateVersion7(),
             StudyInstanceUid = metadata.StudyInstanceUid,
@@ -27,12 +33,12 @@ public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInsta
             SizeBytes = metadata.SizeBytes,
             BlobId = metadata.BlobId,
         });
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<DicomInstanceMetadata?> GetAsync(string sopInstanceUid, CancellationToken cancellationToken)
     {
-        var row = await db.DicomInstances.AsNoTracking()
+        var row = await _db.DicomInstances.AsNoTracking()
             .FirstOrDefaultAsync(i => i.SopInstanceUid == sopInstanceUid, cancellationToken).ConfigureAwait(false);
         return row is null ? null : Project(row);
     }
@@ -40,7 +46,7 @@ public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInsta
     public async Task<IReadOnlyList<DicomInstanceMetadata>> GetByStudyAsync(
         string studyInstanceUid, CancellationToken cancellationToken)
     {
-        var rows = await db.DicomInstances.AsNoTracking()
+        var rows = await _db.DicomInstances.AsNoTracking()
             .Where(i => i.StudyInstanceUid == studyInstanceUid)
             .OrderBy(i => i.SeriesInstanceUid).ThenBy(i => i.SopInstanceUid)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -53,7 +59,7 @@ public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInsta
         DateTimeOffset? studyDateTo,
         CancellationToken cancellationToken)
     {
-        var query = db.DicomInstances.AsNoTracking().AsQueryable();
+        var query = _db.DicomInstances.AsNoTracking().AsQueryable();
         if (!string.IsNullOrEmpty(patientId))
         {
             query = query.Where(i => i.PatientId == patientId);
@@ -68,7 +74,7 @@ public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInsta
         }
         var rows = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
-        return rows
+        return [.. rows
             .GroupBy(i => i.StudyInstanceUid)
             .Select(g =>
             {
@@ -77,7 +83,7 @@ public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInsta
                     .Select(sg => new DicomSeries(
                         sg.Key,
                         sg.First().Modality,
-                        sg.Select(Project).ToList()))
+                        [.. sg.Select(Project)]))
                     .ToList();
                 return new DicomStudy(
                     g.Key,
@@ -85,8 +91,7 @@ public sealed class EfDicomInstanceStore(SmartConnectDbContext db) : IDicomInsta
                     first.PatientName,
                     g.Min(i => i.ReceivedUtc),
                     series);
-            })
-            .ToList();
+            })];
     }
 
     private static DicomInstanceMetadata Project(DicomInstanceEntity row) => new(

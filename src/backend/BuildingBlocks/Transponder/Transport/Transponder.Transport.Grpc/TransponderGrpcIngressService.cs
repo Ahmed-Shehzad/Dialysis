@@ -6,11 +6,20 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.Grpc;
 
 /// <summary>gRPC ingress relay: unary publish fans out to all active subscribe streams.</summary>
-public sealed class TransponderGrpcIngressService(
-    TransponderGrpcIngressHub hub,
-    ILogger<TransponderGrpcIngressService> logger,
-    IServiceProvider services) : TransponderIngress.TransponderIngressBase
+public sealed class TransponderGrpcIngressService : TransponderIngress.TransponderIngressBase
 {
+    private readonly TransponderGrpcIngressHub _hub;
+    private readonly ILogger<TransponderGrpcIngressService> _logger;
+    private readonly IServiceProvider _services;
+    /// <summary>gRPC ingress relay: unary publish fans out to all active subscribe streams.</summary>
+    public TransponderGrpcIngressService(TransponderGrpcIngressHub hub,
+        ILogger<TransponderGrpcIngressService> logger,
+        IServiceProvider services)
+    {
+        _hub = hub;
+        _logger = logger;
+        _services = services;
+    }
     public override async Task<PublishResponse> Publish(TransportEnvelope request, ServerCallContext context)
     {
         if (string.IsNullOrEmpty(request.RoutingKey))
@@ -18,10 +27,10 @@ public sealed class TransponderGrpcIngressService(
 
         await EnsureAuthorizedAsync(context).ConfigureAwait(false);
 
-        if (services.GetService<ITransponderGrpcIngressPublishJournal>() is { } journal)
+        if (_services.GetService<ITransponderGrpcIngressPublishJournal>() is { } journal)
             await journal.AppendAsync(request, context, context.CancellationToken).ConfigureAwait(false);
 
-        await hub.BroadcastAsync(request, context.CancellationToken).ConfigureAwait(false);
+        await _hub.BroadcastAsync(request, context.CancellationToken).ConfigureAwait(false);
         return new PublishResponse();
     }
 
@@ -39,9 +48,9 @@ public sealed class TransponderGrpcIngressService(
             SingleWriter = false,
         });
 
-        using (hub.Register(channel.Writer))
+        using (_hub.Register(channel.Writer))
         {
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Transponder gRPC subscribe started ({ClientName})",
                 string.IsNullOrEmpty(request.ClientName) ? "anonymous" : request.ClientName);
 
@@ -59,7 +68,7 @@ public sealed class TransponderGrpcIngressService(
 
     private async Task EnsureAuthorizedAsync(ServerCallContext context)
     {
-        if (services.GetService<ITransponderGrpcIngressAuthorizer>() is not { } authorizer)
+        if (_services.GetService<ITransponderGrpcIngressAuthorizer>() is not { } authorizer)
             return;
 
         await authorizer.AuthorizeAsync(context, context.CancellationToken).ConfigureAwait(false);

@@ -24,12 +24,42 @@ public enum GematikEnvironment
 /// Updates to URLs land via gematik release notes — when one changes, update the catalog
 /// constants and ship a new release.
 /// </summary>
-public sealed record GematikEndpoint(
-    GematikEnvironment Environment,
-    Uri DiscoveryDocument,
-    Uri EpaUpload,
-    Uri EpaDownload,
-    Uri TokenIssuer);
+public sealed record GematikEndpoint
+{
+    /// <summary>
+    /// URL registry for the gematik TI endpoints per environment. The endpoint base URLs are
+    /// hard-coded here because gematik publishes them as part of their conformance documentation;
+    /// operators only select the environment, never the URL.
+    ///
+    /// Updates to URLs land via gematik release notes — when one changes, update the catalog
+    /// constants and ship a new release.
+    /// </summary>
+    public GematikEndpoint(GematikEnvironment Environment,
+        Uri DiscoveryDocument,
+        Uri EpaUpload,
+        Uri EpaDownload,
+        Uri TokenIssuer)
+    {
+        this.Environment = Environment;
+        this.DiscoveryDocument = DiscoveryDocument;
+        this.EpaUpload = EpaUpload;
+        this.EpaDownload = EpaDownload;
+        this.TokenIssuer = TokenIssuer;
+    }
+    public GematikEnvironment Environment { get; init; }
+    public Uri DiscoveryDocument { get; init; }
+    public Uri EpaUpload { get; init; }
+    public Uri EpaDownload { get; init; }
+    public Uri TokenIssuer { get; init; }
+    public void Deconstruct(out GematikEnvironment Environment, out Uri DiscoveryDocument, out Uri EpaUpload, out Uri EpaDownload, out Uri TokenIssuer)
+    {
+        Environment = this.Environment;
+        DiscoveryDocument = this.DiscoveryDocument;
+        EpaUpload = this.EpaUpload;
+        EpaDownload = this.EpaDownload;
+        TokenIssuer = this.TokenIssuer;
+    }
+}
 
 public static class GematikEndpointCatalog
 {

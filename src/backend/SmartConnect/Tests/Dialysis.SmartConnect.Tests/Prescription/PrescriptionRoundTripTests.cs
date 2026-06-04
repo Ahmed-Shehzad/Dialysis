@@ -129,20 +129,23 @@ public sealed class PrescriptionRoundTripTests
         Assert.Equal("MRN-9001", resolver.LastQuery?.MedicalRecordNumber);
     }
 
-    private sealed class StubResolver(PrescriptionDocument? document) : IPrescriptionResolver
+    private sealed class StubResolver : IPrescriptionResolver
     {
+        private readonly PrescriptionDocument? _document;
+        public StubResolver(PrescriptionDocument? document) => _document = document;
         public PrescriptionQuery? LastQuery { get; private set; }
 
         public Task<PrescriptionDocument?> ResolveAsync(PrescriptionQuery query, CancellationToken cancellationToken = default)
         {
             LastQuery = query;
-            return Task.FromResult(document);
+            return Task.FromResult(_document);
         }
     }
 
-    private sealed class FakeTimeProvider(DateTime utcNow) : TimeProvider
+    private sealed class FakeTimeProvider : TimeProvider
     {
-        private readonly DateTime _utcNow = utcNow;
+        private readonly DateTime _utcNow;
+        public FakeTimeProvider(DateTime utcNow) => _utcNow = utcNow;
         public override DateTimeOffset GetUtcNow() => new(_utcNow, TimeSpan.Zero);
     }
 }

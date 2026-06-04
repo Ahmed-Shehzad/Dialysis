@@ -18,12 +18,45 @@ public interface IRetentionSchedule
 }
 
 /// <summary>One retention window: minimum + maximum + the legal authority justifying it.</summary>
-public readonly record struct RetentionWindow(
-    TimeSpan Minimum,
-    TimeSpan Maximum,
-    string LegalAuthority);
+public readonly record struct RetentionWindow
+{
+    /// <summary>One retention window: minimum + maximum + the legal authority justifying it.</summary>
+    public RetentionWindow(TimeSpan Minimum,
+        TimeSpan Maximum,
+        string LegalAuthority)
+    {
+        this.Minimum = Minimum;
+        this.Maximum = Maximum;
+        this.LegalAuthority = LegalAuthority;
+    }
+    public TimeSpan Minimum { get; init; }
+    public TimeSpan Maximum { get; init; }
+    public string LegalAuthority { get; init; }
+    public void Deconstruct(out TimeSpan Minimum, out TimeSpan Maximum, out string LegalAuthority)
+    {
+        Minimum = this.Minimum;
+        Maximum = this.Maximum;
+        LegalAuthority = this.LegalAuthority;
+    }
+}
 
-public sealed record RetentionWindowRegistration(
-    string Key,
-    RetentionWindow Window,
-    string Description);
+public sealed record RetentionWindowRegistration
+{
+    public RetentionWindowRegistration(string Key,
+        RetentionWindow Window,
+        string Description)
+    {
+        this.Key = Key;
+        this.Window = Window;
+        this.Description = Description;
+    }
+    public string Key { get; init; }
+    public RetentionWindow Window { get; init; }
+    public string Description { get; init; }
+    public void Deconstruct(out string Key, out RetentionWindow Window, out string Description)
+    {
+        Key = this.Key;
+        Window = this.Window;
+        Description = this.Description;
+    }
+}

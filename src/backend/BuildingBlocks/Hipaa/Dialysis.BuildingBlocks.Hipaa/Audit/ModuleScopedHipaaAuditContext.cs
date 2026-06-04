@@ -8,11 +8,24 @@ namespace Dialysis.BuildingBlocks.Hipaa.Audit;
 /// register both via <c>services.AddHipaaCompliance()</c> + the module's standard
 /// <c>AddModuleHost</c> get auditing wired automatically — no per-handler boilerplate.
 /// </summary>
-public sealed class ModuleScopedHipaaAuditContext(ICurrentUser currentUser, HipaaAuditOptions options) : IHipaaAuditContext
+public sealed class ModuleScopedHipaaAuditContext : IHipaaAuditContext
 {
-    public string ModuleSlug => options.ModuleSlug;
+    private readonly ICurrentUser _currentUser;
+    private readonly HipaaAuditOptions _options;
+    /// <summary>
+    /// Default <see cref="IHipaaAuditContext"/> impl: reads the current user from
+    /// <see cref="ICurrentUser"/> and the module slug from <see cref="HipaaAuditOptions"/>. Hosts that
+    /// register both via <c>services.AddHipaaCompliance()</c> + the module's standard
+    /// <c>AddModuleHost</c> get auditing wired automatically — no per-handler boilerplate.
+    /// </summary>
+    public ModuleScopedHipaaAuditContext(ICurrentUser currentUser, HipaaAuditOptions options)
+    {
+        _currentUser = currentUser;
+        _options = options;
+    }
+    public string ModuleSlug => _options.ModuleSlug;
 
-    public string? CurrentUserId => currentUser.UserId;
+    public string? CurrentUserId => _currentUser.UserId;
 }
 
 public sealed class HipaaAuditOptions

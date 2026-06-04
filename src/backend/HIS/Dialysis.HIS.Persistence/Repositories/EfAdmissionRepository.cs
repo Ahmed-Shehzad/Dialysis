@@ -4,16 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfAdmissionRepository(HisDbContext db) : IAdmissionRepository
+public sealed class EfAdmissionRepository : IAdmissionRepository
 {
-    public void Add(Admission admission) => db.Admissions.Add(admission);
+    private readonly HisDbContext _db;
+    public EfAdmissionRepository(HisDbContext db) => _db = db;
+    public void Add(Admission admission) => _db.Admissions.Add(admission);
 
     public Task<Admission?> GetAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.Admissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        => _db.Admissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public IAsyncEnumerable<Admission> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        var query = db.Admissions.AsNoTracking().OrderBy(a => a.AdmittedAtUtc).AsQueryable();
+        var query = _db.Admissions.AsNoTracking().OrderBy(a => a.AdmittedAtUtc).AsQueryable();
         if (since is { } cutoff)
         {
             var cutoffUtc = cutoff.UtcDateTime;
@@ -24,7 +26,7 @@ public sealed class EfAdmissionRepository(HisDbContext db) : IAdmissionRepositor
 
     public IAsyncEnumerable<Guid> StreamDistinctPatientIdsAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        var query = db.Admissions.AsNoTracking().AsQueryable();
+        var query = _db.Admissions.AsNoTracking().AsQueryable();
         if (since is { } cutoff)
         {
             var cutoffUtc = cutoff.UtcDateTime;

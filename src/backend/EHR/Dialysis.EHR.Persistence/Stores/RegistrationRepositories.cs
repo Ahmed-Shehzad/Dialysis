@@ -4,13 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Stores;
 
-public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
+public sealed class PatientRepository : IPatientRepository
 {
+    private readonly EhrDbContext _db;
+    public PatientRepository(EhrDbContext db) => _db = db;
     public Task<Patient?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Patients.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        _db.Patients.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
     public Task<Patient?> FindByMedicalRecordNumberAsync(string medicalRecordNumber, CancellationToken cancellationToken = default) =>
-        db.Patients.FirstOrDefaultAsync(p => p.MedicalRecordNumber == medicalRecordNumber, cancellationToken);
+        _db.Patients.FirstOrDefaultAsync(p => p.MedicalRecordNumber == medicalRecordNumber, cancellationToken);
 
     public async Task<IReadOnlyList<Patient>> SearchAsync(string? nameFragment, int take, CancellationToken cancellationToken = default)
     {
@@ -24,7 +26,7 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
         PatientSearchCriteria criteria,
         CancellationToken cancellationToken = default)
     {
-        var query = db.Patients.AsQueryable();
+        var query = _db.Patients.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(criteria.Query))
         {
@@ -84,11 +86,11 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
         return new PatientSearchPage(items, total);
     }
 
-    public void Add(Patient patient) => db.Patients.Add(patient);
+    public void Add(Patient patient) => _db.Patients.Add(patient);
 
     public IAsyncEnumerable<Patient> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        var query = db.Patients.AsNoTracking().OrderBy(p => p.MedicalRecordNumber).AsQueryable();
+        var query = _db.Patients.AsNoTracking().OrderBy(p => p.MedicalRecordNumber).AsQueryable();
         if (since is { } cutoff)
         {
             query = query.Where(p => p.UpdatedAtUtc >= cutoff);
@@ -97,13 +99,15 @@ public sealed class PatientRepository(EhrDbContext db) : IPatientRepository
     }
 }
 
-public sealed class ProviderRepository(EhrDbContext db) : IProviderRepository
+public sealed class ProviderRepository : IProviderRepository
 {
+    private readonly EhrDbContext _db;
+    public ProviderRepository(EhrDbContext db) => _db = db;
     public Task<Provider?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Providers.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        _db.Providers.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
     public Task<Provider?> FindByNpiAsync(string npi, CancellationToken cancellationToken = default) =>
-        db.Providers.FirstOrDefaultAsync(p => p.NationalProviderIdentifier == npi, cancellationToken);
+        _db.Providers.FirstOrDefaultAsync(p => p.NationalProviderIdentifier == npi, cancellationToken);
 
-    public void Add(Provider provider) => db.Providers.Add(provider);
+    public void Add(Provider provider) => _db.Providers.Add(provider);
 }

@@ -71,9 +71,10 @@ public sealed class ListNotesForPatientQueryHandlerTests
         result.Count.ShouldBe(2);
     }
 
-    private sealed class InMemoryNotes(params ClinicalNote[] seed) : IClinicalNoteRepository
+    private sealed class InMemoryNotes : IClinicalNoteRepository
     {
-        private readonly IReadOnlyList<ClinicalNote> _notes = [.. seed];
+        private readonly IReadOnlyList<ClinicalNote> _notes;
+        public InMemoryNotes(params ClinicalNote[] seed) => _notes = [.. seed];
 
         public Task<ClinicalNote?> GetAsync(Guid id, CancellationToken cancellationToken = default)
             => Task.FromResult(_notes.FirstOrDefault(n => n.Id == id));

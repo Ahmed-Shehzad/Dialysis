@@ -11,17 +11,24 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 /// and its <see cref="CodeTemplateEntity"/> children, plus joins against <see cref="IntegrationFlowEntity"/>
 /// when resolving "linked templates for a flow" (union of library.LinkedFlowIds and flow.LinkedLibraryIds).
 /// </summary>
-public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : ICodeTemplateLibraryRepository
+public sealed class EfCodeTemplateLibraryRepository : ICodeTemplateLibraryRepository
 {
+    private readonly SmartConnectDbContext _db;
+    /// <summary>
+    /// EF Core <see cref="ICodeTemplateLibraryRepository"/>. Reads + writes <see cref="CodeTemplateLibraryEntity"/>
+    /// and its <see cref="CodeTemplateEntity"/> children, plus joins against <see cref="IntegrationFlowEntity"/>
+    /// when resolving "linked templates for a flow" (union of library.LinkedFlowIds and flow.LinkedLibraryIds).
+    /// </summary>
+    public EfCodeTemplateLibraryRepository(SmartConnectDbContext db) => _db = db;
     private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = null };
 
     public async Task<IReadOnlyList<CodeTemplateLibrary>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var libs = await db.CodeTemplateLibraries.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
+        var libs = await _db.CodeTemplateLibraries.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         if (libs.Count == 0)
             return [];
         var libIds = libs.Select(l => l.Id).ToList();
-        var templates = await db.CodeTemplates.AsNoTracking()
+        var templates = await _db.CodeTemplates.AsNoTracking()
             .Where(t => libIds.Contains(t.LibraryId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var grouped = templates.GroupBy(t => t.LibraryId).ToDictionary(g => g.Key, g => g.OrderBy(t => t.Position).ToList());
@@ -30,11 +37,11 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
 
     public async Task<CodeTemplateLibrary?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var lib = await db.CodeTemplateLibraries.AsNoTracking()
+        var lib = await _db.CodeTemplateLibraries.AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == id, cancellationToken).ConfigureAwait(false);
         if (lib is null)
             return null;
-        var templates = await db.CodeTemplates.AsNoTracking()
+        var templates = await _db.CodeTemplates.AsNoTracking()
             .Where(t => t.LibraryId == id)
             .OrderBy(t => t.Position)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -43,13 +50,13 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
 
     public async Task UpsertAsync(CodeTemplateLibrary library, CancellationToken cancellationToken = default)
     {
-        var existing = await db.CodeTemplateLibraries
+        var existing = await _db.CodeTemplateLibraries
             .FirstOrDefaultAsync(l => l.Id == library.Id, cancellationToken).ConfigureAwait(false);
         var linkedFlowIdsJson = JsonSerializer.Serialize(library.LinkedFlowIds, _jsonOpts);
 
         if (existing is null)
         {
-            db.CodeTemplateLibraries.Add(new CodeTemplateLibraryEntity
+            _db.CodeTemplateLibraries.Add(new CodeTemplateLibraryEntity
             {
                 Id = library.Id,
                 Name = library.Name,
@@ -71,15 +78,15 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
         }
 
         // Replace template set: simple delete-then-insert keeps the upsert atomic and avoids per-template diffing.
-        var oldTemplates = await db.CodeTemplates
+        var oldTemplates = await _db.CodeTemplates
             .Where(t => t.LibraryId == library.Id)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        db.CodeTemplates.RemoveRange(oldTemplates);
+        _db.CodeTemplates.RemoveRange(oldTemplates);
 
         var position = 0;
         foreach (var t in library.Templates)
         {
-            db.CodeTemplates.Add(new CodeTemplateEntity
+            _db.CodeTemplates.Add(new CodeTemplateEntity
             {
                 Id = t.Id == Guid.Empty ? Guid.CreateVersion7() : t.Id,
                 LibraryId = library.Id,
@@ -94,17 +101,17 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
             });
         }
 
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var existing = await db.CodeTemplateLibraries
+        var existing = await _db.CodeTemplateLibraries
             .FirstOrDefaultAsync(l => l.Id == id, cancellationToken).ConfigureAwait(false);
         if (existing is null)
             return;
-        db.CodeTemplateLibraries.Remove(existing);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.CodeTemplateLibraries.Remove(existing);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyList<CodeTemplate>> GetLinkedTemplatesForFlowAsync(
@@ -114,11 +121,11 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
     {
         // Side A: libraries whose LinkedFlowIds contains flowId.
         // Side B: libraries whose Id is in this flow's PipelineDefinition.LinkedLibraryIds.
-        var libraries = await db.CodeTemplateLibraries.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
+        var libraries = await _db.CodeTemplateLibraries.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
         if (libraries.Count == 0)
             return [];
 
-        var flowEntity = await db.IntegrationFlows.AsNoTracking()
+        var flowEntity = await _db.IntegrationFlows.AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == flowId, cancellationToken).ConfigureAwait(false);
         var flowLinkedLibIds = new HashSet<Guid>();
         if (flowEntity is not null && !string.IsNullOrWhiteSpace(flowEntity.PipelineJson))
@@ -162,7 +169,7 @@ public sealed class EfCodeTemplateLibraryRepository(SmartConnectDbContext db) : 
         if (matchedLibraryIds.Count == 0)
             return [];
 
-        var templates = await db.CodeTemplates.AsNoTracking()
+        var templates = await _db.CodeTemplates.AsNoTracking()
             .Where(t => matchedLibraryIds.Contains(t.LibraryId))
             .OrderBy(t => t.Position)
             .ToListAsync(cancellationToken).ConfigureAwait(false);

@@ -4,14 +4,15 @@ using Dialysis.PDMS.TreatmentSessions.Ports;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.ListActiveAlarms;
 
-public sealed class ListActiveAlarmsQueryHandler(ITreatmentAlarmRepository alarms)
-    : IQueryHandler<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>>
+public sealed class ListActiveAlarmsQueryHandler : IQueryHandler<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>>
 {
+    private readonly ITreatmentAlarmRepository _alarms;
+    public ListActiveAlarmsQueryHandler(ITreatmentAlarmRepository alarms) => _alarms = alarms;
     public async Task<IReadOnlyList<ActiveAlarmDto>> HandleAsync(
         ListActiveAlarmsQuery _,
         CancellationToken cancellationToken)
     {
-        var active = await alarms.ListActiveAsync(cancellationToken).ConfigureAwait(false);
+        var active = await _alarms.ListActiveAsync(cancellationToken).ConfigureAwait(false);
         return [.. active.Select(a => new ActiveAlarmDto(
             a.Id,
             a.SessionId,

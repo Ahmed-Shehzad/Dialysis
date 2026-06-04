@@ -14,9 +14,11 @@ public sealed class PharmacyTransformStageTests
     private static readonly FixedClock _clock =
         new(new DateTime(2026, 5, 22, 14, 30, 5, DateTimeKind.Utc));
 
-    private sealed class FixedClock(DateTime utcNow) : TimeProvider
+    private sealed class FixedClock : TimeProvider
     {
-        public override DateTimeOffset GetUtcNow() => new(utcNow);
+        private readonly DateTime _utcNow;
+        public FixedClock(DateTime utcNow) => _utcNow = utcNow;
+        public override DateTimeOffset GetUtcNow() => new(_utcNow);
     }
 
     private static IntegrationMessage Message(string json, string correlationId = "corr-1") => new()

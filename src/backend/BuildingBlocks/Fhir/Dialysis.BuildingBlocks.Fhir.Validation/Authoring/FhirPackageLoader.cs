@@ -7,12 +7,35 @@ using Hl7.Fhir.Serialization;
 namespace Dialysis.BuildingBlocks.Fhir.Validation.Authoring;
 
 /// <summary>Summary of loading an external FHIR (NPM-style) package into the registry.</summary>
-public sealed record FhirPackageLoadResult(
-    string? PackageName,
-    string? PackageVersion,
-    int Loaded,
-    int Skipped,
-    IReadOnlyList<string> Canonicals);
+public sealed record FhirPackageLoadResult
+{
+    /// <summary>Summary of loading an external FHIR (NPM-style) package into the registry.</summary>
+    public FhirPackageLoadResult(string? PackageName,
+        string? PackageVersion,
+        int Loaded,
+        int Skipped,
+        IReadOnlyList<string> Canonicals)
+    {
+        this.PackageName = PackageName;
+        this.PackageVersion = PackageVersion;
+        this.Loaded = Loaded;
+        this.Skipped = Skipped;
+        this.Canonicals = Canonicals;
+    }
+    public string? PackageName { get; init; }
+    public string? PackageVersion { get; init; }
+    public int Loaded { get; init; }
+    public int Skipped { get; init; }
+    public IReadOnlyList<string> Canonicals { get; init; }
+    public void Deconstruct(out string? PackageName, out string? PackageVersion, out int Loaded, out int Skipped, out IReadOnlyList<string> Canonicals)
+    {
+        PackageName = this.PackageName;
+        PackageVersion = this.PackageVersion;
+        Loaded = this.Loaded;
+        Skipped = this.Skipped;
+        Canonicals = this.Canonicals;
+    }
+}
 
 /// <summary>
 /// Loads an external FHIR package (the <c>.tgz</c> NPM tarball published by HL7 — US Core,
@@ -28,8 +51,12 @@ public interface IFhirPackageLoader
 }
 
 /// <inheritdoc cref="IFhirPackageLoader" />
-public sealed class FhirPackageLoader(IFhirConformanceRegistry registry) : IFhirPackageLoader
+public sealed class FhirPackageLoader : IFhirPackageLoader
 {
+    private readonly IFhirConformanceRegistry _registry;
+    /// <inheritdoc cref="IFhirPackageLoader" />
+    public FhirPackageLoader(IFhirConformanceRegistry registry) => _registry = registry;
+
     // Modern System.Text.Json FHIR options: synchronous (no VSTHRD103) and not obsolete.
     private static readonly JsonSerializerOptions _fhirJson =
         new JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
@@ -94,7 +121,7 @@ public sealed class FhirPackageLoader(IFhirConformanceRegistry registry) : IFhir
                     continue;
                 }
 
-                registry.Register(canonical, resource);
+                _registry.Register(canonical, resource);
                 loaded.Add(canonical);
             }
             catch (Exception ex) when (

@@ -84,7 +84,27 @@ public sealed class RevocationEvidenceCollector
 /// What the collector found for a single signer cert. Chain certs are always emitted into
 /// the DSS even when the CRL / OCSP slots are empty.
 /// </summary>
-public sealed record CollectedRevocationEvidence(
-    IReadOnlyList<X509Certificate2> ChainCertificates,
-    IReadOnlyList<byte[]> Crls,
-    IReadOnlyList<byte[]> Ocsps);
+public sealed record CollectedRevocationEvidence
+{
+    /// <summary>
+    /// What the collector found for a single signer cert. Chain certs are always emitted into
+    /// the DSS even when the CRL / OCSP slots are empty.
+    /// </summary>
+    public CollectedRevocationEvidence(IReadOnlyList<X509Certificate2> ChainCertificates,
+        IReadOnlyList<byte[]> Crls,
+        IReadOnlyList<byte[]> Ocsps)
+    {
+        this.ChainCertificates = ChainCertificates;
+        this.Crls = Crls;
+        this.Ocsps = Ocsps;
+    }
+    public IReadOnlyList<X509Certificate2> ChainCertificates { get; init; }
+    public IReadOnlyList<byte[]> Crls { get; init; }
+    public IReadOnlyList<byte[]> Ocsps { get; init; }
+    public void Deconstruct(out IReadOnlyList<X509Certificate2> ChainCertificates, out IReadOnlyList<byte[]> Crls, out IReadOnlyList<byte[]> Ocsps)
+    {
+        ChainCertificates = this.ChainCertificates;
+        Crls = this.Crls;
+        Ocsps = this.Ocsps;
+    }
+}
