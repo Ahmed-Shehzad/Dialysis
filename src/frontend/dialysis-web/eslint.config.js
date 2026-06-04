@@ -68,5 +68,15 @@ export default tseslint.config(
       globals: { ...globals.node },
     },
   },
+  {
+    // Static browser scripts served verbatim by Vite (e.g. public/theme-init.js) —
+    // classic scripts, browser globals, not part of the TS module graph.
+    files: ["public/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: { ...globals.browser },
+    },
+  },
   prettier,
 );
