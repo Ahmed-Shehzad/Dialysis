@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   arrayBufferToBase64,
@@ -15,6 +15,13 @@ import {
   type QhinPartnerRow,
   type QhinPartnerStatus,
 } from "@/features/tefca/api/tefcaApi";
+
+/** Badge color for a partner's lifecycle status; Onboarding (and any future status) falls back to amber. */
+const statusBadgeClass = (status: QhinPartnerStatus): string => {
+  if (status === "Active") return "bg-emerald-900/40 text-emerald-200";
+  if (status === "Suspended") return "bg-rose-900/40 text-rose-200";
+  return "bg-amber-900/40 text-amber-200";
+};
 
 /**
  * Operator-facing TEFCA QHIN onboarding board. Lists every persistent partner row, with a
@@ -91,16 +98,7 @@ export const TefcaPartnersPage = () => {
                   <div className="text-xs text-slate-500">{row.fhirBaseUrl}</div>
                 </td>
                 <td className="py-2 align-top text-xs">
-                  <span
-                    className={
-                      "rounded px-1.5 py-0.5 " +
-                      (row.status === "Active"
-                        ? "bg-emerald-900/40 text-emerald-200"
-                        : row.status === "Suspended"
-                          ? "bg-rose-900/40 text-rose-200"
-                          : "bg-amber-900/40 text-amber-200")
-                    }
-                  >
+                  <span className={"rounded px-1.5 py-0.5 " + statusBadgeClass(row.status)}>
                     {row.status}
                   </span>
                 </td>
@@ -187,6 +185,7 @@ const PartnerEditDrawer = ({
       <Field label="Name">
         <input
           type="text"
+          aria-label="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className={inputClass}
@@ -422,6 +421,7 @@ const MtlsRotatePanel = ({
         <span className="text-slate-400">PFX password</span>
         <input
           type="password"
+          aria-label="PFX password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className={inputClass}
@@ -430,6 +430,7 @@ const MtlsRotatePanel = ({
       <input
         ref={fileRef}
         type="file"
+        aria-label="Upload PFX certificate"
         className="hidden"
         accept=".pfx,application/x-pkcs12"
         onChange={(e) => {
@@ -479,6 +480,7 @@ const IasJwtPanel = ({ partnerId }: { partnerId: string }) => {
       <Field label="Scope">
         <input
           type="text"
+          aria-label="Scope"
           value={scope}
           onChange={(e) => setScope(e.target.value)}
           className={inputClass}
@@ -487,6 +489,7 @@ const IasJwtPanel = ({ partnerId }: { partnerId: string }) => {
       <Field label="Lifetime (seconds, 60–3600)">
         <input
           type="number"
+          aria-label="Lifetime in seconds"
           min={60}
           max={3600}
           value={lifetime}
@@ -512,6 +515,7 @@ const IasJwtPanel = ({ partnerId }: { partnerId: string }) => {
           <div className="text-slate-400">Token</div>
           <textarea
             readOnly
+            aria-label="Issued IAS token"
             value={issue.data}
             rows={6}
             className="w-full break-all rounded border border-slate-700 bg-slate-800/60 p-2 font-mono text-[10px] text-emerald-100"
@@ -550,28 +554,45 @@ const DrawerShell = ({
   onClose: () => void;
   children: React.ReactNode;
   wide?: boolean;
-}) => (
-  <div className="fixed inset-0 z-40 flex items-center justify-end bg-slate-950/70" role="dialog">
-    <div
-      className={
-        "h-full overflow-y-auto border-l border-slate-800 bg-slate-900 p-5 shadow-xl " +
-        (wide ? "w-full max-w-lg" : "w-full max-w-sm")
-      }
+}) => {
+  const ref = useRef<HTMLDialogElement>(null);
+  // A native <dialog> opened with showModal() gives the proper dialog role, focus trapping,
+  // and Escape-to-close on every platform — more robust than a div with role="dialog".
+  useEffect(() => {
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+
+  return (
+    <dialog
+      ref={ref}
+      aria-label={title}
+      onCancel={onClose}
+      onClose={onClose}
+      className="fixed inset-0 z-40 m-0 flex h-full max-h-none w-full max-w-none items-center justify-end border-0 bg-transparent p-0 text-slate-100 backdrop:bg-slate-950/70"
     >
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-200 hover:border-slate-500"
-        >
-          Close
-        </button>
+      <div
+        className={
+          "h-full overflow-y-auto border-l border-slate-800 bg-slate-900 p-5 shadow-xl " +
+          (wide ? "w-full max-w-lg" : "w-full max-w-sm")
+        }
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-200 hover:border-slate-500"
+          >
+            Close
+          </button>
+        </div>
+        {children}
       </div>
-      {children}
-    </div>
-  </div>
-);
+    </dialog>
+  );
+};
 
 const DrawerFooter = ({
   onCancel,
