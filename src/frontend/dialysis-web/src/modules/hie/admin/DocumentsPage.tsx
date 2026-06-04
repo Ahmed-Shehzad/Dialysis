@@ -72,6 +72,7 @@ export const DocumentsPage = () => {
         </div>
         <div className="flex flex-wrap gap-2 text-sm">
           <select
+            aria-label="Filter by status"
             value={status}
             onChange={(e) => setStatus(e.target.value as DocumentStatus | "all")}
             className="rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-slate-100"
@@ -82,6 +83,7 @@ export const DocumentsPage = () => {
             <option value="all">All</option>
           </select>
           <select
+            aria-label="Filter by source"
             value={source}
             onChange={(e) => setSource(e.target.value as DocumentSource | "all")}
             className="rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-slate-100"
@@ -93,6 +95,7 @@ export const DocumentsPage = () => {
           </select>
           <input
             type="text"
+            aria-label="Filter by kind"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
             placeholder="Filter by kind…"
@@ -101,6 +104,7 @@ export const DocumentsPage = () => {
           <input
             ref={fileInputRef}
             type="file"
+            aria-label="Upload document"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
