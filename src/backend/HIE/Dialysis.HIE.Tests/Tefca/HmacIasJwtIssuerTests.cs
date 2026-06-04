@@ -10,7 +10,7 @@ namespace Dialysis.HIE.Tests.Tefca;
 
 public sealed class HmacIasJwtIssuerTests
 {
-    private const string Signing_Key = "test-signing-key-at-least-32-bytes-long-12345";
+    private const string SigningKey = "test-signing-key-at-least-32-bytes-long-12345";
 
     [Fact]
     public void Issued_Token_Validates_Round_Trip()
@@ -32,7 +32,7 @@ public sealed class HmacIasJwtIssuerTests
             ValidAudience = "https://qhin.example/ias",
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Signing_Key)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey)),
             ClockSkew = TimeSpan.Zero,
         };
         handler.ValidateToken(token, parameters, out var validated);
@@ -62,6 +62,6 @@ public sealed class HmacIasJwtIssuerTests
     }
 
     private static HmacIasJwtIssuer Make_Issuer() => new(
-        Options.Create(new IasJwtIssuerOptions { SigningKey = Signing_Key }),
+        Options.Create(new IasJwtIssuerOptions { SigningKey = SigningKey }),
         TimeProvider.System);
 }

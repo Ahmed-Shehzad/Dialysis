@@ -2,6 +2,11 @@ import { Route } from "react-router-dom";
 import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
 
+const AdminHubPage = lazyPage(
+  () => import("@/modules/identity/admin/AdminHubPage"),
+  "AdminHubPage",
+);
+
 const IdentityAdminPage = lazyPage(
   () => import("@/modules/identity/admin/IdentityAdminPage"),
   "IdentityAdminPage",
@@ -34,9 +39,10 @@ export const identityModule: ModuleManifest = {
   description:
     "Platform administrator's console — inspect the signed-in user's identity claims and roles, review HIPAA safeguard status across every module, audit who's seen what, and run GDPR records-of-processing-activities + data-subject-rights workflows.",
   enabled: true,
-  home: "/admin/identity",
+  home: "/admin",
   renderRoutes: () => (
     <>
+      <Route path="admin" element={<AdminHubPage />} />
       <Route path="admin/identity" element={<IdentityAdminPage />} />
       <Route path="admin/hipaa" element={<HipaaDashboardPage />} />
       <Route path="admin/data-protection/ropa" element={<RopaPage />} />

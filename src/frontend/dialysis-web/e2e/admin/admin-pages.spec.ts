@@ -29,11 +29,11 @@ const PAGES: Array<{ route: string; heading: RegExp }> = [
   { route: "/admin/reporting/templates", heading: /Reporting templates/i },
   // Documents admin board — list / preview / fill / sign surface (own deep specs in
   // documents.spec.ts + documents-signing.spec.ts; here we just guard the route loads).
-  { route: "/hie/admin/documents", heading: /^Documents$/i },
+  { route: "/admin/documents", heading: /^Documents$/i },
   // Document retention + DSR Art. 17 erasure pipeline.
-  { route: "/hie/admin/documents/retention", heading: /Document retention/i },
+  { route: "/admin/documents/retention", heading: /Document retention/i },
   // TEFCA QHIN onboarding.
-  { route: "/hie/admin/tefca/partners", heading: /TEFCA QHIN partners/i },
+  { route: "/admin/tefca/partners", heading: /TEFCA QHIN partners/i },
 ];
 
 test("every operator admin page loads its heading after sign-in", async ({ page }) => {

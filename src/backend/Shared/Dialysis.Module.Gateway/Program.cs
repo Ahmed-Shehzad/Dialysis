@@ -148,6 +148,8 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
+var isDevelopment = app.Environment.IsDevelopment();
+
 // Security headers — full baseline matching what module hosts apply via
 // SecurityHeadersMiddleware. The gateway is the public entry point so this is the layer
 // browsers actually see for every response (including the SPA catch-all and the gateway's
@@ -166,11 +168,17 @@ app.Use(async (ctx, next) =>
     headers["X-Frame-Options"] = "DENY";
     headers["Permissions-Policy"] =
         "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
-    // Catch-all routes the SPA HTML; CSP must allow the bundle to load + inline-init
-    // tags Vite emits. APIs return JSON and don't need a tighter CSP at this layer —
-    // module-side `UseSecurityHeaders()` applies `default-src 'none'` for JSON responses.
-    headers["Content-Security-Policy"] =
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+    // Catch-all routes the SPA HTML; CSP must allow the bundle to load. APIs return JSON
+    // and don't need a tighter CSP at this layer — module-side `UseSecurityHeaders()`
+    // applies `default-src 'none'` for JSON responses.
+    //
+    // Production keeps a strict `script-src 'self'` (the SPA ships no inline scripts:
+    // theme bootstrap is the same-origin /theme-init.js). Development relaxes script-src to
+    // allow Vite's React Fast-Refresh preamble + HMR, which the plugin injects inline and
+    // which requires `eval`; `connect-src` is widened for the HMR websocket. Dev-only.
+    headers["Content-Security-Policy"] = isDevelopment
+        ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
     headers["Cross-Origin-Opener-Policy"] = "same-origin";
     headers["Cross-Origin-Resource-Policy"] = "same-site";
     if (!ctx.Request.Host.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))

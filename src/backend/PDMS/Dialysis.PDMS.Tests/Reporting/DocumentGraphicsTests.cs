@@ -13,7 +13,7 @@ namespace Dialysis.PDMS.Tests.Reporting;
 /// </summary>
 public sealed class DocumentGraphicsTests
 {
-    private static readonly byte[] _PngMagic = [0x89, 0x50, 0x4E, 0x47];
+    private static readonly byte[] _pngMagic = [0x89, 0x50, 0x4E, 0x47];
 
     private const string MinimalLottie =
         "{\"v\":\"5.5.2\",\"fr\":30,\"ip\":0,\"op\":30,\"w\":100,\"h\":100,\"nm\":\"t\",\"ddd\":0," +
@@ -31,7 +31,7 @@ public sealed class DocumentGraphicsTests
         var png = renderer.RenderQrCode(new QrCodeSpec("https://dialysis.example/p/42") { PixelSize = 200 });
 
         png.Length.ShouldBeGreaterThan(100);
-        png[..4].ShouldBe(_PngMagic);
+        png[..4].ShouldBe(_pngMagic);
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class DocumentGraphicsTests
         var png = renderer.RenderBarcode(new BarcodeSpec(payload, symbology));
 
         png.Length.ShouldBeGreaterThan(100);
-        png[..4].ShouldBe(_PngMagic);
+        png[..4].ShouldBe(_pngMagic);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class DocumentGraphicsTests
         var png = renderer.RenderLottieFrame(new LottieFrameSpec(MinimalLottie) { Width = 120, Height = 120, Progress = 0.5 });
 
         png.Length.ShouldBeGreaterThan(100);
-        png[..4].ShouldBe(_PngMagic);
+        png[..4].ShouldBe(_pngMagic);
     }
 
     [Fact]

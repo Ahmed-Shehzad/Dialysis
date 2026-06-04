@@ -37,9 +37,12 @@ public sealed class SignDocumentCommandHandler(
     IDocumentReferenceRepository repository,
     IDocumentBlobStore blobs,
     IPdfSigner signer,
-    IRemoteSignatureService? remoteSignature,
     IUnitOfWork unitOfWork,
-    TimeProvider clock)
+    TimeProvider clock,
+    // Only registered when a TSP (Documents:Signing:Tsp:BaseUri) is configured. The DI
+    // container treats a parameter as optional only when it has a default value — a nullable
+    // annotation alone is not enough — so keep the `= null` default and trailing position.
+    IRemoteSignatureService? remoteSignature = null)
     : ICommandHandler<SignDocumentCommand, Guid>
 {
     public async Task<Guid> HandleAsync(SignDocumentCommand request, CancellationToken cancellationToken)

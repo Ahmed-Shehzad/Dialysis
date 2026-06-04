@@ -56,15 +56,15 @@ public sealed class HieRetentionPurgeJobTests
         source: DocumentReferenceSource.PdmsReporting,
         createdAtUtc: createdAt);
 
-    private static (HieRetentionPurgeJob Job, Stub_Unit_Of_Work UnitOfWork) MakeSut(
+    private static (HieRetentionPurgeJob Job, StubUnitOfWork UnitOfWork) MakeSut(
         IReadOnlyList<DocumentRetentionPolicy> policies,
         IReadOnlyList<DocumentReference> documents)
     {
-        var uow = new Stub_Unit_Of_Work();
+        var uow = new StubUnitOfWork();
         var clock = new FixedClock(_fixedNow);
         var job = new HieRetentionPurgeJob(
-            new Stub_Policy_Repository(policies),
-            new Stub_Document_Repository(documents),
+            new StubPolicyRepository(policies),
+            new StubDocumentRepository(documents),
             new InMemoryDocumentBlobStore(),
             uow,
             clock,
@@ -72,7 +72,7 @@ public sealed class HieRetentionPurgeJobTests
         return (job, uow);
     }
 
-    private sealed class Stub_Policy_Repository(IReadOnlyList<DocumentRetentionPolicy> policies) : IDocumentRetentionPolicyRepository
+    private sealed class StubPolicyRepository(IReadOnlyList<DocumentRetentionPolicy> policies) : IDocumentRetentionPolicyRepository
     {
         public void Add(DocumentRetentionPolicy policy) { }
         public void Remove(DocumentRetentionPolicy policy) { }
@@ -82,7 +82,7 @@ public sealed class HieRetentionPurgeJobTests
             Task.FromResult(policies);
     }
 
-    private sealed class Stub_Document_Repository(IReadOnlyList<DocumentReference> documents) : IDocumentReferenceRepository
+    private sealed class StubDocumentRepository(IReadOnlyList<DocumentReference> documents) : IDocumentReferenceRepository
     {
         public void Add(DocumentReference document) { }
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<DocumentReference?>(null);
@@ -101,7 +101,7 @@ public sealed class HieRetentionPurgeJobTests
             Task.FromResult(documents);
     }
 
-    private sealed class Stub_Unit_Of_Work : IUnitOfWork
+    private sealed class StubUnitOfWork : IUnitOfWork
     {
         public int Saves { get; private set; }
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) { Saves++; return Task.FromResult(0); }

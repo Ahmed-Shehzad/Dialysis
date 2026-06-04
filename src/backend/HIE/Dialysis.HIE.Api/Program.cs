@@ -28,6 +28,8 @@ builder.AddModuleHost<HiePermissionCatalog>(new ModuleHostingOptions
         typeof(Dialysis.HIE.Inbound.HieInboundMarker).Assembly,
         typeof(Dialysis.HIE.Consent.HieConsentMarker).Assembly,
         typeof(Dialysis.HIE.OpenEhr.HieOpenEhrMarker).Assembly,
+        typeof(Dialysis.HIE.Documents.HieDocumentsMarker).Assembly,
+        typeof(Dialysis.HIE.Tefca.HieTefcaMarker).Assembly,
     ],
 });
 

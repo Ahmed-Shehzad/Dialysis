@@ -10,7 +10,7 @@ import { selectAnyPatient } from "../helpers/selectPatient";
 // half of the spec gracefully skips; the load + filter half still runs (proves the page
 // renders, the list query fires, and the filter selects toggle).
 //
-//   Sign in → open /hie/admin/documents → assert heading and the four filter controls
+//   Sign in → open /admin/documents → assert heading and the four filter controls
 //   → toggle each filter → branch:
 //       (a) patient available → upload minimal PDF → row appears → open drawer →
 //           "Mark entered-in-error" → row leaves the Current list (status filter still set).
@@ -21,7 +21,7 @@ test("documents board loads, filters toggle, and round-trips an upload + soft-de
   page,
 }) => {
   await signIn(page);
-  await page.goto("/hie/admin/documents");
+  await page.goto("/admin/documents");
   await expect(page.getByRole("heading", { name: /^Documents$/i })).toBeVisible({
     timeout: 30_000,
   });
