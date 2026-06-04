@@ -148,15 +148,34 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
-// Security headers — minimal, gateway-side. Module hosts add their own deeper headers.
+// Security headers — full baseline matching what module hosts apply via
+// SecurityHeadersMiddleware. The gateway is the public entry point so this is the layer
+// browsers actually see for every response (including the SPA catch-all and the gateway's
+// own /health, /_gateway endpoints), so the headers have to be applied here too — not
+// only when proxying through to a module that runs the middleware.
+//
+// Strict-Transport-Security stays conditional on the request not arriving over the
+// localhost loopback: HSTS over HTTP-localhost is rejected by browsers anyway, and adding
+// it in the dev smoke loop makes the loopback unusable from a real browser session that
+// previously visited the host over HTTPS.
 app.Use(async (ctx, next) =>
 {
-    ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    ctx.Response.Headers["Referrer-Policy"] = "no-referrer";
-    ctx.Response.Headers["X-Frame-Options"] = "DENY";
+    var headers = ctx.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["Referrer-Policy"] = "no-referrer";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Permissions-Policy"] =
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
+    // Catch-all routes the SPA HTML; CSP must allow the bundle to load + inline-init
+    // tags Vite emits. APIs return JSON and don't need a tighter CSP at this layer —
+    // module-side `UseSecurityHeaders()` applies `default-src 'none'` for JSON responses.
+    headers["Content-Security-Policy"] =
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+    headers["Cross-Origin-Opener-Policy"] = "same-origin";
+    headers["Cross-Origin-Resource-Policy"] = "same-site";
     if (!ctx.Request.Host.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
     {
-        ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
     }
     await next().ConfigureAwait(false);
 });

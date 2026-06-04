@@ -88,52 +88,54 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with: { sarif_file: 'trivy-fs.sarif', category: 'trivy-fs' }
 
-  # --- 5. OWASP ZAP baseline scan ----- DISABLED until staging target ready ---
-  # Originally pointed at the Aspire smoke stack via `dotnet run --project AppHost`.
-  # Two problems made it not worth running:
-  #   1. Aspire stack in CI cold-starts in ~3-4 minutes, then ZAP needs another 2 min,
-  #      so each push spent ~6 min on a scan that mostly surfaces dev-only header
-  #      issues (HSTS off in Development, weaker CSP, Secure cookie flag conditional
-  #      on HTTPS — all correctly hardened in Production).
-  #   2. The ZAP action doesn't fully honor `fail_action: false` and
-  #      `continue-on-error: true` — the job conclusion still posts as `failure` to
-  #      the PR check list, creating a permanent red mark that operators have to
-  #      learn to ignore. That's worse than no signal.
+  # --- 5. OWASP ZAP baseline scan against the running app ------------------
+  # Scans the Aspire-published gateway. The gateway now applies the full security-header
+  # baseline (CSP, Permissions-Policy, COOP, CORP, X-Frame-Options, X-Content-Type-Options,
+  # Referrer-Policy) on every response, matching what module hosts apply via
+  # SecurityHeadersMiddleware. HSTS is the one header that intentionally stays off the
+  # localhost loopback — browsers reject HSTS over HTTP-localhost regardless, and the
+  # tests/security/zap-baseline-rules.tsv file marks the HSTS rule IGNORE for localhost.
   #
-  # To re-enable: point at a production-hardened staging clone (ASPNETCORE_ENVIRONMENT
-  # =Production, real Keycloak Authority, TLS), tighten `cmd_options` to a realistic
-  # warning threshold, and reinstate the job below. The rule overrides in
-  # tests/security/zap-baseline-rules.tsv already encode what we want failing.
-  #
-  # zap-baseline:
-  #   name: OWASP ZAP (baseline)
-  #   if: github.event_name == 'push' || github.event_name == 'schedule'
-  #   runs-on: ubuntu-latest
-  #   services:
-  #     docker: { image: docker:24, options: --privileged }
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-dotnet@v4
-  #       with: { dotnet-version: '10.0.x' }
-  #     - name: Start Aspire stack
-  #       run: |
-  #         dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard &
-  #         echo $! > /tmp/aspire.pid
-  #         for i in {1..120}; do
-  #           if curl -sf http://localhost:9090/ >/dev/null; then break; fi
-  #           sleep 2
-  #         done
-  #     - name: ZAP baseline scan
-  #       uses: zaproxy/action-baseline@v0.13.0
-  #       with:
-  #         target: 'http://localhost:9090/'
-  #         rules_file_name: 'tests/security/zap-baseline-rules.tsv'
-  #         cmd_options: '-a -j -m 5 -T 60'
-  #         fail_action: true
-  #     - name: Stop Aspire stack
-  #       if: always()
-  #       run: kill $(cat /tmp/aspire.pid) || true
-  #     - name: Upload report
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with: { name: zap-baseline, path: report_html.html, retention-days: 30 }
+  # Why this works as a passing scan: we removed the `-a` flag (which pulled in alpha +
+  # false-positive-prone rules) and rely on the released stable ruleset. The rule overrides
+  # in the .tsv encode the dev-target carve-outs (HSTS on localhost, anti-CSRF on bearer
+  # APIs, cookie Secure flag on HTTP).
+  zap-baseline:
+    name: OWASP ZAP (baseline)
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:24
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Start Aspire stack
+        run: |
+          dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard &
+          echo $! > /tmp/aspire.pid
+          # Crude readiness probe — gateway responds on / once everything's up.
+          for i in {1..120}; do
+            if curl -sf http://localhost:9090/ >/dev/null; then break; fi
+            sleep 2
+          done
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.13.0
+        with:
+          target: 'http://localhost:9090/'
+          rules_file_name: 'tests/security/zap-baseline-rules.tsv'
+          # -j: JSON report. -T 60: 60-minute timeout on slow runners.
+          # No -a (alpha rules off — those produce most of the false positives). No -m
+          # threshold (any FAIL-marked rule in the .tsv fails the build; WARN is
+          # informational).
+          cmd_options: '-j -T 60'
+          fail_action: true
+      - name: Stop Aspire stack
+        if: always()
+        run: kill $(cat /tmp/aspire.pid) || true
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: zap-baseline, path: report_html.html, retention-days: 30 }
