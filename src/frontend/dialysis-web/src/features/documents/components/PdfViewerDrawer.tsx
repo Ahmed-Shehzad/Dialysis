@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Document, Page, pdfjs } from "react-pdf";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -8,6 +8,9 @@ import {
   deleteDocument,
   documentBinaryUrl,
   fetchDocumentDetail,
+  fetchDocumentPreview,
+  fillDocumentAcroForm,
+  setJavaScriptExecution,
   signDocument,
   type PadesLevel,
   type SignerKind,
@@ -23,10 +26,17 @@ type Props = {
 };
 
 /**
- * Side drawer that previews a single clinical document with full AcroForm interactivity
- * via pdfjs. PDF JavaScript (calc actions, OpenAction) is preserved in the bytes the
- * server returns; pdfjs's own sandbox decides whether to run it client-side. The drawer
- * also exposes signature history and the platform / per-user sign action.
+ * Side drawer that previews a single clinical document. PDFs render through pdfjs with
+ * AcroForm widgets visible inline. PDF JavaScript stays inert by default — pdfjs's
+ * `enableScripting` flag flips only when an admin has explicitly authorized JS execution
+ * for this document (the `allowJavaScriptExecution` policy on the DocumentReference).
+ *
+ * Non-PDF previews go through the `/preview` envelope: XML / CDA / FHIR-XML are pretty
+ * printed server-side and shown in a code panel; plain text is shown verbatim; everything
+ * else (Office, images) falls back to a download-only card with a link to `/binary`.
+ *
+ * The drawer also exposes the signature history, the platform / per-user / TSP sign
+ * action, server-side AcroForm fill, and the per-document JavaScript-execution toggle.
  */
 export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   const queryClient = useQueryClient();
@@ -36,11 +46,23 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   const [signReason, setSignReason] = useState("");
   const [signLevel, setSignLevel] = useState<PadesLevel>("LT");
   const [tspCredentialId, setTspCredentialId] = useState("");
+  const [fillForm, setFillForm] = useState("");
+  const [fillFeedback, setFillFeedback] = useState<{ filled: string[]; unknown: string[] } | null>(
+    null,
+  );
 
   const detail = useQuery({
     queryKey: ["hie", "documents", documentId],
     queryFn: () => fetchDocumentDetail(documentId),
     enabled: !!documentId,
+  });
+
+  const isPdf = detail.data?.mimeType === "application/pdf";
+
+  const preview = useQuery({
+    queryKey: ["hie", "documents", documentId, "preview"],
+    queryFn: () => fetchDocumentPreview(documentId),
+    enabled: !!documentId && detail.data != null && !isPdf,
   });
 
   const invalidate = () =>
@@ -66,11 +88,42 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
     },
   });
 
+  const fillMutation = useMutation({
+    mutationFn: () => {
+      const trimmed = fillForm.trim();
+      const values = trimmed.length === 0 ? {} : (JSON.parse(trimmed) as Record<string, string>);
+      return fillDocumentAcroForm(documentId, values);
+    },
+    onSuccess: (result) => {
+      setFillFeedback({ filled: result.filledFieldNames, unknown: result.unknownFields });
+      invalidate();
+    },
+  });
+
+  const jsToggleMutation = useMutation({
+    mutationFn: (allow: boolean) => setJavaScriptExecution(documentId, allow),
+    onSuccess: () => invalidate(),
+  });
+
   const doc = detail.data;
   const canSign =
     (signMode === "Platform" && true) ||
     (signMode === "User" && signerUserId.trim().length > 0) ||
     (signMode === "RemoteQes" && tspCredentialId.trim().length > 0);
+
+  // pdfjs's enableScripting opens up AcroForm calc + OpenAction + /AA events to the
+  // document JS sandbox. We only enable it when the server has flipped the per-document
+  // gate — which itself requires the retention-admin role. Everything stays inert by default.
+  const enableScripting = isPdf && doc?.allowJavaScriptExecution === true;
+
+  // Memoize options so react-pdf doesn't re-fetch the worker / document on every render.
+  const pdfDocumentOptions = useMemo(
+    () => ({
+      isEvalSupported: enableScripting,
+      enableXfa: enableScripting,
+    }),
+    [enableScripting],
+  );
 
   return (
     <div className="fixed inset-0 z-40 flex bg-slate-950/70" role="dialog">
@@ -82,8 +135,17 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
               {doc?.kind} · {doc?.mimeType} ·{" "}
               {doc?.size != null ? `${Math.round(doc.size / 1024)} KB` : "—"}
               {doc?.hasJavascript && (
-                <span className="ml-2 rounded bg-amber-900/40 px-1.5 py-0.5 text-amber-200">
-                  JS preserved — runs in viewer sandbox only
+                <span
+                  className={
+                    "ml-2 rounded px-1.5 py-0.5 " +
+                    (doc.allowJavaScriptExecution
+                      ? "bg-rose-900/40 text-rose-200"
+                      : "bg-amber-900/40 text-amber-200")
+                  }
+                >
+                  {doc.allowJavaScriptExecution
+                    ? "JS execution ENABLED in viewer"
+                    : "JS preserved — inert in viewer"}
                 </span>
               )}
               {doc?.hasAcroForms && (
@@ -104,10 +166,11 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
 
         <div className="grid flex-1 grid-cols-3 gap-0 overflow-hidden">
           <div className="col-span-2 overflow-y-auto bg-slate-950 p-4">
-            {doc?.mimeType === "application/pdf" ? (
+            {isPdf ? (
               <Document
                 file={documentBinaryUrl(documentId)}
                 onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+                options={pdfDocumentOptions}
                 loading={<div className="text-sm text-slate-400">Loading PDF…</div>}
                 error={<div className="text-sm text-rose-300">Could not render PDF.</div>}
               >
@@ -122,9 +185,12 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                 ))}
               </Document>
             ) : (
-              <div className="text-sm text-slate-400">
-                Inline preview is only available for PDFs. Download the original to view.
-              </div>
+              <NonPdfPreview
+                preview={preview.data}
+                isLoading={preview.isLoading}
+                mimeType={doc?.mimeType ?? ""}
+                downloadHref={documentBinaryUrl(documentId)}
+              />
             )}
           </div>
 
@@ -154,6 +220,74 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                 </li>
               ))}
             </ul>
+
+            {doc?.hasAcroForms && (
+              <>
+                <h3 className="mb-3 text-sm font-semibold text-slate-200">Fill AcroForm</h3>
+                <p className="mb-2 text-[11px] text-slate-500">
+                  Paste a JSON object of <code>{"{ fieldName: value }"}</code>. Checkboxes accept
+                  true/false/yes/no/1/0. Server bakes values into the PDF; a subsequent signature
+                  covers the filled bytes.
+                </p>
+                <textarea
+                  value={fillForm}
+                  onChange={(e) => setFillForm(e.target.value)}
+                  rows={6}
+                  placeholder={'{"patient.name":"Jane Doe","consent.signed":"true"}'}
+                  className="mb-2 w-full rounded border border-slate-700 bg-slate-800/60 p-2 font-mono text-xs text-slate-100"
+                />
+                {fillFeedback && (
+                  <div className="mb-2 text-[11px] text-slate-300">
+                    <div>Filled {fillFeedback.filled.length} field(s).</div>
+                    {fillFeedback.unknown.length > 0 && (
+                      <div className="text-amber-300">
+                        Unknown keys (ignored): {fillFeedback.unknown.join(", ")}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {fillMutation.isError && (
+                  <div className="mb-2 text-xs text-rose-300">
+                    Fill failed — check JSON syntax and try again.
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fillMutation.mutate()}
+                  disabled={fillMutation.isPending}
+                  className="mb-6 w-full rounded bg-sky-600 px-3 py-2 text-slate-50 hover:bg-sky-500 disabled:opacity-50"
+                >
+                  {fillMutation.isPending ? "Filling…" : "Save filled form"}
+                </button>
+              </>
+            )}
+
+            {doc?.hasJavascript && (
+              <>
+                <h3 className="mb-3 text-sm font-semibold text-slate-200">JavaScript execution</h3>
+                <p className="mb-2 text-[11px] text-slate-500">
+                  The viewer runs embedded PDF JavaScript (calc actions / OpenAction / /AA) only
+                  when this policy is on. Default is off. Audited.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => jsToggleMutation.mutate(!doc.allowJavaScriptExecution)}
+                  disabled={jsToggleMutation.isPending}
+                  className={
+                    "mb-6 w-full rounded px-3 py-2 text-slate-50 disabled:opacity-50 " +
+                    (doc.allowJavaScriptExecution
+                      ? "bg-rose-700 hover:bg-rose-600"
+                      : "border border-amber-700 text-amber-200 hover:border-amber-500")
+                  }
+                >
+                  {jsToggleMutation.isPending
+                    ? "Updating…"
+                    : doc.allowJavaScriptExecution
+                      ? "Disable JS execution"
+                      : "Authorize JS execution"}
+                </button>
+              </>
+            )}
 
             <h3 className="mb-3 text-sm font-semibold text-slate-200">Apply signature</h3>
             <div className="space-y-3 text-sm">
@@ -238,6 +372,64 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
           </aside>
         </div>
       </div>
+    </div>
+  );
+};
+
+type NonPdfPreviewProps = {
+  preview: Awaited<ReturnType<typeof fetchDocumentPreview>> | undefined;
+  isLoading: boolean;
+  mimeType: string;
+  downloadHref: string;
+};
+
+const NonPdfPreview = ({ preview, isLoading, mimeType, downloadHref }: NonPdfPreviewProps) => {
+  if (isLoading) return <div className="text-sm text-slate-400">Loading preview…</div>;
+  if (!preview)
+    return (
+      <div className="text-sm text-slate-400">
+        Preview unavailable.{" "}
+        <a className="text-sky-300 underline" href={downloadHref}>
+          Download the original
+        </a>{" "}
+        ({mimeType}).
+      </div>
+    );
+
+  if (preview.format === "Xml") {
+    return (
+      <div className="space-y-2">
+        <div className="text-xs text-slate-400">
+          {preview.documentTypeName ?? "XML"}
+          {preview.rootElement && <span> · &lt;{preview.rootElement}&gt;</span>}
+        </div>
+        <pre className="overflow-auto whitespace-pre-wrap rounded border border-slate-800 bg-slate-900 p-3 text-xs text-emerald-200">
+          {preview.content}
+        </pre>
+      </div>
+    );
+  }
+  if (preview.format === "Text") {
+    return (
+      <pre className="overflow-auto whitespace-pre-wrap rounded border border-slate-800 bg-slate-900 p-3 text-xs text-slate-200">
+        {preview.content}
+      </pre>
+    );
+  }
+  // "Binary" (Office docs / images / etc.) — download-only.
+  return (
+    <div className="rounded border border-slate-800 bg-slate-900 p-4 text-sm text-slate-300">
+      <div className="mb-2 font-semibold text-slate-100">Inline preview not supported</div>
+      <div className="mb-3 text-xs text-slate-400">
+        {mimeType} is not rendered in-app. Office documents, scanned images, and other binary kinds
+        can be downloaded and opened in their native viewer.
+      </div>
+      <a
+        href={downloadHref}
+        className="inline-block rounded bg-sky-600 px-3 py-1.5 text-slate-50 hover:bg-sky-500"
+      >
+        Download original
+      </a>
     </div>
   );
 };

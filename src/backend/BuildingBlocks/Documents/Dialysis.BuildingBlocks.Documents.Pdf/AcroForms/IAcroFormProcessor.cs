@@ -17,4 +17,27 @@ public interface IAcroFormProcessor
         ReadOnlyMemory<byte> pdfBytes,
         IReadOnlyList<AcroFormPlacement> placements,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Populates existing AcroForm field values in an already-form-enabled PDF (e.g. a partner
+    /// intake form supplied as a blank PDF that the operator fills out in-app). Unknown fields
+    /// are reported in the result; coerces checkbox values from common truthy / falsy strings;
+    /// signature fields are left untouched (cryptographic signing goes through <c>IPdfSigner</c>).
+    /// </summary>
+    Task<AcroFormFillResult> FillFormValuesAsync(
+        ReadOnlyMemory<byte> pdfBytes,
+        IReadOnlyDictionary<string, string> fieldValues,
+        CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Returned by <see cref="IAcroFormProcessor.FillFormValuesAsync"/>. <see cref="FilledBytes"/>
+/// is the new PDF; <see cref="UnknownFields"/> lists keys from the caller's dictionary that
+/// don't exist in the PDF; <see cref="FilledFieldNames"/> lists the keys that were actually
+/// applied. Callers persist the bytes and surface the unknowns in the UI so the operator
+/// knows their input was partially ignored.
+/// </summary>
+public sealed record AcroFormFillResult(
+    byte[] FilledBytes,
+    IReadOnlyList<string> FilledFieldNames,
+    IReadOnlyList<string> UnknownFields);

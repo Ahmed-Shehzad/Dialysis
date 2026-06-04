@@ -27,6 +27,16 @@ public sealed class DocumentReference
     public bool HasAcroForms { get; private set; }
     public bool HasJavascript { get; private set; }
 
+    /// <summary>
+    /// Per-document gate that authorizes pdfjs to run embedded JavaScript when the document
+    /// is opened in the viewer. Stays <c>false</c> by default — even when <see cref="HasJavascript"/>
+    /// is true the bytes are inert in the viewer until an administrator explicitly flips this
+    /// flag through <see cref="AllowJavaScriptExecution"/>. Audit-relevant: every transition
+    /// is logged via the admin command (<c>SetJavaScriptExecutionCommand</c>) so a regulator
+    /// can trace which operator authorized active content per document.
+    /// </summary>
+    public bool AllowJavaScriptExecution { get; private set; }
+
     public IReadOnlyList<DocumentReferenceSignature> Signatures => _signatures;
 
     private DocumentReference() { }
@@ -117,5 +127,20 @@ public sealed class DocumentReference
         if (Status != DocumentReferenceStatus.Current)
             throw new InvalidOperationException("Cannot sign a non-current document.");
         _signatures.Add(signature);
+    }
+
+    /// <summary>
+    /// Flips the JavaScript-execution gate. Requires the document to actually have JS in its
+    /// bytes (a check that's cheap server-side; the byte-scan already populated
+    /// <see cref="HasJavascript"/>). Caller is responsible for audit trail at the command layer;
+    /// the aggregate just enforces the rules.
+    /// </summary>
+    public void SetJavaScriptExecution(bool allow)
+    {
+        if (Status != DocumentReferenceStatus.Current)
+            throw new InvalidOperationException($"Cannot change JS-execution policy on a {Status} document.");
+        if (allow && !HasJavascript)
+            throw new InvalidOperationException("Document does not contain JavaScript — nothing to authorize.");
+        AllowJavaScriptExecution = allow;
     }
 }

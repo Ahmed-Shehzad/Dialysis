@@ -78,6 +78,53 @@ public sealed class DocumentReferenceTests
         doc.Status.ShouldBe(DocumentReferenceStatus.EnteredInError);
     }
 
+    [Fact]
+    public void Set_Js_Execution_Requires_Document_To_Contain_Javascript()
+    {
+        var noJs = Make_Document();
+        Should.Throw<InvalidOperationException>(() => noJs.SetJavaScriptExecution(allow: true));
+
+        var withJs = new DocumentReference(
+            id: Guid.CreateVersion7(),
+            patientId: Guid.NewGuid(),
+            kind: "ConsentForm",
+            title: "Form",
+            mimeType: "application/pdf",
+            storageRef: "inmem://documents/y",
+            contentHash: "AB",
+            size: 200,
+            source: DocumentReferenceSource.AdminUpload,
+            createdAtUtc: DateTime.UtcNow,
+            hasJavascript: true);
+        withJs.AllowJavaScriptExecution.ShouldBeFalse();
+
+        withJs.SetJavaScriptExecution(allow: true);
+        withJs.AllowJavaScriptExecution.ShouldBeTrue();
+
+        withJs.SetJavaScriptExecution(allow: false);
+        withJs.AllowJavaScriptExecution.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Set_Js_Execution_On_Entered_In_Error_Throws()
+    {
+        var doc = new DocumentReference(
+            id: Guid.CreateVersion7(),
+            patientId: Guid.NewGuid(),
+            kind: "Form",
+            title: "x",
+            mimeType: "application/pdf",
+            storageRef: "inmem://documents/z",
+            contentHash: "AC",
+            size: 50,
+            source: DocumentReferenceSource.AdminUpload,
+            createdAtUtc: DateTime.UtcNow,
+            hasJavascript: true);
+        doc.EnterInError();
+
+        Should.Throw<InvalidOperationException>(() => doc.SetJavaScriptExecution(allow: true));
+    }
+
     private static DocumentReference Make_Document() => new(
         id: Guid.CreateVersion7(),
         patientId: Guid.NewGuid(),

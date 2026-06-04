@@ -12,8 +12,11 @@
     <ProjectReference Include="../Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Composition/Dialysis.EHR.Composition.csproj" />
     <ProjectReference Include="../Dialysis.EHR.Persistence/Dialysis.EHR.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.EHR.PatientChart/Dialysis.EHR.PatientChart.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa/Dialysis.BuildingBlocks.Hipaa.csproj" />

@@ -20,7 +20,7 @@ public sealed class RecordVitalSignCommandHandler(
     public async Task<Guid> HandleAsync(RecordVitalSignCommand request, CancellationToken cancellationToken)
     {
         var observation = new Coding(EhrCodeSystems.Loinc, request.LoincCode, request.Display);
-        var id = Guid.CreateVersion7();
+        var id = request.ReadingId != Guid.Empty ? request.ReadingId : Guid.CreateVersion7();
         var reading = VitalSignReading.Record(
             id,
             request.PatientId,

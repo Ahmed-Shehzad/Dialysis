@@ -1,3 +1,5 @@
+using Dialysis.BuildingBlocks.DurableCommandBus;
+using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.BuildingBlocks.Fhir.Smart;
@@ -12,7 +14,10 @@ using Dialysis.EHR.Contracts.Integration;
 using Dialysis.EHR.Contracts.Security;
 using Dialysis.EHR.Integration;
 using Dialysis.EHR.PatientChart;
+using Dialysis.EHR.PatientChart.Features.RecordAllergy;
+using Dialysis.EHR.PatientChart.Features.RecordVitalSign;
 using Dialysis.EHR.PatientPortal;
+using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration;
 using Dialysis.EHR.Scheduling;
 using Dialysis.Module.Hosting;
@@ -96,6 +101,18 @@ builder.Services.AddFhirAudit();
 builder.Services.AddHipaaCompliance("ehr");
 builder.Services.AddHipaaAspNetCoreSafeguards();
 
+// Durable command bus — third opt-in module (after PDMS PR #140, HIS PR #141).
+// RecordVitalSign and RecordAllergy are the EHR chart writes most worth durable
+// buffering: vitals are high-volume, allergies are clinically critical. Flag off
+// by default; flip per env once production traffic patterns settle.
+builder.Services.AddDurableCommandBus<EhrDbContext>("ehr", b =>
+{
+    b.RegisterCommand<RecordVitalSignCommand, Guid>(requiredPermission: EhrPermissions.VitalsRecord);
+    b.RegisterCommand<RecordAllergyCommand, Guid>(requiredPermission: EhrPermissions.AllergyRecord);
+});
+builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
+    o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -107,6 +124,7 @@ app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
 app.MapHipaaSafeguardsEndpoint();
+app.MapDurableCommandStatusEndpoint();
 app.MapControllers();
 
 if (enableEhrSmartOnFhir)

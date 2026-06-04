@@ -125,6 +125,14 @@
     <PackageVersion Include="PDFsharp" Version="6.2.4" />
     <PackageVersion Include="PdfPig" Version="0.1.14" />
     <PackageVersion Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <!-- SkiaSharp-backed graphics for PDF documents: SVG (also native in QuestPDF),
+         Lottie single-frame rasterization (Skottie), and ZXing-generated QR / barcodes
+         rendered to PNG via SkiaSharp. NoDependencies Linux native assets keep the
+         container image free of an extra libfontconfig/glibc surface. -->
+    <PackageVersion Include="SkiaSharp" Version="3.119.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.0" />
+    <PackageVersion Include="SkiaSharp.Skottie" Version="3.119.0" />
+    <PackageVersion Include="ZXing.Net" Version="0.16.10" />
     <PackageVersion Include="Tesseract" Version="5.2.0" />
     <PackageVersion Include="Google.Apis.Auth" Version="1.74.0" />
     <PackageVersion Include="Markdig" Version="1.2.0" />

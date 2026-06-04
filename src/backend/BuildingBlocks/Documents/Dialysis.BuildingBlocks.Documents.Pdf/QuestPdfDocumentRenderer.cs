@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
 using Dialysis.BuildingBlocks.Documents.Pdf.Components;
+using Dialysis.BuildingBlocks.Documents.Pdf.Graphics;
 using Dialysis.BuildingBlocks.Documents.Pdf.Macros;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -29,6 +30,7 @@ namespace Dialysis.BuildingBlocks.Documents.Pdf;
 public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
 {
     private readonly IAcroFormProcessor _acroFormProcessor;
+    private readonly IDocumentGraphicsRenderer _graphicsRenderer;
 
     static QuestPdfDocumentRenderer()
     {
@@ -36,14 +38,19 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    /// <summary>Default ctor — uses the PDFsharp-backed AcroForms processor.</summary>
-    public QuestPdfDocumentRenderer() : this(new PdfSharpAcroFormProcessor()) { }
+    /// <summary>Default ctor — uses the PDFsharp-backed AcroForms processor + SkiaSharp graphics.</summary>
+    public QuestPdfDocumentRenderer()
+        : this(new PdfSharpAcroFormProcessor(), new SkiaDocumentGraphicsRenderer()) { }
 
-    /// <summary>Injection ctor — tests and bespoke pipelines can substitute the AcroForm processor.</summary>
-    public QuestPdfDocumentRenderer(IAcroFormProcessor acroFormProcessor)
+    /// <summary>Injection ctor — tests and bespoke pipelines can substitute the collaborators.</summary>
+    public QuestPdfDocumentRenderer(
+        IAcroFormProcessor acroFormProcessor,
+        IDocumentGraphicsRenderer graphicsRenderer)
     {
         ArgumentNullException.ThrowIfNull(acroFormProcessor);
+        ArgumentNullException.ThrowIfNull(graphicsRenderer);
         _acroFormProcessor = acroFormProcessor;
+        _graphicsRenderer = graphicsRenderer;
     }
 
     /// <summary>
@@ -101,6 +108,39 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
                                         Heading = cb.Heading,
                                         Body = cb.Body,
                                         Kind = cb.IsAlert ? CalloutKind.Alert : CalloutKind.Info,
+                                    });
+                                    break;
+                                case QrCodeBlock qr:
+                                    col.Item().Component(new QrCodeComponent
+                                    {
+                                        Renderer = _graphicsRenderer,
+                                        Spec = qr.Spec,
+                                        WidthPoints = qr.WidthPoints,
+                                        Caption = qr.Caption,
+                                    });
+                                    break;
+                                case BarcodeBlock bc:
+                                    col.Item().Component(new BarcodeComponent
+                                    {
+                                        Renderer = _graphicsRenderer,
+                                        Spec = bc.Spec,
+                                        WidthPoints = bc.WidthPoints,
+                                        Caption = bc.Caption,
+                                    });
+                                    break;
+                                case SvgBlock svg:
+                                    col.Item().Component(new SvgComponent
+                                    {
+                                        SvgContent = svg.SvgContent,
+                                        WidthPoints = svg.WidthPoints,
+                                    });
+                                    break;
+                                case LottieBlock lottie:
+                                    col.Item().Component(new LottieComponent
+                                    {
+                                        Renderer = _graphicsRenderer,
+                                        Spec = lottie.Spec,
+                                        WidthPoints = lottie.WidthPoints,
                                     });
                                     break;
                             }
