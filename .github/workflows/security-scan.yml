@@ -27,6 +27,7 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: gitleaks/gitleaks-action@v2
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
           # Surface findings inline; fail the job on any real positive (allowlist handles
           # the known-safe placeholders documented in .gitleaks.toml).
@@ -80,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: fs
           scan-ref: '.'
