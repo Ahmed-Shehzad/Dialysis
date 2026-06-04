@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Documents.Storage;
+using Dialysis.BuildingBlocks.Documents.Storage.Valkey;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
@@ -72,10 +73,14 @@ public static class HealthInformationExchangeExtensions
             });
             configureTransponderTransport?.Invoke(services);
 
-            // Document storage + signing are shared across the modular monolith, so register them
-            // at the host once. PDMS's IReportBlobStore continues to resolve through this same
-            // IDocumentBlobStore singleton (see InMemoryReportBlobStore's adapter ctor).
+            // Document storage. In-memory is the default, but in the Aspire / containerized stack
+            // each module runs as its own process, so an in-process store would hide PDMS-rendered
+            // reports from HIE's Documents board (HIE holds only the DocumentReference + a storage
+            // ref whose bytes live in the PDMS process). When Valkey is configured we swap in the
+            // shared Valkey-backed store so every module resolves the same bytes by the same ref;
+            // without Valkey this is a no-op and the in-memory store stands (tests/dev).
             services.AddInMemoryDocumentBlobStore();
+            services.AddValkeyDocumentBlobStore(configuration.GetSection("Hie:DistributedCache:Valkey"));
             // AcroForm fill is host-owned (admin operator fills out a partner intake PDF and
             // re-saves with the values baked in) and the QuestPDF renderer generates documents
             // server-side (e.g. the itemised dialysis invoice). All are stateless + thread-safe.

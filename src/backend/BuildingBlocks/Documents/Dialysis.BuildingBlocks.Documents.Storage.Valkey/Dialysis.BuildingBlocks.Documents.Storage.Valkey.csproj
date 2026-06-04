@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Documents.Storage.Valkey</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Documents.Storage.Valkey</AssemblyName>
+    <Description>Valkey (Redis-protocol) backed IDocumentBlobStore. Resolves the same clinical-document bytes from every module process in the monolith (PDMS writes a report blob, HIE's Documents board reads it back by the same storage-ref) under a fixed, module-independent key namespace. Dev/single-cluster tier; production hosts plug an S3 / Azure-Blob implementation behind the same interface.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Documents.Storage/Dialysis.BuildingBlocks.Documents.Storage.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+</Project>

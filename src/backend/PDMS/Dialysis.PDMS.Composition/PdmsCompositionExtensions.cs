@@ -1,6 +1,8 @@
 using Dialysis.BuildingBlocks.DataProtection;
 using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.BuildingBlocks.Documents.Pdf;
+using Dialysis.BuildingBlocks.Documents.Storage;
+using Dialysis.BuildingBlocks.Documents.Storage.Valkey;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
@@ -166,14 +168,21 @@ public static class PdmsCompositionExtensions
             services.AddSingleton<IIvPumpDriver, Pcd04NormalisedDriver>();
 
             // Reporting infrastructure: PDF renderer + Markdown/Mustache binder + the three
-            // generators + an in-memory blob store. Production hosts replace the blob store
-            // with S3 / Azure Blob via a host-specific override.
+            // generators + a document blob store. The blob store is shared with HIE so reports
+            // PDMS renders are resolvable from HIE's Documents board: in-memory by default, but
+            // swapped to the shared Valkey-backed store when Valkey is configured (in Aspire /
+            // containers each module is a separate process, so an in-process store would be
+            // invisible cross-module). IReportBlobStore is a thin adapter over the resolved
+            // IDocumentBlobStore. Production hosts replace it with S3 / Azure Blob.
             services.AddPdfDocumentRendering();
             services.AddSingleton<MustacheMarkdownBinder>();
             services.AddSingleton<DischargeLetterGenerator>();
             services.AddSingleton<ShiftReportGenerator>();
             services.AddSingleton<BillingDocumentGenerator>();
-            services.TryAddSingleton<IReportBlobStore, InMemoryReportBlobStore>();
+            services.AddInMemoryDocumentBlobStore();
+            services.AddValkeyDocumentBlobStore(configuration.GetSection("Pdms:DistributedCache:Valkey"));
+            services.TryAddSingleton<IReportBlobStore>(sp =>
+                new InMemoryReportBlobStore(sp.GetRequiredService<IDocumentBlobStore>()));
             // Language-aware template resolution over the shared PDMS repository (in-memory or
             // EF, per the provider switch above). Scoped because the underlying repository is.
             services.AddScoped<IReportTemplateRepository, PdmsReportTemplateRepository>();
