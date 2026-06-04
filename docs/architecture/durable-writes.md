@@ -113,20 +113,70 @@ The current PR does not ship a pruner; add a `BackgroundService` per module when
 ledger growth becomes an operator concern. The ledger has a `(Status, AppliedAtUtc)`
 index for `DELETE WHERE Status = 'Applied' AND AppliedAtUtc < cutoff`.
 
-## Phase 2 — Postgres HA (forthcoming PR)
+## Postgres HA — CloudNativePG operator
 
-The application-layer pattern in this PR works against the existing single-instance
-Postgres. PR-B adds CloudNativePG to the Aspire k8s publisher: primary + sync standby
-per module DB, WAL archiving to object storage, automatic failover. Synchronous
-replication is the defense-in-depth on top of the RMQ buffer — once the consumer has
-applied a row, it's mirrored to a sync standby before the transaction commits.
+`deploy/k8s/operators/templates/cloudnative-pg-clusters.yaml` ships one
+`Cluster` (postgresql.cnpg.io) per module DB. The Aspire-generated Helm chart's
+module Deployments reference the operator-managed Service names (`pg-his-rw`,
+`pg-ehr-rw`, …) through a per-module PgBouncer sidecar
+(`deploy/k8s/operators/templates/pgbouncer.yaml`) running in `transaction` pool mode.
 
-## Phase 3 — RabbitMQ HA (forthcoming PR)
+Per-environment shape comes from `deploy/k8s/operators/values/<env>.env`:
 
-The RMQ broker is now the durability boundary, so it can't be a single container.
-PR-C adds the RabbitMQ Cluster Operator (3 replicas) + quorum queues by default.
-Existing integration-event queues stay classic for backward compat; we migrate via
-shovel in a later PR.
+| Env | Instances | Sync replicas | Storage | WAL backup |
+|---|---|---|---|---|
+| dev | 1 | 0 (off) | 2 Gi standard | `s3://dialysis-wal-dev/...`, 7-day retention |
+| staging | 2 (primary + 1 sync) | 1 | 20 Gi rwo | `s3://dialysis-wal-staging/...`, 14-day |
+| prod | 3 (primary + 1 sync + 1 async) | 1 | 100 Gi premium | `s3://dialysis-wal-prod/...`, 30-day |
+
+Sync replication is on for **clinical-tier** modules (HIS, EHR, PDMS) — primary
+commits only when at least one standby has fsynced the WAL. Async for SmartConnect
+and HIE (integration plumbing + cross-org dispatch, latency-sensitive). Render +
+apply:
+
+```bash
+./deploy/k8s/operators/render.sh prod | kubectl apply -n dialysis-prod -f -
+```
+
+Once the consumer's transaction commits, the row is mirrored to a sync standby
+before the commit returns — zero-RPO at the storage tier complements the durable
+RMQ buffer at the application tier.
+
+## RabbitMQ HA — Cluster Operator + quorum queues
+
+`deploy/k8s/operators/templates/rabbitmq-cluster.yaml` declares a single
+`RabbitmqCluster` (rabbitmq.com) with `default_queue_type = quorum`. New queues
+come up Raft-replicated, disk-flushed across the cluster — including the
+durable-command queue this BuildingBlock declares at startup. `Cluster
+partition_handling = pause_minority` is the safe default for healthcare workloads.
+
+| Env | Replicas | Persistence |
+|---|---|---|
+| dev | 1 | 2 Gi |
+| staging | 1 | 10 Gi |
+| prod | 3 | 20 Gi premium |
+
+The Transponder RMQ transport now supports an `x-queue-type=quorum` declaration
+flag via `TransponderRabbitMqOptions.QueueType`. When the broker is the operator-
+managed 3-replica cluster, set the option to `Quorum` in the module's config — the
+queue is declared Raft-replicated. Existing integration-event queues stay classic
+for backward compatibility; migrate via shovel in a separate PR.
+
+Single-node loss → zero data loss, zero downtime. Two-node loss → write-unavailable
+but data preserved. Three-node simultaneous disk loss is mitigated by off-cluster
+backup (shovel to a backup broker).
+
+## End-to-end failure matrix
+
+| Scenario | Effect on the application | Mitigation tier |
+|---|---|---|
+| Postgres primary crashes | Consumer's open transaction rolls back; broker redelivers; CNPG promotes standby in seconds | CNPG operator |
+| Postgres node disk fails | Standby takes over; WAL archiving restores history | CNPG operator + WAL backup |
+| RabbitMQ broker dies briefly | API returns 503 + Retry-After; client retries with same `X-Command-Id`; ledger idempotency handles dupe | DurableCommandBus + 503 surface |
+| RabbitMQ node fails (1 of 3) | Quorum queues stay writable; clients reattach to surviving replicas; zero data loss | RMQ Cluster Operator |
+| Module API crashes mid-handler | Explicit EF transaction rolls back; envelope unacked → broker redelivers; ledger idempotency makes the next attempt clean | DurableCommandBus |
+| Two of three RMQ replicas fail | Queue write-unavailable (pause_minority); API gets 503s; data preserved; recovers when quorum restored | RMQ Cluster Operator |
+| Whole cluster loss | Restore Postgres from WAL backup + replay RMQ traffic from backup broker | WAL backup + RMQ shovel |
 
 ## Operator runbook (Phase 1)
 

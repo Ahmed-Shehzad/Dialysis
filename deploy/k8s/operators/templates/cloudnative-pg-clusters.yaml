@@ -1,0 +1,199 @@
+---
+# CloudNativePG Cluster — HIS module Postgres.
+#
+# The Service names that the Aspire-generated module Deployments connect to are:
+#   pg-his-rw  (read/write — primary; PgBouncer fronts this)
+#   pg-his-ro  (read-only — load-balances across replicas)
+#   pg-his-r   (read — any replica including primary)
+# The generated chart's ConnectionStrings__His env var points at pgbouncer-his (see
+# pgbouncer.yaml), which transparently fronts pg-his-rw.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-his
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: his
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  # Synchronous replication. With min=max=1, the primary commits only when at least one
+  # standby has fsynced the WAL — zero RPO for clinical writes, as picked in the durability
+  # plan. Set min=max=0 in dev to keep the loop fast on single-node clusters.
+  minSyncReplicas: ${CNPG_MIN_SYNC_REPLICAS}
+  maxSyncReplicas: ${CNPG_MAX_SYNC_REPLICAS}
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    initdb:
+      database: his
+      owner: his
+      secret:
+        name: pg-his-app-credentials
+  backup:
+    barmanObjectStore:
+      destinationPath: ${CNPG_BACKUP_BUCKET}/his
+      s3Credentials:
+        accessKeyId:
+          name: pg-backup-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: pg-backup-credentials
+          key: SECRET_ACCESS_KEY
+    retentionPolicy: "${CNPG_BACKUP_RETENTION}"
+  monitoring:
+    enablePodMonitor: true
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-ehr
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: ehr
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  minSyncReplicas: ${CNPG_MIN_SYNC_REPLICAS}
+  maxSyncReplicas: ${CNPG_MAX_SYNC_REPLICAS}
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    initdb:
+      database: ehr
+      owner: ehr
+      secret:
+        name: pg-ehr-app-credentials
+  backup:
+    barmanObjectStore:
+      destinationPath: ${CNPG_BACKUP_BUCKET}/ehr
+      s3Credentials:
+        accessKeyId:
+          name: pg-backup-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: pg-backup-credentials
+          key: SECRET_ACCESS_KEY
+    retentionPolicy: "${CNPG_BACKUP_RETENTION}"
+  monitoring:
+    enablePodMonitor: true
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-pdms
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: pdms
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  # PDMS holds telemetry volume but is also clinically critical; same sync settings as
+  # HIS/EHR. Phase 2 may tune this to async if write latency becomes a bottleneck once we
+  # see real device-reading load.
+  minSyncReplicas: ${CNPG_MIN_SYNC_REPLICAS}
+  maxSyncReplicas: ${CNPG_MAX_SYNC_REPLICAS}
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    initdb:
+      database: pdms
+      owner: pdms
+      secret:
+        name: pg-pdms-app-credentials
+  backup:
+    barmanObjectStore:
+      destinationPath: ${CNPG_BACKUP_BUCKET}/pdms
+      s3Credentials:
+        accessKeyId:
+          name: pg-backup-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: pg-backup-credentials
+          key: SECRET_ACCESS_KEY
+    retentionPolicy: "${CNPG_BACKUP_RETENTION}"
+  monitoring:
+    enablePodMonitor: true
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-smartconnect
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: smartconnect
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  # SmartConnect is integration plumbing, not patient PII. Async replication is acceptable
+  # here — the workload is a routing/flow store, not a clinical record.
+  minSyncReplicas: 0
+  maxSyncReplicas: 0
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    initdb:
+      database: smartconnect
+      owner: smartconnect
+      secret:
+        name: pg-smartconnect-app-credentials
+  backup:
+    barmanObjectStore:
+      destinationPath: ${CNPG_BACKUP_BUCKET}/smartconnect
+      s3Credentials:
+        accessKeyId:
+          name: pg-backup-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: pg-backup-credentials
+          key: SECRET_ACCESS_KEY
+    retentionPolicy: "${CNPG_BACKUP_RETENTION}"
+  monitoring:
+    enablePodMonitor: true
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-hie
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: hie
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  # HIE is cross-org dispatch; the outbox + dispatch state is more recoverable than
+  # clinical record loss. Async replication acceptable to favor write latency on the
+  # outbound side.
+  minSyncReplicas: 0
+  maxSyncReplicas: 0
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    initdb:
+      database: hie
+      owner: hie
+      secret:
+        name: pg-hie-app-credentials
+  backup:
+    barmanObjectStore:
+      destinationPath: ${CNPG_BACKUP_BUCKET}/hie
+      s3Credentials:
+        accessKeyId:
+          name: pg-backup-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: pg-backup-credentials
+          key: SECRET_ACCESS_KEY
+    retentionPolicy: "${CNPG_BACKUP_RETENTION}"
+  monitoring:
+    enablePodMonitor: true
