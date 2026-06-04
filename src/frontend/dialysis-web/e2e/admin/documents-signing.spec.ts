@@ -26,7 +26,7 @@ test("platform-cert sign appends a signature row to the document", async ({ page
   );
 
   await signIn(page);
-  await page.goto("/hie/admin/documents");
+  await page.goto("/admin/documents");
   await expect(page.getByRole("heading", { name: /^Documents$/i })).toBeVisible({
     timeout: 30_000,
   });
