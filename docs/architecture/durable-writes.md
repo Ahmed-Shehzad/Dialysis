@@ -202,9 +202,56 @@ LIMIT 20;
 EOF
 ```
 
+## Modules wired today
+
+- **PDMS `RecordReading`** — flag `Pdms:DurableCommands:RecordReading:Enabled`.
+- **HIS `IngestDeviceReading`** — flag `His:DurableCommands:IngestDeviceReading:Enabled`.
+
+Both use the same id-from-CommandId trick (PDMS: `reading.Id = command.CommandId`;
+HIS: `DeviceReadingRecord.Id = command.ReadingId`) so 202 callers know the new row's
+id without polling, and redeliveries yield the same row.
+
 ## Modules not (yet) wired
 
-- **SmartConnect, HIE, HIS, EHR, Identity** — synchronous paths only.
-- The single reference slice (`PDMS RecordReading`) demonstrates the pattern.
-  Other high-volume writes (HIS `DeviceReading`, EHR clinical commands) are
-  candidates for follow-up PRs.
+- **SmartConnect, HIE, EHR, Identity** — synchronous paths only.
+- EHR clinical commands (chart updates, prescriptions) are the next candidates,
+  but those would benefit from a few weeks of production data on PDMS + HIS first
+  to validate the pattern under real telemetry load.
+
+## SPA — `useDurableCommand` hook
+
+The SPA ships a generic hook for any UI write that opts into the durable path:
+
+```tsx
+import { useDurableCommand, DurableCommandProgress } from "@/features/durable-commands";
+
+const RecordReadingButton = ({ sessionId }: { sessionId: string }) => {
+  const qc = useQueryClient();
+  const { mutate, tracking } = useDurableCommand({
+    label: "session reading",
+    mutationFn: vars => apiClient
+      .post(`/api/pdms/api/v1.0/sessions/${sessionId}/readings`, vars)
+      .then(r => r.data),
+    onApplied: () => qc.invalidateQueries({ queryKey: ["readings", sessionId] }),
+  });
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={() => mutate({ ... })}>Record</button>
+      <DurableCommandProgress tracking={tracking} label="Reading" />
+    </div>
+  );
+};
+```
+
+The hook:
+1. Calls the controller endpoint (returns 202 + acceptance envelope).
+2. Polls the status endpoint at 500 ms cadence (configurable) until `Applied` or `Failed`.
+3. Fires toasts on each transition via the in-app toast bus mounted in `<ToastHost />`.
+4. Exposes `tracking` so the form can render `<DurableCommandProgress />` alongside the
+   submit button — users see "queued → applying → applied" without waiting on the
+   202 response shape.
+
+`maxPollMs` (default 30 s) caps how long the SPA watches. After that the command stays
+durably in flight on the server; the user can refresh to see the final state. The
+toast bus is a tiny in-memory pub/sub (`features/durable-commands/components/toastBus.ts`)
+— no external toast library, ~20 lines.

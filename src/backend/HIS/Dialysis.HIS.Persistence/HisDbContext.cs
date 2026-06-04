@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
@@ -66,6 +67,9 @@ public sealed class HisDbContext(
     public DbSet<RaSpecialistEncounterRecord> RaSpecialistEncounterRecords => Set<RaSpecialistEncounterRecord>();
     public DbSet<RaResearchEducationActivity> RaResearchEducationActivities => Set<RaResearchEducationActivity>();
 
+    // Durable command bus idempotency + status ledger; rows live in `his_durablecommands.command_ledger`.
+    public DbSet<CommandLedgerEntry> CommandLedgerEntries => Set<CommandLedgerEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -74,6 +78,8 @@ public sealed class HisDbContext(
         modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());
         modelBuilder.ApplyConfiguration(new SubscriptionRecordConfiguration());
         modelBuilder.ApplyConfiguration(new NotificationOutboxRecordConfiguration());
+
+        modelBuilder.ApplyConfiguration(new CommandLedgerEntityConfiguration("his_durablecommands"));
 
         modelBuilder.Entity<StaffMember>(e =>
         {

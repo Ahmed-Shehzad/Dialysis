@@ -9,15 +9,18 @@ namespace Dialysis.HIE.Tests.OpenEhr;
 public sealed class DeclarativeArchetypeProjectionTests
 {
     [Fact]
-    public void Catalog_Has_Three_Shipped_Definitions()
+    public void Catalog_Has_All_Shipped_Definitions()
     {
         var definitions = ArchetypeMappingCatalog.LoadEmbeddedDefinitions(
             typeof(ArchetypeMappingCatalog).Assembly);
-        definitions.Count.ShouldBe(3);
+        definitions.Count.ShouldBe(5);
         var ids = definitions.Select(d => d.ArchetypeId).ToHashSet();
         ids.ShouldContain("openEHR-DEMOGRAPHIC-PERSON.person.v1");
         ids.ShouldContain("openEHR-EHR-COMPOSITION.haemodialysis_session.v1");
         ids.ShouldContain("openEHR-EHR-OBSERVATION.lab_test_result.v1");
+        // Added as partner-driven extensions; verify the JSON-drop pattern still discovers them.
+        ids.ShouldContain("openEHR-EHR-OBSERVATION.vital_signs.v2");
+        ids.ShouldContain("openEHR-EHR-ACTION.medication.v1");
     }
 
     [Fact]

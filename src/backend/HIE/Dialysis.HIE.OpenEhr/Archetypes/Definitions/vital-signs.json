@@ -1,0 +1,20 @@
+{
+  "archetypeId": "openEHR-EHR-OBSERVATION.vital_signs.v2",
+  "fhirResourceType": "Observation",
+  "description": "Vital-signs panel observation — composite reading covering blood pressure, pulse, respiration, temperature, and oxygen saturation. Mapped from the openEHR clinical-content vital_signs archetype that most international partner clinics use as the canonical patient-monitoring composition.",
+  "fields": [
+    { "key": "panel.code",             "path": "Code.Coding[0].Code" },
+    { "key": "panel.system",           "path": "Code.Coding[0].System" },
+    { "key": "panel.display",          "path": "Code.Coding[0].Display" },
+    { "key": "systolic_mmhg",          "path": "Component[?].ValueQuantity.Value" },
+    { "key": "diastolic_mmhg",         "path": "Component[?].ValueQuantity.Value" },
+    { "key": "pulse_bpm",              "path": "Component[?].ValueQuantity.Value" },
+    { "key": "respiration_per_min",    "path": "Component[?].ValueQuantity.Value" },
+    { "key": "temperature_celsius",    "path": "Component[?].ValueQuantity.Value" },
+    { "key": "spo2_percent",           "path": "Component[?].ValueQuantity.Value" },
+    { "key": "method",                 "path": "Method.Coding[0].Code" },
+    { "key": "body_site",              "path": "BodySite.Coding[0].Code" },
+    { "key": "effective_time",         "path": "Effective as FhirDateTime.Value" },
+    { "key": "status",                 "path": "Status" }
+  ]
+}
