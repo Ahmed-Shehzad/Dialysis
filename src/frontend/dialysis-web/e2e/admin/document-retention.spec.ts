@@ -10,7 +10,7 @@ test.describe.configure({ timeout: 180_000 });
 
 test("upsert + revise + remove a retention policy", async ({ page }) => {
   await signIn(page);
-  await page.goto("/hie/admin/documents/retention");
+  await page.goto("/admin/documents/retention");
   await expect(page.getByRole("heading", { name: /Document retention/i })).toBeVisible({
     timeout: 30_000,
   });

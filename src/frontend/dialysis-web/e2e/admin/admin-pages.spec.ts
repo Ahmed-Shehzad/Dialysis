@@ -28,9 +28,9 @@ const PAGES: Array<{ route: string; heading: RegExp }> = [
   { route: "/admin/inventory", heading: /Medication inventory/i },
   { route: "/admin/reporting/templates", heading: /Reporting templates/i },
   // PR — Document retention + DSR Art. 17 erasure pipeline.
-  { route: "/hie/admin/documents/retention", heading: /Document retention/i },
+  { route: "/admin/documents/retention", heading: /Document retention/i },
   // PR — TEFCA QHIN onboarding.
-  { route: "/hie/admin/tefca/partners", heading: /TEFCA QHIN partners/i },
+  { route: "/admin/tefca/partners", heading: /TEFCA QHIN partners/i },
 ];
 
 test("every operator admin page loads its heading after sign-in", async ({ page }) => {

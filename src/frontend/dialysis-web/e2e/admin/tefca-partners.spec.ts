@@ -7,7 +7,7 @@ test.describe.configure({ timeout: 180_000 });
 
 test("onboard a QHIN partner and revise its FHIR base URL", async ({ page }) => {
   await signIn(page);
-  await page.goto("/hie/admin/tefca/partners");
+  await page.goto("/admin/tefca/partners");
   await expect(page.getByRole("heading", { name: /TEFCA QHIN partners/i })).toBeVisible({
     timeout: 30_000,
   });
