@@ -105,6 +105,36 @@ Office documents (`.docx`, `.xlsx`, `.pptx`) are deliberately download-only. Ren
 them inline would mean shipping a >2 MB office-to-HTML library to every operator
 session — for clinical workflows the round-trip through the native app is acceptable.
 
+## Dynamic graphics in generated PDFs (QR / barcode / SVG / Lottie)
+
+Generated documents (PDMS session reports, EHR billing, discharge letters) are composed
+from a `DocumentModel` of typed blocks rendered by `QuestPdfDocumentRenderer` in
+`BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf`. Beyond text / tables /
+callouts, four graphics block types are available:
+
+| Block | Backed by | Use |
+|---|---|---|
+| `SvgBlock(svg)` | **QuestPDF native SVG** (its own bundled Skia — no rasterization) | Charts, logos, anatomical diagrams; stays crisp at any zoom |
+| `QrCodeBlock(QrCodeSpec)` | ZXing → SkiaSharp → PNG | Patient-portal deep links, FHIR resource URLs, treatment-verification tokens |
+| `BarcodeBlock(BarcodeSpec)` | ZXing → SkiaSharp → PNG | Wristband / specimen ids (Code128/39), GS1 DataMatrix on unit-dose medication (EU FMD), EAN retail codes |
+| `LottieBlock(LottieFrameSpec)` | SkiaSharp.Skottie → single frame → PNG | Branded status glyphs / vector illustrations authored in After Effects (Bodymovin) |
+
+SkiaSharp does the drawing in every non-SVG case: ZXing encodes the symbol to a module
+matrix, SkiaSharp paints it into a PNG with the requested colours, and QuestPDF embeds it
+via `Image()`. Lottie is decoded by `SkiaSharp.Skottie`; because a PDF is static, one
+deterministic frame is rendered at `LottieFrameSpec.Progress` (0.0–1.0).
+
+The renderer (`IDocumentGraphicsRenderer` → `SkiaDocumentGraphicsRenderer`) is registered
+by `AddPdfDocumentRendering()` as a thread-safe singleton. All outputs are **deterministic**
+— the same spec always yields identical bytes — so the audit pipeline that hashes generated
+PDFs stays stable. Supported barcode symbologies: Code128, Code39, EAN-13, EAN-8, ITF,
+DataMatrix, PDF417. QR error-correction defaults to Medium (~15% recovery).
+
+**Container note**: graphics rendering relies on `SkiaSharp.NativeAssets.Linux.NoDependencies`
+(statically linked, no extra system libs). It runs on the Debian-based
+`mcr.microsoft.com/dotnet/aspnet:10.0` runtime image — no Alpine/musl support, which the
+deployment stack doesn't use.
+
 ## Operator runbook
 
 ### "I uploaded a PDF and it shows the JS-preserved chip — should I authorize?"
