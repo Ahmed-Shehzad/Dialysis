@@ -89,7 +89,7 @@ export const SessionLivePage = () => {
             Medications
           </TabButton>
           <TabButton active={tab === "reports"} onClick={() => setTab("reports")}>
-            Reports
+            Documents
           </TabButton>
         </div>
         {tab === "vitals" && <VitalsChart readings={merged} />}
@@ -100,7 +100,9 @@ export const SessionLivePage = () => {
             actorSub={user?.username}
           />
         )}
-        {tab === "reports" && <SessionReportsTab sessionId={sessionId} />}
+        {tab === "reports" && (
+          <SessionReportsTab sessionId={sessionId} patientId={session?.patientId} />
+        )}
       </section>
     </div>
   );

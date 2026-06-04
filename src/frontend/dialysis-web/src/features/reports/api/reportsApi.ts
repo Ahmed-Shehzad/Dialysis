@@ -41,6 +41,26 @@ export const fetchSessionReports = async (sessionId: string): Promise<SessionRep
 export const reportDownloadUrl = (reportId: string): string =>
   `/api/pdms/api/v1.0/reports/${reportId}/content`;
 
+/**
+ * Downloads a rendered report's PDF bytes through the authenticated apiClient (so the Bearer
+ * token is attached) and saves them via a transient object URL. A plain `<a href>` to the
+ * /content endpoint can't carry the Authorization header and 401s against the PDMS API.
+ */
+export const downloadReportBinary = async (reportId: string, filename: string): Promise<void> => {
+  const response = await apiClient.get<Blob>(reportDownloadUrl(reportId), { responseType: "blob" });
+  const url = URL.createObjectURL(response.data);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
+
 export const fetchTemplates = async (kind?: ReportTemplate["kind"]): Promise<ReportTemplate[]> => {
   const response = await apiClient.get<ReportTemplate[]>(`/api/pdms/api/v1.0/reporting/templates`, {
     params: kind ? { kind } : undefined,

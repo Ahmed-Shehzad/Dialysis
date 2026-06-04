@@ -21,7 +21,8 @@ public sealed record DocumentRow
         DateTime CreatedAtUtc,
         int SignatureCount,
         bool HasAcroForms,
-        bool HasJavascript)
+        bool HasJavascript,
+        string? Category = null)
     {
         this.Id = Id;
         this.PatientId = PatientId;
@@ -36,6 +37,7 @@ public sealed record DocumentRow
         this.SignatureCount = SignatureCount;
         this.HasAcroForms = HasAcroForms;
         this.HasJavascript = HasJavascript;
+        this.Category = Category;
     }
     public Guid Id { get; init; }
     public Guid PatientId { get; init; }
@@ -50,7 +52,9 @@ public sealed record DocumentRow
     public int SignatureCount { get; init; }
     public bool HasAcroForms { get; init; }
     public bool HasJavascript { get; init; }
-    public void Deconstruct(out Guid Id, out Guid PatientId, out string Kind, out string Title, out string MimeType, out string? LanguageCode, out DocumentReferenceStatus Status, out DocumentReferenceSource Source, out long Size, out DateTime CreatedAtUtc, out int SignatureCount, out bool HasAcroForms, out bool HasJavascript)
+    /// <summary>Free-form correlation key (e.g. the originating session id for invoices).</summary>
+    public string? Category { get; init; }
+    public void Deconstruct(out Guid Id, out Guid PatientId, out string Kind, out string Title, out string MimeType, out string? LanguageCode, out DocumentReferenceStatus Status, out DocumentReferenceSource Source, out long Size, out DateTime CreatedAtUtc, out int SignatureCount, out bool HasAcroForms, out bool HasJavascript, out string? Category)
     {
         Id = this.Id;
         PatientId = this.PatientId;
@@ -65,6 +69,7 @@ public sealed record DocumentRow
         SignatureCount = this.SignatureCount;
         HasAcroForms = this.HasAcroForms;
         HasJavascript = this.HasJavascript;
+        Category = this.Category;
     }
 }
 

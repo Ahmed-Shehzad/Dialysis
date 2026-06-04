@@ -27,6 +27,8 @@ export type DocumentRow = {
   signatureCount: number;
   hasAcroForms: boolean;
   hasJavascript: boolean;
+  /** Free-form correlation key (e.g. the originating session id for invoices). */
+  category?: string | null;
 };
 
 export type DocumentSignatureRow = {
