@@ -5,11 +5,16 @@ using Dialysis.EHR.Billing.Ports;
 
 namespace Dialysis.EHR.Billing.Features.CaptureCharge;
 
-public sealed class CaptureChargeCommandHandler(
-    IChargeRepository charges,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<CaptureChargeCommand, Guid>
+public sealed class CaptureChargeCommandHandler : ICommandHandler<CaptureChargeCommand, Guid>
 {
+    private readonly IChargeRepository _charges;
+    private readonly IUnitOfWork _unitOfWork;
+    public CaptureChargeCommandHandler(IChargeRepository charges,
+        IUnitOfWork unitOfWork)
+    {
+        _charges = charges;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(CaptureChargeCommand request, CancellationToken cancellationToken)
     {
         var amount = new Money(request.BilledAmount, request.CurrencyCode);
@@ -21,8 +26,8 @@ public sealed class CaptureChargeCommandHandler(
             request.CptCode,
             request.DiagnosisPointerIcd10Codes,
             amount);
-        charges.Add(charge);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _charges.Add(charge);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

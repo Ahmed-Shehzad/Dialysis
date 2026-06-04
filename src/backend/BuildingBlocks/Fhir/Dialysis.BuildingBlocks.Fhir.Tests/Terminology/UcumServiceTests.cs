@@ -39,10 +39,7 @@ public sealed class UcumServiceTests
     }
 
     [Fact]
-    public void Tryconvert_Rejects_Incommensurable_Units()
-    {
-        _sut.TryConvert(1m, "kg", "s", out _).ShouldBeFalse();
-    }
+    public void Tryconvert_Rejects_Incommensurable_Units() => _sut.TryConvert(1m, "kg", "s", out _).ShouldBeFalse();
 
     [Fact]
     public void Trycompare_Treats_Equivalent_Quantities_As_Equal()

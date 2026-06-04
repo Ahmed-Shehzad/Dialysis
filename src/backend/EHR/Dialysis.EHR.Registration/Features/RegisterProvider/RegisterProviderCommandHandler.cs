@@ -5,14 +5,19 @@ using Dialysis.EHR.Registration.Ports;
 
 namespace Dialysis.EHR.Registration.Features.RegisterProvider;
 
-public sealed class RegisterProviderCommandHandler(
-    IProviderRepository providers,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<RegisterProviderCommand, Guid>
+public sealed class RegisterProviderCommandHandler : ICommandHandler<RegisterProviderCommand, Guid>
 {
+    private readonly IProviderRepository _providers;
+    private readonly IUnitOfWork _unitOfWork;
+    public RegisterProviderCommandHandler(IProviderRepository providers,
+        IUnitOfWork unitOfWork)
+    {
+        _providers = providers;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RegisterProviderCommand request, CancellationToken cancellationToken)
     {
-        if (await providers.FindByNpiAsync(request.NationalProviderIdentifier, cancellationToken).ConfigureAwait(false) is not null)
+        if (await _providers.FindByNpiAsync(request.NationalProviderIdentifier, cancellationToken).ConfigureAwait(false) is not null)
             throw new InvalidOperationException($"NPI '{request.NationalProviderIdentifier}' is already registered.");
 
         var id = Guid.CreateVersion7();
@@ -25,8 +30,8 @@ public sealed class RegisterProviderCommandHandler(
             request.SpecialtyCode,
             request.LicenseNumber);
 
-        providers.Add(provider);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _providers.Add(provider);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

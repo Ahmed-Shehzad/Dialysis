@@ -14,9 +14,16 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// filters can include <c>patient</c>, <c>code</c> (the LOINC code, for threshold alerts such as
 /// glucose &gt; 200 mg/dL), and <c>abnormal</c> (the HL7 abnormal flag).
 /// </summary>
-public sealed class LabResultReceivedSubscriptionBroadcaster(SubscriptionBroadcaster broadcaster)
-    : IConsumer<LabResultReceivedIntegrationEvent>
+public sealed class LabResultReceivedSubscriptionBroadcaster : IConsumer<LabResultReceivedIntegrationEvent>
 {
+    private readonly SubscriptionBroadcaster _broadcaster;
+    /// <summary>
+    /// Fans out <see cref="LabResultReceivedIntegrationEvent"/> to FHIR Subscriptions registered for
+    /// the <c>lab-result</c> topic, projecting the result to a FHIR R4 <c>Observation</c>. Subscriber
+    /// filters can include <c>patient</c>, <c>code</c> (the LOINC code, for threshold alerts such as
+    /// glucose &gt; 200 mg/dL), and <c>abnormal</c> (the HL7 abnormal flag).
+    /// </summary>
+    public LabResultReceivedSubscriptionBroadcaster(SubscriptionBroadcaster broadcaster) => _broadcaster = broadcaster;
     public const string TopicUrl = "https://dialysis.local/fhir/SubscriptionTopic/lab-result";
 
     private const string UcumSystem = "http://unitsofmeasure.org";
@@ -67,6 +74,6 @@ public sealed class LabResultReceivedSubscriptionBroadcaster(SubscriptionBroadca
                 "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation", ev.AbnormalFlag));
         }
 
-        await broadcaster.BroadcastAsync(TopicUrl, attributes, observation, context.CancellationToken).ConfigureAwait(false);
+        await _broadcaster.BroadcastAsync(TopicUrl, attributes, observation, context.CancellationToken).ConfigureAwait(false);
     }
 }

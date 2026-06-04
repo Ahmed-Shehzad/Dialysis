@@ -14,15 +14,36 @@ namespace Dialysis.BuildingBlocks.DurableCommandBus;
 /// "the broker has it" semantic real — if the publish fails or the broker nacks, the bus
 /// throws and the API endpoint surfaces 503.
 /// </summary>
-public sealed class DurableCommandBus(
-    ITransponderBus transport,
-    IDurableCommandCatalog catalog,
-    IOptions<DurableCommandBusOptions> options,
-    TimeProvider clock,
-    DurableCommandMetrics metrics,
-    ILogger<DurableCommandBus> logger) : IDurableCommandBus
+public sealed class DurableCommandBus : IDurableCommandBus
 {
-    private readonly DurableCommandBusOptions _options = options.Value;
+    private readonly DurableCommandBusOptions _options;
+    private readonly ITransponderBus _transport;
+    private readonly IDurableCommandCatalog _catalog;
+    private readonly TimeProvider _clock;
+    private readonly DurableCommandMetrics _metrics;
+    private readonly ILogger<DurableCommandBus> _logger;
+    /// <summary>
+    /// Default <see cref="IDurableCommandBus"/>. Wraps the command in a <see cref="DurableCommandEnvelope"/>,
+    /// publishes via the durable <see cref="ITransponderBus"/>, and returns the acceptance token.
+    /// The publisher confirms enabled on the underlying RabbitMQ transport are what make the
+    /// "the broker has it" semantic real — if the publish fails or the broker nacks, the bus
+    /// throws and the API endpoint surfaces 503.
+    /// </summary>
+    public DurableCommandBus(ITransponderBus transport,
+        IDurableCommandCatalog catalog,
+        IOptions<DurableCommandBusOptions> options,
+        TimeProvider clock,
+        DurableCommandMetrics metrics,
+        ILogger<DurableCommandBus> logger)
+    {
+        _transport = transport;
+        _catalog = catalog;
+        _clock = clock;
+        _metrics = metrics;
+        _logger = logger;
+        _options = options.Value;
+    }
+
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -35,7 +56,7 @@ public sealed class DurableCommandBus(
         where TCommand : ICommand<TResult>
     {
         ArgumentNullException.ThrowIfNull(command);
-        if (!catalog.TryGetForType(typeof(TCommand), out var registration))
+        if (!_catalog.TryGetForType(typeof(TCommand), out var registration))
         {
             throw new DurableCommandException(
                 $"{typeof(TCommand).FullName} is not registered in the durable command catalog. "
@@ -50,17 +71,17 @@ public sealed class DurableCommandBus(
             SchemaVersion: 1,
             PayloadJson: JsonSerializer.Serialize(command, typeof(TCommand), _jsonOptions),
             CorrelationId: correlationId,
-            EnqueuedAtUtc: clock.GetUtcNow().UtcDateTime,
+            EnqueuedAtUtc: _clock.GetUtcNow().UtcDateTime,
             RequestedBySubject: null);
 
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            await transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
+            await _transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex,
+            _logger.LogWarning(ex,
                 "Durable command publish failed; module={Module}, commandType={CommandType}, commandId={CommandId}",
                 _options.ModuleSlug, registration.CommandTypeKey, id);
             throw new DurableCommandException(
@@ -69,18 +90,18 @@ public sealed class DurableCommandBus(
         finally
         {
             stopwatch.Stop();
-            metrics.EnqueueLatencyMilliseconds.Record(
+            _metrics.EnqueueLatencyMilliseconds.Record(
                 stopwatch.Elapsed.TotalMilliseconds,
                 new KeyValuePair<string, object?>("module", _options.ModuleSlug),
                 new KeyValuePair<string, object?>("command_type", registration.CommandTypeKey));
         }
 
-        metrics.CommandsEnqueued.Add(
+        _metrics.CommandsEnqueued.Add(
             1,
             new KeyValuePair<string, object?>("module", _options.ModuleSlug),
             new KeyValuePair<string, object?>("command_type", registration.CommandTypeKey));
 
-        logger.LogInformation(
+        _logger.LogInformation(
             "Enqueued durable command {CommandType} (id={CommandId}, correlationId={CorrelationId}) for module {Module}",
             registration.CommandTypeKey, id, correlationId, _options.ModuleSlug);
 

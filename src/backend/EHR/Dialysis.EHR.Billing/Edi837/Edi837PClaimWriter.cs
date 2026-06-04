@@ -64,11 +64,9 @@ public sealed class Edi837PClaimWriter
         sb.Append(isa);
     }
 
-    private static void WriteGs(StringBuilder sb, Edi837ClaimContext ctx)
-    {
+    private static void WriteGs(StringBuilder sb, Edi837ClaimContext ctx) =>
         // HC = Health Care Claim. The functional control number must match GE at the end.
         sb.Append($"GS*HC*{ctx.SubmitterId}*{ctx.ReceiverId}*{ctx.GeneratedAtUtc:yyyyMMdd}*{ctx.GeneratedAtUtc:HHmm}*{ctx.GroupControlNumber}*X*005010X222A1{SegmentTerminator}");
-    }
 
     private static void WriteStBht(StringBuilder sb, Edi837ClaimContext ctx)
     {
@@ -86,11 +84,9 @@ public sealed class Edi837PClaimWriter
         sb.Append($"PER*IC*{ctx.SubmitterContactName}*TE*{ctx.SubmitterContactPhone}{SegmentTerminator}");
     }
 
-    private static void WriteReceiver1000B(StringBuilder sb, Edi837ClaimContext ctx)
-    {
+    private static void WriteReceiver1000B(StringBuilder sb, Edi837ClaimContext ctx) =>
         // 1000B — receiver (the clearinghouse).
         sb.Append($"NM1*40*2*{ctx.ReceiverName}*****46*{ctx.ReceiverId}{SegmentTerminator}");
-    }
 
     private static void WriteBillingProvider2000A(StringBuilder sb, Edi837ClaimContext ctx)
     {
@@ -178,7 +174,8 @@ public sealed class Edi837PClaimWriter
     {
         var count = 0;
         for (var i = 0; i < sb.Length; i++)
-            if (sb[i] == SegmentTerminator) count++;
+            if (sb[i] == SegmentTerminator)
+                count++;
         // We started counting from ST; ISA/GS belong to the interchange/group envelope
         // and aren't part of the transaction-set count. Subtract them out.
         // ISA and GS are always exactly 2 segments before ST.
@@ -187,7 +184,8 @@ public sealed class Edi837PClaimWriter
 
     private static string Pad(string value, int width)
     {
-        if (value.Length >= width) return value[..width];
+        if (value.Length >= width)
+            return value[..width];
         return value.PadRight(width);
     }
 }

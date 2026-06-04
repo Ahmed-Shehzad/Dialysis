@@ -9,16 +9,21 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// Default <see cref="IDatabaseOutboundConnectionFactory"/> backed by <see cref="IConfiguration"/>:
 /// resolves the named connection string and returns a provider-specific connection.
 /// </summary>
-public sealed class ConfigurationDatabaseOutboundConnectionFactory(IConfiguration configuration)
-    : IDatabaseOutboundConnectionFactory
+public sealed class ConfigurationDatabaseOutboundConnectionFactory : IDatabaseOutboundConnectionFactory
 {
+    private readonly IConfiguration _configuration;
+    /// <summary>
+    /// Default <see cref="IDatabaseOutboundConnectionFactory"/> backed by <see cref="IConfiguration"/>:
+    /// resolves the named connection string and returns a provider-specific connection.
+    /// </summary>
+    public ConfigurationDatabaseOutboundConnectionFactory(IConfiguration configuration) => _configuration = configuration;
     public async Task<DbConnection> OpenAsync(
         DatabaseProvider provider,
         string connectionStringName,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionStringName);
-        var connectionString = configuration.GetConnectionString(connectionStringName);
+        var connectionString = _configuration.GetConnectionString(connectionStringName);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(

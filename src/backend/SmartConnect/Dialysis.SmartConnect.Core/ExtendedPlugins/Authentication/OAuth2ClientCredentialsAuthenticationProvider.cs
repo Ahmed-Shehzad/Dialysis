@@ -18,12 +18,30 @@ namespace Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 /// For vendor-specific flows that need JWT-signed assertions, the existing
 /// <c>OAuth2TokenAcquirer</c> in <c>Adapters.Common</c> remains the right tool.
 /// </remarks>
-public sealed class OAuth2ClientCredentialsAuthenticationProvider(
-    IHttpClientFactory httpClientFactory,
-    IDistributedCache tokenCache) : IHttpAuthenticationProvider
+public sealed class OAuth2ClientCredentialsAuthenticationProvider : IHttpAuthenticationProvider
 {
-    private static readonly TimeSpan ExpirationSkew = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan MinimumTtl = TimeSpan.FromSeconds(5);
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IDistributedCache _tokenCache;
+    /// <summary>
+    /// OAuth 2.0 client-credentials grant (RFC 6749 §4.4). POSTs <c>grant_type=client_credentials</c> to
+    /// the configured token endpoint, parses <c>access_token</c> + <c>expires_in</c>, caches the token
+    /// in <see cref="IDistributedCache"/> (Valkey in production, in-memory in dev) so multiple SmartConnect
+    /// replicas share one token, then attaches it as <c>Authorization: Bearer …</c> on every outbound send.
+    /// </summary>
+    /// <remarks>
+    /// Use this for partner integrations where SmartConnect itself is the client (machine-to-machine):
+    /// Epic backend services, Cerner system accounts, lab portals exposing OAuth2 token endpoints, etc.
+    /// For vendor-specific flows that need JWT-signed assertions, the existing
+    /// <c>OAuth2TokenAcquirer</c> in <c>Adapters.Common</c> remains the right tool.
+    /// </remarks>
+    public OAuth2ClientCredentialsAuthenticationProvider(IHttpClientFactory httpClientFactory,
+        IDistributedCache tokenCache)
+    {
+        _httpClientFactory = httpClientFactory;
+        _tokenCache = tokenCache;
+    }
+    private static readonly TimeSpan _expirationSkew = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan _minimumTtl = TimeSpan.FromSeconds(5);
 
     public string Kind => "oauth2-client-credentials";
 
@@ -40,7 +58,7 @@ public sealed class OAuth2ClientCredentialsAuthenticationProvider(
             throw new InvalidOperationException("OAuth2 authentication parameters must include 'ClientSecret'.");
 
         var cacheKey = BuildCacheKey(options);
-        var cached = await tokenCache.GetAsync(cacheKey, cancellationToken).ConfigureAwait(false);
+        var cached = await _tokenCache.GetAsync(cacheKey, cancellationToken).ConfigureAwait(false);
         string accessToken;
         if (cached is { Length: > 0 })
         {
@@ -67,7 +85,7 @@ public sealed class OAuth2ClientCredentialsAuthenticationProvider(
 
         using var form = new FormUrlEncodedContent(fields);
         using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, options.TokenEndpoint) { Content = form };
-        var client = httpClientFactory.CreateClient("smartconnect-outbound");
+        var client = _httpClientFactory.CreateClient("smartconnect-outbound");
         using var response = await client.SendAsync(tokenRequest, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
@@ -84,10 +102,10 @@ public sealed class OAuth2ClientCredentialsAuthenticationProvider(
             ? seconds
             : 300;
 
-        var ttl = TimeSpan.FromSeconds(expiresIn) - ExpirationSkew;
-        if (ttl < MinimumTtl)
-            ttl = MinimumTtl;
-        await tokenCache.SetAsync(
+        var ttl = TimeSpan.FromSeconds(expiresIn) - _expirationSkew;
+        if (ttl < _minimumTtl)
+            ttl = _minimumTtl;
+        await _tokenCache.SetAsync(
             cacheKey,
             Encoding.UTF8.GetBytes(accessToken),
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = ttl },

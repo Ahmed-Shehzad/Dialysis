@@ -26,10 +26,38 @@ public interface ILawfulBasisRegistry
 /// <summary>
 /// One row in a module's lawful-basis registry. Surfaces in the RoPA document.
 /// </summary>
-public sealed record ProcessingActivity(
-    string ActivityName,
-    LawfulBasis Basis,
-    DataCategory Categories,
-    string Purpose,
-    string? RetentionKey,
-    IReadOnlyList<string> RecipientCategories);
+public sealed record ProcessingActivity
+{
+    /// <summary>
+    /// One row in a module's lawful-basis registry. Surfaces in the RoPA document.
+    /// </summary>
+    public ProcessingActivity(string ActivityName,
+        LawfulBasis Basis,
+        DataCategory Categories,
+        string Purpose,
+        string? RetentionKey,
+        IReadOnlyList<string> RecipientCategories)
+    {
+        this.ActivityName = ActivityName;
+        this.Basis = Basis;
+        this.Categories = Categories;
+        this.Purpose = Purpose;
+        this.RetentionKey = RetentionKey;
+        this.RecipientCategories = RecipientCategories;
+    }
+    public string ActivityName { get; init; }
+    public LawfulBasis Basis { get; init; }
+    public DataCategory Categories { get; init; }
+    public string Purpose { get; init; }
+    public string? RetentionKey { get; init; }
+    public IReadOnlyList<string> RecipientCategories { get; init; }
+    public void Deconstruct(out string ActivityName, out LawfulBasis Basis, out DataCategory Categories, out string Purpose, out string? RetentionKey, out IReadOnlyList<string> RecipientCategories)
+    {
+        ActivityName = this.ActivityName;
+        Basis = this.Basis;
+        Categories = this.Categories;
+        Purpose = this.Purpose;
+        RetentionKey = this.RetentionKey;
+        RecipientCategories = this.RecipientCategories;
+    }
+}

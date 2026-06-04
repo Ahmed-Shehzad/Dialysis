@@ -15,8 +15,22 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// is coerced to string and becomes the new UTF-8 payload. Context bindings match
 /// <see cref="JavascriptTransformStage"/>.
 /// </summary>
-public sealed class ExternalScriptTransformStage(IExternalScriptLoader scriptLoader, IServiceProvider? services = null) : ITransformStage
+public sealed class ExternalScriptTransformStage : ITransformStage
 {
+    private readonly IExternalScriptLoader _scriptLoader;
+    private readonly IServiceProvider? _services;
+    /// <summary>
+    /// Transform stage that loads its JavaScript body from an external URI (Mirth UG p283
+    /// "External Script Transformer Step"). Properties JSON:
+    /// <c>{"scriptUri":"file:///... | https://...","cacheTtlSeconds":60}</c>. Script return value
+    /// is coerced to string and becomes the new UTF-8 payload. Context bindings match
+    /// <see cref="JavascriptTransformStage"/>.
+    /// </summary>
+    public ExternalScriptTransformStage(IExternalScriptLoader scriptLoader, IServiceProvider? services = null)
+    {
+        _scriptLoader = scriptLoader;
+        _services = services;
+    }
     public const string KindValue = "external-script";
     public const string ParametersMetadataKey = JavascriptTransformStage.ParametersMetadataKey;
 
@@ -35,7 +49,7 @@ public sealed class ExternalScriptTransformStage(IExternalScriptLoader scriptLoa
             return message;
         }
 
-        var script = await scriptLoader.LoadAsync(uri, ttl, cancellationToken).ConfigureAwait(false);
+        var script = await _scriptLoader.LoadAsync(uri, ttl, cancellationToken).ConfigureAwait(false);
         if (string.IsNullOrWhiteSpace(script))
         {
             return message;
@@ -66,11 +80,11 @@ public sealed class ExternalScriptTransformStage(IExternalScriptLoader scriptLoa
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (services is null) return;
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        if (_services is null) return;
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
 
-        var store = services.GetService<IVariableMapStore>();
+        var store = _services.GetService<IVariableMapStore>();
         IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
@@ -85,22 +99,22 @@ public sealed class ExternalScriptTransformStage(IExternalScriptLoader scriptLoa
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        if (services is null) return;
-        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        if (_services is null) return;
+        var repo = _services.GetService<ICodeTemplateLibraryRepository>();
         if (repo is null) return;
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var context = accessor?.Current?.CurrentStageContext ?? CodeTemplateContext.SourceTransformer;
         await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, context, ct).ConfigureAwait(false);
     }
 
     private void BindAddAttachment(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (services is null)
+        if (_services is null)
         {
             AttachmentJsBinder.Bind(engine, store: null, message.FlowId, message.Id, "application/octet-stream", ct);
             return;
         }
-        var store = services.GetService<IAttachmentStore>();
+        var store = _services.GetService<IAttachmentStore>();
         AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
     }
 }

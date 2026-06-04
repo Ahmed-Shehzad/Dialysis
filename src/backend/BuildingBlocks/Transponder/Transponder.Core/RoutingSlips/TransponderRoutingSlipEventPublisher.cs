@@ -2,8 +2,10 @@ using Dialysis.BuildingBlocks.Transponder.RoutingSlips.Events;
 
 namespace Dialysis.BuildingBlocks.Transponder.RoutingSlips;
 
-internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
+internal sealed class TransponderRoutingSlipEventPublisher
 {
+    private readonly ITransponderBus _bus;
+    public TransponderRoutingSlipEventPublisher(ITransponderBus bus) => _bus = bus;
     private static TransponderPublishOptions Opt(string? correlationId, string deduplicationId) =>
         new(correlationId, deduplicationId);
 
@@ -14,7 +16,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
         string? argumentsJson,
         string? correlationId,
         CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipActivityCompleted
             {
                 TrackingNumber = trackingNumber,
@@ -35,7 +37,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
         string? faultExceptionDetail,
         string? correlationId,
         CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipActivityFaulted
             {
                 TrackingNumber = trackingNumber,
@@ -55,7 +57,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
         int activityIndex,
         string? correlationId,
         CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipActivityCompensated
             {
                 TrackingNumber = trackingNumber,
@@ -74,7 +76,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
         string? exceptionDetail,
         string? correlationId,
         CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipActivityCompensationFailed
             {
                 TrackingNumber = trackingNumber,
@@ -94,7 +96,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
         int? lastFailedActivityIndex,
         string? correlationId,
         CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipCompensationFailed
             {
                 TrackingNumber = trackingNumber,
@@ -107,7 +109,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
             cancellationToken);
 
     public Task PublishSlipCompletedAsync(string trackingNumber, string? correlationId, CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipCompleted
             {
                 TrackingNumber = trackingNumber,
@@ -124,7 +126,7 @@ internal sealed class TransponderRoutingSlipEventPublisher(ITransponderBus bus)
         int? failedActivityIndex,
         string? correlationId,
         CancellationToken cancellationToken) =>
-        bus.PublishAsync(
+        _bus.PublishAsync(
             new TransponderRoutingSlipFaulted
             {
                 TrackingNumber = trackingNumber,

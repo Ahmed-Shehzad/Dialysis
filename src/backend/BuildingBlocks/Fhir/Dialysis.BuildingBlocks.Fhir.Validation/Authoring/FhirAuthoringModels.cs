@@ -75,13 +75,23 @@ public sealed record FhirProfileSpec
 }
 
 /// <summary>Fluent builder producing an immutable <see cref="FhirProfileSpec"/>.</summary>
-public sealed class FhirProfileSpecBuilder(string baseResourceType, string url, string name)
+public sealed class FhirProfileSpecBuilder
 {
     private readonly List<FhirElementConstraint> _constraints = [];
     private string? _title;
     private string? _version;
     private string? _description;
     private string? _baseDefinition;
+    private readonly string _baseResourceType;
+    private readonly string _url;
+    private readonly string _name;
+    /// <summary>Fluent builder producing an immutable <see cref="FhirProfileSpec"/>.</summary>
+    public FhirProfileSpecBuilder(string baseResourceType, string url, string name)
+    {
+        _baseResourceType = baseResourceType;
+        _url = url;
+        _name = name;
+    }
 
     public FhirProfileSpecBuilder Title(string title) { _title = title; return this; }
 
@@ -116,9 +126,9 @@ public sealed class FhirProfileSpecBuilder(string baseResourceType, string url, 
 
     public FhirProfileSpec Build() => new()
     {
-        BaseResourceType = baseResourceType,
-        Url = url,
-        Name = name,
+        BaseResourceType = _baseResourceType,
+        Url = _url,
+        Name = _name,
         Title = _title,
         Version = _version,
         Description = _description,

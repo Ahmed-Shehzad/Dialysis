@@ -13,13 +13,31 @@ namespace Dialysis.SmartConnect.DataTypes;
 public static class DelimitedTextStreaming
 {
     /// <summary>Operator-facing options for the streaming reader.</summary>
-    public sealed record Options(
-        char Delimiter = ',',
-        bool HasHeaderRow = true,
-        bool TrimWhitespace = true,
-        bool SkipBlankLines = true)
+    public sealed record Options
     {
+        /// <summary>Operator-facing options for the streaming reader.</summary>
+        public Options(char Delimiter = ',',
+            bool HasHeaderRow = true,
+            bool TrimWhitespace = true,
+            bool SkipBlankLines = true)
+        {
+            this.Delimiter = Delimiter;
+            this.HasHeaderRow = HasHeaderRow;
+            this.TrimWhitespace = TrimWhitespace;
+            this.SkipBlankLines = SkipBlankLines;
+        }
         public static Options Default { get; } = new();
+        public char Delimiter { get; init; }
+        public bool HasHeaderRow { get; init; }
+        public bool TrimWhitespace { get; init; }
+        public bool SkipBlankLines { get; init; }
+        public void Deconstruct(out char Delimiter, out bool HasHeaderRow, out bool TrimWhitespace, out bool SkipBlankLines)
+        {
+            Delimiter = this.Delimiter;
+            HasHeaderRow = this.HasHeaderRow;
+            TrimWhitespace = this.TrimWhitespace;
+            SkipBlankLines = this.SkipBlankLines;
+        }
     }
 
     /// <summary>

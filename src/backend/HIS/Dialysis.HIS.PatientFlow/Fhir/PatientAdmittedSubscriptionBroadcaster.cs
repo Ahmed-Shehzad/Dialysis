@@ -11,9 +11,15 @@ namespace Dialysis.HIS.PatientFlow.Fhir;
 /// the <c>encounter-admission-discharge</c> topic. Subscriber filters can include
 /// <c>patient</c> (matches the admitted patient id) and <c>ward</c>.
 /// </summary>
-public sealed class PatientAdmittedSubscriptionBroadcaster(SubscriptionBroadcaster broadcaster)
-    : IConsumer<PatientAdmittedIntegrationEvent>
+public sealed class PatientAdmittedSubscriptionBroadcaster : IConsumer<PatientAdmittedIntegrationEvent>
 {
+    private readonly SubscriptionBroadcaster _broadcaster;
+    /// <summary>
+    /// Fans out <see cref="PatientAdmittedIntegrationEvent"/> to FHIR Subscriptions registered for
+    /// the <c>encounter-admission-discharge</c> topic. Subscriber filters can include
+    /// <c>patient</c> (matches the admitted patient id) and <c>ward</c>.
+    /// </summary>
+    public PatientAdmittedSubscriptionBroadcaster(SubscriptionBroadcaster broadcaster) => _broadcaster = broadcaster;
     public const string TopicUrl = "https://dialysis.local/fhir/SubscriptionTopic/encounter-admission-discharge";
 
     public async Task HandleAsync(ConsumeContext<PatientAdmittedIntegrationEvent> context)
@@ -38,6 +44,6 @@ public sealed class PatientAdmittedSubscriptionBroadcaster(SubscriptionBroadcast
             ],
         };
 
-        await broadcaster.BroadcastAsync(TopicUrl, attributes, encounter, context.CancellationToken).ConfigureAwait(false);
+        await _broadcaster.BroadcastAsync(TopicUrl, attributes, encounter, context.CancellationToken).ConfigureAwait(false);
     }
 }

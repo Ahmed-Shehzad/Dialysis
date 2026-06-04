@@ -33,9 +33,12 @@ public sealed class ProviderAvailabilityWindow : AggregateRoot<Guid>
         int slotDurationMinutes,
         Guid? locationId = null)
     {
-        if (providerId == Guid.Empty) throw new ArgumentException("Provider required.", nameof(providerId));
-        if (endUtc <= startUtc) throw new ArgumentException("End must follow start.", nameof(endUtc));
-        if (slotDurationMinutes is < 5 or > 240) throw new ArgumentOutOfRangeException(nameof(slotDurationMinutes), "Slot duration must be between 5 and 240 minutes.");
+        if (providerId == Guid.Empty)
+            throw new ArgumentException("Provider required.", nameof(providerId));
+        if (endUtc <= startUtc)
+            throw new ArgumentException("End must follow start.", nameof(endUtc));
+        if (slotDurationMinutes is < 5 or > 240)
+            throw new ArgumentOutOfRangeException(nameof(slotDurationMinutes), "Slot duration must be between 5 and 240 minutes.");
 
         return new ProviderAvailabilityWindow(id)
         {
@@ -48,8 +51,5 @@ public sealed class ProviderAvailabilityWindow : AggregateRoot<Guid>
         };
     }
 
-    public void Close()
-    {
-        IsActive = false;
-    }
+    public void Close() => IsActive = false;
 }

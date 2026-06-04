@@ -64,21 +64,38 @@ internal static class VariableMapsJsBinder
         return new BoundMaps(globalChannelDict, globalDict);
     }
 
-    public sealed record BoundMaps(
-        IDictionary<string, object?> GlobalChannel,
-        IDictionary<string, object?> Global);
-
-    public sealed class ReadOnlyMap(IReadOnlyDictionary<string, object?> store)
+    public sealed record BoundMaps
     {
-        public object? Get(string key) => store.TryGetValue(key, out var v) ? v : null;
-        public bool ContainsKey(string key) => store.ContainsKey(key);
+        public BoundMaps(IDictionary<string, object?> GlobalChannel,
+            IDictionary<string, object?> Global)
+        {
+            this.GlobalChannel = GlobalChannel;
+            this.Global = Global;
+        }
+        public IDictionary<string, object?> GlobalChannel { get; init; }
+        public IDictionary<string, object?> Global { get; init; }
+        public void Deconstruct(out IDictionary<string, object?> globalChannel, out IDictionary<string, object?> global)
+        {
+            globalChannel = this.GlobalChannel;
+            global = this.Global;
+        }
     }
 
-    public sealed class MutableMap(IDictionary<string, object?> store)
+    public sealed class ReadOnlyMap
     {
-        public object? Get(string key) => store.TryGetValue(key, out var v) ? v : null;
-        public void Put(string key, object? value) => store[key] = value;
-        public bool ContainsKey(string key) => store.ContainsKey(key);
-        public void Remove(string key) => store.Remove(key);
+        private readonly IReadOnlyDictionary<string, object?> _store;
+        public ReadOnlyMap(IReadOnlyDictionary<string, object?> store) => _store = store;
+        public object? Get(string key) => _store.TryGetValue(key, out var v) ? v : null;
+        public bool ContainsKey(string key) => _store.ContainsKey(key);
+    }
+
+    public sealed class MutableMap
+    {
+        private readonly IDictionary<string, object?> _store;
+        public MutableMap(IDictionary<string, object?> store) => _store = store;
+        public object? Get(string key) => _store.TryGetValue(key, out var v) ? v : null;
+        public void Put(string key, object? value) => _store[key] = value;
+        public bool ContainsKey(string key) => _store.ContainsKey(key);
+        public void Remove(string key) => _store.Remove(key);
     }
 }

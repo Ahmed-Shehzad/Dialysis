@@ -9,13 +9,15 @@ namespace Dialysis.HIS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/patient-access")]
-public sealed class PatientAccessController(ICqrsGateway gateway) : HisHateoasControllerBase
+public sealed class PatientAccessController : HisHateoasControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    public PatientAccessController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpGet("patients/{patientId:guid}/portal-summary")]
     [ProducesResponseType(typeof(ResourceEnvelope<PatientPortalSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPortalSummaryAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        var dto = await gateway
+        var dto = await _gateway
             .SendQueryAsync<GetPatientPortalSummaryQuery, PatientPortalSummaryDto>(
                 new GetPatientPortalSummaryQuery(patientId),
                 cancellationToken)

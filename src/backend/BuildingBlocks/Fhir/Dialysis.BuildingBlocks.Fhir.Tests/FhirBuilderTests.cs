@@ -62,7 +62,12 @@ public sealed class FhirBuilderTests
             .ShouldBeOfType<DemoMapper>();
     }
 
-    private sealed record DemoSource(string Id);
+    private sealed record DemoSource
+    {
+        public DemoSource(string Id) => this.Id = Id;
+        public string Id { get; init; }
+        public void Deconstruct(out string id) => id = this.Id;
+    }
 
     private sealed class DemoMapper : IFhirResourceMapper<DemoSource, Patient>
     {

@@ -17,19 +17,47 @@ namespace Dialysis.SmartConnect;
 /// <summary>
 /// Default <see cref="IFlowRuntime"/> that loads flow definitions, resolves plugins, and writes the <see cref="IMessageLedger"/>.
 /// </summary>
-public sealed class FlowRuntimeEngine(
-    IIntegrationFlowRepository flows,
-    IMessageLedger ledger,
-    IFlowPluginRegistry plugins,
-    TimeProvider time,
-    IFlowExecutionContextAccessor? contextAccessor = null,
-    ChannelScriptExecutor? scriptExecutor = null,
-    AttachmentExtractionPipeline? attachmentExtraction = null,
-    AttachmentReattachmentService? attachmentReattachment = null,
-    IAlertSink? alertSink = null,
-    IServiceScopeFactory? scopeFactory = null,
-    IEndpointResolver? endpointResolver = null) : IFlowRuntime
+public sealed class FlowRuntimeEngine : IFlowRuntime
 {
+    private readonly IIntegrationFlowRepository _flows;
+    private readonly IMessageLedger _ledger;
+    private readonly IFlowPluginRegistry _plugins;
+    private readonly TimeProvider _time;
+    private readonly IFlowExecutionContextAccessor? _contextAccessor;
+    private readonly ChannelScriptExecutor? _scriptExecutor;
+    private readonly AttachmentExtractionPipeline? _attachmentExtraction;
+    private readonly AttachmentReattachmentService? _attachmentReattachment;
+    private readonly IAlertSink? _alertSink;
+    private readonly IServiceScopeFactory? _scopeFactory;
+    private readonly IEndpointResolver? _endpointResolver;
+    /// <summary>
+    /// Default <see cref="IFlowRuntime"/> that loads flow definitions, resolves plugins, and writes the <see cref="IMessageLedger"/>.
+    /// </summary>
+    public FlowRuntimeEngine(IIntegrationFlowRepository flows,
+        IMessageLedger ledger,
+        IFlowPluginRegistry plugins,
+        TimeProvider time,
+        IFlowExecutionContextAccessor? contextAccessor = null,
+        ChannelScriptExecutor? scriptExecutor = null,
+        AttachmentExtractionPipeline? attachmentExtraction = null,
+        AttachmentReattachmentService? attachmentReattachment = null,
+        IAlertSink? alertSink = null,
+        IServiceScopeFactory? scopeFactory = null,
+        IEndpointResolver? endpointResolver = null)
+    {
+        _flows = flows;
+        _ledger = ledger;
+        _plugins = plugins;
+        _time = time;
+        _contextAccessor = contextAccessor;
+        _scriptExecutor = scriptExecutor;
+        _attachmentExtraction = attachmentExtraction;
+        _attachmentReattachment = attachmentReattachment;
+        _alertSink = alertSink;
+        _scopeFactory = scopeFactory;
+        _endpointResolver = endpointResolver;
+    }
+
     /// <summary>
     /// Optional metadata key. Source connectors may set this to a JSON object of typed values that the
     /// engine will hydrate into <see cref="FlowExecutionContext.SourceMap"/> (read-only from scripts).
@@ -41,7 +69,35 @@ public sealed class FlowRuntimeEngine(
     /// attempted (DSF did not skip it), whether it failed, and the response payload (if any) for
     /// the lowest-ordinal-first selection rule.
     /// </summary>
-    private sealed record RouteOutcome(int Ordinal, bool Attempted, bool Failed, string RouteName, byte[]? ResponsePayload);
+    private sealed record RouteOutcome
+    {
+        /// <summary>
+        /// Per-route execution result reduced by the outbound loop. Captures whether the route was
+        /// attempted (DSF did not skip it), whether it failed, and the response payload (if any) for
+        /// the lowest-ordinal-first selection rule.
+        /// </summary>
+        public RouteOutcome(int Ordinal, bool Attempted, bool Failed, string RouteName, byte[]? ResponsePayload)
+        {
+            this.Ordinal = Ordinal;
+            this.Attempted = Attempted;
+            this.Failed = Failed;
+            this.RouteName = RouteName;
+            this.ResponsePayload = ResponsePayload;
+        }
+        public int Ordinal { get; init; }
+        public bool Attempted { get; init; }
+        public bool Failed { get; init; }
+        public string RouteName { get; init; }
+        public byte[]? ResponsePayload { get; init; }
+        public void Deconstruct(out int Ordinal, out bool Attempted, out bool Failed, out string RouteName, out byte[]? ResponsePayload)
+        {
+            Ordinal = this.Ordinal;
+            Attempted = this.Attempted;
+            Failed = this.Failed;
+            RouteName = this.RouteName;
+            ResponsePayload = this.ResponsePayload;
+        }
+    }
 
     public async Task<FlowDispatchResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
@@ -53,7 +109,7 @@ public sealed class FlowRuntimeEngine(
             message.Payload.ToArray(),
             cancellationToken).ConfigureAwait(false);
 
-        var flow = await flows.GetByIdAsync(message.FlowId, cancellationToken).ConfigureAwait(false);
+        var flow = await _flows.GetByIdAsync(message.FlowId, cancellationToken).ConfigureAwait(false);
         if (flow is null)
         {
             return Failure("Integration flow was not found.");
@@ -69,10 +125,10 @@ public sealed class FlowRuntimeEngine(
 
         // Build per-dispatch variable-map context (Mirth Source/Channel/Connector/Response scopes).
         var ctx = BuildFlowExecutionContext(message, flow);
-        var previousCtx = contextAccessor?.Current;
-        if (contextAccessor is not null)
+        var previousCtx = _contextAccessor?.Current;
+        if (_contextAccessor is not null)
         {
-            contextAccessor.Current = ctx;
+            _contextAccessor.Current = ctx;
         }
 
         try
@@ -81,9 +137,9 @@ public sealed class FlowRuntimeEngine(
         }
         finally
         {
-            if (contextAccessor is not null)
+            if (_contextAccessor is not null)
             {
-                contextAccessor.Current = previousCtx;
+                _contextAccessor.Current = previousCtx;
             }
         }
     }
@@ -97,9 +153,9 @@ public sealed class FlowRuntimeEngine(
 
         // PreProcessor script
         var workingMessage = message;
-        if (scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PreProcessorScript))
+        if (_scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PreProcessorScript))
         {
-            var preResult = await scriptExecutor.RunPreProcessorAsync(
+            var preResult = await _scriptExecutor.RunPreProcessorAsync(
                 flow.Pipeline.Scripts!.PreProcessorScript!, workingMessage, cancellationToken).ConfigureAwait(false);
             if (preResult.Dropped)
             {
@@ -115,9 +171,9 @@ public sealed class FlowRuntimeEngine(
 
         // Attachment Handler — runs once between PreProcessor and route filters. Extracts inline bulky
         // content into the attachment store and rewrites the payload with ${ATTACH:<id>} tokens.
-        if (attachmentExtraction is not null && flow.Pipeline.AttachmentHandler is not null)
+        if (_attachmentExtraction is not null && flow.Pipeline.AttachmentHandler is not null)
         {
-            var rewritten = await attachmentExtraction
+            var rewritten = await _attachmentExtraction
                 .RunAsync(workingMessage, flow.Pipeline.AttachmentHandler, cancellationToken).ConfigureAwait(false);
             if (!rewritten.Equals(workingMessage.Payload))
             {
@@ -136,7 +192,7 @@ public sealed class FlowRuntimeEngine(
         ctx.SetCurrentStageContext(CodeTemplateContext.SourceTransformer);
         foreach (var stageSlot in flow.Pipeline.SourceTransformStages)
         {
-            var stage = plugins.TryResolveTransformStage(stageSlot.Kind);
+            var stage = _plugins.TryResolveTransformStage(stageSlot.Kind);
             if (stage is null)
             {
                 return Failure($"Source transform stage kind '{stageSlot.Kind}' is not registered.");
@@ -167,7 +223,7 @@ public sealed class FlowRuntimeEngine(
                     break;
                 }
             }
-            outcomes = list.ToArray();
+            outcomes = [.. list];
         }
         else
         {
@@ -221,9 +277,9 @@ public sealed class FlowRuntimeEngine(
 
         // PostProcessor script
         var overallSuccess = !anyOutboundFailed;
-        if (scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PostProcessorScript))
+        if (_scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PostProcessorScript))
         {
-            await scriptExecutor.RunPostProcessorAsync(
+            await _scriptExecutor.RunPostProcessorAsync(
                 flow.Pipeline.Scripts!.PostProcessorScript!, workingMessage, overallSuccess, cancellationToken).ConfigureAwait(false);
         }
 
@@ -243,7 +299,7 @@ public sealed class FlowRuntimeEngine(
     {
         foreach (var slot in flow.Pipeline.RouteFilters)
         {
-            var filter = plugins.TryResolveRouteFilter(slot.Kind);
+            var filter = _plugins.TryResolveRouteFilter(slot.Kind);
             if (filter is null)
             {
                 return Failure($"Route filter kind '{slot.Kind}' is not registered.");
@@ -281,7 +337,7 @@ public sealed class FlowRuntimeEngine(
         var working = message;
         foreach (var stageSlot in route.TransformStages)
         {
-            var stage = plugins.TryResolveTransformStage(stageSlot.Kind);
+            var stage = _plugins.TryResolveTransformStage(stageSlot.Kind);
             if (stage is null)
             {
                 return (null, $"Transform stage kind '{stageSlot.Kind}' is not registered.");
@@ -330,7 +386,7 @@ public sealed class FlowRuntimeEngine(
             return new RouteOutcome(ordinal, Attempted: false, Failed: false, resolvedRouteName, null);
         }
 
-        var outbound = plugins.TryResolveOutboundAdapter(route.OutboundAdapterKind);
+        var outbound = _plugins.TryResolveOutboundAdapter(route.OutboundAdapterKind);
         if (outbound is null)
         {
             var detail = $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.";
@@ -364,9 +420,9 @@ public sealed class FlowRuntimeEngine(
 
         var toSend = transformed.Message!;
         var resolvedParametersJson = route.OutboundParametersJson;
-        if (endpointResolver is not null && !string.IsNullOrWhiteSpace(resolvedParametersJson))
+        if (_endpointResolver is not null && !string.IsNullOrWhiteSpace(resolvedParametersJson))
         {
-            resolvedParametersJson = await endpointResolver
+            resolvedParametersJson = await _endpointResolver
                 .ResolveParametersJsonAsync(resolvedParametersJson, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -376,9 +432,9 @@ public sealed class FlowRuntimeEngine(
         }
 
         // Reattach Attachments — inflate ${ATTACH:<id>} tokens back to raw bytes if the route opted in.
-        if (route.ReattachAttachments && attachmentReattachment is not null)
+        if (route.ReattachAttachments && _attachmentReattachment is not null)
         {
-            var inflated = await attachmentReattachment
+            var inflated = await _attachmentReattachment
                 .InflateAsync(toSend.Payload, workingMessage.Id, cancellationToken).ConfigureAwait(false);
             if (!inflated.Equals(toSend.Payload))
             {
@@ -449,8 +505,9 @@ public sealed class FlowRuntimeEngine(
             var respMsg = workingMessage.CloneWithPayload(rawResp);
             foreach (var stage in route.ResponseTransformStages)
             {
-                var transformer = plugins.TryResolveTransformStage(stage.Kind);
-                if (transformer is null) continue;
+                var transformer = _plugins.TryResolveTransformStage(stage.Kind);
+                if (transformer is null)
+                    continue;
                 var tMsg = !string.IsNullOrWhiteSpace(stage.ParametersJson)
                     ? respMsg.WithMetadata("smartconnect.transform.parameters", stage.ParametersJson!)
                     : respMsg;
@@ -473,7 +530,7 @@ public sealed class FlowRuntimeEngine(
         string? detail,
         byte[]? snapshot,
         CancellationToken cancellationToken) =>
-        ledger.AppendAsync(
+        _ledger.AppendAsync(
             new MessageLedgerEntry
             {
                 Id = Guid.CreateVersion7(),
@@ -485,7 +542,7 @@ public sealed class FlowRuntimeEngine(
                 Detail = detail,
                 PayloadSnapshot = snapshot,
                 Metadata = message.Metadata,
-                CreatedAtUtc = time.GetUtcNow(),
+                CreatedAtUtc = _time.GetUtcNow(),
             },
             cancellationToken);
 
@@ -504,10 +561,10 @@ public sealed class FlowRuntimeEngine(
         bool useScopedLedger,
         CancellationToken cancellationToken)
     {
-        if (useScopedLedger && scopeFactory is not null)
+        if (useScopedLedger && _scopeFactory is not null)
         {
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var scopedLedger = scope.ServiceProvider.GetService<IMessageLedger>() ?? ledger;
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var scopedLedger = scope.ServiceProvider.GetService<IMessageLedger>() ?? _ledger;
             await scopedLedger.AppendAsync(
                 new MessageLedgerEntry
                 {
@@ -520,7 +577,7 @@ public sealed class FlowRuntimeEngine(
                     Detail = detail,
                     PayloadSnapshot = snapshot,
                     Metadata = message.Metadata,
-                    CreatedAtUtc = time.GetUtcNow(),
+                    CreatedAtUtc = _time.GetUtcNow(),
                 },
                 cancellationToken).ConfigureAwait(false);
             return;
@@ -534,7 +591,8 @@ public sealed class FlowRuntimeEngine(
 
     private void PublishAlert(IntegrationMessage message, AlertErrorType errorType, string? errorDetail, CancellationToken cancellationToken)
     {
-        if (alertSink is null) return;
+        if (_alertSink is null)
+            return;
         var trigger = new AlertTrigger
         {
             FlowId = message.FlowId,
@@ -542,7 +600,7 @@ public sealed class FlowRuntimeEngine(
             CorrelationId = message.CorrelationId,
             ErrorType = errorType,
             ErrorDetail = errorDetail,
-            OccurredAtUtc = time.GetUtcNow(),
+            OccurredAtUtc = _time.GetUtcNow(),
         };
         // Fire-and-forget: alerts must never block the dispatch path. When a scope factory is
         // available, the background task runs the alert sink in a fresh DI scope so its EF
@@ -557,15 +615,15 @@ public sealed class FlowRuntimeEngine(
         {
             try
             {
-                if (scopeFactory is not null)
+                if (_scopeFactory is not null)
                 {
-                    await using var scope = scopeFactory.CreateAsyncScope();
-                    var scopedSink = scope.ServiceProvider.GetService<IAlertSink>() ?? alertSink;
+                    await using var scope = _scopeFactory.CreateAsyncScope();
+                    var scopedSink = scope.ServiceProvider.GetService<IAlertSink>() ?? _alertSink;
                     await scopedSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    await alertSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
+                    await _alertSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch { /* swallowed: alert engine logs internally */ }

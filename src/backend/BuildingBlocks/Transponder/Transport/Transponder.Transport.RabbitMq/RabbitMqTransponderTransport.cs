@@ -8,17 +8,30 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 /// <summary>
 /// RabbitMQ <see cref="ITransponderTransport"/> using separate publish and consumer channels.
 /// </summary>
-public sealed class RabbitMqTransponderTransport(
-    IOptions<TransponderRabbitMqOptions> options,
-    RabbitMqSubscriptionRegistry registry,
-    IEnumerable<IConsumeRouteMetadata> consumeRoutes,
-    ILogger<RabbitMqTransponderTransport> logger) : ITransponderTransport
+public sealed class RabbitMqTransponderTransport : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private readonly SemaphoreSlim _dispatch = new(1, 1);
     private IConnection? _connection;
     private IChannel? _publishChannel;
     private IChannel? _consumeChannel;
+    private readonly IOptions<TransponderRabbitMqOptions> _options;
+    private readonly RabbitMqSubscriptionRegistry _registry;
+    private readonly IEnumerable<IConsumeRouteMetadata> _consumeRoutes;
+    private readonly ILogger<RabbitMqTransponderTransport> _logger;
+    /// <summary>
+    /// RabbitMQ <see cref="ITransponderTransport"/> using separate publish and consumer channels.
+    /// </summary>
+    public RabbitMqTransponderTransport(IOptions<TransponderRabbitMqOptions> options,
+        RabbitMqSubscriptionRegistry registry,
+        IEnumerable<IConsumeRouteMetadata> consumeRoutes,
+        ILogger<RabbitMqTransponderTransport> logger)
+    {
+        _options = options;
+        _registry = registry;
+        _consumeRoutes = consumeRoutes;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -30,7 +43,7 @@ public sealed class RabbitMqTransponderTransport(
 
             await DisposeCoreAsync().ConfigureAwait(false);
 
-            var o = options.Value;
+            var o = _options.Value;
             var factory = new ConnectionFactory { Uri = new Uri(o.ConnectionUri, UriKind.Absolute) };
             _connection = await factory.CreateConnectionAsync(cancellationToken).ConfigureAwait(false);
 
@@ -62,7 +75,7 @@ public sealed class RabbitMqTransponderTransport(
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Transponder RabbitMQ connected; exchange {Exchange}, publisher confirms {Confirms}",
                 o.ExchangeName,
                 o.PublisherConfirmsEnabled);
@@ -76,7 +89,7 @@ public sealed class RabbitMqTransponderTransport(
     public async Task PublishAsync(TransportMessage message, CancellationToken cancellationToken = default)
     {
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-        var o = options.Value;
+        var o = _options.Value;
         var ch = _publishChannel ?? throw new InvalidOperationException("Publish channel is not initialized.");
 
         await ch
@@ -97,7 +110,7 @@ public sealed class RabbitMqTransponderTransport(
         ArgumentNullException.ThrowIfNull(onMessage);
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
-        var o = options.Value;
+        var o = _options.Value;
         var consume = _consumeChannel ?? throw new InvalidOperationException("Consumer channel is not initialized.");
 
         var deadLetterConfigured = !string.IsNullOrWhiteSpace(o.DeadLetterFanoutExchangeName)
@@ -137,14 +150,14 @@ public sealed class RabbitMqTransponderTransport(
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Transponder RabbitMQ dead-letter fanout {Dlx} bound to queue {Dlq}",
                 dlx,
                 dlq);
         }
         else if (o.PoisonMessagePolicy == RabbitMqPoisonMessagePolicy.DeadLetter)
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 "PoisonMessagePolicy is DeadLetter but DeadLetterFanoutExchangeName/DeadLetterQueueName are not set; failures will be requeued.");
         }
 
@@ -167,12 +180,12 @@ public sealed class RabbitMqTransponderTransport(
         // the local exchange for transport-internal types like TransponderMessageChunk whose
         // namespace doesn't match a module.
         var bindings = new HashSet<(string Exchange, string RoutingKey)>();
-        foreach (var kvp in registry.RoutingKeyToType)
+        foreach (var kvp in _registry.RoutingKeyToType)
         {
             var exchange = ResolveProducerExchange(kvp.Value, o.ExchangeName);
             bindings.Add((exchange, kvp.Key));
         }
-        foreach (var route in consumeRoutes)
+        foreach (var route in _consumeRoutes)
         {
             var rk = route.MessageType.FullName ?? route.MessageType.Name;
             var exchange = ResolveProducerExchange(route.MessageType, o.ExchangeName);
@@ -211,7 +224,7 @@ public sealed class RabbitMqTransponderTransport(
         if (bindings.Count > 0)
         {
             var foreignCount = bindings.Count(b => !string.Equals(b.Exchange, o.ExchangeName, StringComparison.Ordinal));
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Transponder RabbitMQ bound queue {Queue} to {Total} routing keys ({Foreign} on foreign exchanges).",
                 o.QueueName,
                 bindings.Count,
@@ -239,7 +252,7 @@ public sealed class RabbitMqTransponderTransport(
             catch (Exception ex)
             {
                 var requeue = ComputeRequeueOnFailure(o, deadLetterConfigured);
-                logger.LogError(ex, "Transponder consumer handler failed; nack requeue={Requeue}", requeue);
+                _logger.LogError(ex, "Transponder consumer handler failed; nack requeue={Requeue}", requeue);
                 await consume
                     .BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
@@ -254,7 +267,7 @@ public sealed class RabbitMqTransponderTransport(
             .BasicConsumeAsync(o.QueueName, autoAck: false, consumer, cancellationToken)
             .ConfigureAwait(false);
 
-        logger.LogInformation("Transponder RabbitMQ consuming queue {Queue}", o.QueueName);
+        _logger.LogInformation("Transponder RabbitMQ consuming queue {Queue}", o.QueueName);
 
         try
         {
@@ -338,7 +351,7 @@ public sealed class RabbitMqTransponderTransport(
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Error closing publish channel");
+                _logger.LogDebug(ex, "Error closing publish channel");
             }
 
             _publishChannel = null;
@@ -353,7 +366,7 @@ public sealed class RabbitMqTransponderTransport(
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Error closing consume channel");
+                _logger.LogDebug(ex, "Error closing consume channel");
             }
 
             _consumeChannel = null;
@@ -368,7 +381,7 @@ public sealed class RabbitMqTransponderTransport(
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Error closing connection");
+                _logger.LogDebug(ex, "Error closing connection");
             }
 
             _connection = null;

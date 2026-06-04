@@ -14,22 +14,36 @@ namespace Dialysis.HIE.Documents.Consumers;
 /// event finds the existing row (mapped to <see cref="DocumentReference.Id"/>) and exits
 /// without re-indexing.
 /// </summary>
-public sealed class OnClinicalDocumentProduced(
-    IDocumentReferenceRepository repository,
-    IUnitOfWork unitOfWork,
-    ILogger<OnClinicalDocumentProduced> logger)
-    : IConsumer<ClinicalDocumentProducedIntegrationEvent>
+public sealed class OnClinicalDocumentProduced : IConsumer<ClinicalDocumentProducedIntegrationEvent>
 {
+    private readonly IDocumentReferenceRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<OnClinicalDocumentProduced> _logger;
+    /// <summary>
+    /// Consumes <see cref="ClinicalDocumentProducedIntegrationEvent"/> from PDMS Reporting and
+    /// indexes the report as a HIE <see cref="DocumentReference"/>. Idempotent on the source
+    /// <see cref="ClinicalDocumentProducedIntegrationEvent.ReportId"/>: re-delivery of the same
+    /// event finds the existing row (mapped to <see cref="DocumentReference.Id"/>) and exits
+    /// without re-indexing.
+    /// </summary>
+    public OnClinicalDocumentProduced(IDocumentReferenceRepository repository,
+        IUnitOfWork unitOfWork,
+        ILogger<OnClinicalDocumentProduced> logger)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _logger = logger;
+    }
     public async Task HandleAsync(ConsumeContext<ClinicalDocumentProducedIntegrationEvent> context)
     {
         ArgumentNullException.ThrowIfNull(context);
         var ct = context.CancellationToken;
         var message = context.Message;
 
-        var existing = await repository.FindAsync(message.ReportId, ct).ConfigureAwait(false);
+        var existing = await _repository.FindAsync(message.ReportId, ct).ConfigureAwait(false);
         if (existing is not null)
         {
-            logger.LogDebug("DocumentReference for report {ReportId} already indexed; skipping.", message.ReportId);
+            _logger.LogDebug("DocumentReference for report {ReportId} already indexed; skipping.", message.ReportId);
             return;
         }
 
@@ -48,7 +62,7 @@ public sealed class OnClinicalDocumentProduced(
             languageCode: message.LanguageCode,
             hasAcroForms: false,
             hasJavascript: false);
-        repository.Add(doc);
-        await unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+        _repository.Add(doc);
+        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 }

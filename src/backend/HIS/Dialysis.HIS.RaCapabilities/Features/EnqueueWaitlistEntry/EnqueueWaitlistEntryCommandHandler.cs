@@ -5,13 +5,19 @@ using Dialysis.HIS.RaCapabilities.Ports;
 
 namespace Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
 
-public sealed class EnqueueWaitlistEntryCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
-    : ICommandHandler<EnqueueWaitlistEntryCommand, Guid>
+public sealed class EnqueueWaitlistEntryCommandHandler : ICommandHandler<EnqueueWaitlistEntryCommand, Guid>
 {
+    private readonly IRaCapabilityCommandStore _store;
+    private readonly IUnitOfWork _unitOfWork;
+    public EnqueueWaitlistEntryCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
+    {
+        _store = store;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(EnqueueWaitlistEntryCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
-        store.AddWaitlistEntry(
+        _store.AddWaitlistEntry(
             new RaWaitlistEntry
             {
                 Id = id,
@@ -21,7 +27,7 @@ public sealed class EnqueueWaitlistEntryCommandHandler(IRaCapabilityCommandStore
                 RequestedNotBeforeUtc = request.RequestedNotBeforeUtc,
                 EnqueuedAtUtc = DateTime.UtcNow,
             });
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

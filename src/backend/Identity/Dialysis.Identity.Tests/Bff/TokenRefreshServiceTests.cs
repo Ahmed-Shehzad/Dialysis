@@ -163,8 +163,10 @@ public sealed class TokenRefreshServiceTests
         };
     }
 
-    private sealed class FakeHttp(HttpResponseMessage response) : HttpMessageHandler
+    private sealed class FakeHttp : HttpMessageHandler
     {
+        private readonly HttpResponseMessage _response;
+        public FakeHttp(HttpResponseMessage response) => _response = response;
         public int CallCount { get; private set; }
         public HttpRequestMessage? LastRequest { get; private set; }
 
@@ -172,21 +174,25 @@ public sealed class TokenRefreshServiceTests
         {
             CallCount++;
             LastRequest = request;
-            return Task.FromResult(response);
+            return Task.FromResult(_response);
         }
     }
 
-    private sealed class SingleClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class SingleClientFactory : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false)
+        private readonly HttpMessageHandler _handler;
+        public SingleClientFactory(HttpMessageHandler handler) => _handler = handler;
+        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false)
         {
             DefaultRequestHeaders = { Authorization = new AuthenticationHeaderValue("Basic", "ignored") },
         };
     }
 
-    private sealed class FixedClock(DateTimeOffset now) : TimeProvider
+    private sealed class FixedClock : TimeProvider
     {
-        public override DateTimeOffset GetUtcNow() => now;
+        private readonly DateTimeOffset _now1;
+        public FixedClock(DateTimeOffset now) => _now1 = now;
+        public override DateTimeOffset GetUtcNow() => _now1;
     }
 
     private sealed class EmptyProvider : IServiceProvider

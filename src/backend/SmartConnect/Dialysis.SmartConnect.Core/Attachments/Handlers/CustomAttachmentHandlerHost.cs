@@ -6,8 +6,16 @@ namespace Dialysis.SmartConnect.Attachments.Handlers;
 /// the host looks up <c>custom:&lt;suffix&gt;</c> in <see cref="IFlowPluginRegistry"/>. Mirth UG p226
 /// "Custom Attachment Handler".
 /// </summary>
-public sealed class CustomAttachmentHandlerHost(Func<IFlowPluginRegistry> registryAccessor) : IAttachmentHandler
+public sealed class CustomAttachmentHandlerHost : IAttachmentHandler
 {
+    private readonly Func<IFlowPluginRegistry> _registryAccessor;
+    /// <summary>
+    /// Routes <c>custom</c>-kind slots to a plug-in author's registered handler. The slot's
+    /// <see cref="AttachmentHandlerContext.PropertiesJson"/> must include <c>"customKind": "&lt;suffix&gt;"</c>;
+    /// the host looks up <c>custom:&lt;suffix&gt;</c> in <see cref="IFlowPluginRegistry"/>. Mirth UG p226
+    /// "Custom Attachment Handler".
+    /// </summary>
+    public CustomAttachmentHandlerHost(Func<IFlowPluginRegistry> registryAccessor) => _registryAccessor = registryAccessor;
     public const string KindValue = "custom";
     public const string CustomKindPrefix = "custom:";
 
@@ -25,7 +33,7 @@ public sealed class CustomAttachmentHandlerHost(Func<IFlowPluginRegistry> regist
         }
 
         var fullKind = $"{CustomKindPrefix}{suffix}";
-        var handler = registryAccessor().TryResolveAttachmentHandler(fullKind);
+        var handler = _registryAccessor().TryResolveAttachmentHandler(fullKind);
         if (handler is null)
         {
             return AttachmentHandlerResult.Unchanged(message.Payload);

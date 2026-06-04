@@ -4,16 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIE.Persistence.Repositories;
 
-public sealed class EfDocumentReferenceRepository(HieDbContext db) : IDocumentReferenceRepository
+public sealed class EfDocumentReferenceRepository : IDocumentReferenceRepository
 {
+    private readonly HieDbContext _db;
+    public EfDocumentReferenceRepository(HieDbContext db) => _db = db;
     public void Add(DocumentReference document)
     {
         ArgumentNullException.ThrowIfNull(document);
-        db.DocumentReferences.Add(document);
+        _db.DocumentReferences.Add(document);
     }
 
     public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) =>
-        db.DocumentReferences
+        _db.DocumentReferences
             .Include(d => d.Signatures)
             .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
@@ -25,7 +27,7 @@ public sealed class EfDocumentReferenceRepository(HieDbContext db) : IDocumentRe
         int take,
         CancellationToken cancellationToken)
     {
-        var query = db.DocumentReferences
+        var query = _db.DocumentReferences
             .AsNoTracking()
             .Include(d => d.Signatures)
             .AsQueryable();
@@ -57,7 +59,7 @@ public sealed class EfDocumentReferenceRepository(HieDbContext db) : IDocumentRe
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(kind);
-        return await db.DocumentReferences
+        return await _db.DocumentReferences
             .Where(d => d.Status == DocumentReferenceStatus.Current
                 && d.Kind == kind
                 && d.CreatedAtUtc < createdBefore)
@@ -69,7 +71,7 @@ public sealed class EfDocumentReferenceRepository(HieDbContext db) : IDocumentRe
 
     public async Task<IReadOnlyList<DocumentReference>> ListForPatientAsync(
         Guid patientId, CancellationToken cancellationToken) =>
-        await db.DocumentReferences
+        await _db.DocumentReferences
             .Where(d => d.Status == DocumentReferenceStatus.Current && d.PatientId == patientId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);

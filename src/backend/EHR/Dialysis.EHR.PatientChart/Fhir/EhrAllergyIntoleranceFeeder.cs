@@ -12,15 +12,23 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// onto <c>AllergyIntolerance.code</c>. The aggregate's <c>UpdatedAtUtc</c> audit timestamp
 /// drives <c>Meta.lastUpdated</c> and the incremental (<c>_since</c>) export filter.
 /// </summary>
-public sealed class EhrAllergyIntoleranceFeeder(IAllergyRepository allergies) : INdjsonResourceFeeder<AllergyIntolerance>
+public sealed class EhrAllergyIntoleranceFeeder : INdjsonResourceFeeder<AllergyIntolerance>
 {
+    private readonly IAllergyRepository _allergies;
+    /// <summary>
+    /// Streams every <c>Allergy</c> aggregate as a FHIR R4 <c>AllergyIntolerance</c>. Severity maps
+    /// to the FHIR criticality value set; the source coding (typically SNOMED or RxNorm) is forwarded
+    /// onto <c>AllergyIntolerance.code</c>. The aggregate's <c>UpdatedAtUtc</c> audit timestamp
+    /// drives <c>Meta.lastUpdated</c> and the incremental (<c>_since</c>) export filter.
+    /// </summary>
+    public EhrAllergyIntoleranceFeeder(IAllergyRepository allergies) => _allergies = allergies;
     public async IAsyncEnumerable<AllergyIntolerance> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var allergy in allergies.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var allergy in _allergies.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new AllergyIntolerance
             {

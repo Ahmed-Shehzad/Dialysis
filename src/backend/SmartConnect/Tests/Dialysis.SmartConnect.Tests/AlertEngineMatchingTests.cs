@@ -127,19 +127,22 @@ public sealed class AlertEngineMatchingTests
         return Task.FromResult((sp, recorded, fakeTime));
     }
 
-    private sealed class AdvanceableTimeProvider(DateTimeOffset startUtc) : TimeProvider
+    private sealed class AdvanceableTimeProvider : TimeProvider
     {
-        private DateTimeOffset _utcNow = startUtc;
+        private DateTimeOffset _utcNow;
+        public AdvanceableTimeProvider(DateTimeOffset startUtc) => _utcNow = startUtc;
         public override DateTimeOffset GetUtcNow() => _utcNow;
         public void Advance(TimeSpan delta) => _utcNow = _utcNow.Add(delta);
     }
 
-    private sealed class RecordingAlertActionProvider(List<string> recorded) : IAlertActionProvider
+    private sealed class RecordingAlertActionProvider : IAlertActionProvider
     {
+        private readonly List<string> _recorded;
+        public RecordingAlertActionProvider(List<string> recorded) => _recorded = recorded;
         public string Kind => "test-record";
         public Task<AlertActionResult> ExecuteAsync(AlertEvent evt, AlertRule rule, AlertActionSlot slot, CancellationToken ct)
         {
-            recorded.Add(rule.Name);
+            _recorded.Add(rule.Name);
             return Task.FromResult(AlertActionResult.Success());
         }
     }

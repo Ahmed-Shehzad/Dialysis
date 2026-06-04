@@ -109,14 +109,8 @@ public sealed class DefaultCdaToFhirMapperTests
     }
 
     [Fact]
-    public void Malformed_Xml_Throws_Format_Exception()
-    {
-        Should.Throw<FormatException>(() => _mapper.Map("<ClinicalDocument><unclosed>"));
-    }
+    public void Malformed_Xml_Throws_Format_Exception() => Should.Throw<FormatException>(() => _mapper.Map("<ClinicalDocument><unclosed>"));
 
     [Fact]
-    public void Empty_Input_Throws_Argument_Exception()
-    {
-        Should.Throw<ArgumentException>(() => _mapper.Map("   "));
-    }
+    public void Empty_Input_Throws_Argument_Exception() => Should.Throw<ArgumentException>(() => _mapper.Map("   "));
 }

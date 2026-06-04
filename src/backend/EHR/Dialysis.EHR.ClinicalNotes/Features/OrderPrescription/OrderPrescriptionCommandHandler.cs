@@ -5,11 +5,16 @@ using Dialysis.EHR.ClinicalNotes.Ports;
 
 namespace Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 
-public sealed class OrderPrescriptionCommandHandler(
-    IPrescriptionRepository prescriptions,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<OrderPrescriptionCommand, Guid>
+public sealed class OrderPrescriptionCommandHandler : ICommandHandler<OrderPrescriptionCommand, Guid>
 {
+    private readonly IPrescriptionRepository _prescriptions;
+    private readonly IUnitOfWork _unitOfWork;
+    public OrderPrescriptionCommandHandler(IPrescriptionRepository prescriptions,
+        IUnitOfWork unitOfWork)
+    {
+        _prescriptions = prescriptions;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(OrderPrescriptionCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
@@ -26,8 +31,8 @@ public sealed class OrderPrescriptionCommandHandler(
             request.RefillsAuthorized,
             request.PharmacyNcpdpId,
             request.TransmissionFormat);
-        prescriptions.Add(prescription);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _prescriptions.Add(prescription);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

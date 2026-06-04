@@ -45,7 +45,7 @@ public sealed class PdmsReportTemplateRepositoryTests
 
         public Task<IReadOnlyList<ReportTemplate>> ListAsync(
             ISpecification<ReportTemplate>? specification = null, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<ReportTemplate>>(_items.ToArray());
+            => Task.FromResult<IReadOnlyList<ReportTemplate>>([.. _items]);
 
         public Task AddAsync(ReportTemplate aggregate, CancellationToken cancellationToken = default)
         {

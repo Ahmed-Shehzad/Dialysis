@@ -42,14 +42,28 @@ public enum ConsentScope
     EpaDocument,
 }
 
-public readonly record struct ConsentDecision(
-    bool IsGranted,
-    string Reason,
-    Guid? ConsentRecordId)
+public readonly record struct ConsentDecision
 {
+    public ConsentDecision(bool IsGranted,
+        string Reason,
+        Guid? ConsentRecordId)
+    {
+        this.IsGranted = IsGranted;
+        this.Reason = Reason;
+        this.ConsentRecordId = ConsentRecordId;
+    }
     public static ConsentDecision Granted(Guid recordId) =>
         new(true, "Consent granted.", recordId);
 
     public static ConsentDecision Denied(string reason) =>
         new(false, reason, null);
+    public bool IsGranted { get; init; }
+    public string Reason { get; init; }
+    public Guid? ConsentRecordId { get; init; }
+    public void Deconstruct(out bool IsGranted, out string Reason, out Guid? ConsentRecordId)
+    {
+        IsGranted = this.IsGranted;
+        Reason = this.Reason;
+        ConsentRecordId = this.ConsentRecordId;
+    }
 }

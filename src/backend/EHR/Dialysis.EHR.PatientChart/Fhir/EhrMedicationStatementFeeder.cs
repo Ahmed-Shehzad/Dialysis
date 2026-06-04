@@ -15,15 +15,24 @@ namespace Dialysis.EHR.PatientChart.Fhir;
 /// aggregate's <c>UpdatedAtUtc</c> audit timestamp drives <c>Meta.lastUpdated</c> and the
 /// incremental (<c>_since</c>) export filter.
 /// </summary>
-public sealed class EhrMedicationStatementFeeder(IMedicationStatementRepository statements) : INdjsonResourceFeeder<FhirMedicationStatement>
+public sealed class EhrMedicationStatementFeeder : INdjsonResourceFeeder<FhirMedicationStatement>
 {
+    private readonly IMedicationStatementRepository _statements;
+    /// <summary>
+    /// Streams every <c>MedicationStatement</c> aggregate as a FHIR R4 <c>MedicationStatement</c>.
+    /// Patient-reported medications carry free-text dose + frequency on a single dosage entry; the
+    /// period between <c>StartedOn</c> and <c>StoppedOn</c> populates <c>effective[x]</c>. The
+    /// aggregate's <c>UpdatedAtUtc</c> audit timestamp drives <c>Meta.lastUpdated</c> and the
+    /// incremental (<c>_since</c>) export filter.
+    /// </summary>
+    public EhrMedicationStatementFeeder(IMedicationStatementRepository statements) => _statements = statements;
     public async IAsyncEnumerable<FhirMedicationStatement> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var statement in statements.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var statement in _statements.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(statement);
         }

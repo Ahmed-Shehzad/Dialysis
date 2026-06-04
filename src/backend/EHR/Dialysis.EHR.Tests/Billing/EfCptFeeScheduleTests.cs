@@ -69,8 +69,11 @@ public sealed class EfCptFeeScheduleTests
         return new StubDbContext(options);
     }
 
-    private sealed class StubDbContext(DbContextOptions<StubDbContext> options) : DbContext(options)
+    private sealed class StubDbContext : DbContext
     {
+        public StubDbContext(DbContextOptions<StubDbContext> options) : base(options)
+        {
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<CptFeeScheduleEntry>(b =>

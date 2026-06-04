@@ -5,9 +5,15 @@ using Dialysis.HIE.Consent.Ports;
 
 namespace Dialysis.HIE.Consent.Features.GrantConsent;
 
-public sealed class GrantConsentCommandHandler(IConsentRepository repository, IUnitOfWork unitOfWork)
-    : ICommandHandler<GrantConsentCommand, Guid>
+public sealed class GrantConsentCommandHandler : ICommandHandler<GrantConsentCommand, Guid>
 {
+    private readonly IConsentRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    public GrantConsentCommandHandler(IConsentRepository repository, IUnitOfWork unitOfWork)
+    {
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(GrantConsentCommand request, CancellationToken cancellationToken)
     {
         if (request.EffectiveToUtc is { } end && end <= request.EffectiveFromUtc)
@@ -20,8 +26,8 @@ public sealed class GrantConsentCommandHandler(IConsentRepository repository, IU
             request.Direction,
             request.EffectiveFromUtc,
             request.EffectiveToUtc);
-        await repository.AddAsync(consent, cancellationToken).ConfigureAwait(false);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _repository.AddAsync(consent, cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return consent.Id;
     }
 }

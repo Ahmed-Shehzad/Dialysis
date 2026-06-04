@@ -5,12 +5,17 @@ namespace Dialysis.BuildingBlocks.Fhir;
 /// <summary>
 /// Reflects the <see cref="FhirResourceRegistry"/> into <c>CapabilityStatement.rest.resource[]</c>.
 /// </summary>
-public sealed class DefaultFhirCapabilityProvider(FhirResourceRegistry registry) : IFhirCapabilityProvider
+public sealed class DefaultFhirCapabilityProvider : IFhirCapabilityProvider
 {
+    private readonly FhirResourceRegistry _registry;
+    /// <summary>
+    /// Reflects the <see cref="FhirResourceRegistry"/> into <c>CapabilityStatement.rest.resource[]</c>.
+    /// </summary>
+    public DefaultFhirCapabilityProvider(FhirResourceRegistry registry) => _registry = registry;
     public IReadOnlyList<CapabilityStatement.ResourceComponent> DescribeResources()
     {
-        var result = new List<CapabilityStatement.ResourceComponent>(registry.Entries.Count);
-        foreach (var (typeName, capability) in registry.Entries)
+        var result = new List<CapabilityStatement.ResourceComponent>(_registry.Entries.Count);
+        foreach (var (typeName, capability) in _registry.Entries)
         {
             var component = new CapabilityStatement.ResourceComponent
             {

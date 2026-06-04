@@ -24,4 +24,21 @@ public interface IOutboundAdapter
     string? GetParametersSchema() => null;
 }
 
-public readonly record struct OutboundSendResult(bool Succeeded, string? ErrorDetail, byte[]? ResponsePayload = null);
+public readonly record struct OutboundSendResult
+{
+    public OutboundSendResult(bool Succeeded, string? ErrorDetail, byte[]? ResponsePayload = null)
+    {
+        this.Succeeded = Succeeded;
+        this.ErrorDetail = ErrorDetail;
+        this.ResponsePayload = ResponsePayload;
+    }
+    public bool Succeeded { get; init; }
+    public string? ErrorDetail { get; init; }
+    public byte[]? ResponsePayload { get; init; }
+    public void Deconstruct(out bool Succeeded, out string? ErrorDetail, out byte[]? ResponsePayload)
+    {
+        Succeeded = this.Succeeded;
+        ErrorDetail = this.ErrorDetail;
+        ResponsePayload = this.ResponsePayload;
+    }
+}

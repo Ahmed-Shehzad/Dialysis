@@ -9,13 +9,23 @@ namespace Dialysis.Module.Hosting.Authorization;
 /// Resolves <see cref="ICurrentUser"/> from <see cref="HttpContext.User"/> when an OIDC authority is configured;
 /// otherwise grants every permission declared by the registered <see cref="IModulePermissionCatalog"/> for local dev.
 /// </summary>
-public sealed class HttpContextCurrentUser(
-    IHttpContextAccessor httpContextAccessor,
-    IOptions<ModuleAuthenticationOptions> options,
-    IModulePermissionCatalog permissionCatalog)
-    : ICurrentUser
+public sealed class HttpContextCurrentUser : ICurrentUser
 {
-    private readonly ModuleAuthenticationOptions _options = options.Value;
+    private readonly ModuleAuthenticationOptions _options;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IModulePermissionCatalog _permissionCatalog;
+    /// <summary>
+    /// Resolves <see cref="ICurrentUser"/> from <see cref="HttpContext.User"/> when an OIDC authority is configured;
+    /// otherwise grants every permission declared by the registered <see cref="IModulePermissionCatalog"/> for local dev.
+    /// </summary>
+    public HttpContextCurrentUser(IHttpContextAccessor httpContextAccessor,
+        IOptions<ModuleAuthenticationOptions> options,
+        IModulePermissionCatalog permissionCatalog)
+    {
+        _httpContextAccessor = httpContextAccessor;
+        _permissionCatalog = permissionCatalog;
+        _options = options.Value;
+    }
 
     public string? UserId
     {
@@ -24,7 +34,7 @@ public sealed class HttpContextCurrentUser(
             if (string.IsNullOrWhiteSpace(_options.Authority))
                 return _options.DevelopmentUserId;
 
-            var user = httpContextAccessor.HttpContext?.User;
+            var user = _httpContextAccessor.HttpContext?.User;
             if (user?.Identity?.IsAuthenticated != true)
                 return null;
 
@@ -39,13 +49,13 @@ public sealed class HttpContextCurrentUser(
         get
         {
             if (string.IsNullOrWhiteSpace(_options.Authority))
-                return permissionCatalog.All;
+                return _permissionCatalog.All;
 
-            var user = httpContextAccessor.HttpContext?.User;
+            var user = _httpContextAccessor.HttpContext?.User;
             if (user?.Identity?.IsAuthenticated != true)
                 return Array.Empty<string>();
 
-            var valid = new HashSet<string>(permissionCatalog.All, StringComparer.Ordinal);
+            var valid = new HashSet<string>(_permissionCatalog.All, StringComparer.Ordinal);
             var granted = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var c in user.FindAll(_options.PermissionClaimType).Where(c => valid.Contains(c.Value)))

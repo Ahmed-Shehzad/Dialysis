@@ -49,11 +49,13 @@ public sealed class MdmT02MapperTests
             Encoding.UTF8.GetString(content.Attachment.Data!));
     }
 
-    private sealed class FhirMapperWrapper<TResource>(IFhirV2MessageMapper<TResource> inner) : IFhirV2MessageMapperWrapper
+    private sealed class FhirMapperWrapper<TResource> : IFhirV2MessageMapperWrapper
         where TResource : Resource
     {
-        public string TriggerEvent => inner.TriggerEvent;
+        private readonly IFhirV2MessageMapper<TResource> _inner;
+        public FhirMapperWrapper(IFhirV2MessageMapper<TResource> inner) => _inner = inner;
+        public string TriggerEvent => _inner.TriggerEvent;
 
-        public Resource Map(Hl7V2Message message) => inner.Map(message);
+        public Resource Map(Hl7V2Message message) => _inner.Map(message);
     }
 }

@@ -9,9 +9,16 @@ namespace Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 /// module's <typeparamref name="TDbContext"/>. Modules add
 /// <see cref="AuditEventRecordConfiguration"/> to their <c>OnModelCreating</c> to enable this store.
 /// </summary>
-public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventStore
+public sealed class EfAuditEventStore<TDbContext> : IAuditEventStore
     where TDbContext : DbContext
 {
+    private readonly TDbContext _db;
+    /// <summary>
+    /// Persists <see cref="AuditEvent"/> resources as <see cref="AuditEventRecord"/> rows on the host
+    /// module's <typeparamref name="TDbContext"/>. Modules add
+    /// <see cref="AuditEventRecordConfiguration"/> to their <c>OnModelCreating</c> to enable this store.
+    /// </summary>
+    public EfAuditEventStore(TDbContext db) => _db = db;
     // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
     private static string SerializeFhirJson(AuditEvent auditEvent) => auditEvent.ToJson();
 
@@ -34,8 +41,8 @@ public sealed class EfAuditEventStore<TDbContext>(TDbContext db) : IAuditEventSt
             ResourceJson = SerializeFhirJson(auditEvent),
         };
 
-        db.Set<AuditEventRecord>().Add(record);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.Set<AuditEventRecord>().Add(record);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static string? ExtractResourceType(string? reference)

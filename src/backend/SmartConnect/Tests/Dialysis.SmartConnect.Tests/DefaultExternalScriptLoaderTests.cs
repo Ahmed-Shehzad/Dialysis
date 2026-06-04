@@ -161,9 +161,10 @@ public sealed class DefaultExternalScriptLoaderTests
         return new DefaultExternalScriptLoader(monitor, new StubHttpClientFactory(), time ?? TimeProvider.System);
     }
 
-    private sealed class StaticOptionsMonitor<T>(T value) : IOptionsMonitor<T> where T : class
+    private sealed class StaticOptionsMonitor<T> : IOptionsMonitor<T> where T : class
     {
-        public T CurrentValue { get; } = value;
+        public StaticOptionsMonitor(T value) => CurrentValue = value;
+        public T CurrentValue { get; }
         public T Get(string? name) => CurrentValue;
         public IDisposable? OnChange(Action<T, string?> listener) => null;
     }
@@ -179,9 +180,10 @@ public sealed class DefaultExternalScriptLoaderTests
             => Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
     }
 
-    private sealed class FixedTimeProvider(DateTimeOffset startUtc) : TimeProvider
+    private sealed class FixedTimeProvider : TimeProvider
     {
-        private DateTimeOffset _now = startUtc;
+        private DateTimeOffset _now;
+        public FixedTimeProvider(DateTimeOffset startUtc) => _now = startUtc;
         public void Advance(TimeSpan delta) => _now += delta;
         public override DateTimeOffset GetUtcNow() => _now;
     }

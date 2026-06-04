@@ -16,8 +16,20 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// <see cref="FlowRuntimeEngine"/>). A loop guard tracks chain depth via metadata key
 /// <see cref="DepthMetadataKey"/>.
 /// </remarks>
-public sealed class ChannelWriterOutboundAdapter(IServiceScopeFactory scopeFactory) : IOutboundAdapter
+public sealed class ChannelWriterOutboundAdapter : IOutboundAdapter
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    /// <summary>
+    /// Mirth-equivalent Channel Writer: dispatches the current message into another flow on the same
+    /// SmartConnect host via the in-process <see cref="IInboundTransport"/>.
+    /// </summary>
+    /// <remarks>
+    /// Unlike Mirth's fire-and-forget Channel Writer, dispatch is awaited so the caller's outbound
+    /// route inherits the target flow's success/failure (including retry/backoff in
+    /// <see cref="FlowRuntimeEngine"/>). A loop guard tracks chain depth via metadata key
+    /// <see cref="DepthMetadataKey"/>.
+    /// </remarks>
+    public ChannelWriterOutboundAdapter(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
     public const string KindValue = "channel-writer";
 
     public const string DepthMetadataKey = "smartconnect.channelwriter.depth";
@@ -97,7 +109,7 @@ public sealed class ChannelWriterOutboundAdapter(IServiceScopeFactory scopeFacto
             ReceivedAtUtc = message.ReceivedAtUtc,
         };
 
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var transport = scope.ServiceProvider.GetRequiredService<IInboundTransport>();
         var result = await transport.DispatchAsync(nextMessage, cancellationToken).ConfigureAwait(false);
 

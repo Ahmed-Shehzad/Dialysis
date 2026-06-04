@@ -4,20 +4,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.HIS.Persistence.Repositories;
 
-public sealed class EfPatientPortalReadModel(HisDbContext db) : IPatientPortalReadModel
+public sealed class EfPatientPortalReadModel : IPatientPortalReadModel
 {
+    private readonly HisDbContext _db;
+    public EfPatientPortalReadModel(HisDbContext db) => _db = db;
     public async Task<PatientPortalSummaryDto> GetSummaryAsync(Guid patientId, CancellationToken cancellationToken = default)
     {
         var nowUtc = DateTime.UtcNow;
-        var upcoming = await db.Appointments.AsNoTracking()
+        var upcoming = await _db.Appointments.AsNoTracking()
             .Where(a => a.PatientId == patientId && a.StatusCode == "Booked")
             .CountAsync(cancellationToken).ConfigureAwait(false);
 
-        var openOrders = await db.MedicationOrders.AsNoTracking()
+        var openOrders = await _db.MedicationOrders.AsNoTracking()
             .Where(o => o.PatientId == patientId && o.StatusCode == "Placed")
             .CountAsync(cancellationToken).ConfigureAwait(false);
 
-        var openAdmissions = await db.Admissions.AsNoTracking()
+        var openAdmissions = await _db.Admissions.AsNoTracking()
             .Where(a => a.PatientId == patientId && a.DischargedAtUtc == null)
             .CountAsync(cancellationToken).ConfigureAwait(false);
 

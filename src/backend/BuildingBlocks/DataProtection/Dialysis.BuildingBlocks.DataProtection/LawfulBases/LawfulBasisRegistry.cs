@@ -10,7 +10,7 @@ public sealed class LawfulBasisRegistry : ILawfulBasisRegistry
         ArgumentException.ThrowIfNullOrWhiteSpace(moduleSlug);
         ArgumentNullException.ThrowIfNull(activities);
         ModuleSlug = moduleSlug;
-        _activities = activities.ToArray();
+        _activities = [.. activities];
     }
 
     public string ModuleSlug { get; }

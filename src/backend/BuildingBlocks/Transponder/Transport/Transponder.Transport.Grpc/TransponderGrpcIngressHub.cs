@@ -5,9 +5,12 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.Grpc;
 
 /// <summary>Fans out published envelopes to every active gRPC <c>Subscribe</c> stream.</summary>
-public sealed class TransponderGrpcIngressHub(ILogger<TransponderGrpcIngressHub> logger)
+public sealed class TransponderGrpcIngressHub
 {
     private readonly ConcurrentDictionary<Guid, ChannelWriter<TransportEnvelope>> _writers = new();
+    private readonly ILogger<TransponderGrpcIngressHub> _logger;
+    /// <summary>Fans out published envelopes to every active gRPC <c>Subscribe</c> stream.</summary>
+    public TransponderGrpcIngressHub(ILogger<TransponderGrpcIngressHub> logger) => _logger = logger;
 
     /// <summary>Registers a subscriber; disposing unregisters and completes the writer.</summary>
     public IDisposable Register(ChannelWriter<TransportEnvelope> writer)
@@ -34,7 +37,7 @@ public sealed class TransponderGrpcIngressHub(ILogger<TransponderGrpcIngressHub>
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Transponder gRPC hub: failed writing to subscriber {Subscriber}", kv.Key);
+                _logger.LogDebug(ex, "Transponder gRPC hub: failed writing to subscriber {Subscriber}", kv.Key);
             }
         }
     }
@@ -57,17 +60,26 @@ public sealed class TransponderGrpcIngressHub(ILogger<TransponderGrpcIngressHub>
         return clone;
     }
 
-    private sealed class Registration(TransponderGrpcIngressHub hub, Guid id, ChannelWriter<TransportEnvelope> writer) : IDisposable
+    private sealed class Registration : IDisposable
     {
         private int _disposed;
+        private readonly TransponderGrpcIngressHub _hub;
+        private readonly Guid _id;
+        private readonly ChannelWriter<TransportEnvelope> _writer;
+        public Registration(TransponderGrpcIngressHub hub, Guid id, ChannelWriter<TransportEnvelope> writer)
+        {
+            _hub = hub;
+            _id = id;
+            _writer = writer;
+        }
 
         public void Dispose()
         {
             if (Interlocked.Exchange(ref _disposed, 1) != 0)
                 return;
 
-            hub.Remove(id);
-            writer.TryComplete();
+            _hub.Remove(_id);
+            _writer.TryComplete();
         }
     }
 }

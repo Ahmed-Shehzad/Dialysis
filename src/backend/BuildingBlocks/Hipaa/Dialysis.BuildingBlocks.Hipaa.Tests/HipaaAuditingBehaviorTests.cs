@@ -60,7 +60,21 @@ public sealed class HipaaAuditingBehaviorTests
 
     private sealed record NoPhiQuery : IRequest<string>;
 
-    private sealed record TestContext(string ModuleSlug, string? CurrentUserId) : IHipaaAuditContext;
+    private sealed record TestContext : IHipaaAuditContext
+    {
+        public TestContext(string ModuleSlug, string? CurrentUserId)
+        {
+            this.ModuleSlug = ModuleSlug;
+            this.CurrentUserId = CurrentUserId;
+        }
+        public string ModuleSlug { get; init; }
+        public string? CurrentUserId { get; init; }
+        public void Deconstruct(out string moduleSlug, out string? currentUserId)
+        {
+            moduleSlug = this.ModuleSlug;
+            currentUserId = this.CurrentUserId;
+        }
+    }
 
     private sealed class RecordingEmitter : IAuditEventEmitter
     {

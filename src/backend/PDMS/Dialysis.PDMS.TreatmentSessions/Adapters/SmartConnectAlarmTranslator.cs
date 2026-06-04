@@ -35,11 +35,43 @@ public static class SmartConnectAlarmTranslator
 /// PDMS-local intent translated from a SmartConnect alarm event. Carries everything the alarm pipeline
 /// needs to resolve a machine, find-or-raise a <see cref="TreatmentAlarm"/>, and persist the state change.
 /// </summary>
-public sealed record IncomingAlarm(
-    string MachineSerial,
-    long AlarmCode,
-    string? AlarmSource,
-    string? AlarmPhase,
-    TreatmentAlarmState State,
-    DateTime ObservedAtUtc,
-    string MessageControlId);
+public sealed record IncomingAlarm
+{
+    /// <summary>
+    /// PDMS-local intent translated from a SmartConnect alarm event. Carries everything the alarm pipeline
+    /// needs to resolve a machine, find-or-raise a <see cref="TreatmentAlarm"/>, and persist the state change.
+    /// </summary>
+    public IncomingAlarm(string MachineSerial,
+        long AlarmCode,
+        string? AlarmSource,
+        string? AlarmPhase,
+        TreatmentAlarmState State,
+        DateTime ObservedAtUtc,
+        string MessageControlId)
+    {
+        this.MachineSerial = MachineSerial;
+        this.AlarmCode = AlarmCode;
+        this.AlarmSource = AlarmSource;
+        this.AlarmPhase = AlarmPhase;
+        this.State = State;
+        this.ObservedAtUtc = ObservedAtUtc;
+        this.MessageControlId = MessageControlId;
+    }
+    public string MachineSerial { get; init; }
+    public long AlarmCode { get; init; }
+    public string? AlarmSource { get; init; }
+    public string? AlarmPhase { get; init; }
+    public TreatmentAlarmState State { get; init; }
+    public DateTime ObservedAtUtc { get; init; }
+    public string MessageControlId { get; init; }
+    public void Deconstruct(out string MachineSerial, out long AlarmCode, out string? AlarmSource, out string? AlarmPhase, out TreatmentAlarmState State, out DateTime ObservedAtUtc, out string MessageControlId)
+    {
+        MachineSerial = this.MachineSerial;
+        AlarmCode = this.AlarmCode;
+        AlarmSource = this.AlarmSource;
+        AlarmPhase = this.AlarmPhase;
+        State = this.State;
+        ObservedAtUtc = this.ObservedAtUtc;
+        MessageControlId = this.MessageControlId;
+    }
+}

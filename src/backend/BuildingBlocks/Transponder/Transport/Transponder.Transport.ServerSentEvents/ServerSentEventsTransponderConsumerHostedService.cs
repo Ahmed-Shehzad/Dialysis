@@ -5,26 +5,39 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.ServerSentEvents;
 
 /// <summary>Hosts the long-lived GET SSE stream and dispatches to <see cref="TransponderConsumeDispatcher"/>.</summary>
-public sealed class ServerSentEventsTransponderConsumerHostedService(
-    ITransponderTransport transport,
-    TransponderConsumeDispatcher dispatcher,
-    IMessageSerializer serializer,
-    ITransponderBus bus,
-    ILogger<ServerSentEventsTransponderConsumerHostedService> logger) : BackgroundService
+public sealed class ServerSentEventsTransponderConsumerHostedService : BackgroundService
 {
+    private readonly ITransponderTransport _transport;
+    private readonly TransponderConsumeDispatcher _dispatcher;
+    private readonly IMessageSerializer _serializer;
+    private readonly ITransponderBus _bus;
+    private readonly ILogger<ServerSentEventsTransponderConsumerHostedService> _logger;
+    /// <summary>Hosts the long-lived GET SSE stream and dispatches to <see cref="TransponderConsumeDispatcher"/>.</summary>
+    public ServerSentEventsTransponderConsumerHostedService(ITransponderTransport transport,
+        TransponderConsumeDispatcher dispatcher,
+        IMessageSerializer serializer,
+        ITransponderBus bus,
+        ILogger<ServerSentEventsTransponderConsumerHostedService> logger)
+    {
+        _transport = transport;
+        _dispatcher = dispatcher;
+        _serializer = serializer;
+        _bus = bus;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await transport
+            await _transport
                 .RunConsumerAsync(
-                    (msg, ct) => dispatcher.DispatchAsync(
+                    (msg, ct) => _dispatcher.DispatchAsync(
                         msg.RoutingKey,
                         msg.Payload,
                         msg.CorrelationId,
                         msg.DeduplicationId,
-                        serializer,
-                        bus,
+                        _serializer,
+                        _bus,
                         ct),
                     stoppingToken)
                 .ConfigureAwait(false);
@@ -35,7 +48,7 @@ public sealed class ServerSentEventsTransponderConsumerHostedService(
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Transponder SSE consumer terminated unexpectedly");
+            _logger.LogCritical(ex, "Transponder SSE consumer terminated unexpectedly");
             throw;
         }
     }

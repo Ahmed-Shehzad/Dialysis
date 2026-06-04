@@ -11,12 +11,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class ManagerDashboardFlowTests(HisApiWebApplicationFactory factory)
+public sealed class ManagerDashboardFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public ManagerDashboardFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Snapshot_Counts_Queued_Billing_And_Open_Quality_Tasks_And_Echoes_Focus_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 

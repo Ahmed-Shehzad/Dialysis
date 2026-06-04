@@ -8,12 +8,19 @@ using Dialysis.HIS.PatientFlow.Ports;
 
 namespace Dialysis.HIS.PatientFlow.Features.RegisterWalkIn;
 
-public sealed class RegisterWalkInCommandHandler(
-    IPatientQueueRepository repository,
-    ITransponderOutbox outbox,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<RegisterWalkInCommand, PatientQueueEntryDto>
+public sealed class RegisterWalkInCommandHandler : ICommandHandler<RegisterWalkInCommand, PatientQueueEntryDto>
 {
+    private readonly IPatientQueueRepository _repository;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IUnitOfWork _unitOfWork;
+    public RegisterWalkInCommandHandler(IPatientQueueRepository repository,
+        ITransponderOutbox outbox,
+        IUnitOfWork unitOfWork)
+    {
+        _repository = repository;
+        _outbox = outbox;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<PatientQueueEntryDto> HandleAsync(
         RegisterWalkInCommand request,
         CancellationToken cancellationToken)
@@ -25,15 +32,15 @@ public sealed class RegisterWalkInCommandHandler(
             mrn: request.Mrn.Trim(),
             arrivalUtc: DateTime.UtcNow,
             eligibilityVerified: request.EligibilityVerified);
-        repository.Add(entry);
+        _repository.Add(entry);
 
         foreach (var @event in entry.IntegrationEvents)
         {
-            await outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
+            await _outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
         }
         entry.ClearIntegrationEvents();
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new PatientQueueEntryDto(
             entry.Id,
             entry.PatientId,

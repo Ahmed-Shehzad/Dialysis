@@ -10,34 +10,41 @@ namespace Dialysis.HIE.Persistence.Repositories;
 /// <see cref="HieDbContext"/> under the <c>hie_documents</c> schema. The execution log
 /// is stored as JSON so the per-module breakdown can grow without a schema change.
 /// </summary>
-public sealed class EfErasureRequestStore(HieDbContext db) : IErasureRequestStore
+public sealed class EfErasureRequestStore : IErasureRequestStore
 {
+    private readonly HieDbContext _db;
+    /// <summary>
+    /// EF-backed <see cref="IErasureRequestStore"/>. Persists DSR Art. 17 requests on
+    /// <see cref="HieDbContext"/> under the <c>hie_documents</c> schema. The execution log
+    /// is stored as JSON so the per-module breakdown can grow without a schema change.
+    /// </summary>
+    public EfErasureRequestStore(HieDbContext db) => _db = db;
     public async Task SaveAsync(ErasureRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var existing = await db.ErasureRequests.FindAsync([request.Id], cancellationToken).ConfigureAwait(false);
+        var existing = await _db.ErasureRequests.FindAsync([request.Id], cancellationToken).ConfigureAwait(false);
         var row = ErasureRequestRow.FromDomain(request);
         if (existing is null)
         {
-            db.ErasureRequests.Add(row);
+            _db.ErasureRequests.Add(row);
         }
         else
         {
-            db.Entry(existing).CurrentValues.SetValues(row);
+            _db.Entry(existing).CurrentValues.SetValues(row);
         }
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<ErasureRequest?> FindAsync(Guid id, CancellationToken cancellationToken)
     {
-        var row = await db.ErasureRequests.FindAsync([id], cancellationToken).ConfigureAwait(false);
+        var row = await _db.ErasureRequests.FindAsync([id], cancellationToken).ConfigureAwait(false);
         return row?.ToDomain();
     }
 
     public async Task<IReadOnlyList<ErasureRequest>> ListByStatusAsync(
         ErasureRequestStatus status, int take, CancellationToken cancellationToken)
     {
-        var rows = await db.ErasureRequests
+        var rows = await _db.ErasureRequests
             .AsNoTracking()
             .Where(r => r.Status == status)
             .OrderByDescending(r => r.RequestedAtUtc)

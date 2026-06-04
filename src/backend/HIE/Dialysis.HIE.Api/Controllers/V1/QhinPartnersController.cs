@@ -25,14 +25,28 @@ namespace Dialysis.HIE.Api.Controllers.V1;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/tefca/partners")]
 [Authorize]
-public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
+public sealed class QhinPartnersController : ControllerBase
 {
+    private readonly ICqrsGateway _cqrs;
+    /// <summary>
+    /// US TEFCA QHIN partner onboarding surface. Operators manage:
+    /// <list type="bullet">
+    ///   <item>partner identity (name, FHIR base URL, IAS endpoint);</item>
+    ///   <item>lifecycle (Onboarding → Active → Suspended);</item>
+    ///   <item>trust anchors (PEM X.509 certs attached / revoked);</item>
+    ///   <item>mTLS material (PFX uploads stored via the shared blob store);</item>
+    ///   <item>preview IAS JWTs the operator hands to the partner for handshake validation.</item>
+    /// </list>
+    /// Every endpoint is <c>[PhiAccess]</c>-audited so a regulator can verify the partner
+    /// configuration trail end-to-end.
+    /// </summary>
+    public QhinPartnersController(ICqrsGateway cqrs) => _cqrs = cqrs;
     [HttpGet]
     [PhiAccess("hie.tefca.partners.list")]
     [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<QhinPartnerRow>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAsync(CancellationToken cancellationToken)
     {
-        var rows = await cqrs.SendQueryAsync<ListQhinPartnersQuery, IReadOnlyList<QhinPartnerRow>>(
+        var rows = await _cqrs.SendQueryAsync<ListQhinPartnersQuery, IReadOnlyList<QhinPartnerRow>>(
             new ListQhinPartnersQuery(), cancellationToken).ConfigureAwait(false);
         var self = Self();
         return Ok(new ResourceEnvelope<IReadOnlyList<QhinPartnerRow>>(rows, [new LinkDto("self", self, "GET")]));
@@ -44,7 +58,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var detail = await cqrs.SendQueryAsync<GetQhinPartnerQuery, QhinPartnerDetail?>(
+        var detail = await _cqrs.SendQueryAsync<GetQhinPartnerQuery, QhinPartnerDetail?>(
             new GetQhinPartnerQuery(id), cancellationToken).ConfigureAwait(false);
         if (detail is null) return NotFound();
         return Ok(new ResourceEnvelope<QhinPartnerDetail>(detail, [new LinkDto("self", Self(), "GET")]));
@@ -56,7 +70,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> OnboardAsync([FromBody] OnboardBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var id = await cqrs.SendCommandAsync<OnboardQhinPartnerCommand, Guid>(
+        var id = await _cqrs.SendCommandAsync<OnboardQhinPartnerCommand, Guid>(
             new OnboardQhinPartnerCommand(body.Name, body.FhirBaseUrl, body.IasEndpoint, User.Identity?.Name ?? "operator"),
             cancellationToken).ConfigureAwait(false);
         var location = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/tefca/partners/{id}";
@@ -71,7 +85,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> ReviseAsync(Guid id, [FromBody] OnboardBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        await cqrs.SendCommandAsync<ReviseQhinPartnerCommand, Unit>(
+        await _cqrs.SendCommandAsync<ReviseQhinPartnerCommand, Unit>(
             new ReviseQhinPartnerCommand(id, body.Name, body.FhirBaseUrl, body.IasEndpoint, User.Identity?.Name ?? "operator"),
             cancellationToken).ConfigureAwait(false);
         return NoContent();
@@ -83,7 +97,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> TransitionAsync(Guid id, [FromBody] StatusBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        await cqrs.SendCommandAsync<TransitionQhinPartnerStatusCommand, Unit>(
+        await _cqrs.SendCommandAsync<TransitionQhinPartnerStatusCommand, Unit>(
             new TransitionQhinPartnerStatusCommand(id, body.Next, User.Identity?.Name ?? "operator"),
             cancellationToken).ConfigureAwait(false);
         return NoContent();
@@ -95,7 +109,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> AttachAnchorAsync(Guid id, [FromBody] AnchorBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var anchorId = await cqrs.SendCommandAsync<AttachTrustAnchorCommand, Guid>(
+        var anchorId = await _cqrs.SendCommandAsync<AttachTrustAnchorCommand, Guid>(
             new AttachTrustAnchorCommand(id, body.CertificatePem, User.Identity?.Name ?? "operator"),
             cancellationToken).ConfigureAwait(false);
         return Ok(new ResourceEnvelope<AttachedAnchorDto>(new AttachedAnchorDto(anchorId), [new LinkDto("self", Self(), "GET")]));
@@ -106,7 +120,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RevokeAnchorAsync(Guid id, Guid anchorId, CancellationToken cancellationToken)
     {
-        await cqrs.SendCommandAsync<RevokeTrustAnchorCommand, Unit>(
+        await _cqrs.SendCommandAsync<RevokeTrustAnchorCommand, Unit>(
             new RevokeTrustAnchorCommand(id, anchorId), cancellationToken).ConfigureAwait(false);
         return NoContent();
     }
@@ -117,7 +131,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> RotateMtlsAsync(Guid id, [FromBody] MtlsBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var thumbprint = await cqrs.SendCommandAsync<RotateMtlsCertificateCommand, string>(
+        var thumbprint = await _cqrs.SendCommandAsync<RotateMtlsCertificateCommand, string>(
             new RotateMtlsCertificateCommand(id, body.Base64Pfx, body.PfxPassword, User.Identity?.Name ?? "operator"),
             cancellationToken).ConfigureAwait(false);
         return Ok(new ResourceEnvelope<RotatedMtlsDto>(new RotatedMtlsDto(thumbprint), [new LinkDto("self", Self(), "GET")]));
@@ -129,7 +143,7 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> IssueIasJwtAsync(Guid id, [FromBody] IssueIasJwtBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var token = await cqrs.SendCommandAsync<IssueIasJwtCommand, string>(
+        var token = await _cqrs.SendCommandAsync<IssueIasJwtCommand, string>(
             new IssueIasJwtCommand(id, body.SubjectPatientId, body.Scope ?? "patient.read", body.LifetimeSeconds ?? 300),
             cancellationToken).ConfigureAwait(false);
         return Ok(new ResourceEnvelope<IssuedIasJwtDto>(new IssuedIasJwtDto(token), [new LinkDto("self", Self(), "GET")]));
@@ -137,14 +151,99 @@ public sealed class QhinPartnersController(ICqrsGateway cqrs) : ControllerBase
 
     private string Self() => $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
 
-    public sealed record OnboardBody(string Name, string FhirBaseUrl, string IasEndpoint);
-    public sealed record StatusBody(QhinPartnerStatus Next);
-    public sealed record AnchorBody(string CertificatePem);
-    public sealed record MtlsBody(string Base64Pfx, string PfxPassword);
-    public sealed record IssueIasJwtBody(string SubjectPatientId, string? Scope, int? LifetimeSeconds);
+    public sealed record OnboardBody
+    {
+        public OnboardBody(string Name, string FhirBaseUrl, string IasEndpoint)
+        {
+            this.Name = Name;
+            this.FhirBaseUrl = FhirBaseUrl;
+            this.IasEndpoint = IasEndpoint;
+        }
+        public string Name { get; init; }
+        public string FhirBaseUrl { get; init; }
+        public string IasEndpoint { get; init; }
+        public void Deconstruct(out string name, out string fhirBaseUrl, out string iasEndpoint)
+        {
+            name = this.Name;
+            fhirBaseUrl = this.FhirBaseUrl;
+            iasEndpoint = this.IasEndpoint;
+        }
+    }
 
-    public sealed record OnboardedDto(Guid Id);
-    public sealed record AttachedAnchorDto(Guid AnchorId);
-    public sealed record RotatedMtlsDto(string Thumbprint);
-    public sealed record IssuedIasJwtDto(string Token);
+    public sealed record StatusBody
+    {
+        public StatusBody(QhinPartnerStatus Next) => this.Next = Next;
+        public QhinPartnerStatus Next { get; init; }
+        public void Deconstruct(out QhinPartnerStatus next) => next = this.Next;
+    }
+
+    public sealed record AnchorBody
+    {
+        public AnchorBody(string CertificatePem) => this.CertificatePem = CertificatePem;
+        public string CertificatePem { get; init; }
+        public void Deconstruct(out string certificatePem) => certificatePem = this.CertificatePem;
+    }
+
+    public sealed record MtlsBody
+    {
+        public MtlsBody(string Base64Pfx, string PfxPassword)
+        {
+            this.Base64Pfx = Base64Pfx;
+            this.PfxPassword = PfxPassword;
+        }
+        public string Base64Pfx { get; init; }
+        public string PfxPassword { get; init; }
+        public void Deconstruct(out string base64Pfx, out string pfxPassword)
+        {
+            base64Pfx = this.Base64Pfx;
+            pfxPassword = this.PfxPassword;
+        }
+    }
+
+    public sealed record IssueIasJwtBody
+    {
+        public IssueIasJwtBody(string SubjectPatientId, string? Scope, int? LifetimeSeconds)
+        {
+            this.SubjectPatientId = SubjectPatientId;
+            this.Scope = Scope;
+            this.LifetimeSeconds = LifetimeSeconds;
+        }
+        public string SubjectPatientId { get; init; }
+        public string? Scope { get; init; }
+        public int? LifetimeSeconds { get; init; }
+        public void Deconstruct(out string subjectPatientId, out string? scope, out int? lifetimeSeconds)
+        {
+            subjectPatientId = this.SubjectPatientId;
+            scope = this.Scope;
+            lifetimeSeconds = this.LifetimeSeconds;
+        }
+    }
+
+    public sealed record OnboardedDto
+    {
+        public OnboardedDto(Guid Id) => this.Id = Id;
+        public Guid Id { get; init; }
+        public void Deconstruct(out Guid id) => id = this.Id;
+    }
+
+    public sealed record AttachedAnchorDto
+    {
+        public AttachedAnchorDto(Guid AnchorId) => this.AnchorId = AnchorId;
+        public Guid AnchorId { get; init; }
+        public void Deconstruct(out Guid anchorId) => anchorId = this.AnchorId;
+    }
+
+    public sealed record RotatedMtlsDto
+    {
+        public RotatedMtlsDto(string Thumbprint) => this.Thumbprint = Thumbprint;
+        public string Thumbprint { get; init; }
+        public void Deconstruct(out string thumbprint) => thumbprint = this.Thumbprint;
+    }
+
+    public sealed record IssuedIasJwtDto
+    {
+        public IssuedIasJwtDto(string Token) => this.Token = Token;
+        public string Token { get; init; }
+        public void Deconstruct(out string token) => token = this.Token;
+    }
 }

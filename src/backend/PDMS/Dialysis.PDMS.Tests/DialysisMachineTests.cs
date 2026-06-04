@@ -55,8 +55,5 @@ public sealed class DialysisMachineTests
     }
 
     [Fact]
-    public void Register_Rejects_Blank_Serial()
-    {
-        Should.Throw<ArgumentException>(() => DialysisMachine.Register(Guid.NewGuid(), "  ", null, null));
-    }
+    public void Register_Rejects_Blank_Serial() => Should.Throw<ArgumentException>(() => DialysisMachine.Register(Guid.NewGuid(), "  ", null, null));
 }

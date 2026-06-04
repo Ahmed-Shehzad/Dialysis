@@ -21,15 +21,32 @@ public interface IAttachmentBlobScanner
 /// Outcome of a scanner invocation. <see cref="ThreatName"/> is non-null only when
 /// <see cref="Verdict"/> is <see cref="AttachmentScanVerdict.Infected"/>.
 /// </summary>
-public sealed record AttachmentScanResult(AttachmentScanVerdict Verdict, string? ThreatName)
+public sealed record AttachmentScanResult
 {
+    /// <summary>
+    /// Outcome of a scanner invocation. <see cref="ThreatName"/> is non-null only when
+    /// <see cref="Verdict"/> is <see cref="AttachmentScanVerdict.Infected"/>.
+    /// </summary>
+    public AttachmentScanResult(AttachmentScanVerdict Verdict, string? ThreatName)
+    {
+        this.Verdict = Verdict;
+        this.ThreatName = ThreatName;
+    }
     public static AttachmentScanResult Clean { get; } = new(AttachmentScanVerdict.Clean, null);
+    public AttachmentScanVerdict Verdict { get; init; }
+    public string? ThreatName { get; init; }
 
     public static AttachmentScanResult Infected(string threatName) =>
         new(AttachmentScanVerdict.Infected, threatName);
 
     public static AttachmentScanResult ScannerUnavailable { get; } =
         new(AttachmentScanVerdict.ScannerUnavailable, null);
+
+    public void Deconstruct(out AttachmentScanVerdict Verdict, out string? ThreatName)
+    {
+        Verdict = this.Verdict;
+        ThreatName = this.ThreatName;
+    }
 }
 
 /// <summary>Verdict from the scanner.</summary>

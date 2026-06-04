@@ -22,8 +22,31 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// hosts that do not wire a bus (some unit-test compositions) can still register the adapter without
 /// failing at startup — a missing bus surfaces as an actionable per-send failure instead.
 /// </remarks>
-public sealed class TransponderBusOutboundAdapter(IServiceScopeFactory scopeFactory, TimeProvider time) : IOutboundAdapter
+public sealed class TransponderBusOutboundAdapter : IOutboundAdapter
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TimeProvider _time;
+    /// <summary>
+    /// Outbound adapter (kind <c>transponder-bus</c>) that publishes the transformed route payload onto
+    /// the Transponder bus as a <see cref="SmartConnectRoutedPayloadIntegrationEvent"/>. Consumers
+    /// across other modules subscribe via <c>IConsumer&lt;SmartConnectRoutedPayloadIntegrationEvent&gt;</c>
+    /// and fan out by <c>RoutingHint</c>.
+    /// </summary>
+    /// <remarks>
+    /// Use this when a flow needs to broadcast its output to the cross-module bus without committing to
+    /// a module-owned typed event. For module-specific contracts prefer a dedicated typed publisher.
+    /// Schema-versioned via <see cref="SmartConnectRoutedPayloadIntegrationEvent.SchemaVersion"/>;
+    /// bumps go through <c>IntegrationEventVersioningTests</c>.
+    ///
+    /// Resolves <see cref="ITransponderBus"/> from a fresh DI scope on each send so SmartConnect.Core
+    /// hosts that do not wire a bus (some unit-test compositions) can still register the adapter without
+    /// failing at startup — a missing bus surfaces as an actionable per-send failure instead.
+    /// </remarks>
+    public TransponderBusOutboundAdapter(IServiceScopeFactory scopeFactory, TimeProvider time)
+    {
+        _scopeFactory = scopeFactory;
+        _time = time;
+    }
     public const string KindValue = "transponder-bus";
 
     private const string ParametersMetadataKey = "smartconnect.outbound.parameters";
@@ -53,7 +76,7 @@ public sealed class TransponderBusOutboundAdapter(IServiceScopeFactory scopeFact
             parameters = new TransponderBusOutboundParameters();
         }
 
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var bus = scope.ServiceProvider.GetService<ITransponderBus>();
         if (bus is null)
         {
@@ -65,7 +88,7 @@ public sealed class TransponderBusOutboundAdapter(IServiceScopeFactory scopeFact
         var headers = BuildHeaderDictionary(message, parameters);
         var envelope = new SmartConnectRoutedPayloadIntegrationEvent(
             EventId: Guid.CreateVersion7(),
-            OccurredOn: time.GetUtcNow().UtcDateTime,
+            OccurredOn: _time.GetUtcNow().UtcDateTime,
             SchemaVersion: 1,
             FlowId: message.FlowId,
             IntegrationMessageId: message.Id,

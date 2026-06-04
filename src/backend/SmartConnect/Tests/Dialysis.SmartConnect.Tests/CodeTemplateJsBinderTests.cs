@@ -97,15 +97,23 @@ public sealed class CodeTemplateJsBinderTests
         };
 
     /// <summary>Tiny in-memory repo backed by a flat template list, filtered by context on read.</summary>
-    private sealed class StubRepository(Guid libraryId, IReadOnlyList<CodeTemplate> templates) : ICodeTemplateLibraryRepository
+    private sealed class StubRepository : ICodeTemplateLibraryRepository
     {
+        private readonly Guid _libraryId;
+        private readonly IReadOnlyList<CodeTemplate> _templates;
+        /// <summary>Tiny in-memory repo backed by a flat template list, filtered by context on read.</summary>
+        public StubRepository(Guid libraryId, IReadOnlyList<CodeTemplate> templates)
+        {
+            _libraryId = libraryId;
+            _templates = templates;
+        }
         public Task<IReadOnlyList<CodeTemplateLibrary>> GetAllAsync(CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<CodeTemplateLibrary>>(
-                [new CodeTemplateLibrary { Id = libraryId, Name = "stub", Templates = templates, LastModifiedUtc = DateTimeOffset.UtcNow }]);
+                [new CodeTemplateLibrary { Id = _libraryId, Name = "stub", Templates = _templates, LastModifiedUtc = DateTimeOffset.UtcNow }]);
 
         public Task<CodeTemplateLibrary?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-            Task.FromResult<CodeTemplateLibrary?>(id == libraryId
-                ? new CodeTemplateLibrary { Id = libraryId, Name = "stub", Templates = templates, LastModifiedUtc = DateTimeOffset.UtcNow }
+            Task.FromResult<CodeTemplateLibrary?>(id == _libraryId
+                ? new CodeTemplateLibrary { Id = _libraryId, Name = "stub", Templates = _templates, LastModifiedUtc = DateTimeOffset.UtcNow }
                 : null);
 
         public Task UpsertAsync(CodeTemplateLibrary library, CancellationToken ct = default) => Task.CompletedTask;
@@ -117,6 +125,6 @@ public sealed class CodeTemplateJsBinderTests
             CodeTemplateContext context,
             CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<CodeTemplate>>(
-                [.. templates.Where(t => t.Contexts.Contains(context))]);
+                [.. _templates.Where(t => t.Contexts.Contains(context))]);
     }
 }

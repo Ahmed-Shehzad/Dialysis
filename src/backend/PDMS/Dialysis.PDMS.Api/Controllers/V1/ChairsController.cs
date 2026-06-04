@@ -8,8 +8,10 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/chairs")]
-public sealed class ChairsController(ICqrsGateway gateway) : ControllerBase
+public sealed class ChairsController : ControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    public ChairsController(ICqrsGateway gateway) => _gateway = gateway;
     /// <summary>
     /// Returns the current chair occupancy snapshot — one entry per chair that's been placed
     /// since the API started. Drives the chairside dashboard and any future floor map. The
@@ -20,7 +22,7 @@ public sealed class ChairsController(ICqrsGateway gateway) : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<ChairAssignmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAsync(CancellationToken cancellationToken)
     {
-        var assignments = await gateway
+        var assignments = await _gateway
             .SendQueryAsync<ListChairAssignmentsQuery, IReadOnlyList<ChairAssignmentDto>>(
                 new ListChairAssignmentsQuery(), cancellationToken)
             .ConfigureAwait(false);

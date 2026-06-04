@@ -4,20 +4,25 @@ using Dialysis.PDMS.TreatmentSessions.Ports;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.ListSessionsByPatient;
 
-public sealed class ListSessionsByPatientQueryHandler(
-    IDialysisSessionRepository sessions,
-    TimeProvider time)
-    : IQueryHandler<ListSessionsByPatientQuery, IReadOnlyList<DialysisSessionListItem>>
+public sealed class ListSessionsByPatientQueryHandler : IQueryHandler<ListSessionsByPatientQuery, IReadOnlyList<DialysisSessionListItem>>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    private readonly TimeProvider _time;
+    public ListSessionsByPatientQueryHandler(IDialysisSessionRepository sessions,
+        TimeProvider time)
+    {
+        _sessions = sessions;
+        _time = time;
+    }
     public async Task<IReadOnlyList<DialysisSessionListItem>> HandleAsync(
         ListSessionsByPatientQuery request,
         CancellationToken cancellationToken)
     {
         var take = Math.Clamp(request.Take, 1, 200);
         var lookbackDays = Math.Clamp(request.LookbackDays, 1, 365);
-        var sinceUtc = time.GetUtcNow().UtcDateTime.AddDays(-lookbackDays);
+        var sinceUtc = _time.GetUtcNow().UtcDateTime.AddDays(-lookbackDays);
 
-        var rows = await sessions
+        var rows = await _sessions
             .ListByPatientAsync(request.PatientId, sinceUtc, cancellationToken)
             .ConfigureAwait(false);
 

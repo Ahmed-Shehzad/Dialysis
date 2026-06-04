@@ -21,10 +21,19 @@ public sealed class MeditechAdapterOptions
 /// Meditech Expanse backend-services auth via OAuth2 <c>client_credentials</c> grant with HTTP Basic
 /// authentication. Bearer tokens are cached per-tenant.
 /// </summary>
-public sealed class MeditechAuthProvider(IOptions<MeditechAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
-    : IExternalEhrAuthProvider
+public sealed class MeditechAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly MeditechAdapterOptions _options = options.Value;
+    private readonly MeditechAdapterOptions _options;
+    private readonly OAuth2TokenAcquirer _tokenAcquirer;
+    /// <summary>
+    /// Meditech Expanse backend-services auth via OAuth2 <c>client_credentials</c> grant with HTTP Basic
+    /// authentication. Bearer tokens are cached per-tenant.
+    /// </summary>
+    public MeditechAuthProvider(IOptions<MeditechAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
+    {
+        _tokenAcquirer = tokenAcquirer;
+        _options = options.Value;
+    }
 
     public string VendorName => "Meditech";
 
@@ -40,17 +49,17 @@ public sealed class MeditechAuthProvider(IOptions<MeditechAdapterOptions> option
                 new("scope", _options.Scope),
             ],
             BasicAuth: new BasicAuthCredential(_options.ClientId, _options.ClientSecret));
-        return tokenAcquirer.AcquireAsync(request, cancellationToken);
+        return _tokenAcquirer.AcquireAsync(request, cancellationToken);
     }
 }
 
-public sealed class MeditechFhirAdapter(
-    IHttpClientFactory httpClientFactory,
-    MeditechAuthProvider authProvider,
-    IOptions<MeditechAdapterOptions> options)
-    : HttpFhirAdapterBase(httpClientFactory, authProvider)
+public sealed class MeditechFhirAdapter : HttpFhirAdapterBase
 {
-    private readonly MeditechAdapterOptions _options = options.Value;
+    private readonly MeditechAdapterOptions _options;
+    public MeditechFhirAdapter(IHttpClientFactory httpClientFactory,
+        MeditechAuthProvider authProvider,
+        IOptions<MeditechAdapterOptions> options) : base(httpClientFactory, authProvider) =>
+        _options = options.Value;
 
     public override ExternalEhrAdapterDescriptor Describe() => new("Meditech", FhirVersion: "4.0.1", BaseUrl: _options.BaseUrl);
 }

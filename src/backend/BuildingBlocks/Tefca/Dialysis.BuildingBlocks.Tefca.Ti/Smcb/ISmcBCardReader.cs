@@ -49,15 +49,21 @@ public enum SmcBKeyKind
 }
 
 /// <summary>The SMC-B's certificate chain — leaf at index 0, root at the end.</summary>
-public sealed record SmcBCertificateChain(IReadOnlyList<byte[]> CertificatesDer)
+public sealed record SmcBCertificateChain
 {
+    /// <summary>The SMC-B's certificate chain — leaf at index 0, root at the end.</summary>
+    public SmcBCertificateChain(IReadOnlyList<byte[]> CertificatesDer) => this.CertificatesDer = CertificatesDer;
+
     public string ChainFingerprintSha256
     {
         get
         {
             using var sha = System.Security.Cryptography.SHA256.Create();
-            var hash = sha.ComputeHash(CertificatesDer.SelectMany(c => c).ToArray());
+            var hash = sha.ComputeHash([.. CertificatesDer.SelectMany(c => c)]);
             return Convert.ToHexString(hash);
         }
     }
+
+    public IReadOnlyList<byte[]> CertificatesDer { get; init; }
+    public void Deconstruct(out IReadOnlyList<byte[]> CertificatesDer) => CertificatesDer = this.CertificatesDer;
 }

@@ -10,11 +10,21 @@ namespace Dialysis.DomainDrivenDesign.Persistence;
 /// so handlers no longer need to call <c>RecordCreation</c>/<c>RecordUpdate</c>/<c>RecordSoftDelete</c> manually.
 /// Soft-delete is detected by an entity entering the modified state with <see cref="Audit.IsDeleted"/> flipped to true.
 /// </summary>
-public sealed class AuditSaveChangesInterceptor(
-    TimeProvider timeProvider,
-    IAuditActorAccessor actorAccessor)
-    : SaveChangesInterceptor
+public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
 {
+    private readonly TimeProvider _timeProvider;
+    private readonly IAuditActorAccessor _actorAccessor;
+    /// <summary>
+    /// Stamps <see cref="Audit"/> shadow fields on every aggregate flagged for the audit primitive,
+    /// so handlers no longer need to call <c>RecordCreation</c>/<c>RecordUpdate</c>/<c>RecordSoftDelete</c> manually.
+    /// Soft-delete is detected by an entity entering the modified state with <see cref="Audit.IsDeleted"/> flipped to true.
+    /// </summary>
+    public AuditSaveChangesInterceptor(TimeProvider timeProvider,
+        IAuditActorAccessor actorAccessor)
+    {
+        _timeProvider = timeProvider;
+        _actorAccessor = actorAccessor;
+    }
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -39,8 +49,8 @@ public sealed class AuditSaveChangesInterceptor(
             return;
         }
 
-        var now = timeProvider.GetUtcNow().UtcDateTime;
-        var actorId = actorAccessor.ActorId;
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var actorId = _actorAccessor.ActorId;
 
         foreach (var entry in context.ChangeTracker.Entries<Audit>())
         {

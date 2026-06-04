@@ -6,12 +6,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class PatientAccessFlowTests(HisApiWebApplicationFactory factory)
+public sealed class PatientAccessFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public PatientAccessFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Getpatientportalsummary_Returns_Zero_Counts_For_Unknown_Patient_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var patientId = Guid.CreateVersion7();

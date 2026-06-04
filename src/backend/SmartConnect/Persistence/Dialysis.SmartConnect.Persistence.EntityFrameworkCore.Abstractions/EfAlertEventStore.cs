@@ -5,15 +5,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventStore
+public sealed class EfAlertEventStore : IAlertEventStore
 {
+    private readonly SmartConnectDbContext _db;
+    public EfAlertEventStore(SmartConnectDbContext db) => _db = db;
     private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = null };
 
     public async Task AppendAsync(AlertEvent evt, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(evt);
 
-        db.AlertEvents.Add(new AlertEventEntity
+        _db.AlertEvents.Add(new AlertEventEntity
         {
             Id = evt.Id == Guid.Empty ? Guid.CreateVersion7() : evt.Id,
             RuleId = evt.RuleId,
@@ -25,19 +27,19 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
             OccurredAtUtc = evt.OccurredAtUtc == default ? DateTimeOffset.UtcNow : evt.OccurredAtUtc,
             ActionOutcomesJson = JsonSerializer.Serialize(evt.ActionOutcomes, _jsonOpts),
         });
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<AlertEvent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var row = await db.AlertEvents.AsNoTracking()
+        var row = await _db.AlertEvents.AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken).ConfigureAwait(false);
         return row is null ? null : ToDomain(row);
     }
 
     public async Task<IReadOnlyList<AlertEvent>> GetRecentAsync(int take, CancellationToken cancellationToken = default)
     {
-        var rows = await db.AlertEvents.AsNoTracking()
+        var rows = await _db.AlertEvents.AsNoTracking()
             .OrderByDescending(e => e.OccurredAtUtc)
             .Take(Math.Clamp(take, 1, 500))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -46,7 +48,7 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
 
     public async Task<IReadOnlyList<AlertEvent>> GetForRuleAsync(Guid ruleId, int take, CancellationToken cancellationToken = default)
     {
-        var rows = await db.AlertEvents.AsNoTracking()
+        var rows = await _db.AlertEvents.AsNoTracking()
             .Where(e => e.RuleId == ruleId)
             .OrderByDescending(e => e.OccurredAtUtc)
             .Take(Math.Clamp(take, 1, 500))
@@ -56,11 +58,11 @@ public sealed class EfAlertEventStore(SmartConnectDbContext db) : IAlertEventSto
 
     public async Task<int> DeleteOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken = default)
     {
-        var rows = await db.AlertEvents.Where(e => e.OccurredAtUtc < cutoffUtc).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var rows = await _db.AlertEvents.Where(e => e.OccurredAtUtc < cutoffUtc).ToListAsync(cancellationToken).ConfigureAwait(false);
         if (rows.Count == 0)
             return 0;
-        db.AlertEvents.RemoveRange(rows);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.AlertEvents.RemoveRange(rows);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return rows.Count;
     }
 

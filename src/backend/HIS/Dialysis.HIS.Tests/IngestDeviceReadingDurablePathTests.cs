@@ -18,14 +18,24 @@ namespace Dialysis.HIS.Tests;
 /// existing handler / repository tests; this file covers the durable rails specifically.
 /// </summary>
 [Collection(nameof(HisFixtureCollection))]
-public sealed class IngestDeviceReadingDurablePathTests(HisApiWebApplicationFactory factory)
+public sealed class IngestDeviceReadingDurablePathTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    /// <summary>
+    /// End-to-end exercise of the durable-command path for HIS <c>IngestDeviceReading</c>.
+    /// Runs against the real Testcontainers Postgres + in-memory Transponder so the ledger
+    /// row + the aggregate change land in one transaction the way they will in production.
+    ///
+    /// This is the contract lock-down for PR #141 — the synchronous path is covered by the
+    /// existing handler / repository tests; this file covers the durable rails specifically.
+    /// </summary>
+    public IngestDeviceReadingDurablePathTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Sync_Path_Generates_Server_Side_Id_When_Reading_Id_Is_Empty_Async()
     {
         // Synchronous fallback (the feature flag off path). Confirms the legacy behavior
         // still works after the [DurableCommand] + ReadingId additions in #141.
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 
@@ -50,7 +60,7 @@ public sealed class IngestDeviceReadingDurablePathTests(HisApiWebApplicationFact
         // handler with an explicit ReadingId, the handler uses it verbatim. This is what
         // makes a redelivery yield the same row + lets the 202 caller know the row id
         // without polling.
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 
@@ -74,7 +84,7 @@ public sealed class IngestDeviceReadingDurablePathTests(HisApiWebApplicationFact
         // The bus's contract — caller supplies a CommandId, the bus uses it as both the
         // ledger PK and the acceptance correlation marker. Same id → same row, idempotency
         // guaranteed by EfCommandLedger.TryClaimAsync.
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var bus = scope.ServiceProvider.GetRequiredService<IDurableCommandBus>();
 
         var commandId = Guid.CreateVersion7();
@@ -97,7 +107,7 @@ public sealed class IngestDeviceReadingDurablePathTests(HisApiWebApplicationFact
         // publish happens. PR #140 ships RecordReadingCommand for PDMS;
         // PR #141 added IngestDeviceReadingCommand for HIS. AdmitPatientCommand is
         // intentionally NOT in either catalog, so it should be rejected here.
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var bus = scope.ServiceProvider.GetRequiredService<IDurableCommandBus>();
 
         await Should.ThrowAsync<DurableCommandException>(() =>

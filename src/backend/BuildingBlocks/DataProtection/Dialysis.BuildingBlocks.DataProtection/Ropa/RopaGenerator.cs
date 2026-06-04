@@ -22,7 +22,7 @@ public sealed class RopaGenerator : IRopaGenerator
         ArgumentNullException.ThrowIfNull(retention);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(clock);
-        _moduleRegistries = moduleRegistries.ToArray();
+        _moduleRegistries = [.. moduleRegistries];
         _retention = retention;
         _options = options.Value;
         _clock = clock;

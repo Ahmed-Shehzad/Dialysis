@@ -112,10 +112,7 @@ public sealed class NcpdpTelecomTransformStageTests
     }
 
     [Fact]
-    public void Stage_Advertises_Ncpdp_Telecom_Kind()
-    {
-        Assert.Equal("ncpdp-telecom", new NcpdpTelecomTransformStage().Kind);
-    }
+    public void Stage_Advertises_Ncpdp_Telecom_Kind() => Assert.Equal("ncpdp-telecom", new NcpdpTelecomTransformStage().Kind);
 
     private static string BuildPayload(params string[] segments) =>
         string.Join(Ss, segments) + Ss;

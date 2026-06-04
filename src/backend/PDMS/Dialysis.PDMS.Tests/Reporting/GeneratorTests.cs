@@ -92,10 +92,7 @@ public sealed class GeneratorTests
     }
 
     [Fact]
-    public void Cpt_Resolver_Rejects_Unknown_Modality()
-    {
-        Should.Throw<InvalidOperationException>(() => BillingDocumentGenerator.ResolveCptCode("CRRT", 1));
-    }
+    public void Cpt_Resolver_Rejects_Unknown_Modality() => Should.Throw<InvalidOperationException>(() => BillingDocumentGenerator.ResolveCptCode("CRRT", 1));
 
     [Fact]
     public async Task Discharge_Letter_Signable_Variant_Has_Acroform_Signature_Field_Async()

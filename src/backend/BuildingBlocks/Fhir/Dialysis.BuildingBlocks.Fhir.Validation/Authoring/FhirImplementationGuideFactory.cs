@@ -3,9 +3,23 @@ using Hl7.Fhir.Model;
 namespace Dialysis.BuildingBlocks.Fhir.Validation.Authoring;
 
 /// <summary>The artifacts produced when authoring an Implementation Guide on demand.</summary>
-public sealed record AuthoredImplementationGuide(
-    ImplementationGuide Guide,
-    IReadOnlyList<StructureDefinition> Profiles);
+public sealed record AuthoredImplementationGuide
+{
+    /// <summary>The artifacts produced when authoring an Implementation Guide on demand.</summary>
+    public AuthoredImplementationGuide(ImplementationGuide Guide,
+        IReadOnlyList<StructureDefinition> Profiles)
+    {
+        this.Guide = Guide;
+        this.Profiles = Profiles;
+    }
+    public ImplementationGuide Guide { get; init; }
+    public IReadOnlyList<StructureDefinition> Profiles { get; init; }
+    public void Deconstruct(out ImplementationGuide Guide, out IReadOnlyList<StructureDefinition> Profiles)
+    {
+        Guide = this.Guide;
+        Profiles = this.Profiles;
+    }
+}
 
 /// <summary>Builds an <c>ImplementationGuide</c> plus its contained profiles from a spec.</summary>
 public interface IFhirImplementationGuideFactory
@@ -15,9 +29,11 @@ public interface IFhirImplementationGuideFactory
 }
 
 /// <inheritdoc cref="IFhirImplementationGuideFactory" />
-public sealed class FhirImplementationGuideFactory(IFhirProfileFactory profileFactory)
-    : IFhirImplementationGuideFactory
+public sealed class FhirImplementationGuideFactory : IFhirImplementationGuideFactory
 {
+    private readonly IFhirProfileFactory _profileFactory;
+    /// <inheritdoc cref="IFhirImplementationGuideFactory" />
+    public FhirImplementationGuideFactory(IFhirProfileFactory profileFactory) => _profileFactory = profileFactory;
     public async Task<AuthoredImplementationGuide> BuildAsync(
         FhirImplementationGuideSpec spec, CancellationToken cancellationToken)
     {
@@ -33,7 +49,7 @@ public sealed class FhirImplementationGuideFactory(IFhirProfileFactory profileFa
         foreach (var profileSpec in spec.Profiles)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            profiles.Add(await profileFactory.BuildAsync(profileSpec, cancellationToken).ConfigureAwait(false));
+            profiles.Add(await _profileFactory.BuildAsync(profileSpec, cancellationToken).ConfigureAwait(false));
         }
 
         var ig = new ImplementationGuide

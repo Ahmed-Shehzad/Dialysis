@@ -18,12 +18,20 @@ namespace Dialysis.Identity.Tests;
 /// Transponder building block's own tests; here we just lock down the per-module hand-off.
 /// </summary>
 [Collection(nameof(IdentityFixtureCollection))]
-public sealed class IdentityProvisioningOutboxTests(IdentityApiWebApplicationFactory factory)
+public sealed class IdentityProvisioningOutboxTests
 {
+    private readonly IdentityApiWebApplicationFactory _factory;
+    /// <summary>
+    /// Smoke-test the cross-module publish contract: when the Identity module mutates its aggregates
+    /// the resulting <c>IIntegrationEvent</c> lands in the Transponder transactional outbox so the
+    /// outbox relay → RabbitMQ leg can ship it to other modules. RabbitMQ itself is exercised by the
+    /// Transponder building block's own tests; here we just lock down the per-module hand-off.
+    /// </summary>
+    public IdentityProvisioningOutboxTests(IdentityApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Provisioning_A_User_Writes_A_Userregistered_Row_Into_The_Outbox_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
 
@@ -44,7 +52,7 @@ public sealed class IdentityProvisioningOutboxTests(IdentityApiWebApplicationFac
     [Fact]
     public async Task Assigning_A_Role_Writes_A_Roleassigned_Row_Into_The_Outbox_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
 

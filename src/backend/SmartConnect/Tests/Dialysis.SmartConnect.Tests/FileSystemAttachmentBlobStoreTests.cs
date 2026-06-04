@@ -63,7 +63,7 @@ public sealed class FileSystemAttachmentBlobStoreTests
             Assert.True(blob.SizeBytes > 0);
         }
 
-        Assert.Equal(ids.ToHashSet(), enumerated);
+        Assert.Equal([.. ids], enumerated);
     }
 
     [Fact]
@@ -108,7 +108,8 @@ public sealed class FileSystemAttachmentBlobStoreTests
         {
             try
             {
-                if (Directory.Exists(RootPath)) Directory.Delete(RootPath, recursive: true);
+                if (Directory.Exists(RootPath))
+                    Directory.Delete(RootPath, recursive: true);
             }
             catch (IOException) { /* test cleanup — best effort */ }
         }

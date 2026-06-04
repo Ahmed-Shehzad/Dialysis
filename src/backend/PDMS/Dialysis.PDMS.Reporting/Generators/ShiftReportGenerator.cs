@@ -8,8 +8,16 @@ namespace Dialysis.PDMS.Reporting.Generators;
 /// at handover; the generator stays read-only so it can be re-run any number of times for the
 /// same window with the same byte output.
 /// </summary>
-public sealed class ShiftReportGenerator(IPdfDocumentRenderer pdf)
+public sealed class ShiftReportGenerator
 {
+    private readonly IPdfDocumentRenderer _pdf;
+    /// <summary>
+    /// Per-chair / per-shift roll-up. Produces one PDF that lists every session that started or
+    /// ended in the window, with totals for alarms + medications + duration. Operators print this
+    /// at handover; the generator stays read-only so it can be re-run any number of times for the
+    /// same window with the same byte output.
+    /// </summary>
+    public ShiftReportGenerator(IPdfDocumentRenderer pdf) => _pdf = pdf;
     public async Task<byte[]> GenerateAsync(
         ShiftReportContext context,
         CancellationToken cancellationToken)
@@ -50,12 +58,31 @@ public sealed class ShiftReportGenerator(IPdfDocumentRenderer pdf)
             {
                 ["shift"] = context.ShiftLabel,
             });
-        return await pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
+        return await _pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
     }
 }
 
-public sealed record ShiftReportContext(
-    string ShiftLabel,
-    DateTime WindowStartUtc,
-    DateTime WindowEndUtc,
-    IReadOnlyList<SessionReportContext> Sessions);
+public sealed record ShiftReportContext
+{
+    public ShiftReportContext(string ShiftLabel,
+        DateTime WindowStartUtc,
+        DateTime WindowEndUtc,
+        IReadOnlyList<SessionReportContext> Sessions)
+    {
+        this.ShiftLabel = ShiftLabel;
+        this.WindowStartUtc = WindowStartUtc;
+        this.WindowEndUtc = WindowEndUtc;
+        this.Sessions = Sessions;
+    }
+    public string ShiftLabel { get; init; }
+    public DateTime WindowStartUtc { get; init; }
+    public DateTime WindowEndUtc { get; init; }
+    public IReadOnlyList<SessionReportContext> Sessions { get; init; }
+    public void Deconstruct(out string shiftLabel, out DateTime windowStartUtc, out DateTime windowEndUtc, out IReadOnlyList<SessionReportContext> sessions)
+    {
+        shiftLabel = this.ShiftLabel;
+        windowStartUtc = this.WindowStartUtc;
+        windowEndUtc = this.WindowEndUtc;
+        sessions = this.Sessions;
+    }
+}

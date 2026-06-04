@@ -6,12 +6,14 @@ using Xunit;
 namespace Dialysis.EHR.Tests;
 
 [Collection(nameof(EhrFixtureCollection))]
-public sealed class EhrCoreClockTests(EhrApiWebApplicationFactory factory)
+public sealed class EhrCoreClockTests
 {
+    private readonly EhrApiWebApplicationFactory _factory;
+    public EhrCoreClockTests(EhrApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public void Iehr_Clock_Resolves_And_Returns_Utc_Now_Within_One_Second()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var clock = scope.ServiceProvider.GetRequiredService<IEhrClock>();
 
         var before = DateTime.UtcNow;

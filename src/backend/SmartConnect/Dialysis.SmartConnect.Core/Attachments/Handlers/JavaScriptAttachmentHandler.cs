@@ -15,8 +15,16 @@ namespace Dialysis.SmartConnect.Attachments.Handlers;
 /// Properties JSON: <c>{ "script": "..." }</c>. Variable maps and code templates (with context
 /// <c>AttachmentHandler</c>) are bound alongside.
 /// </summary>
-public sealed class JavaScriptAttachmentHandler(IServiceProvider services) : IAttachmentHandler
+public sealed class JavaScriptAttachmentHandler : IAttachmentHandler
 {
+    private readonly IServiceProvider _services;
+    /// <summary>
+    /// User-defined JS handler with <c>addAttachment(data, type) -&gt; token</c> + a mutable <c>msg</c> variable
+    /// the script returns/sets to drive the rewritten payload. Mirth UG p224 "JavaScript Attachment Handler".
+    /// Properties JSON: <c>{ "script": "..." }</c>. Variable maps and code templates (with context
+    /// <c>AttachmentHandler</c>) are bound alongside.
+    /// </summary>
+    public JavaScriptAttachmentHandler(IServiceProvider services) => _services = services;
     public const string KindValue = "javascript";
 
     public string Kind => KindValue;
@@ -88,9 +96,9 @@ public sealed class JavaScriptAttachmentHandler(IServiceProvider services) : IAt
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
-        var store = services.GetService<IVariableMapStore>();
+        var store = _services.GetService<IVariableMapStore>();
         IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
@@ -105,7 +113,7 @@ public sealed class JavaScriptAttachmentHandler(IServiceProvider services) : IAt
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        var repo = _services.GetService<ICodeTemplateLibraryRepository>();
         if (repo is null) return;
         await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, CodeTemplateContext.AttachmentHandler, ct).ConfigureAwait(false);
     }

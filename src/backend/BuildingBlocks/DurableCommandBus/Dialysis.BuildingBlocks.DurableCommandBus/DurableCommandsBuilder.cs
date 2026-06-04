@@ -19,10 +19,7 @@ public sealed class DurableCommandsBuilder
 
     private readonly List<DurableCommandRegistration> _registrations = [];
 
-    internal DurableCommandsBuilder(string moduleSlug)
-    {
-        ModuleSlug = moduleSlug;
-    }
+    internal DurableCommandsBuilder(string moduleSlug) => ModuleSlug = moduleSlug;
 
     public string ModuleSlug { get; }
 
@@ -54,8 +51,10 @@ public sealed class DurableCommandsBuilder
                 var gateway = sp.GetRequiredService<ICqrsGateway>();
                 var result = await gateway.SendCommandAsync<TCommand, TResult>(
                     (TCommand)cmd, ct).ConfigureAwait(false);
-                if (result is null) return null;
-                if (typeof(TResult) == typeof(string)) return (string)(object)result;
+                if (result is null)
+                    return null;
+                if (typeof(TResult) == typeof(string))
+                    return (string)(object)result;
                 return JsonSerializer.Serialize(result, typeof(TResult), _jsonOptions);
             };
 

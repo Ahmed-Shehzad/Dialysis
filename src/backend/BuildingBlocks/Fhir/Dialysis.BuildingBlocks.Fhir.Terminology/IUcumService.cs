@@ -33,4 +33,23 @@ public interface IUcumService
 /// expression (e.g. <c>g</c> for masses, <c>s</c> for times). Use <see cref="CanonicalUnit"/> equality to
 /// determine commensurability — two quantities can only be compared/added when their canonical units match.
 /// </summary>
-public sealed record CanonicalQuantity(decimal Value, string CanonicalUnit);
+public sealed record CanonicalQuantity
+{
+    /// <summary>
+    /// Result of <see cref="IUcumService.TryCanonicalize"/>. <see cref="CanonicalUnit"/> is the SI base-unit
+    /// expression (e.g. <c>g</c> for masses, <c>s</c> for times). Use <see cref="CanonicalUnit"/> equality to
+    /// determine commensurability — two quantities can only be compared/added when their canonical units match.
+    /// </summary>
+    public CanonicalQuantity(decimal Value, string CanonicalUnit)
+    {
+        this.Value = Value;
+        this.CanonicalUnit = CanonicalUnit;
+    }
+    public decimal Value { get; init; }
+    public string CanonicalUnit { get; init; }
+    public void Deconstruct(out decimal Value, out string CanonicalUnit)
+    {
+        Value = this.Value;
+        CanonicalUnit = this.CanonicalUnit;
+    }
+}

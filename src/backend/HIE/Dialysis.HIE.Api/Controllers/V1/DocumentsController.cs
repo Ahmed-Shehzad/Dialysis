@@ -29,8 +29,17 @@ namespace Dialysis.HIE.Api.Controllers.V1;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/documents")]
 [Authorize]
-public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
+public sealed class DocumentsController : ControllerBase
 {
+    private readonly ICqrsGateway _cqrs;
+    /// <summary>
+    /// Admin document-management surface. Indexes every clinical document (PDMS-produced,
+    /// HIE-received, admin-uploaded) into one browsable list with PDF preview, AcroForm fill
+    /// metadata, PAdES digital signing, and a soft-delete flow. Binary preview / AcroForms /
+    /// macros are served as-is and rendered by the SPA's pdfjs viewer; the server preserves
+    /// embedded JavaScript byte-for-byte and never executes it.
+    /// </summary>
+    public DocumentsController(ICqrsGateway cqrs) => _cqrs = cqrs;
     [HttpGet]
     [PhiAccess("hie.documents.list")]
     [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<DocumentRow>>), StatusCodes.Status200OK)]
@@ -42,7 +51,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
         [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var rows = await cqrs.SendQueryAsync<ListDocumentsQuery, IReadOnlyList<DocumentRow>>(
+        var rows = await _cqrs.SendQueryAsync<ListDocumentsQuery, IReadOnlyList<DocumentRow>>(
             new ListDocumentsQuery(patientId, kind, status, source, take), cancellationToken).ConfigureAwait(false);
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
         return Ok(new ResourceEnvelope<IReadOnlyList<DocumentRow>>(rows, [new LinkDto("self", self, "GET")]));
@@ -54,7 +63,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var detail = await cqrs.SendQueryAsync<GetDocumentQuery, DocumentDetail?>(new GetDocumentQuery(id), cancellationToken)
+        var detail = await _cqrs.SendQueryAsync<GetDocumentQuery, DocumentDetail?>(new GetDocumentQuery(id), cancellationToken)
             .ConfigureAwait(false);
         if (detail is null) return NotFound();
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
@@ -85,7 +94,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPreviewAsync(Guid id, CancellationToken cancellationToken)
     {
-        var preview = await cqrs.SendQueryAsync<GetDocumentPreviewQuery, DocumentPreview?>(
+        var preview = await _cqrs.SendQueryAsync<GetDocumentPreviewQuery, DocumentPreview?>(
             new GetDocumentPreviewQuery(id), cancellationToken).ConfigureAwait(false);
         if (preview is null) return NotFound();
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
@@ -98,7 +107,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBinaryAsync(Guid id, CancellationToken cancellationToken)
     {
-        var binary = await cqrs.SendQueryAsync<GetDocumentBinaryQuery, DocumentBinary?>(
+        var binary = await _cqrs.SendQueryAsync<GetDocumentBinaryQuery, DocumentBinary?>(
             new GetDocumentBinaryQuery(id), cancellationToken).ConfigureAwait(false);
         if (binary is null) return NotFound();
         return File(binary.Bytes, binary.MimeType);
@@ -113,7 +122,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
         var command = new UploadDocumentCommand(
             body.PatientId, body.Kind, body.Title, body.MimeType, body.Base64Content,
             body.LanguageCode, body.Category, User.Identity?.Name);
-        var id = await cqrs.SendCommandAsync<UploadDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        var id = await _cqrs.SendCommandAsync<UploadDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         var location = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{id}";
         return Created(location, new ResourceEnvelope<UploadedDocumentDto>(
             new UploadedDocumentDto(id),
@@ -135,7 +144,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
             body.ContactInfo,
             body.Level ?? PadesConformance.B,
             body.TspCredentialId);
-        var signedId = await cqrs.SendCommandAsync<SignDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        var signedId = await _cqrs.SendCommandAsync<SignDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{signedId}";
         return Ok(new ResourceEnvelope<UploadedDocumentDto>(
             new UploadedDocumentDto(signedId),
@@ -147,7 +156,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        await cqrs.SendCommandAsync<DeleteDocumentCommand, Unit>(new DeleteDocumentCommand(id), cancellationToken)
+        await _cqrs.SendCommandAsync<DeleteDocumentCommand, Unit>(new DeleteDocumentCommand(id), cancellationToken)
             .ConfigureAwait(false);
         return NoContent();
     }
@@ -166,7 +175,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(body);
         var command = new FillDocumentAcroFormCommand(id, body.FieldValues ?? new Dictionary<string, string>());
-        var result = await cqrs.SendCommandAsync<FillDocumentAcroFormCommand, FillDocumentAcroFormResult>(command, cancellationToken)
+        var result = await _cqrs.SendCommandAsync<FillDocumentAcroFormCommand, FillDocumentAcroFormResult>(command, cancellationToken)
             .ConfigureAwait(false);
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{result.DocumentId}";
         return Ok(new ResourceEnvelope<FilledDocumentDto>(
@@ -188,7 +197,7 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
     public async Task<IActionResult> SetJavaScriptExecutionAsync(Guid id, [FromBody] JavaScriptExecutionRequest body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var allowed = await cqrs.SendCommandAsync<SetDocumentJavaScriptExecutionCommand, bool>(
+        var allowed = await _cqrs.SendCommandAsync<SetDocumentJavaScriptExecutionCommand, bool>(
             new SetDocumentJavaScriptExecutionCommand(id, body.Allow), cancellationToken).ConfigureAwait(false);
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{id}";
         return Ok(new ResourceEnvelope<JavaScriptExecutionPolicyDto>(
@@ -196,34 +205,135 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
             [new LinkDto("self", self, "GET")]));
     }
 
-    public sealed record UploadDocumentRequest(
-        Guid PatientId,
-        string Kind,
-        string Title,
-        string MimeType,
-        string Base64Content,
-        string? LanguageCode,
-        string? Category);
+    public sealed record UploadDocumentRequest
+    {
+        public UploadDocumentRequest(Guid PatientId,
+            string Kind,
+            string Title,
+            string MimeType,
+            string Base64Content,
+            string? LanguageCode,
+            string? Category)
+        {
+            this.PatientId = PatientId;
+            this.Kind = Kind;
+            this.Title = Title;
+            this.MimeType = MimeType;
+            this.Base64Content = Base64Content;
+            this.LanguageCode = LanguageCode;
+            this.Category = Category;
+        }
+        public Guid PatientId { get; init; }
+        public string Kind { get; init; }
+        public string Title { get; init; }
+        public string MimeType { get; init; }
+        public string Base64Content { get; init; }
+        public string? LanguageCode { get; init; }
+        public string? Category { get; init; }
+        public void Deconstruct(out Guid patientId, out string kind, out string title, out string mimeType, out string base64Content, out string? languageCode, out string? category)
+        {
+            patientId = this.PatientId;
+            kind = this.Kind;
+            title = this.Title;
+            mimeType = this.MimeType;
+            base64Content = this.Base64Content;
+            languageCode = this.LanguageCode;
+            category = this.Category;
+        }
+    }
 
-    public sealed record SignDocumentRequest(
-        PdfSigningCertificateSource CertificateSource,
-        string? UserId,
-        string? Reason,
-        string? Location,
-        string? ContactInfo,
-        PadesConformance? Level = null,
-        string? TspCredentialId = null);
+    public sealed record SignDocumentRequest
+    {
+        public SignDocumentRequest(PdfSigningCertificateSource CertificateSource,
+            string? UserId,
+            string? Reason,
+            string? Location,
+            string? ContactInfo,
+            PadesConformance? Level = null,
+            string? TspCredentialId = null)
+        {
+            this.CertificateSource = CertificateSource;
+            this.UserId = UserId;
+            this.Reason = Reason;
+            this.Location = Location;
+            this.ContactInfo = ContactInfo;
+            this.Level = Level;
+            this.TspCredentialId = TspCredentialId;
+        }
+        public PdfSigningCertificateSource CertificateSource { get; init; }
+        public string? UserId { get; init; }
+        public string? Reason { get; init; }
+        public string? Location { get; init; }
+        public string? ContactInfo { get; init; }
+        public PadesConformance? Level { get; init; }
+        public string? TspCredentialId { get; init; }
+        public void Deconstruct(out PdfSigningCertificateSource certificateSource, out string? userId, out string? reason, out string? location, out string? contactInfo, out PadesConformance? level, out string? tspCredentialId)
+        {
+            certificateSource = this.CertificateSource;
+            userId = this.UserId;
+            reason = this.Reason;
+            location = this.Location;
+            contactInfo = this.ContactInfo;
+            level = this.Level;
+            tspCredentialId = this.TspCredentialId;
+        }
+    }
 
-    public sealed record UploadedDocumentDto(Guid DocumentId);
+    public sealed record UploadedDocumentDto
+    {
+        public UploadedDocumentDto(Guid DocumentId) => this.DocumentId = DocumentId;
+        public Guid DocumentId { get; init; }
+        public void Deconstruct(out Guid documentId) => documentId = this.DocumentId;
+    }
 
-    public sealed record FillDocumentRequest(Dictionary<string, string>? FieldValues);
+    public sealed record FillDocumentRequest
+    {
+        public FillDocumentRequest(Dictionary<string, string>? FieldValues) => this.FieldValues = FieldValues;
+        public Dictionary<string, string>? FieldValues { get; init; }
+        public void Deconstruct(out Dictionary<string, string>? fieldValues) => fieldValues = this.FieldValues;
+    }
 
-    public sealed record FilledDocumentDto(
-        Guid DocumentId,
-        IReadOnlyList<string> FilledFieldNames,
-        IReadOnlyList<string> UnknownFields);
+    public sealed record FilledDocumentDto
+    {
+        public FilledDocumentDto(Guid DocumentId,
+            IReadOnlyList<string> FilledFieldNames,
+            IReadOnlyList<string> UnknownFields)
+        {
+            this.DocumentId = DocumentId;
+            this.FilledFieldNames = FilledFieldNames;
+            this.UnknownFields = UnknownFields;
+        }
+        public Guid DocumentId { get; init; }
+        public IReadOnlyList<string> FilledFieldNames { get; init; }
+        public IReadOnlyList<string> UnknownFields { get; init; }
+        public void Deconstruct(out Guid documentId, out IReadOnlyList<string> filledFieldNames, out IReadOnlyList<string> unknownFields)
+        {
+            documentId = this.DocumentId;
+            filledFieldNames = this.FilledFieldNames;
+            unknownFields = this.UnknownFields;
+        }
+    }
 
-    public sealed record JavaScriptExecutionRequest(bool Allow);
+    public sealed record JavaScriptExecutionRequest
+    {
+        public JavaScriptExecutionRequest(bool Allow) => this.Allow = Allow;
+        public bool Allow { get; init; }
+        public void Deconstruct(out bool allow) => allow = this.Allow;
+    }
 
-    public sealed record JavaScriptExecutionPolicyDto(Guid DocumentId, bool AllowJavaScriptExecution);
+    public sealed record JavaScriptExecutionPolicyDto
+    {
+        public JavaScriptExecutionPolicyDto(Guid DocumentId, bool AllowJavaScriptExecution)
+        {
+            this.DocumentId = DocumentId;
+            this.AllowJavaScriptExecution = AllowJavaScriptExecution;
+        }
+        public Guid DocumentId { get; init; }
+        public bool AllowJavaScriptExecution { get; init; }
+        public void Deconstruct(out Guid documentId, out bool allowJavaScriptExecution)
+        {
+            documentId = this.DocumentId;
+            allowJavaScriptExecution = this.AllowJavaScriptExecution;
+        }
+    }
 }

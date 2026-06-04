@@ -13,11 +13,22 @@ namespace Dialysis.BuildingBlocks.Documents.Pdf.Conversion;
 /// The output is valid OOXML — Word, LibreOffice, Google Docs and any conformant
 /// processor opens it without recovery dialogs.
 /// </summary>
-public sealed class PdfToWordConverter(IPdfTextExtractor extractor) : IPdfToWordConverter
+public sealed class PdfToWordConverter : IPdfToWordConverter
 {
+    private readonly IPdfTextExtractor _extractor;
+    /// <summary>
+    /// Renders the extractor's <see cref="ExtractedDocument"/> as an Office Open XML
+    /// (.docx) byte array. Inferred headings (H1–H6) map to the Word built-in heading
+    /// styles so the document is navigable via Word's document map and screen readers.
+    /// Page boundaries become explicit page breaks.
+    ///
+    /// The output is valid OOXML — Word, LibreOffice, Google Docs and any conformant
+    /// processor opens it without recovery dialogs.
+    /// </summary>
+    public PdfToWordConverter(IPdfTextExtractor extractor) => _extractor = extractor;
     public async Task<byte[]> ConvertAsync(ReadOnlyMemory<byte> pdfDocument, CancellationToken cancellationToken)
     {
-        var extracted = await extractor.ExtractAsync(pdfDocument, cancellationToken).ConfigureAwait(false);
+        var extracted = await _extractor.ExtractAsync(pdfDocument, cancellationToken).ConfigureAwait(false);
 
         using var ms = new MemoryStream();
         using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Document, autoSave: true))

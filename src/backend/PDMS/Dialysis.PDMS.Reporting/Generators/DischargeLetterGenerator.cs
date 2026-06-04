@@ -12,10 +12,23 @@ namespace Dialysis.PDMS.Reporting.Generators;
 /// a code deploy. The generated PDF is deterministic byte-for-byte for the same context +
 /// template version, which is what lets the audit gate hash the output and detect tampering.
 /// </summary>
-public sealed class DischargeLetterGenerator(
-    IPdfDocumentRenderer pdf,
-    MustacheMarkdownBinder binder)
+public sealed class DischargeLetterGenerator
 {
+    private readonly IPdfDocumentRenderer _pdf;
+    private readonly MustacheMarkdownBinder _binder;
+    /// <summary>
+    /// Renders a per-session discharge letter PDF. The clinical summary is built from the
+    /// <see cref="SessionReportContext"/> and the operator-authored
+    /// <see cref="ReportKind.DischargeLetter"/> template — operators control the wording without
+    /// a code deploy. The generated PDF is deterministic byte-for-byte for the same context +
+    /// template version, which is what lets the audit gate hash the output and detect tampering.
+    /// </summary>
+    public DischargeLetterGenerator(IPdfDocumentRenderer pdf,
+        MustacheMarkdownBinder binder)
+    {
+        _pdf = pdf;
+        _binder = binder;
+    }
     public async Task<byte[]> GenerateAsync(
         SessionReportContext context,
         ReportTemplate? template,
@@ -27,7 +40,7 @@ public sealed class DischargeLetterGenerator(
         // Operator-authored summary if a template is published; fall back to a fixed body
         // so an unconfigured deployment still produces a usable letter.
         var summary = template?.GetPublishedBody() is { } body
-            ? binder.BindToPlainText(body, bindings)
+            ? _binder.BindToPlainText(body, bindings)
             : "Patient completed the scheduled dialysis session as documented below.";
 
         var sections = new List<DocumentSection>();
@@ -74,14 +87,14 @@ public sealed class DischargeLetterGenerator(
             sections.Add(new DocumentSection("Medications administered",
                 [new TableBlock(
                     Headers: ["Time", "Medication", "Dose", "Route", "Outcome"],
-                    Rows: context.Medications.Select(m => (IReadOnlyList<string>)new[]
+                    Rows: [.. context.Medications.Select(m => (IReadOnlyList<string>)new[]
                     {
                         m.AdministeredAtUtc.ToString("u"),
                         m.MedicationDisplay,
                         $"{m.DoseQuantity} {m.DoseUnit}",
                         m.Route,
                         m.WasAdministered ? "Given" : $"Declined: {m.DeclineReason}",
-                    }).ToArray())]));
+                    })])]));
         }
 
         if (context.Alarms.Count > 0)
@@ -89,13 +102,13 @@ public sealed class DischargeLetterGenerator(
             sections.Add(new DocumentSection("Alarms during session",
                 [new TableBlock(
                     Headers: ["Time", "Code", "Severity", "Ack?"],
-                    Rows: context.Alarms.Select(a => (IReadOnlyList<string>)new[]
+                    Rows: [.. context.Alarms.Select(a => (IReadOnlyList<string>)new[]
                     {
                         a.RaisedAtUtc.ToString("u"),
                         a.AlarmCode,
                         a.Severity,
                         a.Acknowledged ? "yes" : "no",
-                    }).ToArray())]));
+                    })])]));
         }
 
         var doc = new DocumentModel(
@@ -111,7 +124,7 @@ public sealed class DischargeLetterGenerator(
                 // platform default. Lets the ePA upload tag the document's language part.
                 ["language"] = ResolveLanguage(context, template),
             });
-        return await pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
+        return await _pdf.RenderAsync(doc, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -146,7 +159,7 @@ public sealed class DischargeLetterGenerator(
                     Tooltip = "Patient consented to discharge",
                 }),
         };
-        return await pdf.RenderWithFormsAsync(BuildModelForSignature(context, template), placements, cancellationToken)
+        return await _pdf.RenderWithFormsAsync(BuildModelForSignature(context, template), placements, cancellationToken)
             .ConfigureAwait(false);
     }
 

@@ -26,21 +26,75 @@ public interface IIvPumpDriver
 /// (<see cref="PumpDeviceId"/>, <see cref="SequenceNumber"/>) to either start a new
 /// <see cref="IvPumpInfusion"/> or update an existing one.
 /// </summary>
-public sealed record IvPumpReading(
-    string VendorCode,
-    string PumpDeviceId,
-    long SequenceNumber,
-    IvPumpReadingKind Kind,
-    DateTime CapturedAtUtc,
-    decimal? ProgrammedRateMlPerHour,
-    decimal? ActualRateMlPerHour,
-    decimal? ProgrammedVolumeMl,
-    decimal? InfusedVolumeMl,
-    string? MedicationCodeSystem,
-    string? MedicationCode,
-    string? AlarmCode,
-    string? AlarmText,
-    IvPumpAlarmSeverity? AlarmSeverity);
+public sealed record IvPumpReading
+{
+    /// <summary>
+    /// Unified shape produced by every vendor driver. The dispatch path correlates
+    /// (<see cref="PumpDeviceId"/>, <see cref="SequenceNumber"/>) to either start a new
+    /// <see cref="IvPumpInfusion"/> or update an existing one.
+    /// </summary>
+    public IvPumpReading(string VendorCode,
+        string PumpDeviceId,
+        long SequenceNumber,
+        IvPumpReadingKind Kind,
+        DateTime CapturedAtUtc,
+        decimal? ProgrammedRateMlPerHour,
+        decimal? ActualRateMlPerHour,
+        decimal? ProgrammedVolumeMl,
+        decimal? InfusedVolumeMl,
+        string? MedicationCodeSystem,
+        string? MedicationCode,
+        string? AlarmCode,
+        string? AlarmText,
+        IvPumpAlarmSeverity? AlarmSeverity)
+    {
+        this.VendorCode = VendorCode;
+        this.PumpDeviceId = PumpDeviceId;
+        this.SequenceNumber = SequenceNumber;
+        this.Kind = Kind;
+        this.CapturedAtUtc = CapturedAtUtc;
+        this.ProgrammedRateMlPerHour = ProgrammedRateMlPerHour;
+        this.ActualRateMlPerHour = ActualRateMlPerHour;
+        this.ProgrammedVolumeMl = ProgrammedVolumeMl;
+        this.InfusedVolumeMl = InfusedVolumeMl;
+        this.MedicationCodeSystem = MedicationCodeSystem;
+        this.MedicationCode = MedicationCode;
+        this.AlarmCode = AlarmCode;
+        this.AlarmText = AlarmText;
+        this.AlarmSeverity = AlarmSeverity;
+    }
+    public string VendorCode { get; init; }
+    public string PumpDeviceId { get; init; }
+    public long SequenceNumber { get; init; }
+    public IvPumpReadingKind Kind { get; init; }
+    public DateTime CapturedAtUtc { get; init; }
+    public decimal? ProgrammedRateMlPerHour { get; init; }
+    public decimal? ActualRateMlPerHour { get; init; }
+    public decimal? ProgrammedVolumeMl { get; init; }
+    public decimal? InfusedVolumeMl { get; init; }
+    public string? MedicationCodeSystem { get; init; }
+    public string? MedicationCode { get; init; }
+    public string? AlarmCode { get; init; }
+    public string? AlarmText { get; init; }
+    public IvPumpAlarmSeverity? AlarmSeverity { get; init; }
+    public void Deconstruct(out string VendorCode, out string PumpDeviceId, out long SequenceNumber, out IvPumpReadingKind Kind, out DateTime CapturedAtUtc, out decimal? ProgrammedRateMlPerHour, out decimal? ActualRateMlPerHour, out decimal? ProgrammedVolumeMl, out decimal? InfusedVolumeMl, out string? MedicationCodeSystem, out string? MedicationCode, out string? AlarmCode, out string? AlarmText, out IvPumpAlarmSeverity? AlarmSeverity)
+    {
+        VendorCode = this.VendorCode;
+        PumpDeviceId = this.PumpDeviceId;
+        SequenceNumber = this.SequenceNumber;
+        Kind = this.Kind;
+        CapturedAtUtc = this.CapturedAtUtc;
+        ProgrammedRateMlPerHour = this.ProgrammedRateMlPerHour;
+        ActualRateMlPerHour = this.ActualRateMlPerHour;
+        ProgrammedVolumeMl = this.ProgrammedVolumeMl;
+        InfusedVolumeMl = this.InfusedVolumeMl;
+        MedicationCodeSystem = this.MedicationCodeSystem;
+        MedicationCode = this.MedicationCode;
+        AlarmCode = this.AlarmCode;
+        AlarmText = this.AlarmText;
+        AlarmSeverity = this.AlarmSeverity;
+    }
+}
 
 public enum IvPumpReadingKind
 {

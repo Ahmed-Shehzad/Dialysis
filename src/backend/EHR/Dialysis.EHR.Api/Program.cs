@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DataProtection.AspNetCore;
 using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.Audit;
@@ -124,6 +125,9 @@ app.MapOpenApi();
 
 app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
 app.MapHipaaSafeguardsEndpoint();
+// GDPR / BDSG surface — RoPA + data-subject-rights. The SPA admin pages proxy here
+// (/api/ehr/admin/data-protection/ropa, /api/ehr/api/v1.0/data-subject-rights/...).
+app.MapEuDataProtectionRoutes();
 app.MapDurableCommandStatusEndpoint();
 app.MapControllers();
 

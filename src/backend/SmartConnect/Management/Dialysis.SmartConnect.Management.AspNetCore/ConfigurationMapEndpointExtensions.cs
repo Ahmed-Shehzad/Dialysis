@@ -93,5 +93,10 @@ public static class ConfigurationMapEndpointExtensions
         return Enum.TryParse(raw, ignoreCase: true, out scope);
     }
 
-    public record ConfigMapValueBody(string Value);
+    public record ConfigMapValueBody
+    {
+        public ConfigMapValueBody(string Value) => this.Value = Value;
+        public string Value { get; init; }
+        public void Deconstruct(out string value) => value = this.Value;
+    }
 }

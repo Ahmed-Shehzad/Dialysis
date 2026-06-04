@@ -78,7 +78,7 @@ public sealed class PdfSharpPdfSigner : IPdfSigner
         var initialSignedBytes = SignWithPdfSharp(pdf, request, certificate);
 
         // 2. Optional LTV augmentation — only when the request asked for it.
-        var (finalBytes, evidence) = request.Level >= PadesConformance.LT && _ltvOptions.Enabled
+        var (finalBytes, evidence) = request.Level >= PadesConformance.Lt && _ltvOptions.Enabled
             ? await AugmentForLtvAsync(initialSignedBytes, certificate, cancellationToken).ConfigureAwait(false)
             : (initialSignedBytes, null);
 

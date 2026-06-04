@@ -17,11 +17,17 @@ namespace Dialysis.HIE.Persistence;
 /// MPI, consents, and openEHR compositions; inherits <see cref="ModuleDbContextBase"/> for the per-module
 /// schema + Transponder outbox/inbox tables.
 /// </summary>
-public sealed class HieDbContext(
-    DbContextOptions<HieDbContext> options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions)
-    : ModuleDbContextBase(options, persistenceOptions), IUnitOfWork
+public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
 {
+    /// <summary>
+    /// Health Information Exchange DbContext. Owns slice schemas for outbound bundles, inbound resources,
+    /// MPI, consents, and openEHR compositions; inherits <see cref="ModuleDbContextBase"/> for the per-module
+    /// schema + Transponder outbox/inbox tables.
+    /// </summary>
+    public HieDbContext(DbContextOptions<HieDbContext> options,
+        IOptions<TransponderPersistenceOptions> persistenceOptions) : base(options, persistenceOptions)
+    {
+    }
     protected override string ModuleSchema => "hie";
 
     public DbSet<OutboundBundle> OutboundBundles => Set<OutboundBundle>();

@@ -1,3 +1,4 @@
+using Dialysis.Module.Contracts.Demo;
 using Dialysis.PDMS.Persistence;
 using Dialysis.PDMS.TreatmentSessions.Domain;
 using Dialysis.PDMS.TreatmentSessions.Ports;
@@ -12,15 +13,26 @@ namespace Dialysis.PDMS.Composition.Demo;
 /// Development-only seeder that ensures a small set of in-progress dialysis sessions exists
 /// keyed by the EHR demo patient slots (offsets 0..4 in the EHR demo MRN list). Idempotent.
 /// </summary>
-public sealed class PdmsDemoSeeder(IServiceProvider services, ILogger<PdmsDemoSeeder> logger) : IHostedService
+public sealed class PdmsDemoSeeder : IHostedService
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<PdmsDemoSeeder> _logger;
+    /// <summary>
+    /// Development-only seeder that ensures a small set of in-progress dialysis sessions exists
+    /// keyed by the EHR demo patient slots (offsets 0..4 in the EHR demo MRN list). Idempotent.
+    /// </summary>
+    public PdmsDemoSeeder(IServiceProvider services, ILogger<PdmsDemoSeeder> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
+        using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PdmsDbContext>();
         if (!await db.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false))
         {
-            logger.LogWarning("PDMS demo seeder: database not reachable, skipping.");
+            _logger.LogWarning("PDMS demo seeder: database not reachable, skipping.");
             return;
         }
         try
@@ -29,12 +41,12 @@ public sealed class PdmsDemoSeeder(IServiceProvider services, ILogger<PdmsDemoSe
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "PDMS demo seeder: migrations failed, attempting seed on existing schema.");
+            _logger.LogWarning(ex, "PDMS demo seeder: migrations failed, attempting seed on existing schema.");
         }
 
         if (await db.Sessions.AnyAsync(cancellationToken).ConfigureAwait(false))
         {
-            logger.LogInformation("PDMS demo seeder: sessions already present, skipping.");
+            _logger.LogInformation("PDMS demo seeder: sessions already present, skipping.");
             return;
         }
 
@@ -42,11 +54,10 @@ public sealed class PdmsDemoSeeder(IServiceProvider services, ILogger<PdmsDemoSe
         var time = scope.ServiceProvider.GetRequiredService<TimeProvider>();
         var now = time.GetUtcNow().UtcDateTime;
 
-        // Stable demo patient ids — these must match what the EHR seeder produces if the demo
-        // is run cross-module, but for a standalone PDMS demo any deterministic Guid set works.
-        var demoPatientIds = Enumerable.Range(1, 3)
-            .Select(i => new Guid($"00000000-0000-0000-0000-0000000000{i:D2}"))
-            .ToArray();
+        // Seed sessions for the first three shared demo patients. Ids come from the cross-module
+        // DemoDataCatalog, so each session's patient matches a real EHR patient (and HIS queue
+        // entry) — the patient "follows" the user from EHR chart to PDMS chairside.
+        var demoPatientIds = DemoDataCatalog.Patients.Take(3).Select(p => p.Id).ToArray();
 
         foreach (var patientId in demoPatientIds)
         {
@@ -92,7 +103,7 @@ public sealed class PdmsDemoSeeder(IServiceProvider services, ILogger<PdmsDemoSe
         }
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        logger.LogInformation("PDMS demo seeder: seeded {Count} in-progress sessions.", demoPatientIds.Length);
+        _logger.LogInformation("PDMS demo seeder: seeded {Count} in-progress sessions.", demoPatientIds.Length);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

@@ -9,14 +9,25 @@ using Dialysis.EHR.PatientChart.Projections;
 
 namespace Dialysis.EHR.PatientChart.Features.RecordVitalSign;
 
-public sealed class RecordVitalSignCommandHandler(
-    IVitalSignRepository vitals,
-    IUnitOfWork unitOfWork,
-    ITransponderBus bus,
-    VitalSignOpenEhrProjector openEhrProjector,
-    TimeProvider timeProvider)
-    : ICommandHandler<RecordVitalSignCommand, Guid>
+public sealed class RecordVitalSignCommandHandler : ICommandHandler<RecordVitalSignCommand, Guid>
 {
+    private readonly IVitalSignRepository _vitals;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ITransponderBus _bus;
+    private readonly VitalSignOpenEhrProjector _openEhrProjector;
+    private readonly TimeProvider _timeProvider;
+    public RecordVitalSignCommandHandler(IVitalSignRepository vitals,
+        IUnitOfWork unitOfWork,
+        ITransponderBus bus,
+        VitalSignOpenEhrProjector openEhrProjector,
+        TimeProvider timeProvider)
+    {
+        _vitals = vitals;
+        _unitOfWork = unitOfWork;
+        _bus = bus;
+        _openEhrProjector = openEhrProjector;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(RecordVitalSignCommand request, CancellationToken cancellationToken)
     {
         var observation = new Coding(EhrCodeSystems.Loinc, request.LoincCode, request.Display);
@@ -30,14 +41,14 @@ public sealed class RecordVitalSignCommandHandler(
             request.ObservedAtUtc,
             request.EncounterId,
             request.RecordedByProviderId);
-        vitals.Add(reading);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _vitals.Add(reading);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        if (openEhrProjector.Project(reading) is { } projection)
+        if (_openEhrProjector.Project(reading) is { } projection)
         {
             var openEhrEvent = new ChartVitalSignProjectedAsOpenEhrIntegrationEvent(
                 EventId: Guid.CreateVersion7(),
-                OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+                OccurredOn: _timeProvider.GetUtcNow().UtcDateTime,
                 SchemaVersion: 1,
                 VitalSignReadingId: id,
                 PatientId: reading.PatientId,
@@ -46,7 +57,7 @@ public sealed class RecordVitalSignCommandHandler(
                 ArchetypeId: projection.ArchetypeId,
                 CompositionJson: projection.CompositionJson,
                 ObservedAtUtc: reading.ObservedAtUtc);
-            await bus.PublishAsync(openEhrEvent, cancellationToken).ConfigureAwait(false);
+            await _bus.PublishAsync(openEhrEvent, cancellationToken).ConfigureAwait(false);
         }
 
         return id;

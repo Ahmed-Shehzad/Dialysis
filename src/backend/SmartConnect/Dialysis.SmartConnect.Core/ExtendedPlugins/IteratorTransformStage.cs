@@ -39,10 +39,7 @@ public sealed class IteratorTransformStage : ITransformStage
     /// the registry singleton's factory registers this stage, so the registry isn't yet built at construction time.
     /// We resolve the registry lazily on each evaluation.
     /// </summary>
-    public IteratorTransformStage(IServiceProvider services)
-    {
-        _services = services ?? throw new ArgumentNullException(nameof(services));
-    }
+    public IteratorTransformStage(IServiceProvider services) => _services = services ?? throw new ArgumentNullException(nameof(services));
 
     public string Kind => KindValue;
 

@@ -29,4 +29,21 @@ public sealed class ChairOccupancyProjection
         [.. _byChair.Values.OrderBy(a => a.Chair, StringComparer.Ordinal)];
 }
 
-public sealed record ChairAssignmentSnapshot(string Chair, Guid PatientId, DateTime PlacedAtUtc);
+public sealed record ChairAssignmentSnapshot
+{
+    public ChairAssignmentSnapshot(string Chair, Guid PatientId, DateTime PlacedAtUtc)
+    {
+        this.Chair = Chair;
+        this.PatientId = PatientId;
+        this.PlacedAtUtc = PlacedAtUtc;
+    }
+    public string Chair { get; init; }
+    public Guid PatientId { get; init; }
+    public DateTime PlacedAtUtc { get; init; }
+    public void Deconstruct(out string Chair, out Guid PatientId, out DateTime PlacedAtUtc)
+    {
+        Chair = this.Chair;
+        PatientId = this.PatientId;
+        PlacedAtUtc = this.PlacedAtUtc;
+    }
+}

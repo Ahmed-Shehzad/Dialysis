@@ -27,20 +27,76 @@ public static class SmartConnectSnapshotTranslator
             MessageControlId: message.MessageControlId);
 }
 
-public sealed record IncomingTreatmentSnapshot(
-    string MachineSerial,
-    string? VendorCode,
-    string? ModelCode,
-    DateTime ObservedAtUtc,
-    string? PatientMrn,
-    string? FillerOrderNumber,
-    IReadOnlyList<IncomingObservation> Observations,
-    string MessageControlId);
+public sealed record IncomingTreatmentSnapshot
+{
+    public IncomingTreatmentSnapshot(string MachineSerial,
+        string? VendorCode,
+        string? ModelCode,
+        DateTime ObservedAtUtc,
+        string? PatientMrn,
+        string? FillerOrderNumber,
+        IReadOnlyList<IncomingObservation> Observations,
+        string MessageControlId)
+    {
+        this.MachineSerial = MachineSerial;
+        this.VendorCode = VendorCode;
+        this.ModelCode = ModelCode;
+        this.ObservedAtUtc = ObservedAtUtc;
+        this.PatientMrn = PatientMrn;
+        this.FillerOrderNumber = FillerOrderNumber;
+        this.Observations = Observations;
+        this.MessageControlId = MessageControlId;
+    }
+    public string MachineSerial { get; init; }
+    public string? VendorCode { get; init; }
+    public string? ModelCode { get; init; }
+    public DateTime ObservedAtUtc { get; init; }
+    public string? PatientMrn { get; init; }
+    public string? FillerOrderNumber { get; init; }
+    public IReadOnlyList<IncomingObservation> Observations { get; init; }
+    public string MessageControlId { get; init; }
+    public void Deconstruct(out string MachineSerial, out string? VendorCode, out string? ModelCode, out DateTime ObservedAtUtc, out string? PatientMrn, out string? FillerOrderNumber, out IReadOnlyList<IncomingObservation> Observations, out string MessageControlId)
+    {
+        MachineSerial = this.MachineSerial;
+        VendorCode = this.VendorCode;
+        ModelCode = this.ModelCode;
+        ObservedAtUtc = this.ObservedAtUtc;
+        PatientMrn = this.PatientMrn;
+        FillerOrderNumber = this.FillerOrderNumber;
+        Observations = this.Observations;
+        MessageControlId = this.MessageControlId;
+    }
+}
 
-public sealed record IncomingObservation(
-    long MdcCode,
-    string ContainmentPath,
-    decimal? NumericValue,
-    string? StringValue,
-    string? Units,
-    DateTime ObservedAtUtc);
+public sealed record IncomingObservation
+{
+    public IncomingObservation(long MdcCode,
+        string ContainmentPath,
+        decimal? NumericValue,
+        string? StringValue,
+        string? Units,
+        DateTime ObservedAtUtc)
+    {
+        this.MdcCode = MdcCode;
+        this.ContainmentPath = ContainmentPath;
+        this.NumericValue = NumericValue;
+        this.StringValue = StringValue;
+        this.Units = Units;
+        this.ObservedAtUtc = ObservedAtUtc;
+    }
+    public long MdcCode { get; init; }
+    public string ContainmentPath { get; init; }
+    public decimal? NumericValue { get; init; }
+    public string? StringValue { get; init; }
+    public string? Units { get; init; }
+    public DateTime ObservedAtUtc { get; init; }
+    public void Deconstruct(out long MdcCode, out string ContainmentPath, out decimal? NumericValue, out string? StringValue, out string? Units, out DateTime ObservedAtUtc)
+    {
+        MdcCode = this.MdcCode;
+        ContainmentPath = this.ContainmentPath;
+        NumericValue = this.NumericValue;
+        StringValue = this.StringValue;
+        Units = this.Units;
+        ObservedAtUtc = this.ObservedAtUtc;
+    }
+}

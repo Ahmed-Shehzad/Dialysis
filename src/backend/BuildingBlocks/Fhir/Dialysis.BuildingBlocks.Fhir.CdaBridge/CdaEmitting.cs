@@ -20,10 +20,13 @@ internal static class CdaEmitting
         var coding = concept?.Coding?.FirstOrDefault();
         if (coding is not null)
         {
-            if (!string.IsNullOrEmpty(coding.Code)) element.SetAttributeValue("code", coding.Code);
+            if (!string.IsNullOrEmpty(coding.Code))
+                element.SetAttributeValue("code", coding.Code);
             var oid = CdaConstants.UriToOid(coding.System);
-            if (!string.IsNullOrEmpty(oid)) element.SetAttributeValue("codeSystem", oid);
-            if (!string.IsNullOrEmpty(coding.Display)) element.SetAttributeValue("displayName", coding.Display);
+            if (!string.IsNullOrEmpty(oid))
+                element.SetAttributeValue("codeSystem", oid);
+            if (!string.IsNullOrEmpty(coding.Display))
+                element.SetAttributeValue("displayName", coding.Display);
         }
         else if (!string.IsNullOrEmpty(concept?.Text))
         {
@@ -40,18 +43,23 @@ internal static class CdaEmitting
         {
             case Quantity quantity:
                 element.SetAttributeValue(_xsi + "type", "PQ");
-                if (quantity.Value.HasValue) element.SetAttributeValue("value", quantity.Value.Value);
-                if (!string.IsNullOrEmpty(quantity.Unit)) element.SetAttributeValue("unit", quantity.Unit);
+                if (quantity.Value.HasValue)
+                    element.SetAttributeValue("value", quantity.Value.Value);
+                if (!string.IsNullOrEmpty(quantity.Unit))
+                    element.SetAttributeValue("unit", quantity.Unit);
                 break;
             case CodeableConcept concept:
                 element.SetAttributeValue(_xsi + "type", "CD");
                 var coding = concept.Coding?.FirstOrDefault();
                 if (coding is not null)
                 {
-                    if (!string.IsNullOrEmpty(coding.Code)) element.SetAttributeValue("code", coding.Code);
+                    if (!string.IsNullOrEmpty(coding.Code))
+                        element.SetAttributeValue("code", coding.Code);
                     var oid = CdaConstants.UriToOid(coding.System);
-                    if (!string.IsNullOrEmpty(oid)) element.SetAttributeValue("codeSystem", oid);
-                    if (!string.IsNullOrEmpty(coding.Display)) element.SetAttributeValue("displayName", coding.Display);
+                    if (!string.IsNullOrEmpty(oid))
+                        element.SetAttributeValue("codeSystem", oid);
+                    if (!string.IsNullOrEmpty(coding.Display))
+                        element.SetAttributeValue("displayName", coding.Display);
                 }
                 break;
             case FhirString text:
@@ -70,8 +78,10 @@ internal static class CdaEmitting
     {
         var element = new XElement(_hl7 + elementName);
         var ts = ToCdaTimestamp(when);
-        if (ts is not null) element.SetAttributeValue("value", ts);
-        else element.SetAttributeValue("nullFlavor", "UNK");
+        if (ts is not null)
+            element.SetAttributeValue("value", ts);
+        else
+            element.SetAttributeValue("nullFlavor", "UNK");
         return element;
     }
 
@@ -81,9 +91,12 @@ internal static class CdaEmitting
         var element = new XElement(_hl7 + "effectiveTime");
         var low = ToCdaTimestamp(period?.StartElement);
         var high = ToCdaTimestamp(period?.EndElement);
-        if (low is not null) element.Add(new XElement(_hl7 + "low", new XAttribute("value", low)));
-        if (high is not null) element.Add(new XElement(_hl7 + "high", new XAttribute("value", high)));
-        if (low is null && high is null) element.SetAttributeValue("nullFlavor", "UNK");
+        if (low is not null)
+            element.Add(new XElement(_hl7 + "low", new XAttribute("value", low)));
+        if (high is not null)
+            element.Add(new XElement(_hl7 + "high", new XAttribute("value", high)));
+        if (low is null && high is null)
+            element.SetAttributeValue("nullFlavor", "UNK");
         return element;
     }
 
@@ -97,11 +110,11 @@ internal static class CdaEmitting
             FhirString s => s.Value,
             _ => null,
         };
-        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
 
         // Keep only the date+time digits, dropping separators and any timezone suffix.
-        var digits = new string(raw.TakeWhile(c => c is not ('+' or 'Z'))
-            .Where(char.IsDigit).ToArray());
+        var digits = new string([.. raw.TakeWhile(c => c is not ('+' or 'Z')).Where(char.IsDigit)]);
         return digits.Length >= 4 ? digits : null;
     }
 }

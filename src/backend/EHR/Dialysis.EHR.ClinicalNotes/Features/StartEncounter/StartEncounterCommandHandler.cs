@@ -5,12 +5,19 @@ using Dialysis.EHR.ClinicalNotes.Ports;
 
 namespace Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 
-public sealed class StartEncounterCommandHandler(
-    IEncounterRepository encounters,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : ICommandHandler<StartEncounterCommand, Guid>
+public sealed class StartEncounterCommandHandler : ICommandHandler<StartEncounterCommand, Guid>
 {
+    private readonly IEncounterRepository _encounters;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public StartEncounterCommandHandler(IEncounterRepository encounters,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _encounters = encounters;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(StartEncounterCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
@@ -19,10 +26,10 @@ public sealed class StartEncounterCommandHandler(
             request.PatientId,
             request.ProviderId,
             request.EncounterClassCode,
-            timeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             request.AppointmentId);
-        encounters.Add(encounter);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _encounters.Add(encounter);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

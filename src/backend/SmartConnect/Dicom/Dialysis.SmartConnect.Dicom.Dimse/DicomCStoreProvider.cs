@@ -13,7 +13,7 @@ namespace Dialysis.SmartConnect.Dicom.Dimse;
 /// </summary>
 public sealed class DicomCStoreProvider : DicomService, IDicomServiceProvider, IDicomCStoreProvider
 {
-    private static readonly DicomTransferSyntax[] AcceptedTransferSyntaxes =
+    private static readonly DicomTransferSyntax[] _acceptedTransferSyntaxes =
     [
         DicomTransferSyntax.ExplicitVRLittleEndian,
         DicomTransferSyntax.ImplicitVRLittleEndian,
@@ -47,7 +47,7 @@ public sealed class DicomCStoreProvider : DicomService, IDicomServiceProvider, I
         }
         foreach (var pc in association.PresentationContexts)
         {
-            pc.AcceptTransferSyntaxes(AcceptedTransferSyntaxes);
+            pc.AcceptTransferSyntaxes(_acceptedTransferSyntaxes);
         }
         return SendAssociationAcceptAsync(association);
     }

@@ -9,32 +9,41 @@ using Dialysis.HIS.Operations.Ports;
 
 namespace Dialysis.HIS.Operations.Features.SubmitBillingExportJob;
 
-public sealed class SubmitBillingExportJobCommandHandler(
-    IBillingExportJobRepository jobs,
-    BillingExportEligibilityService eligibility,
-    ITransponderOutbox outbox,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<SubmitBillingExportJobCommand, Guid>
+public sealed class SubmitBillingExportJobCommandHandler : ICommandHandler<SubmitBillingExportJobCommand, Guid>
 {
+    private readonly IBillingExportJobRepository _jobs;
+    private readonly BillingExportEligibilityService _eligibility;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IUnitOfWork _unitOfWork;
+    public SubmitBillingExportJobCommandHandler(IBillingExportJobRepository jobs,
+        BillingExportEligibilityService eligibility,
+        ITransponderOutbox outbox,
+        IUnitOfWork unitOfWork)
+    {
+        _jobs = jobs;
+        _eligibility = eligibility;
+        _outbox = outbox;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(SubmitBillingExportJobCommand request, CancellationToken cancellationToken)
     {
         var nowUtc = DateTime.UtcNow;
         var payer = new PayerCode(request.PayerCode);
         var period = new BillingPeriod(request.PeriodStart, request.PeriodEnd);
 
-        await eligibility.EnsureNoQueuedDuplicateAsync(payer, period, cancellationToken).ConfigureAwait(false);
+        await _eligibility.EnsureNoQueuedDuplicateAsync(payer, period, cancellationToken).ConfigureAwait(false);
 
         var job = BillingExportJob.Queue(payer, period, request.Notes, nowUtc);
 
-        jobs.Add(job);
+        _jobs.Add(job);
 
         foreach (var @event in job.IntegrationEvents)
         {
-            await outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
+            await _outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
         }
         job.ClearIntegrationEvents();
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return job.Id;
     }
 }

@@ -13,7 +13,23 @@ public interface IClinicianNotificationDispatcher
         CancellationToken cancellationToken);
 }
 
-public sealed record ChannelOutcome(
-    string Channel,
-    string Address,
-    ClinicianNotificationResult Result);
+public sealed record ChannelOutcome
+{
+    public ChannelOutcome(string Channel,
+        string Address,
+        ClinicianNotificationResult Result)
+    {
+        this.Channel = Channel;
+        this.Address = Address;
+        this.Result = Result;
+    }
+    public string Channel { get; init; }
+    public string Address { get; init; }
+    public ClinicianNotificationResult Result { get; init; }
+    public void Deconstruct(out string Channel, out string Address, out ClinicianNotificationResult Result)
+    {
+        Channel = this.Channel;
+        Address = this.Address;
+        Result = this.Result;
+    }
+}

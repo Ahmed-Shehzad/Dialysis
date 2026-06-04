@@ -33,7 +33,7 @@ public sealed class InMemoryCptFeeScheduleAdminRepository : ICptFeeScheduleAdmin
             .OrderBy(e => e.CptCode, StringComparer.Ordinal)
             .ThenBy(e => e.PayerCode, StringComparer.Ordinal)
             .ThenByDescending(e => e.EffectiveFromUtc);
-        return Task.FromResult<IReadOnlyList<CptFeeScheduleEntry>>(rows.ToArray());
+        return Task.FromResult<IReadOnlyList<CptFeeScheduleEntry>>([.. rows]);
     }
 
     public Task<CptFeeScheduleEntry?> GetAsync(Guid id, CancellationToken cancellationToken = default)

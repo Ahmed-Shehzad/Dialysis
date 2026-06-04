@@ -71,11 +71,30 @@ public sealed class ReportTemplate : AggregateRoot<Guid>
         : _versions.FirstOrDefault(v => v.VersionNumber == PublishedVersionNumber.Value)?.BodyMarkdown;
 }
 
-public sealed record ReportTemplateVersion(
-    int VersionNumber,
-    string BodyMarkdown,
-    string AuthoredBySub,
-    DateTime AuthoredAtUtc);
+public sealed record ReportTemplateVersion
+{
+    public ReportTemplateVersion(int VersionNumber,
+        string BodyMarkdown,
+        string AuthoredBySub,
+        DateTime AuthoredAtUtc)
+    {
+        this.VersionNumber = VersionNumber;
+        this.BodyMarkdown = BodyMarkdown;
+        this.AuthoredBySub = AuthoredBySub;
+        this.AuthoredAtUtc = AuthoredAtUtc;
+    }
+    public int VersionNumber { get; init; }
+    public string BodyMarkdown { get; init; }
+    public string AuthoredBySub { get; init; }
+    public DateTime AuthoredAtUtc { get; init; }
+    public void Deconstruct(out int VersionNumber, out string BodyMarkdown, out string AuthoredBySub, out DateTime AuthoredAtUtc)
+    {
+        VersionNumber = this.VersionNumber;
+        BodyMarkdown = this.BodyMarkdown;
+        AuthoredBySub = this.AuthoredBySub;
+        AuthoredAtUtc = this.AuthoredAtUtc;
+    }
+}
 
 public enum ReportKind
 {

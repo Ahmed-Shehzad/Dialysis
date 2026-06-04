@@ -20,18 +20,40 @@ namespace Dialysis.SmartConnect.Attachments;
 /// <see cref="AttachmentOrphanReaperOptions.MaxDeletionsPerSweep"/> so a wiped DB doesn't cascade
 /// into a mass-delete.
 /// </remarks>
-public sealed class AttachmentOrphanReaperHostedService(
-    IServiceScopeFactory scopeFactory,
-    IOptions<AttachmentOrphanReaperOptions> options,
-    TimeProvider timeProvider,
-    ILogger<AttachmentOrphanReaperHostedService> logger) : BackgroundService
+public sealed class AttachmentOrphanReaperHostedService : BackgroundService
 {
     private const int BatchSize = 100;
-    private readonly AttachmentOrphanReaperOptions _options = options.Value;
+    private readonly AttachmentOrphanReaperOptions _options;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TimeProvider _timeProvider;
+    private readonly ILogger<AttachmentOrphanReaperHostedService> _logger;
+    /// <summary>
+    /// Periodic background sweep that deletes blobs whose metadata insert never committed. Only active
+    /// when the registered <see cref="IAttachmentBlobStore"/> is out-of-row; in-row backends store bytes
+    /// and metadata in the same row, so orphans are impossible and the reaper exits each sweep early.
+    /// </summary>
+    /// <remarks>
+    /// Blob-first insert ordering means the bytes land before the metadata row. If the metadata save
+    /// fails, the bytes are stranded. This service walks the blob store, filters out blobs younger than
+    /// <see cref="AttachmentOrphanReaperOptions.GracePeriod"/> (those may still be mid-insert), batches
+    /// id lookups against the metadata table, and deletes any blob with no matching row — capped by
+    /// <see cref="AttachmentOrphanReaperOptions.MaxDeletionsPerSweep"/> so a wiped DB doesn't cascade
+    /// into a mass-delete.
+    /// </remarks>
+    public AttachmentOrphanReaperHostedService(IServiceScopeFactory scopeFactory,
+        IOptions<AttachmentOrphanReaperOptions> options,
+        TimeProvider timeProvider,
+        ILogger<AttachmentOrphanReaperHostedService> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _timeProvider = timeProvider;
+        _logger = logger;
+        _options = options.Value;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(_options.SweepInterval, timeProvider);
+        using var timer = new PeriodicTimer(_options.SweepInterval, _timeProvider);
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
         {
             try
@@ -44,7 +66,7 @@ public sealed class AttachmentOrphanReaperHostedService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Attachment orphan reaper sweep failed");
+                _logger.LogError(ex, "Attachment orphan reaper sweep failed");
             }
         }
     }
@@ -56,7 +78,7 @@ public sealed class AttachmentOrphanReaperHostedService(
     /// </summary>
     public async Task SweepAsync(CancellationToken cancellationToken)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var blobs = scope.ServiceProvider.GetRequiredService<IAttachmentBlobStore>();
         if (blobs.StoresBytesInRow)
         {
@@ -64,7 +86,7 @@ public sealed class AttachmentOrphanReaperHostedService(
         }
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();
 
-        var cutoff = timeProvider.GetUtcNow() - _options.GracePeriod;
+        var cutoff = _timeProvider.GetUtcNow() - _options.GracePeriod;
         var candidates = new List<BlobMetadata>();
         var collectionLimit = _options.MaxDeletionsPerSweep * 2;
 
@@ -97,7 +119,7 @@ public sealed class AttachmentOrphanReaperHostedService(
 
         if (deletionsTotal > 0)
         {
-            logger.LogInformation("Reaped {Count} orphan attachment blobs", deletionsTotal);
+            _logger.LogInformation("Reaped {Count} orphan attachment blobs", deletionsTotal);
         }
     }
 }

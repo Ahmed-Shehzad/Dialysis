@@ -10,8 +10,16 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// provider-style placeholders (e.g. <c>@p0</c>, <c>@name</c>) bound through
 /// <see cref="DatabaseParameterBinding"/> entries to prevent SQL injection.
 /// </summary>
-public sealed class DatabaseOutboundAdapter(IDatabaseOutboundConnectionFactory connectionFactory) : IOutboundAdapter
+public sealed class DatabaseOutboundAdapter : IOutboundAdapter
 {
+    private readonly IDatabaseOutboundConnectionFactory _connectionFactory;
+    /// <summary>
+    /// Outbound adapter that executes a parameterized SQL command per message. Connection strings are
+    /// resolved by name via <see cref="IDatabaseOutboundConnectionFactory"/>; SQL bodies must use
+    /// provider-style placeholders (e.g. <c>@p0</c>, <c>@name</c>) bound through
+    /// <see cref="DatabaseParameterBinding"/> entries to prevent SQL injection.
+    /// </summary>
+    public DatabaseOutboundAdapter(IDatabaseOutboundConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
     public const string KindValue = "database";
 
     public string Kind => KindValue;
@@ -50,7 +58,7 @@ public sealed class DatabaseOutboundAdapter(IDatabaseOutboundConnectionFactory c
 
         try
         {
-            await using var connection = await connectionFactory
+            await using var connection = await _connectionFactory
                 .OpenAsync(opts.Provider, opts.ConnectionStringName!, cancellationToken)
                 .ConfigureAwait(false);
 

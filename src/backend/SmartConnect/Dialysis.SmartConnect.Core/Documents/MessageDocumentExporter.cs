@@ -8,7 +8,25 @@ using Dialysis.SmartConnect.DataTypes;
 namespace Dialysis.SmartConnect.Documents;
 
 /// <summary>A converted, downloadable representation of a ledger message payload.</summary>
-public sealed record ExportedDocument(string FileName, string ContentType, byte[] Content);
+public sealed record ExportedDocument
+{
+    /// <summary>A converted, downloadable representation of a ledger message payload.</summary>
+    public ExportedDocument(string FileName, string ContentType, byte[] Content)
+    {
+        this.FileName = FileName;
+        this.ContentType = ContentType;
+        this.Content = Content;
+    }
+    public string FileName { get; init; }
+    public string ContentType { get; init; }
+    public byte[] Content { get; init; }
+    public void Deconstruct(out string FileName, out string ContentType, out byte[] Content)
+    {
+        FileName = this.FileName;
+        ContentType = this.ContentType;
+        Content = this.Content;
+    }
+}
 
 /// <summary>
 /// Converts a captured message payload into a downloadable clinical document. HL7 v2 payloads are
@@ -380,7 +398,33 @@ public static class MessageDocumentExporter
 
     // ---- shared helpers --------------------------------------------------------------------
 
-    private sealed record Observation(string Code, string Name, string Value, string Units, string? Time, string? Iso);
+    private sealed record Observation
+    {
+        public Observation(string Code, string Name, string Value, string Units, string? Time, string? Iso)
+        {
+            this.Code = Code;
+            this.Name = Name;
+            this.Value = Value;
+            this.Units = Units;
+            this.Time = Time;
+            this.Iso = Iso;
+        }
+        public string Code { get; init; }
+        public string Name { get; init; }
+        public string Value { get; init; }
+        public string Units { get; init; }
+        public string? Time { get; init; }
+        public string? Iso { get; init; }
+        public void Deconstruct(out string Code, out string Name, out string Value, out string Units, out string? Time, out string? Iso)
+        {
+            Code = this.Code;
+            Name = this.Name;
+            Value = this.Value;
+            Units = this.Units;
+            Time = this.Time;
+            Iso = this.Iso;
+        }
+    }
 
     private static List<Observation> ExtractObservations(Hl7V2Message? msg)
     {

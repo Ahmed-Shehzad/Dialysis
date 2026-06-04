@@ -11,27 +11,41 @@ namespace Dialysis.SmartConnect.Inbound.Transponder;
 /// Runs <see cref="ITransponderTransport.RunConsumerAsync"/> and enqueues each payload to <see cref="ChannelInboundQueue"/>.
 /// Host must register <see cref="ITransponderTransport"/>, <see cref="ChannelInboundQueue"/>, and <see cref="SmartConnectInboundQueueConsumer"/>.
 /// </summary>
-public sealed class TransponderInboundTransportBridge(
-    ITransponderTransport transport,
-    ChannelInboundQueue channelInboundQueue,
-    IOptionsMonitor<TransponderInboundBridgeOptions> options,
-    ILogger<TransponderInboundTransportBridge> logger) : BackgroundService
+public sealed class TransponderInboundTransportBridge : BackgroundService
 {
+    private readonly ITransponderTransport _transport;
+    private readonly ChannelInboundQueue _channelInboundQueue;
+    private readonly IOptionsMonitor<TransponderInboundBridgeOptions> _options;
+    private readonly ILogger<TransponderInboundTransportBridge> _logger;
+    /// <summary>
+    /// Runs <see cref="ITransponderTransport.RunConsumerAsync"/> and enqueues each payload to <see cref="ChannelInboundQueue"/>.
+    /// Host must register <see cref="ITransponderTransport"/>, <see cref="ChannelInboundQueue"/>, and <see cref="SmartConnectInboundQueueConsumer"/>.
+    /// </summary>
+    public TransponderInboundTransportBridge(ITransponderTransport transport,
+        ChannelInboundQueue channelInboundQueue,
+        IOptionsMonitor<TransponderInboundBridgeOptions> options,
+        ILogger<TransponderInboundTransportBridge> logger)
+    {
+        _transport = transport;
+        _channelInboundQueue = channelInboundQueue;
+        _options = options;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var opt = options.CurrentValue;
+        var opt = _options.CurrentValue;
         if (opt.DefaultFlowId == Guid.Empty)
         {
-            logger.LogWarning("Transponder inbound bridge disabled: DefaultFlowId is empty.");
+            _logger.LogWarning("Transponder inbound bridge disabled: DefaultFlowId is empty.");
             return;
         }
 
-        await transport.EnsureConnectedAsync(stoppingToken).ConfigureAwait(false);
-        logger.LogInformation(
+        await _transport.EnsureConnectedAsync(stoppingToken).ConfigureAwait(false);
+        _logger.LogInformation(
             "SmartConnect Transponder inbound bridge consuming for flow {FlowId}.",
             opt.DefaultFlowId);
 
-        await transport.RunConsumerAsync(
+        await _transport.RunConsumerAsync(
             async (msg, ct) =>
             {
                 var format = ResolveFormat(msg, opt);
@@ -43,7 +57,7 @@ public sealed class TransponderInboundTransportBridge(
                         metadata = metadata.Add(kv.Key, kv.Value);
                     }
                 }
-                await channelInboundQueue.Writer.WriteAsync(
+                await _channelInboundQueue.Writer.WriteAsync(
                     new InboundQueueItem
                     {
                         FlowId = opt.DefaultFlowId,

@@ -64,20 +64,24 @@ public sealed class OcrAugmentedExtractorTests
         ocr.CallCount.ShouldBe(0);
     }
 
-    private sealed class StubNativeExtractor(ExtractedDocument result) : IPdfTextExtractor
+    private sealed class StubNativeExtractor : IPdfTextExtractor
     {
+        private readonly ExtractedDocument _result;
+        public StubNativeExtractor(ExtractedDocument result) => _result = result;
         public Task<ExtractedDocument> ExtractAsync(ReadOnlyMemory<byte> pdfDocument, CancellationToken cancellationToken)
-            => Task.FromResult(result);
+            => Task.FromResult(_result);
     }
 
-    private sealed class StubRasterizer(IReadOnlyList<RasterizedPage> pages) : IPdfRasterizer
+    private sealed class StubRasterizer : IPdfRasterizer
     {
+        private readonly IReadOnlyList<RasterizedPage> _pages;
+        public StubRasterizer(IReadOnlyList<RasterizedPage> pages) => _pages = pages;
         public async IAsyncEnumerable<RasterizedPage> RasterizeAsync(
             ReadOnlyMemory<byte> pdfDocument,
             RasterizationOptions options,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            foreach (var page in pages)
+            foreach (var page in _pages)
             {
                 await Task.Yield();
                 yield return page;
@@ -85,13 +89,15 @@ public sealed class OcrAugmentedExtractorTests
         }
     }
 
-    private sealed class StubOcrEngine(OcrResult result) : IOcrEngine
+    private sealed class StubOcrEngine : IOcrEngine
     {
+        private readonly OcrResult _result;
+        public StubOcrEngine(OcrResult result) => _result = result;
         public int CallCount { get; private set; }
         public Task<OcrResult> RecognizeAsync(ReadOnlyMemory<byte> imageBytes, OcrOptions options, CancellationToken cancellationToken)
         {
             CallCount++;
-            return Task.FromResult(result);
+            return Task.FromResult(_result);
         }
     }
 }

@@ -11,8 +11,22 @@ namespace Dialysis.SmartConnect.Alerts.Actions;
 /// The new message carries <c>smartconnect.alert.ruleId</c>, <c>smartconnect.alert.eventId</c>, and
 /// <c>smartconnect.alert.errorType</c> metadata so the receiving flow can route on the alert origin.
 /// </summary>
-public sealed class ChannelRedispatchAlertActionProvider(Func<IFlowRuntime> runtimeAccessor, TimeProvider time) : IAlertActionProvider
+public sealed class ChannelRedispatchAlertActionProvider : IAlertActionProvider
 {
+    private readonly Func<IFlowRuntime> _runtimeAccessor;
+    private readonly TimeProvider _time;
+    /// <summary>
+    /// Re-dispatches a synthetic <see cref="IntegrationMessage"/> to a designated SmartConnect flow when
+    /// the alert fires. Lets operators handle alerts via the existing flow infrastructure (retry, fan-out, queue).
+    /// Properties JSON: <c>{"targetFlowId":"&lt;guid&gt;","payloadTemplate":"..."}</c>.
+    /// The new message carries <c>smartconnect.alert.ruleId</c>, <c>smartconnect.alert.eventId</c>, and
+    /// <c>smartconnect.alert.errorType</c> metadata so the receiving flow can route on the alert origin.
+    /// </summary>
+    public ChannelRedispatchAlertActionProvider(Func<IFlowRuntime> runtimeAccessor, TimeProvider time)
+    {
+        _runtimeAccessor = runtimeAccessor;
+        _time = time;
+    }
     public const string KindValue = "channel-redispatch";
 
     private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
@@ -59,13 +73,13 @@ public sealed class ChannelRedispatchAlertActionProvider(Func<IFlowRuntime> runt
             CorrelationId = evt.CorrelationId ?? evt.Id.ToString(),
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Utf8Text,
-            ReceivedAtUtc = time.GetUtcNow(),
+            ReceivedAtUtc = _time.GetUtcNow(),
             Metadata = metadata,
         };
 
         try
         {
-            var runtime = runtimeAccessor();
+            var runtime = _runtimeAccessor();
             var result = await runtime.DispatchAsync(message, cancellationToken).ConfigureAwait(false);
             return result.Succeeded
                 ? AlertActionResult.Success($"Dispatched to flow {props.TargetFlowId}")

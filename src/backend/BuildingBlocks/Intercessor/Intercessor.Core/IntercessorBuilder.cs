@@ -9,8 +9,15 @@ namespace Dialysis.BuildingBlocks.Intercessor;
 /// For each request type, call <see cref="AddHandler{TRequest,TResponse,THandler}"/> before
 /// <see cref="AddBehavior{TRequest,TResponse,TBehavior}"/> so behaviors wrap the handler in registration order.
 /// </summary>
-public sealed class IntercessorBuilder(IServiceCollection services)
+public sealed class IntercessorBuilder
 {
+    private readonly IServiceCollection _services;
+    /// <summary>
+    /// Registers handlers, validators, and pipeline behaviors for Intercessor.
+    /// For each request type, call <see cref="AddHandler{TRequest,TResponse,THandler}"/> before
+    /// <see cref="AddBehavior{TRequest,TResponse,TBehavior}"/> so behaviors wrap the handler in registration order.
+    /// </summary>
+    public IntercessorBuilder(IServiceCollection services) => _services = services;
     /// <summary>
     /// Registers <typeparamref name="THandler"/> as the handler for <typeparamref name="TRequest"/>.
     /// </summary>
@@ -18,8 +25,8 @@ public sealed class IntercessorBuilder(IServiceCollection services)
         where TRequest : IRequest<TResponse>
         where THandler : class, IRequestHandler<TRequest, TResponse>
     {
-        services.AddScoped<IRequestHandler<TRequest, TResponse>, THandler>();
-        services.AddScoped<IRequestDispatcher<TRequest, TResponse>, RequestDispatcher<TRequest, TResponse>>();
+        _services.AddScoped<IRequestHandler<TRequest, TResponse>, THandler>();
+        _services.AddScoped<IRequestDispatcher<TRequest, TResponse>, RequestDispatcher<TRequest, TResponse>>();
         return this;
     }
 
@@ -29,7 +36,7 @@ public sealed class IntercessorBuilder(IServiceCollection services)
     public IntercessorBuilder AddValidator<TRequest, TValidator>()
         where TValidator : class, IValidator<TRequest>
     {
-        services.TryAddEnumerable(ServiceDescriptor.Scoped<IValidator<TRequest>, TValidator>());
+        _services.TryAddEnumerable(ServiceDescriptor.Scoped<IValidator<TRequest>, TValidator>());
         return this;
     }
 
@@ -40,7 +47,7 @@ public sealed class IntercessorBuilder(IServiceCollection services)
         where TRequest : IRequest<TResponse>
         where TBehavior : class, IPipelineBehavior<TRequest, TResponse>
     {
-        services.TryAddEnumerable(ServiceDescriptor.Scoped<IPipelineBehavior<TRequest, TResponse>, TBehavior>());
+        _services.TryAddEnumerable(ServiceDescriptor.Scoped<IPipelineBehavior<TRequest, TResponse>, TBehavior>());
         return this;
     }
 }

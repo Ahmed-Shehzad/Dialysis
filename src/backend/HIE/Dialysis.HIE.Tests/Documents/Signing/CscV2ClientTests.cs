@@ -117,10 +117,7 @@ public sealed class CscV2ClientTests
 
         private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
 
-        public FakeHttpHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)
-        {
-            _handler = handler;
-        }
+        public FakeHttpHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) => _handler = handler;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

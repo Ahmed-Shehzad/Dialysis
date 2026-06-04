@@ -155,42 +155,201 @@ public sealed class CscV2Client
 
     // -------- Wire shapes --------
 
-    public sealed record CredentialInfoRequest(
-        [property: JsonPropertyName("credentialID")] string CredentialId,
-        [property: JsonPropertyName("certificates")] string Certificates,
-        [property: JsonPropertyName("certInfo")] bool CertInfo,
-        [property: JsonPropertyName("authInfo")] bool AuthInfo);
+    public sealed record CredentialInfoRequest
+    {
+        public CredentialInfoRequest(string CredentialId,
+            string Certificates,
+            bool CertInfo,
+            bool AuthInfo)
+        {
+            this.CredentialId = CredentialId;
+            this.Certificates = Certificates;
+            this.CertInfo = CertInfo;
+            this.AuthInfo = AuthInfo;
+        }
 
-    public sealed record CredentialInfoResponse(
-        [property: JsonPropertyName("cert")] CredentialCertInfo? Cert,
-        [property: JsonPropertyName("key")] CredentialKeyInfo? Key);
+        [JsonPropertyName("credentialID")]
+        public string CredentialId { get; init; }
 
-    public sealed record CredentialCertInfo(
-        [property: JsonPropertyName("certificates")] IReadOnlyList<string> Certificates,
-        [property: JsonPropertyName("subjectDN")] string? SubjectDistinguishedName,
-        [property: JsonPropertyName("status")] string? Status);
+        [JsonPropertyName("certificates")]
+        public string Certificates { get; init; }
 
-    public sealed record CredentialKeyInfo(
-        [property: JsonPropertyName("algo")] IReadOnlyList<string>? Algo,
-        [property: JsonPropertyName("len")] int? Len);
+        [JsonPropertyName("certInfo")]
+        public bool CertInfo { get; init; }
 
-    private sealed record AuthorizeRequest(
-        [property: JsonPropertyName("credentialID")] string CredentialId,
-        [property: JsonPropertyName("numSignatures")] int NumSignatures);
+        [JsonPropertyName("authInfo")]
+        public bool AuthInfo { get; init; }
 
-    private sealed record AuthorizeResponse([property: JsonPropertyName("SAD")] string? Sad);
+        public void Deconstruct(out string CredentialId, out string Certificates, out bool CertInfo, out bool AuthInfo)
+        {
+            CredentialId = this.CredentialId;
+            Certificates = this.Certificates;
+            CertInfo = this.CertInfo;
+            AuthInfo = this.AuthInfo;
+        }
+    }
 
-    private sealed record SignHashRequest(
-        [property: JsonPropertyName("credentialID")] string CredentialId,
-        [property: JsonPropertyName("SAD")] string Sad,
-        [property: JsonPropertyName("hash")] IReadOnlyList<string> Hash,
-        [property: JsonPropertyName("hashAlgo")] string HashAlgo,
-        [property: JsonPropertyName("signAlgo")] string SignAlgo);
+    public sealed record CredentialInfoResponse
+    {
+        public CredentialInfoResponse(CredentialCertInfo? Cert,
+            CredentialKeyInfo? Key)
+        {
+            this.Cert = Cert;
+            this.Key = Key;
+        }
+        [JsonPropertyName("cert")] public CredentialCertInfo? Cert { get; init; }
+        [JsonPropertyName("key")] public CredentialKeyInfo? Key { get; init; }
+        public void Deconstruct(out CredentialCertInfo? Cert, out CredentialKeyInfo? Key)
+        {
+            Cert = this.Cert;
+            Key = this.Key;
+        }
+    }
 
-    private sealed record SignHashResponse([property: JsonPropertyName("signatures")] IReadOnlyList<string> Signatures);
+    public sealed record CredentialCertInfo
+    {
+        public CredentialCertInfo(IReadOnlyList<string> Certificates,
+            string? SubjectDistinguishedName,
+            string? Status)
+        {
+            this.Certificates = Certificates;
+            this.SubjectDistinguishedName = SubjectDistinguishedName;
+            this.Status = Status;
+        }
 
-    private sealed record TokenResponse(
-        [property: JsonPropertyName("access_token")] string? AccessToken,
-        [property: JsonPropertyName("token_type")] string? TokenType,
-        [property: JsonPropertyName("expires_in")] int ExpiresIn);
+        [JsonPropertyName("certificates")]
+        public IReadOnlyList<string> Certificates { get; init; }
+
+        [JsonPropertyName("subjectDN")]
+        public string? SubjectDistinguishedName { get; init; }
+
+        [JsonPropertyName("status")] public string? Status { get; init; }
+        public void Deconstruct(out IReadOnlyList<string> Certificates, out string? SubjectDistinguishedName, out string? Status)
+        {
+            Certificates = this.Certificates;
+            SubjectDistinguishedName = this.SubjectDistinguishedName;
+            Status = this.Status;
+        }
+    }
+
+    public sealed record CredentialKeyInfo
+    {
+        public CredentialKeyInfo(IReadOnlyList<string>? Algo,
+            int? Len)
+        {
+            this.Algo = Algo;
+            this.Len = Len;
+        }
+        [JsonPropertyName("algo")] public IReadOnlyList<string>? Algo { get; init; }
+        [JsonPropertyName("len")] public int? Len { get; init; }
+        public void Deconstruct(out IReadOnlyList<string>? Algo, out int? Len)
+        {
+            Algo = this.Algo;
+            Len = this.Len;
+        }
+    }
+
+    private sealed record AuthorizeRequest
+    {
+        public AuthorizeRequest(string CredentialId,
+            int NumSignatures)
+        {
+            this.CredentialId = CredentialId;
+            this.NumSignatures = NumSignatures;
+        }
+
+        [JsonPropertyName("credentialID")]
+        public string CredentialId { get; init; }
+
+        [JsonPropertyName("numSignatures")]
+        public int NumSignatures { get; init; }
+
+        public void Deconstruct(out string CredentialId, out int NumSignatures)
+        {
+            CredentialId = this.CredentialId;
+            NumSignatures = this.NumSignatures;
+        }
+    }
+
+    private sealed record AuthorizeResponse
+    {
+        public AuthorizeResponse(string? Sad) => this.Sad = Sad;
+        [JsonPropertyName("SAD")] public string? Sad { get; init; }
+        public void Deconstruct(out string? Sad) => Sad = this.Sad;
+    }
+
+    private sealed record SignHashRequest
+    {
+        public SignHashRequest(string CredentialId,
+            string Sad,
+            IReadOnlyList<string> Hash,
+            string HashAlgo,
+            string SignAlgo)
+        {
+            this.CredentialId = CredentialId;
+            this.Sad = Sad;
+            this.Hash = Hash;
+            this.HashAlgo = HashAlgo;
+            this.SignAlgo = SignAlgo;
+        }
+
+        [JsonPropertyName("credentialID")]
+        public string CredentialId { get; init; }
+
+        [JsonPropertyName("SAD")] public string Sad { get; init; }
+        [JsonPropertyName("hash")] public IReadOnlyList<string> Hash { get; init; }
+
+        [JsonPropertyName("hashAlgo")]
+        public string HashAlgo { get; init; }
+
+        [JsonPropertyName("signAlgo")]
+        public string SignAlgo { get; init; }
+
+        public void Deconstruct(out string CredentialId, out string Sad, out IReadOnlyList<string> Hash, out string HashAlgo, out string SignAlgo)
+        {
+            CredentialId = this.CredentialId;
+            Sad = this.Sad;
+            Hash = this.Hash;
+            HashAlgo = this.HashAlgo;
+            SignAlgo = this.SignAlgo;
+        }
+    }
+
+    private sealed record SignHashResponse
+    {
+        public SignHashResponse(IReadOnlyList<string> Signatures) => this.Signatures = Signatures;
+
+        [JsonPropertyName("signatures")]
+        public IReadOnlyList<string> Signatures { get; init; }
+
+        public void Deconstruct(out IReadOnlyList<string> Signatures) => Signatures = this.Signatures;
+    }
+
+    private sealed record TokenResponse
+    {
+        public TokenResponse(string? AccessToken,
+            string? TokenType,
+            int ExpiresIn)
+        {
+            this.AccessToken = AccessToken;
+            this.TokenType = TokenType;
+            this.ExpiresIn = ExpiresIn;
+        }
+
+        [JsonPropertyName("access_token")]
+        public string? AccessToken { get; init; }
+
+        [JsonPropertyName("token_type")]
+        public string? TokenType { get; init; }
+
+        [JsonPropertyName("expires_in")]
+        public int ExpiresIn { get; init; }
+
+        public void Deconstruct(out string? AccessToken, out string? TokenType, out int ExpiresIn)
+        {
+            AccessToken = this.AccessToken;
+            TokenType = this.TokenType;
+            ExpiresIn = this.ExpiresIn;
+        }
+    }
 }

@@ -53,9 +53,10 @@ public sealed class AcknowledgeAlarmCommandHandlerTests
         alarm.AcknowledgedBy.ShouldBe("nurse-1");
     }
 
-    private sealed class InMemoryAlarms(params TreatmentAlarm[] seed) : ITreatmentAlarmRepository
+    private sealed class InMemoryAlarms : ITreatmentAlarmRepository
     {
-        private readonly List<TreatmentAlarm> _alarms = [.. seed];
+        private readonly List<TreatmentAlarm> _alarms;
+        public InMemoryAlarms(params TreatmentAlarm[] seed) => _alarms = [.. seed];
 
         public void Add(TreatmentAlarm alarm) => _alarms.Add(alarm);
 
@@ -83,9 +84,10 @@ public sealed class AcknowledgeAlarmCommandHandlerTests
         }
     }
 
-    private sealed class FakeTimeProvider(DateTime utcNow) : TimeProvider
+    private sealed class FakeTimeProvider : TimeProvider
     {
-        private readonly DateTime _utcNow = utcNow;
+        private readonly DateTime _utcNow;
+        public FakeTimeProvider(DateTime utcNow) => _utcNow = utcNow;
 
         public override DateTimeOffset GetUtcNow() => new(_utcNow, TimeSpan.Zero);
     }

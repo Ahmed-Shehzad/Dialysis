@@ -4,20 +4,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Stores;
 
-public sealed class ChargeRepository(EhrDbContext db) : IChargeRepository
+public sealed class ChargeRepository : IChargeRepository
 {
+    private readonly EhrDbContext _db;
+    public ChargeRepository(EhrDbContext db) => _db = db;
     public Task<Charge?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Charges.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        _db.Charges.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<Charge>> ListUnbilledForPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
-        await db.Charges
+        await _db.Charges
             .Where(c => c.PatientId == patientId && c.Status == ChargeStatus.Captured)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public async Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default)
     {
         var bounded = Math.Clamp(take, 1, 500);
-        var query = db.Charges.AsQueryable();
+        var query = _db.Charges.AsQueryable();
         if (status is not null)
             query = query.Where(c => c.Status == status.Value);
         return await query
@@ -27,21 +29,23 @@ public sealed class ChargeRepository(EhrDbContext db) : IChargeRepository
             .ConfigureAwait(false);
     }
 
-    public void Add(Charge charge) => db.Charges.Add(charge);
+    public void Add(Charge charge) => _db.Charges.Add(charge);
 }
 
-public sealed class ClaimRepository(EhrDbContext db) : IClaimRepository
+public sealed class ClaimRepository : IClaimRepository
 {
+    private readonly EhrDbContext _db;
+    public ClaimRepository(EhrDbContext db) => _db = db;
     public Task<Claim?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Claims.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        _db.Claims.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public Task<Claim?> FindByExternalControlNumberAsync(string controlNumber, CancellationToken cancellationToken = default) =>
-        db.Claims.FirstOrDefaultAsync(c => c.ExternalControlNumber == controlNumber, cancellationToken);
+        _db.Claims.FirstOrDefaultAsync(c => c.ExternalControlNumber == controlNumber, cancellationToken);
 
     public async Task<IReadOnlyList<Claim>> ListAsync(ClaimStatus? status, int take, CancellationToken cancellationToken = default)
     {
         var bounded = Math.Clamp(take, 1, 500);
-        var query = db.Claims.AsQueryable();
+        var query = _db.Claims.AsQueryable();
         if (status is not null)
             query = query.Where(c => c.Status == status.Value);
         return await query
@@ -52,32 +56,38 @@ public sealed class ClaimRepository(EhrDbContext db) : IClaimRepository
             .ConfigureAwait(false);
     }
 
-    public void Add(Claim claim) => db.Claims.Add(claim);
+    public void Add(Claim claim) => _db.Claims.Add(claim);
 }
 
-public sealed class RemittanceRepository(EhrDbContext db) : IRemittanceRepository
+public sealed class RemittanceRepository : IRemittanceRepository
 {
+    private readonly EhrDbContext _db;
+    public RemittanceRepository(EhrDbContext db) => _db = db;
     public Task<Remittance?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Remittances.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        _db.Remittances.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public void Add(Remittance remittance) => db.Remittances.Add(remittance);
+    public void Add(Remittance remittance) => _db.Remittances.Add(remittance);
 }
 
-public sealed class PaymentRepository(EhrDbContext db) : IPaymentRepository
+public sealed class PaymentRepository : IPaymentRepository
 {
+    private readonly EhrDbContext _db;
+    public PaymentRepository(EhrDbContext db) => _db = db;
     public Task<Payment?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Payments.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        _db.Payments.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
-    public void Add(Payment payment) => db.Payments.Add(payment);
+    public void Add(Payment payment) => _db.Payments.Add(payment);
 }
 
-public sealed class PayerRepository(EhrDbContext db) : IPayerRepository
+public sealed class PayerRepository : IPayerRepository
 {
+    private readonly EhrDbContext _db;
+    public PayerRepository(EhrDbContext db) => _db = db;
     public Task<Payer?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Payers.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        _db.Payers.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
     public Task<Payer?> FindByCodeAsync(string payerCode, CancellationToken cancellationToken = default) =>
-        db.Payers.FirstOrDefaultAsync(p => p.PayerCode == payerCode.ToUpperInvariant(), cancellationToken);
+        _db.Payers.FirstOrDefaultAsync(p => p.PayerCode == payerCode.ToUpperInvariant(), cancellationToken);
 
-    public void Add(Payer payer) => db.Payers.Add(payer);
+    public void Add(Payer payer) => _db.Payers.Add(payer);
 }

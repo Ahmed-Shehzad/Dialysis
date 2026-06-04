@@ -45,10 +45,10 @@ public enum PadesLevel
     T = 2,
 
     /// <summary>PAdES-B-LT — TSA + DSS revocation evidence packed in.</summary>
-    LT = 3,
+    Lt = 3,
 
     /// <summary>PAdES-B-LTA — LT plus a document-timestamp over the DSS to extend trust.</summary>
-    LTA = 4,
+    Lta = 4,
 }
 
 /// <summary>Whether the signature is an advanced (AES) or qualified (QES) electronic signature.</summary>

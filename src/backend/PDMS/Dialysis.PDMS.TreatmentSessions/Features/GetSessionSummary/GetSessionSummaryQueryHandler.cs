@@ -3,14 +3,15 @@ using Dialysis.PDMS.TreatmentSessions.Ports;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 
-public sealed class GetSessionSummaryQueryHandler(IDialysisSessionRepository sessions)
-    : IQueryHandler<GetSessionSummaryQuery, SessionSummaryDto>
+public sealed class GetSessionSummaryQueryHandler : IQueryHandler<GetSessionSummaryQuery, SessionSummaryDto>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    public GetSessionSummaryQueryHandler(IDialysisSessionRepository sessions) => _sessions = sessions;
     public async Task<SessionSummaryDto> HandleAsync(
         GetSessionSummaryQuery request,
         CancellationToken cancellationToken)
     {
-        var session = await sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
+        var session = await _sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Session '{request.SessionId}' not found.");
 
         var readings = session.Readings.OrderBy(r => r.ObservedAtUtc).ToList();

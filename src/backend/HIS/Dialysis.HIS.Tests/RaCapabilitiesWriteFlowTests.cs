@@ -9,12 +9,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory factory)
+public sealed class RaCapabilitiesWriteFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Registerfinancialerplink_Persists_And_Is_Listed_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var id = await gateway.SendCommandAsync<RegisterFinancialErpLinkCommand, Guid>(
@@ -33,7 +35,7 @@ public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory fac
     [Fact]
     public async Task Registerfinancialerplink_Rejects_Invalid_Status_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         await Should.ThrowAsync<Exception>(async () =>
@@ -45,7 +47,7 @@ public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory fac
     [Fact]
     public async Task Recordmedicationdispensing_Persists_And_Is_Listed_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var orderId = Guid.CreateVersion7();
@@ -65,7 +67,7 @@ public sealed class RaCapabilitiesWriteFlowTests(HisApiWebApplicationFactory fac
     [Fact]
     public async Task Recordmedicationdispensing_Rejects_Lowercase_Barcode_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         await Should.ThrowAsync<Exception>(async () =>

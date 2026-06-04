@@ -54,9 +54,11 @@ public sealed class CompositeSubscriptionNotificationDispatcherTests
         FilterParameters: new Dictionary<string, string>(StringComparer.Ordinal),
         Status: SubscriptionStatus.Active);
 
-    private sealed class RecordingChannel(SubscriptionChannelType channel) : ISubscriptionChannelDispatcher
+    private sealed class RecordingChannel : ISubscriptionChannelDispatcher
     {
-        public SubscriptionChannelType Channel => channel;
+        private readonly SubscriptionChannelType _channel;
+        public RecordingChannel(SubscriptionChannelType channel) => _channel = channel;
+        public SubscriptionChannelType Channel => _channel;
 
         public int Count { get; private set; }
 

@@ -4,13 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.PDMS.Persistence.Stores;
 
-public sealed class DialysisSessionRepository(PdmsDbContext db) : IDialysisSessionRepository
+public sealed class DialysisSessionRepository : IDialysisSessionRepository
 {
+    private readonly PdmsDbContext _db;
+    public DialysisSessionRepository(PdmsDbContext db) => _db = db;
     public Task<DialysisSession?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Sessions.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+        _db.Sessions.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<DialysisSession>> ListByPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default) =>
-        await db.Sessions
+        await _db.Sessions
             .Where(s => s.PatientId == patientId && s.ScheduledStartUtc >= sinceUtc)
             .OrderByDescending(s => s.ScheduledStartUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -19,7 +21,7 @@ public sealed class DialysisSessionRepository(PdmsDbContext db) : IDialysisSessi
         DateTime sinceUtc,
         int take,
         CancellationToken cancellationToken = default) =>
-        await db.Sessions
+        await _db.Sessions
             .Where(s => s.ScheduledStartUtc >= sinceUtc)
             .OrderByDescending(s => s.ScheduledStartUtc)
             .Take(take)
@@ -27,18 +29,18 @@ public sealed class DialysisSessionRepository(PdmsDbContext db) : IDialysisSessi
 
     public async Task<IReadOnlyList<DialysisSession>> ListActiveAsync(
         CancellationToken cancellationToken = default) =>
-        await db.Sessions
+        await _db.Sessions
             .Where(s => s.Status == DialysisSessionStatus.InProgress
                      || s.Status == DialysisSessionStatus.Scheduled
                      || s.Status == DialysisSessionStatus.Paused)
             .OrderBy(s => s.ScheduledStartUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
-    public void Add(DialysisSession session) => db.Sessions.Add(session);
+    public void Add(DialysisSession session) => _db.Sessions.Add(session);
 
     public IAsyncEnumerable<DialysisSession> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
     {
-        var query = db.Sessions.AsNoTracking().OrderBy(s => s.ScheduledStartUtc).AsQueryable();
+        var query = _db.Sessions.AsNoTracking().OrderBy(s => s.ScheduledStartUtc).AsQueryable();
         if (since is { } cutoff)
         {
             var cutoffUtc = cutoff.UtcDateTime;

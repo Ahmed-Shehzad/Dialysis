@@ -2,6 +2,19 @@ using System.Text.Json.Serialization;
 
 namespace Dialysis.HIS.Api.Hateoas;
 
-public sealed record ResourceEnvelope<T>(
-    [property: JsonPropertyName("data")] T Data,
-    [property: JsonPropertyName("links")] IReadOnlyList<LinkDto> Links);
+public sealed record ResourceEnvelope<T>
+{
+    public ResourceEnvelope(T Data,
+        IReadOnlyList<LinkDto> Links)
+    {
+        this.Data = Data;
+        this.Links = Links;
+    }
+    [JsonPropertyName("data")] public T Data { get; init; }
+    [JsonPropertyName("links")] public IReadOnlyList<LinkDto> Links { get; init; }
+    public void Deconstruct(out T Data, out IReadOnlyList<LinkDto> Links)
+    {
+        Data = this.Data;
+        Links = this.Links;
+    }
+}

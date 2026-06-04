@@ -4,15 +4,16 @@ using Dialysis.HIS.PatientFlow.Ports;
 
 namespace Dialysis.HIS.PatientFlow.Features.GetTodaysQueue;
 
-public sealed class GetTodaysQueueQueryHandler(IPatientQueueRepository repository)
-    : IQueryHandler<GetTodaysQueueQuery, IReadOnlyList<PatientQueueEntryDto>>
+public sealed class GetTodaysQueueQueryHandler : IQueryHandler<GetTodaysQueueQuery, IReadOnlyList<PatientQueueEntryDto>>
 {
+    private readonly IPatientQueueRepository _repository;
+    public GetTodaysQueueQueryHandler(IPatientQueueRepository repository) => _repository = repository;
     public Task<IReadOnlyList<PatientQueueEntryDto>> HandleAsync(
         GetTodaysQueueQuery _,
         CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var entries = repository.ListForToday(today)
+        var entries = _repository.ListForToday(today)
             .Select(e => new PatientQueueEntryDto(
                 e.Id,
                 e.PatientId,

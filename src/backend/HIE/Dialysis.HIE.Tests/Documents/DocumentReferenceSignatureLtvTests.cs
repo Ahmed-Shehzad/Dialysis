@@ -28,7 +28,7 @@ public sealed class DocumentReferenceSignatureLtvTests
     public void Pades_Lt_Requires_Revocation_Evidence()
     {
         var ex = Should.Throw<ArgumentException>(() => Make_Signature(
-            level: PadesLevel.LT,
+            level: PadesLevel.Lt,
             tsaUri: "http://timestamp.example/tsa",
             revocationEvidenceFormat: RevocationEvidenceFormat.None));
         ex.ParamName.ShouldBe("revocationEvidenceFormat");
@@ -62,9 +62,9 @@ public sealed class DocumentReferenceSignatureLtvTests
             revocationEvidenceFormat: RevocationEvidenceFormat.Crl,
             revocationEvidenceBlob: [1]);
 
-        s.UpgradeLevel(PadesLevel.LTA, RevocationEvidenceFormat.Both, [2, 3, 4]);
+        s.UpgradeLevel(PadesLevel.Lta, RevocationEvidenceFormat.Both, [2, 3, 4]);
 
-        s.PadesLevel.ShouldBe(PadesLevel.LTA);
+        s.PadesLevel.ShouldBe(PadesLevel.Lta);
         s.RevocationEvidenceFormat.ShouldBe(RevocationEvidenceFormat.Both);
         s.RevocationEvidenceBlob.ShouldBe([2, 3, 4]);
     }
@@ -73,7 +73,7 @@ public sealed class DocumentReferenceSignatureLtvTests
     public void Upgrade_Level_Below_Current_Throws()
     {
         var s = Make_Signature(
-            level: PadesLevel.LT,
+            level: PadesLevel.Lt,
             tsaUri: "http://timestamp.example/tsa",
             timestampedAtUtc: DateTime.UtcNow,
             revocationEvidenceFormat: RevocationEvidenceFormat.Crl,

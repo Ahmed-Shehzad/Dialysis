@@ -12,12 +12,26 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 /// REST-hook channel dispatcher. POSTs a subscription notification Bundle (per the Backport IG)
 /// to the subscriber's URL with an HMAC signature header derived from the subscription secret.
 /// </summary>
-public sealed class RestHookNotificationDispatcher(
-    IHttpClientFactory httpClientFactory,
-    FhirJsonSerializerProvider serializer,
-    ISubscriptionRegistry registry,
-    ILogger<RestHookNotificationDispatcher> logger) : ISubscriptionChannelDispatcher
+public sealed class RestHookNotificationDispatcher : ISubscriptionChannelDispatcher
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly FhirJsonSerializerProvider _serializer;
+    private readonly ISubscriptionRegistry _registry;
+    private readonly ILogger<RestHookNotificationDispatcher> _logger;
+    /// <summary>
+    /// REST-hook channel dispatcher. POSTs a subscription notification Bundle (per the Backport IG)
+    /// to the subscriber's URL with an HMAC signature header derived from the subscription secret.
+    /// </summary>
+    public RestHookNotificationDispatcher(IHttpClientFactory httpClientFactory,
+        FhirJsonSerializerProvider serializer,
+        ISubscriptionRegistry registry,
+        ILogger<RestHookNotificationDispatcher> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _serializer = serializer;
+        _registry = registry;
+        _logger = logger;
+    }
     private const int MaxConsecutiveFailures = 5;
 
     public SubscriptionChannelType Channel => SubscriptionChannelType.RestHook;
@@ -32,10 +46,10 @@ public sealed class RestHookNotificationDispatcher(
             return;
 
         var bundle = SubscriptionNotificationBundleFactory.Build(subscription, payloadResource);
-        var json = serializer.Serialize(bundle);
+        var json = _serializer.Serialize(bundle);
         var body = Encoding.UTF8.GetBytes(json);
 
-        using var client = httpClientFactory.CreateClient(nameof(RestHookNotificationDispatcher));
+        using var client = _httpClientFactory.CreateClient(nameof(RestHookNotificationDispatcher));
         using var request = new HttpRequestMessage(HttpMethod.Post, subscription.ChannelEndpoint)
         {
             Content = new ByteArrayContent(body)
@@ -62,7 +76,7 @@ public sealed class RestHookNotificationDispatcher(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "REST-hook delivery failed for subscription {SubscriptionId}", subscription.Id);
+            _logger.LogWarning(ex, "REST-hook delivery failed for subscription {SubscriptionId}", subscription.Id);
             await RecordFailureAsync(subscription, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -70,13 +84,13 @@ public sealed class RestHookNotificationDispatcher(
     private Task RecordSuccessAsync(FhirSubscriptionRegistration subscription, CancellationToken cancellationToken)
     {
         if (subscription.ConsecutiveFailures == 0) return Task.CompletedTask;
-        return registry.UpdateStatusAsync(subscription.Id, SubscriptionStatus.Active, consecutiveFailures: 0, cancellationToken).AsTask();
+        return _registry.UpdateStatusAsync(subscription.Id, SubscriptionStatus.Active, consecutiveFailures: 0, cancellationToken).AsTask();
     }
 
     private Task RecordFailureAsync(FhirSubscriptionRegistration subscription, CancellationToken cancellationToken)
     {
         var nextFailureCount = subscription.ConsecutiveFailures + 1;
         var nextStatus = nextFailureCount >= MaxConsecutiveFailures ? SubscriptionStatus.Error : subscription.Status;
-        return registry.UpdateStatusAsync(subscription.Id, nextStatus, nextFailureCount, cancellationToken).AsTask();
+        return _registry.UpdateStatusAsync(subscription.Id, nextStatus, nextFailureCount, cancellationToken).AsTask();
     }
 }

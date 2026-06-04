@@ -37,7 +37,8 @@ public sealed class PdfPigPdfTextExtractor : IPdfTextExtractor
                 foreach (var line in block.TextLines)
                 {
                     var text = Sanitize(line.Text);
-                    if (string.IsNullOrEmpty(text)) continue;
+                    if (string.IsNullOrEmpty(text))
+                        continue;
                     var fontSize = line.Words.Count == 0 ? 0d : line.Words.Average(w => w.Letters.Count == 0 ? 0 : w.Letters.Average(l => l.FontSize));
                     var isBold = line.Words.SelectMany(w => w.Letters).Any(IsBold);
                     allLines.Add((page.Number, text, fontSize, isBold));
@@ -52,11 +53,11 @@ public sealed class PdfPigPdfTextExtractor : IPdfTextExtractor
             .OrderBy(g => g.Key)
             .Select(g => new ExtractedPage(
                 g.Key,
-                g.Select(line => new ExtractedLine(
+                [.. g.Select(line => new ExtractedLine(
                     line.Text,
                     line.FontSize,
                     line.IsBold,
-                    InferHeadingLevel(line.FontSize, bodyFontSize, headingThreshold))).ToArray()))
+                    InferHeadingLevel(line.FontSize, bodyFontSize, headingThreshold)))]))
             .ToArray();
         return Task.FromResult(new ExtractedDocument(title, pages));
     }
@@ -69,12 +70,14 @@ public sealed class PdfPigPdfTextExtractor : IPdfTextExtractor
     /// </summary>
     private static string Sanitize(string? raw)
     {
-        if (string.IsNullOrEmpty(raw)) return string.Empty;
+        if (string.IsNullOrEmpty(raw))
+            return string.Empty;
         Span<char> buffer = raw.Length <= 1024 ? stackalloc char[raw.Length] : new char[raw.Length];
         var write = 0;
         foreach (var ch in raw)
         {
-            if (ch < 0x20 && ch != '\t' && ch != '\n' && ch != '\r') continue;
+            if (ch < 0x20 && ch != '\t' && ch != '\n' && ch != '\r')
+                continue;
             buffer[write++] = ch;
         }
         return new string(buffer[..write]).Trim();
@@ -85,7 +88,8 @@ public sealed class PdfPigPdfTextExtractor : IPdfTextExtractor
         // PdfPig 0.1.x deprecated Letter.Font in favour of FontDetails — which exposes
         // IsBold and the font name directly. Not every PDF populates these (some embed
         // anonymous subset fonts), so we fall back to a name-based heuristic.
-        if (letter.FontDetails.IsBold) return true;
+        if (letter.FontDetails.IsBold)
+            return true;
         var name = letter.FontDetails.Name;
         return name is not null && (name.Contains("Bold", StringComparison.OrdinalIgnoreCase)
             || name.Contains("Heavy", StringComparison.OrdinalIgnoreCase)
@@ -94,9 +98,11 @@ public sealed class PdfPigPdfTextExtractor : IPdfTextExtractor
 
     private static double MedianBodyFontSize(IReadOnlyList<(int Page, string Text, double FontSize, bool IsBold)> lines)
     {
-        if (lines.Count == 0) return 0d;
+        if (lines.Count == 0)
+            return 0d;
         var sizes = lines.Select(l => l.FontSize).Where(s => s > 0).OrderBy(s => s).ToArray();
-        if (sizes.Length == 0) return 0d;
+        if (sizes.Length == 0)
+            return 0d;
         return sizes.Length % 2 == 1
             ? sizes[sizes.Length / 2]
             : (sizes[(sizes.Length / 2) - 1] + sizes[sizes.Length / 2]) / 2.0;
@@ -104,7 +110,8 @@ public sealed class PdfPigPdfTextExtractor : IPdfTextExtractor
 
     private static int? InferHeadingLevel(double fontSize, double bodyFontSize, double headingThreshold)
     {
-        if (bodyFontSize <= 0 || fontSize <= headingThreshold) return null;
+        if (bodyFontSize <= 0 || fontSize <= headingThreshold)
+            return null;
         var ratio = fontSize / bodyFontSize;
         // Step-function: 1.15× → H6, 1.3× → H5, 1.5× → H4, 1.75× → H3, 2× → H2, 2.5× → H1.
         return ratio switch

@@ -7,8 +7,19 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.SignalR;
 /// <summary>
 /// Ingress hub: clients call <see cref="PublishAsync"/>; all connections receive copies on <see cref="ReceiveMethod"/>.
 /// </summary>
-public sealed class TransponderSignalRHub(ILogger<TransponderSignalRHub> logger, IServiceProvider services) : Hub
+public sealed class TransponderSignalRHub : Hub
 {
+    private readonly ILogger<TransponderSignalRHub> _logger;
+    private readonly IServiceProvider _services;
+    /// <summary>
+    /// Ingress hub: clients call <see cref="PublishAsync"/>; all connections receive copies on <see cref="ReceiveMethod"/>.
+    /// </summary>
+    public TransponderSignalRHub(ILogger<TransponderSignalRHub> logger, IServiceProvider services)
+    {
+        _logger = logger;
+        _services = services;
+    }
+
     /// <summary>Default path for <c>MapHub&lt;TransponderSignalRHub&gt;</c>.</summary>
     public const string MapPath = "/hubs/transponder";
 
@@ -23,16 +34,16 @@ public sealed class TransponderSignalRHub(ILogger<TransponderSignalRHub> logger,
         if (string.IsNullOrEmpty(envelope.RoutingKey))
             throw new HubException("routing_key is required.");
 
-        if (services.GetService<ITransponderSignalRAuthorizer>() is { } authorizer)
+        if (_services.GetService<ITransponderSignalRAuthorizer>() is { } authorizer)
             await authorizer.AuthorizePublishAsync(Context, envelope, Context.ConnectionAborted).ConfigureAwait(false);
 
-        if (services.GetService<ITransponderSignalRPublishJournal>() is { } journal)
+        if (_services.GetService<ITransponderSignalRPublishJournal>() is { } journal)
             await journal.AppendAsync(envelope, Context, Context.ConnectionAborted).ConfigureAwait(false);
 
         await Clients.All.SendAsync(ReceiveMethod, envelope, cancellationToken: Context.ConnectionAborted)
             .ConfigureAwait(false);
 
-        logger.LogDebug(
+        _logger.LogDebug(
             "Transponder SignalR fan-out {RoutingKey} from connection {ConnectionId}",
             envelope.RoutingKey,
             Context.ConnectionId);
@@ -40,7 +51,7 @@ public sealed class TransponderSignalRHub(ILogger<TransponderSignalRHub> logger,
 
     public override async Task OnConnectedAsync()
     {
-        if (services.GetService<ITransponderSignalRAuthorizer>() is { } authorizer)
+        if (_services.GetService<ITransponderSignalRAuthorizer>() is { } authorizer)
             await authorizer.AuthorizeSubscribeAsync(Context, Context.ConnectionAborted).ConfigureAwait(false);
 
         await base.OnConnectedAsync().ConfigureAwait(false);

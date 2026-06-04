@@ -13,10 +13,22 @@ namespace Dialysis.EHR.Composition.Demo;
 /// PDMS vitals ticker — system automation, not a user action). Lets the SPA cross-module integration
 /// events feed continuously show new <c>PatientRegisteredIntegrationEvent</c> rows during a demo.
 /// </summary>
-public sealed class EhrPatientRegistrationSimulator(
-    IServiceProvider services,
-    ILogger<EhrPatientRegistrationSimulator> logger) : BackgroundService
+public sealed class EhrPatientRegistrationSimulator : BackgroundService
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<EhrPatientRegistrationSimulator> _logger;
+    /// <summary>
+    /// Development-only background service. Periodically registers a brand-new synthetic patient via the
+    /// <see cref="IPatientRepository"/> directly (same bypass pattern as <c>EhrDemoSeeder</c> and the
+    /// PDMS vitals ticker — system automation, not a user action). Lets the SPA cross-module integration
+    /// events feed continuously show new <c>PatientRegisteredIntegrationEvent</c> rows during a demo.
+    /// </summary>
+    public EhrPatientRegistrationSimulator(IServiceProvider services,
+        ILogger<EhrPatientRegistrationSimulator> logger)
+    {
+        _services = services;
+        _logger = logger;
+    }
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(20);
 
     private static readonly (string Family, string Origin)[] _families =
@@ -68,7 +80,7 @@ public sealed class EhrPatientRegistrationSimulator(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("EHR patient registration simulator started (every {Seconds}s).", _interval.TotalSeconds);
+        _logger.LogInformation("EHR patient registration simulator started (every {Seconds}s).", _interval.TotalSeconds);
         try { await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken).ConfigureAwait(false); }
         catch (TaskCanceledException) { return; }
 
@@ -80,7 +92,7 @@ public sealed class EhrPatientRegistrationSimulator(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "EHR patient registration simulator tick failed.");
+                _logger.LogWarning(ex, "EHR patient registration simulator tick failed.");
             }
             try { await Task.Delay(_interval, stoppingToken).ConfigureAwait(false); }
             catch (TaskCanceledException) { return; }
@@ -89,7 +101,7 @@ public sealed class EhrPatientRegistrationSimulator(
 
     private async Task TickAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
+        using var scope = _services.CreateScope();
         var patients = scope.ServiceProvider.GetRequiredService<IPatientRepository>();
         var db = scope.ServiceProvider.GetRequiredService<EhrDbContext>();
 
@@ -129,7 +141,7 @@ public sealed class EhrPatientRegistrationSimulator(
         patients.Add(patient);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        logger.LogDebug(
+        _logger.LogDebug(
             "Simulator registered patient {Family}, {Given} ({Mrn}) DOB {Dob} lang {Lang}.",
             family, given, mrn, dob, language);
     }

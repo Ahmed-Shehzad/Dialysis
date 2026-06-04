@@ -21,8 +21,17 @@ namespace Dialysis.HIE.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/hie/ops")]
 [Authorize]
-public sealed class HieOpsAdminController(ICqrsGateway cqrs) : ControllerBase
+public sealed class HieOpsAdminController : ControllerBase
 {
+    private readonly ICqrsGateway _cqrs;
+    /// <summary>
+    /// Operator-facing dashboard endpoints for HIE: outbound dispatch queue, inbound feed by
+    /// partner, and TEFCA partner-configuration status. Backs the FHIR exchange admin panels
+    /// in the SPA (Phase 3b). FHIR endpoints continue to live in <see cref="Inbound.Controllers.FhirController"/>
+    /// and remain spec-compliant native FHIR JSON; the operator dashboard uses the standard
+    /// HATEOAS envelope.
+    /// </summary>
+    public HieOpsAdminController(ICqrsGateway cqrs) => _cqrs = cqrs;
     /// <summary>
     /// Lists outbound bundles. Filter by status with <c>?status=1</c> (Pending),
     /// <c>2</c> (Delivered), or <c>3</c> (Failed). Default returns every status, ordered
@@ -35,7 +44,7 @@ public sealed class HieOpsAdminController(ICqrsGateway cqrs) : ControllerBase
         [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var rows = await cqrs.SendQueryAsync<ListOutboundBundlesQuery, IReadOnlyList<OutboundBundleDto>>(
+        var rows = await _cqrs.SendQueryAsync<ListOutboundBundlesQuery, IReadOnlyList<OutboundBundleDto>>(
             new ListOutboundBundlesQuery(status, take), cancellationToken).ConfigureAwait(false);
         return OkResource(rows);
     }
@@ -49,7 +58,7 @@ public sealed class HieOpsAdminController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RetryOutboundAsync(Guid bundleId, CancellationToken cancellationToken)
     {
-        await cqrs.SendCommandAsync<RetryOutboundBundleCommand, Unit>(
+        await _cqrs.SendCommandAsync<RetryOutboundBundleCommand, Unit>(
             new RetryOutboundBundleCommand(bundleId), cancellationToken).ConfigureAwait(false);
         return NoContent();
     }
@@ -64,7 +73,7 @@ public sealed class HieOpsAdminController(ICqrsGateway cqrs) : ControllerBase
         [FromQuery] int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var rows = await cqrs.SendQueryAsync<ListInboundResourcesQuery, IReadOnlyList<InboundResourceDto>>(
+        var rows = await _cqrs.SendQueryAsync<ListInboundResourcesQuery, IReadOnlyList<InboundResourceDto>>(
             new ListInboundResourcesQuery(partnerId, take), cancellationToken).ConfigureAwait(false);
         return OkResource(rows);
     }
@@ -78,7 +87,7 @@ public sealed class HieOpsAdminController(ICqrsGateway cqrs) : ControllerBase
     [ProducesResponseType(typeof(ResourceEnvelope<IReadOnlyList<PartnerStatusDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListPartnersAsync(CancellationToken cancellationToken)
     {
-        var rows = await cqrs.SendQueryAsync<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>(
+        var rows = await _cqrs.SendQueryAsync<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>(
             new ListPartnersQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(rows);
     }

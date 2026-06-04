@@ -25,8 +25,31 @@ public static class PrescriptionOrderedTranslator
 /// EHR Integration-local intent translated from a Clinical-Notes prescription-ordered event. Carries the
 /// fields the pharmacy transmission needs to queue an outbound NCPDP SCRIPT message.
 /// </summary>
-public sealed record OutboundPharmacyOrder(
-    Guid PrescriptionId,
-    string PharmacyNcpdpId,
-    string TransmissionFormat,
-    string PayloadDigest);
+public sealed record OutboundPharmacyOrder
+{
+    /// <summary>
+    /// EHR Integration-local intent translated from a Clinical-Notes prescription-ordered event. Carries the
+    /// fields the pharmacy transmission needs to queue an outbound NCPDP SCRIPT message.
+    /// </summary>
+    public OutboundPharmacyOrder(Guid PrescriptionId,
+        string PharmacyNcpdpId,
+        string TransmissionFormat,
+        string PayloadDigest)
+    {
+        this.PrescriptionId = PrescriptionId;
+        this.PharmacyNcpdpId = PharmacyNcpdpId;
+        this.TransmissionFormat = TransmissionFormat;
+        this.PayloadDigest = PayloadDigest;
+    }
+    public Guid PrescriptionId { get; init; }
+    public string PharmacyNcpdpId { get; init; }
+    public string TransmissionFormat { get; init; }
+    public string PayloadDigest { get; init; }
+    public void Deconstruct(out Guid PrescriptionId, out string PharmacyNcpdpId, out string TransmissionFormat, out string PayloadDigest)
+    {
+        PrescriptionId = this.PrescriptionId;
+        PharmacyNcpdpId = this.PharmacyNcpdpId;
+        TransmissionFormat = this.TransmissionFormat;
+        PayloadDigest = this.PayloadDigest;
+    }
+}

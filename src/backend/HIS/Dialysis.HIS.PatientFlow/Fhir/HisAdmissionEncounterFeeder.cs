@@ -10,15 +10,22 @@ namespace Dialysis.HIS.PatientFlow.Fhir;
 /// in a Bulk Data <c>$export</c>. Honours the job's <c>_since</c> filter against the latest
 /// of discharge/admit timestamps.
 /// </summary>
-public sealed class HisAdmissionEncounterFeeder(IAdmissionRepository admissions) : INdjsonResourceFeeder<Encounter>
+public sealed class HisAdmissionEncounterFeeder : INdjsonResourceFeeder<Encounter>
 {
+    private readonly IAdmissionRepository _admissions;
+    /// <summary>
+    /// Streams every HIS <see cref="Domain.Admission"/> as a FHIR <c>Encounter</c> for inclusion
+    /// in a Bulk Data <c>$export</c>. Honours the job's <c>_since</c> filter against the latest
+    /// of discharge/admit timestamps.
+    /// </summary>
+    public HisAdmissionEncounterFeeder(IAdmissionRepository admissions) => _admissions = admissions;
     public async IAsyncEnumerable<Encounter> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var admission in admissions.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var admission in _admissions.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new Encounter
             {

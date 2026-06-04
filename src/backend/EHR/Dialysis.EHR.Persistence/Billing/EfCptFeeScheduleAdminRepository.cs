@@ -9,12 +9,19 @@ namespace Dialysis.EHR.Persistence.Billing;
 /// table. Backs the operator fee-schedule management UI; writes are committed by the caller via
 /// <c>IUnitOfWork.SaveChangesAsync</c>, consistent with the other billing repositories.
 /// </summary>
-public sealed class EfCptFeeScheduleAdminRepository(EhrDbContext db) : ICptFeeScheduleAdminRepository
+public sealed class EfCptFeeScheduleAdminRepository : ICptFeeScheduleAdminRepository
 {
+    private readonly EhrDbContext _db;
+    /// <summary>
+    /// EF-backed <see cref="ICptFeeScheduleAdminRepository"/> over the <c>ehr_billing.CptFeeSchedule</c>
+    /// table. Backs the operator fee-schedule management UI; writes are committed by the caller via
+    /// <c>IUnitOfWork.SaveChangesAsync</c>, consistent with the other billing repositories.
+    /// </summary>
+    public EfCptFeeScheduleAdminRepository(EhrDbContext db) => _db = db;
     public async Task<IReadOnlyList<CptFeeScheduleEntry>> ListAsync(
         string? cptCode, string? payerCode, CancellationToken cancellationToken = default)
     {
-        var query = db.CptFeeSchedule.AsQueryable();
+        var query = _db.CptFeeSchedule.AsQueryable();
         if (!string.IsNullOrWhiteSpace(cptCode))
         {
             var code = cptCode.Trim().ToUpperInvariant();
@@ -34,9 +41,9 @@ public sealed class EfCptFeeScheduleAdminRepository(EhrDbContext db) : ICptFeeSc
     }
 
     public Task<CptFeeScheduleEntry?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.CptFeeSchedule.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        _db.CptFeeSchedule.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
-    public void Add(CptFeeScheduleEntry entry) => db.CptFeeSchedule.Add(entry);
+    public void Add(CptFeeScheduleEntry entry) => _db.CptFeeSchedule.Add(entry);
 
-    public void Remove(CptFeeScheduleEntry entry) => db.CptFeeSchedule.Remove(entry);
+    public void Remove(CptFeeScheduleEntry entry) => _db.CptFeeSchedule.Remove(entry);
 }

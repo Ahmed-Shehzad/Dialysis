@@ -6,11 +6,20 @@ using Quartz;
 namespace Dialysis.BuildingBlocks.Transponder.Scheduling.Quartz;
 
 /// <summary>Maps <see cref="ITransponderMessageScheduler"/> to Quartz triggers. Cron uses Quartz's cron syntax.</summary>
-public sealed class QuartzTransponderMessageScheduler(
-    ISchedulerFactory schedulerFactory,
-    IMessageSerializer serializer,
-    ILogger<QuartzTransponderMessageScheduler> logger) : ITransponderMessageScheduler
+public sealed class QuartzTransponderMessageScheduler : ITransponderMessageScheduler
 {
+    private readonly ISchedulerFactory _schedulerFactory;
+    private readonly IMessageSerializer _serializer;
+    private readonly ILogger<QuartzTransponderMessageScheduler> _logger;
+    /// <summary>Maps <see cref="ITransponderMessageScheduler"/> to Quartz triggers. Cron uses Quartz's cron syntax.</summary>
+    public QuartzTransponderMessageScheduler(ISchedulerFactory schedulerFactory,
+        IMessageSerializer serializer,
+        ILogger<QuartzTransponderMessageScheduler> logger)
+    {
+        _schedulerFactory = schedulerFactory;
+        _serializer = serializer;
+        _logger = logger;
+    }
     private const string OnceGroup = "transponder-once";
     private const string RecurringGroup = "transponder-recurring";
 
@@ -21,10 +30,10 @@ public sealed class QuartzTransponderMessageScheduler(
         CancellationToken cancellationToken = default)
         where TMessage : class
     {
-        var envelope = TransponderScheduledEnvelopeFactory.Create(message, serializer, publishOptions);
+        var envelope = TransponderScheduledEnvelopeFactory.Create(message, _serializer, publishOptions);
         var jobName = Guid.NewGuid().ToString("N");
         var jobKey = new JobKey(jobName, OnceGroup);
-        var scheduler = await schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
+        var scheduler = await _schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
 
         var job = JobBuilder.Create<TransponderQuartzPublishJob>()
             .WithIdentity(jobKey)
@@ -37,7 +46,7 @@ public sealed class QuartzTransponderMessageScheduler(
             .Build();
 
         await scheduler.ScheduleJob(job, trigger, cancellationToken).ConfigureAwait(false);
-        logger.LogDebug("Scheduled one-time Transponder Quartz job {JobKey} for {RunAt}", jobKey, runAt);
+        _logger.LogDebug("Scheduled one-time Transponder Quartz job {JobKey} for {RunAt}", jobKey, runAt);
         return jobName;
     }
 
@@ -51,10 +60,10 @@ public sealed class QuartzTransponderMessageScheduler(
         where TMessage : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cronExpression);
-        var envelope = TransponderScheduledEnvelopeFactory.Create(message, serializer, publishOptions);
+        var envelope = TransponderScheduledEnvelopeFactory.Create(message, _serializer, publishOptions);
         var name = string.IsNullOrWhiteSpace(scheduleId) ? $"transponder:{typeof(TMessage).FullName}:{Guid.NewGuid():N}" : scheduleId!;
         var jobKey = new JobKey(name, RecurringGroup);
-        var scheduler = await schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
+        var scheduler = await _schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
 
         var job = JobBuilder.Create<TransponderQuartzPublishJob>()
             .WithIdentity(jobKey)
@@ -68,19 +77,19 @@ public sealed class QuartzTransponderMessageScheduler(
             .Build();
 
         await scheduler.ScheduleJob(job, trigger, cancellationToken).ConfigureAwait(false);
-        logger.LogDebug("Registered recurring Transponder Quartz job {JobKey} with cron {Cron}", jobKey, cronExpression);
+        _logger.LogDebug("Registered recurring Transponder Quartz job {JobKey} with cron {Cron}", jobKey, cronExpression);
         return name;
     }
 
     public async Task<bool> TryCancelOnceAsync(string scheduleId, CancellationToken cancellationToken = default)
     {
-        var scheduler = await schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
+        var scheduler = await _schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
         return await scheduler.DeleteJob(new JobKey(scheduleId, OnceGroup), cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<bool> TryCancelRecurringAsync(string scheduleId, CancellationToken cancellationToken = default)
     {
-        var scheduler = await schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
+        var scheduler = await _schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
         return await scheduler.DeleteJob(new JobKey(scheduleId, RecurringGroup), cancellationToken).ConfigureAwait(false);
     }
 }

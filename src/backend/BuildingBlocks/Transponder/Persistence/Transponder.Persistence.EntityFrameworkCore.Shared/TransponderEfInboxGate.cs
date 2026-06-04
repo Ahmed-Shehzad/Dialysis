@@ -5,9 +5,14 @@ namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 /// <summary>
 /// EF-backed inbox using a unique <see cref="TransponderInboxMessageEntity.DeduplicationKey"/>.
 /// </summary>
-public sealed class TransponderEfInboxGate<TContext>(TContext db) : ITransponderInboxGate
+public sealed class TransponderEfInboxGate<TContext> : ITransponderInboxGate
     where TContext : TransponderPersistenceDbContextBase
 {
+    private readonly TContext _db;
+    /// <summary>
+    /// EF-backed inbox using a unique <see cref="TransponderInboxMessageEntity.DeduplicationKey"/>.
+    /// </summary>
+    public TransponderEfInboxGate(TContext db) => _db = db;
     public async Task<bool> TryAcquireAsync(string deduplicationKey, string routingKey, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(deduplicationKey);
@@ -20,16 +25,16 @@ public sealed class TransponderEfInboxGate<TContext>(TContext db) : ITransponder
             RoutingKey = routingKey,
             CreatedAtUtc = DateTime.UtcNow,
         };
-        db.InboxMessages.Add(entity);
+        _db.InboxMessages.Add(entity);
         try
         {
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (DbUpdateException)
         {
-            db.Entry(entity).State = EntityState.Detached;
-            var row = await db.InboxMessages
+            _db.Entry(entity).State = EntityState.Detached;
+            var row = await _db.InboxMessages
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.DeduplicationKey == deduplicationKey, cancellationToken)
                 .ConfigureAwait(false);
@@ -45,7 +50,7 @@ public sealed class TransponderEfInboxGate<TContext>(TContext db) : ITransponder
     public async Task CompleteAsync(string deduplicationKey, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(deduplicationKey);
-        await db.InboxMessages
+        await _db.InboxMessages
             .Where(x => x.DeduplicationKey == deduplicationKey && x.CompletedAtUtc == null)
             .ExecuteUpdateAsync(
                 s => s.SetProperty(x => x.CompletedAtUtc, DateTime.UtcNow),
@@ -56,7 +61,7 @@ public sealed class TransponderEfInboxGate<TContext>(TContext db) : ITransponder
     public async Task AbandonAsync(string deduplicationKey, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(deduplicationKey);
-        await db.InboxMessages
+        await _db.InboxMessages
             .Where(x => x.DeduplicationKey == deduplicationKey && x.CompletedAtUtc == null)
             .ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);

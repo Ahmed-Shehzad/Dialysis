@@ -11,9 +11,17 @@ namespace Dialysis.DomainDrivenDesign.DomainEvents;
 /// in a fresh DI scope so handlers can use their own DbContext without re-entering the saving context.
 /// Mirrors the existing <c>AuditSaveChangesInterceptor</c> shape so modules wire it identically.
 /// </summary>
-public sealed class DomainEventSaveChangesInterceptor(IServiceScopeFactory scopeFactory) : SaveChangesInterceptor
+public sealed class DomainEventSaveChangesInterceptor : SaveChangesInterceptor
 {
     private readonly List<IDomainEvent> _pending = [];
+    private readonly IServiceScopeFactory _scopeFactory;
+    /// <summary>
+    /// EF Core interceptor that drains <see cref="IDomainEvent"/> instances raised by tracked aggregates
+    /// after the database transaction commits, then dispatches each via <see cref="IDomainEventDispatcher"/>
+    /// in a fresh DI scope so handlers can use their own DbContext without re-entering the saving context.
+    /// Mirrors the existing <c>AuditSaveChangesInterceptor</c> shape so modules wire it identically.
+    /// </summary>
+    public DomainEventSaveChangesInterceptor(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -88,7 +96,7 @@ public sealed class DomainEventSaveChangesInterceptor(IServiceScopeFactory scope
         var batch = _pending.ToArray();
         _pending.Clear();
 
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDomainEventDispatcher>();
 
         foreach (var domainEvent in batch)

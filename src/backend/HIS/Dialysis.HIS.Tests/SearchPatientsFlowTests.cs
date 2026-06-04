@@ -10,12 +10,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class SearchPatientsFlowTests(HisApiWebApplicationFactory factory)
+public sealed class SearchPatientsFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public SearchPatientsFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Returns_Only_Patients_Corpus_Entries_Matching_Q_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
@@ -38,7 +40,7 @@ public sealed class SearchPatientsFlowTests(HisApiWebApplicationFactory factory)
     [Fact]
     public async Task Empty_Q_Returns_All_Patient_Rows_Clamped_To_Take_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 

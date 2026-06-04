@@ -8,12 +8,19 @@ using Dialysis.HIS.Medication.Ports;
 
 namespace Dialysis.HIS.Medication.Features.PlaceMedicationOrder;
 
-public sealed class PlaceMedicationOrderCommandHandler(
-    IMedicationOrderRepository orders,
-    ITransponderOutbox outbox,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<PlaceMedicationOrderCommand, Guid>
+public sealed class PlaceMedicationOrderCommandHandler : ICommandHandler<PlaceMedicationOrderCommand, Guid>
 {
+    private readonly IMedicationOrderRepository _orders;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IUnitOfWork _unitOfWork;
+    public PlaceMedicationOrderCommandHandler(IMedicationOrderRepository orders,
+        ITransponderOutbox outbox,
+        IUnitOfWork unitOfWork)
+    {
+        _orders = orders;
+        _outbox = outbox;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(PlaceMedicationOrderCommand request, CancellationToken cancellationToken)
     {
         var order = MedicationOrder.Place(
@@ -22,15 +29,15 @@ public sealed class PlaceMedicationOrderCommandHandler(
             new Dosage(request.Dosage),
             DateTime.UtcNow);
 
-        orders.Add(order);
+        _orders.Add(order);
 
         foreach (var @event in order.IntegrationEvents)
         {
-            await outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
+            await _outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
         }
         order.ClearIntegrationEvents();
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return order.Id;
     }
 }

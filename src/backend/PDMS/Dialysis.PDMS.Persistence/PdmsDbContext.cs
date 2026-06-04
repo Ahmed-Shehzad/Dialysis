@@ -14,11 +14,12 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.PDMS.Persistence;
 
-public sealed class PdmsDbContext(
-    DbContextOptions<PdmsDbContext> options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions)
-    : ModuleDbContextBase(options, persistenceOptions)
+public sealed class PdmsDbContext : ModuleDbContextBase
 {
+    public PdmsDbContext(DbContextOptions<PdmsDbContext> options,
+        IOptions<TransponderPersistenceOptions> persistenceOptions) : base(options, persistenceOptions)
+    {
+    }
     protected override string ModuleSchema => "pdms";
 
     private const string SessionsSchema = "pdms_sessions";

@@ -16,8 +16,17 @@ namespace Dialysis.SmartConnect.ExtendedPlugins;
 /// globalChannelMap, globalMap, configurationMap) and the <c>$(key)</c> walker.
 /// Truthy return → Allow; falsy → Drop.
 /// </summary>
-public sealed class JavascriptRouteFilter(IServiceProvider? services = null) : IRouteFilter
+public sealed class JavascriptRouteFilter : IRouteFilter
 {
+    private readonly IServiceProvider? _services;
+    /// <summary>
+    /// Sandboxed JavaScript route filter via Jint. Parameters JSON must include <c>script</c>.
+    /// Exposes <c>payloadText</c>, <c>metadata</c> (object), <c>correlationId</c>, <c>flowId</c>, plus the
+    /// full Mirth-style variable map binding (sourceMap, channelMap, connectorMap, responseMap,
+    /// globalChannelMap, globalMap, configurationMap) and the <c>$(key)</c> walker.
+    /// Truthy return → Allow; falsy → Drop.
+    /// </summary>
+    public JavascriptRouteFilter(IServiceProvider? services = null) => _services = services;
     public const string ParametersMetadataKey = "smartconnect.filter.parameters";
 
     public string Kind => "javascript";
@@ -86,12 +95,12 @@ public sealed class JavascriptRouteFilter(IServiceProvider? services = null) : I
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (services is null) return;
+        if (_services is null) return;
 
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
 
-        var store = services.GetService<IVariableMapStore>();
+        var store = _services.GetService<IVariableMapStore>();
         IReadOnlyDictionary<string, string> globalChannel = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> global = new Dictionary<string, string>();
         IReadOnlyDictionary<string, string> configuration = new Dictionary<string, string>();
@@ -107,10 +116,10 @@ public sealed class JavascriptRouteFilter(IServiceProvider? services = null) : I
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        if (services is null) return;
-        var repo = services.GetService<ICodeTemplateLibraryRepository>();
+        if (_services is null) return;
+        var repo = _services.GetService<ICodeTemplateLibraryRepository>();
         if (repo is null) return;
-        var accessor = services.GetService<IFlowExecutionContextAccessor>();
+        var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         // RouteFilters in SmartConnect's model are pipeline-level pre-route gates → map to SourceFilter.
         // If a route-scoped filter context is set on the accessor (e.g. DestinationFilter), prefer it.
         var current = accessor?.Current?.CurrentStageContext;
@@ -122,7 +131,7 @@ public sealed class JavascriptRouteFilter(IServiceProvider? services = null) : I
 
     private void BindAddAttachment(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        var store = services?.GetService<IAttachmentStore>();
+        var store = _services?.GetService<IAttachmentStore>();
         AttachmentJsBinder.Bind(engine, store, message.FlowId, message.Id, "application/octet-stream", ct);
     }
 }

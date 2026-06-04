@@ -7,12 +7,18 @@ namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 /// <see cref="ITransponderSagaStore"/> backed by EF Core (same database as Transponder outbox/inbox). Safe across nodes when combined with unique
 /// (<see cref="TransponderSagaInstanceEntity.SagaKind"/>, <see cref="TransponderSagaInstanceEntity.InstanceKey"/>) and optimistic concurrency on <see cref="TransponderSagaInstanceEntity.Version"/>.
 /// </summary>
-public sealed class EntityFrameworkCoreTransponderSagaStore<TContext>(TContext db) : ITransponderSagaStore
+public sealed class EntityFrameworkCoreTransponderSagaStore<TContext> : ITransponderSagaStore
     where TContext : TransponderPersistenceDbContextBase
 {
+    private readonly TContext _db;
+    /// <summary>
+    /// <see cref="ITransponderSagaStore"/> backed by EF Core (same database as Transponder outbox/inbox). Safe across nodes when combined with unique
+    /// (<see cref="TransponderSagaInstanceEntity.SagaKind"/>, <see cref="TransponderSagaInstanceEntity.InstanceKey"/>) and optimistic concurrency on <see cref="TransponderSagaInstanceEntity.Version"/>.
+    /// </summary>
+    public EntityFrameworkCoreTransponderSagaStore(TContext db) => _db = db;
     public async Task<TransponderSagaRecord?> GetAsync(string sagaKind, string instanceKey, CancellationToken cancellationToken = default)
     {
-        var row = await db.SagaInstances
+        var row = await _db.SagaInstances
             .AsNoTracking()
             .FirstOrDefaultAsync(
                 e => e.SagaKind == sagaKind && e.InstanceKey == instanceKey,
@@ -25,7 +31,7 @@ public sealed class EntityFrameworkCoreTransponderSagaStore<TContext>(TContext d
     public async Task<bool> TryInsertAsync(TransponderSagaRecord record, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(record);
-        db.SagaInstances.Add(
+        _db.SagaInstances.Add(
             new TransponderSagaInstanceEntity
             {
                 Id = Guid.NewGuid(),
@@ -40,12 +46,12 @@ public sealed class EntityFrameworkCoreTransponderSagaStore<TContext>(TContext d
 
         try
         {
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (DbUpdateException)
         {
-            db.ChangeTracker.Clear();
+            _db.ChangeTracker.Clear();
             return false;
         }
     }
@@ -53,7 +59,7 @@ public sealed class EntityFrameworkCoreTransponderSagaStore<TContext>(TContext d
     public async Task<bool> TryUpdateAsync(TransponderSagaRecord record, long expectedVersion, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(record);
-        var row = await db.SagaInstances
+        var row = await _db.SagaInstances
             .FirstOrDefaultAsync(
                 e => e.SagaKind == record.SagaKind && e.InstanceKey == record.InstanceKey,
                 cancellationToken)
@@ -70,19 +76,19 @@ public sealed class EntityFrameworkCoreTransponderSagaStore<TContext>(TContext d
 
         try
         {
-            await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (DbUpdateConcurrencyException)
         {
-            db.ChangeTracker.Clear();
+            _db.ChangeTracker.Clear();
             return false;
         }
     }
 
     public async Task DeleteAsync(string sagaKind, string instanceKey, CancellationToken cancellationToken = default)
     {
-        await db.SagaInstances
+        await _db.SagaInstances
             .Where(e => e.SagaKind == sagaKind && e.InstanceKey == instanceKey)
             .ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);

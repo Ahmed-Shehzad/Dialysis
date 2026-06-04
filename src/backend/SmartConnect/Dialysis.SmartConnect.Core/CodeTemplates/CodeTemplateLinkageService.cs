@@ -7,10 +7,21 @@ namespace Dialysis.SmartConnect.CodeTemplates;
 /// <see cref="IntegrationFlowPipelineDefinition.LinkedLibraryIds"/>. Reconciles in both directions on write
 /// so reads from either side surface the same union.
 /// </summary>
-public sealed class CodeTemplateLinkageService(
-    ICodeTemplateLibraryRepository libraries,
-    IIntegrationFlowRepository flows)
+public sealed class CodeTemplateLinkageService
 {
+    private readonly ICodeTemplateLibraryRepository _libraries;
+    private readonly IIntegrationFlowRepository _flows;
+    /// <summary>
+    /// Maintains denormalized linkage consistency between <see cref="CodeTemplateLibrary.LinkedFlowIds"/> and
+    /// <see cref="IntegrationFlowPipelineDefinition.LinkedLibraryIds"/>. Reconciles in both directions on write
+    /// so reads from either side surface the same union.
+    /// </summary>
+    public CodeTemplateLinkageService(ICodeTemplateLibraryRepository libraries,
+        IIntegrationFlowRepository flows)
+    {
+        _libraries = libraries;
+        _flows = flows;
+    }
     /// <summary>
     /// Called after a library is saved with <paramref name="newLinkedFlowIds"/>. Adds the library Id to every
     /// flow's <c>LinkedLibraryIds</c> that newly appeared, and removes it from flows that dropped off.
@@ -28,22 +39,22 @@ public sealed class CodeTemplateLinkageService(
 
         foreach (var flowId in added)
         {
-            var flow = await flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
+            var flow = await _flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
             if (flow is null) continue;
             if (!flow.Pipeline.LinkedLibraryIds.Contains(libraryId))
             {
                 flow.Pipeline.LinkedLibraryIds.Add(libraryId);
-                await flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
+                await _flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
             }
         }
 
         foreach (var flowId in removed)
         {
-            var flow = await flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
+            var flow = await _flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
             if (flow is null) continue;
             if (flow.Pipeline.LinkedLibraryIds.Remove(libraryId))
             {
-                await flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
+                await _flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -65,7 +76,7 @@ public sealed class CodeTemplateLinkageService(
 
         foreach (var libraryId in added)
         {
-            var lib = await libraries.GetByIdAsync(libraryId, cancellationToken).ConfigureAwait(false);
+            var lib = await _libraries.GetByIdAsync(libraryId, cancellationToken).ConfigureAwait(false);
             if (lib is null) continue;
             if (!lib.LinkedFlowIds.Contains(flowId))
             {
@@ -80,13 +91,13 @@ public sealed class CodeTemplateLinkageService(
                     LastModifiedUtc = DateTimeOffset.UtcNow,
                     Templates = lib.Templates,
                 };
-                await libraries.UpsertAsync(updated, cancellationToken).ConfigureAwait(false);
+                await _libraries.UpsertAsync(updated, cancellationToken).ConfigureAwait(false);
             }
         }
 
         foreach (var libraryId in removed)
         {
-            var lib = await libraries.GetByIdAsync(libraryId, cancellationToken).ConfigureAwait(false);
+            var lib = await _libraries.GetByIdAsync(libraryId, cancellationToken).ConfigureAwait(false);
             if (lib is null) continue;
             if (lib.LinkedFlowIds.Contains(flowId))
             {
@@ -102,7 +113,7 @@ public sealed class CodeTemplateLinkageService(
                     LastModifiedUtc = DateTimeOffset.UtcNow,
                     Templates = lib.Templates,
                 };
-                await libraries.UpsertAsync(updated, cancellationToken).ConfigureAwait(false);
+                await _libraries.UpsertAsync(updated, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -115,11 +126,11 @@ public sealed class CodeTemplateLinkageService(
         Guid flowId,
         CancellationToken cancellationToken = default)
     {
-        var allLibs = await libraries.GetAllAsync(cancellationToken).ConfigureAwait(false);
+        var allLibs = await _libraries.GetAllAsync(cancellationToken).ConfigureAwait(false);
         var autoLinkLibs = allLibs.Where(l => l.AutoLinkNewFlows).ToList();
         if (autoLinkLibs.Count == 0) return;
 
-        var flow = await flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
+        var flow = await _flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
         if (flow is null) return;
 
         var added = new List<Guid>();
@@ -134,7 +145,7 @@ public sealed class CodeTemplateLinkageService(
 
         if (added.Count > 0)
         {
-            await flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
+            await _flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
             foreach (var libraryId in added)
             {
                 var lib = autoLinkLibs.First(l => l.Id == libraryId);
@@ -151,7 +162,7 @@ public sealed class CodeTemplateLinkageService(
                         LastModifiedUtc = DateTimeOffset.UtcNow,
                         Templates = lib.Templates,
                     };
-                    await libraries.UpsertAsync(updated, cancellationToken).ConfigureAwait(false);
+                    await _libraries.UpsertAsync(updated, cancellationToken).ConfigureAwait(false);
                 }
             }
         }

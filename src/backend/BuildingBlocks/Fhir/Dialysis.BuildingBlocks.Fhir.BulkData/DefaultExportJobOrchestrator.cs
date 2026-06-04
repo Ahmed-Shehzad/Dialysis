@@ -4,11 +4,23 @@ namespace Dialysis.BuildingBlocks.Fhir.BulkData;
 /// Default <see cref="IExportJobOrchestrator"/>: persists jobs via <see cref="IExportJobStore"/>
 /// and hands the job id off to <see cref="ExportJobQueue"/> for in-process background execution.
 /// </summary>
-public sealed class DefaultExportJobOrchestrator(
-    IExportJobStore store,
-    ExportJobQueue queue,
-    TimeProvider time) : IExportJobOrchestrator
+public sealed class DefaultExportJobOrchestrator : IExportJobOrchestrator
 {
+    private readonly IExportJobStore _store;
+    private readonly ExportJobQueue _queue;
+    private readonly TimeProvider _time;
+    /// <summary>
+    /// Default <see cref="IExportJobOrchestrator"/>: persists jobs via <see cref="IExportJobStore"/>
+    /// and hands the job id off to <see cref="ExportJobQueue"/> for in-process background execution.
+    /// </summary>
+    public DefaultExportJobOrchestrator(IExportJobStore store,
+        ExportJobQueue queue,
+        TimeProvider time)
+    {
+        _store = store;
+        _queue = queue;
+        _time = time;
+    }
     public async ValueTask<ExportJob> EnqueueAsync(
         ExportScope scope,
         IReadOnlyList<string> resourceTypes,
@@ -29,19 +41,19 @@ public sealed class DefaultExportJobOrchestrator(
             DeIdentificationProfile: deIdentificationProfile,
             RequestorId: requestorId,
             Status: ExportJobStatus.Queued,
-            CreatedAt: time.GetUtcNow(),
+            CreatedAt: _time.GetUtcNow(),
             CompletedAt: null,
             Outputs: Array.Empty<ExportJobOutput>(),
             Error: null);
 
-        var persisted = await store.CreateAsync(job, cancellationToken).ConfigureAwait(false);
-        await queue.EnqueueAsync(persisted.Id, cancellationToken).ConfigureAwait(false);
+        var persisted = await _store.CreateAsync(job, cancellationToken).ConfigureAwait(false);
+        await _queue.EnqueueAsync(persisted.Id, cancellationToken).ConfigureAwait(false);
         return persisted;
     }
 
     public async ValueTask CancelAsync(string jobId, CancellationToken cancellationToken)
     {
-        var job = await store.GetAsync(jobId, cancellationToken).ConfigureAwait(false);
+        var job = await _store.GetAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null)
         {
             return;
@@ -51,7 +63,7 @@ public sealed class DefaultExportJobOrchestrator(
             return;
         }
 
-        var cancelled = job with { Status = ExportJobStatus.Cancelled, CompletedAt = time.GetUtcNow() };
-        await store.UpdateAsync(cancelled, cancellationToken).ConfigureAwait(false);
+        var cancelled = job with { Status = ExportJobStatus.Cancelled, CompletedAt = _time.GetUtcNow() };
+        await _store.UpdateAsync(cancelled, cancellationToken).ConfigureAwait(false);
     }
 }

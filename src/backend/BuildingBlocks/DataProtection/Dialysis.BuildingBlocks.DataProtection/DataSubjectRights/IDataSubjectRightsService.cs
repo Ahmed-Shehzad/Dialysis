@@ -66,15 +66,47 @@ public interface IModuleDataExtractor
         Guid patientId, CancellationToken cancellationToken);
 }
 
-public sealed record DataSubjectResource(
-    string ResourceType,
-    string Identifier,
-    string Json);
+public sealed record DataSubjectResource
+{
+    public DataSubjectResource(string ResourceType,
+        string Identifier,
+        string Json)
+    {
+        this.ResourceType = ResourceType;
+        this.Identifier = Identifier;
+        this.Json = Json;
+    }
+    public string ResourceType { get; init; }
+    public string Identifier { get; init; }
+    public string Json { get; init; }
+    public void Deconstruct(out string ResourceType, out string Identifier, out string Json)
+    {
+        ResourceType = this.ResourceType;
+        Identifier = this.Identifier;
+        Json = this.Json;
+    }
+}
 
-public sealed record DataSubjectExport(
-    Guid PatientId,
-    DateTimeOffset GeneratedAtUtc,
-    IReadOnlyList<DataSubjectResource> Resources);
+public sealed record DataSubjectExport
+{
+    public DataSubjectExport(Guid PatientId,
+        DateTimeOffset GeneratedAtUtc,
+        IReadOnlyList<DataSubjectResource> Resources)
+    {
+        this.PatientId = PatientId;
+        this.GeneratedAtUtc = GeneratedAtUtc;
+        this.Resources = Resources;
+    }
+    public Guid PatientId { get; init; }
+    public DateTimeOffset GeneratedAtUtc { get; init; }
+    public IReadOnlyList<DataSubjectResource> Resources { get; init; }
+    public void Deconstruct(out Guid PatientId, out DateTimeOffset GeneratedAtUtc, out IReadOnlyList<DataSubjectResource> Resources)
+    {
+        PatientId = this.PatientId;
+        GeneratedAtUtc = this.GeneratedAtUtc;
+        Resources = this.Resources;
+    }
+}
 
 /// <summary>Status of an erasure request through the approval / execution pipeline.</summary>
 public enum ErasureRequestStatus
@@ -91,20 +123,78 @@ public enum ErasureRequestStatus
 /// Audit trail row for one GDPR Art. 17 erasure request. Persisted before approval so a
 /// regulator can verify both the inbound subject claim and the operator decision.
 /// </summary>
-public sealed record ErasureRequest(
-    Guid Id,
-    Guid PatientId,
-    ErasureRequestStatus Status,
-    string RequestedBy,
-    DateTimeOffset RequestedAtUtc,
-    string? Reason,
-    string? DecisionBy,
-    DateTimeOffset? DecisionAtUtc,
-    string? DecisionReason,
-    IReadOnlyList<ErasureModuleResult> ExecutionLog);
+public sealed record ErasureRequest
+{
+    /// <summary>
+    /// Audit trail row for one GDPR Art. 17 erasure request. Persisted before approval so a
+    /// regulator can verify both the inbound subject claim and the operator decision.
+    /// </summary>
+    public ErasureRequest(Guid Id,
+        Guid PatientId,
+        ErasureRequestStatus Status,
+        string RequestedBy,
+        DateTimeOffset RequestedAtUtc,
+        string? Reason,
+        string? DecisionBy,
+        DateTimeOffset? DecisionAtUtc,
+        string? DecisionReason,
+        IReadOnlyList<ErasureModuleResult> ExecutionLog)
+    {
+        this.Id = Id;
+        this.PatientId = PatientId;
+        this.Status = Status;
+        this.RequestedBy = RequestedBy;
+        this.RequestedAtUtc = RequestedAtUtc;
+        this.Reason = Reason;
+        this.DecisionBy = DecisionBy;
+        this.DecisionAtUtc = DecisionAtUtc;
+        this.DecisionReason = DecisionReason;
+        this.ExecutionLog = ExecutionLog;
+    }
+    public Guid Id { get; init; }
+    public Guid PatientId { get; init; }
+    public ErasureRequestStatus Status { get; init; }
+    public string RequestedBy { get; init; }
+    public DateTimeOffset RequestedAtUtc { get; init; }
+    public string? Reason { get; init; }
+    public string? DecisionBy { get; init; }
+    public DateTimeOffset? DecisionAtUtc { get; init; }
+    public string? DecisionReason { get; init; }
+    public IReadOnlyList<ErasureModuleResult> ExecutionLog { get; init; }
+    public void Deconstruct(out Guid Id, out Guid PatientId, out ErasureRequestStatus Status, out string RequestedBy, out DateTimeOffset RequestedAtUtc, out string? Reason, out string? DecisionBy, out DateTimeOffset? DecisionAtUtc, out string? DecisionReason, out IReadOnlyList<ErasureModuleResult> ExecutionLog)
+    {
+        Id = this.Id;
+        PatientId = this.PatientId;
+        Status = this.Status;
+        RequestedBy = this.RequestedBy;
+        RequestedAtUtc = this.RequestedAtUtc;
+        Reason = this.Reason;
+        DecisionBy = this.DecisionBy;
+        DecisionAtUtc = this.DecisionAtUtc;
+        DecisionReason = this.DecisionReason;
+        ExecutionLog = this.ExecutionLog;
+    }
+}
 
 /// <summary>Per-module audit entry written when the operator approved the request.</summary>
-public sealed record ErasureModuleResult(
-    string ModuleSlug,
-    int RecordsErased,
-    IReadOnlyDictionary<string, int> ByCategory);
+public sealed record ErasureModuleResult
+{
+    /// <summary>Per-module audit entry written when the operator approved the request.</summary>
+    public ErasureModuleResult(string ModuleSlug,
+        int RecordsErased,
+        IReadOnlyDictionary<string, int> ByCategory)
+    {
+        this.ModuleSlug = ModuleSlug;
+        this.RecordsErased = RecordsErased;
+        this.ByCategory = ByCategory;
+    }
+    public string ModuleSlug { get; init; }
+    public int RecordsErased { get; init; }
+    public IReadOnlyDictionary<string, int> ByCategory { get; init; }
+    public void Deconstruct(out string ModuleSlug, out int RecordsErased, out IReadOnlyDictionary<string, int> ByCategory)
+    {
+        ModuleSlug = this.ModuleSlug;
+        RecordsErased = this.RecordsErased;
+        ByCategory = this.ByCategory;
+    }
+}

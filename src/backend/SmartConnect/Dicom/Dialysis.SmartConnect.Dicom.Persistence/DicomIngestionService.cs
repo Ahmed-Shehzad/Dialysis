@@ -9,11 +9,25 @@ namespace Dialysis.SmartConnect.Dicom.Persistence;
 /// matters — blob first so a metadata-save failure leaves the bytes for the orphan reaper to
 /// remove, rather than a metadata row pointing at nothing.
 /// </summary>
-public sealed class DicomIngestionService(
-    IAttachmentBlobStore blobs,
-    IDicomInstanceStore instances,
-    TimeProvider timeProvider) : IDicomIngestionService
+public sealed class DicomIngestionService : IDicomIngestionService
 {
+    private readonly IAttachmentBlobStore _blobs;
+    private readonly IDicomInstanceStore _instances;
+    private readonly TimeProvider _timeProvider;
+    /// <summary>
+    /// Default ingestion: writes the .dcm bytes to <see cref="IAttachmentBlobStore"/>, records the
+    /// header metadata in <see cref="IDicomInstanceStore"/>, returns the resulting metadata. Order
+    /// matters — blob first so a metadata-save failure leaves the bytes for the orphan reaper to
+    /// remove, rather than a metadata row pointing at nothing.
+    /// </summary>
+    public DicomIngestionService(IAttachmentBlobStore blobs,
+        IDicomInstanceStore instances,
+        TimeProvider timeProvider)
+    {
+        _blobs = blobs;
+        _instances = instances;
+        _timeProvider = timeProvider;
+    }
     public async Task<DicomInstanceMetadata> IngestAsync(DicomFile dicomFile, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(dicomFile);
@@ -38,7 +52,7 @@ public sealed class DicomIngestionService(
         var bytes = stream.ToArray();
 
         var blobId = Guid.CreateVersion7();
-        await blobs.WriteAsync(blobId, bytes, cancellationToken).ConfigureAwait(false);
+        await _blobs.WriteAsync(blobId, bytes, cancellationToken).ConfigureAwait(false);
 
         var metadata = new DicomInstanceMetadata(
             StudyInstanceUid: studyUid,
@@ -48,11 +62,11 @@ public sealed class DicomIngestionService(
             PatientId: patientId,
             PatientName: patientName,
             Modality: modality,
-            ReceivedUtc: timeProvider.GetUtcNow(),
+            ReceivedUtc: _timeProvider.GetUtcNow(),
             SizeBytes: bytes.LongLength,
             BlobId: blobId);
 
-        await instances.AddAsync(metadata, cancellationToken).ConfigureAwait(false);
+        await _instances.AddAsync(metadata, cancellationToken).ConfigureAwait(false);
         return metadata;
     }
 }

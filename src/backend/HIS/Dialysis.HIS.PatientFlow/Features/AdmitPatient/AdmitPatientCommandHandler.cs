@@ -8,24 +8,31 @@ using Dialysis.HIS.PatientFlow.Ports;
 
 namespace Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 
-public sealed class AdmitPatientCommandHandler(
-    IAdmissionRepository admissions,
-    ITransponderOutbox outbox,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<AdmitPatientCommand, Guid>
+public sealed class AdmitPatientCommandHandler : ICommandHandler<AdmitPatientCommand, Guid>
 {
+    private readonly IAdmissionRepository _admissions;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IUnitOfWork _unitOfWork;
+    public AdmitPatientCommandHandler(IAdmissionRepository admissions,
+        ITransponderOutbox outbox,
+        IUnitOfWork unitOfWork)
+    {
+        _admissions = admissions;
+        _outbox = outbox;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(AdmitPatientCommand request, CancellationToken cancellationToken)
     {
         var admission = Admission.Admit(request.PatientId, new WardCode(request.WardCode), DateTime.UtcNow);
-        admissions.Add(admission);
+        _admissions.Add(admission);
 
         foreach (var @event in admission.IntegrationEvents)
         {
-            await outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
+            await _outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
         }
         admission.ClearIntegrationEvents();
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return admission.Id;
     }
 }

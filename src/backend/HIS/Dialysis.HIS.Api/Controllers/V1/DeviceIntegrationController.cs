@@ -12,8 +12,11 @@ namespace Dialysis.HIS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/integration")]
-public sealed class DeviceIntegrationController(ICqrsGateway gateway) : HisHateoasControllerBase
+public sealed class DeviceIntegrationController : HisHateoasControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    /// <summary>RA: <em>Patient monitoring</em> — device / telemetry ingest path (Tummers et al., 2021).</summary>
+    public DeviceIntegrationController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpPost("device-readings")]
     [EnableRateLimiting("DeviceIngest")]
     [ProducesResponseType(typeof(ResourceEnvelope<IngestDeviceReadingResponse>), StatusCodes.Status201Created)]
@@ -58,9 +61,14 @@ public sealed class DeviceIntegrationController(ICqrsGateway gateway) : HisHateo
             }
         }
 
-        var id = await gateway.SendCommandAsync<IngestDeviceReadingCommand, Guid>(commandWithId, cancellationToken).ConfigureAwait(false);
+        var id = await _gateway.SendCommandAsync<IngestDeviceReadingCommand, Guid>(commandWithId, cancellationToken).ConfigureAwait(false);
         return CreatedResource($"{Request.Path}/{id}", new IngestDeviceReadingResponse(id), LinkCapabilitiesIndex());
     }
 
-    public sealed record IngestDeviceReadingResponse(Guid Id);
+    public sealed record IngestDeviceReadingResponse
+    {
+        public IngestDeviceReadingResponse(Guid Id) => this.Id = Id;
+        public Guid Id { get; init; }
+        public void Deconstruct(out Guid id) => id = this.Id;
+    }
 }

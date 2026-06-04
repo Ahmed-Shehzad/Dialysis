@@ -79,10 +79,7 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
         }
     }
 
-    public async Task DeleteAsync(Guid attachmentId, CancellationToken cancellationToken)
-    {
-        await _client.DeleteObjectAsync(_bucket, KeyOf(attachmentId), cancellationToken).ConfigureAwait(false);
-    }
+    public async Task DeleteAsync(Guid attachmentId, CancellationToken cancellationToken) => await _client.DeleteObjectAsync(_bucket, KeyOf(attachmentId), cancellationToken).ConfigureAwait(false);
 
     public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -98,15 +95,18 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
             };
             var response = await _client.ListObjectsV2Async(request, cancellationToken).ConfigureAwait(false);
             var objects = response.S3Objects;
-            if (objects is null) continue;
+            if (objects is null)
+                continue;
             foreach (var obj in objects)
             {
                 var key = obj.Key;
-                if (string.IsNullOrEmpty(key)) continue;
+                if (string.IsNullOrEmpty(key))
+                    continue;
                 var name = key.StartsWith(_prefix, StringComparison.Ordinal)
                     ? key[_prefix.Length..]
                     : key;
-                if (!Guid.TryParse(name, out var id)) continue;
+                if (!Guid.TryParse(name, out var id))
+                    continue;
                 yield return new BlobMetadata(id, ToDateTimeOffset(obj.LastModified), obj.Size ?? 0);
             }
             continuationToken = response.IsTruncated == true ? response.NextContinuationToken : null;
@@ -128,7 +128,8 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
 
     private static string NormalisePrefix(string raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
         return raw.EndsWith('/') ? raw : raw + "/";
     }
 

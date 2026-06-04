@@ -36,6 +36,24 @@ public interface IPatientEraser
 /// what kind of aggregate was erased — e.g. for HIE Documents that's
 /// <c>{ "PdmsReporting": 4, "HieInbound": 2, "AdminUpload": 1 }</c>.
 /// </summary>
-public sealed record PatientErasureResult(
-    int RecordsErased,
-    IReadOnlyDictionary<string, int> ByCategory);
+public sealed record PatientErasureResult
+{
+    /// <summary>
+    /// Per-module result of an erasure pass. <see cref="ByCategory"/> lets the audit row capture
+    /// what kind of aggregate was erased — e.g. for HIE Documents that's
+    /// <c>{ "PdmsReporting": 4, "HieInbound": 2, "AdminUpload": 1 }</c>.
+    /// </summary>
+    public PatientErasureResult(int RecordsErased,
+        IReadOnlyDictionary<string, int> ByCategory)
+    {
+        this.RecordsErased = RecordsErased;
+        this.ByCategory = ByCategory;
+    }
+    public int RecordsErased { get; init; }
+    public IReadOnlyDictionary<string, int> ByCategory { get; init; }
+    public void Deconstruct(out int RecordsErased, out IReadOnlyDictionary<string, int> ByCategory)
+    {
+        RecordsErased = this.RecordsErased;
+        ByCategory = this.ByCategory;
+    }
+}

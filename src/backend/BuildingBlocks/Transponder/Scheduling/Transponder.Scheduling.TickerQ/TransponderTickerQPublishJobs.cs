@@ -8,11 +8,22 @@ namespace Dialysis.BuildingBlocks.Transponder.Scheduling.TickerQ;
 /// <summary>
 /// TickerQ entry points for scheduled Transponder publishes. Function name must match <see cref="TransponderTickerQPublishJobs.FunctionName"/>.
 /// </summary>
-public sealed class TransponderTickerQPublishJobs(
-    ITransponderBus bus,
-    IMessageSerializer serializer,
-    ILogger<TransponderTickerQPublishJobs> logger)
+public sealed class TransponderTickerQPublishJobs
 {
+    private readonly ITransponderBus _bus;
+    private readonly IMessageSerializer _serializer;
+    private readonly ILogger<TransponderTickerQPublishJobs> _logger;
+    /// <summary>
+    /// TickerQ entry points for scheduled Transponder publishes. Function name must match <see cref="TransponderTickerQPublishJobs.FunctionName"/>.
+    /// </summary>
+    public TransponderTickerQPublishJobs(ITransponderBus bus,
+        IMessageSerializer serializer,
+        ILogger<TransponderTickerQPublishJobs> logger)
+    {
+        _bus = bus;
+        _serializer = serializer;
+        _logger = logger;
+    }
     public const string FunctionName = "Transponder.PublishScheduledMessage";
 
     [TickerFunction(FunctionName)]
@@ -26,20 +37,20 @@ public sealed class TransponderTickerQPublishJobs(
         var type = Type.GetType(envelope.AssemblyQualifiedMessageTypeName, throwOnError: false, ignoreCase: false);
         if (type is null)
         {
-            logger.LogError("Transponder TickerQ job: unknown type {TypeName}", envelope.AssemblyQualifiedMessageTypeName);
+            _logger.LogError("Transponder TickerQ job: unknown type {TypeName}", envelope.AssemblyQualifiedMessageTypeName);
             throw new InvalidOperationException($"Could not load type '{envelope.AssemblyQualifiedMessageTypeName}'.");
         }
 
         var bytes = Encoding.UTF8.GetBytes(envelope.JsonPayload);
-        var body = serializer.Deserialize(type, bytes);
+        var body = _serializer.Deserialize(type, bytes);
         if (body is null)
         {
-            logger.LogError("Transponder TickerQ job: deserialization returned null for {TypeName}", type.FullName);
+            _logger.LogError("Transponder TickerQ job: deserialization returned null for {TypeName}", type.FullName);
             throw new InvalidOperationException("Deserialized message was null.");
         }
 
         var routingKey = type.FullName ?? type.Name;
-        await bus
+        await _bus
             .PublishPreparedAsync(
                 routingKey,
                 body,

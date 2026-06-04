@@ -29,25 +29,63 @@ public enum DocumentPreviewFormat
 /// binary blobs return the <see cref="DocumentPreviewFormat.Binary"/> hint with no content;
 /// the SPA links to <c>/binary</c> for download.
 /// </summary>
-public sealed record DocumentPreview(
-    DocumentPreviewFormat Format,
-    string? Content,
-    string MimeType,
-    string? RootElement,
-    string? DocumentTypeName);
-
-public sealed record GetDocumentPreviewQuery(Guid Id) : IQuery<DocumentPreview?>, IPermissionedCommand
+public sealed record DocumentPreview
 {
-    public string RequiredPermission => HiePermissions.DocumentsView;
+    /// <summary>
+    /// Preview envelope for non-PDF documents. PDFs return only the format hint — the SPA still
+    /// renders them through the existing pdfjs path against <c>/binary</c>. XML / CDA documents
+    /// return pretty-printed text the SPA renders in a code panel. Office, image, and other
+    /// binary blobs return the <see cref="DocumentPreviewFormat.Binary"/> hint with no content;
+    /// the SPA links to <c>/binary</c> for download.
+    /// </summary>
+    public DocumentPreview(DocumentPreviewFormat Format,
+        string? Content,
+        string MimeType,
+        string? RootElement,
+        string? DocumentTypeName)
+    {
+        this.Format = Format;
+        this.Content = Content;
+        this.MimeType = MimeType;
+        this.RootElement = RootElement;
+        this.DocumentTypeName = DocumentTypeName;
+    }
+    public DocumentPreviewFormat Format { get; init; }
+    public string? Content { get; init; }
+    public string MimeType { get; init; }
+    public string? RootElement { get; init; }
+    public string? DocumentTypeName { get; init; }
+    public void Deconstruct(out DocumentPreviewFormat format, out string? content, out string mimeType, out string? rootElement, out string? documentTypeName)
+    {
+        format = this.Format;
+        content = this.Content;
+        mimeType = this.MimeType;
+        rootElement = this.RootElement;
+        documentTypeName = this.DocumentTypeName;
+    }
 }
 
-public sealed class GetDocumentPreviewQueryHandler(
-    IDocumentReferenceRepository repository,
-    IDocumentBlobStore blobs)
-    : IQueryHandler<GetDocumentPreviewQuery, DocumentPreview?>
+public sealed record GetDocumentPreviewQuery : IQuery<DocumentPreview?>, IPermissionedCommand
 {
+    public GetDocumentPreviewQuery(Guid Id) => this.Id = Id;
+    public string RequiredPermission => HiePermissions.DocumentsView;
+    public Guid Id { get; init; }
+    public void Deconstruct(out Guid id) => id = this.Id;
+}
+
+public sealed class GetDocumentPreviewQueryHandler : IQueryHandler<GetDocumentPreviewQuery, DocumentPreview?>
+{
+    private readonly IDocumentReferenceRepository _repository;
+    private readonly IDocumentBlobStore _blobs;
+    public GetDocumentPreviewQueryHandler(IDocumentReferenceRepository repository,
+        IDocumentBlobStore blobs)
+    {
+        _repository = repository;
+        _blobs = blobs;
+    }
+
     // CDA documents commonly arrive as one of these. Plain XML uses the same code path.
-    private static readonly HashSet<string> _XmlMimeTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _xmlMimeTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "application/xml",
         "text/xml",
@@ -56,7 +94,7 @@ public sealed class GetDocumentPreviewQueryHandler(
         "application/fhir+xml",
     };
 
-    private static readonly HashSet<string> _TextMimeTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _textMimeTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "text/plain",
         "text/csv",
@@ -65,20 +103,20 @@ public sealed class GetDocumentPreviewQueryHandler(
 
     public async Task<DocumentPreview?> HandleAsync(GetDocumentPreviewQuery request, CancellationToken cancellationToken)
     {
-        var document = await repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
+        var document = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
         if (document is null) return null;
 
         var mime = document.MimeType;
         if (string.Equals(mime, "application/pdf", StringComparison.OrdinalIgnoreCase))
             return new DocumentPreview(DocumentPreviewFormat.Pdf, Content: null, MimeType: mime, RootElement: null, DocumentTypeName: null);
 
-        var bytes = await blobs.ReadAsync(document.StorageRef, cancellationToken).ConfigureAwait(false);
+        var bytes = await _blobs.ReadAsync(document.StorageRef, cancellationToken).ConfigureAwait(false);
         if (bytes is null) return null;
 
-        if (_XmlMimeTypes.Contains(mime))
+        if (_xmlMimeTypes.Contains(mime))
             return BuildXmlPreview(bytes, mime);
 
-        if (_TextMimeTypes.Contains(mime))
+        if (_textMimeTypes.Contains(mime))
             return new DocumentPreview(
                 DocumentPreviewFormat.Text,
                 Encoding.UTF8.GetString(bytes),

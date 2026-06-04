@@ -8,28 +8,37 @@ using Microsoft.Extensions.Options;
 
 namespace Dialysis.SmartConnect;
 
-public sealed class DataPrunerHostedService(
-    IServiceScopeFactory scopeFactory,
-    IOptions<DataPrunerOptions> options,
-    TimeProvider time,
-    ILogger<DataPrunerHostedService> logger) : BackgroundService
+public sealed class DataPrunerHostedService : BackgroundService
 {
-    private readonly DataPrunerOptions _options = options.Value;
+    private readonly DataPrunerOptions _options;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly TimeProvider _time;
+    private readonly ILogger<DataPrunerHostedService> _logger;
+    public DataPrunerHostedService(IServiceScopeFactory scopeFactory,
+        IOptions<DataPrunerOptions> options,
+        TimeProvider time,
+        ILogger<DataPrunerHostedService> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _time = time;
+        _logger = logger;
+        _options = options.Value;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(_options.Interval, time);
+        using var timer = new PeriodicTimer(_options.Interval, _time);
         while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))
         {
             try
             {
-                var threshold = time.GetUtcNow() - _options.RetentionPeriod;
-                await using var scope = scopeFactory.CreateAsyncScope();
+                var threshold = _time.GetUtcNow() - _options.RetentionPeriod;
+                await using var scope = _scopeFactory.CreateAsyncScope();
                 var ledger = scope.ServiceProvider.GetRequiredService<IMessageLedger>();
                 var pruned = await ledger.PruneAsync(threshold, cancellationToken: stoppingToken).ConfigureAwait(false);
                 if (pruned > 0)
                 {
-                    logger.LogInformation("Data pruner removed {Count} ledger entries older than {Threshold}.", pruned, threshold);
+                    _logger.LogInformation("Data pruner removed {Count} ledger entries older than {Threshold}.", pruned, threshold);
                 }
 
                 var attachments = scope.ServiceProvider.GetService<IAttachmentStore>();
@@ -38,7 +47,7 @@ public sealed class DataPrunerHostedService(
                     var attRemoved = await attachments.DeleteOlderThanAsync(threshold, stoppingToken).ConfigureAwait(false);
                     if (attRemoved > 0)
                     {
-                        logger.LogInformation("Data pruner removed {Count} attachments older than {Threshold}.", attRemoved, threshold);
+                        _logger.LogInformation("Data pruner removed {Count} attachments older than {Threshold}.", attRemoved, threshold);
                     }
                 }
 
@@ -48,7 +57,7 @@ public sealed class DataPrunerHostedService(
                     var alertRemoved = await alertEvents.DeleteOlderThanAsync(threshold, stoppingToken).ConfigureAwait(false);
                     if (alertRemoved > 0)
                     {
-                        logger.LogInformation("Data pruner removed {Count} alert events older than {Threshold}.", alertRemoved, threshold);
+                        _logger.LogInformation("Data pruner removed {Count} alert events older than {Threshold}.", alertRemoved, threshold);
                     }
                 }
             }
@@ -58,7 +67,7 @@ public sealed class DataPrunerHostedService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Data pruner encountered an error.");
+                _logger.LogError(ex, "Data pruner encountered an error.");
             }
         }
     }

@@ -5,11 +5,16 @@ using Dialysis.EHR.PatientPortal.Ports;
 
 namespace Dialysis.EHR.PatientPortal.Features.RequestAppointment;
 
-public sealed class RequestAppointmentCommandHandler(
-    IPortalAppointmentRequestRepository requests,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<RequestAppointmentCommand, Guid>
+public sealed class RequestAppointmentCommandHandler : ICommandHandler<RequestAppointmentCommand, Guid>
 {
+    private readonly IPortalAppointmentRequestRepository _requests;
+    private readonly IUnitOfWork _unitOfWork;
+    public RequestAppointmentCommandHandler(IPortalAppointmentRequestRepository requests,
+        IUnitOfWork unitOfWork)
+    {
+        _requests = requests;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RequestAppointmentCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
@@ -19,8 +24,8 @@ public sealed class RequestAppointmentCommandHandler(
             request.ReasonText,
             request.EarliestPreferredUtc,
             request.LatestPreferredUtc);
-        requests.Add(portalRequest);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _requests.Add(portalRequest);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

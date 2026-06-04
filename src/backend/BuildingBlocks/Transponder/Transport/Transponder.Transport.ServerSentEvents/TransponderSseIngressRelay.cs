@@ -7,11 +7,14 @@ using Microsoft.Extensions.Logging;
 namespace Dialysis.BuildingBlocks.Transponder.Transport.ServerSentEvents;
 
 /// <summary>Fans out published envelopes to every open GET <c>subscribe</c> response stream.</summary>
-public sealed class TransponderSseIngressRelay(ILogger<TransponderSseIngressRelay> logger)
+public sealed class TransponderSseIngressRelay
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly ConcurrentDictionary<Guid, Subscriber> _subscribers = new();
+    private readonly ILogger<TransponderSseIngressRelay> _logger;
+    /// <summary>Fans out published envelopes to every open GET <c>subscribe</c> response stream.</summary>
+    public TransponderSseIngressRelay(ILogger<TransponderSseIngressRelay> logger) => _logger = logger;
 
     /// <summary>Blocks until the client disconnects.</summary>
     public async Task SubscribeAsync(HttpContext httpContext)
@@ -64,23 +67,25 @@ public sealed class TransponderSseIngressRelay(ILogger<TransponderSseIngressRela
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Transponder SSE: removing subscriber {Id} after write failure", kv.Key);
+                _logger.LogDebug(ex, "Transponder SSE: removing subscriber {Id} after write failure", kv.Key);
                 _subscribers.TryRemove(kv.Key, out _);
             }
         }
     }
 
-    private sealed class Subscriber(Stream body)
+    private sealed class Subscriber
     {
         private readonly SemaphoreSlim _write = new(1, 1);
+        private readonly Stream _body;
+        public Subscriber(Stream body) => _body = body;
 
         public async Task WriteRawAsync(byte[] payload, CancellationToken cancellationToken)
         {
             await _write.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                await body.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
-                await body.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await _body.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
+                await _body.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {

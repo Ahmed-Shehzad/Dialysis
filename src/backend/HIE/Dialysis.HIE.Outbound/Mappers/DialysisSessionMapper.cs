@@ -5,16 +5,18 @@ using Hl7.Fhir.Model;
 
 namespace Dialysis.HIE.Outbound.Mappers;
 
-public sealed class DialysisSessionMapper(IConceptCatalog concepts) :
+public sealed class DialysisSessionMapper :
     IFhirResourceMapper<DialysisSessionStartedIntegrationEvent, Procedure>,
     IFhirResourceMapper<DialysisSessionCompletedIntegrationEvent, Procedure>,
     IFhirResourceMapper<DialysisSessionAbortedIntegrationEvent, Procedure>
 {
+    private readonly IConceptCatalog _concepts;
+    public DialysisSessionMapper(IConceptCatalog concepts) => _concepts = concepts;
     public Procedure Map(DialysisSessionStartedIntegrationEvent e) => new()
     {
         Id = e.SessionId.ToString(),
         Status = EventStatus.InProgress,
-        Code = concepts.Get(ClinicalConcepts.RenalDialysis),
+        Code = _concepts.Get(ClinicalConcepts.RenalDialysis),
         Subject = new ResourceReference($"Patient/{e.PatientId}"),
         Performed = new Period { StartElement = new FhirDateTime(e.StartedAtUtc) },
         UsedCode = [new CodeableConcept { Text = e.DialyzerModel }],
@@ -24,10 +26,10 @@ public sealed class DialysisSessionMapper(IConceptCatalog concepts) :
     {
         Id = e.SessionId.ToString(),
         Status = EventStatus.Completed,
-        Code = concepts.Get(ClinicalConcepts.RenalDialysis),
+        Code = _concepts.Get(ClinicalConcepts.RenalDialysis),
         Subject = new ResourceReference($"Patient/{e.PatientId}"),
         Performed = new Period { EndElement = new FhirDateTime(e.CompletedAtUtc) },
-        Outcome = concepts.Get(ClinicalConcepts.SuccessfulOutcome),
+        Outcome = _concepts.Get(ClinicalConcepts.SuccessfulOutcome),
         Note = [new Annotation { Text = new Markdown($"Achieved UF {e.AchievedUfVolumeLiters} L over {e.ActualDurationMinutes} min") }],
     };
 
@@ -35,7 +37,7 @@ public sealed class DialysisSessionMapper(IConceptCatalog concepts) :
     {
         Id = e.SessionId.ToString(),
         Status = EventStatus.Stopped,
-        Code = concepts.Get(ClinicalConcepts.RenalDialysis),
+        Code = _concepts.Get(ClinicalConcepts.RenalDialysis),
         Subject = new ResourceReference($"Patient/{e.PatientId}"),
         Performed = new Period { EndElement = new FhirDateTime(e.AbortedAtUtc) },
         StatusReason = new CodeableConcept { Text = e.ReasonCode },

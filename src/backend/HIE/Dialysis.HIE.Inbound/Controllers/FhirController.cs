@@ -19,11 +19,23 @@ namespace Dialysis.HIE.Inbound.Controllers;
 [Route("api/v{version:apiVersion}/fhir")]
 [Authorize]
 [Produces("application/fhir+json")]
-public sealed class FhirController(
-    InboundIngestionService ingestion,
-    IPatientIndex patientIndex,
-    ILogger<FhirController> logger) : ControllerBase
+public sealed class FhirController : ControllerBase
 {
+    private readonly InboundIngestionService _ingestion;
+    private readonly IPatientIndex _patientIndex;
+    private readonly ILogger<FhirController> _logger;
+    /// <summary>
+    /// FHIR R4 REST surface. Returns native <c>application/fhir+json</c> bodies (spec compliance) so it does
+    /// NOT wrap responses in the HATEOAS envelope used by admin endpoints elsewhere in this host.
+    /// </summary>
+    public FhirController(InboundIngestionService ingestion,
+        IPatientIndex patientIndex,
+        ILogger<FhirController> logger)
+    {
+        _ingestion = ingestion;
+        _patientIndex = patientIndex;
+        _logger = logger;
+    }
     private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
     [HttpPost("Bundle")]
@@ -43,11 +55,11 @@ public sealed class FhirController(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Inbound FHIR parse error");
+            _logger.LogWarning(ex, "Inbound FHIR parse error");
             return FhirResult(UnprocessableEntity(), ParseErrorOutcome(ex.Message));
         }
 
-        var outcome = await ingestion.IngestAsync(partnerId, resource, cancellationToken).ConfigureAwait(false);
+        var outcome = await _ingestion.IngestAsync(partnerId, resource, cancellationToken).ConfigureAwait(false);
         var status = outcome.Issue.Any(i => i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal)
             ? StatusCodes.Status422UnprocessableEntity
             : StatusCodes.Status200OK;
@@ -65,7 +77,7 @@ public sealed class FhirController(
         DateOnly? dob = null;
         if (!string.IsNullOrWhiteSpace(birthdate) && DateOnly.TryParse(birthdate, out var parsed))
             dob = parsed;
-        var matches = await patientIndex.MatchAsync(mrn, family, given, dob, take: 20, cancellationToken).ConfigureAwait(false);
+        var matches = await _patientIndex.MatchAsync(mrn, family, given, dob, take: 20, cancellationToken).ConfigureAwait(false);
 
         var bundle = new Bundle { Type = Bundle.BundleType.Searchset, Total = matches.Count };
         foreach (var m in matches)

@@ -11,17 +11,45 @@ namespace Dialysis.SmartConnect;
 /// column so no schema churn is required. The operator dashboard's existing metadata
 /// filter then trivially supports "show me every message in batch X".
 /// </summary>
-public readonly record struct BatchContext(
-    string BatchId,
-    int Sequence,
-    int Total,
-    string? Source)
+public readonly record struct BatchContext
 {
+    /// <summary>
+    /// Slice D of the SmartConnect ↔ Mirth alignment plan: a batch is a group of related
+    /// integration messages sourced from one inbound event — a single file containing N
+    /// HL7v2 messages, a database query that returned N rows, a delimited-text file split
+    /// into N records, etc. Mirth Connect uses dedicated message-metadata columns for batch
+    /// id / sequence; we layer the same shape on top of slice C's <c>MetadataJson</c>
+    /// column so no schema churn is required. The operator dashboard's existing metadata
+    /// filter then trivially supports "show me every message in batch X".
+    /// </summary>
+    public BatchContext(string BatchId,
+        int Sequence,
+        int Total,
+        string? Source)
+    {
+        this.BatchId = BatchId;
+        this.Sequence = Sequence;
+        this.Total = Total;
+        this.Source = Source;
+    }
+
     /// <summary>True when this row is the final message in its batch.</summary>
     public bool IsLast => Sequence == Total;
 
     /// <summary>True when this row is the first message in its batch.</summary>
     public bool IsFirst => Sequence == 1;
+
+    public string BatchId { get; init; }
+    public int Sequence { get; init; }
+    public int Total { get; init; }
+    public string? Source { get; init; }
+    public void Deconstruct(out string BatchId, out int Sequence, out int Total, out string? Source)
+    {
+        BatchId = this.BatchId;
+        Sequence = this.Sequence;
+        Total = this.Total;
+        Source = this.Source;
+    }
 }
 
 /// <summary>

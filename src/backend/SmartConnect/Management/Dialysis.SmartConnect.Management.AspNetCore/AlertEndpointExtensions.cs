@@ -133,10 +133,32 @@ public static class AlertEndpointExtensions
         LastModifiedUtc = DateTimeOffset.UtcNow,
     };
 
-    private sealed record TestAlertRequest(
-        Guid? FlowId,
-        Guid? MessageId,
-        string? CorrelationId,
-        AlertErrorType? ErrorType,
-        string? ErrorDetail);
+    private sealed record TestAlertRequest
+    {
+        public TestAlertRequest(Guid? FlowId,
+            Guid? MessageId,
+            string? CorrelationId,
+            AlertErrorType? ErrorType,
+            string? ErrorDetail)
+        {
+            this.FlowId = FlowId;
+            this.MessageId = MessageId;
+            this.CorrelationId = CorrelationId;
+            this.ErrorType = ErrorType;
+            this.ErrorDetail = ErrorDetail;
+        }
+        public Guid? FlowId { get; init; }
+        public Guid? MessageId { get; init; }
+        public string? CorrelationId { get; init; }
+        public AlertErrorType? ErrorType { get; init; }
+        public string? ErrorDetail { get; init; }
+        public void Deconstruct(out Guid? FlowId, out Guid? MessageId, out string? CorrelationId, out AlertErrorType? ErrorType, out string? ErrorDetail)
+        {
+            FlowId = this.FlowId;
+            MessageId = this.MessageId;
+            CorrelationId = this.CorrelationId;
+            ErrorType = this.ErrorType;
+            ErrorDetail = this.ErrorDetail;
+        }
+    }
 }

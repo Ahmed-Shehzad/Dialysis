@@ -10,21 +10,32 @@ namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 /// <summary>
 /// Polls unprocessed outbox rows and publishes them through <see cref="ITransponderBus"/>. Run a single instance per logical database or coordinate externally.
 /// </summary>
-public sealed class TransponderOutboxRelayHostedService<TContext>(
-    IServiceScopeFactory scopeFactory,
-    IOptions<TransponderOutboxRelayOptions> options,
-    ILogger<TransponderOutboxRelayHostedService<TContext>> logger) : BackgroundService
+public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundService
     where TContext : TransponderPersistenceDbContextBase
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IOptions<TransponderOutboxRelayOptions> _options;
+    private readonly ILogger<TransponderOutboxRelayHostedService<TContext>> _logger;
+    /// <summary>
+    /// Polls unprocessed outbox rows and publishes them through <see cref="ITransponderBus"/>. Run a single instance per logical database or coordinate externally.
+    /// </summary>
+    public TransponderOutboxRelayHostedService(IServiceScopeFactory scopeFactory,
+        IOptions<TransponderOutboxRelayOptions> options,
+        ILogger<TransponderOutboxRelayHostedService<TContext>> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _options = options;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var opts = options.Value;
+        var opts = _options.Value;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 var processedAny = false;
-                await using (var scope = scopeFactory.CreateAsyncScope())
+                await using (var scope = _scopeFactory.CreateAsyncScope())
                 {
                     var db = scope.ServiceProvider.GetRequiredService<TContext>();
                     var bus = scope.ServiceProvider.GetRequiredService<ITransponderBus>();
@@ -50,7 +61,7 @@ public sealed class TransponderOutboxRelayHostedService<TContext>(
                         }
                         catch (Exception ex)
                         {
-                            logger.LogError(
+                            _logger.LogError(
                                 ex,
                                 "Transponder outbox relay failed for row {OutboxId}; will retry on next poll.",
                                 row.Id);
@@ -69,10 +80,10 @@ public sealed class TransponderOutboxRelayHostedService<TContext>(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Transponder outbox relay loop error; backing off.");
+                _logger.LogError(ex, "Transponder outbox relay loop error; backing off.");
                 try
                 {
-                    await Task.Delay(options.Value.IdlePollInterval, stoppingToken).ConfigureAwait(false);
+                    await Task.Delay(_options.Value.IdlePollInterval, stoppingToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {

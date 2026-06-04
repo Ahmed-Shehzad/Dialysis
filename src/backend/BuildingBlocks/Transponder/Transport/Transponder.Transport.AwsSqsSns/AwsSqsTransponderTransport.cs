@@ -10,12 +10,21 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.AwsSqsSns;
 /// <summary>
 /// Publishes and consumes a single standard SQS queue; CLR routing key is stored in string message attributes.
 /// </summary>
-public sealed class AwsSqsTransponderTransport(
-    IOptions<TransponderAwsSqsOptions> options,
-    ILogger<AwsSqsTransponderTransport> logger) : ITransponderTransport
+public sealed class AwsSqsTransponderTransport : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private AmazonSQSClient? _sqs;
+    private readonly IOptions<TransponderAwsSqsOptions> _options;
+    private readonly ILogger<AwsSqsTransponderTransport> _logger;
+    /// <summary>
+    /// Publishes and consumes a single standard SQS queue; CLR routing key is stored in string message attributes.
+    /// </summary>
+    public AwsSqsTransponderTransport(IOptions<TransponderAwsSqsOptions> options,
+        ILogger<AwsSqsTransponderTransport> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -25,12 +34,12 @@ public sealed class AwsSqsTransponderTransport(
             if (_sqs is not null)
                 return;
 
-            var o = options.Value;
+            var o = _options.Value;
             if (string.IsNullOrWhiteSpace(o.QueueUrl))
                 throw new InvalidOperationException("Transponder AWS SQS: QueueUrl is required.");
 
             _sqs = CreateClient(o);
-            logger.LogInformation("Transponder AWS SQS client ready for queue {QueueUrl}", o.QueueUrl.Trim());
+            _logger.LogInformation("Transponder AWS SQS client ready for queue {QueueUrl}", o.QueueUrl.Trim());
         }
         finally
         {
@@ -42,7 +51,7 @@ public sealed class AwsSqsTransponderTransport(
     {
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
         var sqs = _sqs ?? throw new InvalidOperationException("SQS client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
 
         var correlation = message.CorrelationId ?? Guid.NewGuid().ToString("N");
         var deduplicationId = string.IsNullOrEmpty(message.DeduplicationId) ? correlation : message.DeduplicationId;
@@ -93,12 +102,12 @@ public sealed class AwsSqsTransponderTransport(
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
         var sqs = _sqs ?? throw new InvalidOperationException("SQS client is not initialized.");
-        var o = options.Value;
+        var o = _options.Value;
         var queueUrl = o.QueueUrl.Trim();
         var wait = Math.Clamp(o.WaitTimeSeconds, 0, 20);
         var maxMsgs = Math.Clamp(o.MaxNumberOfMessages, 1, 10);
 
-        logger.LogInformation("Transponder AWS SQS receive loop started for {QueueUrl}", queueUrl);
+        _logger.LogInformation("Transponder AWS SQS receive loop started for {QueueUrl}", queueUrl);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -127,7 +136,7 @@ public sealed class AwsSqsTransponderTransport(
                 var transport = ToTransportMessage(m);
                 if (transport is null)
                 {
-                    logger.LogWarning("Transponder AWS SQS: message {Id} missing routing key; deleting", m.MessageId);
+                    _logger.LogWarning("Transponder AWS SQS: message {Id} missing routing key; deleting", m.MessageId);
                     await TryDeleteAsync(sqs, queueUrl, m, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -139,7 +148,7 @@ public sealed class AwsSqsTransponderTransport(
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(
+                    _logger.LogError(
                         ex,
                         "Transponder AWS SQS handler failed; leaving message {Id} for redelivery",
                         m.MessageId);
@@ -208,7 +217,7 @@ public sealed class AwsSqsTransponderTransport(
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Transponder AWS SQS: failed to delete message {Id}", m.MessageId);
+            _logger.LogDebug(ex, "Transponder AWS SQS: failed to delete message {Id}", m.MessageId);
         }
     }
 }

@@ -9,18 +9,31 @@ namespace Dialysis.BuildingBlocks.Transponder;
 /// <summary>
 /// Collects <see cref="TransponderMessageChunk"/> deliveries, verifies SHA-256, and dispatches the merged JSON to the logical routing key.
 /// </summary>
-public sealed class TransponderChunkReassemblyConsumer(
-    TransponderConsumeDispatcher dispatcher,
-    IMessageSerializer serializer,
-    IOptions<TransponderLargeMessageOptions> largeOptions,
-    ILogger<TransponderChunkReassemblyConsumer> logger) : IConsumer<TransponderMessageChunk>
+public sealed class TransponderChunkReassemblyConsumer : IConsumer<TransponderMessageChunk>
 {
     private readonly ConcurrentDictionary<Guid, Session> _sessions = new();
+    private readonly TransponderConsumeDispatcher _dispatcher;
+    private readonly IMessageSerializer _serializer;
+    private readonly IOptions<TransponderLargeMessageOptions> _largeOptions;
+    private readonly ILogger<TransponderChunkReassemblyConsumer> _logger;
+    /// <summary>
+    /// Collects <see cref="TransponderMessageChunk"/> deliveries, verifies SHA-256, and dispatches the merged JSON to the logical routing key.
+    /// </summary>
+    public TransponderChunkReassemblyConsumer(TransponderConsumeDispatcher dispatcher,
+        IMessageSerializer serializer,
+        IOptions<TransponderLargeMessageOptions> largeOptions,
+        ILogger<TransponderChunkReassemblyConsumer> logger)
+    {
+        _dispatcher = dispatcher;
+        _serializer = serializer;
+        _largeOptions = largeOptions;
+        _logger = logger;
+    }
 
     public async Task HandleAsync(ConsumeContext<TransponderMessageChunk> context)
     {
         var chunk = context.Message;
-        var ttl = largeOptions.Value.IncompleteSessionTimeout;
+        var ttl = _largeOptions.Value.IncompleteSessionTimeout;
         PruneStaleSessions(ttl);
 
         if (string.IsNullOrEmpty(chunk.LogicalRoutingKey)
@@ -30,7 +43,7 @@ public sealed class TransponderChunkReassemblyConsumer(
             || string.IsNullOrEmpty(chunk.PayloadSha256Hex)
             || chunk.Segment is null)
         {
-            logger.LogWarning("Transponder chunk ignored: invalid metadata (session {Session})", chunk.ChunkSessionId);
+            _logger.LogWarning("Transponder chunk ignored: invalid metadata (session {Session})", chunk.ChunkSessionId);
             return;
         }
 
@@ -52,7 +65,7 @@ public sealed class TransponderChunkReassemblyConsumer(
                     || !string.Equals(session.PayloadSha256Hex, chunk.PayloadSha256Hex, StringComparison.OrdinalIgnoreCase)
                     || session.TotalChunks != chunk.TotalChunks)
                 {
-                    logger.LogWarning(
+                    _logger.LogWarning(
                         "Transponder chunk session {Session} aborted: conflicting metadata",
                         chunk.ChunkSessionId);
                     _sessions.TryRemove(chunk.ChunkSessionId, out _);
@@ -66,7 +79,7 @@ public sealed class TransponderChunkReassemblyConsumer(
                 merged = session.Merge();
                 if (!session.VerifyDigest(merged))
                 {
-                    logger.LogError(
+                    _logger.LogError(
                         "Transponder chunk session {Session} failed SHA-256 verification",
                         chunk.ChunkSessionId);
                     _sessions.TryRemove(chunk.ChunkSessionId, out _);
@@ -86,13 +99,13 @@ public sealed class TransponderChunkReassemblyConsumer(
             return;
 
         var dedup = chunk.ChunkSessionId.ToString("N");
-        await dispatcher
+        await _dispatcher
             .DispatchAsync(
                 chunk.LogicalRoutingKey,
                 merged,
                 context.CorrelationId,
                 dedup,
-                serializer,
+                _serializer,
                 context.Bus,
                 context.CancellationToken)
             .ConfigureAwait(false);

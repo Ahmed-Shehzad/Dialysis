@@ -118,7 +118,13 @@ await app.RunAsync().ConfigureAwait(false);
 namespace Dialysis.Identity.Api
 {
     /// <summary>Body for assigning a role to a user.</summary>
-    public sealed record AssignRoleBody(string RoleCode);
+    public sealed record AssignRoleBody
+    {
+        /// <summary>Body for assigning a role to a user.</summary>
+        public AssignRoleBody(string RoleCode) => this.RoleCode = RoleCode;
+        public string RoleCode { get; init; }
+        public void Deconstruct(out string roleCode) => roleCode = this.RoleCode;
+    }
 
     /// <summary>Test factory marker.</summary>
     public partial class Program;

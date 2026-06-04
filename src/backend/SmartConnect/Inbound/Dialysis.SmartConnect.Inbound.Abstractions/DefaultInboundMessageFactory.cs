@@ -8,8 +8,13 @@ namespace Dialysis.SmartConnect.Inbound;
 /// <summary>
 /// Default <see cref="IInboundMessageFactory"/> using version-7 message ids and optional <see cref="TimeProvider"/> for receive time.
 /// </summary>
-public sealed class DefaultInboundMessageFactory(TimeProvider? time = null) : IInboundMessageFactory
+public sealed class DefaultInboundMessageFactory : IInboundMessageFactory
 {
+    private readonly TimeProvider? _time;
+    /// <summary>
+    /// Default <see cref="IInboundMessageFactory"/> using version-7 message ids and optional <see cref="TimeProvider"/> for receive time.
+    /// </summary>
+    public DefaultInboundMessageFactory(TimeProvider? time = null) => _time = time;
     public IntegrationMessage Create(
         Guid flowId,
         ReadOnlyMemory<byte> payload,
@@ -18,7 +23,7 @@ public sealed class DefaultInboundMessageFactory(TimeProvider? time = null) : II
         IReadOnlyDictionary<string, string>? metadata = null,
         DateTimeOffset? receivedAtUtc = null)
     {
-        var received = receivedAtUtc ?? (time?.GetUtcNow() ?? DateTimeOffset.UtcNow);
+        var received = receivedAtUtc ?? (_time?.GetUtcNow() ?? DateTimeOffset.UtcNow);
         var cid = string.IsNullOrWhiteSpace(correlationId) ? Guid.CreateVersion7().ToString("N") : correlationId.Trim();
         return new IntegrationMessage
         {

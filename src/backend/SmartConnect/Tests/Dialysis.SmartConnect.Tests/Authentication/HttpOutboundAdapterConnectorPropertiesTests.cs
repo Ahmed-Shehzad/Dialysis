@@ -163,10 +163,7 @@ public sealed class HttpOutboundAdapterConnectorPropertiesTests
     }
 
     private static (HttpOutboundAdapter adapter, ServiceProvider sp) BuildAdapter(
-        Func<HttpRequestMessage, HttpResponseMessage> respond)
-    {
-        return BuildAdapter((req, _) => Task.FromResult(respond(req)));
-    }
+        Func<HttpRequestMessage, HttpResponseMessage> respond) => BuildAdapter((req, _) => Task.FromResult(respond(req)));
 
     private static (HttpOutboundAdapter adapter, ServiceProvider sp) BuildAdapter(
         Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respondAsync)
@@ -197,10 +194,11 @@ public sealed class HttpOutboundAdapterConnectorPropertiesTests
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 
-    private sealed class ScriptedHandler(
-        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respondAsync) : HttpMessageHandler
+    private sealed class ScriptedHandler : HttpMessageHandler
     {
+        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _respond;
+        public ScriptedHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) => _respond = respond;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            respondAsync(request, cancellationToken);
+            _respond(request, cancellationToken);
     }
 }

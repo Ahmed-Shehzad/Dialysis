@@ -15,15 +15,23 @@ namespace Dialysis.EHR.Registration.Fhir;
 /// the projection emits MRN as a business identifier, demographics, contact points, and
 /// primary address.
 /// </summary>
-public sealed class EhrPatientFhirFeeder(IPatientRepository patients) : INdjsonResourceFeeder<FhirPatient>
+public sealed class EhrPatientFhirFeeder : INdjsonResourceFeeder<FhirPatient>
 {
+    private readonly IPatientRepository _patients;
+    /// <summary>
+    /// Streams every EHR <see cref="Patient"/> aggregate as a FHIR R4 <c>Patient</c> resource for
+    /// inclusion in a Bulk Data <c>$export</c>. EHR is the patient-identity system of record;
+    /// the projection emits MRN as a business identifier, demographics, contact points, and
+    /// primary address.
+    /// </summary>
+    public EhrPatientFhirFeeder(IPatientRepository patients) => _patients = patients;
     public async IAsyncEnumerable<FhirPatient> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var patient in patients.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var patient in _patients.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(patient);
         }

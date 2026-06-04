@@ -5,11 +5,16 @@ using Dialysis.PDMS.TreatmentSessions.Ports;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 
-public sealed class ScheduleSessionCommandHandler(
-    IDialysisSessionRepository sessions,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<ScheduleSessionCommand, Guid>
+public sealed class ScheduleSessionCommandHandler : ICommandHandler<ScheduleSessionCommand, Guid>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    private readonly IUnitOfWork _unitOfWork;
+    public ScheduleSessionCommandHandler(IDialysisSessionRepository sessions,
+        IUnitOfWork unitOfWork)
+    {
+        _sessions = sessions;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(ScheduleSessionCommand request, CancellationToken cancellationToken)
     {
         var prescription = new SessionPrescription(
@@ -27,8 +32,8 @@ public sealed class ScheduleSessionCommandHandler(
 
         var id = Guid.CreateVersion7();
         var session = DialysisSession.Schedule(id, request.PatientId, request.ScheduledStartUtc, prescription, access);
-        sessions.Add(session);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _sessions.Add(session);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

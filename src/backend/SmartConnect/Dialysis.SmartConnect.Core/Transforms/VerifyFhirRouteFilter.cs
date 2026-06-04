@@ -16,29 +16,45 @@ namespace Dialysis.SmartConnect.Transforms;
 /// Filter parameter <c>profileUri</c> is an optional override that adds a single-shot binding for
 /// the resource type emitted by this dispatch (not persisted into the global map).
 /// </remarks>
-public sealed class VerifyFhirRouteFilter(IFhirProfileValidator validator) : IRouteFilter
+public sealed class VerifyFhirRouteFilter : IRouteFilter
 {
+    private readonly IFhirProfileValidator _validator;
+    /// <summary>
+    /// Route filter (kind <c>verify-fhir</c>) that parses the payload as a FHIR R4 resource and
+    /// validates it via <see cref="IFhirProfileValidator"/>. Drops the message (RouteFilterDropped)
+    /// on any error. The strict transform-stage sibling throws (OutboundFailed) instead.
+    /// </summary>
+    /// <remarks>
+    /// The FHIR profile binding map is configured at host wire-up via
+    /// <c>services.AddFhirValidation(map =&gt; map.Require&lt;Patient&gt;("http://hl7.org/fhir/us/core/..."))</c>.
+    /// Filter parameter <c>profileUri</c> is an optional override that adds a single-shot binding for
+    /// the resource type emitted by this dispatch (not persisted into the global map).
+    /// </remarks>
+    public VerifyFhirRouteFilter(IFhirProfileValidator validator) => _validator = validator;
     public const string KindValue = "verify-fhir";
 
     public string Kind => KindValue;
 
     public async Task<RouteFilterResult> EvaluateAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
-        var verdict = await VerifyFhirCore.InspectAsync(validator, message.Payload, message.Metadata, cancellationToken).ConfigureAwait(false);
+        var verdict = await VerifyFhirCore.InspectAsync(_validator, message.Payload, message.Metadata, cancellationToken).ConfigureAwait(false);
         return verdict.IsValid ? RouteFilterResult.Allow() : RouteFilterResult.Drop();
     }
 }
 
 /// <summary>Strict sibling — kind <c>verify-fhir-strict</c>; throws on any FHIR validation error.</summary>
-public sealed class VerifyFhirTransformStage(IFhirProfileValidator validator) : ITransformStage
+public sealed class VerifyFhirTransformStage : ITransformStage
 {
+    private readonly IFhirProfileValidator _validator;
+    /// <summary>Strict sibling — kind <c>verify-fhir-strict</c>; throws on any FHIR validation error.</summary>
+    public VerifyFhirTransformStage(IFhirProfileValidator validator) => _validator = validator;
     public const string KindValue = "verify-fhir-strict";
 
     public string Kind => KindValue;
 
     public async Task<IntegrationMessage> TransformAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
-        var verdict = await VerifyFhirCore.InspectAsync(validator, message.Payload, message.Metadata, cancellationToken).ConfigureAwait(false);
+        var verdict = await VerifyFhirCore.InspectAsync(_validator, message.Payload, message.Metadata, cancellationToken).ConfigureAwait(false);
         if (!verdict.IsValid)
         {
             throw new InvalidOperationException($"verify-fhir-strict: {verdict.Reason}");
@@ -54,7 +70,21 @@ internal static class VerifyFhirCore
     // DeserializationFailedException it raises is caught below and reported as a parse failure.
     private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Strict));
 
-    public readonly record struct Inspection(bool IsValid, string? Reason);
+    public readonly record struct Inspection
+    {
+        public Inspection(bool IsValid, string? Reason)
+        {
+            this.IsValid = IsValid;
+            this.Reason = Reason;
+        }
+        public bool IsValid { get; init; }
+        public string? Reason { get; init; }
+        public void Deconstruct(out bool isValid, out string? reason)
+        {
+            isValid = this.IsValid;
+            reason = this.Reason;
+        }
+    }
 
     public static async Task<Inspection> InspectAsync(
         IFhirProfileValidator validator,

@@ -8,8 +8,19 @@ namespace Dialysis.SmartConnect.Adapters;
 /// Reusable base for vendor adapters that talk plain FHIR REST over HTTPS. Subclasses supply the
 /// <see cref="IExternalEhrAuthProvider"/> and the vendor descriptor.
 /// </summary>
-public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, IExternalEhrAuthProvider authProvider) : IExternalEhrAdapter
+public abstract class HttpFhirAdapterBase : IExternalEhrAdapter
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IExternalEhrAuthProvider _authProvider;
+    /// <summary>
+    /// Reusable base for vendor adapters that talk plain FHIR REST over HTTPS. Subclasses supply the
+    /// <see cref="IExternalEhrAuthProvider"/> and the vendor descriptor.
+    /// </summary>
+    protected HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, IExternalEhrAuthProvider authProvider)
+    {
+        _httpClientFactory = httpClientFactory;
+        _authProvider = authProvider;
+    }
     private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
 
     // Deserialize is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
@@ -41,8 +52,8 @@ public abstract class HttpFhirAdapterBase(IHttpClientFactory httpClientFactory, 
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, ExternalEhrContext context, CancellationToken cancellationToken)
     {
-        using var client = httpClientFactory.CreateClient(Describe().VendorName);
-        var token = await authProvider.AcquireAccessTokenAsync(context, cancellationToken).ConfigureAwait(false);
+        using var client = _httpClientFactory.CreateClient(Describe().VendorName);
+        var token = await _authProvider.AcquireAccessTokenAsync(context, cancellationToken).ConfigureAwait(false);
         using var request = new HttpRequestMessage(method, url);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/fhir+json"));
         if (!string.IsNullOrEmpty(token))

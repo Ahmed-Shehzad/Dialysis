@@ -7,15 +7,22 @@ using Dialysis.EHR.Registration.Ports;
 
 namespace Dialysis.EHR.Registration.Features.RegisterPatient;
 
-public sealed class RegisterPatientCommandHandler(
-    IPatientRepository patients,
-    ITransponderOutbox outbox,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<RegisterPatientCommand, Guid>
+public sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPatientCommand, Guid>
 {
+    private readonly IPatientRepository _patients;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IUnitOfWork _unitOfWork;
+    public RegisterPatientCommandHandler(IPatientRepository patients,
+        ITransponderOutbox outbox,
+        IUnitOfWork unitOfWork)
+    {
+        _patients = patients;
+        _outbox = outbox;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RegisterPatientCommand request, CancellationToken cancellationToken)
     {
-        if (await patients.FindByMedicalRecordNumberAsync(request.MedicalRecordNumber, cancellationToken).ConfigureAwait(false) is not null)
+        if (await _patients.FindByMedicalRecordNumberAsync(request.MedicalRecordNumber, cancellationToken).ConfigureAwait(false) is not null)
             throw new InvalidOperationException($"MRN '{request.MedicalRecordNumber}' is already in use.");
 
         var id = Guid.CreateVersion7();
@@ -28,13 +35,13 @@ public sealed class RegisterPatientCommandHandler(
             request.SexAtBirthCode,
             request.PreferredLanguageCode);
 
-        patients.Add(patient);
+        _patients.Add(patient);
 
         foreach (var @event in patient.IntegrationEvents)
         {
             var eventType = @event.GetType();
             var json = JsonSerializer.Serialize(@event, eventType);
-            await outbox.EnqueueAsync(new TransponderOutboxEnvelope(
+            await _outbox.EnqueueAsync(new TransponderOutboxEnvelope(
                 AssemblyQualifiedEventType: eventType.AssemblyQualifiedName ?? eventType.FullName!,
                 PayloadJson: json,
                 Id: @event.EventId),
@@ -42,7 +49,7 @@ public sealed class RegisterPatientCommandHandler(
         }
         patient.ClearIntegrationEvents();
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

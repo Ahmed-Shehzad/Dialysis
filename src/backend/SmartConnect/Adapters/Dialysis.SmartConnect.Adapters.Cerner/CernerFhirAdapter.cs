@@ -22,10 +22,19 @@ public sealed class CernerAdapterOptions
 /// Cerner FHIR R4 backend-services auth via OAuth2 <c>client_credentials</c> grant with HTTP Basic
 /// authentication carrying the client id + secret. Bearer tokens are cached per-tenant.
 /// </summary>
-public sealed class CernerAuthProvider(IOptions<CernerAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
-    : IExternalEhrAuthProvider
+public sealed class CernerAuthProvider : IExternalEhrAuthProvider
 {
-    private readonly CernerAdapterOptions _options = options.Value;
+    private readonly CernerAdapterOptions _options;
+    private readonly OAuth2TokenAcquirer _tokenAcquirer;
+    /// <summary>
+    /// Cerner FHIR R4 backend-services auth via OAuth2 <c>client_credentials</c> grant with HTTP Basic
+    /// authentication carrying the client id + secret. Bearer tokens are cached per-tenant.
+    /// </summary>
+    public CernerAuthProvider(IOptions<CernerAdapterOptions> options, OAuth2TokenAcquirer tokenAcquirer)
+    {
+        _tokenAcquirer = tokenAcquirer;
+        _options = options.Value;
+    }
 
     public string VendorName => "Cerner";
 
@@ -41,17 +50,17 @@ public sealed class CernerAuthProvider(IOptions<CernerAdapterOptions> options, O
                 new KeyValuePair<string, string>("scope", _options.Scope),
             ],
             BasicAuth: new BasicAuthCredential(_options.ClientId, _options.ClientSecret));
-        return tokenAcquirer.AcquireAsync(request, cancellationToken);
+        return _tokenAcquirer.AcquireAsync(request, cancellationToken);
     }
 }
 
-public sealed class CernerFhirAdapter(
-    IHttpClientFactory httpClientFactory,
-    CernerAuthProvider authProvider,
-    IOptions<CernerAdapterOptions> options)
-    : HttpFhirAdapterBase(httpClientFactory, authProvider)
+public sealed class CernerFhirAdapter : HttpFhirAdapterBase
 {
-    private readonly CernerAdapterOptions _options = options.Value;
+    private readonly CernerAdapterOptions _options;
+    public CernerFhirAdapter(IHttpClientFactory httpClientFactory,
+        CernerAuthProvider authProvider,
+        IOptions<CernerAdapterOptions> options) : base(httpClientFactory, authProvider) =>
+        _options = options.Value;
 
     public override ExternalEhrAdapterDescriptor Describe() => new("Cerner", FhirVersion: "4.0.1", BaseUrl: _options.BaseUrl);
 }

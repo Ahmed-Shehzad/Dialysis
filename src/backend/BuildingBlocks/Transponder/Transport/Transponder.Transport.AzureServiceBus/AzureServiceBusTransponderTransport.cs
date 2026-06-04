@@ -8,14 +8,23 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.AzureServiceBus;
 /// <summary>
 /// Publishes to a Service Bus topic and consumes a subscription; CLR routing key is carried in application properties (same names as <see cref="TransponderTransportHeaderNames"/>).
 /// </summary>
-public sealed class AzureServiceBusTransponderTransport(
-    IOptions<TransponderAzureServiceBusOptions> options,
-    ILogger<AzureServiceBusTransponderTransport> logger) : ITransponderTransport
+public sealed class AzureServiceBusTransponderTransport : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private ServiceBusClient? _client;
     private ServiceBusSender? _sender;
     private ServiceBusProcessor? _processor;
+    private readonly IOptions<TransponderAzureServiceBusOptions> _options;
+    private readonly ILogger<AzureServiceBusTransponderTransport> _logger;
+    /// <summary>
+    /// Publishes to a Service Bus topic and consumes a subscription; CLR routing key is carried in application properties (same names as <see cref="TransponderTransportHeaderNames"/>).
+    /// </summary>
+    public AzureServiceBusTransponderTransport(IOptions<TransponderAzureServiceBusOptions> options,
+        ILogger<AzureServiceBusTransponderTransport> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -27,7 +36,7 @@ public sealed class AzureServiceBusTransponderTransport(
 
             await DisposeCoreAsync().ConfigureAwait(false);
 
-            var o = options.Value;
+            var o = _options.Value;
             if (string.IsNullOrWhiteSpace(o.ConnectionString))
                 throw new InvalidOperationException("Transponder Azure Service Bus: ConnectionString is required.");
             if (string.IsNullOrWhiteSpace(o.TopicName))
@@ -37,7 +46,7 @@ public sealed class AzureServiceBusTransponderTransport(
 
             _client = new ServiceBusClient(o.ConnectionString);
             _sender = _client.CreateSender(o.TopicName.Trim());
-            logger.LogInformation(
+            _logger.LogInformation(
                 "Transponder Azure Service Bus client ready for topic {Topic}, subscription {Subscription}",
                 o.TopicName,
                 o.SubscriptionName);
@@ -86,7 +95,7 @@ public sealed class AzureServiceBusTransponderTransport(
         ArgumentNullException.ThrowIfNull(onMessage);
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
-        var o = options.Value;
+        var o = _options.Value;
         var client = _client ?? throw new InvalidOperationException("Service Bus client is not initialized.");
 
         if (_processor is not null)
@@ -102,12 +111,12 @@ public sealed class AzureServiceBusTransponderTransport(
         _processor.ProcessMessageAsync += args => ProcessOneAsync(args, onMessage);
         _processor.ProcessErrorAsync += args =>
         {
-            logger.LogError(args.Exception, "Transponder Azure Service Bus processor error: {Error}", args.ErrorSource);
+            _logger.LogError(args.Exception, "Transponder Azure Service Bus processor error: {Error}", args.ErrorSource);
             return Task.CompletedTask;
         };
 
         await _processor.StartProcessingAsync(cancellationToken).ConfigureAwait(false);
-        logger.LogInformation(
+        _logger.LogInformation(
             "Transponder Azure Service Bus processor started on topic {Topic}, subscription {Subscription}",
             o.TopicName,
             o.SubscriptionName);
@@ -128,7 +137,7 @@ public sealed class AzureServiceBusTransponderTransport(
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Error stopping Service Bus processor");
+                _logger.LogDebug(ex, "Error stopping Service Bus processor");
             }
 
             await _processor.DisposeAsync().ConfigureAwait(false);
@@ -143,7 +152,7 @@ public sealed class AzureServiceBusTransponderTransport(
         var transport = ToTransportMessage(args.Message);
         if (transport is null)
         {
-            logger.LogWarning("Transponder Azure Service Bus: message {MessageId} missing routing key; completing", args.Message.MessageId);
+            _logger.LogWarning("Transponder Azure Service Bus: message {MessageId} missing routing key; completing", args.Message.MessageId);
             await args.CompleteMessageAsync(args.Message, args.CancellationToken).ConfigureAwait(false);
             return;
         }
@@ -155,7 +164,7 @@ public sealed class AzureServiceBusTransponderTransport(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Transponder Azure Service Bus handler failed; abandoning message {MessageId}", args.Message.MessageId);
+            _logger.LogError(ex, "Transponder Azure Service Bus handler failed; abandoning message {MessageId}", args.Message.MessageId);
             await args.AbandonMessageAsync(args.Message, cancellationToken: args.CancellationToken).ConfigureAwait(false);
         }
     }

@@ -12,9 +12,16 @@ namespace Dialysis.PDMS.TreatmentSessions.Fhir;
 /// <c>AdverseEvent</c> for real-time care-team alerting. Subscriber filters can include
 /// <c>patient</c>, <c>kind</c> (the adverse-event SNOMED code), and <c>severity</c>.
 /// </summary>
-public sealed class IntradialyticAdverseEventSubscriptionBroadcaster(SubscriptionBroadcaster broadcaster)
-    : IConsumer<IntradialyticAdverseEventIntegrationEvent>
+public sealed class IntradialyticAdverseEventSubscriptionBroadcaster : IConsumer<IntradialyticAdverseEventIntegrationEvent>
 {
+    private readonly SubscriptionBroadcaster _broadcaster;
+    /// <summary>
+    /// Fans out <see cref="IntradialyticAdverseEventIntegrationEvent"/> to FHIR Subscriptions
+    /// registered for the <c>dialysis-adverse-event</c> topic, projecting the event to a FHIR R4
+    /// <c>AdverseEvent</c> for real-time care-team alerting. Subscriber filters can include
+    /// <c>patient</c>, <c>kind</c> (the adverse-event SNOMED code), and <c>severity</c>.
+    /// </summary>
+    public IntradialyticAdverseEventSubscriptionBroadcaster(SubscriptionBroadcaster broadcaster) => _broadcaster = broadcaster;
     public const string TopicUrl = "https://dialysis.local/fhir/SubscriptionTopic/dialysis-adverse-event";
 
     private const string SnomedSystem = "http://snomed.info/sct";
@@ -55,6 +62,6 @@ public sealed class IntradialyticAdverseEventSubscriptionBroadcaster(Subscriptio
             };
         }
 
-        await broadcaster.BroadcastAsync(TopicUrl, attributes, adverseEvent, context.CancellationToken).ConfigureAwait(false);
+        await _broadcaster.BroadcastAsync(TopicUrl, attributes, adverseEvent, context.CancellationToken).ConfigureAwait(false);
     }
 }

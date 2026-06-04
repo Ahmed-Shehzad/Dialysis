@@ -6,13 +6,22 @@ using Dialysis.EHR.Integration.Ports;
 
 namespace Dialysis.EHR.Integration.Consumers;
 
-public sealed class ClaimSubmittedConsumer(
-    IInsurerTransmissionRepository transmissions,
-    IInsurerGateway gateway,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : IConsumer<ClaimSubmittedIntegrationEvent>
+public sealed class ClaimSubmittedConsumer : IConsumer<ClaimSubmittedIntegrationEvent>
 {
+    private readonly IInsurerTransmissionRepository _transmissions;
+    private readonly IInsurerGateway _gateway;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public ClaimSubmittedConsumer(IInsurerTransmissionRepository transmissions,
+        IInsurerGateway gateway,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _transmissions = transmissions;
+        _gateway = gateway;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task HandleAsync(ConsumeContext<ClaimSubmittedIntegrationEvent> context)
     {
         var message = context.Message;
@@ -28,15 +37,15 @@ public sealed class ClaimSubmittedConsumer(
 
         try
         {
-            await gateway.TransmitAsync(transmission, context.CancellationToken).ConfigureAwait(false);
-            transmission.RecordSent(timeProvider.GetUtcNow().UtcDateTime);
+            await _gateway.TransmitAsync(transmission, context.CancellationToken).ConfigureAwait(false);
+            transmission.RecordSent(_timeProvider.GetUtcNow().UtcDateTime);
         }
         catch (Exception ex)
         {
-            transmission.RecordFailure(ex.GetType().Name, timeProvider.GetUtcNow().UtcDateTime);
+            transmission.RecordFailure(ex.GetType().Name, _timeProvider.GetUtcNow().UtcDateTime);
         }
 
-        transmissions.Add(transmission);
-        await unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
+        _transmissions.Add(transmission);
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
     }
 }

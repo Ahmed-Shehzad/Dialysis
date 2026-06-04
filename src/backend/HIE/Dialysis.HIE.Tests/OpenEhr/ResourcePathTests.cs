@@ -8,10 +8,7 @@ namespace Dialysis.HIE.Tests.OpenEhr;
 public sealed class ResourcePathTests
 {
     [Fact]
-    public void Evaluate_Returns_Null_When_Source_Is_Null()
-    {
-        ResourcePath.Evaluate(null, "Code.Coding[0].Code").ShouldBeNull();
-    }
+    public void Evaluate_Returns_Null_When_Source_Is_Null() => ResourcePath.Evaluate(null, "Code.Coding[0].Code").ShouldBeNull();
 
     [Fact]
     public void Evaluate_Walks_Property_Chain()

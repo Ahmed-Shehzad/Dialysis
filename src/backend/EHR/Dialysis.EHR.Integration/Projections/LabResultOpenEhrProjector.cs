@@ -39,4 +39,18 @@ public sealed class LabResultOpenEhrProjector
     }
 }
 
-public sealed record LabResultOpenEhrProjection(string ArchetypeId, string CompositionJson);
+public sealed record LabResultOpenEhrProjection
+{
+    public LabResultOpenEhrProjection(string ArchetypeId, string CompositionJson)
+    {
+        this.ArchetypeId = ArchetypeId;
+        this.CompositionJson = CompositionJson;
+    }
+    public string ArchetypeId { get; init; }
+    public string CompositionJson { get; init; }
+    public void Deconstruct(out string ArchetypeId, out string CompositionJson)
+    {
+        ArchetypeId = this.ArchetypeId;
+        CompositionJson = this.CompositionJson;
+    }
+}

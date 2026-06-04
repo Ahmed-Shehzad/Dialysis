@@ -5,13 +5,21 @@ namespace Dialysis.BuildingBlocks.Transponder.Serialization;
 /// <summary>
 /// JSON serializer using <see cref="JsonSerializer"/> with camel-case names.
 /// </summary>
-public sealed class SystemTextJsonMessageSerializer(JsonSerializerOptions? options = null) : IMessageSerializer
+public sealed class SystemTextJsonMessageSerializer : IMessageSerializer
 {
-    private readonly JsonSerializerOptions _options = options ?? new JsonSerializerOptions
+    private readonly JsonSerializerOptions _options;
+
+    /// <summary>
+    /// JSON serializer using <see cref="JsonSerializer"/> with camel-case names.
+    /// </summary>
+    public SystemTextJsonMessageSerializer(JsonSerializerOptions? options = null)
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-    };
+        _options = options ?? new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+        };
+    }
 
     public ReadOnlyMemory<byte> Serialize<T>(T message)
         where T : class

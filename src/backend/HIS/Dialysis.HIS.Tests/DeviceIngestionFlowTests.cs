@@ -8,12 +8,14 @@ using Shouldly;
 namespace Dialysis.HIS.Tests;
 
 [Collection(nameof(HisFixtureCollection))]
-public sealed class DeviceIngestionFlowTests(HisApiWebApplicationFactory factory)
+public sealed class DeviceIngestionFlowTests
 {
+    private readonly HisApiWebApplicationFactory _factory;
+    public DeviceIngestionFlowTests(HisApiWebApplicationFactory factory) => _factory = factory;
     [Fact]
     public async Task Ingesting_A_Reading_Persists_To_The_Facility_Database_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
 
@@ -38,7 +40,7 @@ public sealed class DeviceIngestionFlowTests(HisApiWebApplicationFactory factory
     [Fact]
     public async Task Reingesting_The_Same_External_Message_Id_Returns_The_Same_Row_Async()
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = _factory.Services.CreateScope();
         var gateway = scope.ServiceProvider.GetRequiredService<ICqrsGateway>();
 
         var cmd = new IngestDeviceReadingCommand(

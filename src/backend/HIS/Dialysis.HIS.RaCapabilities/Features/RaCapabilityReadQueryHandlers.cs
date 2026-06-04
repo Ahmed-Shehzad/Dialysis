@@ -5,97 +5,110 @@ using Dialysis.HIS.RaCapabilities.Ports;
 
 namespace Dialysis.HIS.RaCapabilities.Features;
 
-public sealed class ListOrganizationalCommunicationsQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>
+public sealed class ListOrganizationalCommunicationsQueryHandler : IQueryHandler<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListOrganizationalCommunicationsQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaOrgCommunicationRow>> HandleAsync(ListOrganizationalCommunicationsQuery request, CancellationToken cancellationToken) =>
-        store.ListOrganizationalCommunicationsAsync(cancellationToken);
+        _store.ListOrganizationalCommunicationsAsync(cancellationToken);
 }
 
-public sealed class ListQualityWorkflowTasksQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>>
+public sealed class ListQualityWorkflowTasksQueryHandler : IQueryHandler<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListQualityWorkflowTasksQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaQualityWorkflowTaskRow>> HandleAsync(ListQualityWorkflowTasksQuery request, CancellationToken cancellationToken) =>
-        store.ListQualityWorkflowTasksAsync(cancellationToken);
+        _store.ListQualityWorkflowTasksAsync(cancellationToken);
 }
 
-public sealed class ListFinancialErpLinksQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListFinancialErpLinksQuery, IReadOnlyList<RaFinancialErpLinkRow>>
+public sealed class ListFinancialErpLinksQueryHandler : IQueryHandler<ListFinancialErpLinksQuery, IReadOnlyList<RaFinancialErpLinkRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListFinancialErpLinksQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaFinancialErpLinkRow>> HandleAsync(ListFinancialErpLinksQuery request, CancellationToken cancellationToken) =>
-        store.ListFinancialErpLinksAsync(cancellationToken);
+        _store.ListFinancialErpLinksAsync(cancellationToken);
 }
 
-public sealed class ListWaitlistEntriesQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListWaitlistEntriesQuery, IReadOnlyList<RaWaitlistEntryRow>>
+public sealed class ListWaitlistEntriesQueryHandler : IQueryHandler<ListWaitlistEntriesQuery, IReadOnlyList<RaWaitlistEntryRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListWaitlistEntriesQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaWaitlistEntryRow>> HandleAsync(ListWaitlistEntriesQuery request, CancellationToken cancellationToken) =>
-        store.ListWaitlistEntriesAsync(cancellationToken);
+        _store.ListWaitlistEntriesAsync(cancellationToken);
 }
 
-public sealed class ListEhrDocumentExchangesQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListEhrDocumentExchangesQuery, IReadOnlyList<RaEhrDocumentExchangeRow>>
+public sealed class ListEhrDocumentExchangesQueryHandler : IQueryHandler<ListEhrDocumentExchangesQuery, IReadOnlyList<RaEhrDocumentExchangeRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListEhrDocumentExchangesQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaEhrDocumentExchangeRow>> HandleAsync(ListEhrDocumentExchangesQuery request, CancellationToken cancellationToken) =>
-        store.ListEhrDocumentExchangesAsync(cancellationToken);
+        _store.ListEhrDocumentExchangesAsync(cancellationToken);
 }
 
-public sealed class ListPatientAlertsQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListPatientAlertsQuery, IReadOnlyList<RaPatientAlertRow>>
+public sealed class ListPatientAlertsQueryHandler : IQueryHandler<ListPatientAlertsQuery, IReadOnlyList<RaPatientAlertRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListPatientAlertsQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaPatientAlertRow>> HandleAsync(ListPatientAlertsQuery request, CancellationToken cancellationToken) =>
-        store.ListPatientAlertsAsync(cancellationToken);
+        _store.ListPatientAlertsAsync(cancellationToken);
 }
 
-public sealed class ListMedicationDispensingRecordsQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListMedicationDispensingRecordsQuery, IReadOnlyList<RaMedicationDispensingRow>>
+public sealed class ListMedicationDispensingRecordsQueryHandler : IQueryHandler<ListMedicationDispensingRecordsQuery, IReadOnlyList<RaMedicationDispensingRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListMedicationDispensingRecordsQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaMedicationDispensingRow>> HandleAsync(ListMedicationDispensingRecordsQuery request, CancellationToken cancellationToken) =>
-        store.ListMedicationDispensingRecordsAsync(cancellationToken);
+        _store.ListMedicationDispensingRecordsAsync(cancellationToken);
 }
 
-public sealed class ListClinicalDecisionSupportEvaluationsQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListClinicalDecisionSupportEvaluationsQuery, IReadOnlyList<RaClinicalDecisionSupportRow>>
+public sealed class ListClinicalDecisionSupportEvaluationsQueryHandler : IQueryHandler<ListClinicalDecisionSupportEvaluationsQuery, IReadOnlyList<RaClinicalDecisionSupportRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListClinicalDecisionSupportEvaluationsQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaClinicalDecisionSupportRow>> HandleAsync(ListClinicalDecisionSupportEvaluationsQuery request, CancellationToken cancellationToken) =>
-        store.ListClinicalDecisionSupportEvaluationsAsync(cancellationToken);
+        _store.ListClinicalDecisionSupportEvaluationsAsync(cancellationToken);
 }
 
-public sealed class ListAnalyticsExportJobsQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListAnalyticsExportJobsQuery, IReadOnlyList<RaAnalyticsExportJobRow>>
+public sealed class ListAnalyticsExportJobsQueryHandler : IQueryHandler<ListAnalyticsExportJobsQuery, IReadOnlyList<RaAnalyticsExportJobRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListAnalyticsExportJobsQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaAnalyticsExportJobRow>> HandleAsync(ListAnalyticsExportJobsQuery request, CancellationToken cancellationToken) =>
-        store.ListAnalyticsExportJobsAsync(cancellationToken);
+        _store.ListAnalyticsExportJobsAsync(cancellationToken);
 }
 
-public sealed class ListFullTextSearchEntriesQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListFullTextSearchEntriesQuery, IReadOnlyList<RaFullTextSearchEntryRow>>
+public sealed class ListFullTextSearchEntriesQueryHandler : IQueryHandler<ListFullTextSearchEntriesQuery, IReadOnlyList<RaFullTextSearchEntryRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListFullTextSearchEntriesQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaFullTextSearchEntryRow>> HandleAsync(ListFullTextSearchEntriesQuery request, CancellationToken cancellationToken) =>
-        store.ListFullTextSearchEntriesAsync(request.SearchTextContains, cancellationToken);
+        _store.ListFullTextSearchEntriesAsync(request.SearchTextContains, cancellationToken);
 }
 
-public sealed class ListSecurityMechanismHardeningsQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListSecurityMechanismHardeningsQuery, IReadOnlyList<RaSecurityMechanismRow>>
+public sealed class ListSecurityMechanismHardeningsQueryHandler : IQueryHandler<ListSecurityMechanismHardeningsQuery, IReadOnlyList<RaSecurityMechanismRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListSecurityMechanismHardeningsQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaSecurityMechanismRow>> HandleAsync(ListSecurityMechanismHardeningsQuery request, CancellationToken cancellationToken) =>
-        store.ListSecurityMechanismHardeningsAsync(cancellationToken);
+        _store.ListSecurityMechanismHardeningsAsync(cancellationToken);
 }
 
-public sealed class ListSpecialistEncountersQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>>
+public sealed class ListSpecialistEncountersQueryHandler : IQueryHandler<ListSpecialistEncountersQuery, IReadOnlyList<RaSpecialistEncounterRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListSpecialistEncountersQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaSpecialistEncounterRow>> HandleAsync(
         ListSpecialistEncountersQuery request,
         CancellationToken cancellationToken) =>
-        store.ListSpecialistEncountersAsync(cancellationToken);
+        _store.ListSpecialistEncountersAsync(cancellationToken);
 }
 
-public sealed class ListResearchEducationActivitiesQueryHandler(IRaCapabilitiesReadStore store)
-    : IQueryHandler<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>>
+public sealed class ListResearchEducationActivitiesQueryHandler : IQueryHandler<ListResearchEducationActivitiesQuery, IReadOnlyList<RaResearchEducationActivityRow>>
 {
+    private readonly IRaCapabilitiesReadStore _store;
+    public ListResearchEducationActivitiesQueryHandler(IRaCapabilitiesReadStore store) => _store = store;
     public Task<IReadOnlyList<RaResearchEducationActivityRow>> HandleAsync(
         ListResearchEducationActivitiesQuery request,
         CancellationToken cancellationToken) =>
-        store.ListResearchEducationActivitiesAsync(cancellationToken);
+        _store.ListResearchEducationActivitiesAsync(cancellationToken);
 }

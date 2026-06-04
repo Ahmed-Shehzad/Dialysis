@@ -10,8 +10,15 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/alarms")]
-public sealed class AlarmsController(ICqrsGateway gateway, ICurrentUser currentUser) : ControllerBase
+public sealed class AlarmsController : ControllerBase
 {
+    private readonly ICqrsGateway _gateway;
+    private readonly ICurrentUser _currentUser;
+    public AlarmsController(ICqrsGateway gateway, ICurrentUser currentUser)
+    {
+        _gateway = gateway;
+        _currentUser = currentUser;
+    }
     /// <summary>
     /// Returns every alarm currently <c>Present</c> or <c>Inactivating</c>, ordered by first
     /// observation. Drives the chairside alarm strip and any future operator alarm board.
@@ -22,7 +29,7 @@ public sealed class AlarmsController(ICqrsGateway gateway, ICurrentUser currentU
     [ProducesResponseType(typeof(IReadOnlyList<ActiveAlarmDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListActiveAsync(CancellationToken cancellationToken)
     {
-        var alarms = await gateway
+        var alarms = await _gateway
             .SendQueryAsync<ListActiveAlarmsQuery, IReadOnlyList<ActiveAlarmDto>>(
                 new ListActiveAlarmsQuery(), cancellationToken)
             .ConfigureAwait(false);
@@ -39,14 +46,14 @@ public sealed class AlarmsController(ICqrsGateway gateway, ICurrentUser currentU
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> AcknowledgeAsync(Guid alarmId, CancellationToken cancellationToken)
     {
-        var acknowledgedBy = currentUser.UserId;
+        var acknowledgedBy = _currentUser.UserId;
         if (string.IsNullOrWhiteSpace(acknowledgedBy))
             return Problem(
                 title: "Acknowledger identity missing.",
                 detail: "The acknowledging user could not be resolved from the current authentication context.",
                 statusCode: StatusCodes.Status401Unauthorized);
 
-        await gateway
+        await _gateway
             .SendCommandAsync<AcknowledgeAlarmCommand, Unit>(
                 new AcknowledgeAlarmCommand(alarmId, acknowledgedBy), cancellationToken)
             .ConfigureAwait(false);

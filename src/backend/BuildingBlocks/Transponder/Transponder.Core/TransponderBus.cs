@@ -6,11 +6,22 @@ namespace Dialysis.BuildingBlocks.Transponder;
 /// <summary>
 /// Default in-process bus: resolves scoped consumers and invokes them sequentially within a scope per publish.
 /// </summary>
-public sealed class TransponderBus(
-    IServiceScopeFactory scopeFactory,
-    ITransponderConsumeRouteInvoker routes,
-    IMessageSerializer serializer) : ITransponderBus
+public sealed class TransponderBus : ITransponderBus
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITransponderConsumeRouteInvoker _routes;
+    private readonly IMessageSerializer _serializer;
+    /// <summary>
+    /// Default in-process bus: resolves scoped consumers and invokes them sequentially within a scope per publish.
+    /// </summary>
+    public TransponderBus(IServiceScopeFactory scopeFactory,
+        ITransponderConsumeRouteInvoker routes,
+        IMessageSerializer serializer)
+    {
+        _scopeFactory = scopeFactory;
+        _routes = routes;
+        _serializer = serializer;
+    }
     public Task PublishAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
         where TMessage : class =>
         PublishAsync(message, default, cancellationToken);
@@ -26,20 +37,20 @@ public sealed class TransponderBus(
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message);
-        if (!routes.HasRoute(routingKey))
+        if (!_routes.HasRoute(routingKey))
         {
             throw new InvalidOperationException(
                 $"No consume route for routing key '{routingKey}'. Register the contract with AddConsumer<T> or your transport's Listen<T>().");
         }
 
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var provider = scope.ServiceProvider;
-        await routes
+        await _routes
             .InvokeConsumersAsync(provider, routingKey, message, this, options.CorrelationId, deduplicationId: null, cancellationToken)
             .ConfigureAwait(false);
     }
 
     public Task PublishLargeAsync<TMessage>(TMessage message, TransponderLargeMessageOptions? options = null, CancellationToken cancellationToken = default)
         where TMessage : class =>
-        TransponderLargeMessagePublisher.PublishAsync(this, serializer, message, options, cancellationToken);
+        TransponderLargeMessagePublisher.PublishAsync(this, _serializer, message, options, cancellationToken);
 }

@@ -12,8 +12,16 @@ namespace Dialysis.PDMS.TreatmentSessions.Fhir;
 /// latest of actual/scheduled start timestamps. Status maps PDMS lifecycle to the FHIR
 /// EventStatus value set; the procedure code is fixed to SNOMED 302497006 (Haemodialysis).
 /// </summary>
-public sealed class PdmsDialysisSessionProcedureFeeder(IDialysisSessionRepository sessions) : INdjsonResourceFeeder<Procedure>
+public sealed class PdmsDialysisSessionProcedureFeeder : INdjsonResourceFeeder<Procedure>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    /// <summary>
+    /// Streams every PDMS <see cref="DialysisSession"/> as a FHIR R4 <c>Procedure</c> resource for
+    /// inclusion in a Bulk Data <c>$export</c>. Honours the job's <c>_since</c> filter against the
+    /// latest of actual/scheduled start timestamps. Status maps PDMS lifecycle to the FHIR
+    /// EventStatus value set; the procedure code is fixed to SNOMED 302497006 (Haemodialysis).
+    /// </summary>
+    public PdmsDialysisSessionProcedureFeeder(IDialysisSessionRepository sessions) => _sessions = sessions;
     private const string HemodialysisSnomed = "302497006";
     private const string SnomedSystem = "http://snomed.info/sct";
 
@@ -23,7 +31,7 @@ public sealed class PdmsDialysisSessionProcedureFeeder(IDialysisSessionRepositor
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var session in sessions.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var session in _sessions.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(session);
         }

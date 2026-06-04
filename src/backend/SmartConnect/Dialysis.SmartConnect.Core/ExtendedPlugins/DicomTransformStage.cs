@@ -209,13 +209,28 @@ public sealed class DicomTransformStage : ITransformStage
         return true;
     }
 
-    private sealed record DicomTransformOptions(
-        DicomKeyFormat Format,
-        bool IncludePixelData,
-        HashSet<DicomTag>? IncludeTags)
+    private sealed record DicomTransformOptions
     {
-        public static DicomTransformOptions Default { get; } =
-            new(DicomKeyFormat.ByName, IncludePixelData: false, IncludeTags: null);
+        public DicomTransformOptions(DicomKeyFormat Format,
+            bool IncludePixelData,
+            HashSet<DicomTag>? IncludeTags)
+        {
+            this.Format = Format;
+            this.IncludePixelData = IncludePixelData;
+            this.IncludeTags = IncludeTags;
+        }
+
+        public static DicomTransformOptions Default { get; } = new(DicomKeyFormat.ByName, IncludePixelData: false, IncludeTags: null);
+
+        public DicomKeyFormat Format { get; init; }
+        public bool IncludePixelData { get; init; }
+        public HashSet<DicomTag>? IncludeTags { get; init; }
+        public void Deconstruct(out DicomKeyFormat Format, out bool IncludePixelData, out HashSet<DicomTag>? IncludeTags)
+        {
+            Format = this.Format;
+            IncludePixelData = this.IncludePixelData;
+            IncludeTags = this.IncludeTags;
+        }
     }
 
     private enum DicomKeyFormat

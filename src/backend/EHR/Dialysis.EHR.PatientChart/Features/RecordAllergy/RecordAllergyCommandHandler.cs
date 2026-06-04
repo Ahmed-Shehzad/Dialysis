@@ -5,11 +5,16 @@ using Dialysis.EHR.PatientChart.Ports;
 
 namespace Dialysis.EHR.PatientChart.Features.RecordAllergy;
 
-public sealed class RecordAllergyCommandHandler(
-    IAllergyRepository allergies,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<RecordAllergyCommand, Guid>
+public sealed class RecordAllergyCommandHandler : ICommandHandler<RecordAllergyCommand, Guid>
 {
+    private readonly IAllergyRepository _allergies;
+    private readonly IUnitOfWork _unitOfWork;
+    public RecordAllergyCommandHandler(IAllergyRepository allergies,
+        IUnitOfWork unitOfWork)
+    {
+        _allergies = allergies;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RecordAllergyCommand request, CancellationToken cancellationToken)
     {
         var allergen = new Coding(request.AllergenSystem, request.AllergenCode, request.AllergenDisplay);
@@ -22,8 +27,8 @@ public sealed class RecordAllergyCommandHandler(
             request.VerificationStatus,
             request.ReactionText,
             request.OnsetDate);
-        allergies.Add(allergy);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _allergies.Add(allergy);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

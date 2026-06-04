@@ -13,13 +13,21 @@ namespace Dialysis.SmartConnect.Routing;
 /// match. Opens a fresh DI scope per call so concurrent dispatches from many source connectors
 /// don't race the engine's scoped DbContext.
 /// </summary>
-public sealed class DefaultMessageRouter(IServiceScopeFactory scopeFactory) : IMessageRouter
+public sealed class DefaultMessageRouter : IMessageRouter
 {
+    private readonly IServiceScopeFactory _scopeFactory;
+    /// <summary>
+    /// Default <see cref="IMessageRouter"/>. Loads all Started flows on demand and evaluates each
+    /// flow's <c>InboundSubscriptions</c> against the candidate. Returns flow ids whose subscriptions
+    /// match. Opens a fresh DI scope per call so concurrent dispatches from many source connectors
+    /// don't race the engine's scoped DbContext.
+    /// </summary>
+    public DefaultMessageRouter(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
     public async Task<IReadOnlyList<Guid>> ResolveFlowIdsAsync(MessageRoutingCandidate candidate, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(candidate);
 
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetService<SmartConnectDbContext>();
         if (db is null)
         {

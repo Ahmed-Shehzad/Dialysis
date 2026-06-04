@@ -3,13 +3,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class EfMessageLedgerQuery(SmartConnectDbContext db) : IMessageLedgerQuery
+public sealed class EfMessageLedgerQuery : IMessageLedgerQuery
 {
+    private readonly SmartConnectDbContext _db;
+    public EfMessageLedgerQuery(SmartConnectDbContext db) => _db = db;
     public async Task<(IReadOnlyList<MessageLedgerEntry> Items, int TotalCount)> QueryAsync(
         MessageLedgerQueryCriteria criteria,
         CancellationToken cancellationToken)
     {
-        var q = db.MessageLedgerEntries.AsNoTracking().AsQueryable();
+        var q = _db.MessageLedgerEntries.AsNoTracking().AsQueryable();
         if (criteria.FlowId is { } flowId)
         {
             q = q.Where(e => e.FlowId == flowId);
@@ -71,7 +73,7 @@ public sealed class EfMessageLedgerQuery(SmartConnectDbContext db) : IMessageLed
 
     public async Task<MessageLedgerEntry?> GetByIdAsync(Guid ledgerEntryId, CancellationToken cancellationToken)
     {
-        var e = await db.MessageLedgerEntries.AsNoTracking()
+        var e = await _db.MessageLedgerEntries.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == ledgerEntryId, cancellationToken)
             .ConfigureAwait(false);
         return e is null ? null : Map(e);

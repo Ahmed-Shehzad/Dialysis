@@ -6,12 +6,15 @@ namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 /// <summary>
 /// Shared EF model; concrete <see cref="DbContext"/> types live in provider assemblies so migrations stay provider-specific.
 /// </summary>
-public abstract class TransponderPersistenceDbContextBase(
-    DbContextOptions options,
-    IOptions<TransponderPersistenceOptions> persistenceOptions)
-    : DbContext(options)
+public abstract class TransponderPersistenceDbContextBase : DbContext
 {
-    private readonly IOptions<TransponderPersistenceOptions> _persistenceOptions = persistenceOptions;
+    private readonly IOptions<TransponderPersistenceOptions> _persistenceOptions;
+    /// <summary>
+    /// Shared EF model; concrete <see cref="DbContext"/> types live in provider assemblies so migrations stay provider-specific.
+    /// </summary>
+    protected TransponderPersistenceDbContextBase(DbContextOptions options,
+        IOptions<TransponderPersistenceOptions> persistenceOptions) : base(options) =>
+        _persistenceOptions = persistenceOptions;
 
     public DbSet<TransponderOutboxMessageEntity> OutboxMessages => Set<TransponderOutboxMessageEntity>();
 

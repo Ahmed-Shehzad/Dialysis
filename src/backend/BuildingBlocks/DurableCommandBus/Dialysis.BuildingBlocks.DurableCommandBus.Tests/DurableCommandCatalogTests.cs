@@ -11,7 +11,13 @@ namespace Dialysis.BuildingBlocks.DurableCommandBus.Tests;
 /// </summary>
 public sealed class DurableCommandCatalogTests
 {
-    public sealed record SampleCommand(string Note) : ICommand<int>;
+    public sealed record SampleCommand : ICommand<int>
+    {
+        public SampleCommand(string Note) => this.Note = Note;
+        public string Note { get; init; }
+        public void Deconstruct(out string note) => note = this.Note;
+    }
+
     public sealed record UnregisteredCommand : ICommand<int>;
 
     [Fact]

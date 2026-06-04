@@ -85,22 +85,23 @@ public sealed class OnMedicationAdministeredTests
         MedicationAdministeredIntegrationEvent message)
         => new(message, CancellationToken.None, NullBus.Instance);
 
-    private sealed class StubInventoryRepo(List<MedicationInventoryItem> seed)
-        : IPdmsRepository<MedicationInventoryItem, Guid>
+    private sealed class StubInventoryRepo : IPdmsRepository<MedicationInventoryItem, Guid>
     {
+        private readonly List<MedicationInventoryItem> _seed;
+        public StubInventoryRepo(List<MedicationInventoryItem> seed) => _seed = seed;
         public Task<MedicationInventoryItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-            => Task.FromResult(seed.FirstOrDefault(i => i.Id == id));
+            => Task.FromResult(_seed.FirstOrDefault(i => i.Id == id));
         public Task<IReadOnlyList<MedicationInventoryItem>> ListAsync(
             ISpecification<MedicationInventoryItem>? specification = null,
             CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<MedicationInventoryItem>>(seed);
+            => Task.FromResult<IReadOnlyList<MedicationInventoryItem>>(_seed);
         public Task AddAsync(MedicationInventoryItem aggregate, CancellationToken cancellationToken = default)
         {
-            seed.Add(aggregate);
+            _seed.Add(aggregate);
             return Task.CompletedTask;
         }
         public void Update(MedicationInventoryItem aggregate) { }
-        public void Remove(MedicationInventoryItem aggregate) => seed.Remove(aggregate);
+        public void Remove(MedicationInventoryItem aggregate) => _seed.Remove(aggregate);
     }
 
     private sealed class StubUnitOfWork : IUnitOfWork

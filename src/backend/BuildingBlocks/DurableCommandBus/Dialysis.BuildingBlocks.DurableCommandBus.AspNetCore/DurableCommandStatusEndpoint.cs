@@ -81,11 +81,40 @@ public static class DurableCommandStatusEndpointExtensions
 }
 
 /// <summary>HTTP wire shape for the status endpoint.</summary>
-public sealed record DurableCommandStatusResponse(
-    Guid CommandId,
-    string CorrelationId,
-    string Status,
-    DateTime EnqueuedAtUtc,
-    DateTime? AppliedAtUtc,
-    JsonElement? Result,
-    JsonElement? Failure);
+public sealed record DurableCommandStatusResponse
+{
+    /// <summary>HTTP wire shape for the status endpoint.</summary>
+    public DurableCommandStatusResponse(Guid CommandId,
+        string CorrelationId,
+        string Status,
+        DateTime EnqueuedAtUtc,
+        DateTime? AppliedAtUtc,
+        JsonElement? Result,
+        JsonElement? Failure)
+    {
+        this.CommandId = CommandId;
+        this.CorrelationId = CorrelationId;
+        this.Status = Status;
+        this.EnqueuedAtUtc = EnqueuedAtUtc;
+        this.AppliedAtUtc = AppliedAtUtc;
+        this.Result = Result;
+        this.Failure = Failure;
+    }
+    public Guid CommandId { get; init; }
+    public string CorrelationId { get; init; }
+    public string Status { get; init; }
+    public DateTime EnqueuedAtUtc { get; init; }
+    public DateTime? AppliedAtUtc { get; init; }
+    public JsonElement? Result { get; init; }
+    public JsonElement? Failure { get; init; }
+    public void Deconstruct(out Guid CommandId, out string CorrelationId, out string Status, out DateTime EnqueuedAtUtc, out DateTime? AppliedAtUtc, out JsonElement? Result, out JsonElement? Failure)
+    {
+        CommandId = this.CommandId;
+        CorrelationId = this.CorrelationId;
+        Status = this.Status;
+        EnqueuedAtUtc = this.EnqueuedAtUtc;
+        AppliedAtUtc = this.AppliedAtUtc;
+        Result = this.Result;
+        Failure = this.Failure;
+    }
+}

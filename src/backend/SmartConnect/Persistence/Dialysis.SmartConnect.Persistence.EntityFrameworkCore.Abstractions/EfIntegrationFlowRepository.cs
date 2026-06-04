@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 
-public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IIntegrationFlowRepository
+public sealed class EfIntegrationFlowRepository : IIntegrationFlowRepository
 {
+    private readonly SmartConnectDbContext _db;
+    public EfIntegrationFlowRepository(SmartConnectDbContext db) => _db = db;
     public async Task<IntegrationFlow?> GetByIdAsync(Guid flowId, CancellationToken cancellationToken)
     {
-        var row = await db.IntegrationFlows.AsNoTracking()
+        var row = await _db.IntegrationFlows.AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == flowId, cancellationToken)
             .ConfigureAwait(false);
         return row is null ? null : Map(row);
@@ -17,7 +19,7 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
 
     public async Task<IReadOnlyList<IntegrationFlow>> GetAllAsync(CancellationToken cancellationToken)
     {
-        var rows = await db.IntegrationFlows.AsNoTracking()
+        var rows = await _db.IntegrationFlows.AsNoTracking()
             .OrderBy(f => f.Name)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -26,7 +28,7 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
 
     public async Task AddAsync(IntegrationFlow flow, CancellationToken cancellationToken)
     {
-        db.IntegrationFlows.Add(
+        _db.IntegrationFlows.Add(
             new IntegrationFlowEntity
             {
                 Id = flow.Id,
@@ -40,12 +42,12 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
                 DependenciesJson = flow.Dependencies.Count > 0 ? JsonSerializer.Serialize(flow.Dependencies) : null,
                 AttachmentsJson = flow.Attachments.Count > 0 ? JsonSerializer.Serialize(flow.Attachments) : null,
             });
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<bool> UpdateAsync(IntegrationFlow flow, CancellationToken cancellationToken)
     {
-        var row = await db.IntegrationFlows.FirstOrDefaultAsync(f => f.Id == flow.Id, cancellationToken)
+        var row = await _db.IntegrationFlows.FirstOrDefaultAsync(f => f.Id == flow.Id, cancellationToken)
             .ConfigureAwait(false);
         if (row is null)
         {
@@ -61,21 +63,21 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
         row.DataTypesJson = flow.DataTypes.Count > 0 ? JsonSerializer.Serialize(flow.DataTypes) : null;
         row.DependenciesJson = flow.Dependencies.Count > 0 ? JsonSerializer.Serialize(flow.Dependencies) : null;
         row.AttachmentsJson = flow.Attachments.Count > 0 ? JsonSerializer.Serialize(flow.Attachments) : null;
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
 
     public async Task<bool> DeleteAsync(Guid flowId, CancellationToken cancellationToken)
     {
-        var row = await db.IntegrationFlows.FirstOrDefaultAsync(f => f.Id == flowId, cancellationToken)
+        var row = await _db.IntegrationFlows.FirstOrDefaultAsync(f => f.Id == flowId, cancellationToken)
             .ConfigureAwait(false);
         if (row is null)
         {
             return false;
         }
 
-        db.IntegrationFlows.Remove(row);
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _db.IntegrationFlows.Remove(row);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
 
@@ -84,7 +86,7 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
         FlowRuntimeState state,
         CancellationToken cancellationToken)
     {
-        var row = await db.IntegrationFlows.FirstOrDefaultAsync(f => f.Id == flowId, cancellationToken)
+        var row = await _db.IntegrationFlows.FirstOrDefaultAsync(f => f.Id == flowId, cancellationToken)
             .ConfigureAwait(false);
         if (row is null)
         {
@@ -92,7 +94,7 @@ public sealed class EfIntegrationFlowRepository(SmartConnectDbContext db) : IInt
         }
 
         row.RuntimeState = (int)state;
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
 

@@ -5,13 +5,19 @@ using Dialysis.HIS.RaCapabilities.Ports;
 
 namespace Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEvaluation;
 
-public sealed class RecordClinicalDecisionSupportEvaluationCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
-    : ICommandHandler<RecordClinicalDecisionSupportEvaluationCommand, Guid>
+public sealed class RecordClinicalDecisionSupportEvaluationCommandHandler : ICommandHandler<RecordClinicalDecisionSupportEvaluationCommand, Guid>
 {
+    private readonly IRaCapabilityCommandStore _store;
+    private readonly IUnitOfWork _unitOfWork;
+    public RecordClinicalDecisionSupportEvaluationCommandHandler(IRaCapabilityCommandStore store, IUnitOfWork unitOfWork)
+    {
+        _store = store;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(RecordClinicalDecisionSupportEvaluationCommand request, CancellationToken cancellationToken)
     {
         var id = Guid.CreateVersion7();
-        store.AddClinicalDecisionSupportEvaluation(
+        _store.AddClinicalDecisionSupportEvaluation(
             new RaClinicalDecisionSupportEvaluation
             {
                 Id = id,
@@ -20,7 +26,7 @@ public sealed class RecordClinicalDecisionSupportEvaluationCommandHandler(IRaCap
                 SafeToProceed = request.SafeToProceed,
                 EvaluatedAtUtc = DateTime.UtcNow,
             });
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

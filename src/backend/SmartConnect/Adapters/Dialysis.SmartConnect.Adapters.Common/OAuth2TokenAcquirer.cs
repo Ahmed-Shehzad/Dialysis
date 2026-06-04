@@ -73,12 +73,51 @@ public sealed class OAuth2TokenAcquirer
     }
 }
 
-public sealed record OAuth2TokenRequest(
-    string VendorName,
-    string TokenEndpoint,
-    string CacheKey,
-    IReadOnlyList<KeyValuePair<string, string>> FormFields,
-    BasicAuthCredential? BasicAuth = null,
-    IReadOnlyDictionary<string, string>? ExtraHeaders = null);
+public sealed record OAuth2TokenRequest
+{
+    public OAuth2TokenRequest(string VendorName,
+        string TokenEndpoint,
+        string CacheKey,
+        IReadOnlyList<KeyValuePair<string, string>> FormFields,
+        BasicAuthCredential? BasicAuth = null,
+        IReadOnlyDictionary<string, string>? ExtraHeaders = null)
+    {
+        this.VendorName = VendorName;
+        this.TokenEndpoint = TokenEndpoint;
+        this.CacheKey = CacheKey;
+        this.FormFields = FormFields;
+        this.BasicAuth = BasicAuth;
+        this.ExtraHeaders = ExtraHeaders;
+    }
+    public string VendorName { get; init; }
+    public string TokenEndpoint { get; init; }
+    public string CacheKey { get; init; }
+    public IReadOnlyList<KeyValuePair<string, string>> FormFields { get; init; }
+    public BasicAuthCredential? BasicAuth { get; init; }
+    public IReadOnlyDictionary<string, string>? ExtraHeaders { get; init; }
+    public void Deconstruct(out string VendorName, out string TokenEndpoint, out string CacheKey, out IReadOnlyList<KeyValuePair<string, string>> FormFields, out BasicAuthCredential? BasicAuth, out IReadOnlyDictionary<string, string>? ExtraHeaders)
+    {
+        VendorName = this.VendorName;
+        TokenEndpoint = this.TokenEndpoint;
+        CacheKey = this.CacheKey;
+        FormFields = this.FormFields;
+        BasicAuth = this.BasicAuth;
+        ExtraHeaders = this.ExtraHeaders;
+    }
+}
 
-public sealed record BasicAuthCredential(string User, string Password);
+public sealed record BasicAuthCredential
+{
+    public BasicAuthCredential(string User, string Password)
+    {
+        this.User = User;
+        this.Password = Password;
+    }
+    public string User { get; init; }
+    public string Password { get; init; }
+    public void Deconstruct(out string User, out string Password)
+    {
+        User = this.User;
+        Password = this.Password;
+    }
+}

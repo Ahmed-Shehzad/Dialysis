@@ -20,20 +20,33 @@ public sealed class FhirAuthoringOptions
 /// conformance registry on host startup. The in-memory registry is rebuilt per process, so this
 /// makes a configured package set survive restarts. Per-file failures are logged, never fatal.
 /// </summary>
-public sealed class FhirPackagePreloader(
-    IFhirPackageLoader loader,
-    FhirAuthoringOptions options,
-    ILogger<FhirPackagePreloader> logger) : IHostedService
+public sealed class FhirPackagePreloader : IHostedService
 {
+    private readonly IFhirPackageLoader _loader;
+    private readonly FhirAuthoringOptions _options;
+    private readonly ILogger<FhirPackagePreloader> _logger;
+    /// <summary>
+    /// Loads every FHIR package found in <see cref="FhirAuthoringOptions.PackagesPath"/> into the
+    /// conformance registry on host startup. The in-memory registry is rebuilt per process, so this
+    /// makes a configured package set survive restarts. Per-file failures are logged, never fatal.
+    /// </summary>
+    public FhirPackagePreloader(IFhirPackageLoader loader,
+        FhirAuthoringOptions options,
+        ILogger<FhirPackagePreloader> logger)
+    {
+        _loader = loader;
+        _options = options;
+        _logger = logger;
+    }
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var dir = options.PackagesPath;
+        var dir = _options.PackagesPath;
         if (string.IsNullOrWhiteSpace(dir))
             return;
 
         if (!Directory.Exists(dir))
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 "FHIR package preloader: directory '{Directory}' does not exist; skipping.", dir);
             return;
         }
@@ -47,7 +60,7 @@ public sealed class FhirPackagePreloader(
 
         if (files.Count == 0)
         {
-            logger.LogInformation(
+            _logger.LogInformation(
                 "FHIR package preloader: no .tgz packages found in '{Directory}'.", dir);
             return;
         }
@@ -57,21 +70,21 @@ public sealed class FhirPackagePreloader(
         {
             try
             {
-                var result = await loader.LoadFileAsync(file, cancellationToken).ConfigureAwait(false);
+                var result = await _loader.LoadFileAsync(file, cancellationToken).ConfigureAwait(false);
                 total += result.Loaded;
-                logger.LogInformation(
+                _logger.LogInformation(
                     "FHIR package preloader: loaded {Loaded} resource(s) from {Package}@{Version} ({File}).",
                     result.Loaded, result.PackageName ?? "(unknown)", result.PackageVersion ?? "?",
                     Path.GetFileName(file));
             }
             catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentException)
             {
-                logger.LogWarning(ex,
+                _logger.LogWarning(ex,
                     "FHIR package preloader: failed to load '{File}'; continuing.", file);
             }
         }
 
-        logger.LogInformation(
+        _logger.LogInformation(
             "FHIR package preloader: registered {Total} conformance resource(s) from {Count} package(s).",
             total, files.Count);
     }

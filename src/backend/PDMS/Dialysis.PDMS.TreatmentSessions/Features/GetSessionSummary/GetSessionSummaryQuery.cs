@@ -4,55 +4,202 @@ using Dialysis.PDMS.Contracts.Security;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 
-public sealed record SessionPrescriptionDto(
-    string DialyzerModel,
-    int PrescribedDurationMinutes,
-    int BloodFlowRateMlPerMin,
-    int DialysateFlowRateMlPerMin,
-    decimal DialysatePotassiumMmolPerL,
-    decimal DialysateCalciumMmolPerL,
-    decimal DialysateSodiumMmolPerL,
-    decimal TargetUfVolumeLiters,
-    string AnticoagulationProtocolCode);
-
-public sealed record VascularAccessDto(
-    string Kind,
-    string Site,
-    DateOnly EstablishedOn);
-
-public sealed record ReadingStatsDto(
-    int Count,
-    int? SystolicMin,
-    int? SystolicMax,
-    int? SystolicAvg,
-    int? DiastolicMin,
-    int? DiastolicMax,
-    int? DiastolicAvg,
-    int? HeartRateMin,
-    int? HeartRateMax,
-    int? HeartRateAvg,
-    decimal? LastUltrafiltrationRateMlPerHour,
-    DateTime? FirstObservedAtUtc,
-    DateTime? LastObservedAtUtc);
-
-public sealed record SessionSummaryDto(
-    Guid Id,
-    Guid PatientId,
-    string Status,
-    DateTime ScheduledStartUtc,
-    DateTime? ActualStartUtc,
-    DateTime? ActualEndUtc,
-    int? ActualDurationMinutes,
-    decimal? AchievedUfVolumeLiters,
-    decimal? UfAchievementPercent,
-    string? AbortReasonCode,
-    Guid? MachineId,
-    SessionPrescriptionDto Prescription,
-    VascularAccessDto Access,
-    ReadingStatsDto Readings);
-
-public sealed record GetSessionSummaryQuery(Guid SessionId)
-    : IQuery<SessionSummaryDto>, IPermissionedCommand
+public sealed record SessionPrescriptionDto
 {
+    public SessionPrescriptionDto(string DialyzerModel,
+        int PrescribedDurationMinutes,
+        int BloodFlowRateMlPerMin,
+        int DialysateFlowRateMlPerMin,
+        decimal DialysatePotassiumMmolPerL,
+        decimal DialysateCalciumMmolPerL,
+        decimal DialysateSodiumMmolPerL,
+        decimal TargetUfVolumeLiters,
+        string AnticoagulationProtocolCode)
+    {
+        this.DialyzerModel = DialyzerModel;
+        this.PrescribedDurationMinutes = PrescribedDurationMinutes;
+        this.BloodFlowRateMlPerMin = BloodFlowRateMlPerMin;
+        this.DialysateFlowRateMlPerMin = DialysateFlowRateMlPerMin;
+        this.DialysatePotassiumMmolPerL = DialysatePotassiumMmolPerL;
+        this.DialysateCalciumMmolPerL = DialysateCalciumMmolPerL;
+        this.DialysateSodiumMmolPerL = DialysateSodiumMmolPerL;
+        this.TargetUfVolumeLiters = TargetUfVolumeLiters;
+        this.AnticoagulationProtocolCode = AnticoagulationProtocolCode;
+    }
+    public string DialyzerModel { get; init; }
+    public int PrescribedDurationMinutes { get; init; }
+    public int BloodFlowRateMlPerMin { get; init; }
+    public int DialysateFlowRateMlPerMin { get; init; }
+    public decimal DialysatePotassiumMmolPerL { get; init; }
+    public decimal DialysateCalciumMmolPerL { get; init; }
+    public decimal DialysateSodiumMmolPerL { get; init; }
+    public decimal TargetUfVolumeLiters { get; init; }
+    public string AnticoagulationProtocolCode { get; init; }
+    public void Deconstruct(out string dialyzerModel, out int prescribedDurationMinutes, out int bloodFlowRateMlPerMin, out int dialysateFlowRateMlPerMin, out decimal dialysatePotassiumMmolPerL, out decimal dialysateCalciumMmolPerL, out decimal dialysateSodiumMmolPerL, out decimal targetUfVolumeLiters, out string anticoagulationProtocolCode)
+    {
+        dialyzerModel = this.DialyzerModel;
+        prescribedDurationMinutes = this.PrescribedDurationMinutes;
+        bloodFlowRateMlPerMin = this.BloodFlowRateMlPerMin;
+        dialysateFlowRateMlPerMin = this.DialysateFlowRateMlPerMin;
+        dialysatePotassiumMmolPerL = this.DialysatePotassiumMmolPerL;
+        dialysateCalciumMmolPerL = this.DialysateCalciumMmolPerL;
+        dialysateSodiumMmolPerL = this.DialysateSodiumMmolPerL;
+        targetUfVolumeLiters = this.TargetUfVolumeLiters;
+        anticoagulationProtocolCode = this.AnticoagulationProtocolCode;
+    }
+}
+
+public sealed record VascularAccessDto
+{
+    public VascularAccessDto(string Kind,
+        string Site,
+        DateOnly EstablishedOn)
+    {
+        this.Kind = Kind;
+        this.Site = Site;
+        this.EstablishedOn = EstablishedOn;
+    }
+    public string Kind { get; init; }
+    public string Site { get; init; }
+    public DateOnly EstablishedOn { get; init; }
+    public void Deconstruct(out string kind, out string site, out DateOnly establishedOn)
+    {
+        kind = this.Kind;
+        site = this.Site;
+        establishedOn = this.EstablishedOn;
+    }
+}
+
+public sealed record ReadingStatsDto
+{
+    public ReadingStatsDto(int Count,
+        int? SystolicMin,
+        int? SystolicMax,
+        int? SystolicAvg,
+        int? DiastolicMin,
+        int? DiastolicMax,
+        int? DiastolicAvg,
+        int? HeartRateMin,
+        int? HeartRateMax,
+        int? HeartRateAvg,
+        decimal? LastUltrafiltrationRateMlPerHour,
+        DateTime? FirstObservedAtUtc,
+        DateTime? LastObservedAtUtc)
+    {
+        this.Count = Count;
+        this.SystolicMin = SystolicMin;
+        this.SystolicMax = SystolicMax;
+        this.SystolicAvg = SystolicAvg;
+        this.DiastolicMin = DiastolicMin;
+        this.DiastolicMax = DiastolicMax;
+        this.DiastolicAvg = DiastolicAvg;
+        this.HeartRateMin = HeartRateMin;
+        this.HeartRateMax = HeartRateMax;
+        this.HeartRateAvg = HeartRateAvg;
+        this.LastUltrafiltrationRateMlPerHour = LastUltrafiltrationRateMlPerHour;
+        this.FirstObservedAtUtc = FirstObservedAtUtc;
+        this.LastObservedAtUtc = LastObservedAtUtc;
+    }
+    public int Count { get; init; }
+    public int? SystolicMin { get; init; }
+    public int? SystolicMax { get; init; }
+    public int? SystolicAvg { get; init; }
+    public int? DiastolicMin { get; init; }
+    public int? DiastolicMax { get; init; }
+    public int? DiastolicAvg { get; init; }
+    public int? HeartRateMin { get; init; }
+    public int? HeartRateMax { get; init; }
+    public int? HeartRateAvg { get; init; }
+    public decimal? LastUltrafiltrationRateMlPerHour { get; init; }
+    public DateTime? FirstObservedAtUtc { get; init; }
+    public DateTime? LastObservedAtUtc { get; init; }
+    public void Deconstruct(out int count, out int? systolicMin, out int? systolicMax, out int? systolicAvg, out int? diastolicMin, out int? diastolicMax, out int? diastolicAvg, out int? heartRateMin, out int? heartRateMax, out int? heartRateAvg, out decimal? lastUltrafiltrationRateMlPerHour, out DateTime? firstObservedAtUtc, out DateTime? lastObservedAtUtc)
+    {
+        count = this.Count;
+        systolicMin = this.SystolicMin;
+        systolicMax = this.SystolicMax;
+        systolicAvg = this.SystolicAvg;
+        diastolicMin = this.DiastolicMin;
+        diastolicMax = this.DiastolicMax;
+        diastolicAvg = this.DiastolicAvg;
+        heartRateMin = this.HeartRateMin;
+        heartRateMax = this.HeartRateMax;
+        heartRateAvg = this.HeartRateAvg;
+        lastUltrafiltrationRateMlPerHour = this.LastUltrafiltrationRateMlPerHour;
+        firstObservedAtUtc = this.FirstObservedAtUtc;
+        lastObservedAtUtc = this.LastObservedAtUtc;
+    }
+}
+
+public sealed record SessionSummaryDto
+{
+    public SessionSummaryDto(Guid Id,
+        Guid PatientId,
+        string Status,
+        DateTime ScheduledStartUtc,
+        DateTime? ActualStartUtc,
+        DateTime? ActualEndUtc,
+        int? ActualDurationMinutes,
+        decimal? AchievedUfVolumeLiters,
+        decimal? UfAchievementPercent,
+        string? AbortReasonCode,
+        Guid? MachineId,
+        SessionPrescriptionDto Prescription,
+        VascularAccessDto Access,
+        ReadingStatsDto Readings)
+    {
+        this.Id = Id;
+        this.PatientId = PatientId;
+        this.Status = Status;
+        this.ScheduledStartUtc = ScheduledStartUtc;
+        this.ActualStartUtc = ActualStartUtc;
+        this.ActualEndUtc = ActualEndUtc;
+        this.ActualDurationMinutes = ActualDurationMinutes;
+        this.AchievedUfVolumeLiters = AchievedUfVolumeLiters;
+        this.UfAchievementPercent = UfAchievementPercent;
+        this.AbortReasonCode = AbortReasonCode;
+        this.MachineId = MachineId;
+        this.Prescription = Prescription;
+        this.Access = Access;
+        this.Readings = Readings;
+    }
+    public Guid Id { get; init; }
+    public Guid PatientId { get; init; }
+    public string Status { get; init; }
+    public DateTime ScheduledStartUtc { get; init; }
+    public DateTime? ActualStartUtc { get; init; }
+    public DateTime? ActualEndUtc { get; init; }
+    public int? ActualDurationMinutes { get; init; }
+    public decimal? AchievedUfVolumeLiters { get; init; }
+    public decimal? UfAchievementPercent { get; init; }
+    public string? AbortReasonCode { get; init; }
+    public Guid? MachineId { get; init; }
+    public SessionPrescriptionDto Prescription { get; init; }
+    public VascularAccessDto Access { get; init; }
+    public ReadingStatsDto Readings { get; init; }
+    public void Deconstruct(out Guid id, out Guid patientId, out string status, out DateTime scheduledStartUtc, out DateTime? actualStartUtc, out DateTime? actualEndUtc, out int? actualDurationMinutes, out decimal? achievedUfVolumeLiters, out decimal? ufAchievementPercent, out string? abortReasonCode, out Guid? machineId, out SessionPrescriptionDto prescription, out VascularAccessDto access, out ReadingStatsDto readings)
+    {
+        id = this.Id;
+        patientId = this.PatientId;
+        status = this.Status;
+        scheduledStartUtc = this.ScheduledStartUtc;
+        actualStartUtc = this.ActualStartUtc;
+        actualEndUtc = this.ActualEndUtc;
+        actualDurationMinutes = this.ActualDurationMinutes;
+        achievedUfVolumeLiters = this.AchievedUfVolumeLiters;
+        ufAchievementPercent = this.UfAchievementPercent;
+        abortReasonCode = this.AbortReasonCode;
+        machineId = this.MachineId;
+        prescription = this.Prescription;
+        access = this.Access;
+        readings = this.Readings;
+    }
+}
+
+public sealed record GetSessionSummaryQuery : IQuery<SessionSummaryDto>, IPermissionedCommand
+{
+    public GetSessionSummaryQuery(Guid SessionId) => this.SessionId = SessionId;
     public string RequiredPermission => PdmsPermissions.SessionRead;
+    public Guid SessionId { get; init; }
+    public void Deconstruct(out Guid sessionId) => sessionId = this.SessionId;
 }

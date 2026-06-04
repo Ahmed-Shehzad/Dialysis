@@ -73,8 +73,5 @@ public sealed class SettingProvenanceTests
     [InlineData(ObservationSource.AutoSetting, true)]
     [InlineData(ObservationSource.AutoMeasurement, false)]
     [InlineData(ObservationSource.ManualMeasurement, false)]
-    public void Is_Setting_Discriminator_Matches_Ig_Categories(ObservationSource source, bool expected)
-    {
-        Assert.Equal(expected, source.IsSetting());
-    }
+    public void Is_Setting_Discriminator_Matches_Ig_Categories(ObservationSource source, bool expected) => Assert.Equal(expected, source.IsSetting());
 }

@@ -17,27 +17,57 @@ namespace Dialysis.PDMS.Reporting.Consumers;
 /// The consumer is idempotent on <c>(SessionId, ReportKind)</c>: re-delivery of the same
 /// event finds the existing aggregate row and exits without re-rendering.
 /// </summary>
-public sealed class OnDialysisSessionCompleted(
-    ISessionReportContextBuilder contextBuilder,
-    IReportTemplateRepository templates,
-    DischargeLetterGenerator dischargeLetter,
-    BillingDocumentGenerator billing,
-    IReportBlobStore blobs,
-    ISessionReportRepository reports,
-    IUnitOfWork unitOfWork,
-    ITransponderBus bus,
-    TimeProvider clock,
-    ILogger<OnDialysisSessionCompleted> logger)
-    : IConsumer<DialysisSessionCompletedIntegrationEvent>
+public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionCompletedIntegrationEvent>
 {
+    private readonly ISessionReportContextBuilder _contextBuilder;
+    private readonly IReportTemplateRepository _templates;
+    private readonly DischargeLetterGenerator _dischargeLetter;
+    private readonly BillingDocumentGenerator _billing;
+    private readonly IReportBlobStore _blobs;
+    private readonly ISessionReportRepository _reports;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ITransponderBus _bus;
+    private readonly TimeProvider _clock;
+    private readonly ILogger<OnDialysisSessionCompleted> _logger;
+    /// <summary>
+    /// Reacts to <see cref="DialysisSessionCompletedIntegrationEvent"/> by running the three
+    /// generators in best-effort order: discharge letter → shift roll-up → billing summary.
+    /// Each generator runs in isolation so a transient failure in one (e.g. an unpublished
+    /// template) does not stop the others.
+    ///
+    /// The consumer is idempotent on <c>(SessionId, ReportKind)</c>: re-delivery of the same
+    /// event finds the existing aggregate row and exits without re-rendering.
+    /// </summary>
+    public OnDialysisSessionCompleted(ISessionReportContextBuilder contextBuilder,
+        IReportTemplateRepository templates,
+        DischargeLetterGenerator dischargeLetter,
+        BillingDocumentGenerator billing,
+        IReportBlobStore blobs,
+        ISessionReportRepository reports,
+        IUnitOfWork unitOfWork,
+        ITransponderBus bus,
+        TimeProvider clock,
+        ILogger<OnDialysisSessionCompleted> logger)
+    {
+        _contextBuilder = contextBuilder;
+        _templates = templates;
+        _dischargeLetter = dischargeLetter;
+        _billing = billing;
+        _blobs = blobs;
+        _reports = reports;
+        _unitOfWork = unitOfWork;
+        _bus = bus;
+        _clock = clock;
+        _logger = logger;
+    }
     public async Task HandleAsync(ConsumeContext<DialysisSessionCompletedIntegrationEvent> context)
     {
         var ct = context.CancellationToken;
         var sessionId = context.Message.SessionId;
-        var ctx = await contextBuilder.BuildAsync(sessionId, ct).ConfigureAwait(false);
+        var ctx = await _contextBuilder.BuildAsync(sessionId, ct).ConfigureAwait(false);
         if (ctx is null)
         {
-            logger.LogWarning("Reporting consumer skipped: no context for completed session {SessionId}.", sessionId);
+            _logger.LogWarning("Reporting consumer skipped: no context for completed session {SessionId}.", sessionId);
             return;
         }
 
@@ -45,19 +75,19 @@ public sealed class OnDialysisSessionCompleted(
         {
             // Resolve the discharge-letter template in the patient's preferred language, falling
             // back to the operator-flagged language-neutral default (ReportTemplateResolver).
-            var template = await templates
+            var template = await _templates
                 .FindActiveAsync(ReportKind.DischargeLetter, ctx.PreferredLanguageCode, ct)
                 .ConfigureAwait(false);
-            return await dischargeLetter.GenerateAsync(ctx, template, ct).ConfigureAwait(false);
+            return await _dischargeLetter.GenerateAsync(ctx, template, ct).ConfigureAwait(false);
         }, ct).ConfigureAwait(false);
 
         await TryGenerateAsync(ctx, ReportKind.BillingDocument, async () =>
         {
-            var (pdf, _) = await billing.GenerateAsync(ctx, evaluationCount: 1, ct).ConfigureAwait(false);
+            var (pdf, _) = await _billing.GenerateAsync(ctx, evaluationCount: 1, ct).ConfigureAwait(false);
             return pdf;
         }, ct).ConfigureAwait(false);
 
-        await unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
     private async Task TryGenerateAsync(
@@ -74,28 +104,28 @@ public sealed class OnDialysisSessionCompleted(
         {
             var bytes = await render().ConfigureAwait(false);
             hash = Convert.ToHexString(SHA256.HashData(bytes));
-            storageRef = await blobs.SaveAsync(report.Id, "application/pdf", bytes, cancellationToken)
+            storageRef = await _blobs.SaveAsync(report.Id, "application/pdf", bytes, cancellationToken)
                 .ConfigureAwait(false);
-            report.RecordGenerated(storageRef, hash, clock.GetUtcNow().UtcDateTime);
+            report.RecordGenerated(storageRef, hash, _clock.GetUtcNow().UtcDateTime);
             generated = true;
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Reporting generator for {Kind} on session {SessionId} failed.", kind, ctx.SessionId);
+            _logger.LogError(ex, "Reporting generator for {Kind} on session {SessionId} failed.", kind, ctx.SessionId);
             report.RecordFailure(ex.GetType().Name);
         }
-        reports.Add(report);
+        _reports.Add(report);
 
         if (generated)
         {
             // HIE Documents consumes this and indexes the report as a FHIR DocumentReference
             // pointing at the same shared blob store, so the admin Documents view, ePA upload,
             // and partner exchange resolve through one storage ref.
-            await bus.PublishAsync(
+            await _bus.PublishAsync(
                 new ClinicalDocumentProducedIntegrationEvent(
                     EventId: Guid.CreateVersion7(),
-                    OccurredOn: clock.GetUtcNow().UtcDateTime,
+                    OccurredOn: _clock.GetUtcNow().UtcDateTime,
                     SchemaVersion: 1,
                     ReportId: report.Id,
                     PatientId: ctx.PatientId,

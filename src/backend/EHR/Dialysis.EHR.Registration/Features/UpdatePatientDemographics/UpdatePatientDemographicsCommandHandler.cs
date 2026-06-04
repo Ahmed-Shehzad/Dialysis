@@ -6,21 +6,26 @@ using Dialysis.EHR.Registration.Ports;
 
 namespace Dialysis.EHR.Registration.Features.UpdatePatientDemographics;
 
-public sealed class UpdatePatientDemographicsCommandHandler(
-    IPatientRepository patients,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<UpdatePatientDemographicsCommand, Unit>
+public sealed class UpdatePatientDemographicsCommandHandler : ICommandHandler<UpdatePatientDemographicsCommand, Unit>
 {
+    private readonly IPatientRepository _patients;
+    private readonly IUnitOfWork _unitOfWork;
+    public UpdatePatientDemographicsCommandHandler(IPatientRepository patients,
+        IUnitOfWork unitOfWork)
+    {
+        _patients = patients;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Unit> HandleAsync(UpdatePatientDemographicsCommand request, CancellationToken cancellationToken)
     {
-        var patient = await patients.GetAsync(request.PatientId, cancellationToken).ConfigureAwait(false)
+        var patient = await _patients.GetAsync(request.PatientId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Patient '{request.PatientId}' not found.");
 
         var name = new HumanName(request.FamilyName, request.GivenName, request.MiddleName);
         var address = TryBuildAddress(request);
         patient.UpdateDemographics(name, request.SexAtBirthCode, request.PreferredLanguageCode, address);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
     }
 

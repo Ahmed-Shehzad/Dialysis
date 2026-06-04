@@ -10,8 +10,18 @@ namespace Dialysis.CQRS;
 /// <summary>
 /// Registers CQRS handlers, validators, and pipeline behaviors via Intercessor.
 /// </summary>
-public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection services)
+public sealed class CqrsBuilder
 {
+    private readonly IntercessorBuilder _inner;
+    private readonly IServiceCollection _services;
+    /// <summary>
+    /// Registers CQRS handlers, validators, and pipeline behaviors via Intercessor.
+    /// </summary>
+    public CqrsBuilder(IntercessorBuilder inner, IServiceCollection services)
+    {
+        _inner = inner;
+        _services = services;
+    }
     /// <summary>
     /// Registers a query handler.
     /// </summary>
@@ -19,7 +29,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
         where TQuery : IQuery<TResponse>
         where THandler : class, IRequestHandler<TQuery, TResponse>
     {
-        inner.AddHandler<TQuery, TResponse, THandler>();
+        _inner.AddHandler<TQuery, TResponse, THandler>();
         return this;
     }
 
@@ -30,7 +40,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
         where TCommand : ICommand<TResponse>
         where THandler : class, IRequestHandler<TCommand, TResponse>
     {
-        inner.AddHandler<TCommand, TResponse, THandler>();
+        _inner.AddHandler<TCommand, TResponse, THandler>();
         return this;
     }
 
@@ -41,7 +51,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
         where TCommand : ICommand
         where THandler : class, IRequestHandler<TCommand, Unit>
     {
-        inner.AddHandler<TCommand, Unit, THandler>();
+        _inner.AddHandler<TCommand, Unit, THandler>();
         return this;
     }
 
@@ -51,7 +61,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
     public CqrsBuilder AddQueryValidator<TQuery, TValidator>()
         where TValidator : class, IValidator<TQuery>
     {
-        inner.AddValidator<TQuery, TValidator>();
+        _inner.AddValidator<TQuery, TValidator>();
         return this;
     }
 
@@ -61,7 +71,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
     public CqrsBuilder AddCommandValidator<TCommand, TValidator>()
         where TValidator : class, IValidator<TCommand>
     {
-        inner.AddValidator<TCommand, TValidator>();
+        _inner.AddValidator<TCommand, TValidator>();
         return this;
     }
 
@@ -72,7 +82,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
         where TQuery : IQuery<TResponse>
         where TBehavior : class, IPipelineBehavior<TQuery, TResponse>
     {
-        inner.AddBehavior<TQuery, TResponse, TBehavior>();
+        _inner.AddBehavior<TQuery, TResponse, TBehavior>();
         return this;
     }
 
@@ -83,7 +93,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
         where TCommand : ICommand<TResponse>
         where TBehavior : class, IPipelineBehavior<TCommand, TResponse>
     {
-        inner.AddBehavior<TCommand, TResponse, TBehavior>();
+        _inner.AddBehavior<TCommand, TResponse, TBehavior>();
         return this;
     }
 
@@ -97,7 +107,7 @@ public sealed class CqrsBuilder(IntercessorBuilder inner, IServiceCollection ser
     public CqrsBuilder AddFromAssemblies(params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);
-        CqrsAssemblyScanner.Register(inner, services, assemblies);
+        CqrsAssemblyScanner.Register(_inner, _services, assemblies);
         return this;
     }
 

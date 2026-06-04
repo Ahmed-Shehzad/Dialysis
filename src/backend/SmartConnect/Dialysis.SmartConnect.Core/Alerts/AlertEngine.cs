@@ -10,17 +10,35 @@ namespace Dialysis.SmartConnect.Alerts;
 /// runs each matching rule's actions sequentially via <see cref="IFlowPluginRegistry"/>. The single
 /// <see cref="AlertEvent"/> recording the outcome is appended to <see cref="IAlertEventStore"/>.
 /// </summary>
-public sealed class AlertEngine(
-    IAlertRuleRepository rules,
-    IAlertEventStore events,
-    IFlowPluginRegistry plugins,
-    TimeProvider time,
-    ILogger<AlertEngine>? logger = null) : IAlertSink
+public sealed class AlertEngine : IAlertSink
 {
     private static readonly TimeSpan _defaultThrottleWindow = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan _regexTimeout = TimeSpan.FromSeconds(3);
 
     private readonly ConcurrentDictionary<(Guid RuleId, Guid FlowId, AlertErrorType ErrorType), DateTimeOffset> _lastFiredUtc = new();
+    private readonly IAlertRuleRepository _rules;
+    private readonly IAlertEventStore _events;
+    private readonly IFlowPluginRegistry _plugins;
+    private readonly TimeProvider _time;
+    private readonly ILogger<AlertEngine>? _logger;
+    /// <summary>
+    /// Default <see cref="IAlertSink"/>. On publish, loads enabled rules, filters by flow scope and
+    /// error type/regex, applies an in-memory throttle window per (rule, flow, errorType) tuple, and
+    /// runs each matching rule's actions sequentially via <see cref="IFlowPluginRegistry"/>. The single
+    /// <see cref="AlertEvent"/> recording the outcome is appended to <see cref="IAlertEventStore"/>.
+    /// </summary>
+    public AlertEngine(IAlertRuleRepository rules,
+        IAlertEventStore events,
+        IFlowPluginRegistry plugins,
+        TimeProvider time,
+        ILogger<AlertEngine>? logger = null)
+    {
+        _rules = rules;
+        _events = events;
+        _plugins = plugins;
+        _time = time;
+        _logger = logger;
+    }
 
     public async Task PublishAsync(AlertTrigger trigger, CancellationToken cancellationToken)
     {
@@ -29,17 +47,17 @@ public sealed class AlertEngine(
         IReadOnlyList<AlertRule> enabled;
         try
         {
-            enabled = await rules.GetEnabledAsync(cancellationToken).ConfigureAwait(false);
+            enabled = await _rules.GetEnabledAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex, "Alert engine failed to load enabled rules.");
+            _logger?.LogWarning(ex, "Alert engine failed to load enabled rules.");
             return;
         }
 
         if (enabled.Count == 0) return;
 
-        var nowUtc = time.GetUtcNow();
+        var nowUtc = _time.GetUtcNow();
         foreach (var rule in enabled)
         {
             if (!Scopes(rule, trigger)) continue;
@@ -63,7 +81,7 @@ public sealed class AlertEngine(
         ArgumentNullException.ThrowIfNull(rule);
         ArgumentNullException.ThrowIfNull(trigger);
 
-        var nowUtc = time.GetUtcNow();
+        var nowUtc = _time.GetUtcNow();
         var evt = new AlertEvent
         {
             Id = Guid.CreateVersion7(),
@@ -91,7 +109,7 @@ public sealed class AlertEngine(
                 OccurredAtUtc = evt.OccurredAtUtc,
                 ActionOutcomes = outcomes,
             };
-            await events.AppendAsync(persisted, cancellationToken).ConfigureAwait(false);
+            await _events.AppendAsync(persisted, cancellationToken).ConfigureAwait(false);
         }
         return outcomes;
     }
@@ -174,11 +192,11 @@ public sealed class AlertEngine(
 
         try
         {
-            await events.AppendAsync(persisted, cancellationToken).ConfigureAwait(false);
+            await _events.AppendAsync(persisted, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            logger?.LogWarning(ex, "Alert engine failed to persist event for rule {RuleId}.", rule.Id);
+            _logger?.LogWarning(ex, "Alert engine failed to persist event for rule {RuleId}.", rule.Id);
         }
     }
 
@@ -190,8 +208,8 @@ public sealed class AlertEngine(
         var outcomes = new List<AlertActionOutcome>(rule.Actions.Count);
         foreach (var slot in rule.Actions)
         {
-            var attemptedAtUtc = time.GetUtcNow();
-            var provider = plugins.TryResolveAlertActionProvider(slot.Kind);
+            var attemptedAtUtc = _time.GetUtcNow();
+            var provider = _plugins.TryResolveAlertActionProvider(slot.Kind);
             if (provider is null)
             {
                 outcomes.Add(new AlertActionOutcome

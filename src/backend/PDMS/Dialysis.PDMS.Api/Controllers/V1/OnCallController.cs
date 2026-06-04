@@ -32,12 +32,45 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/oncall")]
-public sealed class OnCallController(
-    IPdmsRepository<OnCallRotation, Guid> rotations,
-    IPdmsRepository<EscalationPolicy, Guid> policies,
-    IPdmsRepository<AlarmDispatch, Guid> dispatches,
-    TimeProvider clock) : ControllerBase
+public sealed class OnCallController : ControllerBase
 {
+    private readonly IPdmsRepository<OnCallRotation, Guid> _rotations;
+    private readonly IPdmsRepository<EscalationPolicy, Guid> _policies;
+    private readonly IPdmsRepository<AlarmDispatch, Guid> _dispatches;
+    private readonly TimeProvider _clock;
+    /// <summary>
+    /// On-call rotation + escalation-policy + alarm-dispatch audit surface. Drives the three
+    /// <c>/admin/oncall/*</c> SPA pages. Every action is tagged with <see cref="PhiAccessAttribute"/>
+    /// so the audit filter emits a FHIR <c>AuditEvent</c> per call — the GDPR / BDSG audit
+    /// trail covers operator scheduling changes alongside clinical PHI reads.
+    ///
+    /// Rotation lifecycle:
+    /// <list type="bullet">
+    ///   <item><c>GET /api/v1.0/oncall/rotations?chairId=&amp;atUtc=</c> — active rotations</item>
+    ///   <item><c>POST /api/v1.0/oncall/rotations</c> — create</item>
+    ///   <item><c>PUT /api/v1.0/oncall/rotations/{id}</c> — replace (operator save)</item>
+    /// </list>
+    /// Policy lifecycle:
+    /// <list type="bullet">
+    ///   <item><c>GET /api/v1.0/oncall/policies</c></item>
+    ///   <item><c>PUT /api/v1.0/oncall/policies/{id}</c></item>
+    /// </list>
+    /// Dispatch audit:
+    /// <list type="bullet">
+    ///   <item><c>GET /api/v1.0/oncall/dispatches?from=&amp;to=</c></item>
+    ///   <item><c>POST /api/v1.0/oncall/{chairId}/acknowledge</c></item>
+    /// </list>
+    /// </summary>
+    public OnCallController(IPdmsRepository<OnCallRotation, Guid> rotations,
+        IPdmsRepository<EscalationPolicy, Guid> policies,
+        IPdmsRepository<AlarmDispatch, Guid> dispatches,
+        TimeProvider clock)
+    {
+        _rotations = rotations;
+        _policies = policies;
+        _dispatches = dispatches;
+        _clock = clock;
+    }
     [HttpGet("rotations")]
     [PhiAccess("pdms.oncall.rotations.read")]
     [ProducesResponseType(typeof(IReadOnlyList<OnCallRotationDto>), StatusCodes.Status200OK)]
@@ -46,10 +79,12 @@ public sealed class OnCallController(
         [FromQuery] DateTime? atUtc = null,
         CancellationToken cancellationToken = default)
     {
-        var all = await rotations.ListAsync(null, cancellationToken).ConfigureAwait(false);
+        var all = await _rotations.ListAsync(null, cancellationToken).ConfigureAwait(false);
         IEnumerable<OnCallRotation> filtered = all;
-        if (chairId is not null) filtered = filtered.Where(r => r.ChairId == chairId.Value);
-        if (atUtc is DateTime instant) filtered = filtered.Where(r => r.CoversInstant(instant));
+        if (chairId is not null)
+            filtered = filtered.Where(r => r.ChairId == chairId.Value);
+        if (atUtc is DateTime instant)
+            filtered = filtered.Where(r => r.CoversInstant(instant));
         return Ok(filtered.Select(OnCallRotationDto.From).ToArray());
     }
 
@@ -63,7 +98,7 @@ public sealed class OnCallController(
     {
         ArgumentNullException.ThrowIfNull(request);
         var rotation = BuildRotation(Guid.CreateVersion7(), request);
-        await rotations.AddAsync(rotation, cancellationToken).ConfigureAwait(false);
+        await _rotations.AddAsync(rotation, cancellationToken).ConfigureAwait(false);
         return CreatedAtAction(nameof(ListRotationsAsync), null, OnCallRotationDto.From(rotation));
     }
 
@@ -77,12 +112,13 @@ public sealed class OnCallController(
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var existing = await rotations.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return NotFound();
+        var existing = await _rotations.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        if (existing is null)
+            return NotFound();
         // OnCallRotation is immutable post-create; replacement = remove + re-add with same id.
-        rotations.Remove(existing);
+        _rotations.Remove(existing);
         var replacement = BuildRotation(id, request);
-        await rotations.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
+        await _rotations.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
         return Ok(OnCallRotationDto.From(replacement));
     }
 
@@ -91,7 +127,7 @@ public sealed class OnCallController(
     [ProducesResponseType(typeof(IReadOnlyList<EscalationPolicyDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListPoliciesAsync(CancellationToken cancellationToken)
     {
-        var all = await policies.ListAsync(null, cancellationToken).ConfigureAwait(false);
+        var all = await _policies.ListAsync(null, cancellationToken).ConfigureAwait(false);
         return Ok(all.Select(EscalationPolicyDto.From).ToArray());
     }
 
@@ -106,9 +142,10 @@ public sealed class OnCallController(
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var existing = await policies.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return NotFound();
-        policies.Remove(existing);
+        var existing = await _policies.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        if (existing is null)
+            return NotFound();
+        _policies.Remove(existing);
         EscalationPolicy replacement;
         try
         {
@@ -123,7 +160,7 @@ public sealed class OnCallController(
                 request.QuietHoursSuppressNonCritical);
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
-        await policies.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
+        await _policies.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
         return Ok(EscalationPolicyDto.From(replacement));
     }
 
@@ -136,11 +173,14 @@ public sealed class OnCallController(
         [FromQuery] Guid? chairId = null,
         CancellationToken cancellationToken = default)
     {
-        var all = await dispatches.ListAsync(null, cancellationToken).ConfigureAwait(false);
+        var all = await _dispatches.ListAsync(null, cancellationToken).ConfigureAwait(false);
         IEnumerable<AlarmDispatch> filtered = all;
-        if (from is DateTime f) filtered = filtered.Where(d => d.StartedAtUtc >= f);
-        if (to is DateTime t) filtered = filtered.Where(d => d.StartedAtUtc <= t);
-        if (chairId is Guid c) filtered = filtered.Where(d => d.ChairId == c);
+        if (from is DateTime f)
+            filtered = filtered.Where(d => d.StartedAtUtc >= f);
+        if (to is DateTime t)
+            filtered = filtered.Where(d => d.StartedAtUtc <= t);
+        if (chairId is Guid c)
+            filtered = filtered.Where(d => d.ChairId == c);
         return Ok(filtered.OrderByDescending(d => d.StartedAtUtc).Select(AlarmDispatchDto.From).ToArray());
     }
 
@@ -154,14 +194,15 @@ public sealed class OnCallController(
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var all = await dispatches.ListAsync(null, cancellationToken).ConfigureAwait(false);
+        var all = await _dispatches.ListAsync(null, cancellationToken).ConfigureAwait(false);
         var open = all
             .Where(d => d.ChairId == chairId && d.Status != AlarmDispatchStatus.Acknowledged && d.Status != AlarmDispatchStatus.Exhausted)
             .OrderByDescending(d => d.StartedAtUtc)
             .FirstOrDefault();
-        if (open is null) return NotFound();
-        open.Acknowledge(request.ClinicianSub, clock.GetUtcNow().UtcDateTime);
-        dispatches.Update(open);
+        if (open is null)
+            return NotFound();
+        open.Acknowledge(request.ClinicianSub, _clock.GetUtcNow().UtcDateTime);
+        _dispatches.Update(open);
         return Ok(AlarmDispatchDto.From(open));
     }
 
@@ -186,9 +227,7 @@ public sealed class OnCallController(
     }
 
     private static OnCallChainLink BuildLink(ChainLinkRequest req) =>
-        new(req.ClinicianSub, req.DisplayName, req.Channels
-            .Select(c => new NotificationChannelTarget(ParseChannel(c.Channel), c.Address))
-            .ToArray());
+        new(req.ClinicianSub, req.DisplayName, [.. req.Channels.Select(c => new NotificationChannelTarget(ParseChannel(c.Channel), c.Address))]);
 
     private static NotificationChannel ParseChannel(string channel) => channel.ToLowerInvariant() switch
     {
@@ -201,43 +240,144 @@ public sealed class OnCallController(
     };
 }
 
-public sealed record UpsertRotationRequest(
-    Guid ChairId,
-    string ShiftCode,
-    DateOnly EffectiveFromUtc,
-    DateOnly EffectiveUntilUtc,
-    ChainLinkRequest Primary,
-    ChainLinkRequest Backup,
-    ChainLinkRequest Supervisor);
-
-public sealed record ChainLinkRequest(
-    string ClinicianSub,
-    string DisplayName,
-    IReadOnlyList<ChannelTargetRequest> Channels);
-
-public sealed record ChannelTargetRequest(string Channel, string Address);
-
-public sealed record UpsertPolicyRequest(
-    string Name,
-    int CriticalPrimaryWindowSeconds,
-    int CriticalBackupWindowSeconds,
-    int WarningPrimaryWindowSeconds,
-    int WarningBackupWindowSeconds,
-    int InformationalPrimaryWindowSeconds,
-    bool QuietHoursSuppressNonCritical);
-
-public sealed record AcknowledgeAlarmRequest(string ClinicianSub);
-
-public sealed record OnCallRotationDto(
-    Guid Id,
-    Guid ChairId,
-    string ShiftCode,
-    DateOnly EffectiveFromUtc,
-    DateOnly EffectiveUntilUtc,
-    ChainLinkDto Primary,
-    ChainLinkDto Backup,
-    ChainLinkDto Supervisor)
+public sealed record UpsertRotationRequest
 {
+    public UpsertRotationRequest(Guid ChairId,
+        string ShiftCode,
+        DateOnly EffectiveFromUtc,
+        DateOnly EffectiveUntilUtc,
+        ChainLinkRequest Primary,
+        ChainLinkRequest Backup,
+        ChainLinkRequest Supervisor)
+    {
+        this.ChairId = ChairId;
+        this.ShiftCode = ShiftCode;
+        this.EffectiveFromUtc = EffectiveFromUtc;
+        this.EffectiveUntilUtc = EffectiveUntilUtc;
+        this.Primary = Primary;
+        this.Backup = Backup;
+        this.Supervisor = Supervisor;
+    }
+    public Guid ChairId { get; init; }
+    public string ShiftCode { get; init; }
+    public DateOnly EffectiveFromUtc { get; init; }
+    public DateOnly EffectiveUntilUtc { get; init; }
+    public ChainLinkRequest Primary { get; init; }
+    public ChainLinkRequest Backup { get; init; }
+    public ChainLinkRequest Supervisor { get; init; }
+    public void Deconstruct(out Guid chairId, out string shiftCode, out DateOnly effectiveFromUtc, out DateOnly effectiveUntilUtc, out ChainLinkRequest primary, out ChainLinkRequest backup, out ChainLinkRequest supervisor)
+    {
+        chairId = this.ChairId;
+        shiftCode = this.ShiftCode;
+        effectiveFromUtc = this.EffectiveFromUtc;
+        effectiveUntilUtc = this.EffectiveUntilUtc;
+        primary = this.Primary;
+        backup = this.Backup;
+        supervisor = this.Supervisor;
+    }
+}
+
+public sealed record ChainLinkRequest
+{
+    public ChainLinkRequest(string ClinicianSub,
+        string DisplayName,
+        IReadOnlyList<ChannelTargetRequest> Channels)
+    {
+        this.ClinicianSub = ClinicianSub;
+        this.DisplayName = DisplayName;
+        this.Channels = Channels;
+    }
+    public string ClinicianSub { get; init; }
+    public string DisplayName { get; init; }
+    public IReadOnlyList<ChannelTargetRequest> Channels { get; init; }
+    public void Deconstruct(out string clinicianSub, out string displayName, out IReadOnlyList<ChannelTargetRequest> channels)
+    {
+        clinicianSub = this.ClinicianSub;
+        displayName = this.DisplayName;
+        channels = this.Channels;
+    }
+}
+
+public sealed record ChannelTargetRequest
+{
+    public ChannelTargetRequest(string Channel, string Address)
+    {
+        this.Channel = Channel;
+        this.Address = Address;
+    }
+    public string Channel { get; init; }
+    public string Address { get; init; }
+    public void Deconstruct(out string channel, out string address)
+    {
+        channel = this.Channel;
+        address = this.Address;
+    }
+}
+
+public sealed record UpsertPolicyRequest
+{
+    public UpsertPolicyRequest(string Name,
+        int CriticalPrimaryWindowSeconds,
+        int CriticalBackupWindowSeconds,
+        int WarningPrimaryWindowSeconds,
+        int WarningBackupWindowSeconds,
+        int InformationalPrimaryWindowSeconds,
+        bool QuietHoursSuppressNonCritical)
+    {
+        this.Name = Name;
+        this.CriticalPrimaryWindowSeconds = CriticalPrimaryWindowSeconds;
+        this.CriticalBackupWindowSeconds = CriticalBackupWindowSeconds;
+        this.WarningPrimaryWindowSeconds = WarningPrimaryWindowSeconds;
+        this.WarningBackupWindowSeconds = WarningBackupWindowSeconds;
+        this.InformationalPrimaryWindowSeconds = InformationalPrimaryWindowSeconds;
+        this.QuietHoursSuppressNonCritical = QuietHoursSuppressNonCritical;
+    }
+    public string Name { get; init; }
+    public int CriticalPrimaryWindowSeconds { get; init; }
+    public int CriticalBackupWindowSeconds { get; init; }
+    public int WarningPrimaryWindowSeconds { get; init; }
+    public int WarningBackupWindowSeconds { get; init; }
+    public int InformationalPrimaryWindowSeconds { get; init; }
+    public bool QuietHoursSuppressNonCritical { get; init; }
+    public void Deconstruct(out string name, out int criticalPrimaryWindowSeconds, out int criticalBackupWindowSeconds, out int warningPrimaryWindowSeconds, out int warningBackupWindowSeconds, out int informationalPrimaryWindowSeconds, out bool quietHoursSuppressNonCritical)
+    {
+        name = this.Name;
+        criticalPrimaryWindowSeconds = this.CriticalPrimaryWindowSeconds;
+        criticalBackupWindowSeconds = this.CriticalBackupWindowSeconds;
+        warningPrimaryWindowSeconds = this.WarningPrimaryWindowSeconds;
+        warningBackupWindowSeconds = this.WarningBackupWindowSeconds;
+        informationalPrimaryWindowSeconds = this.InformationalPrimaryWindowSeconds;
+        quietHoursSuppressNonCritical = this.QuietHoursSuppressNonCritical;
+    }
+}
+
+public sealed record AcknowledgeAlarmRequest
+{
+    public AcknowledgeAlarmRequest(string ClinicianSub) => this.ClinicianSub = ClinicianSub;
+    public string ClinicianSub { get; init; }
+    public void Deconstruct(out string clinicianSub) => clinicianSub = this.ClinicianSub;
+}
+
+public sealed record OnCallRotationDto
+{
+    public OnCallRotationDto(Guid Id,
+        Guid ChairId,
+        string ShiftCode,
+        DateOnly EffectiveFromUtc,
+        DateOnly EffectiveUntilUtc,
+        ChainLinkDto Primary,
+        ChainLinkDto Backup,
+        ChainLinkDto Supervisor)
+    {
+        this.Id = Id;
+        this.ChairId = ChairId;
+        this.ShiftCode = ShiftCode;
+        this.EffectiveFromUtc = EffectiveFromUtc;
+        this.EffectiveUntilUtc = EffectiveUntilUtc;
+        this.Primary = Primary;
+        this.Backup = Backup;
+        this.Supervisor = Supervisor;
+    }
     public static OnCallRotationDto From(OnCallRotation r) => new(
         r.Id,
         r.ChairId,
@@ -247,28 +387,86 @@ public sealed record OnCallRotationDto(
         ChainLinkDto.From(r.Primary),
         ChainLinkDto.From(r.Backup),
         ChainLinkDto.From(r.Supervisor));
+    public Guid Id { get; init; }
+    public Guid ChairId { get; init; }
+    public string ShiftCode { get; init; }
+    public DateOnly EffectiveFromUtc { get; init; }
+    public DateOnly EffectiveUntilUtc { get; init; }
+    public ChainLinkDto Primary { get; init; }
+    public ChainLinkDto Backup { get; init; }
+    public ChainLinkDto Supervisor { get; init; }
+    public void Deconstruct(out Guid id, out Guid chairId, out string shiftCode, out DateOnly effectiveFromUtc, out DateOnly effectiveUntilUtc, out ChainLinkDto primary, out ChainLinkDto backup, out ChainLinkDto supervisor)
+    {
+        id = this.Id;
+        chairId = this.ChairId;
+        shiftCode = this.ShiftCode;
+        effectiveFromUtc = this.EffectiveFromUtc;
+        effectiveUntilUtc = this.EffectiveUntilUtc;
+        primary = this.Primary;
+        backup = this.Backup;
+        supervisor = this.Supervisor;
+    }
 }
 
-public sealed record ChainLinkDto(string ClinicianSub, string DisplayName, IReadOnlyList<ChannelTargetDto> Channels)
+public sealed record ChainLinkDto
 {
+    public ChainLinkDto(string ClinicianSub, string DisplayName, IReadOnlyList<ChannelTargetDto> Channels)
+    {
+        this.ClinicianSub = ClinicianSub;
+        this.DisplayName = DisplayName;
+        this.Channels = Channels;
+    }
     public static ChainLinkDto From(OnCallChainLink l) => new(
         l.ClinicianSub,
         l.DisplayName,
-        l.Channels.Select(c => new ChannelTargetDto(c.Channel.ToString(), c.Address)).ToArray());
+        [.. l.Channels.Select(c => new ChannelTargetDto(c.Channel.ToString(), c.Address))]);
+    public string ClinicianSub { get; init; }
+    public string DisplayName { get; init; }
+    public IReadOnlyList<ChannelTargetDto> Channels { get; init; }
+    public void Deconstruct(out string clinicianSub, out string displayName, out IReadOnlyList<ChannelTargetDto> channels)
+    {
+        clinicianSub = this.ClinicianSub;
+        displayName = this.DisplayName;
+        channels = this.Channels;
+    }
 }
 
-public sealed record ChannelTargetDto(string Channel, string Address);
-
-public sealed record EscalationPolicyDto(
-    Guid Id,
-    string Name,
-    int CriticalPrimaryWindowSeconds,
-    int CriticalBackupWindowSeconds,
-    int WarningPrimaryWindowSeconds,
-    int WarningBackupWindowSeconds,
-    int InformationalPrimaryWindowSeconds,
-    bool QuietHoursSuppressNonCritical)
+public sealed record ChannelTargetDto
 {
+    public ChannelTargetDto(string Channel, string Address)
+    {
+        this.Channel = Channel;
+        this.Address = Address;
+    }
+    public string Channel { get; init; }
+    public string Address { get; init; }
+    public void Deconstruct(out string channel, out string address)
+    {
+        channel = this.Channel;
+        address = this.Address;
+    }
+}
+
+public sealed record EscalationPolicyDto
+{
+    public EscalationPolicyDto(Guid Id,
+        string Name,
+        int CriticalPrimaryWindowSeconds,
+        int CriticalBackupWindowSeconds,
+        int WarningPrimaryWindowSeconds,
+        int WarningBackupWindowSeconds,
+        int InformationalPrimaryWindowSeconds,
+        bool QuietHoursSuppressNonCritical)
+    {
+        this.Id = Id;
+        this.Name = Name;
+        this.CriticalPrimaryWindowSeconds = CriticalPrimaryWindowSeconds;
+        this.CriticalBackupWindowSeconds = CriticalBackupWindowSeconds;
+        this.WarningPrimaryWindowSeconds = WarningPrimaryWindowSeconds;
+        this.WarningBackupWindowSeconds = WarningBackupWindowSeconds;
+        this.InformationalPrimaryWindowSeconds = InformationalPrimaryWindowSeconds;
+        this.QuietHoursSuppressNonCritical = QuietHoursSuppressNonCritical;
+    }
     public static EscalationPolicyDto From(EscalationPolicy p) => new(
         p.Id,
         p.Name,
@@ -278,22 +476,55 @@ public sealed record EscalationPolicyDto(
         (int)p.WarningBackupWindow.TotalSeconds,
         (int)p.InformationalPrimaryWindow.TotalSeconds,
         p.QuietHoursSuppressNonCritical);
+    public Guid Id { get; init; }
+    public string Name { get; init; }
+    public int CriticalPrimaryWindowSeconds { get; init; }
+    public int CriticalBackupWindowSeconds { get; init; }
+    public int WarningPrimaryWindowSeconds { get; init; }
+    public int WarningBackupWindowSeconds { get; init; }
+    public int InformationalPrimaryWindowSeconds { get; init; }
+    public bool QuietHoursSuppressNonCritical { get; init; }
+    public void Deconstruct(out Guid id, out string name, out int criticalPrimaryWindowSeconds, out int criticalBackupWindowSeconds, out int warningPrimaryWindowSeconds, out int warningBackupWindowSeconds, out int informationalPrimaryWindowSeconds, out bool quietHoursSuppressNonCritical)
+    {
+        id = this.Id;
+        name = this.Name;
+        criticalPrimaryWindowSeconds = this.CriticalPrimaryWindowSeconds;
+        criticalBackupWindowSeconds = this.CriticalBackupWindowSeconds;
+        warningPrimaryWindowSeconds = this.WarningPrimaryWindowSeconds;
+        warningBackupWindowSeconds = this.WarningBackupWindowSeconds;
+        informationalPrimaryWindowSeconds = this.InformationalPrimaryWindowSeconds;
+        quietHoursSuppressNonCritical = this.QuietHoursSuppressNonCritical;
+    }
 }
 
-public sealed record AlarmDispatchDto(
-    Guid Id,
-    Guid InfusionId,
-    Guid SessionId,
-    Guid ChairId,
-    string AlarmCode,
-    string Severity,
-    DateTime StartedAtUtc,
-    DateTime? ResolvedAtUtc,
-    string Status,
-    int CurrentLinkIndex,
-    string? AcknowledgedBySub,
-    IReadOnlyList<AlarmDispatchAttemptDto> Attempts)
+public sealed record AlarmDispatchDto
 {
+    public AlarmDispatchDto(Guid Id,
+        Guid InfusionId,
+        Guid SessionId,
+        Guid ChairId,
+        string AlarmCode,
+        string Severity,
+        DateTime StartedAtUtc,
+        DateTime? ResolvedAtUtc,
+        string Status,
+        int CurrentLinkIndex,
+        string? AcknowledgedBySub,
+        IReadOnlyList<AlarmDispatchAttemptDto> Attempts)
+    {
+        this.Id = Id;
+        this.InfusionId = InfusionId;
+        this.SessionId = SessionId;
+        this.ChairId = ChairId;
+        this.AlarmCode = AlarmCode;
+        this.Severity = Severity;
+        this.StartedAtUtc = StartedAtUtc;
+        this.ResolvedAtUtc = ResolvedAtUtc;
+        this.Status = Status;
+        this.CurrentLinkIndex = CurrentLinkIndex;
+        this.AcknowledgedBySub = AcknowledgedBySub;
+        this.Attempts = Attempts;
+    }
     public static AlarmDispatchDto From(AlarmDispatch d) => new(
         d.Id,
         d.InfusionId,
@@ -306,19 +537,71 @@ public sealed record AlarmDispatchDto(
         d.Status.ToString(),
         d.CurrentLinkIndex,
         d.AcknowledgedBySub,
-        d.Attempts.Select(a => new AlarmDispatchAttemptDto(
+        [.. d.Attempts.Select(a => new AlarmDispatchAttemptDto(
             a.ChainLinkIndex,
             a.Channel.ToString(),
             a.Address,
             a.Delivered,
             a.FailureReason,
-            a.AttemptedAtUtc)).ToArray());
+            a.AttemptedAtUtc))]);
+    public Guid Id { get; init; }
+    public Guid InfusionId { get; init; }
+    public Guid SessionId { get; init; }
+    public Guid ChairId { get; init; }
+    public string AlarmCode { get; init; }
+    public string Severity { get; init; }
+    public DateTime StartedAtUtc { get; init; }
+    public DateTime? ResolvedAtUtc { get; init; }
+    public string Status { get; init; }
+    public int CurrentLinkIndex { get; init; }
+    public string? AcknowledgedBySub { get; init; }
+    public IReadOnlyList<AlarmDispatchAttemptDto> Attempts { get; init; }
+    public void Deconstruct(out Guid id, out Guid infusionId, out Guid sessionId, out Guid chairId, out string alarmCode, out string severity, out DateTime startedAtUtc, out DateTime? resolvedAtUtc, out string status, out int currentLinkIndex, out string? acknowledgedBySub, out IReadOnlyList<AlarmDispatchAttemptDto> attempts)
+    {
+        id = this.Id;
+        infusionId = this.InfusionId;
+        sessionId = this.SessionId;
+        chairId = this.ChairId;
+        alarmCode = this.AlarmCode;
+        severity = this.Severity;
+        startedAtUtc = this.StartedAtUtc;
+        resolvedAtUtc = this.ResolvedAtUtc;
+        status = this.Status;
+        currentLinkIndex = this.CurrentLinkIndex;
+        acknowledgedBySub = this.AcknowledgedBySub;
+        attempts = this.Attempts;
+    }
 }
 
-public sealed record AlarmDispatchAttemptDto(
-    int ChainLinkIndex,
-    string Channel,
-    string Address,
-    bool Delivered,
-    string? FailureReason,
-    DateTime AttemptedAtUtc);
+public sealed record AlarmDispatchAttemptDto
+{
+    public AlarmDispatchAttemptDto(int ChainLinkIndex,
+        string Channel,
+        string Address,
+        bool Delivered,
+        string? FailureReason,
+        DateTime AttemptedAtUtc)
+    {
+        this.ChainLinkIndex = ChainLinkIndex;
+        this.Channel = Channel;
+        this.Address = Address;
+        this.Delivered = Delivered;
+        this.FailureReason = FailureReason;
+        this.AttemptedAtUtc = AttemptedAtUtc;
+    }
+    public int ChainLinkIndex { get; init; }
+    public string Channel { get; init; }
+    public string Address { get; init; }
+    public bool Delivered { get; init; }
+    public string? FailureReason { get; init; }
+    public DateTime AttemptedAtUtc { get; init; }
+    public void Deconstruct(out int chainLinkIndex, out string channel, out string address, out bool delivered, out string? failureReason, out DateTime attemptedAtUtc)
+    {
+        chainLinkIndex = this.ChainLinkIndex;
+        channel = this.Channel;
+        address = this.Address;
+        delivered = this.Delivered;
+        failureReason = this.FailureReason;
+        attemptedAtUtc = this.AttemptedAtUtc;
+    }
+}

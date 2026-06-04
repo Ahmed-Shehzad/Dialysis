@@ -48,11 +48,13 @@ public sealed class MemoryCacheTerminologyDecoratorTests
         public int LookupCalls;
     }
 
-    private sealed class CountingTerminologyService(CallCounts counts) : ITerminologyService
+    private sealed class CountingTerminologyService : ITerminologyService
     {
+        private readonly CallCounts _counts;
+        public CountingTerminologyService(CallCounts counts) => _counts = counts;
         public ValueTask<Parameters> LookupAsync(string system, string code, CancellationToken cancellationToken)
         {
-            Interlocked.Increment(ref counts.LookupCalls);
+            Interlocked.Increment(ref _counts.LookupCalls);
             return new ValueTask<Parameters>(new Parameters());
         }
 

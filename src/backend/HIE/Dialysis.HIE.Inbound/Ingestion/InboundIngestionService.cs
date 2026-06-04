@@ -15,14 +15,37 @@ namespace Dialysis.HIE.Inbound.Ingestion;
 /// Validates, consent-gates, persists, and republishes inbound FHIR resources. Returns an
 /// <see cref="OperationOutcome"/> describing the result for the FHIR controller to serialise back.
 /// </summary>
-public sealed class InboundIngestionService(
-    IReceivedResourceStore resourceStore,
-    IPatientIndex patientIndex,
-    IConsentGate consentGate,
-    ITransponderOutbox? transponderOutbox,
-    TimeProvider timeProvider,
-    ILogger<InboundIngestionService> logger)
+public sealed class InboundIngestionService
 {
+    private readonly IReceivedResourceStore _resourceStore;
+
+    private readonly IPatientIndex _patientIndex;
+
+    private readonly IConsentGate _consentGate;
+
+    private readonly ITransponderOutbox? _transponderOutbox;
+
+    private readonly TimeProvider _timeProvider;
+
+    private readonly ILogger<InboundIngestionService> _logger;
+    /// <summary>
+    /// Validates, consent-gates, persists, and republishes inbound FHIR resources. Returns an
+    /// <see cref="OperationOutcome"/> describing the result for the FHIR controller to serialise back.
+    /// </summary>
+    public InboundIngestionService(IReceivedResourceStore resourceStore,
+        IPatientIndex patientIndex,
+        IConsentGate consentGate,
+        ITransponderOutbox? transponderOutbox,
+        TimeProvider timeProvider,
+        ILogger<InboundIngestionService> logger)
+    {
+        _resourceStore = resourceStore;
+        _patientIndex = patientIndex;
+        _consentGate = consentGate;
+        _transponderOutbox = transponderOutbox;
+        _timeProvider = timeProvider;
+        _logger = logger;
+    }
     // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
     private static string SerializeFhirJson(Resource resource) => resource.ToJson();
 
@@ -45,7 +68,7 @@ public sealed class InboundIngestionService(
             await IngestSingleAsync(partnerId, resource, outcome, cancellationToken).ConfigureAwait(false);
         }
 
-        await resourceStore.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _resourceStore.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         if (outcome.Issue.Count == 0)
             outcome.Issue.Add(InformationIssue("All entries accepted."));
         return outcome;
@@ -56,7 +79,7 @@ public sealed class InboundIngestionService(
         var logicalId = resource.Id ?? Guid.NewGuid().ToString();
         var scope = ScopeFor(resource);
 
-        var consented = await consentGate.CheckInboundAsync(logicalId, partnerId, scope, cancellationToken).ConfigureAwait(false);
+        var consented = await _consentGate.CheckInboundAsync(logicalId, partnerId, scope, cancellationToken).ConfigureAwait(false);
         if (!consented)
         {
             outcome.Issue.Add(new OperationOutcome.IssueComponent
@@ -74,9 +97,9 @@ public sealed class InboundIngestionService(
             resource.TypeName,
             logicalId,
             fhirJson,
-            timeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             validationOutcome: "accepted");
-        await resourceStore.UpsertAsync(received, cancellationToken).ConfigureAwait(false);
+        await _resourceStore.UpsertAsync(received, cancellationToken).ConfigureAwait(false);
 
         await ProjectAsync(partnerId, resource, logicalId, cancellationToken).ConfigureAwait(false);
         outcome.Issue.Add(new OperationOutcome.IssueComponent
@@ -97,7 +120,7 @@ public sealed class InboundIngestionService(
             case Encounter encounter:
                 await EmitAsync(new ExternalEncounterIngestedIntegrationEvent(
                     Guid.NewGuid(),
-                    timeProvider.GetUtcNow().UtcDateTime,
+                    _timeProvider.GetUtcNow().UtcDateTime,
                     SchemaVersion: 1,
                     partnerId,
                     logicalId,
@@ -125,7 +148,7 @@ public sealed class InboundIngestionService(
                     var observed = observation.Effective is FhirDateTime fdt && DateTime.TryParse(fdt.Value, out var ts) ? ts : (DateTime?)null;
                     await EmitAsync(new ExternalLabResultIngestedIntegrationEvent(
                         Guid.NewGuid(),
-                        timeProvider.GetUtcNow().UtcDateTime,
+                        _timeProvider.GetUtcNow().UtcDateTime,
                         SchemaVersion: 1,
                         partnerId,
                         logicalId,
@@ -147,7 +170,7 @@ public sealed class InboundIngestionService(
                     }
                     await EmitAsync(new ExternalDialysisSessionIngestedIntegrationEvent(
                         Guid.NewGuid(),
-                        timeProvider.GetUtcNow().UtcDateTime,
+                        _timeProvider.GetUtcNow().UtcDateTime,
                         SchemaVersion: 1,
                         partnerId,
                         logicalId,
@@ -158,7 +181,7 @@ public sealed class InboundIngestionService(
                     break;
                 }
             default:
-                logger.LogDebug("No inbound projection implemented for {ResourceType}", resource.TypeName);
+                _logger.LogDebug("No inbound projection implemented for {ResourceType}", resource.TypeName);
                 break;
         }
     }
@@ -182,12 +205,12 @@ public sealed class InboundIngestionService(
             given,
             dob,
             patient.Gender?.ToString(),
-            timeProvider.GetUtcNow().UtcDateTime);
-        await patientIndex.UpsertAsync(entry, cancellationToken).ConfigureAwait(false);
+            _timeProvider.GetUtcNow().UtcDateTime);
+        await _patientIndex.UpsertAsync(entry, cancellationToken).ConfigureAwait(false);
 
         await EmitAsync(new ExternalPatientReferenceIngestedIntegrationEvent(
             Guid.NewGuid(),
-            timeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             SchemaVersion: 1,
             partnerId,
             logicalId,
@@ -200,10 +223,10 @@ public sealed class InboundIngestionService(
 
     private async Task EmitAsync<T>(T evt, CancellationToken cancellationToken)
     {
-        if (transponderOutbox is null) return;
+        if (_transponderOutbox is null) return;
         var json = JsonSerializer.Serialize(evt);
         var envelope = new TransponderOutboxEnvelope(typeof(T).AssemblyQualifiedName!, json);
-        await transponderOutbox.EnqueueAsync(envelope, cancellationToken).ConfigureAwait(false);
+        await _transponderOutbox.EnqueueAsync(envelope, cancellationToken).ConfigureAwait(false);
     }
 
     private static string ScopeFor(Resource resource) => resource.TypeName switch

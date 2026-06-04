@@ -3,11 +3,16 @@ namespace Dialysis.BuildingBlocks.Fhir.BulkData;
 /// <summary>
 /// Writes NDJSON output files under <c>{ContentRoot}/bulk-data/{jobId}/{resourceType}.ndjson</c>.
 /// </summary>
-public sealed class LocalFileBulkDataStorage(string rootPath) : IBulkDataStorage
+public sealed class LocalFileBulkDataStorage : IBulkDataStorage
 {
+    private readonly string _rootPath;
+    /// <summary>
+    /// Writes NDJSON output files under <c>{ContentRoot}/bulk-data/{jobId}/{resourceType}.ndjson</c>.
+    /// </summary>
+    public LocalFileBulkDataStorage(string rootPath) => _rootPath = rootPath;
     public ValueTask<Stream> OpenWriteAsync(string jobId, string resourceType, CancellationToken cancellationToken)
     {
-        var dir = Path.Combine(rootPath, SafeSegment(jobId));
+        var dir = Path.Combine(_rootPath, SafeSegment(jobId));
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, $"{SafeSegment(resourceType)}.ndjson");
         return ValueTask.FromResult<Stream>(File.Create(path));
@@ -15,7 +20,7 @@ public sealed class LocalFileBulkDataStorage(string rootPath) : IBulkDataStorage
 
     public ValueTask<Stream> OpenReadAsync(string jobId, string fileName, CancellationToken cancellationToken)
     {
-        var path = Path.Combine(rootPath, SafeSegment(jobId), SafeSegment(fileName));
+        var path = Path.Combine(_rootPath, SafeSegment(jobId), SafeSegment(fileName));
         return ValueTask.FromResult<Stream>(File.OpenRead(path));
     }
 

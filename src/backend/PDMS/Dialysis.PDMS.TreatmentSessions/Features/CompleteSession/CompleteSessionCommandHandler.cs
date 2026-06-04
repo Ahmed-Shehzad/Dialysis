@@ -9,24 +9,35 @@ using Dialysis.PDMS.TreatmentSessions.Projections;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.CompleteSession;
 
-public sealed class CompleteSessionCommandHandler(
-    IDialysisSessionRepository sessions,
-    IUnitOfWork unitOfWork,
-    ITransponderBus bus,
-    HaemodialysisSessionOpenEhrProjector openEhrProjector,
-    TimeProvider timeProvider)
-    : ICommandHandler<CompleteSessionCommand, Unit>
+public sealed class CompleteSessionCommandHandler : ICommandHandler<CompleteSessionCommand, Unit>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ITransponderBus _bus;
+    private readonly HaemodialysisSessionOpenEhrProjector _openEhrProjector;
+    private readonly TimeProvider _timeProvider;
+    public CompleteSessionCommandHandler(IDialysisSessionRepository sessions,
+        IUnitOfWork unitOfWork,
+        ITransponderBus bus,
+        HaemodialysisSessionOpenEhrProjector openEhrProjector,
+        TimeProvider timeProvider)
+    {
+        _sessions = sessions;
+        _unitOfWork = unitOfWork;
+        _bus = bus;
+        _openEhrProjector = openEhrProjector;
+        _timeProvider = timeProvider;
+    }
     public async Task<Unit> HandleAsync(CompleteSessionCommand request, CancellationToken cancellationToken)
     {
-        var session = await sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
+        var session = await _sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Session '{request.SessionId}' not found.");
-        var completedAt = timeProvider.GetUtcNow().UtcDateTime;
+        var completedAt = _timeProvider.GetUtcNow().UtcDateTime;
         session.Complete(completedAt, request.AchievedUfVolumeLiters);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        var projection = openEhrProjector.Project(session, HaemodialysisSessionPhase.Completed, completedAt);
-        await bus.PublishAsync(new HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent(
+        var projection = _openEhrProjector.Project(session, HaemodialysisSessionPhase.Completed, completedAt);
+        await _bus.PublishAsync(new HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: completedAt,
             SchemaVersion: 1,

@@ -5,14 +5,19 @@ using Dialysis.EHR.Scheduling.Ports;
 
 namespace Dialysis.EHR.Scheduling.Features.BookAppointment;
 
-public sealed class BookAppointmentCommandHandler(
-    IAppointmentRepository appointments,
-    IUnitOfWork unitOfWork)
-    : ICommandHandler<BookAppointmentCommand, Guid>
+public sealed class BookAppointmentCommandHandler : ICommandHandler<BookAppointmentCommand, Guid>
 {
+    private readonly IAppointmentRepository _appointments;
+    private readonly IUnitOfWork _unitOfWork;
+    public BookAppointmentCommandHandler(IAppointmentRepository appointments,
+        IUnitOfWork unitOfWork)
+    {
+        _appointments = appointments;
+        _unitOfWork = unitOfWork;
+    }
     public async Task<Guid> HandleAsync(BookAppointmentCommand request, CancellationToken cancellationToken)
     {
-        if (await appointments.HasOverlapAsync(request.ProviderId, request.StartUtc, request.EndUtc, cancellationToken).ConfigureAwait(false))
+        if (await _appointments.HasOverlapAsync(request.ProviderId, request.StartUtc, request.EndUtc, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Provider has an overlapping appointment in this window.");
 
         var id = Guid.CreateVersion7();
@@ -24,8 +29,8 @@ public sealed class BookAppointmentCommandHandler(
             request.EndUtc,
             request.EncounterClassCode,
             request.VisitReason);
-        appointments.Add(appointment);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _appointments.Add(appointment);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

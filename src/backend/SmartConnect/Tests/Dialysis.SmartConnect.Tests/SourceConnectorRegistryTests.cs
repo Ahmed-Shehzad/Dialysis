@@ -6,9 +6,10 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class SourceConnectorRegistryTests
 {
-    private sealed class StubConnector(string kind) : ISourceConnector
+    private sealed class StubConnector : ISourceConnector
     {
-        public string Kind { get; } = kind;
+        public StubConnector(string kind) => Kind = kind;
+        public string Kind { get; }
 
         public Task RunAsync(SourceConnectorContext context, CancellationToken cancellationToken) => Task.CompletedTask;
     }

@@ -118,5 +118,19 @@ public sealed class DefaultExternalScriptLoader : IExternalScriptLoader
             && !Path.IsPathRooted(rel);
     }
 
-    private readonly record struct CacheEntry(string Body, DateTimeOffset ExpiresAtUtc);
+    private readonly record struct CacheEntry
+    {
+        public CacheEntry(string Body, DateTimeOffset ExpiresAtUtc)
+        {
+            this.Body = Body;
+            this.ExpiresAtUtc = ExpiresAtUtc;
+        }
+        public string Body { get; init; }
+        public DateTimeOffset ExpiresAtUtc { get; init; }
+        public void Deconstruct(out string Body, out DateTimeOffset ExpiresAtUtc)
+        {
+            Body = this.Body;
+            ExpiresAtUtc = this.ExpiresAtUtc;
+        }
+    }
 }

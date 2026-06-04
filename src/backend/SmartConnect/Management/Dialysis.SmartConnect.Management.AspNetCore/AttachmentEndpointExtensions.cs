@@ -73,11 +73,36 @@ public static class AttachmentEndpointExtensions
         }
     }
 
-    private sealed record AttachmentMetadata(
-        Guid Id,
-        Guid MessageId,
-        Guid FlowId,
-        string MimeType,
-        long SizeBytes,
-        DateTimeOffset CreatedUtc);
+    private sealed record AttachmentMetadata
+    {
+        public AttachmentMetadata(Guid Id,
+            Guid MessageId,
+            Guid FlowId,
+            string MimeType,
+            long SizeBytes,
+            DateTimeOffset CreatedUtc)
+        {
+            this.Id = Id;
+            this.MessageId = MessageId;
+            this.FlowId = FlowId;
+            this.MimeType = MimeType;
+            this.SizeBytes = SizeBytes;
+            this.CreatedUtc = CreatedUtc;
+        }
+        public Guid Id { get; init; }
+        public Guid MessageId { get; init; }
+        public Guid FlowId { get; init; }
+        public string MimeType { get; init; }
+        public long SizeBytes { get; init; }
+        public DateTimeOffset CreatedUtc { get; init; }
+        public void Deconstruct(out Guid Id, out Guid MessageId, out Guid FlowId, out string MimeType, out long SizeBytes, out DateTimeOffset CreatedUtc)
+        {
+            Id = this.Id;
+            MessageId = this.MessageId;
+            FlowId = this.FlowId;
+            MimeType = this.MimeType;
+            SizeBytes = this.SizeBytes;
+            CreatedUtc = this.CreatedUtc;
+        }
+    }
 }

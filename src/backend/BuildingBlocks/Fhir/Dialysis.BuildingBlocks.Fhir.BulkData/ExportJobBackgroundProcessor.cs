@@ -5,16 +5,28 @@ using Microsoft.Extensions.Logging;
 
 namespace Dialysis.BuildingBlocks.Fhir.BulkData;
 
-internal sealed class ExportJobBackgroundProcessor(
-    ExportJobQueue queue,
-    IServiceScopeFactory scopeFactory,
-    NdjsonFeederBinder binder,
-    TimeProvider time,
-    ILogger<ExportJobBackgroundProcessor> logger) : BackgroundService
+internal sealed class ExportJobBackgroundProcessor : BackgroundService
 {
+    private readonly ExportJobQueue _queue;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly NdjsonFeederBinder _binder;
+    private readonly TimeProvider _time;
+    private readonly ILogger<ExportJobBackgroundProcessor> _logger;
+    public ExportJobBackgroundProcessor(ExportJobQueue queue,
+        IServiceScopeFactory scopeFactory,
+        NdjsonFeederBinder binder,
+        TimeProvider time,
+        ILogger<ExportJobBackgroundProcessor> logger)
+    {
+        _queue = queue;
+        _scopeFactory = scopeFactory;
+        _binder = binder;
+        _time = time;
+        _logger = logger;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await foreach (var jobId in queue.ReadAllAsync(stoppingToken).ConfigureAwait(false))
+        await foreach (var jobId in _queue.ReadAllAsync(stoppingToken).ConfigureAwait(false))
         {
             try
             {
@@ -26,7 +38,7 @@ internal sealed class ExportJobBackgroundProcessor(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Export job {JobId} failed", jobId);
+                _logger.LogError(ex, "Export job {JobId} failed", jobId);
                 await MarkFailedAsync(jobId, ex.Message).ConfigureAwait(false);
             }
         }
@@ -34,7 +46,7 @@ internal sealed class ExportJobBackgroundProcessor(
 
     private async Task RunJobAsync(string jobId, CancellationToken cancellationToken)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var services = scope.ServiceProvider;
         var store = services.GetRequiredService<IExportJobStore>();
         var storage = services.GetRequiredService<IBulkDataStorage>();
@@ -50,7 +62,7 @@ internal sealed class ExportJobBackgroundProcessor(
         await store.UpdateAsync(inProgress, cancellationToken).ConfigureAwait(false);
 
         var types = job.ResourceTypes.Count == 0
-            ? [.. binder.SupportedResourceTypes]
+            ? [.. _binder.SupportedResourceTypes]
             : job.ResourceTypes;
 
         var outputs = new List<ExportJobOutput>(types.Count);
@@ -63,7 +75,7 @@ internal sealed class ExportJobBackgroundProcessor(
                 return;
             }
 
-            if (!binder.TryGet(resourceType, out var binding))
+            if (!_binder.TryGet(resourceType, out var binding))
             {
                 continue;
             }
@@ -81,7 +93,7 @@ internal sealed class ExportJobBackgroundProcessor(
         var completed = latest with
         {
             Status = ExportJobStatus.Completed,
-            CompletedAt = time.GetUtcNow(),
+            CompletedAt = _time.GetUtcNow(),
             Outputs = outputs,
         };
         await store.UpdateAsync(completed, cancellationToken).ConfigureAwait(false);
@@ -110,7 +122,7 @@ internal sealed class ExportJobBackgroundProcessor(
 
     private async Task MarkFailedAsync(string jobId, string error)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var store = scope.ServiceProvider.GetRequiredService<IExportJobStore>();
         var job = await store.GetAsync(jobId, CancellationToken.None).ConfigureAwait(false);
         if (job is null)
@@ -120,7 +132,7 @@ internal sealed class ExportJobBackgroundProcessor(
         var failed = job with
         {
             Status = ExportJobStatus.Failed,
-            CompletedAt = time.GetUtcNow(),
+            CompletedAt = _time.GetUtcNow(),
             Error = error,
         };
         await store.UpdateAsync(failed, CancellationToken.None).ConfigureAwait(false);

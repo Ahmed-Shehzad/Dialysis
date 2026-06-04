@@ -9,13 +9,22 @@ namespace Dialysis.BuildingBlocks.Transponder.Transport.SignalR;
 /// <summary>
 /// SignalR client to <see cref="TransponderSignalRHub"/>: invokes <see cref="TransponderSignalRHub.PublishMethod"/> and buffers <see cref="TransponderSignalRHub.ReceiveMethod"/> into <see cref="ITransponderTransport.RunConsumerAsync"/>.
 /// </summary>
-public sealed class SignalRTransponderTransport(
-    IOptions<TransponderSignalRClientOptions> options,
-    ILogger<SignalRTransponderTransport> logger) : ITransponderTransport
+public sealed class SignalRTransponderTransport : ITransponderTransport
 {
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private HubConnection? _connection;
     private Channel<TransportMessage>? _inbound;
+    private readonly IOptions<TransponderSignalRClientOptions> _options;
+    private readonly ILogger<SignalRTransponderTransport> _logger;
+    /// <summary>
+    /// SignalR client to <see cref="TransponderSignalRHub"/>: invokes <see cref="TransponderSignalRHub.PublishMethod"/> and buffers <see cref="TransponderSignalRHub.ReceiveMethod"/> into <see cref="ITransponderTransport.RunConsumerAsync"/>.
+    /// </summary>
+    public SignalRTransponderTransport(IOptions<TransponderSignalRClientOptions> options,
+        ILogger<SignalRTransponderTransport> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
@@ -27,7 +36,7 @@ public sealed class SignalRTransponderTransport(
 
             await DisposeCoreAsync().ConfigureAwait(false);
 
-            var o = options.Value;
+            var o = _options.Value;
             if (string.IsNullOrWhiteSpace(o.HubUrl))
                 throw new InvalidOperationException("Transponder SignalR: HubUrl is required (full URL, e.g. https://host/hubs/transponder).");
 
@@ -49,13 +58,13 @@ public sealed class SignalRTransponderTransport(
                     return;
 
                 if (!inbound.Writer.TryWrite(msg.Value))
-                    logger.LogWarning("Transponder SignalR: inbound channel closed; dropping message {RoutingKey}", dto.RoutingKey);
+                    _logger.LogWarning("Transponder SignalR: inbound channel closed; dropping message {RoutingKey}", dto.RoutingKey);
             });
 
             connection.Closed += ex =>
             {
                 if (ex is not null)
-                    logger.LogWarning(ex, "Transponder SignalR connection closed with error");
+                    _logger.LogWarning(ex, "Transponder SignalR connection closed with error");
                 inbound.Writer.TryComplete(ex);
                 return Task.CompletedTask;
             };
@@ -64,7 +73,7 @@ public sealed class SignalRTransponderTransport(
 
             _inbound = inbound;
             _connection = connection;
-            logger.LogInformation("Transponder SignalR client connected to {HubUrl}", o.HubUrl.Trim());
+            _logger.LogInformation("Transponder SignalR client connected to {HubUrl}", o.HubUrl.Trim());
         }
         finally
         {
@@ -110,7 +119,7 @@ public sealed class SignalRTransponderTransport(
 
     private void ConfigureConnection(HttpConnectionOptions httpOptions)
     {
-        var o = options.Value;
+        var o = _options.Value;
         if (o.AccessTokenProvider is not null)
             httpOptions.AccessTokenProvider = o.AccessTokenProvider;
     }
@@ -128,7 +137,7 @@ public sealed class SignalRTransponderTransport(
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Transponder SignalR: error stopping connection");
+                _logger.LogDebug(ex, "Transponder SignalR: error stopping connection");
             }
 
             await _connection.DisposeAsync().ConfigureAwait(false);

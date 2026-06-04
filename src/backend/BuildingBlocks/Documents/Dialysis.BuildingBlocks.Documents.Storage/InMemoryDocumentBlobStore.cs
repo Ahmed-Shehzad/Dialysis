@@ -25,8 +25,5 @@ public sealed class InMemoryDocumentBlobStore : IDocumentBlobStore
         return Task.FromResult<byte[]?>(bytes);
     }
 
-    public Task<bool> DeleteAsync(string storageRef, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(_store.TryRemove(storageRef, out _));
-    }
+    public Task<bool> DeleteAsync(string storageRef, CancellationToken cancellationToken) => Task.FromResult(_store.TryRemove(storageRef, out _));
 }

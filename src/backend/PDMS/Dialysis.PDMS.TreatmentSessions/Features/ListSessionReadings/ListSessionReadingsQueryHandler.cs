@@ -4,14 +4,15 @@ using Dialysis.PDMS.TreatmentSessions.Realtime;
 
 namespace Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 
-public sealed class ListSessionReadingsQueryHandler(IDialysisSessionRepository sessions)
-    : IQueryHandler<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>
+public sealed class ListSessionReadingsQueryHandler : IQueryHandler<ListSessionReadingsQuery, IReadOnlyList<VitalsReadingSnapshot>>
 {
+    private readonly IDialysisSessionRepository _sessions;
+    public ListSessionReadingsQueryHandler(IDialysisSessionRepository sessions) => _sessions = sessions;
     public async Task<IReadOnlyList<VitalsReadingSnapshot>> HandleAsync(
         ListSessionReadingsQuery request,
         CancellationToken cancellationToken)
     {
-        var session = await sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
+        var session = await _sessions.GetAsync(request.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Session '{request.SessionId}' not found.");
 
         var limit = Math.Clamp(request.Limit, 1, 5000);

@@ -8,17 +8,28 @@ using Dialysis.Identity.Provisioning.Ports;
 
 namespace Dialysis.Identity.Provisioning.Features.ProvisionUser;
 
-public sealed class ProvisionUserCommandHandler(
-    IUserAccountRepository users,
-    ITransponderOutbox outbox,
-    IMessageSerializer serializer,
-    IUnitOfWork unitOfWork,
-    TimeProvider timeProvider)
-    : ICommandHandler<ProvisionUserCommand, Guid>
+public sealed class ProvisionUserCommandHandler : ICommandHandler<ProvisionUserCommand, Guid>
 {
+    private readonly IUserAccountRepository _users;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IMessageSerializer _serializer;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TimeProvider _timeProvider;
+    public ProvisionUserCommandHandler(IUserAccountRepository users,
+        ITransponderOutbox outbox,
+        IMessageSerializer serializer,
+        IUnitOfWork unitOfWork,
+        TimeProvider timeProvider)
+    {
+        _users = users;
+        _outbox = outbox;
+        _serializer = serializer;
+        _unitOfWork = unitOfWork;
+        _timeProvider = timeProvider;
+    }
     public async Task<Guid> HandleAsync(ProvisionUserCommand request, CancellationToken cancellationToken)
     {
-        if (await users.FindBySubjectAsync(request.Subject, cancellationToken).ConfigureAwait(false) is { } existing)
+        if (await _users.FindBySubjectAsync(request.Subject, cancellationToken).ConfigureAwait(false) is { } existing)
             return existing.Id;
 
         var id = Guid.CreateVersion7();
@@ -30,25 +41,25 @@ public sealed class ProvisionUserCommandHandler(
             Email = request.Email,
             Status = UserAccountStatus.Provisioned,
         };
-        users.Add(user);
+        _users.Add(user);
 
         var @event = new UserRegisteredIntegrationEvent(
             EventId: Guid.CreateVersion7(),
-            OccurredOn: timeProvider.GetUtcNow().UtcDateTime,
+            OccurredOn: _timeProvider.GetUtcNow().UtcDateTime,
             SchemaVersion: 1,
             UserId: id,
             Subject: request.Subject,
             DisplayName: request.DisplayName,
             Email: request.Email);
 
-        var payload = serializer.Serialize(@event);
-        await outbox.EnqueueAsync(new TransponderOutboxEnvelope(
+        var payload = _serializer.Serialize(@event);
+        await _outbox.EnqueueAsync(new TransponderOutboxEnvelope(
             AssemblyQualifiedEventType: typeof(UserRegisteredIntegrationEvent).AssemblyQualifiedName!,
             PayloadJson: System.Text.Encoding.UTF8.GetString(payload.Span),
             Id: @event.EventId),
             cancellationToken).ConfigureAwait(false);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 }

@@ -12,15 +12,24 @@ namespace Dialysis.HIS.PatientFlow.Fhir;
 /// regional HIE pipelines) a complete patient list scoped to HIS activity so cross-resource
 /// joins inside the NDJSON output work without round-tripping to EHR mid-export.
 /// </summary>
-public sealed class HisPatientStubFeeder(IAdmissionRepository admissions) : INdjsonResourceFeeder<Patient>
+public sealed class HisPatientStubFeeder : INdjsonResourceFeeder<Patient>
 {
+    private readonly IAdmissionRepository _admissions;
+    /// <summary>
+    /// Emits a minimal FHIR <c>Patient</c> stub for each distinct patient referenced by a HIS
+    /// Admission. EHR remains the patient-identity system of record — the EHR-side Patient feeder
+    /// owns demographics, MRN, etc. HIS's stub gives Bulk Data <c>$export</c> consumers (payers,
+    /// regional HIE pipelines) a complete patient list scoped to HIS activity so cross-resource
+    /// joins inside the NDJSON output work without round-tripping to EHR mid-export.
+    /// </summary>
+    public HisPatientStubFeeder(IAdmissionRepository admissions) => _admissions = admissions;
     public async IAsyncEnumerable<Patient> StreamAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        await foreach (var patientId in admissions.StreamDistinctPatientIdsAsync(job.Since, cancellationToken).ConfigureAwait(false))
+        await foreach (var patientId in _admissions.StreamDistinctPatientIdsAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new Patient
             {

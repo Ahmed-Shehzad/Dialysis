@@ -8,8 +8,15 @@ namespace Dialysis.SmartConnect.Alerts.Actions;
 /// <c>{"url":"https://...","method":"POST","headers":{"X-Token":"..."},"contentType":"application/json","bodyTemplate":"..."}</c>.
 /// <see cref="AlertVariables"/> is applied to <c>bodyTemplate</c> and to every header value.
 /// </summary>
-public sealed class WebhookAlertActionProvider(IHttpClientFactory httpClientFactory) : IAlertActionProvider
+public sealed class WebhookAlertActionProvider : IAlertActionProvider
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+    /// <summary>
+    /// Sends an HTTP request when an alert fires. Properties JSON shape:
+    /// <c>{"url":"https://...","method":"POST","headers":{"X-Token":"..."},"contentType":"application/json","bodyTemplate":"..."}</c>.
+    /// <see cref="AlertVariables"/> is applied to <c>bodyTemplate</c> and to every header value.
+    /// </summary>
+    public WebhookAlertActionProvider(IHttpClientFactory httpClientFactory) => _httpClientFactory = httpClientFactory;
     public const string KindValue = "webhook";
     public const string HttpClientName = "smartconnect-outbound";
 
@@ -61,7 +68,7 @@ public sealed class WebhookAlertActionProvider(IHttpClientFactory httpClientFact
 
         try
         {
-            var client = httpClientFactory.CreateClient(HttpClientName);
+            var client = _httpClientFactory.CreateClient(HttpClientName);
             using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (response.IsSuccessStatusCode)
             {

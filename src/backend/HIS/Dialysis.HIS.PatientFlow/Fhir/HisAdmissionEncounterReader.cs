@@ -10,14 +10,21 @@ namespace Dialysis.HIS.PatientFlow.Fhir;
 /// Identifier reuses the admission Guid; status reflects admit/discharge state; subject
 /// references the EHR-owned <c>Patient/{patientId}</c>.
 /// </summary>
-public sealed class HisAdmissionEncounterReader(IAdmissionRepository admissions) : IFhirReader<Encounter>
+public sealed class HisAdmissionEncounterReader : IFhirReader<Encounter>
 {
+    private readonly IAdmissionRepository _admissions;
+    /// <summary>
+    /// Projects an HIS <see cref="Admission"/> aggregate as a FHIR R4 <c>Encounter</c> resource.
+    /// Identifier reuses the admission Guid; status reflects admit/discharge state; subject
+    /// references the EHR-owned <c>Patient/{patientId}</c>.
+    /// </summary>
+    public HisAdmissionEncounterReader(IAdmissionRepository admissions) => _admissions = admissions;
     public async ValueTask<FhirReadResult<Encounter>> ReadAsync(string id, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(id, out var admissionId))
             return new FhirReadResult<Encounter>(null);
 
-        var admission = await admissions.GetAsync(admissionId, cancellationToken).ConfigureAwait(false);
+        var admission = await _admissions.GetAsync(admissionId, cancellationToken).ConfigureAwait(false);
         if (admission is null)
             return new FhirReadResult<Encounter>(null);
 

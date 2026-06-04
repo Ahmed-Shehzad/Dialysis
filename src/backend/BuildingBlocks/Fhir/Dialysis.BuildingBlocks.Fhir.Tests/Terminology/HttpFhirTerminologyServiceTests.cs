@@ -73,9 +73,11 @@ public sealed class HttpFhirTerminologyServiceTests
         Content = new StringContent(json, Encoding.UTF8, "application/fhir+json"),
     };
 
-    private sealed class StubHandler(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> handler) : HttpMessageHandler
+    private sealed class StubHandler : HttpMessageHandler
     {
+        private readonly Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> _handler;
+        public StubHandler(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> handler) => _handler = handler;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(handler(request, cancellationToken));
+            => Task.FromResult(_handler(request, cancellationToken));
     }
 }
