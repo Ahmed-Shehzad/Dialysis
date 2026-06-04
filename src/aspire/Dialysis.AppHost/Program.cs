@@ -191,13 +191,23 @@ static IResourceBuilder<PostgresServerResource> Pg(IDistributedApplicationBuilde
         .WithDataVolume($"dialysis-{name}-data")
         .WithLifetime(ContainerLifetime.Persistent);
 
+// PDMS gets the TimescaleDB image — same Postgres wire protocol + drivers, plus the
+// `timescaledb` extension that the IntradialyticReadings table needs (hypertable +
+// compression policy declared by the EF migration). Other modules stay on plain
+// postgres-alpine because they don't have the high-volume time-series shape.
+static IResourceBuilder<PostgresServerResource> PgTimescale(IDistributedApplicationBuilder b, string name) =>
+    b.AddPostgres(name)
+        .WithImage("timescale/timescaledb", "latest-pg17")
+        .WithDataVolume($"dialysis-{name}-data")
+        .WithLifetime(ContainerLifetime.Persistent);
+
 // Keep the server builders so the publish-time decoration block at the bottom can map the
 // host-side port + healthcheck onto each one. The DB-wrapper builder (.AddDatabase) is what
 // downstream resources use for the connection string, but the host port mapping belongs on
 // the server resource.
 var hisPgServer = Pg(builder, "postgres-his");
 var ehrPgServer = Pg(builder, "postgres-ehr");
-var pdmsPgServer = Pg(builder, "postgres-pdms");
+var pdmsPgServer = PgTimescale(builder, "postgres-pdms");
 var smartconnectPgServer = Pg(builder, "postgres-smartconnect");
 var hiePgServer = Pg(builder, "postgres-hie");
 

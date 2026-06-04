@@ -91,6 +91,11 @@ metadata:
     app.kubernetes.io/component: postgres
     dialysis.io/module: pdms
 spec:
+  # PDMS uses the timescale/timescaledb image for the hypertable on IntradialyticReadings
+  # (see EF migration AddTimescaleHypertable). CNPG accepts an imageName override on the
+  # cluster spec — we point at TimescaleDB's CNPG-compatible image. The Postgres major
+  # matches the rest of the fleet (17).
+  imageName: ghcr.io/timescale/cloudnative-pg-timescaledb:17
   instances: ${CNPG_INSTANCES}
   primaryUpdateStrategy: unsupervised
   # PDMS holds telemetry volume but is also clinically critical; same sync settings as
@@ -101,12 +106,23 @@ spec:
   storage:
     size: ${CNPG_STORAGE_SIZE}
     storageClass: ${CNPG_STORAGE_CLASS}
+  postgresql:
+    # TimescaleDB ships a planner extension that needs to load at server start. CNPG
+    # surfaces shared_preload_libraries via the cluster's postgresql block; here we
+    # ensure `timescaledb` is loaded before any user query runs.
+    shared_preload_libraries:
+      - timescaledb
   bootstrap:
     initdb:
       database: pdms
       owner: pdms
       secret:
         name: pg-pdms-app-credentials
+      # CREATE EXTENSION runs as a post-bootstrap script so the extension is enabled
+      # before the application connects + before any migration runs. The migration
+      # itself also has CREATE EXTENSION IF NOT EXISTS as a belt-and-braces.
+      postInitApplicationSQL:
+        - "CREATE EXTENSION IF NOT EXISTS timescaledb;"
   backup:
     barmanObjectStore:
       destinationPath: ${CNPG_BACKUP_BUCKET}/pdms

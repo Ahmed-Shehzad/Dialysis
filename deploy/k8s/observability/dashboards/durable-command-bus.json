@@ -1,0 +1,180 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "datasource", "uid": "grafana" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Durability dashboard for the Dialysis durable command bus. Renders the four headline metrics emitted by the Dialysis.DurableCommandBus meter — enqueue rate, applied rate, latency p99, failure rate — partitioned by module + command_type. Pair with the Postgres + RabbitMQ operator-shipped dashboards for full coverage.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Enqueue rate (commands/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (module, command_type) (rate(dialysis_durable_commands_enqueued_total{module=~\"$module\"}[5m]))",
+          "legendFormat": "{{module}}.{{command_type}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "description": "Rate of commands that received publisher-confirm ACK. Drop to zero on the publisher side → broker outage; the API endpoint will be returning 503 + Retry-After."
+    },
+    {
+      "title": "Applied rate (commands/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (module, command_type) (rate(dialysis_durable_commands_applied_total{module=~\"$module\"}[5m]))",
+          "legendFormat": "{{module}}.{{command_type}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "description": "Rate at which the consumer commits the handler + ledger row to Postgres. Sustained lag behind 'Enqueue rate' = consumer fall-behind; HPA should be scaling the API pods up via the rabbitmq_queue_messages signal."
+    },
+    {
+      "title": "Enqueue → applied latency (p99, seconds)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, module, command_type) (rate(dialysis_durable_commands_latency_seconds_bucket{module=~\"$module\"}[5m])))",
+          "legendFormat": "{{module}}.{{command_type}} p99",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, module, command_type) (rate(dialysis_durable_commands_latency_seconds_bucket{module=~\"$module\"}[5m])))",
+          "legendFormat": "{{module}}.{{command_type}} p50",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "description": "End-to-end durability latency: EnqueuedAtUtc → AppliedAtUtc. Design contract: p99 < 1s under steady load; spikes above 5s usually mean Postgres write contention or the RMQ cluster paging to disk under backlog."
+    },
+    {
+      "title": "Failure rate (commands/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (module, command_type, reason) (rate(dialysis_durable_commands_failed_total{module=~\"$module\"}[5m]))",
+          "legendFormat": "{{module}}.{{command_type}} ({{reason}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "description": "Failed terminal commands by reason: catalog_or_payload (envelope rejected before handler) vs handler_exception (handler threw). Sustained handler_exception above zero = a bug in the slice; check the consumer logs + the command_ledger.failure_json column."
+    },
+    {
+      "title": "Publish-confirm latency (p99, ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, module, command_type) (rate(dialysis_durable_commands_enqueue_latency_milliseconds_bucket{module=~\"$module\"}[5m])))",
+          "legendFormat": "{{module}}.{{command_type}} p99",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "description": "Broker round-trip from publish to confirm-ack. The 202 response SLO sits on this — design contract: p99 < 500ms. Sustained > 1s = RMQ cluster under pressure, likely disk fsync queued; check the rmq dashboard."
+    },
+    {
+      "title": "Backlog by queue (RabbitMQ Operator metric)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (queue) (rabbitmq_queue_messages{queue=~\".*durable.*|.*DurableCommandEnvelope.*\"})",
+          "legendFormat": "{{queue}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "description": "Queue depth for durable-command queues, sourced from the RabbitMQ Cluster Operator's Prometheus exporter. PDMS HPA targets `averageValue: 1000` on this metric — sustained backlog above 1000 means HPA is scaling out."
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["dialysis", "durability", "durable-command-bus"],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Datasource"
+      },
+      {
+        "name": "module",
+        "type": "query",
+        "label": "Module",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(dialysis_durable_commands_enqueued_total, module)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Dialysis · Durable Command Bus",
+  "uid": "dialysis-durable-commands",
+  "version": 1,
+  "weekStart": ""
+}
