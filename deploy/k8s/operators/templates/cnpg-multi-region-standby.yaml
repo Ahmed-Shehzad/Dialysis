@@ -1,0 +1,134 @@
+---
+# Multi-region active-passive scaffold for the clinical-tier Postgres clusters
+# (HIS, EHR, PDMS). The PRIMARY region runs the cluster manifest in
+# cloudnative-pg-clusters.yaml; the SECONDARY region runs this manifest, which
+# bootstraps each cluster as a CNPG "replica cluster" continuously streaming WAL
+# from the primary region's S3 archive.
+#
+# Two clusters with the same name in different K8s contexts. Operator opt-in:
+# only render this file when DIALYSIS_REGION_ROLE=secondary AND
+# DIALYSIS_PRIMARY_WAL_BUCKET points at the primary's CNPG backup destination.
+#
+# Failover (planned or unplanned): on the secondary, edit each Cluster CR and
+# remove the `replica` section + `bootstrap.recovery`, which promotes the
+# standby to a writable primary. Then update DNS / gateway routing to send
+# traffic to the secondary region. See docs/operations/multi-region.md.
+#
+# Three clinical-tier clusters get the standby treatment. SmartConnect + HIE
+# stay region-affinitized — they're integration plumbing, not clinical records,
+# and async-only replication is acceptable for them via point-in-time-recovery
+# on demand rather than continuous standby.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-his
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: his
+    dialysis.io/region-role: secondary
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  # Bootstrap from the primary region's WAL archive. Continuous streaming keeps
+  # the standby ~seconds behind the primary; the gap is bounded by the WAL
+  # archive's flush cadence (CNPG's default is every 5 minutes, configurable).
+  bootstrap:
+    recovery:
+      source: pg-his-primary
+  replica:
+    enabled: true
+    source: pg-his-primary
+  externalClusters:
+    - name: pg-his-primary
+      barmanObjectStore:
+        destinationPath: ${DIALYSIS_PRIMARY_WAL_BUCKET}/his
+        s3Credentials:
+          accessKeyId:
+            name: pg-backup-credentials
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: pg-backup-credentials
+            key: SECRET_ACCESS_KEY
+  monitoring:
+    enablePodMonitor: true
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-ehr
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: ehr
+    dialysis.io/region-role: secondary
+spec:
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    recovery:
+      source: pg-ehr-primary
+  replica:
+    enabled: true
+    source: pg-ehr-primary
+  externalClusters:
+    - name: pg-ehr-primary
+      barmanObjectStore:
+        destinationPath: ${DIALYSIS_PRIMARY_WAL_BUCKET}/ehr
+        s3Credentials:
+          accessKeyId:
+            name: pg-backup-credentials
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: pg-backup-credentials
+            key: SECRET_ACCESS_KEY
+  monitoring:
+    enablePodMonitor: true
+---
+# PDMS standby — note this still uses the TimescaleDB image and pre-loads the
+# extension. The replica cluster needs the same Postgres + extension set as the
+# primary, otherwise WAL replay fails on TimescaleDB-specific operations.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-pdms
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: postgres
+    dialysis.io/module: pdms
+    dialysis.io/region-role: secondary
+spec:
+  imageName: ghcr.io/timescale/cloudnative-pg-timescaledb:17
+  instances: ${CNPG_INSTANCES}
+  primaryUpdateStrategy: unsupervised
+  postgresql:
+    shared_preload_libraries:
+      - timescaledb
+  storage:
+    size: ${CNPG_STORAGE_SIZE}
+    storageClass: ${CNPG_STORAGE_CLASS}
+  bootstrap:
+    recovery:
+      source: pg-pdms-primary
+  replica:
+    enabled: true
+    source: pg-pdms-primary
+  externalClusters:
+    - name: pg-pdms-primary
+      barmanObjectStore:
+        destinationPath: ${DIALYSIS_PRIMARY_WAL_BUCKET}/pdms
+        s3Credentials:
+          accessKeyId:
+            name: pg-backup-credentials
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: pg-backup-credentials
+            key: SECRET_ACCESS_KEY
+  monitoring:
+    enablePodMonitor: true

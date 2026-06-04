@@ -23,6 +23,7 @@ public sealed record DocumentDetail(
     string ContentHash,
     bool HasAcroForms,
     bool HasJavascript,
+    bool AllowJavaScriptExecution,
     IReadOnlyList<DocumentSignatureRow> Signatures);
 
 public sealed record DocumentSignatureRow(
@@ -68,6 +69,7 @@ public sealed class GetDocumentQueryHandler(IDocumentReferenceRepository reposit
             doc.ContentHash,
             doc.HasAcroForms,
             doc.HasJavascript,
+            doc.AllowJavaScriptExecution,
             [.. doc.Signatures.Select(s => new DocumentSignatureRow(
                 s.Id, s.SignerKind, s.SignerUserId, s.CertThumbprint, s.SignedAtUtc, s.Reason,
                 s.PadesLevel, s.SignatureFormat, s.TsaUri, s.TimestampedAtUtc,

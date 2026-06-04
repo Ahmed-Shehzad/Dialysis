@@ -5,9 +5,12 @@ using Dialysis.CQRS;
 using Dialysis.HIE.Api.Hateoas;
 using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Documents.Features.DeleteDocument;
+using Dialysis.HIE.Documents.Features.FillDocumentAcroForm;
 using Dialysis.HIE.Documents.Features.GetDocument;
 using Dialysis.HIE.Documents.Features.GetDocumentBinary;
+using Dialysis.HIE.Documents.Features.GetDocumentPreview;
 using Dialysis.HIE.Documents.Features.ListDocuments;
+using Dialysis.HIE.Documents.Features.SetDocumentJavaScriptExecution;
 using Dialysis.HIE.Documents.Features.SignDocument;
 using Dialysis.HIE.Documents.Features.UploadDocument;
 using Microsoft.AspNetCore.Authorization;
@@ -61,9 +64,32 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
             [
                 new LinkDto("self", self, "GET"),
                 new LinkDto("hie:document:binary", binaryHref, "GET"),
+                new LinkDto("hie:document:fill", self + "/fill", "POST"),
                 new LinkDto("hie:document:sign", self + "/sign", "POST"),
+                new LinkDto("hie:document:javascript-execution", self + "/javascript-execution", "POST"),
                 new LinkDto("hie:document:delete", self, "DELETE"),
             ]));
+    }
+
+    /// <summary>
+    /// Inline-preview envelope for the SPA. PDFs return only the format hint (the SPA keeps
+    /// using the existing pdfjs path against <c>/binary</c>). XML / CDA / FHIR-XML bodies
+    /// return pretty-printed text the SPA renders in a code panel; plain-text bodies are
+    /// returned verbatim; everything else returns the Binary hint so the SPA shows a
+    /// download-only card. Keeps the controller surface narrow: one endpoint covers every
+    /// non-PDF kind we currently support without adding per-kind routes.
+    /// </summary>
+    [HttpGet("{id:guid}/preview")]
+    [PhiAccess("hie.documents.preview")]
+    [ProducesResponseType(typeof(ResourceEnvelope<DocumentPreview>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPreviewAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var preview = await cqrs.SendQueryAsync<GetDocumentPreviewQuery, DocumentPreview?>(
+            new GetDocumentPreviewQuery(id), cancellationToken).ConfigureAwait(false);
+        if (preview is null) return NotFound();
+        var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
+        return Ok(new ResourceEnvelope<DocumentPreview>(preview, [new LinkDto("self", self, "GET")]));
     }
 
     [HttpGet("{id:guid}/binary")]
@@ -126,6 +152,50 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Populates AcroForm field values on an existing PDF. Returns the revised document
+    /// (same id, new bytes) plus which fields the server applied vs which keys it didn't
+    /// recognize. Doing this server-side ensures a subsequent PAdES signature actually
+    /// covers the filled values rather than signing an empty form.
+    /// </summary>
+    [HttpPost("{id:guid}/fill")]
+    [PhiAccess("hie.documents.fill")]
+    [ProducesResponseType(typeof(ResourceEnvelope<FilledDocumentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> FillAcroFormAsync(Guid id, [FromBody] FillDocumentRequest body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var command = new FillDocumentAcroFormCommand(id, body.FieldValues ?? new Dictionary<string, string>());
+        var result = await cqrs.SendCommandAsync<FillDocumentAcroFormCommand, FillDocumentAcroFormResult>(command, cancellationToken)
+            .ConfigureAwait(false);
+        var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{result.DocumentId}";
+        return Ok(new ResourceEnvelope<FilledDocumentDto>(
+            new FilledDocumentDto(result.DocumentId, result.FilledFieldNames, result.UnknownFields),
+            [new LinkDto("self", self, "GET")]));
+    }
+
+    /// <summary>
+    /// Per-document gate for pdfjs JavaScript execution. The bytes are preserved on upload;
+    /// this endpoint only flips the policy flag the SPA viewer reads. Default-off — even
+    /// documents that ship with JS embedded stay inert in the viewer until an operator with
+    /// the retention-admin role explicitly authorizes execution. Each transition is audited
+    /// through <see cref="PhiAccessAttribute"/>.
+    /// </summary>
+    [HttpPost("{id:guid}/javascript-execution")]
+    [PhiAccess("hie.documents.javascript.administer")]
+    [ProducesResponseType(typeof(ResourceEnvelope<JavaScriptExecutionPolicyDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetJavaScriptExecutionAsync(Guid id, [FromBody] JavaScriptExecutionRequest body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var allowed = await cqrs.SendCommandAsync<SetDocumentJavaScriptExecutionCommand, bool>(
+            new SetDocumentJavaScriptExecutionCommand(id, body.Allow), cancellationToken).ConfigureAwait(false);
+        var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{id}";
+        return Ok(new ResourceEnvelope<JavaScriptExecutionPolicyDto>(
+            new JavaScriptExecutionPolicyDto(id, allowed),
+            [new LinkDto("self", self, "GET")]));
+    }
+
     public sealed record UploadDocumentRequest(
         Guid PatientId,
         string Kind,
@@ -145,4 +215,15 @@ public sealed class DocumentsController(ICqrsGateway cqrs) : ControllerBase
         string? TspCredentialId = null);
 
     public sealed record UploadedDocumentDto(Guid DocumentId);
+
+    public sealed record FillDocumentRequest(Dictionary<string, string>? FieldValues);
+
+    public sealed record FilledDocumentDto(
+        Guid DocumentId,
+        IReadOnlyList<string> FilledFieldNames,
+        IReadOnlyList<string> UnknownFields);
+
+    public sealed record JavaScriptExecutionRequest(bool Allow);
+
+    public sealed record JavaScriptExecutionPolicyDto(Guid DocumentId, bool AllowJavaScriptExecution);
 }

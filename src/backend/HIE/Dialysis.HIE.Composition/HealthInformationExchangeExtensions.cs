@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
 using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.BuildingBlocks.Transponder;
@@ -72,6 +73,9 @@ public static class HealthInformationExchangeExtensions
             // at the host once. PDMS's IReportBlobStore continues to resolve through this same
             // IDocumentBlobStore singleton (see InMemoryReportBlobStore's adapter ctor).
             services.AddInMemoryDocumentBlobStore();
+            // AcroForm fill is host-owned (admin operator fills out a partner intake PDF and
+            // re-saves with the values baked in). The processor is stateless + thread-safe.
+            services.AddSingleton<IAcroFormProcessor, PdfSharpAcroFormProcessor>();
             var signingSection = configuration.GetSection("Documents:Signing");
             services.AddPdfSigning(signingSection);
             // eIDAS-QES path is opt-in: the host configures a TSP only when it has a CSC v2
@@ -132,7 +136,13 @@ public static class HealthInformationExchangeExtensions
                 services.AddTransponderOutboxRelay<HieDbContext>();
 
             if (enableDemoSeed)
+            {
                 services.AddHostedService<Demo.HieDemoSeeder>();
+                // Synthetic TEFCA QHIN partner the operator can use to walk the activation
+                // flow against /hie/admin/tefca/partners — gated alongside the consent
+                // demo so a single Hie:Demo:Enabled flag covers both.
+                services.AddHostedService<Demo.HieTefcaSandboxSeeder>();
+            }
 
             return services;
         }

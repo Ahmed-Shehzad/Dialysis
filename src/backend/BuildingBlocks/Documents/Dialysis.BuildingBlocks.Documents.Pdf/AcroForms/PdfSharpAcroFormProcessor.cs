@@ -207,4 +207,104 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
 
     private static PdfRectangle ToPdfRectangle(PdfPoint origin, PdfSize size) =>
         new(new XRect(origin.X, origin.Y, size.Width, size.Height));
+
+    public Task<AcroFormFillResult> FillFormValuesAsync(
+        ReadOnlyMemory<byte> pdfBytes,
+        IReadOnlyDictionary<string, string> fieldValues,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(fieldValues);
+        EmbeddedLatoFontResolver.EnsureRegistered();
+
+        using var input = new MemoryStream(pdfBytes.ToArray(), writable: false);
+        using var document = PdfReader.Open(input, PdfDocumentOpenMode.Modify);
+
+        // Build a fully-qualified-name → field index over the existing AcroForm tree (handles
+        // nested kid hierarchies — Acrobat / many partner forms wrap fields in group nodes).
+        var index = new Dictionary<string, PdfAcroField>(StringComparer.Ordinal);
+        var catalog = document.Internals.Catalog.Elements;
+        if (catalog.ContainsKey("/AcroForm"))
+        {
+            IndexFields(document.AcroForm.Fields, parentName: null, index);
+        }
+
+        var filled = new List<string>(fieldValues.Count);
+        var unknown = new List<string>();
+
+        foreach (var (key, raw) in fieldValues)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!index.TryGetValue(key, out var field))
+            {
+                unknown.Add(key);
+                continue;
+            }
+            // Signature fields are filled through IPdfSigner — silently skip them here so a
+            // caller that round-trips the full field set doesn't accidentally overwrite the
+            // signature dictionary. PDFsharp 6.x round-trips signature fields as either a
+            // typed PdfSignatureField or a generic field with /FT=/Sig — check both.
+            if (field is PdfSignatureField || IsSignatureField(field)) continue;
+            ApplyValue(field, raw);
+            filled.Add(key);
+        }
+
+        using var output = new MemoryStream();
+#pragma warning disable VSTHRD103
+        document.Save(output);
+#pragma warning restore VSTHRD103
+        return Task.FromResult(new AcroFormFillResult(output.ToArray(), filled, unknown));
+    }
+
+    private static void IndexFields(PdfAcroField.PdfAcroFieldCollection fields, string? parentName, IDictionary<string, PdfAcroField> sink)
+    {
+        for (var i = 0; i < fields.Count; i++)
+        {
+            var field = fields[i];
+            var localName = field.Elements.GetString("/T") ?? string.Empty;
+            var qualified = string.IsNullOrEmpty(parentName) ? localName : $"{parentName}.{localName}";
+
+            if (!string.IsNullOrEmpty(qualified))
+                sink[qualified] = field;
+
+            if (field.HasKids)
+                IndexFields(field.Fields, qualified, sink);
+        }
+    }
+
+    private static void ApplyValue(PdfAcroField field, string raw)
+    {
+        switch (field)
+        {
+            case PdfTextField text:
+                text.Text = raw ?? string.Empty;
+                break;
+            case PdfCheckBoxField checkbox:
+                checkbox.Checked = IsTruthy(raw);
+                break;
+            case PdfRadioButtonField radio:
+                if (!string.IsNullOrEmpty(raw))
+                    radio.Elements.SetName("/V", raw.StartsWith('/') ? raw : "/" + raw);
+                break;
+            case PdfChoiceField choice:
+                if (!string.IsNullOrEmpty(raw))
+                    choice.Elements.SetString("/V", raw);
+                break;
+            default:
+                // Generic fallback: set the /V entry as a string. PDF readers will display it
+                // even when PDFsharp doesn't model the field type directly.
+                field.Elements.SetString("/V", raw ?? string.Empty);
+                break;
+        }
+    }
+
+    private static bool IsSignatureField(PdfAcroField field) =>
+        string.Equals(field.Elements.GetName("/FT"), "/Sig", StringComparison.Ordinal);
+
+    private static bool IsTruthy(string raw) =>
+        raw is not null && (
+            string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(raw, "yes", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(raw, "on", StringComparison.OrdinalIgnoreCase) ||
+            raw == "1" ||
+            string.Equals(raw, "checked", StringComparison.OrdinalIgnoreCase));
 }

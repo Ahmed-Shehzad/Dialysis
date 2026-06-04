@@ -13,7 +13,7 @@ public sealed class RecordAllergyCommandHandler(
     public async Task<Guid> HandleAsync(RecordAllergyCommand request, CancellationToken cancellationToken)
     {
         var allergen = new Coding(request.AllergenSystem, request.AllergenCode, request.AllergenDisplay);
-        var id = Guid.CreateVersion7();
+        var id = request.AllergyId != Guid.Empty ? request.AllergyId : Guid.CreateVersion7();
         var allergy = Allergy.Record(
             id,
             request.PatientId,

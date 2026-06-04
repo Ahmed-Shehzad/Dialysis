@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
@@ -64,6 +65,10 @@ public sealed class EhrDbContext(
     public DbSet<LabTransmission> LabTransmissions => Set<LabTransmission>();
     public DbSet<InsurerTransmission> InsurerTransmissions => Set<InsurerTransmission>();
 
+    // Durable command bus idempotency + status ledger; rows live in
+    // `ehr_durablecommands.command_ledger`.
+    public DbSet<CommandLedgerEntry> CommandLedgerEntries => Set<CommandLedgerEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -73,5 +78,7 @@ public sealed class EhrDbContext(
         modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());
         modelBuilder.ApplyConfiguration(new SubscriptionRecordConfiguration());
         modelBuilder.ApplyConfiguration(new NotificationOutboxRecordConfiguration());
+
+        modelBuilder.ApplyConfiguration(new CommandLedgerEntityConfiguration("ehr_durablecommands"));
     }
 }

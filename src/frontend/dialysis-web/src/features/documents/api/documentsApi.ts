@@ -49,7 +49,19 @@ export type DocumentDetail = DocumentRow & {
   category?: string | null;
   createdBy?: string | null;
   contentHash: string;
+  /** Per-document gate the SPA viewer consults to enable pdfjs JS execution. */
+  allowJavaScriptExecution: boolean;
   signatures: DocumentSignatureRow[];
+};
+
+export type DocumentPreviewFormat = "Pdf" | "Xml" | "Text" | "Binary";
+
+export type DocumentPreview = {
+  format: DocumentPreviewFormat;
+  content?: string | null;
+  mimeType: string;
+  rootElement?: string | null;
+  documentTypeName?: string | null;
 };
 
 type ListFilters = {
@@ -123,6 +135,42 @@ export const signDocument = async (id: string, input: SignDocumentInput): Promis
 
 export const deleteDocument = async (id: string): Promise<void> => {
   await apiClient.delete(`/api/hie/api/v1.0/documents/${id}`);
+};
+
+export type FillDocumentResult = {
+  documentId: string;
+  filledFieldNames: string[];
+  unknownFields: string[];
+};
+
+export const fillDocumentAcroForm = async (
+  id: string,
+  fieldValues: Record<string, string>,
+): Promise<FillDocumentResult> => {
+  const response = await apiClient.post<Envelope<FillDocumentResult>>(
+    `/api/hie/api/v1.0/documents/${id}/fill`,
+    { fieldValues },
+  );
+  return response.data.data;
+};
+
+export const setJavaScriptExecution = async (id: string, allow: boolean): Promise<boolean> => {
+  const response = await apiClient.post<
+    Envelope<{ documentId: string; allowJavaScriptExecution: boolean }>
+  >(`/api/hie/api/v1.0/documents/${id}/javascript-execution`, { allow });
+  return response.data.data.allowJavaScriptExecution;
+};
+
+export const fetchDocumentPreview = async (id: string): Promise<DocumentPreview | null> => {
+  try {
+    const response = await apiClient.get<Envelope<DocumentPreview>>(
+      `/api/hie/api/v1.0/documents/${id}/preview`,
+    );
+    return response.data?.data ?? null;
+  } catch (error) {
+    if ((error as { response?: { status?: number } }).response?.status === 404) return null;
+    throw error;
+  }
 };
 
 export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {

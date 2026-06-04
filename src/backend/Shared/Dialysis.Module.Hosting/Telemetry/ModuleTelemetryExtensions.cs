@@ -33,13 +33,23 @@ public static class ModuleTelemetryExtensions
                 : Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
             var hasOtlp = !string.IsNullOrWhiteSpace(otlpEndpoint);
 
+            // Region awareness — set via DIALYSIS_REGION env var (rendered into the
+            // module Deployment by the Aspire k8s publisher / per-env compose .env).
+            // Default to "local" when unset so dev traces are self-identifying. Region
+            // tag flows onto every span + metric + log as the OTel `cloud.region`
+            // resource attribute, giving the prod dashboards a per-region slice for
+            // free in active-passive deployments.
+            var region = Environment.GetEnvironmentVariable("DIALYSIS_REGION");
+            if (string.IsNullOrWhiteSpace(region)) region = "local";
+
             services.AddOpenTelemetry()
                 .ConfigureResource(r =>
                 {
                     r.AddService(serviceName, serviceVersion: options.ServiceVersion);
                     r.AddAttributes(
                     [
-                        new KeyValuePair<string, object>("dialysis.module", moduleSlug)
+                        new KeyValuePair<string, object>("dialysis.module", moduleSlug),
+                        new KeyValuePair<string, object>("cloud.region", region),
                     ]);
                 })
                 .WithTracing(t =>
