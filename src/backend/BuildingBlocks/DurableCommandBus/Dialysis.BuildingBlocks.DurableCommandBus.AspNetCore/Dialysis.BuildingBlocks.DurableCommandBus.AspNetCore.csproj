@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore</AssemblyName>
+    <Description>HTTP surface for the durable command bus: GET /{prefix}/{correlationId} returns ledger row status + result. Authorized against the owning command's RequiredPermission so callers can't probe across permission boundaries.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

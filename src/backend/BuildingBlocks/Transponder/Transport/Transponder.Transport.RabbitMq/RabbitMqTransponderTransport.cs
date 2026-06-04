@@ -314,13 +314,17 @@ public sealed class RabbitMqTransponderTransport(
 
     private static IDictionary<string, object?>? BuildQueueArguments(TransponderRabbitMqOptions o, bool deadLetterConfigured)
     {
-        if (!deadLetterConfigured || o.PoisonMessagePolicy != RabbitMqPoisonMessagePolicy.DeadLetter)
+        var hasDeadLetter = deadLetterConfigured && o.PoisonMessagePolicy == RabbitMqPoisonMessagePolicy.DeadLetter;
+        var isQuorum = o.QueueType == RabbitMqQueueType.Quorum;
+        if (!hasDeadLetter && !isQuorum)
             return null;
 
-        return new Dictionary<string, object?>(StringComparer.Ordinal)
-        {
-            ["x-dead-letter-exchange"] = o.DeadLetterFanoutExchangeName!.Trim(),
-        };
+        var args = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (hasDeadLetter)
+            args["x-dead-letter-exchange"] = o.DeadLetterFanoutExchangeName!.Trim();
+        if (isQuorum)
+            args["x-queue-type"] = "quorum";
+        return args;
     }
 
     private async Task DisposeCoreAsync()

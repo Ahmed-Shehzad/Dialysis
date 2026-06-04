@@ -1,0 +1,57 @@
+# k6 Operator-based distributed runner for the million-RPS scenario.
+# Install the operator once: https://github.com/grafana/k6-operator#install-from-github
+# Then: kubectl apply -f tests/load/k6/million-rps-runner.yaml
+#
+# Parallelism: 50 pods × ~20k VU = 1,000,000 VU. Each runner pod handles 20k VUs and
+# emits to the cluster's Prometheus via the in-built statsd output. Make sure your
+# load-generator nodepool is separate from the application nodepool — otherwise the
+# load test starves the API it's trying to measure.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: million-rps-script
+  namespace: dialysis-load
+data:
+  test.js: |
+    // Symlinked at runtime to /test/test.js
+    // The actual script body lives in million-rps-shape.js — apply this manifest only
+    // after copying that script body in via `kubectl create configmap --from-file`.
+---
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: dialysis-million-rps
+  namespace: dialysis-load
+spec:
+  parallelism: 50
+  script:
+    configMap:
+      name: million-rps-script
+      file: test.js
+  runner:
+    resources:
+      requests:
+        cpu: 2
+        memory: 4Gi
+      limits:
+        cpu: 4
+        memory: 8Gi
+    env:
+      - name: BASE_URL
+        valueFrom:
+          configMapKeyRef:
+            name: million-rps-config
+            key: BASE_URL
+      - name: ACCESS_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: million-rps-credentials
+            key: ACCESS_TOKEN
+      - name: SESSION_IDS
+        valueFrom:
+          configMapKeyRef:
+            name: million-rps-config
+            key: SESSION_IDS
+  separate: true
+  arguments: --out experimental-prometheus-rw

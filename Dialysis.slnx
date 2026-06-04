@@ -73,6 +73,11 @@
     <Project Path="src/backend/BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection.AspNetCore/Dialysis.BuildingBlocks.DataProtection.AspNetCore.csproj" />
     <Project Path="src/backend/BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection.Tests/Dialysis.BuildingBlocks.DataProtection.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/DurableCommandBus/">
+    <Project Path="src/backend/BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
+    <Project Path="src/backend/BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore.csproj" />
+    <Project Path="src/backend/BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.Tests/Dialysis.BuildingBlocks.DurableCommandBus.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Tefca/">
     <Project Path="src/backend/BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti/Dialysis.BuildingBlocks.Tefca.Ti.csproj" />
     <Project Path="src/backend/BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti.Tests/Dialysis.BuildingBlocks.Tefca.Ti.Tests.csproj" />

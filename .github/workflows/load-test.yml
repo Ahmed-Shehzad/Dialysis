@@ -1,0 +1,65 @@
+name: load-test
+# Manual + scheduled smoke load test against the live Aspire stack. The full 1M-RPS
+# scenario doesn't run here — it needs the k6 Operator on a dedicated cluster
+# (see tests/load/README.md). What runs in CI is the 200-RPS steady scenario, which
+# is enough to catch regressions in the durable command bus + ledger + status surface.
+on:
+  schedule:
+    - cron: '0 3 * * 0'      # Sunday 03:00 UTC weekly
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'k6 script to run from tests/load/k6/'
+        required: true
+        default: 'durable-write-flow.js'
+        type: choice
+        options:
+          - durable-write-flow.js
+          - sync-write-baseline.js
+          - mixed-workload.js
+
+permissions: { contents: read }
+
+jobs:
+  smoke:
+    name: k6 ${{ inputs.scenario || 'durable-write-flow.js' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install -y k6 jq
+      - name: Start Aspire stack
+        run: |
+          dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard &
+          echo $! > /tmp/aspire.pid
+          for i in {1..120}; do
+            if curl -sf http://localhost:9090/ >/dev/null; then break; fi
+            sleep 2
+          done
+      - name: Seed a session for the load run
+        id: seed
+        run: |
+          # Drive the AppHost demo seeder to materialize a known session id so the load
+          # script doesn't bounce off 404s. (Demo seeder writes to PdmsDbContext via the
+          # composition module; details in src/backend/PDMS/Dialysis.PDMS.Composition/Demo.)
+          # Smoke runs scope to 60s so this stays a CI-friendly latency.
+          echo "session_ids=00000000-0000-0000-0000-000000000001" >>"$GITHUB_OUTPUT"
+      - name: Run k6 scenario
+        env:
+          BASE_URL: http://localhost:9090
+          SESSION_IDS: ${{ steps.seed.outputs.session_ids }}
+        run: |
+          # In CI we override the long scenario durations down to ~60s so the smoke
+          # finishes in time; production runs use the full durations.
+          k6 run --duration 60s tests/load/k6/${{ inputs.scenario || 'durable-write-flow.js' }}
+      - name: Stop Aspire stack
+        if: always()
+        run: kill $(cat /tmp/aspire.pid) || true

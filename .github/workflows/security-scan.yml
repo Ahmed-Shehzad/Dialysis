@@ -1,0 +1,141 @@
+name: security-scan
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly full scan against main, even if no code change — catches new CVEs in pinned packages.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write  # so SARIF uploads land on the Security tab
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --- 1. Secrets in the repo / git history -----------------------------------
+  # NOTE: GitGuardian Security Checks already runs on every push/PR at the repo level
+  # and covers the same surface as gitleaks (probably with a more aggressive proprietary
+  # ruleset). When secret-scanning needs to move to a self-hosted tool (compliance ask,
+  # regulator audit, GitGuardian cost), re-enable a gitleaks job here against
+  # `.gitleaks.toml`. The allowlist already documents the known-safe placeholders
+  # (Keycloak dev secret in the realm import + the CHANGE_ME-* operator manifest values).
+
+  # --- 2. Vulnerable .NET dependencies ---------------------------------------
+  dotnet-deps:
+    name: dotnet (vulnerable packages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Restore
+        run: dotnet restore Dialysis.slnx
+      - name: List vulnerable transitive packages
+        run: |
+          set -o pipefail
+          # Aggregate output and fail if any vulnerability is reported. The --include-transitive
+          # flag catches the long tail of indirect deps that direct-only audits miss.
+          dotnet list Dialysis.slnx package --vulnerable --include-transitive 2>&1 | tee dotnet-vuln.txt
+          if grep -q '>' dotnet-vuln.txt && grep -qiE 'Critical|High|Moderate' dotnet-vuln.txt; then
+            echo '::error::vulnerable packages found — see dotnet-vuln.txt'
+            exit 1
+          fi
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: dotnet-vuln, path: dotnet-vuln.txt, retention-days: 30 }
+
+  # --- 3. Vulnerable npm dependencies ----------------------------------------
+  npm-deps:
+    name: npm (vulnerable packages)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: src/frontend/dialysis-web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: src/frontend/dialysis-web/package-lock.json }
+      - run: npm ci
+      - name: npm audit
+        run: |
+          set -o pipefail
+          # Fail on high/critical; moderate is informational only because the SPA's dev
+          # toolchain (esbuild, vite) regularly carries moderate findings that don't affect
+          # the production bundle.
+          npm audit --audit-level=high
+
+  # --- 4. Trivy filesystem + container scan ----------------------------------
+  trivy-fs:
+    name: trivy (filesystem)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: fs
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
+      - name: Upload SARIF to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: 'trivy-fs.sarif', category: 'trivy-fs' }
+
+  # --- 5. OWASP ZAP baseline scan against the running app ------------------
+  # Scans the Aspire-published gateway. The gateway now applies the full security-header
+  # baseline (CSP, Permissions-Policy, COOP, CORP, X-Frame-Options, X-Content-Type-Options,
+  # Referrer-Policy) on every response, matching what module hosts apply via
+  # SecurityHeadersMiddleware. HSTS is the one header that intentionally stays off the
+  # localhost loopback — browsers reject HSTS over HTTP-localhost regardless, and the
+  # tests/security/zap-baseline-rules.tsv file marks the HSTS rule IGNORE for localhost.
+  #
+  # Why this works as a passing scan: we removed the `-a` flag (which pulled in alpha +
+  # false-positive-prone rules) and rely on the released stable ruleset. The rule overrides
+  # in the .tsv encode the dev-target carve-outs (HSTS on localhost, anti-CSRF on bearer
+  # APIs, cookie Secure flag on HTTP).
+  zap-baseline:
+    name: OWASP ZAP (baseline)
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:24
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Start Aspire stack
+        run: |
+          dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard &
+          echo $! > /tmp/aspire.pid
+          # Crude readiness probe — gateway responds on / once everything's up.
+          for i in {1..120}; do
+            if curl -sf http://localhost:9090/ >/dev/null; then break; fi
+            sleep 2
+          done
+      - name: ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.13.0
+        with:
+          target: 'http://localhost:9090/'
+          rules_file_name: 'tests/security/zap-baseline-rules.tsv'
+          # -j: JSON report. -T 60: 60-minute timeout on slow runners.
+          # No -a (alpha rules off — those produce most of the false positives). No -m
+          # threshold (any FAIL-marked rule in the .tsv fails the build; WARN is
+          # informational).
+          cmd_options: '-j -T 60'
+          fail_action: true
+      - name: Stop Aspire stack
+        if: always()
+        run: kill $(cat /tmp/aspire.pid) || true
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: zap-baseline, path: report_html.html, retention-days: 30 }

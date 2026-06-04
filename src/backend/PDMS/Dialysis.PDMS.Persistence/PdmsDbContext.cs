@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
@@ -42,6 +43,9 @@ public sealed class PdmsDbContext(
     public DbSet<EscalationPolicy> EscalationPolicies => Set<EscalationPolicy>();
     public DbSet<AlarmDispatch> AlarmDispatches => Set<AlarmDispatch>();
 
+    // Durable command bus idempotency + status ledger; rows live in `pdms_durablecommands.command_ledger`.
+    public DbSet<CommandLedgerEntry> CommandLedgerEntries => Set<CommandLedgerEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -50,6 +54,8 @@ public sealed class PdmsDbContext(
         modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());
         modelBuilder.ApplyConfiguration(new SubscriptionRecordConfiguration());
         modelBuilder.ApplyConfiguration(new NotificationOutboxRecordConfiguration());
+
+        modelBuilder.ApplyConfiguration(new CommandLedgerEntityConfiguration("pdms_durablecommands"));
 
         // PR 6 — Medications + Reporting + OnCall configurations.
         modelBuilder.ApplyConfiguration(new MedicationAdministrationRecordConfiguration());

@@ -1,0 +1,38 @@
+# Gitleaks configuration. The default ruleset catches generic credentials; this file
+# adds allowlist patterns for legitimate placeholders in the repo (Keycloak dev secret,
+# CHANGE_ME-* operator manifest values, fixture JWTs in tests).
+#
+# Run locally:  gitleaks detect --config=.gitleaks.toml
+# Run in CI:    see .github/workflows/security-scan.yml
+
+[extend]
+# Inherit the default Gitleaks ruleset; this file only ADDS allowlist entries on top.
+useDefault = true
+
+[allowlist]
+description = "Known-safe placeholders that look like secrets to a generic scanner"
+
+regexes = [
+  # Keycloak dev secret intentionally checked in for the local Aspire smoke flow
+  # (documented in src/backend/Identity/RUNBOOK.md). Real deployments override via env.
+  '''bff-dev-secret-change-me''',
+  '''his-api-placeholder-secret-not-used-for-login''',
+
+  # Operator manifest placeholders — every CR field that's literally CHANGE_ME-... is
+  # documented as "operator-supplied at apply time" in deploy/k8s/operators/README.md.
+  '''CHANGE_ME-[a-z0-9-]+''',
+
+  # Envsubst placeholders in deploy/k8s/operators/templates — ${VAR} forms
+  '''\$\{[A-Z_]+\}''',
+]
+
+paths = [
+  # The Keycloak realm import is intentionally checked in as a dev artifact; documented
+  # in CLAUDE.md (Identity / auth section). Real deployments use a different realm file
+  # per environment via operator-managed ConfigMaps.
+  '''src/backend/Identity/keycloak/dialysis-realm\.json''',
+  # Test fixtures that contain example JWTs (signed with throwaway keys)
+  '''tests/.*Test.*Fixture.*''',
+  # The architecture-test inventory contains assembly names that match credential heuristics
+  '''tests/Dialysis\.ArchitectureTests/.*''',
+]

@@ -1,0 +1,41 @@
+---
+# RabbitMQ cluster — durability boundary for the durable command bus.
+#
+# With the DurableCommandBus pattern, RMQ is the durability layer: once a command's publisher
+# confirm is acknowledged, the envelope is replicated across the cluster's quorum queues
+# (Raft-based, disk-flushed on each replica). Losing 1 node → no data loss, no downtime.
+# Losing 2 → write-unavailable but data preserved. Losing 3 simultaneously is catastrophic
+# and mitigated by off-cluster backup (shovel / federated mirror).
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: broker
+spec:
+  replicas: ${RABBITMQ_REPLICAS}
+  persistence:
+    storageClassName: ${RABBITMQ_STORAGE_CLASS}
+    storage: ${RABBITMQ_STORAGE_SIZE}
+  rabbitmq:
+    # default_queue_type=quorum: new queues come up Raft-replicated by default. Existing
+    # integration-event queues remain classic for backward compatibility — migrate via shovel
+    # in a separate PR once we're happy with the durable-command path under load.
+    #
+    # cluster_partition_handling=pause_minority: the safe choice for healthcare workloads.
+    # If the cluster partitions, the minority side stops accepting writes rather than
+    # accept potentially-conflicting state and resolve later.
+    additionalConfig: |
+      default_queue_type = quorum
+      cluster_partition_handling = pause_minority
+      consumer_timeout = 1800000
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  service:
+    type: ClusterIP

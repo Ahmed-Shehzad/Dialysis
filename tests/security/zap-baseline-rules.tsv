@@ -1,0 +1,75 @@
+# OWASP ZAP baseline scan rule overrides.
+#
+# Format: RULE_ID	ACTION	URL_REGEX	[NOTE]
+#
+# Action: IGNORE | WARN | FAIL
+#
+# Strategy:
+#  * Rules that depend on HTTPS / non-localhost hostname → IGNORE on http://localhost.*
+#    (browsers reject HSTS / Secure-cookie attributes over HTTP-localhost anyway, so
+#    flagging them on the loopback target is a false positive for a real production deploy).
+#  * Rules that catch genuine misconfiguration regardless of host → FAIL.
+#  * Rules that report on a header SET on every response by the gateway / module hosts →
+#    not present here because they pass naturally now.
+
+# 10035 Strict-Transport-Security: off on localhost (browsers won't honor it). Production
+# scan against a real https host catches this.
+10035	IGNORE	http://localhost.*
+
+# 10038 CSP Header Not Set: gateway sets a CSP for catch-all + SPA HTML; modules set a tighter
+# `default-src 'none'` for JSON responses. Both layers covered → FAIL on production hosts to
+# regress-protect.
+10038	FAIL	https://.*
+
+# 10054 Cookie Without Secure Flag: BFF cookie defaults to `SecurePolicy = SameAsRequest`,
+# so over HTTP-localhost it correctly drops the Secure flag. Over HTTPS in production it
+# adds it. Suppress on localhost; FAIL on real hosts.
+10054	IGNORE	http://localhost.*
+10054	FAIL	https://.*
+
+# 10055 Cookie Without SameSite Attribute: every cookie we set declares SameSite=Lax.
+10055	FAIL	.*
+
+# 10094 Base Tag Analysis: the SPA's index.html has `<base href="/">`; that's expected.
+10094	IGNORE	http://localhost:9090/
+
+# 10202 Absence of Anti-CSRF Tokens: irrelevant on a Bearer-JWT API. Always IGNORE on the
+# API surface; FAIL on any HTML page returned by the gateway (the SPA shell — but the SPA
+# is signed-in via the BFF cookie + access token, not via state-changing form POSTs from
+# arbitrary origins).
+10202	IGNORE	.*/api/v1.*
+10202	IGNORE	.*/fhir.*
+10202	WARN	.*
+
+# 10010 Cookie No HttpOnly Flag: BFF auth cookie is HttpOnly via the cookie handler default;
+# if a future regression flips it off this rule catches it.
+10010	FAIL	.*
+
+# 10037 Server Header Leaks: gateway / Kestrel strip `Server` header by default in Production;
+# fail if it ever leaks (information disclosure).
+10037	FAIL	.*
+
+# 10030 Cookie Loosely Scoped to Parent Domain: cookies should scope to the gateway origin
+# only, not a parent suffix.
+10030	FAIL	.*
+
+# 10020 X-Frame-Options Header: gateway + modules always set DENY. Catch regressions.
+10020	FAIL	.*
+
+# 10021 X-Content-Type-Options Header: gateway + modules always set nosniff. Catch regressions.
+10021	FAIL	.*
+
+# 10027 Information Disclosure - Suspicious Comments: PII-bearing comments in HTML responses
+# would be a clinical compliance issue. FAIL.
+10027	FAIL	.*
+
+# 10037 Information Disclosure - Server Banner / .NET Version: don't leak runtime version.
+10038	FAIL	.*
+
+# Rules that fire on the SPA HTML (sourcemap reference, comments). The SPA in CI ships
+# unminified — sourcemaps are fine in dev. Mark WARN, not FAIL.
+10036	WARN	.*
+
+# 10049 Storable and Cacheable Content: APIs return Cache-Control: no-store via the module
+# pipeline; the SPA bundle is cacheable (versioned filenames). Both shapes are correct.
+10049	IGNORE	.*

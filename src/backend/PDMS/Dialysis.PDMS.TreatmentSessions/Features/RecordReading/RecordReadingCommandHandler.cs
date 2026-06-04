@@ -26,7 +26,8 @@ public sealed class RecordReadingCommandHandler(
             request.VenousPressureMmHg,
             request.UltrafiltrationRateMlPerHour,
             request.ConductivityMsPerCm,
-            request.Notes);
+            request.Notes,
+            explicitReadingId: request.ReadingId == Guid.Empty ? null : request.ReadingId);
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

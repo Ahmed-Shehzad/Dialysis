@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.CQRS;
 using Dialysis.PDMS.TreatmentSessions.Domain;
 using Dialysis.PDMS.TreatmentSessions.Features.AbortSession;
@@ -157,24 +158,61 @@ public sealed class SessionsController(ICqrsGateway gateway) : ControllerBase
 
     [HttpPost("{sessionId:guid}/readings")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> RecordReadingAsync(
         Guid sessionId,
         [FromBody] RecordReadingRequest body,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IDurableCommandBus durableCommandBus,
+        [FromHeader(Name = "X-Command-Id")] Guid? commandId,
         CancellationToken cancellationToken)
     {
+        // Feature flag — false (default) keeps the existing synchronous path; true routes the
+        // write through the durable command bus and returns 202 with a poll URL. The flag
+        // exists so PR-A can ship the mechanism without flipping production traffic; ops can
+        // promote per environment once they're happy with the consumer + status surface.
+        var useDurablePath = configuration.GetValue("Pdms:DurableCommands:RecordReading:Enabled", false);
+        var readingId = commandId ?? Guid.CreateVersion7();
+        var command = new RecordReadingCommand(
+            sessionId,
+            body.SystolicBloodPressure,
+            body.DiastolicBloodPressure,
+            body.HeartRateBpm,
+            body.ArterialPressureMmHg,
+            body.VenousPressureMmHg,
+            body.UltrafiltrationRateMlPerHour,
+            body.ConductivityMsPerCm,
+            body.Notes,
+            ReadingId: readingId);
+
+        if (useDurablePath)
+        {
+            try
+            {
+                var acceptance = await durableCommandBus
+                    .EnqueueAsync<RecordReadingCommand, Guid>(command, commandId: readingId, cancellationToken)
+                    .ConfigureAwait(false);
+                Response.Headers["Location"] = acceptance.StatusEndpoint;
+                return Accepted(acceptance.StatusEndpoint, new
+                {
+                    commandId = acceptance.CommandId,
+                    correlationId = acceptance.CorrelationId,
+                    statusEndpoint = acceptance.StatusEndpoint,
+                    // The id is deterministic from CommandId (see DialysisSession.RecordReading),
+                    // so the caller knows the new reading row's id without polling.
+                    readingId,
+                });
+            }
+            catch (DurableCommandException)
+            {
+                Response.Headers.Append("Retry-After", "5");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
+        }
+
         var id = await gateway
-            .SendCommandAsync<RecordReadingCommand, Guid>(
-                new RecordReadingCommand(
-                    sessionId,
-                    body.SystolicBloodPressure,
-                    body.DiastolicBloodPressure,
-                    body.HeartRateBpm,
-                    body.ArterialPressureMmHg,
-                    body.VenousPressureMmHg,
-                    body.UltrafiltrationRateMlPerHour,
-                    body.ConductivityMsPerCm,
-                    body.Notes),
-                cancellationToken)
+            .SendCommandAsync<RecordReadingCommand, Guid>(command, cancellationToken)
             .ConfigureAwait(false);
         return Created($"/api/v1.0/sessions/{sessionId}/readings/{id}", new { id });
     }

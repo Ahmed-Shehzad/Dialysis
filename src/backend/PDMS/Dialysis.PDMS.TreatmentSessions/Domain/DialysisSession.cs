@@ -98,13 +98,20 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         decimal venousPressureMmHg,
         decimal ultrafiltrationRateMlPerHour,
         decimal conductivityMsPerCm,
-        string? notes = null)
+        string? notes = null,
+        Guid? explicitReadingId = null)
     {
         if (Status != DialysisSessionStatus.InProgress)
             throw new InvalidOperationException($"Cannot record reading on session in status {Status}.");
 
+        // explicitReadingId carries the durable-bus CommandId so a redelivery of the same
+        // envelope yields the same reading row. The caller (durable consumer) hands the
+        // CommandId in; for sync callers it stays null and we generate a fresh v7 guid.
+        var readingId = explicitReadingId is { } supplied && supplied != Guid.Empty
+            ? supplied
+            : Guid.CreateVersion7();
         var reading = IntradialyticReading.Record(
-            Guid.CreateVersion7(), Id, observedAtUtc,
+            readingId, Id, observedAtUtc,
             systolic, diastolic, heartRateBpm,
             arterialPressureMmHg, venousPressureMmHg,
             ultrafiltrationRateMlPerHour, conductivityMsPerCm,

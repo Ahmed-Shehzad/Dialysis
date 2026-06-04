@@ -30,4 +30,25 @@ public sealed class TransponderRabbitMqOptions
 
     /// <summary>Handler failure policy for AMQP negative acknowledgements.</summary>
     public RabbitMqPoisonMessagePolicy PoisonMessagePolicy { get; set; } = RabbitMqPoisonMessagePolicy.Requeue;
+
+    /// <summary>
+    /// Queue type for the application queue. <see cref="RabbitMqQueueType.Classic"/> matches
+    /// the historical default (single-node, mirror queues if clustered — deprecated in 3.13+).
+    /// Set to <see cref="RabbitMqQueueType.Quorum"/> when the broker is a clustered
+    /// <c>RabbitmqCluster</c> CR with 3+ replicas; quorum queues are Raft-replicated and
+    /// disk-flushed on each replica, surviving a single-node failure with no data loss.
+    /// Classic queues stay backwards-compatible — flipping to Quorum is an operator decision
+    /// per environment, gated on the broker actually being clustered.
+    /// </summary>
+    public RabbitMqQueueType QueueType { get; set; } = RabbitMqQueueType.Classic;
+}
+
+/// <summary>
+/// Underlying queue implementation in RabbitMQ. Quorum is the modern HA primitive; classic
+/// mirroring is deprecated. Quorum requires RMQ 3.8+ which the existing image already meets.
+/// </summary>
+public enum RabbitMqQueueType
+{
+    Classic,
+    Quorum,
 }
