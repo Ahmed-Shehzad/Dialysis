@@ -65,6 +65,7 @@ var fhirBulkDataExportScope = builder.Configuration["His:Fhir:BulkData:RequireSc
     ?? (enableFhirSmartOnFhir ? "system/*.read" : null);
 var fhirSubscriptionsScope = builder.Configuration["His:Fhir:Subscriptions:RequireScope"]
     ?? (enableFhirSmartOnFhir ? "user/*.write" : null);
+var enableHisDemo = builder.Configuration.GetValue("His:Demo:Enabled", false);
 
 builder.Services.AddHospitalInformationSystem(
     builder.Configuration,
@@ -80,6 +81,7 @@ builder.Services.AddHospitalInformationSystem(
     enableFhirSmartOnFhir: enableFhirSmartOnFhir,
     enableFhirSubscriptions: enableFhirSubscriptions,
     enableFhirSubscriptionsPersistence: enableFhirSubscriptionsPersistence,
+    enableDemoChairBroadcast: enableHisDemo,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>
@@ -127,7 +129,12 @@ builder.Services.AddDurableCommandBus<HisDbContext>("his", b =>
 builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
     o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    // Accept string-named enum payloads from the SPA (consistent with PDMS/SmartConnect);
+    // otherwise System.Text.Json only binds the integer backing values and rejects names with 400.
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
 

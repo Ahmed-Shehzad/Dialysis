@@ -24,6 +24,18 @@ type AdminGroup = {
 // typing URLs. Adding a new admin page = add its module Route + one entry here.
 const ADMIN_GROUPS: readonly AdminGroup[] = [
   {
+    title: "Demo & walkthrough",
+    owner: "All modules",
+    links: [
+      {
+        label: "Demo control panel",
+        to: "/demo",
+        description:
+          "Reset the demo, drive a live session, and run the guided cross-module walkthrough.",
+      },
+    ],
+  },
+  {
     title: "Billing & claims",
     owner: "HIS · EHR",
     links: [

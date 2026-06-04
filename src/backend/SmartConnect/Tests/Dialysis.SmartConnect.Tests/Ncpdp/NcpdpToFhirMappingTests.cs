@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
 using Dialysis.SmartConnect.Ncpdp;
@@ -157,7 +156,7 @@ public sealed class NcpdpToFhirMappingTests
         CorrelationId = "C",
         Payload = Encoding.UTF8.GetBytes(payload),
         PayloadFormat = PayloadFormat.Utf8Text,
-        Metadata = ImmutableDictionary<string, string>.Empty,
+        Metadata = [],
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 }

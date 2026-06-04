@@ -43,6 +43,19 @@ public sealed class DialysisSession : AggregateRoot<Guid>
 
     public string? AbortReasonCode { get; private set; }
 
+    /// <summary>
+    /// Total time the session has spent paused (machine off), excluding any currently-open
+    /// pause. Subtracted from wall-clock elapsed to give the machine usage time that drives
+    /// billing and reporting.
+    /// </summary>
+    public TimeSpan AccumulatedPausedDuration { get; private set; }
+
+    /// <summary>
+    /// When the session entered its current pause, or null while running / ended. The open
+    /// pause is folded into <see cref="AccumulatedPausedDuration"/> on resume or abort.
+    /// </summary>
+    public DateTime? PausedAtUtc { get; private set; }
+
     /// <summary>The dialysis machine currently bound to this session. Set via <see cref="BindMachine"/> at start time; remains for the lifetime of the session.</summary>
     public Guid? MachineId { get; private set; }
 
@@ -135,7 +148,9 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         ActualEndUtc = completedAtUtc;
         AchievedUfVolumeLiters = achievedUfVolumeLiters;
 
-        var durationMinutes = (int)Math.Round((completedAtUtc - ActualStartUtc.Value).TotalMinutes);
+        // Machine usage time = wall-clock minus paused spans. Complete only runs from
+        // InProgress (never Paused), so there is no open pause to fold in here.
+        var durationMinutes = UsageMinutesAsOf(completedAtUtc);
         RaiseIntegrationEvent(new DialysisSessionCompletedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
@@ -154,6 +169,14 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         ArgumentException.ThrowIfNullOrWhiteSpace(reasonCode);
 
         Status = DialysisSessionStatus.Aborted;
+        // A session can be aborted while paused — close the open pause up to the abort instant
+        // so the final usage time correctly excludes it.
+        if (PausedAtUtc is { } pausedAt)
+        {
+            var openPause = abortedAtUtc - pausedAt;
+            if (openPause > TimeSpan.Zero) AccumulatedPausedDuration += openPause;
+            PausedAtUtc = null;
+        }
         ActualEndUtc = abortedAtUtc;
         AbortReasonCode = reasonCode.Trim();
 
@@ -212,19 +235,50 @@ public sealed class DialysisSession : AggregateRoot<Guid>
             throw new ArgumentException("Alarm predates session start.", nameof(observedAtUtc));
     }
 
-    /// <summary>Transitions an in-progress session to paused (e.g. machine entered standby).</summary>
-    public void Pause()
+    /// <summary>
+    /// Transitions an in-progress session to paused (e.g. machine entered standby). Records
+    /// <paramref name="pausedAtUtc"/> so the paused span is excluded from machine usage time.
+    /// </summary>
+    public void Pause(DateTime pausedAtUtc)
     {
         if (Status != DialysisSessionStatus.InProgress)
             throw new InvalidOperationException($"Cannot pause a session in status {Status}.");
+        if (!ActualStartUtc.HasValue)
+            throw new InvalidOperationException("Session was never started.");
+        if (pausedAtUtc < ActualStartUtc.Value)
+            throw new ArgumentException("Pause cannot precede start.", nameof(pausedAtUtc));
         Status = DialysisSessionStatus.Paused;
+        PausedAtUtc = pausedAtUtc;
     }
 
-    /// <summary>Resumes a paused session.</summary>
-    public void Resume()
+    /// <summary>
+    /// Resumes a paused session, folding the elapsed pause (up to <paramref name="resumedAtUtc"/>)
+    /// into <see cref="AccumulatedPausedDuration"/> so usage time keeps excluding it.
+    /// </summary>
+    public void Resume(DateTime resumedAtUtc)
     {
         if (Status != DialysisSessionStatus.Paused)
             throw new InvalidOperationException($"Cannot resume a session in status {Status}.");
+        if (PausedAtUtc is { } pausedAt)
+        {
+            var span = resumedAtUtc - pausedAt;
+            if (span > TimeSpan.Zero) AccumulatedPausedDuration += span;
+            PausedAtUtc = null;
+        }
         Status = DialysisSessionStatus.InProgress;
+    }
+
+    /// <summary>
+    /// Machine usage time (treatment minutes) as of <paramref name="asOfUtc"/>: wall-clock from
+    /// start to the reference instant, minus every paused span. While paused the figure freezes
+    /// at the moment the pause began; once the session ends it freezes at the end. Returns 0
+    /// before the session has started.
+    /// </summary>
+    public int UsageMinutesAsOf(DateTime asOfUtc)
+    {
+        if (!ActualStartUtc.HasValue) return 0;
+        var reference = ActualEndUtc ?? PausedAtUtc ?? asOfUtc;
+        var usage = reference - ActualStartUtc.Value - AccumulatedPausedDuration;
+        return (int)Math.Max(0, Math.Round(usage.TotalMinutes));
     }
 }

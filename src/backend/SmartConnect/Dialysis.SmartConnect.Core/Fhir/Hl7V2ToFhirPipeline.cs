@@ -25,7 +25,7 @@ public sealed class Hl7V2ToFhirPipeline
 
         var trigger = ReadTriggerEvent(message);
         if (string.IsNullOrEmpty(trigger))
-            return Array.Empty<Resource>();
+            return [];
 
         var produced = new List<Resource>();
         foreach (var wrapper in _mappers)

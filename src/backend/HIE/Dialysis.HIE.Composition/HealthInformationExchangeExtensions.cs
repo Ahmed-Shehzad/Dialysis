@@ -1,4 +1,4 @@
-using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.BuildingBlocks.Transponder;
@@ -6,6 +6,7 @@ using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Documents.Consumers;
+using Dialysis.HIE.Documents.Invoicing;
 using Dialysis.HIE.Inbound.Ingestion;
 using Dialysis.HIE.Outbound;
 using Dialysis.HIE.Outbound.Consumers;
@@ -66,6 +67,8 @@ public static class HealthInformationExchangeExtensions
                 bus.AddConsumer<LabResultProjectedAsOpenEhrIntegrationEvent, LabResultOpenEhrConsumer>();
                 bus.AddConsumer<HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent, HaemodialysisSessionOpenEhrConsumer>();
                 bus.AddConsumer<ClinicalDocumentProducedIntegrationEvent, OnClinicalDocumentProduced>();
+                // EHR.Billing priced a completed session → render the itemised AcroForm invoice PDF.
+                bus.AddConsumer<DialysisInvoiceReadyIntegrationEvent, OnDialysisInvoiceReady>();
             });
             configureTransponderTransport?.Invoke(services);
 
@@ -74,8 +77,10 @@ public static class HealthInformationExchangeExtensions
             // IDocumentBlobStore singleton (see InMemoryReportBlobStore's adapter ctor).
             services.AddInMemoryDocumentBlobStore();
             // AcroForm fill is host-owned (admin operator fills out a partner intake PDF and
-            // re-saves with the values baked in). The processor is stateless + thread-safe.
-            services.AddSingleton<IAcroFormProcessor, PdfSharpAcroFormProcessor>();
+            // re-saves with the values baked in) and the QuestPDF renderer generates documents
+            // server-side (e.g. the itemised dialysis invoice). All are stateless + thread-safe.
+            services.AddPdfDocumentRendering();
+            services.AddSingleton<InvoicePdfBuilder>();
             var signingSection = configuration.GetSection("Documents:Signing");
             services.AddPdfSigning(signingSection);
             // eIDAS-QES path is opt-in: the host configures a TSP only when it has a CSC v2

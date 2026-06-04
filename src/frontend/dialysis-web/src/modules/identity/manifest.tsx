@@ -26,6 +26,10 @@ const DataSubjectRightsPage = lazyPage(
   () => import("@/modules/identity/admin/DataSubjectRightsPage"),
   "DataSubjectRightsPage",
 );
+const DemoControlPanelPage = lazyPage(
+  () => import("@/modules/demo/DemoControlPanelPage"),
+  "DemoControlPanelPage",
+);
 
 // First Identity surface — a read-only "who am I?" page that shows the signed-in user's
 // claims, roles, and access-token lifetime. Pure SPA work: the page reads from the
@@ -48,6 +52,7 @@ export const identityModule: ModuleManifest = {
       <Route path="admin/data-protection/ropa" element={<RopaPage />} />
       <Route path="admin/data-protection/consents" element={<ConsentsPage />} />
       <Route path="admin/data-protection/data-subject-rights" element={<DataSubjectRightsPage />} />
+      <Route path="demo" element={<DemoControlPanelPage />} />
     </>
   ),
 };

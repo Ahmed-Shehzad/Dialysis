@@ -150,13 +150,15 @@ public sealed class MllpRealSocketEndToEndTests
         var deadline = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < deadline)
         {
-            if (!client.Connected) return true;
+            if (!client.Connected)
+                return true;
             try
             {
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
                 var buf = new byte[1];
                 var read = await client.GetStream().ReadAsync(buf.AsMemory(), cts2.Token);
-                if (read == 0) return true;
+                if (read == 0)
+                    return true;
             }
             catch (OperationCanceledException) { /* still alive */ }
             catch { return true; }
@@ -218,7 +220,7 @@ public sealed class MllpRealSocketEndToEndTests
     private sealed class NoOpClockSkewMonitor : IClockSkewMonitor
     {
         public void Record(ClockSkewObservation observation) { }
-        public IReadOnlyList<ClockSkewStatus> List() => Array.Empty<ClockSkewStatus>();
+        public IReadOnlyList<ClockSkewStatus> List() => [];
     }
 
     private sealed class NoOpClockSkewCorrectionEventSink : IClockSkewCorrectionEventSink

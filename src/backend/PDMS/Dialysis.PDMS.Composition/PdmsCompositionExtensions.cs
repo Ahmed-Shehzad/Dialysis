@@ -19,6 +19,7 @@ using Dialysis.PDMS.Medications.Contracts;
 using Dialysis.PDMS.OnCall.Consumers;
 using Dialysis.PDMS.OnCall.Dispatch;
 using Dialysis.PDMS.OnCall.Domain;
+using Dialysis.PDMS.Reporting.Consumers;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
 using Dialysis.PDMS.Reporting.Templating;
@@ -75,6 +76,7 @@ public static class PdmsCompositionExtensions
         bool enableDemoSeed = false,
         bool enableVitalsTicker = false,
         bool enableMachineTelemetrySimulator = false,
+        bool enableLifecycleSimulator = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
         {
@@ -176,6 +178,11 @@ public static class PdmsCompositionExtensions
             // EF, per the provider switch above). Scoped because the underlying repository is.
             services.AddScoped<IReportTemplateRepository, PdmsReportTemplateRepository>();
 
+            // Post-session reporting: build the report context from the session aggregate and
+            // persist generated reports through the same SessionReport repository the read API uses.
+            services.AddScoped<ISessionReportContextBuilder, SessionReportContextBuilder>();
+            services.AddScoped<ISessionReportRepository, SessionReportRepository>();
+
             // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
             services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
 
@@ -184,6 +191,10 @@ public static class PdmsCompositionExtensions
                 t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
                 t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
                 t.AddConsumer<PatientPlacedInChairIntegrationEvent, PatientPlacedInChairConsumer>();
+
+                // Completed session → post-session reports (discharge letter + billing summary)
+                // and the billing charge that drives the itemised invoice (EHR → HIE).
+                t.AddConsumer<DialysisSessionCompletedIntegrationEvent, OnDialysisSessionCompleted>();
 
                 // Medications → inventory deduction loop.
                 t.AddConsumer<MedicationAdministeredIntegrationEvent, OnMedicationAdministered>();
@@ -272,6 +283,9 @@ public static class PdmsCompositionExtensions
 
             if (enableMachineTelemetrySimulator)
                 services.AddHostedService<Demo.MachineTelemetrySimulatorService>();
+
+            if (enableLifecycleSimulator)
+                services.AddHostedService<Demo.SessionLifecycleSimulator>();
 
             return services;
         }

@@ -31,7 +31,7 @@ public sealed class MessageLedgerEntry
     /// re-parse the payload (Slice C of the SmartConnect ↔ Mirth alignment plan).
     /// </summary>
     public ImmutableDictionary<string, string> Metadata { get; init; } =
-        ImmutableDictionary<string, string>.Empty;
+        [];
 
     public DateTimeOffset CreatedAtUtc { get; init; }
 }

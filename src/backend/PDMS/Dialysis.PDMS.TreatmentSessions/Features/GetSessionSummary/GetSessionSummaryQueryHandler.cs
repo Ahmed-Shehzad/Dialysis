@@ -33,8 +33,9 @@ public sealed class GetSessionSummaryQueryHandler : IQueryHandler<GetSessionSumm
                 readings[0].ObservedAtUtc,
                 readings[^1].ObservedAtUtc);
 
-        int? actualDurationMinutes = session.ActualStartUtc.HasValue && session.ActualEndUtc.HasValue
-            ? (int)Math.Round((session.ActualEndUtc.Value - session.ActualStartUtc.Value).TotalMinutes)
+        // Pause-aware machine usage time: wall-clock minus paused spans, frozen at the end.
+        int? actualDurationMinutes = session.ActualEndUtc.HasValue
+            ? session.UsageMinutesAsOf(session.ActualEndUtc.Value)
             : null;
 
         decimal? ufAchievementPercent = session.AchievedUfVolumeLiters.HasValue
@@ -56,6 +57,8 @@ public sealed class GetSessionSummaryQueryHandler : IQueryHandler<GetSessionSumm
             ufAchievementPercent,
             session.AbortReasonCode,
             session.MachineId,
+            session.PausedAtUtc,
+            (int)session.AccumulatedPausedDuration.TotalSeconds,
             new SessionPrescriptionDto(
                 session.Prescription.DialyzerModel,
                 session.Prescription.PrescribedDurationMinutes,

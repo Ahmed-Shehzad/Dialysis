@@ -64,6 +64,23 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
     {
         var ct = context.CancellationToken;
         var sessionId = context.Message.SessionId;
+
+        // Idempotency on (SessionId, Kind): a re-delivered completion event re-renders only the
+        // kinds that have not already succeeded. A previously-failed kind is retried; a fully
+        // processed session is a no-op (no re-render, no duplicate charge).
+        var existing = await _reports.ListBySessionAsync(sessionId, ct).ConfigureAwait(false);
+        bool AlreadyGenerated(ReportKind kind) =>
+            existing.Any(r => r.Kind == kind && r.Status == ReportStatus.Generated);
+
+        var needDischarge = !AlreadyGenerated(ReportKind.DischargeLetter);
+        var needBilling = !AlreadyGenerated(ReportKind.BillingDocument);
+        if (!needDischarge && !needBilling)
+        {
+            _logger.LogDebug(
+                "Reports for session {SessionId} already generated; skipping (idempotent).", sessionId);
+            return;
+        }
+
         var ctx = await _contextBuilder.BuildAsync(sessionId, ct).ConfigureAwait(false);
         if (ctx is null)
         {
@@ -71,21 +88,48 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
             return;
         }
 
-        await TryGenerateAsync(ctx, ReportKind.DischargeLetter, async () =>
+        if (needDischarge)
         {
-            // Resolve the discharge-letter template in the patient's preferred language, falling
-            // back to the operator-flagged language-neutral default (ReportTemplateResolver).
-            var template = await _templates
-                .FindActiveAsync(ReportKind.DischargeLetter, ctx.PreferredLanguageCode, ct)
-                .ConfigureAwait(false);
-            return await _dischargeLetter.GenerateAsync(ctx, template, ct).ConfigureAwait(false);
-        }, ct).ConfigureAwait(false);
+            await TryGenerateAsync(ctx, ReportKind.DischargeLetter, async () =>
+            {
+                // Resolve the discharge-letter template in the patient's preferred language, falling
+                // back to the operator-flagged language-neutral default (ReportTemplateResolver).
+                var template = await _templates
+                    .FindActiveAsync(ReportKind.DischargeLetter, ctx.PreferredLanguageCode, ct)
+                    .ConfigureAwait(false);
+                return await _dischargeLetter.GenerateAsync(ctx, template, ct).ConfigureAwait(false);
+            }, ct).ConfigureAwait(false);
+        }
 
-        await TryGenerateAsync(ctx, ReportKind.BillingDocument, async () =>
+        if (needBilling)
         {
-            var (pdf, _) = await _billing.GenerateAsync(ctx, evaluationCount: 1, ct).ConfigureAwait(false);
-            return pdf;
-        }, ct).ConfigureAwait(false);
+            await TryGenerateAsync(ctx, ReportKind.BillingDocument, async () =>
+            {
+                var (pdf, _) = await _billing
+                    .GenerateAsync(ctx, evaluationCount: 1, context.Message.AchievedUfVolumeLiters, ct)
+                    .ConfigureAwait(false);
+                return pdf;
+            }, ct).ConfigureAwait(false);
+
+            // Billing trigger — published independently of the human-readable summary PDF so a
+            // render failure above never blocks the charge + invoice pipeline. Gated on the
+            // billing-document kind so it fires once per session; EHR.Billing is additionally
+            // idempotent on (SessionId, CptCode) to absorb any retry-driven re-publish.
+            var chargeReady = new DialysisSessionChargeReadyIntegrationEvent(
+                EventId: Guid.CreateVersion7(),
+                OccurredOn: _clock.GetUtcNow().UtcDateTime,
+                SchemaVersion: 1,
+                SessionId: ctx.SessionId,
+                PatientId: ctx.PatientId,
+                Modality: ctx.Modality,
+                // Use the pause-aware machine usage time computed by the aggregate on completion,
+                // so the charge / invoice match the live chairside estimate and the session summary.
+                DurationMinutes: context.Message.ActualDurationMinutes,
+                CompletedAtUtc: ctx.CompletedAtUtc,
+                CptCode: BillingDocumentGenerator.ResolveCptCode(ctx.Modality, evaluationCount: 1),
+                AchievedUfVolumeLiters: context.Message.AchievedUfVolumeLiters);
+            await _bus.PublishAsync(chargeReady, ct).ConfigureAwait(false);
+        }
 
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -115,7 +159,7 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
             _logger.LogError(ex, "Reporting generator for {Kind} on session {SessionId} failed.", kind, ctx.SessionId);
             report.RecordFailure(ex.GetType().Name);
         }
-        _reports.Add(report);
+        await _reports.AddAsync(report, cancellationToken).ConfigureAwait(false);
 
         if (generated)
         {

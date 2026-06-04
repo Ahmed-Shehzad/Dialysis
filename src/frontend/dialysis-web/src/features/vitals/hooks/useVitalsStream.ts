@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { type HubConnection, HubConnectionState } from "@microsoft/signalr";
 import { buildHubConnection } from "@/lib/realtime/signalrConnection";
 import { useAuth } from "@/features/auth/components/AuthProvider";
-import { VITALS_HUB_URL, type VitalsReading } from "../api/vitalsApi";
+import { VITALS_HUB_URL, type SessionCost, type VitalsReading } from "../api/vitalsApi";
 
 type ConnectionStatus = "idle" | "connecting" | "connected" | "reconnecting" | "disconnected";
 
 export type UseVitalsStreamResult = {
   readings: VitalsReading[];
+  /** Latest server-computed running cost estimate for the session, or null until first tick. */
+  cost: SessionCost | null;
   status: ConnectionStatus;
   reset: () => void;
 };
@@ -18,6 +20,7 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
   const { getAccessToken } = useAuth();
   const connectionRef = useRef<HubConnection | null>(null);
   const [readings, setReadings] = useState<VitalsReading[]>([]);
+  const [cost, setCost] = useState<SessionCost | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("idle");
 
   useEffect(() => {
@@ -39,7 +42,13 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
       });
     };
 
+    const handleCost = (incoming: SessionCost) => {
+      if (cancelled) return;
+      setCost(incoming);
+    };
+
     connection.on("reading", handleReading);
+    connection.on("cost", handleCost);
     connection.onreconnecting(() => setStatus("reconnecting"));
     connection.onreconnected(() => setStatus("connected"));
     connection.onclose(() => setStatus("disconnected"));
@@ -59,6 +68,7 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
     return () => {
       cancelled = true;
       connection.off("reading", handleReading);
+      connection.off("cost", handleCost);
       if (connection.state === HubConnectionState.Connected) {
         void connection.invoke("LeaveSessionAsync", sessionId).catch(() => undefined);
       }
@@ -69,7 +79,11 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
 
   return {
     readings,
+    cost,
     status,
-    reset: () => setReadings([]),
+    reset: () => {
+      setReadings([]);
+      setCost(null);
+    },
   };
 };

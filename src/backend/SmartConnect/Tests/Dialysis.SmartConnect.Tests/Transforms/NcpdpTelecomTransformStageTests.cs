@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.DataTypes.Ncpdp;
@@ -124,7 +123,7 @@ public sealed class NcpdpTelecomTransformStageTests
         CorrelationId = "C",
         Payload = Encoding.UTF8.GetBytes(payload),
         PayloadFormat = PayloadFormat.Utf8Text,
-        Metadata = ImmutableDictionary<string, string>.Empty,
+        Metadata = [],
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 }

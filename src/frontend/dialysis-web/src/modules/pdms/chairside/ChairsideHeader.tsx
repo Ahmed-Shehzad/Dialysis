@@ -23,12 +23,17 @@ interface ChairsideHeaderProps {
  * Chairside-format header for the live treatment page. Sized so a nurse can read it
  * standing two metres from a tablet on the machine cart: large station identifier
  * (machine id stands in for chair), patient name (from the cross-module patient context
- * once HIS has selected one), session status, elapsed treatment time ticking once per
- * second, and a realtime-stream pulse.
+ * once HIS has selected one), session status, treatment usage time (machine on-time, ticking
+ * once per second while running and frozen once the session ends), and a realtime-stream pulse.
  */
 export const ChairsideHeader = ({ session, sessionId, realtimeStatus }: ChairsideHeaderProps) => {
   const { patient } = usePatientContext();
-  const elapsed = useElapsedTime(session?.actualStartUtc);
+  const usageTime = useElapsedTime(session?.actualStartUtc, {
+    endUtc: session?.actualEndUtc,
+    pausedAtUtc: session?.pausedAtUtc,
+    pausedSeconds: session?.accumulatedPausedSeconds,
+  });
+  const isPaused = session?.status === "Paused";
   const station = session?.machineId ?? "Live session";
   const patientLabel =
     patient && session && patient.id === session.patientId
@@ -64,12 +69,16 @@ export const ChairsideHeader = ({ session, sessionId, realtimeStatus }: Chairsid
         </div>
 
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Elapsed</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">
+            Treatment time{isPaused && <span className="ml-1 text-amber-300">· paused</span>}
+          </p>
           <p
-            className="font-mono text-3xl font-semibold text-clinic-50 tabular-nums"
-            aria-label="Elapsed treatment time"
+            className={`font-mono text-3xl font-semibold tabular-nums ${
+              isPaused ? "text-amber-300" : "text-clinic-50"
+            }`}
+            aria-label="Treatment usage time (dialysis machine on-time, excluding pauses)"
           >
-            {elapsed}
+            {usageTime}
           </p>
         </div>
 

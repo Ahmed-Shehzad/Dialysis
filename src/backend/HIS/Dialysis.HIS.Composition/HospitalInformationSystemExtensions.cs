@@ -40,6 +40,7 @@ public static class HospitalInformationSystemExtensions
             bool enableFhirSmartOnFhir = false,
             bool enableFhirSubscriptionsPersistence = false,
             bool enableFhirSubscriptions = false,
+            bool enableDemoChairBroadcast = false,
             Action<FhirBuilder>? configureFhir = null,
             Action<IServiceCollection>? configureTransponderTransport = null)
         {
@@ -62,6 +63,10 @@ public static class HospitalInformationSystemExtensions
 
             if (enableOutboxRelay)
                 services.AddTransponderOutboxRelay<HisDbContext>();
+
+            // Demo-only: re-broadcast the seeded chair placements so PDMS's chair board fills.
+            if (enableDemoChairBroadcast)
+                services.AddHostedService<Demo.HisChairOccupancyDemoPublisher>();
 
             if (enableFhirEndpoints)
             {

@@ -58,7 +58,13 @@ builder.Services.AddFhirAudit();
 builder.Services.AddHipaaCompliance("hie");
 builder.Services.AddHipaaAspNetCoreSafeguards();
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    // The SPA posts enums by name (e.g. SignDocumentRequest.CertificateSource = "Platform").
+    // Without this converter System.Text.Json only binds the integer backing values, so a
+    // string enum payload fails model binding and the action returns 400 before it runs.
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
 

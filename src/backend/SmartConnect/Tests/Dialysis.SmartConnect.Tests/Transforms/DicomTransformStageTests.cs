@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.ExtendedPlugins;
@@ -72,7 +71,7 @@ public sealed class DicomTransformStageTests
             CorrelationId = "C",
             Payload = "not a dicom file"u8.ToArray(),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
         var stage = new DicomTransformStage();
@@ -124,7 +123,7 @@ public sealed class DicomTransformStageTests
             CorrelationId = "C",
             Payload = ms.ToArray(),
             PayloadFormat = PayloadFormat.Binary,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
@@ -161,7 +160,7 @@ public sealed class DicomTransformStageTests
             CorrelationId = "C",
             Payload = ms.ToArray(),
             PayloadFormat = PayloadFormat.Binary,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
@@ -196,7 +195,7 @@ public sealed class DicomTransformStageTests
             CorrelationId = "C",
             Payload = ms.ToArray(),
             PayloadFormat = PayloadFormat.Binary,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
     }

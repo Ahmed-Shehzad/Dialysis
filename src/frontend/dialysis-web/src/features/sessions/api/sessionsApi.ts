@@ -9,6 +9,10 @@ export type DialysisSessionSummary = {
   actualStartUtc?: string | null;
   actualEndUtc?: string | null;
   machineId?: string | null;
+  /** When the session entered its current pause, or null while running / ended. */
+  pausedAtUtc?: string | null;
+  /** Total seconds spent paused so far (excluding any open pause) — lets the live timer exclude pauses. */
+  accumulatedPausedSeconds?: number | null;
 };
 
 export const fetchActiveSessions = async (activeOnly = true): Promise<DialysisSessionSummary[]> => {
@@ -80,6 +84,8 @@ export type SessionSummary = {
   ufAchievementPercent: number | null;
   abortReasonCode: string | null;
   machineId: string | null;
+  pausedAtUtc: string | null;
+  accumulatedPausedSeconds: number;
   prescription: SessionPrescription;
   access: VascularAccessSummary;
   readings: ReadingStats;
@@ -133,6 +139,12 @@ export const scheduleSession = async (body: ScheduleSessionRequest): Promise<str
 
 export const startSession = (sessionId: string) =>
   apiClient.post(`/api/pdms/api/v1.0/sessions/${sessionId}/start`);
+
+export const pauseSession = (sessionId: string) =>
+  apiClient.post(`/api/pdms/api/v1.0/sessions/${sessionId}/pause`);
+
+export const resumeSession = (sessionId: string) =>
+  apiClient.post(`/api/pdms/api/v1.0/sessions/${sessionId}/resume`);
 
 export const completeSession = (sessionId: string, achievedUfVolumeLiters: number) =>
   apiClient.post(`/api/pdms/api/v1.0/sessions/${sessionId}/complete`, { achievedUfVolumeLiters });

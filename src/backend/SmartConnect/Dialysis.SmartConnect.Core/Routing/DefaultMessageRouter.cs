@@ -31,7 +31,7 @@ public sealed class DefaultMessageRouter : IMessageRouter
         var db = scope.ServiceProvider.GetService<SmartConnectDbContext>();
         if (db is null)
         {
-            return Array.Empty<Guid>();
+            return [];
         }
 
         var startedRaw = await db.IntegrationFlows

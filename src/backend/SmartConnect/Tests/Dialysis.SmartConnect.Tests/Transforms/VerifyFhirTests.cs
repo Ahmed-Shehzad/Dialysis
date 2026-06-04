@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using Dialysis.BuildingBlocks.Fhir.Validation;
 using Dialysis.SmartConnect.Transforms;
@@ -78,7 +77,7 @@ public sealed class VerifyFhirTests
         CorrelationId = "c-" + Guid.NewGuid().ToString("N")[..8],
         Payload = Encoding.UTF8.GetBytes(payload),
         PayloadFormat = PayloadFormat.Json,
-        Metadata = ImmutableDictionary<string, string>.Empty,
+        Metadata = [],
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 }

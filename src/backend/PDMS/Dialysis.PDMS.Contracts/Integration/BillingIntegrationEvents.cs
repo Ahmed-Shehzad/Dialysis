@@ -24,7 +24,8 @@ public sealed record DialysisSessionChargeReadyIntegrationEvent : IIntegrationEv
         string Modality,
         int DurationMinutes,
         DateTime CompletedAtUtc,
-        string CptCode)
+        string CptCode,
+        decimal AchievedUfVolumeLiters)
     {
         this.EventId = EventId;
         this.OccurredOn = OccurredOn;
@@ -35,6 +36,7 @@ public sealed record DialysisSessionChargeReadyIntegrationEvent : IIntegrationEv
         this.DurationMinutes = DurationMinutes;
         this.CompletedAtUtc = CompletedAtUtc;
         this.CptCode = CptCode;
+        this.AchievedUfVolumeLiters = AchievedUfVolumeLiters;
     }
     public Guid EventId { get; init; }
     public DateTime OccurredOn { get; init; }
@@ -45,7 +47,9 @@ public sealed record DialysisSessionChargeReadyIntegrationEvent : IIntegrationEv
     public int DurationMinutes { get; init; }
     public DateTime CompletedAtUtc { get; init; }
     public string CptCode { get; init; }
-    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid SessionId, out Guid PatientId, out string Modality, out int DurationMinutes, out DateTime CompletedAtUtc, out string CptCode)
+    /// <summary>Ultrafiltration volume removed during the session, in litres — drives the consumables charge line.</summary>
+    public decimal AchievedUfVolumeLiters { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid SessionId, out Guid PatientId, out string Modality, out int DurationMinutes, out DateTime CompletedAtUtc, out string CptCode, out decimal AchievedUfVolumeLiters)
     {
         EventId = this.EventId;
         OccurredOn = this.OccurredOn;
@@ -56,5 +60,6 @@ public sealed record DialysisSessionChargeReadyIntegrationEvent : IIntegrationEv
         DurationMinutes = this.DurationMinutes;
         CompletedAtUtc = this.CompletedAtUtc;
         CptCode = this.CptCode;
+        AchievedUfVolumeLiters = this.AchievedUfVolumeLiters;
     }
 }

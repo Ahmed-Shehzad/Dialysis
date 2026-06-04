@@ -43,7 +43,7 @@ public sealed class DefaultExportJobOrchestrator : IExportJobOrchestrator
             Status: ExportJobStatus.Queued,
             CreatedAt: _time.GetUtcNow(),
             CompletedAt: null,
-            Outputs: Array.Empty<ExportJobOutput>(),
+            Outputs: [],
             Error: null);
 
         var persisted = await _store.CreateAsync(job, cancellationToken).ConfigureAwait(false);

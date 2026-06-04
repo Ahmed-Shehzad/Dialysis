@@ -9,7 +9,7 @@ public sealed class InboundReceiveResult
 
     public string? Error { get; init; }
 
-    public IReadOnlyList<int> OutboundRoutesAttempted { get; init; } = Array.Empty<int>();
+    public IReadOnlyList<int> OutboundRoutesAttempted { get; init; } = [];
 
     /// <summary>HTTP status code hint for API layers (e.g. 200, 400, 404, 409, 500).</summary>
     public int SuggestedHttpStatus { get; init; } = 200;

@@ -16,5 +16,5 @@ public sealed class InboundQueueItem
     public string? CorrelationId { get; init; }
 
     public ImmutableDictionary<string, string> Metadata { get; init; } =
-        ImmutableDictionary<string, string>.Empty;
+        [];
 }

@@ -14,7 +14,7 @@ public sealed class FlowDispatchResult
 
     public string? Error { get; init; }
 
-    public IReadOnlyList<int> OutboundRoutesAttempted { get; init; } = Array.Empty<int>();
+    public IReadOnlyList<int> OutboundRoutesAttempted { get; init; } = [];
 
     /// <summary>Response payload from the first outbound route (for synchronous request-response flows).</summary>
     public byte[]? ResponsePayload { get; init; }

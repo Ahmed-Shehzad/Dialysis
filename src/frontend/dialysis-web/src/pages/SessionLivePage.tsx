@@ -12,6 +12,7 @@ import { SessionReportsTab } from "@/features/reports/components/SessionReportsT
 import { ChairsideAlarmStrip } from "@/modules/pdms/chairside/ChairsideAlarmStrip";
 import { ChairsideHeader } from "@/modules/pdms/chairside/ChairsideHeader";
 import { KioskVitals } from "@/modules/pdms/chairside/KioskVitals";
+import { LiveCostTile } from "@/modules/pdms/chairside/LiveCostTile";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
@@ -76,6 +77,8 @@ export const SessionLivePage = () => {
       {sessionId && <TreatmentSummary sessionId={sessionId} />}
 
       <KioskVitals latest={latest} />
+
+      {(session?.status === "InProgress" || stream.cost) && <LiveCostTile cost={stream.cost} />}
 
       <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
         <div className="mb-3 flex items-center gap-1 border-b border-slate-800/60">

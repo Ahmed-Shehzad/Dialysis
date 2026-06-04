@@ -144,6 +144,8 @@ public sealed record SessionSummaryDto
         decimal? UfAchievementPercent,
         string? AbortReasonCode,
         Guid? MachineId,
+        DateTime? PausedAtUtc,
+        int AccumulatedPausedSeconds,
         SessionPrescriptionDto Prescription,
         VascularAccessDto Access,
         ReadingStatsDto Readings)
@@ -159,6 +161,8 @@ public sealed record SessionSummaryDto
         this.UfAchievementPercent = UfAchievementPercent;
         this.AbortReasonCode = AbortReasonCode;
         this.MachineId = MachineId;
+        this.PausedAtUtc = PausedAtUtc;
+        this.AccumulatedPausedSeconds = AccumulatedPausedSeconds;
         this.Prescription = Prescription;
         this.Access = Access;
         this.Readings = Readings;
@@ -169,15 +173,20 @@ public sealed record SessionSummaryDto
     public DateTime ScheduledStartUtc { get; init; }
     public DateTime? ActualStartUtc { get; init; }
     public DateTime? ActualEndUtc { get; init; }
+    /// <summary>Machine usage time on completion (wall-clock minus paused spans); null until the session ends.</summary>
     public int? ActualDurationMinutes { get; init; }
     public decimal? AchievedUfVolumeLiters { get; init; }
     public decimal? UfAchievementPercent { get; init; }
     public string? AbortReasonCode { get; init; }
     public Guid? MachineId { get; init; }
+    /// <summary>When the session entered its current pause, or null while running / ended.</summary>
+    public DateTime? PausedAtUtc { get; init; }
+    /// <summary>Total seconds spent paused so far, excluding any open pause.</summary>
+    public int AccumulatedPausedSeconds { get; init; }
     public SessionPrescriptionDto Prescription { get; init; }
     public VascularAccessDto Access { get; init; }
     public ReadingStatsDto Readings { get; init; }
-    public void Deconstruct(out Guid id, out Guid patientId, out string status, out DateTime scheduledStartUtc, out DateTime? actualStartUtc, out DateTime? actualEndUtc, out int? actualDurationMinutes, out decimal? achievedUfVolumeLiters, out decimal? ufAchievementPercent, out string? abortReasonCode, out Guid? machineId, out SessionPrescriptionDto prescription, out VascularAccessDto access, out ReadingStatsDto readings)
+    public void Deconstruct(out Guid id, out Guid patientId, out string status, out DateTime scheduledStartUtc, out DateTime? actualStartUtc, out DateTime? actualEndUtc, out int? actualDurationMinutes, out decimal? achievedUfVolumeLiters, out decimal? ufAchievementPercent, out string? abortReasonCode, out Guid? machineId, out DateTime? pausedAtUtc, out int accumulatedPausedSeconds, out SessionPrescriptionDto prescription, out VascularAccessDto access, out ReadingStatsDto readings)
     {
         id = this.Id;
         patientId = this.PatientId;
@@ -190,6 +199,8 @@ public sealed record SessionSummaryDto
         ufAchievementPercent = this.UfAchievementPercent;
         abortReasonCode = this.AbortReasonCode;
         machineId = this.MachineId;
+        pausedAtUtc = this.PausedAtUtc;
+        accumulatedPausedSeconds = this.AccumulatedPausedSeconds;
         prescription = this.Prescription;
         access = this.Access;
         readings = this.Readings;

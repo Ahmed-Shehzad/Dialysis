@@ -9,7 +9,7 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class FileReaderSourceConnectorTests : IDisposable
 {
-    private readonly string _root ;
+    private readonly string _root;
 
     public FileReaderSourceConnectorTests()
     {
@@ -19,7 +19,9 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(_root, recursive: true); } catch { /* best effort */ }
+        try
+        { Directory.Delete(_root, recursive: true); }
+        catch { /* best effort */ }
     }
 
     private sealed class StubFactory : IInboundMessageFactory
@@ -39,7 +41,7 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
                 Payload = payload,
                 PayloadFormat = format,
                 Metadata = metadata is null
-                    ? ImmutableDictionary<string, string>.Empty
+                    ? []
                     : metadata.ToImmutableDictionary(StringComparer.Ordinal),
                 ReceivedAtUtc = receivedAtUtc ?? DateTimeOffset.UtcNow,
             };

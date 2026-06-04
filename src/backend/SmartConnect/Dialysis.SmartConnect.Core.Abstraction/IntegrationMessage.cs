@@ -19,7 +19,7 @@ public sealed class IntegrationMessage
     public required PayloadFormat PayloadFormat { get; init; }
 
     public ImmutableDictionary<string, string> Metadata { get; init; } =
-        ImmutableDictionary<string, string>.Empty;
+        [];
 
     public DateTimeOffset ReceivedAtUtc { get; init; }
 

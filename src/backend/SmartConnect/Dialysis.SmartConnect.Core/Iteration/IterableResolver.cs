@@ -95,7 +95,7 @@ public static class IterableResolver
         var match = segments.FirstOrDefault(s =>
             s.StartsWith(segName + fieldSep, StringComparison.OrdinalIgnoreCase));
         if (match is null)
-            return Array.Empty<IterableElement>();
+            return [];
 
         var fields = match.Split(fieldSep);
         // MSH has special handling — MSH.1 is the field separator itself, MSH.2 encoding chars; the visible fields
@@ -105,7 +105,7 @@ public static class IterableResolver
             ? fieldIndex - 1
             : fieldIndex;
         if (fieldArrayIndex < 0 || fieldArrayIndex >= fields.Length)
-            return Array.Empty<IterableElement>();
+            return [];
 
         var repeats = fields[fieldArrayIndex].Split(repeatSep);
         var output = new IterableElement[repeats.Length];
@@ -119,7 +119,7 @@ public static class IterableResolver
     {
         var node = JsonNode.Parse(payload);
         if (node is null)
-            return Array.Empty<IterableElement>();
+            return [];
 
         var path = expression.TrimStart();
         if (path.StartsWith('$'))
@@ -135,20 +135,20 @@ public static class IterableResolver
             foreach (var seg in path.Split('.', StringSplitOptions.RemoveEmptyEntries))
             {
                 if (current is null)
-                    return Array.Empty<IterableElement>();
+                    return [];
                 if (current is JsonObject obj && obj.TryGetPropertyValue(seg, out var child))
                 {
                     current = child;
                 }
                 else
                 {
-                    return Array.Empty<IterableElement>();
+                    return [];
                 }
             }
         }
 
         if (current is not JsonArray array)
-            return Array.Empty<IterableElement>();
+            return [];
 
         var results = new IterableElement[array.Count];
         for (var i = 0; i < array.Count; i++)
@@ -159,7 +159,7 @@ public static class IterableResolver
     private static IReadOnlyList<IterableElement> ResolveXml(string payload, string expression)
     {
         if (string.IsNullOrWhiteSpace(payload))
-            return Array.Empty<IterableElement>();
+            return [];
 
         XPathDocument doc;
         try
@@ -170,7 +170,7 @@ public static class IterableResolver
         }
         catch (XmlException)
         {
-            return Array.Empty<IterableElement>();
+            return [];
         }
 
         var navigator = doc.CreateNavigator();
@@ -181,7 +181,7 @@ public static class IterableResolver
         }
         catch (XPathException)
         {
-            return Array.Empty<IterableElement>();
+            return [];
         }
 
         var results = new List<IterableElement>();

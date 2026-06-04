@@ -284,7 +284,7 @@ public sealed class NatsTransponderTransport : ITransponderTransport
         var deduplicationId = GetHeaderString(headers, TransponderTransportHeaderNames.DeduplicationId);
         return new TransportMessage(
             routingKey,
-            body ?? Array.Empty<byte>(),
+            body ?? [],
             correlationId,
             "application/json",
             DeduplicationId: deduplicationId);

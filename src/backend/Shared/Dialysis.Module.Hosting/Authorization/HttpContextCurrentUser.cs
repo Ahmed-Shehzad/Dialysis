@@ -53,7 +53,7 @@ public sealed class HttpContextCurrentUser : ICurrentUser
 
             var user = _httpContextAccessor.HttpContext?.User;
             if (user?.Identity?.IsAuthenticated != true)
-                return Array.Empty<string>();
+                return [];
 
             var valid = new HashSet<string>(_permissionCatalog.All, StringComparer.Ordinal);
             var granted = new HashSet<string>(StringComparer.Ordinal);

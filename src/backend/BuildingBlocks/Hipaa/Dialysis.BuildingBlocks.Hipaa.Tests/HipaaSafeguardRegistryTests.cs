@@ -67,7 +67,7 @@ public sealed class HipaaSafeguardRegistryTests
 
     private sealed class InMemoryXmlRepo : IXmlRepository
     {
-        public IReadOnlyCollection<System.Xml.Linq.XElement> GetAllElements() => Array.Empty<System.Xml.Linq.XElement>();
+        public IReadOnlyCollection<System.Xml.Linq.XElement> GetAllElements() => [];
         public void StoreElement(System.Xml.Linq.XElement element, string friendlyName) { }
     }
 }

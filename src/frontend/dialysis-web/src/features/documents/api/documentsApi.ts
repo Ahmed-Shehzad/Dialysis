@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api/apiClient";
 
 export type DocumentStatus = "Current" | "Superseded" | "EnteredInError";
-export type DocumentSource = "PdmsReporting" | "HieInbound" | "AdminUpload";
+export type DocumentSource = "PdmsReporting" | "HieInbound" | "AdminUpload" | "Billing";
 export type SignerKind = "Platform" | "User" | "RemoteQes";
 
 /** PAdES conformance level — drives whether a TSA timestamp + DSS is embedded. */

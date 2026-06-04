@@ -97,7 +97,7 @@ public sealed record FhirResourceCapability
         this.TypeName = TypeName;
         this.SupportsRead = SupportsRead;
         this.SupportsSearch = SupportsSearch;
-        this.SupportedProfiles = SupportedProfiles ?? Array.Empty<string>();
+        this.SupportedProfiles = SupportedProfiles ?? [];
     }
     public IReadOnlyList<string> SupportedProfiles { get; init; }
     public string TypeName { get; init; }

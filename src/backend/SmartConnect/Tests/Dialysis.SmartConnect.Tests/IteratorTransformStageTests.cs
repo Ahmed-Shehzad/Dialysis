@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -108,7 +107,7 @@ public sealed class IteratorTransformStageTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Json,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
@@ -120,7 +119,7 @@ public sealed class IteratorTransformStageTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 }

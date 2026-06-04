@@ -13,6 +13,7 @@ using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
+using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.BuildingBlocks.DataProtection;
 using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.EHR.Billing;
@@ -108,6 +109,9 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<PrescriptionOrderedIntegrationEvent, PrescriptionOrderedConsumer>();
                 t.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
                 t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
+                // Cross-module: PDMS completes a session → capture the itemised dialysis charge
+                // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
+                t.AddConsumer<DialysisSessionChargeReadyIntegrationEvent, DialysisSessionChargeReadyConsumer>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();

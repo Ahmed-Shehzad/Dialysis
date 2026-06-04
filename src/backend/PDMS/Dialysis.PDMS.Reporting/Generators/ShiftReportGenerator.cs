@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.Documents.Pdf;
+using Dialysis.Module.Contracts.Billing;
 
 namespace Dialysis.PDMS.Reporting.Generators;
 
@@ -30,7 +31,7 @@ public sealed class ShiftReportGenerator
             s.ChairLabel,
             s.StartedAtUtc.ToString("HH:mm"),
             s.CompletedAtUtc.ToString("HH:mm"),
-            $"{s.DurationMinutes} min",
+            TreatmentUsageTime.Format(s.DurationMinutes),
             s.Medications.Count.ToString(),
             s.Alarms.Count.ToString(),
         }).ToArray();
@@ -47,7 +48,7 @@ public sealed class ShiftReportGenerator
                 ])]),
             new("Sessions",
                 [new TableBlock(
-                    Headers: ["Patient", "Chair", "Start", "End", "Duration", "Meds", "Alarms"],
+                    Headers: ["Patient", "Chair", "Start", "End", "Usage time", "Meds", "Alarms"],
                     Rows: rows)]),
         };
         var doc = new DocumentModel(

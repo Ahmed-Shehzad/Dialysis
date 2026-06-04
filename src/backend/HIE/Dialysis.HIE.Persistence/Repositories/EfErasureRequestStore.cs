@@ -76,7 +76,7 @@ public sealed class ErasureRequestRow
     public ErasureRequest ToDomain()
     {
         var log = string.IsNullOrWhiteSpace(ExecutionLogJson)
-            ? Array.Empty<ErasureModuleResult>()
+            ? []
             : JsonSerializer.Deserialize<ErasureModuleResult[]>(ExecutionLogJson) ?? [];
         return new ErasureRequest(
             Id: Id,

@@ -29,4 +29,12 @@ public sealed class TreatmentAlarmRepository : ITreatmentAlarmRepository
             .OrderBy(a => a.FirstObservedUtc)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<TreatmentAlarm>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken = default) =>
+        await _db.TreatmentAlarms
+            .AsNoTracking()
+            .Where(a => a.SessionId == sessionId)
+            .OrderBy(a => a.FirstObservedUtc)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

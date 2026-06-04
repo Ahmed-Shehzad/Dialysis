@@ -8,7 +8,9 @@ using Dialysis.PDMS.TreatmentSessions.Features.GetSessionSummary;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionsByPatient;
+using Dialysis.PDMS.TreatmentSessions.Features.PauseSession;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
+using Dialysis.PDMS.TreatmentSessions.Features.ResumeSession;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
 using Dialysis.PDMS.TreatmentSessions.Features.StartSession;
 using Dialysis.PDMS.TreatmentSessions.Realtime;
@@ -126,6 +128,26 @@ public sealed class SessionsController : ControllerBase
     {
         await _gateway
             .SendCommandAsync<StartSessionCommand, Unit>(new StartSessionCommand(sessionId), cancellationToken)
+            .ConfigureAwait(false);
+        return NoContent();
+    }
+
+    [HttpPost("{sessionId:guid}/pause")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> PauseAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        await _gateway
+            .SendCommandAsync<PauseSessionCommand, Unit>(new PauseSessionCommand(sessionId), cancellationToken)
+            .ConfigureAwait(false);
+        return NoContent();
+    }
+
+    [HttpPost("{sessionId:guid}/resume")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ResumeAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        await _gateway
+            .SendCommandAsync<ResumeSessionCommand, Unit>(new ResumeSessionCommand(sessionId), cancellationToken)
             .ConfigureAwait(false);
         return NoContent();
     }
