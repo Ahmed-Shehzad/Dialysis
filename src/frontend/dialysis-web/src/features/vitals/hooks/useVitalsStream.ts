@@ -54,7 +54,11 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
     connection.onclose(() => setStatus("disconnected"));
 
     setStatus("connecting");
-    connection
+    // Keep the start promise so cleanup can await it before stopping. Calling stop() while the
+    // negotiate request is still in flight throws "The connection was stopped during negotiation"
+    // — which React 18 StrictMode triggers on every mount via its immediate mount→unmount→mount.
+    // Awaiting start() first lets the connection settle, then we tear it down cleanly.
+    const startPromise = connection
       .start()
       .then(async () => {
         if (cancelled) return;
@@ -65,15 +69,19 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
         if (!cancelled) setStatus("disconnected");
       });
 
+    const teardown = async () => {
+      if (connection.state === HubConnectionState.Connected) {
+        await connection.invoke("LeaveSessionAsync", sessionId).catch(() => undefined);
+      }
+      await connection.stop().catch(() => undefined);
+    };
+
     return () => {
       cancelled = true;
       connection.off("reading", handleReading);
       connection.off("cost", handleCost);
-      if (connection.state === HubConnectionState.Connected) {
-        void connection.invoke("LeaveSessionAsync", sessionId).catch(() => undefined);
-      }
-      void connection.stop();
       connectionRef.current = null;
+      void startPromise.finally(teardown);
     };
   }, [sessionId, getAccessToken]);
 

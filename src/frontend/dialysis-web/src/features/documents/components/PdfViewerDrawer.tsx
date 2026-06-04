@@ -8,6 +8,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 import {
   deleteDocument,
   documentBinaryUrl,
+  downloadDocumentBinary,
   fetchDocumentDetail,
   fetchDocumentPreview,
   fillDocumentAcroForm,
@@ -16,6 +17,7 @@ import {
   type PadesLevel,
   type SignerKind,
 } from "@/features/documents/api/documentsApi";
+import { useAuth } from "@/features/auth/components/AuthProvider";
 
 // pdfjs worker is shipped as an ES module; Vite resolves it via the ?url import. With
 // the worker wired the viewer can render annotations + AcroForm widgets inline.
@@ -120,6 +122,7 @@ const toAcroFields = (
  */
 export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   const queryClient = useQueryClient();
+  const { getAccessToken } = useAuth();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [signMode, setSignMode] = useState<SignerKind>("Platform");
   const [signerUserId, setSignerUserId] = useState("");
@@ -296,6 +299,19 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
     [enableScripting],
   );
 
+  // react-pdf fetches the bytes itself (it doesn't go through the axios apiClient), so the Bearer
+  // token the interceptor normally attaches is missing and the module API 401s. Pass the token as
+  // an explicit httpHeader on the pdfjs request Source. The `?v=` bumps after a fill so the baked
+  // bytes re-fetch. Memoized on the token + reloadKey so the document isn't re-fetched per render.
+  const pdfFileSource = useMemo(() => {
+    const token = getAccessToken();
+    return {
+      url: `${documentBinaryUrl(documentId)}?v=${reloadKey}`,
+      httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      withCredentials: true,
+    };
+  }, [documentId, reloadKey, getAccessToken]);
+
   return (
     <div className="fixed inset-0 z-40 flex bg-slate-950/70" role="dialog">
       <div className="ml-auto flex h-full w-full max-w-3xl flex-col border-l border-slate-800 bg-slate-900 shadow-xl">
@@ -340,7 +356,7 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
             {isPdf ? (
               <Document
                 key={reloadKey}
-                file={`${documentBinaryUrl(documentId)}?v=${reloadKey}`}
+                file={pdfFileSource}
                 onLoadSuccess={(pdf) => void loadFormFields(pdf)}
                 options={pdfDocumentOptions}
                 loading={<div className="text-sm text-slate-400">Loading PDF…</div>}
@@ -362,7 +378,8 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                 preview={preview.data}
                 isLoading={preview.isLoading}
                 mimeType={doc?.mimeType ?? ""}
-                downloadHref={documentBinaryUrl(documentId)}
+                documentId={documentId}
+                filename={doc?.title ?? `document-${documentId}`}
               />
             )}
           </div>
@@ -563,18 +580,29 @@ type NonPdfPreviewProps = {
   preview: Awaited<ReturnType<typeof fetchDocumentPreview>> | undefined;
   isLoading: boolean;
   mimeType: string;
-  downloadHref: string;
+  documentId: string;
+  filename: string;
 };
 
-const NonPdfPreview = ({ preview, isLoading, mimeType, downloadHref }: NonPdfPreviewProps) => {
+const NonPdfPreview = ({
+  preview,
+  isLoading,
+  mimeType,
+  documentId,
+  filename,
+}: NonPdfPreviewProps) => {
+  // The /binary endpoint requires a Bearer token, so download via the authenticated apiClient
+  // (object-URL save) rather than a plain anchor that would 401 against the module API.
+  const download = () => void downloadDocumentBinary(documentId, filename);
+
   if (isLoading) return <div className="text-sm text-slate-400">Loading preview…</div>;
   if (!preview)
     return (
       <div className="text-sm text-slate-400">
         Preview unavailable.{" "}
-        <a className="text-sky-300 underline" href={downloadHref}>
+        <button type="button" className="text-sky-300 underline" onClick={download}>
           Download the original
-        </a>{" "}
+        </button>{" "}
         ({mimeType}).
       </div>
     );
@@ -607,12 +635,13 @@ const NonPdfPreview = ({ preview, isLoading, mimeType, downloadHref }: NonPdfPre
         {mimeType} is not rendered in-app. Office documents, scanned images, and other binary kinds
         can be downloaded and opened in their native viewer.
       </div>
-      <a
-        href={downloadHref}
+      <button
+        type="button"
+        onClick={download}
         className="inline-block rounded bg-sky-600 px-3 py-1.5 text-slate-50 hover:bg-sky-500"
       >
         Download original
-      </a>
+      </button>
     </div>
   );
 };
