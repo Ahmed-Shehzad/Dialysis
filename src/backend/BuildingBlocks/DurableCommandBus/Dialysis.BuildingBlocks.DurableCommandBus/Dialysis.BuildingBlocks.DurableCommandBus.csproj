@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../Transponder/Transponder.Core/Transponder.Core.csproj" />
     <ProjectReference Include="../../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../../DomainDrivenDesign/Persistence/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions/Dialysis.Domain.Driven.Design.Core.Persistence.Abstractions.csproj" />
     <ProjectReference Include="../../Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />

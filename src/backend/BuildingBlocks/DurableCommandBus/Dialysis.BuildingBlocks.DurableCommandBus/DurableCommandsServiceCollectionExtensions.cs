@@ -36,6 +36,10 @@ public static class DurableCommandsServiceCollectionExtensions
         services.AddScoped<ICommandLedger, EfCommandLedger<TContext>>();
         services.AddSingleton<IDurableCommandBus, DurableCommandBus>();
         services.AddScoped<IConsumer<DurableCommandEnvelope>, DurableCommandConsumer<TContext>>();
+        // Register the consume route so the in-memory + RabbitMQ transports both know to route
+        // DurableCommandEnvelope to the consumer above. Without this, the in-memory dispatcher
+        // throws "No consume route for routing key 'DurableCommandEnvelope'" at publish time.
+        TransponderConsumeRouteRegistration.Register<DurableCommandEnvelope>(services);
         services.TryAddSingleton(TimeProvider.System);
         // Singleton metrics — one Meter instance per host process, shared by the bus +
         // consumer. The host's OTLP exporter picks it up automatically when the meter
