@@ -1,4 +1,6 @@
 using System.Threading.RateLimiting;
+using Dialysis.BuildingBlocks.DurableCommandBus;
+using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
@@ -12,6 +14,7 @@ using Dialysis.HIS.Composition;
 using Dialysis.HIS.Contracts.Security;
 using Dialysis.HIS.DataServices;
 using Dialysis.HIS.Integration;
+using Dialysis.HIS.Integration.Features.IngestDeviceReading;
 using Dialysis.HIS.Operations;
 using Dialysis.HIS.Persistence;
 using Dialysis.HIS.RaCapabilities;
@@ -111,6 +114,14 @@ builder.Services.AddRateLimiter(o =>
             }));
 });
 
+// Durable command bus. Optional — flips on per-command via the feature flag; with the
+// flag off, controllers stay on the existing synchronous ICqrsGateway path. Follows the
+// PDMS opt-in pattern from PR #140; second slice on the durable path.
+builder.Services.AddDurableCommandBus<HisDbContext>("his", b =>
+{
+    b.RegisterCommand<IngestDeviceReadingCommand, Guid>(requiredPermission: HisPermissions.DeviceIngest);
+});
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -149,6 +160,7 @@ app.MapGet(
     .AllowAnonymous();
 app.MapGet("/", () => Results.Ok(new { module = "his", version = "v1" }));
 app.MapHipaaSafeguardsEndpoint();
+app.MapDurableCommandStatusEndpoint();
 app.MapControllers();
 
 if (enableFhirEndpoints)

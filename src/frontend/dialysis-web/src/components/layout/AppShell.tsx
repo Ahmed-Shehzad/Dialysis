@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/AuthProvider";
+import { ToastHost } from "@/features/durable-commands";
 import { useTheme } from "@/features/theme/ThemeProvider";
 import { PatientContextBar } from "@/shell/PatientContextBar";
 import { enabledModules } from "@/shell/registry";
@@ -100,6 +101,7 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
           {children ?? <Outlet />}
         </Suspense>
       </main>
+      <ToastHost />
     </div>
   );
 };

@@ -1,0 +1,21 @@
+{
+  "archetypeId": "openEHR-EHR-ACTION.medication.v1",
+  "fhirResourceType": "MedicationAdministration",
+  "description": "Medication administration action — the in-clinic record of giving a drug. Maps the openEHR action archetype most partners use to log drug events during a dialysis session (anticoagulant boluses, calcium gluconate, etc.) onto FHIR R4 MedicationAdministration.",
+  "fields": [
+    { "key": "drug.code",              "path": "Medication as CodeableConcept.Coding[0].Code" },
+    { "key": "drug.system",            "path": "Medication as CodeableConcept.Coding[0].System" },
+    { "key": "drug.display",           "path": "Medication as CodeableConcept.Coding[0].Display" },
+    { "key": "dose.magnitude",         "path": "Dosage.Dose.Value" },
+    { "key": "dose.unit",              "path": "Dosage.Dose.Unit" },
+    { "key": "dose.unit_system",       "path": "Dosage.Dose.System" },
+    { "key": "route.code",             "path": "Dosage.Route.Coding[0].Code" },
+    { "key": "method.code",            "path": "Dosage.Method.Coding[0].Code" },
+    { "key": "site.code",              "path": "Dosage.Site.Coding[0].Code" },
+    { "key": "effective.start",        "path": "Effective as Period.Start" },
+    { "key": "effective.end",          "path": "Effective as Period.End" },
+    { "key": "performer.who",          "path": "Performer[?].Actor.Reference" },
+    { "key": "status",                 "path": "Status" },
+    { "key": "status_reason",          "path": "StatusReason[?].Coding[?].Code" }
+  ]
+}

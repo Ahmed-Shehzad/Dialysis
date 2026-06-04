@@ -22,7 +22,7 @@ public sealed class IngestDeviceReadingCommandHandler(
                 return existing.Value;
         }
 
-        var id = Guid.CreateVersion7();
+        var id = request.ReadingId != Guid.Empty ? request.ReadingId : Guid.CreateVersion7();
         repository.Add(new DeviceReadingRecord
         {
             Id = id,

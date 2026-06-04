@@ -27,6 +27,8 @@
     <ProjectReference Include="../Dialysis.HIS.PatientFlow/Dialysis.HIS.PatientFlow.csproj" />
     <ProjectReference Include="../Dialysis.HIS.PatientAccess/Dialysis.HIS.PatientAccess.csproj" />
     <ProjectReference Include="../Dialysis.HIS.Medication/Dialysis.HIS.Medication.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore/Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
