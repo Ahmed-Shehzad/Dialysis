@@ -1,6 +1,7 @@
 using Dialysis.Module.Hosting.Authorization;
 using Dialysis.Module.Hosting.Health;
 using Dialysis.Module.Hosting.Middleware;
+using Dialysis.Module.Hosting.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public static class ModuleHostingApplicationBuilderExtensions
             app.UseSecurityHeaders();
             app.UseExceptionHandler();
             app.UseMiddleware<CorrelationIdMiddleware>();
+            app.UseModuleRateLimiting();
 
             var auth = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ModuleAuthenticationOptions>>().Value;
             if (!string.IsNullOrWhiteSpace(auth.Authority))

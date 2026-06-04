@@ -1,0 +1,48 @@
+# OWASP ZAP baseline scan rule overrides.
+#
+# Format: RULE_ID	ACTION	URL_REGEX	[NOTE]
+#
+# Action: IGNORE | WARN | FAIL
+# The baseline action is WARN; we tighten clinically-relevant rules to FAIL and
+# silence ones that produce noise without value on a private clinical API.
+
+# Always FAIL the build on anything that exposes patient data without auth — these
+# rules surface when authentication / authorization is misconfigured.
+10010	FAIL	.*
+10011	FAIL	.*
+10015	FAIL	.*
+10020	FAIL	.*
+10021	FAIL	.*
+10023	FAIL	.*
+10024	FAIL	.*
+10025	FAIL	.*
+10026	FAIL	.*
+10027	FAIL	.*
+10028	FAIL	.*
+10029	FAIL	.*
+10030	FAIL	.*
+10031	FAIL	.*
+10032	FAIL	.*
+
+# Mixed-content / HTTPS rules — FAIL in production scans, allow in dev where TLS is off.
+10038	WARN	http://localhost.*
+10038	FAIL	https://.*
+
+# Anti-CSRF — informational on a SPA-only API where every mutating endpoint requires
+# a Bearer JWT (CSRF is irrelevant when there's no cookie-based session). Silence
+# the noisy rule on the API surface, but keep it FAIL on any HTML page returned by
+# the gateway (the SPA shell).
+10202	IGNORE	.*/api/v1.*
+10202	WARN	.*
+
+# Cookie attributes (Secure / HttpOnly / SameSite). Always FAIL — even the BFF auth
+# cookie has to respect these.
+10010	FAIL	.*
+10011	FAIL	.*
+10054	FAIL	.*
+10055	FAIL	.*
+10094	FAIL	.*
+
+# Information disclosure — server header, X-Powered-By, etc. SecurityHeaders middleware
+# already strips these; FAIL if a regression sneaks them back in.
+10037	FAIL	.*

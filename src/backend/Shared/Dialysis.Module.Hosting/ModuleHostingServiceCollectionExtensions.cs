@@ -6,6 +6,7 @@ using Dialysis.Module.Contracts.Authorization;
 using Dialysis.Module.Hosting.Authorization;
 using Dialysis.Module.Hosting.Middleware;
 using Dialysis.Module.Hosting.OpenApi;
+using Dialysis.Module.Hosting.RateLimiting;
 using Dialysis.Module.Hosting.Telemetry;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -125,6 +126,11 @@ public static class ModuleHostingServiceCollectionExtensions
                 }
                 builder.Services.AddValkeyDistributedCache(valkeySection);
             }
+
+            // Built-in ASP.NET 7+ rate limiting — first backpressure surface in front of the
+            // module API, partitioned per authenticated subject (sub claim) or IP fallback.
+            // See docs/operations/load-and-capacity.md for the per-tier shedding story.
+            builder.Services.AddModuleRateLimiting(builder.Configuration.GetSection(options.ModuleSlug));
 
             return builder;
         }

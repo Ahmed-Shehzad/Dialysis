@@ -1,0 +1,157 @@
+---
+# HorizontalPodAutoscaler for each module API + the gateway. Two-signal HPA:
+#   1. CPU at 65% (avoids thrash on spiky workloads; standard recommendation)
+#   2. External: RabbitMQ queue depth > 1000 (scales out when consumer can't keep up,
+#      not just when the API itself is CPU-bound — this is the key signal for the
+#      durable command bus pattern)
+#
+# Requires prometheus-adapter exposing `rabbitmq_queue_messages` via the
+# custom.metrics.k8s.io API. The RabbitMQ Cluster Operator emits this metric out of
+# the box via its Prometheus exporter sidecar.
+#
+# maxReplicas defaults below give the 1M-RPS scenario room to scale; tune per env.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: his-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: his-api
+  minReplicas: 2
+  maxReplicas: 100
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 65 }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies: [{ type: Percent, value: 100, periodSeconds: 30 }]
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{ type: Percent, value: 25, periodSeconds: 60 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ehr-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ehr-api
+  minReplicas: 2
+  maxReplicas: 100
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 65 }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies: [{ type: Percent, value: 100, periodSeconds: 30 }]
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{ type: Percent, value: 25, periodSeconds: 60 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pdms-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pdms-api
+  minReplicas: 2
+  maxReplicas: 100
+  metrics:
+  # PDMS gets the dual-signal HPA — durable command bus puts queue depth on the hot path
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 65 }
+  - type: External
+    external:
+      metric:
+        name: rabbitmq_queue_messages
+        selector:
+          matchLabels:
+            queue: "durable.RecordReadingCommand"
+      target:
+        type: AverageValue
+        averageValue: "1000"
+  behavior:
+    scaleUp:
+      # Scale up faster than the other modules — telemetry surges (machine reconnects,
+      # batch reading uploads) drive PDMS first and the queue-depth signal needs a
+      # responsive HPA to keep up with intake.
+      stabilizationWindowSeconds: 15
+      policies: [{ type: Percent, value: 200, periodSeconds: 30 }]
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{ type: Percent, value: 25, periodSeconds: 60 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: smartconnect-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: smartconnect-api
+  minReplicas: 2
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 70 }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hie-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hie-api
+  minReplicas: 2
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 70 }
+---
+# Gateway scales aggressively — it terminates TLS, so CPU is the right signal and a
+# tight stabilization window matches the SLA-sensitive nature of the edge.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gateway
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: { type: Utilization, averageUtilization: 60 }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 15
+      policies: [{ type: Percent, value: 200, periodSeconds: 30 }]
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies: [{ type: Percent, value: 20, periodSeconds: 60 }]
