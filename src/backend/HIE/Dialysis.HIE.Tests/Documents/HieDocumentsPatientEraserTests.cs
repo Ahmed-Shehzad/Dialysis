@@ -15,9 +15,9 @@ public sealed class HieDocumentsPatientEraserTests
     public async Task Erase_Async_Returns_Zero_When_Patient_Has_Nothing_Async()
     {
         var sut = new HieDocumentsPatientEraser(
-            new Stub_Repository([]),
+            new StubRepository([]),
             new InMemoryDocumentBlobStore(),
-            new Stub_Unit_Of_Work(),
+            new StubUnitOfWork(),
             NullLogger<HieDocumentsPatientEraser>.Instance);
 
         var result = await sut.EraseAsync(Guid.NewGuid(), "dpo", CancellationToken.None);
@@ -40,9 +40,9 @@ public sealed class HieDocumentsPatientEraserTests
         var blobs = new InMemoryDocumentBlobStore();
         foreach (var d in docs)
             await blobs.SaveAsync(d.Id, d.MimeType, new byte[] { 1, 2 }, CancellationToken.None);
-        var uow = new Stub_Unit_Of_Work();
+        var uow = new StubUnitOfWork();
 
-        var sut = new HieDocumentsPatientEraser(new Stub_Repository(docs), blobs, uow, NullLogger<HieDocumentsPatientEraser>.Instance);
+        var sut = new HieDocumentsPatientEraser(new StubRepository(docs), blobs, uow, NullLogger<HieDocumentsPatientEraser>.Instance);
 
         var result = await sut.EraseAsync(patient, "dpo", CancellationToken.None);
 
@@ -67,7 +67,7 @@ public sealed class HieDocumentsPatientEraserTests
         source: source,
         createdAtUtc: DateTime.UtcNow);
 
-    private sealed class Stub_Repository(IReadOnlyList<DocumentReference> docs) : IDocumentReferenceRepository
+    private sealed class StubRepository(IReadOnlyList<DocumentReference> docs) : IDocumentReferenceRepository
     {
         public void Add(DocumentReference document) { }
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<DocumentReference?>(null);
@@ -79,7 +79,7 @@ public sealed class HieDocumentsPatientEraserTests
             Task.FromResult(docs);
     }
 
-    private sealed class Stub_Unit_Of_Work : IUnitOfWork
+    private sealed class StubUnitOfWork : IUnitOfWork
     {
         public int Saves { get; private set; }
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) { Saves++; return Task.FromResult(0); }
