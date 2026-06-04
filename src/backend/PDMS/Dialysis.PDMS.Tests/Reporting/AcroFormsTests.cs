@@ -121,4 +121,70 @@ public sealed class AcroFormsTests
         var form = doc.AcroForm;
         return form?.Fields.DescendantNames ?? [];
     }
+
+    [Fact]
+    public async Task Fill_Form_Values_Populates_Existing_Text_Field_Async()
+    {
+        var renderer = new QuestPdfDocumentRenderer();
+        var placements = new AcroFormPlacement[]
+        {
+            new(1, new PdfPoint(60, 100), new PdfSize(200, 24),
+                new TextFormField("patient_name") { Tooltip = "Print" }),
+            new(1, new PdfPoint(60, 60), new PdfSize(16, 16),
+                new CheckBoxFormField("consent_signed")),
+        };
+        var blank = await renderer.RenderWithFormsAsync(SampleDocument(), placements, CancellationToken.None);
+
+        var processor = new PdfSharpAcroFormProcessor();
+        var result = await processor.FillFormValuesAsync(
+            blank,
+            new Dictionary<string, string>
+            {
+                ["patient_name"] = "Ada Lovelace",
+                ["consent_signed"] = "true",
+                ["nonexistent_field"] = "shrug",
+            },
+            CancellationToken.None);
+
+        result.FilledFieldNames.ShouldContain("patient_name");
+        result.FilledFieldNames.ShouldContain("consent_signed");
+        result.UnknownFields.ShouldContain("nonexistent_field");
+        result.FilledBytes.Length.ShouldBeGreaterThan(0);
+
+        // Re-open and confirm the /V entry contains the filled value.
+        using var ms = new MemoryStream(result.FilledBytes);
+        using var doc = PdfReader.Open(ms, PdfDocumentOpenMode.Import);
+        var nameField = doc.AcroForm.Fields["patient_name"];
+        nameField.ShouldNotBeNull();
+        var v = nameField.Elements.GetString("/V");
+        v.ShouldBe("Ada Lovelace");
+    }
+
+    [Fact]
+    public async Task Fill_Form_Values_Reports_Unknown_Keys_Without_Throwing_Async()
+    {
+        // Unknown keys should be surfaced to the caller (not silently dropped) so the
+        // operator UI can show "we ignored these keys" rather than implying success.
+        var renderer = new QuestPdfDocumentRenderer();
+        var placements = new AcroFormPlacement[]
+        {
+            new(1, new PdfPoint(60, 100), new PdfSize(200, 24), new TextFormField("real_field")),
+        };
+        var blank = await renderer.RenderWithFormsAsync(SampleDocument(), placements, CancellationToken.None);
+
+        var processor = new PdfSharpAcroFormProcessor();
+        var result = await processor.FillFormValuesAsync(
+            blank,
+            new Dictionary<string, string>
+            {
+                ["real_field"] = "value",
+                ["bogus_key_one"] = "x",
+                ["bogus_key_two"] = "y",
+            },
+            CancellationToken.None);
+
+        result.FilledFieldNames.ShouldContain("real_field");
+        result.UnknownFields.ShouldContain("bogus_key_one");
+        result.UnknownFields.ShouldContain("bogus_key_two");
+    }
 }
