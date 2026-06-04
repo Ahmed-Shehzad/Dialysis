@@ -19,18 +19,12 @@ concurrency:
 
 jobs:
   # --- 1. Secrets in the repo / git history -----------------------------------
-  gitleaks:
-    name: gitleaks (secrets)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-          # Surface findings inline; fail the job on any real positive (allowlist handles
-          # the known-safe placeholders documented in .gitleaks.toml).
+  # NOTE: GitGuardian Security Checks already runs on every push/PR at the repo level
+  # and covers the same surface as gitleaks (probably with a more aggressive proprietary
+  # ruleset). When secret-scanning needs to move to a self-hosted tool (compliance ask,
+  # regulator audit, GitGuardian cost), re-enable a gitleaks job here against
+  # `.gitleaks.toml`. The allowlist already documents the known-safe placeholders
+  # (Keycloak dev secret in the realm import + the CHANGE_ME-* operator manifest values).
 
   # --- 2. Vulnerable .NET dependencies ---------------------------------------
   dotnet-deps:
@@ -81,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@0.24.0
+      - uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: '.'

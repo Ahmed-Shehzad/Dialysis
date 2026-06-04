@@ -10,11 +10,13 @@ The `.github/workflows/security-scan.yml` workflow runs five jobs on every push 
 
 | Job | Tool | What it catches | What it misses |
 |---|---|---|---|
-| **gitleaks** | `gitleaks` v8 + `.gitleaks.toml` | Secrets / API keys / tokens in the working tree AND in the git history | Secrets that never went through git (env files, vault entries) |
+| **GitGuardian** | Repo-level GitGuardian Security Checks | Secrets / API keys / tokens in the working tree AND in the git history (proprietary SaaS ruleset) | Secrets that never went through git (env files, vault entries) |
 | **dotnet-deps** | `dotnet list package --vulnerable --include-transitive` | CVEs in any NuGet dep (direct + transitive) | License risks, abandoned packages |
 | **npm-deps** | `npm audit --audit-level=high` | CVEs in the SPA dep tree (production + dev) | Same as above |
 | **trivy-fs** | Aqua Trivy filesystem scan | OS-package CVEs in Dockerfiles, IaC misconfigs in Helm values | Runtime config (env vars) |
 | **zap-baseline** | OWASP ZAP baseline scan | Missing security headers, mixed content, weak cookie attrs, info disclosure | Authorization logic, business rules — those need targeted tests |
+
+`.gitleaks.toml` ships as a fallback config for teams that want a self-hosted secret scanner (compliance ask, regulator audit, GitGuardian cost concern). To re-enable in CI, restore the `gitleaks` job in `.github/workflows/security-scan.yml`.
 
 Run on every code change → cost is mostly compute; benefit is regression coverage of
 the well-known issue surface.
