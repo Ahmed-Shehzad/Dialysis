@@ -121,6 +121,11 @@ builder.Services.AddDurableCommandBus<HisDbContext>("his", b =>
 {
     b.RegisterCommand<IngestDeviceReadingCommand, Guid>(requiredPermission: HisPermissions.DeviceIngest);
 });
+// Surface the bus's meter to the OTLP pipeline so the Aspire dashboard + the prod
+// Grafana dashboards (deploy/k8s/observability/dashboards/) pick up its counters +
+// histograms automatically.
+builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
+    o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
 
 builder.Services.AddControllers();
 

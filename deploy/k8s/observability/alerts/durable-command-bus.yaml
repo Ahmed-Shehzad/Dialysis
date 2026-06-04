@@ -1,0 +1,79 @@
+---
+# Prometheus alert rules for the durable command bus. Apply alongside the cluster's
+# kube-prometheus-stack install:
+#   kubectl apply -n monitoring -f deploy/k8s/observability/alerts/durable-command-bus.yaml
+#
+# All rules are pageable in production; tune to your alerting fatigue tolerance.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dialysis-durable-command-bus
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: durable-command-bus
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: dialysis.durable-command-bus
+    interval: 30s
+    rules:
+    - alert: DurableCommandBusBacklogGrowing
+      # Backlog > 1000 sustained for 5 minutes is the HPA's scale-out trigger; if it stays
+      # there it means HPA hit maxReplicas, the consumer is genuinely under-provisioned, or
+      # the DB tier is the actual bottleneck.
+      expr: |
+        sum by (queue) (rabbitmq_queue_messages{queue=~".*durable.*|.*DurableCommandEnvelope.*"}) > 1000
+      for: 5m
+      labels: { severity: warning, component: durable-command-bus }
+      annotations:
+        summary: "Durable-command queue backlog growing on {{ $labels.queue }}"
+        description: |
+          Queue {{ $labels.queue }} has had more than 1000 unconsumed envelopes for 5 minutes.
+          Check: (1) consumer HPA hit maxReplicas? (2) DB primary write-rate saturated?
+          (3) Handler stuck (long transactions)?
+        runbook_url: https://github.com/Ahmed-Shehzad/Dialysis/blob/main/docs/architecture/durable-writes.md#backpressure-and-troubleshooting
+
+    - alert: DurableCommandHandlerFailures
+      # Sustained handler exceptions = a slice bug, not a transient broker hiccup. The Failed
+      # rows on the ledger have the exception type + message; cross-reference with the
+      # module's exception logs.
+      expr: |
+        sum by (module, command_type) (rate(dialysis_durable_commands_failed_total{reason="handler_exception"}[5m])) > 0.1
+      for: 10m
+      labels: { severity: critical, component: durable-command-bus }
+      annotations:
+        summary: "Durable command handler failing for {{ $labels.module }}.{{ $labels.command_type }}"
+        description: |
+          {{ $labels.module }}.{{ $labels.command_type }} handler is throwing > 0.1/s for 10 minutes.
+          The ledger's failure_json column has the exception payload. Likely causes:
+          aggregate invariant violation, FK to deleted row, encryption-key rotation issue.
+
+    - alert: DurableCommandLatencyP99High
+      # Design contract is p99 < 1s. Sustained > 5s = something is wrong at the consumer or
+      # DB side; we should know about it before the user reports "the toast never says Applied."
+      expr: |
+        histogram_quantile(0.99, sum by (le, module, command_type)
+          (rate(dialysis_durable_commands_latency_seconds_bucket[5m]))) > 5
+      for: 10m
+      labels: { severity: warning, component: durable-command-bus }
+      annotations:
+        summary: "Durable command latency p99 > 5s for {{ $labels.module }}.{{ $labels.command_type }}"
+        description: |
+          End-to-end latency p99 is above 5s for 10 minutes. Check Postgres write-latency,
+          RMQ disk fsync queue, and HPA replica count. If applied_rate is matching
+          enqueue_rate but latency is high, the consumer is keeping up but each commit is
+          slow — likely DB write contention.
+
+    - alert: DurableCommandEnqueuePublishFailing
+      # Publisher confirm nack → API returns 503. Brief blips are normal; sustained = real
+      # broker problem (cluster partitioned, disk full).
+      expr: |
+        sum by (module) (rate(dialysis_durable_commands_failed_total{reason="catalog_or_payload"}[5m])) > 0.5
+      for: 5m
+      labels: { severity: critical, component: durable-command-bus }
+      annotations:
+        summary: "Durable command publish failures on {{ $labels.module }}"
+        description: |
+          Bus is throwing DurableCommandException at > 0.5/s for 5 minutes. The reason is
+          either catalog rejection (a slice is sending an unregistered command type — bug)
+          or publish-confirm nack (broker problem). Check the RabbitMqCluster status.

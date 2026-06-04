@@ -32,6 +32,8 @@ public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandE
     private readonly IDurableCommandCatalog _catalog;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<DurableCommandBusOptions> _options;
+    private readonly DurableCommandMetrics _metrics;
+    private readonly TimeProvider _clock;
     private readonly ILogger<DurableCommandConsumer<TContext>> _logger;
     private readonly string _consumerInstanceId;
 
@@ -39,11 +41,15 @@ public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandE
         IDurableCommandCatalog catalog,
         IServiceScopeFactory scopeFactory,
         IOptions<DurableCommandBusOptions> options,
+        DurableCommandMetrics metrics,
+        TimeProvider clock,
         ILogger<DurableCommandConsumer<TContext>> logger)
     {
         _catalog = catalog;
         _scopeFactory = scopeFactory;
         _options = options;
+        _metrics = metrics;
+        _clock = clock;
         _logger = logger;
         _consumerInstanceId = $"{Environment.MachineName}/{Environment.ProcessId}";
     }
@@ -107,13 +113,30 @@ public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandE
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
             await tx.CommitAsync(ct).ConfigureAwait(false);
 
+            var appliedAt = _clock.GetUtcNow().UtcDateTime;
+            var latencySeconds = Math.Max(0, (appliedAt - envelope.EnqueuedAtUtc).TotalSeconds);
+            _metrics.CommandsApplied.Add(
+                1,
+                new KeyValuePair<string, object?>("module", _options.Value.ModuleSlug),
+                new KeyValuePair<string, object?>("command_type", envelope.CommandTypeKey));
+            _metrics.CommandLatencySeconds.Record(
+                latencySeconds,
+                new KeyValuePair<string, object?>("module", _options.Value.ModuleSlug),
+                new KeyValuePair<string, object?>("command_type", envelope.CommandTypeKey));
+
             _logger.LogInformation(
-                "Durable command {CommandId} ({CommandType}) applied in {Module}.",
-                envelope.CommandId, envelope.CommandTypeKey, _options.Value.ModuleSlug);
+                "Durable command {CommandId} ({CommandType}) applied in {Module} ({LatencyMs}ms).",
+                envelope.CommandId, envelope.CommandTypeKey, _options.Value.ModuleSlug,
+                (long)(latencySeconds * 1000));
         }
         catch (DurableCommandException)
         {
             await tx.RollbackAsync(ct).ConfigureAwait(false);
+            _metrics.CommandsFailed.Add(
+                1,
+                new KeyValuePair<string, object?>("module", _options.Value.ModuleSlug),
+                new KeyValuePair<string, object?>("command_type", envelope.CommandTypeKey),
+                new KeyValuePair<string, object?>("reason", "catalog_or_payload"));
             throw;
         }
         catch (Exception ex)
@@ -123,6 +146,11 @@ public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandE
             // the rollback. Rethrow so the broker nacks → DLQ.
             await tx.RollbackAsync(ct).ConfigureAwait(false);
             await WriteFailureAsync(envelope, ex, ct).ConfigureAwait(false);
+            _metrics.CommandsFailed.Add(
+                1,
+                new KeyValuePair<string, object?>("module", _options.Value.ModuleSlug),
+                new KeyValuePair<string, object?>("command_type", envelope.CommandTypeKey),
+                new KeyValuePair<string, object?>("reason", "handler_exception"));
             throw;
         }
         finally

@@ -37,6 +37,11 @@ public static class DurableCommandsServiceCollectionExtensions
         services.AddSingleton<IDurableCommandBus, DurableCommandBus>();
         services.AddScoped<IConsumer<DurableCommandEnvelope>, DurableCommandConsumer<TContext>>();
         services.TryAddSingleton(TimeProvider.System);
+        // Singleton metrics — one Meter instance per host process, shared by the bus +
+        // consumer. The host's OTLP exporter picks it up automatically when the meter
+        // name (DurableCommandMetrics.MeterName) is added to ModuleTelemetryOptions
+        // .AdditionalMeters — done below.
+        services.TryAddSingleton<DurableCommandMetrics>();
 
         return services;
     }

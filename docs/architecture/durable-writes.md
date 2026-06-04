@@ -142,6 +142,26 @@ Once the consumer's transaction commits, the row is mirrored to a sync standby
 before the commit returns — zero-RPO at the storage tier complements the durable
 RMQ buffer at the application tier.
 
+**PDMS additionally runs on TimescaleDB** — the `pg-pdms` CNPG cluster uses the
+`timescale/timescaledb` image, and `IntradialyticReadings` is a hypertable
+partitioned by `ObservedAtUtc` with a 7-day compression policy + 365-day retention.
+See `docs/operations/telemetry-storage-tiering.md` for the why and the operator
+runbook. Other modules stay on stock Postgres.
+
+## Observability
+
+The bus emits a `Dialysis.DurableCommandBus` meter with five instruments:
+`commands_enqueued`, `commands_applied`, `commands_failed` (counters);
+`latency` (seconds, enqueue→applied) + `enqueue_latency` (ms, publish-confirm).
+Each is tagged `module` + `command_type` and emitted via the standard OTLP
+pipeline (the AppHost wires `Dialysis.DurableCommandBus` into
+`ModuleTelemetryOptions.AdditionalMeters` on every host that calls
+`AddDurableCommandBus<>`).
+
+Grafana dashboard JSON: `deploy/k8s/observability/dashboards/durable-command-bus.json`.
+Alert rules: `deploy/k8s/observability/alerts/durable-command-bus.yaml`. Full
+operator-facing detail in `docs/operations/observability.md`.
+
 ## RabbitMQ HA — Cluster Operator + quorum queues
 
 `deploy/k8s/operators/templates/rabbitmq-cluster.yaml` declares a single

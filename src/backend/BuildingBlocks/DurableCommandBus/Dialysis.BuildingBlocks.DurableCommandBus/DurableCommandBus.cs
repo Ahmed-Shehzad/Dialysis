@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
@@ -18,6 +19,7 @@ public sealed class DurableCommandBus(
     IDurableCommandCatalog catalog,
     IOptions<DurableCommandBusOptions> options,
     TimeProvider clock,
+    DurableCommandMetrics metrics,
     ILogger<DurableCommandBus> logger) : IDurableCommandBus
 {
     private readonly DurableCommandBusOptions _options = options.Value;
@@ -51,6 +53,7 @@ public sealed class DurableCommandBus(
             EnqueuedAtUtc: clock.GetUtcNow().UtcDateTime,
             RequestedBySubject: null);
 
+        var stopwatch = Stopwatch.StartNew();
         try
         {
             await transport.PublishAsync(envelope, cancellationToken).ConfigureAwait(false);
@@ -63,6 +66,19 @@ public sealed class DurableCommandBus(
             throw new DurableCommandException(
                 $"Failed to publish {registration.CommandTypeKey} to the durable transport.", ex);
         }
+        finally
+        {
+            stopwatch.Stop();
+            metrics.EnqueueLatencyMilliseconds.Record(
+                stopwatch.Elapsed.TotalMilliseconds,
+                new KeyValuePair<string, object?>("module", _options.ModuleSlug),
+                new KeyValuePair<string, object?>("command_type", registration.CommandTypeKey));
+        }
+
+        metrics.CommandsEnqueued.Add(
+            1,
+            new KeyValuePair<string, object?>("module", _options.ModuleSlug),
+            new KeyValuePair<string, object?>("command_type", registration.CommandTypeKey));
 
         logger.LogInformation(
             "Enqueued durable command {CommandType} (id={CommandId}, correlationId={CorrelationId}) for module {Module}",
