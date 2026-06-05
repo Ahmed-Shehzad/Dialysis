@@ -53,6 +53,8 @@
     <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
     <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Persistence/Dialysis.HIE.Persistence.csproj" />
     <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Composition/Dialysis.HIE.Composition.csproj" />
+    <ProjectReference Include="../../src/backend/Lab/Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
+    <ProjectReference Include="../../src/backend/Lab/Dialysis.Lab.Orders/Dialysis.Lab.Orders.csproj" />
   </ItemGroup>
 
   <ItemGroup>
