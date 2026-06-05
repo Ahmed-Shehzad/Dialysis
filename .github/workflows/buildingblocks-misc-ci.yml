@@ -1,0 +1,93 @@
+# Misc building-block CI: build + test the cross-cutting building blocks that had test
+# projects but no dedicated workflow (so their tests were compiled by solution-ci but never
+# executed): DataProtection, DurableCommandBus, ClinicianNotification, Tefca.Ti, Hipaa.
+name: BuildingBlocks Misc CI
+
+on:
+  push:
+    paths:
+      - "src/backend/BuildingBlocks/DataProtection/**"
+      - "src/backend/BuildingBlocks/DurableCommandBus/**"
+      - "src/backend/BuildingBlocks/ClinicianNotification/**"
+      - "src/backend/BuildingBlocks/Tefca/**"
+      - "src/backend/BuildingBlocks/Hipaa/**"
+      - "src/backend/BuildingBlocks/Verifier/**"
+      - "src/backend/Shared/**"
+      - "src/backend/CQRS/**"
+      - "src/backend/DomainDrivenDesign/**"
+      - "Directory.Packages.props"
+      - "Directory.Build.props"
+      - "Dialysis.slnx"
+      - "global.json"
+      - ".github/workflows/buildingblocks-misc-ci.yml"
+  pull_request:
+    paths:
+      - "src/backend/BuildingBlocks/DataProtection/**"
+      - "src/backend/BuildingBlocks/DurableCommandBus/**"
+      - "src/backend/BuildingBlocks/ClinicianNotification/**"
+      - "src/backend/BuildingBlocks/Tefca/**"
+      - "src/backend/BuildingBlocks/Hipaa/**"
+      - "src/backend/BuildingBlocks/Verifier/**"
+      - "src/backend/Shared/**"
+      - "src/backend/CQRS/**"
+      - "src/backend/DomainDrivenDesign/**"
+      - "Directory.Packages.props"
+      - "Directory.Build.props"
+      - "Dialysis.slnx"
+      - "global.json"
+      - ".github/workflows/buildingblocks-misc-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: buildingblocks-misc-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  misc:
+    name: Misc building-block build + test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - src/backend/BuildingBlocks/DataProtection/Dialysis.BuildingBlocks.DataProtection.Tests/Dialysis.BuildingBlocks.DataProtection.Tests.csproj
+          - src/backend/BuildingBlocks/DurableCommandBus/Dialysis.BuildingBlocks.DurableCommandBus.Tests/Dialysis.BuildingBlocks.DurableCommandBus.Tests.csproj
+          - src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.Tests/Dialysis.BuildingBlocks.ClinicianNotification.Tests.csproj
+          - src/backend/BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti.Tests/Dialysis.BuildingBlocks.Tefca.Ti.Tests.csproj
+          - src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.Tests/Dialysis.BuildingBlocks.Hipaa.Tests.csproj
+          - src/backend/BuildingBlocks/Verifier/Verifier.Core.Tests/Verifier.Core.Tests.csproj
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build tests
+        run: dotnet build ${{ matrix.project }} --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test ${{ matrix.project }}
+          --configuration Release --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory artifacts/test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildingblocks-misc-test-results-${{ strategy.job-index }}
+          path: artifacts/test-results

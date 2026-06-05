@@ -69,7 +69,10 @@ public sealed class JavaScriptAttachmentHandler : IAttachmentHandler
                 SizeBytes = bytes.LongLength,
                 CreatedUtc = DateTimeOffset.UtcNow,
             };
-            var stored = context.Store.AddAsync(attachment, cancellationToken).GetAwaiter().GetResult();
+            // Jint host functions are synchronous and cannot await; use the store's purpose-built
+            // sync Add (added for exactly this path) rather than a sync-over-async bridge that
+            // blocks the calling thread inside script evaluation.
+            var stored = context.Store.Add(attachment, cancellationToken);
             return AttachmentReference.Format(stored.Id);
         }));
 

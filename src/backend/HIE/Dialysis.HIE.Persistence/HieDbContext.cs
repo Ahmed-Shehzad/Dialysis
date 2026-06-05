@@ -39,6 +39,7 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
     public DbSet<DocumentReferenceSignature> DocumentReferenceSignatures => Set<DocumentReferenceSignature>();
     public DbSet<DocumentRetentionPolicy> DocumentRetentionPolicies => Set<DocumentRetentionPolicy>();
     public DbSet<ErasureRequestRow> ErasureRequests => Set<ErasureRequestRow>();
+    public DbSet<RestrictionRequestRow> RestrictionRequests => Set<RestrictionRequestRow>();
     public DbSet<QhinPartner> QhinPartners => Set<QhinPartner>();
     public DbSet<QhinTrustAnchor> QhinTrustAnchors => Set<QhinTrustAnchor>();
 
@@ -180,6 +181,19 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
             e.Property(r => r.ExecutionLogJson).IsRequired();
             e.HasIndex(r => r.Status).HasDatabaseName("IX_ErasureRequests_Status");
             e.HasIndex(r => r.PatientId).HasDatabaseName("IX_ErasureRequests_PatientId");
+        });
+
+        modelBuilder.Entity<RestrictionRequestRow>(e =>
+        {
+            e.ToTable("RestrictionRequests", "hie_documents");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Status).HasConversion<int>();
+            e.Property(r => r.RequestedBy).HasMaxLength(128).IsRequired();
+            e.Property(r => r.Reason).HasMaxLength(1024);
+            e.Property(r => r.LiftedBy).HasMaxLength(128);
+            e.Property(r => r.LiftReason).HasMaxLength(1024);
+            e.HasIndex(r => r.Status).HasDatabaseName("IX_RestrictionRequests_Status");
+            e.HasIndex(r => r.PatientId).HasDatabaseName("IX_RestrictionRequests_PatientId");
         });
 
         modelBuilder.Entity<QhinPartner>(e =>

@@ -119,6 +119,37 @@ public static class DataProtectionEndpointExtensions
                     })
                 .WithName("DataSubjectRights_RejectErasure");
 
+            // --- Operator-facing restriction pipeline (Art. 18) -------------
+            // A subject files a restriction; the operator lifts it once the dispute that
+            // prompted it is resolved. Both branches persist the audit row.
+
+            subjects.MapGet(
+                    "/restriction/requests",
+                    async (
+                        IDataSubjectRightsService service,
+                        CancellationToken ct,
+                        int take = 50) =>
+                    {
+                        var rows = await service.ListActiveRestrictionsAsync(take, ct)
+                            .ConfigureAwait(false);
+                        return Results.Ok(rows);
+                    })
+                .WithName("DataSubjectRights_ListActiveRestrictions");
+
+            subjects.MapPost(
+                    "/restriction/{requestId:guid}/lift",
+                    async (
+                        Guid requestId,
+                        RestrictionLiftBody body,
+                        IDataSubjectRightsService service,
+                        CancellationToken ct) =>
+                    {
+                        var lifted = await service.LiftRestrictionAsync(
+                            requestId, body.DecidedBy, body.Reason, ct).ConfigureAwait(false);
+                        return Results.Ok(lifted);
+                    })
+                .WithName("DataSubjectRights_LiftRestriction");
+
             return endpoints;
         }
     }
@@ -142,6 +173,12 @@ public sealed class ErasureDecisionBody
 }
 
 public sealed class ErasureRejectionBody
+{
+    public string DecidedBy { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+}
+
+public sealed class RestrictionLiftBody
 {
     public string DecidedBy { get; set; } = string.Empty;
     public string Reason { get; set; } = string.Empty;

@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
+using Dialysis.BuildingBlocks.DataProtection.Restriction;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIE.Consent;
@@ -52,6 +53,7 @@ public static class PersistenceServiceCollectionExtensions
             services.AddScoped<IDocumentRetentionPolicyRepository, EfDocumentRetentionPolicyRepository>();
             services.AddScoped<IQhinPartnerRepository, EfQhinPartnerRepository>();
             services.AddScoped<IErasureRequestStore, EfErasureRequestStore>();
+            services.AddScoped<IRestrictionRequestStore, EfRestrictionRequestStore>();
 
             return services;
         }

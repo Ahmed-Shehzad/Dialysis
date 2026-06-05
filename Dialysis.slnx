@@ -8,6 +8,7 @@
   <Folder Name="/src/backend/BuildingBlocks/Verifier/">
     <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Abstractions/Verifier.Abstractions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Verifier/Verifier.Core.Tests/Verifier.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/" />
   <Folder Name="/src/backend/BuildingBlocks/DistributedCache/">

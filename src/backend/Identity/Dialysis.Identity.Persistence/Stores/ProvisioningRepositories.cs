@@ -32,6 +32,20 @@ public sealed class RoleDefinitionRepository : IRoleDefinitionRepository
     public async Task<IReadOnlyList<RoleDefinition>> ListAsync(CancellationToken cancellationToken = default) =>
         await _db.Roles.AsNoTracking().OrderBy(r => r.Code).ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<RoleDefinition>> ListByIdsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        if (ids.Count == 0)
+            return [];
+        return await _db.Roles
+            .AsNoTracking()
+            .Where(r => ids.Contains(r.Id))
+            .OrderBy(r => r.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public void Add(RoleDefinition role) => _db.Roles.Add(role);
 }
 

@@ -23,9 +23,8 @@ public sealed class ListUserPermissionsQueryHandler : IQueryHandler<ListUserPerm
             return null;
 
         var userAssignments = await _assignments.ListForUserAsync(user.Id, cancellationToken).ConfigureAwait(false);
-        var allRoles = await _roles.ListAsync(cancellationToken).ConfigureAwait(false);
-
-        var assignedRoles = allRoles.Where(r => userAssignments.Any(a => a.RoleId == r.Id)).ToList();
+        var roleIds = userAssignments.Select(a => a.RoleId).Distinct().ToArray();
+        var assignedRoles = await _roles.ListByIdsAsync(roleIds, cancellationToken).ConfigureAwait(false);
         var permissions = assignedRoles.SelectMany(r => r.Permissions).Distinct().OrderBy(p => p).ToList();
         var roleCodes = assignedRoles.Select(r => r.Code).ToList();
 
