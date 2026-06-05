@@ -8,6 +8,7 @@ using Dialysis.HIE.Inbound.Ports;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Inbound.Ingestion;
@@ -32,6 +33,8 @@ public sealed class InboundIngestionService
 
     private readonly TimeProvider _timeProvider;
 
+    private readonly MpiMatchOptions _matchOptions;
+
     private readonly ILogger<InboundIngestionService> _logger;
     /// <summary>
     /// Validates, consent-gates, persists, and republishes inbound FHIR resources. Returns an
@@ -44,6 +47,7 @@ public sealed class InboundIngestionService
         IConsentGate consentGate,
         ITransponderOutbox? transponderOutbox,
         TimeProvider timeProvider,
+        IOptions<MpiMatchOptions> matchOptions,
         ILogger<InboundIngestionService> logger)
     {
         _resourceStore = resourceStore;
@@ -53,6 +57,7 @@ public sealed class InboundIngestionService
         _consentGate = consentGate;
         _transponderOutbox = transponderOutbox;
         _timeProvider = timeProvider;
+        _matchOptions = matchOptions?.Value ?? new MpiMatchOptions();
         _logger = logger;
     }
     // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
@@ -233,8 +238,10 @@ public sealed class InboundIngestionService
 
     /// <summary>
     /// Probabilistic duplicate detection: scores the just-ingested patient against existing index
-    /// entries and queues a steward review for any other record that scores Probable/Certain — never
-    /// auto-linking. Deduped on the unordered entry pair so repeated ingests don't pile up reviews.
+    /// entries. A cross-source <see cref="Mpi.MatchGrade.Certain"/> match is auto-linked when the site
+    /// opts in (<see cref="Mpi.MpiMatchOptions.AutoLinkCertainMatches"/>); everything else that scores
+    /// Probable/Certain is queued for a steward. Deduped on the unordered entry pair so repeated
+    /// ingests don't pile up reviews.
     /// </summary>
     private async Task DetectDuplicatesAsync(Domain.PatientIndexEntry source, CancellationToken cancellationToken)
     {
@@ -253,10 +260,25 @@ public sealed class InboundIngestionService
                 continue;
             }
 
+            var now = _timeProvider.GetUtcNow().UtcDateTime;
+            var crossSource = !string.Equals(source.PartnerId, match.Entry.PartnerId, StringComparison.Ordinal);
+
+            if (_matchOptions.AutoLinkCertainMatches && match.Grade == Mpi.MatchGrade.Certain && crossSource)
+            {
+                _linkReviews.Add(Mpi.PatientLinkReview.AutoLink(
+                    source.Id, source.PartnerId, Label(source),
+                    match.Entry.Id, match.Entry.PartnerId, Label(match.Entry),
+                    match.Score, match.Grade, _matchOptions.AutoLinkActor, now));
+                _logger.LogInformation(
+                    "MPI auto-linked cross-source Certain match {Source} ↔ {Candidate} (score {Score:F3}).",
+                    source.Id, match.Entry.Id, match.Score);
+                continue;
+            }
+
             _linkReviews.Add(Mpi.PatientLinkReview.Raise(
                 source.Id, source.PartnerId, Label(source),
                 match.Entry.Id, match.Entry.PartnerId, Label(match.Entry),
-                match.Score, match.Grade, _timeProvider.GetUtcNow().UtcDateTime));
+                match.Score, match.Grade, now));
         }
     }
 
