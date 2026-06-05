@@ -15,9 +15,9 @@ health information exchange) and turns the **gaps** into a prioritized, scoped r
 | **Patient Portals** | ✅ Strong | `patient-portal-web` + aggregating `PatientPortal.Bff` — appointments, meds, labs, recent treatments |
 | **Health Information Exchange** | ✅ Strong | `HIE` — FHIR R4, IHE XDS (ITI‑18/41/42/43), TEFCA, consent, `DocumentReference` |
 | **Master Patient Index** | ✅ Good | `HIE` `PatientIndexEntry` / `EfPatientIndex` (deterministic linking) |
-| **Remote Patient Monitoring** | 🟡 Partial | `HIS.Integration/DeviceIngestion` (`IngestDeviceReading`, `EfDeviceReadingRepository`) + PDMS intradialytic telemetry (TimescaleDB hypertable). **No device registry**; dialysis‑machine‑only |
+| **Remote Patient Monitoring** | ✅ Good | `HIS.Integration` device **registry** (`Device` aggregate, config‑driven `IDeviceTypeCatalog`, register/bind/status API) governs ingestion (status + patient‑binding enforced, last‑seen stamped, strict mode opt‑in) on top of `IngestDeviceReading` + PDMS intradialytic telemetry (TimescaleDB). *Remaining: device‑reading frontend + load test.* |
 | **Medical Imaging** | 🟡 Store‑only | `SmartConnect.Dicom.{Core,Dimse,Persistence,Web}` — DICOMweb WADO/STOW/QIDO + DIMSE. **No ordering, no AI** |
-| **Laboratory Information Systems** | 🟡 Partial/stubbed | `SmartConnect` HL7v2 pipeline + `Adapters/Cerner` FHIR adapter; HIS lab path is stub/opt‑in. **No closed order→result loop** |
+| **Laboratory Information Systems** | ✅ Good | Dedicated `Lab` context (order domain + API) → `SmartConnect` ORM/FHIR transforms → ORU bridge → typed result event → Lab records it → EHR chart Labs panel. Closed order→result loop, both transports. *Remaining: live loopback‑LIS e2e (needs infra).* |
 
 **AI / interop enablers already present:** `BuildingBlocks/Fhir.DeIdentification`,
 `BuildingBlocks/Fhir.Terminology`, `Fhir.Validation` (US Core), `Fhir.BulkData`.
@@ -26,25 +26,29 @@ The gaps are about **closing workflow loops on strong rails**, not greenfield bu
 
 ## Roadmap (prioritized)
 
-### P1 — Laboratory Information Systems, end‑to‑end · **M–L (~3–4 sprints)**
+### ✅ P1 — Laboratory Information Systems, end‑to‑end — **delivered** (dedicated `Lab` context)
 Highest clinical ROI: labs (Kt/V, electrolytes, Hgb/ferritin, PTH) drive dialysis dosing.
-- **Slots into:** `SmartConnect/Inbound/*` (HL7v2 ORM/ORU) → `SmartConnect/Adapters/*` (vendor LIS) →
-  FHIR `ServiceRequest`→`DiagnosticReport`/`Observation` mappers (`BuildingBlocks/Fhir` + slice
-  `Fhir/` folders) → **new** order slice in `HIS`/`EHR` and a results panel on the EHR chart.
-- **DoD:** an order placed in EHR/HIS round‑trips to a chart result via the broker; idempotent on
-  placer/filler IDs; one real LIS sandbox exercised e2e.
-- **Detailed plan:** [`lis-integration-plan.md`](./lis-integration-plan.md).
+- **Delivered:** dedicated `Lab` bounded context (order aggregate, persistence, headless API) →
+  `SmartConnect` outbound HL7v2 `ORM^O01` + FHIR `ServiceRequest` transforms (config‑selected) →
+  inbound `ORU^R01` → `Hl7V2OruToLabResultMapper` → host bridge publishes the Lab‑owned
+  `LabResultReceivedIntegrationEvent` → `LabResultReceivedConsumer` records results (idempotent on
+  placer order number) → EHR chart **Labs panel** via the EHR BFF `_x/lab` aggregation. Aspire runs
+  the headless `lab-api` + `postgres-lab`.
+- **Remaining:** a live loopback‑LIS e2e (needs Docker/RabbitMQ/Keycloak). Note: kept **parallel**
+  with EHR's pre‑existing in‑house lab order flow per an explicit decision — a standing duplication
+  to consolidate later if desired.
 
-### P1 — RPM device registry + ingestion hardening · **M (~2–3 sprints)**
-`IngestDeviceReading` exists but there is **no device‑identity registry** — no device→patient/session
-binding, provenance, dedup store, or back‑pressure; and only dialysis machines are modelled.
-- **Slots into:** `HIS.Integration/DeviceIngestion`, `EfDeviceReadingRepository`, PDMS telemetry +
-  TimescaleDB, the durable command bus.
-- **Scope:** `Device` registry aggregate (id, type, patient/session binding, calibration/provenance);
-  dedup on `ExternalMessageId` + partition key; back‑pressure (503); a **device‑type catalog** so new
-  RPM device classes (pulse‑ox, scale, glucose) are config, not code.
-- **DoD:** a registered device's readings bind to the correct patient/session, duplicates are rejected,
-  and a load test sustains the target ingest rate.
+### ✅ P1 — RPM device registry + ingestion hardening — **delivered** (frontend + load test pending)
+`IngestDeviceReading` existed but had **no device‑identity registry**.
+- **Delivered:** `Device` registry aggregate (HIS.Integration/DeviceRegistry) — external id, type,
+  manufacturer/model/serial, patient + optional session binding, calibration date, and a
+  Registered→Active→Suspended/Retired lifecycle; config‑driven `IDeviceTypeCatalog`
+  (`His:DeviceRegistry:DeviceTypes`, new RPM classes are config not code); EF persistence + migration;
+  register/list/get/types + bind/status API. Ingestion is **registry‑governed**: status + patient
+  binding enforced, last‑seen stamped, unknown‑device rejection opt‑in via
+  `His:DeviceRegistry:RequireRegistration`. Dedup on `ExternalMessageId` + unique external id; HTTP
+  back‑pressure via `EnableRateLimiting`.
+- **Remaining:** a device‑reading/registry frontend panel and a sustained‑rate load test.
 
 ### P2 — Imaging orders in the clinical workflow (EHR ↔ DICOM) · **M (~2 sprints)**
 DICOMweb store exists but there is **no `ImagingStudy`/radiology ordering** — imaging is store‑only.
@@ -71,10 +75,11 @@ missing piece is inference orchestration.
   + `Fhir.BulkData` (research / disease surveillance).
 
 ## Suggested sequencing
-1. **LIS e2e** + **RPM registry** in parallel (extend strong existing rails, highest near‑term value).
-2. **Imaging ordering** (closes the EHR↔DICOM loop, de‑risks AI).
+1. ~~**LIS e2e** + **RPM registry**~~ — ✅ both delivered (backend + EHR Labs panel; registry + governed ingestion).
+2. **Imaging ordering** (closes the EHR↔DICOM loop, de‑risks AI) — **next**.
 3. **AI imaging** (needs `ImagingStudy` plumbing + governance lead time).
-4. **Enablers** opportunistically alongside.
+4. **Enablers** opportunistically alongside. Loose ends on the delivered items: LIS live e2e,
+   RPM device‑reading frontend + load test, and consolidating the parallel EHR/Lab order paths.
 
 ## Cross‑cutting constraints (apply to every item)
 - New cross‑context flows go through **integration events in `<Module>.Contracts`** + an `IConsumer<>` —
