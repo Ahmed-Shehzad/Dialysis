@@ -22,7 +22,7 @@ public sealed class RestrictionRequestTests
             clock: TimeProvider.System);
 
     [Fact]
-    public async Task RequestRestrictionAsync_persists_an_active_audit_row()
+    public async Task Request_Restriction_Persists_An_Active_Audit_Row_Async()
     {
         var store = new InMemoryRestrictionRequestStore();
         var service = NewService(store);
@@ -39,7 +39,7 @@ public sealed class RestrictionRequestTests
     }
 
     [Fact]
-    public async Task Active_restrictions_are_listed_for_the_operator()
+    public async Task Active_Restrictions_Are_Listed_For_The_Operator_Async()
     {
         var store = new InMemoryRestrictionRequestStore();
         var service = NewService(store);
@@ -53,7 +53,7 @@ public sealed class RestrictionRequestTests
     }
 
     [Fact]
-    public async Task LiftRestrictionAsync_marks_the_row_lifted_and_records_who_and_why()
+    public async Task Lift_Restriction_Marks_The_Row_Lifted_And_Records_Who_And_Why_Async()
     {
         var store = new InMemoryRestrictionRequestStore();
         var service = NewService(store);
@@ -69,7 +69,7 @@ public sealed class RestrictionRequestTests
     }
 
     [Fact]
-    public async Task Lifting_an_already_lifted_restriction_throws()
+    public async Task Lifting_An_Already_Lifted_Restriction_Throws_Async()
     {
         var store = new InMemoryRestrictionRequestStore();
         var service = NewService(store);

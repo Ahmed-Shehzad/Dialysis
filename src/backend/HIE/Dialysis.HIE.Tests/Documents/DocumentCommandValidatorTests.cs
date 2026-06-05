@@ -22,7 +22,7 @@ public sealed class DocumentCommandValidatorTests
     }
 
     [Fact]
-    public async Task Sign_Requires_UserId_For_PerUser_Source_Async()
+    public async Task Sign_Requires_User_Id_For_Per_User_Source_Async()
     {
         var cmd = new SignDocumentCommand(
             Guid.NewGuid(), PdfSigningCertificateSource.User, UserId: null,
@@ -32,7 +32,7 @@ public sealed class DocumentCommandValidatorTests
     }
 
     [Fact]
-    public async Task Sign_Requires_TspCredential_For_RemoteQes_Async()
+    public async Task Sign_Requires_Tsp_Credential_For_Remote_Qes_Async()
     {
         var cmd = new SignDocumentCommand(
             Guid.NewGuid(), PdfSigningCertificateSource.RemoteQes, UserId: "u1",
@@ -43,7 +43,7 @@ public sealed class DocumentCommandValidatorTests
     }
 
     [Fact]
-    public async Task Sign_Rejects_Empty_DocumentId_Async()
+    public async Task Sign_Rejects_Empty_Document_Id_Async()
     {
         var cmd = new SignDocumentCommand(
             Guid.Empty, PdfSigningCertificateSource.Platform, UserId: null,
@@ -76,7 +76,7 @@ public sealed class DocumentCommandValidatorTests
     }
 
     [Fact]
-    public async Task Upload_Rejects_Empty_PatientId_Async()
+    public async Task Upload_Rejects_Empty_Patient_Id_Async()
     {
         var content = Convert.ToBase64String("x"u8.ToArray());
         var cmd = new UploadDocumentCommand(
