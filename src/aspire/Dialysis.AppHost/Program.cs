@@ -526,14 +526,15 @@ IResourceBuilder<NodeAppResource> AddContextWeb(string slug, int port) =>
         .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
         .PublishAsDockerFile();
 
-// Web apps are added as each context's React app lands. pdms/smartconnect/hie web apps are
-// wired here as they are created (their BFFs already exist above).
+// Web apps are added as each context's React app lands. smartconnect/hie web apps are wired
+// here as they are created (their BFFs already exist above).
 var hisWeb = AddContextWeb("his", 5331);
 var ehrWeb = AddContextWeb("ehr", 5332);
+var pdmsWeb = AddContextWeb("pdms", 5333);
 
 // Keep the per-context BFFs up before the gateway so the /<ctx>/* routes resolve on first hit.
 gateway.WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff);
-_ = (hisWeb, ehrWeb);
+_ = (hisWeb, ehrWeb, pdmsWeb);
 
 // --- Compose-publish decoration -------------------------------------------
 // Every overlay concern that used to live in `docker-compose.override.yaml` is applied
