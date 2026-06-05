@@ -12,8 +12,21 @@ public sealed class HiePartnersOptions
 
 public sealed class PartnerHttpOptions
 {
+    /// <summary>
+    /// Transport used to reach the partner. <c>Http</c> (default) POSTs FHIR over HTTPS;
+    /// <c>Direct</c> sends an S/MIME Direct secure message via <see cref="DirectFromAddress"/> →
+    /// <see cref="DirectToAddress"/>.
+    /// </summary>
+    public PartnerTransport Transport { get; set; } = PartnerTransport.Http;
+
     /// <summary>Base URL of the partner's FHIR endpoint (must end with <c>/</c>). Resources are POSTed to <c>{BaseUrl}{ResourceType}</c>.</summary>
     public string BaseUrl { get; set; } = string.Empty;
+
+    /// <summary>Direct sender address (our HISP mailbox), used when <see cref="Transport"/> is <c>Direct</c>.</summary>
+    public string? DirectFromAddress { get; set; }
+
+    /// <summary>Direct recipient address (the partner's HISP mailbox), used when <see cref="Transport"/> is <c>Direct</c>.</summary>
+    public string? DirectToAddress { get; set; }
 
     /// <summary>
     /// Static bearer token, used when <see cref="UseIasJwt"/> is false (or no IAS issuer is wired).
@@ -46,4 +59,14 @@ public sealed class PartnerHttpOptions
 
     /// <summary>IAS JWT lifetime in seconds. Default 300 (5 minutes).</summary>
     public int IasLifetimeSeconds { get; set; } = 300;
+}
+
+/// <summary>Outbound transport for a partner endpoint.</summary>
+public enum PartnerTransport
+{
+    /// <summary>FHIR REST over HTTPS (default).</summary>
+    Http = 0,
+
+    /// <summary>Direct Project S/MIME secure messaging.</summary>
+    Direct = 1,
 }

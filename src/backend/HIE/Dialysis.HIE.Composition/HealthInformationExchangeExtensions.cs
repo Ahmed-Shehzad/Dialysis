@@ -15,6 +15,7 @@ using Dialysis.HIE.Outbound.Consumers;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.HIE.Outbound.Partners;
+using Dialysis.HIE.Outbound.Partners.Direct;
 using Dialysis.HIE.Outbound.Partners.Http;
 using Dialysis.BuildingBlocks.Fhir.CdaBridge;
 using Dialysis.BuildingBlocks.Fhir.Terminology;
@@ -142,6 +143,9 @@ public static class HealthInformationExchangeExtensions
             services.AddFhirCdaBridge();
             services.AddScoped<Dialysis.HIE.Outbound.CareSummary.CareSummaryAssembler>();
             services.AddFhirHttpPartnerEndpoints(configuration);
+            // Direct secure messaging (S/MIME) as an alternative outbound transport — wired when
+            // Hie:Direct is configured; partners opt in per-partner via Transport=Direct.
+            services.AddHieDirectMessaging(configuration);
             services.AddSingleton<IPartnerEndpointResolver, PartnerEndpointResolver>();
             services.AddScoped<IOutboundDispatcher, OutboundDispatcher>();
             services.AddHostedService<OutboundDispatcherHostedService>();

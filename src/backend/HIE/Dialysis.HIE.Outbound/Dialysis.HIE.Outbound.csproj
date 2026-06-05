@@ -16,6 +16,7 @@
     <ProjectReference Include="../Dialysis.HIE.Tefca/Dialysis.HIE.Tefca.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Tefca/Dialysis.BuildingBlocks.Fhir.Tefca.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.CdaBridge/Dialysis.BuildingBlocks.Fhir.CdaBridge.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Direct/Dialysis.BuildingBlocks.Direct/Dialysis.BuildingBlocks.Direct.csproj" />
     <ProjectReference Include="../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
     <ProjectReference Include="../../PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />

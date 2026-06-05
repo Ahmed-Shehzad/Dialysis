@@ -23,7 +23,8 @@ public static class HttpPartnerServiceCollectionExtensions
             {
                 var partnerId = child.Key;
                 var options = child.Get<PartnerHttpOptions>();
-                if (options is null || string.IsNullOrWhiteSpace(options.BaseUrl))
+                // Direct-transport partners are wired by AddHieDirectMessaging, not here.
+                if (options is null || options.Transport == PartnerTransport.Direct || string.IsNullOrWhiteSpace(options.BaseUrl))
                     continue;
                 partners[partnerId] = options;
             }
