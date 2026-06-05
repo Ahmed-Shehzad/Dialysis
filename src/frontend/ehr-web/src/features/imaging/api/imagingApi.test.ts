@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "@/lib/api/apiClient";
-import { fetchImagingOrders, orderImagingStudy } from "./imagingApi";
+import { fetchImagingOrders, orderImagingStudy, reviewImagingAiFinding } from "./imagingApi";
 
 describe("imagingApi", () => {
   afterEach(() => vi.restoreAllMocks());
@@ -35,5 +35,16 @@ describe("imagingApi", () => {
       expect.objectContaining({ modalityCode: "CT", bodySiteCode: "Chest" }),
     );
     expect(id).toBe("img-1");
+  });
+
+  it("posts an AI-finding sign-off to the review endpoint", async () => {
+    const post = vi.spyOn(apiClient, "post").mockResolvedValue({ data: null } as never);
+
+    await reviewImagingAiFinding("img-1", false);
+
+    expect(post).toHaveBeenCalledWith(
+      "/ehr/api/v1.0/clinical/imaging-orders/img-1/ai-finding/review",
+      { accepted: false },
+    );
   });
 });

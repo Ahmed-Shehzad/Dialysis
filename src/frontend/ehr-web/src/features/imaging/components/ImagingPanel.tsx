@@ -5,6 +5,7 @@ import {
   COMMON_IMAGING_STUDIES,
   fetchImagingOrders,
   orderImagingStudy,
+  reviewImagingAiFinding,
   type ImagingOrder,
   type ImagingOrderStatus,
 } from "@/features/imaging/api/imagingApi";
@@ -59,6 +60,12 @@ export const ImagingPanel = ({ patientId }: { patientId: string }) => {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["ehr", "imaging", patientId] }),
   });
 
+  const review = useMutation({
+    mutationFn: ({ id, accepted }: { id: string; accepted: boolean }) =>
+      reviewImagingAiFinding(id, accepted),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["ehr", "imaging", patientId] }),
+  });
+
   const rows = orders.data ?? [];
 
   return (
@@ -107,10 +114,21 @@ export const ImagingPanel = ({ patientId }: { patientId: string }) => {
         <p className="text-xs text-slate-500">No imaging orders on file for this patient.</p>
       )}
 
+      {review.error && (
+        <p role="alert" className="mb-2 text-xs text-rose-300">
+          {humanizeError(review.error)}
+        </p>
+      )}
+
       {rows.length > 0 && (
         <ul className="divide-y divide-slate-800 text-sm">
           {rows.map((order) => (
-            <ImagingRow key={order.id} order={order} />
+            <ImagingRow
+              key={order.id}
+              order={order}
+              onReview={(accepted) => review.mutate({ id: order.id, accepted })}
+              reviewing={review.isPending}
+            />
           ))}
         </ul>
       )}
@@ -118,25 +136,98 @@ export const ImagingPanel = ({ patientId }: { patientId: string }) => {
   );
 };
 
-const ImagingRow = ({ order }: { order: ImagingOrder }) => (
-  <li className="grid grid-cols-12 items-center gap-2 py-2">
-    <span className="col-span-2 font-mono text-xs text-slate-300">{order.modalityCode}</span>
-    <span className="col-span-3 truncate text-xs text-slate-200" title={order.bodySiteCode}>
-      {order.bodySiteCode}
-    </span>
-    <span
-      className="col-span-3 truncate font-mono text-xs text-slate-500"
-      title={order.studyInstanceUid ?? order.accessionNumber}
-    >
-      {order.studyInstanceUid ? `study ${order.studyInstanceUid}` : order.accessionNumber}
-    </span>
-    <span className="col-span-2 text-xs text-slate-500">
-      {order.reasonText ?? ""}
-    </span>
-    <span className="col-span-2 text-right">
-      <span className={`rounded-full border px-2 py-0.5 text-xs ${statusTone(order.status)}`}>
-        {order.status}
+const ImagingRow = ({
+  order,
+  onReview,
+  reviewing,
+}: {
+  order: ImagingOrder;
+  onReview: (accepted: boolean) => void;
+  reviewing: boolean;
+}) => (
+  <li className="py-2">
+    <div className="grid grid-cols-12 items-center gap-2">
+      <span className="col-span-2 font-mono text-xs text-slate-300">{order.modalityCode}</span>
+      <span className="col-span-3 truncate text-xs text-slate-200" title={order.bodySiteCode}>
+        {order.bodySiteCode}
       </span>
-    </span>
+      <span
+        className="col-span-3 truncate font-mono text-xs text-slate-500"
+        title={order.studyInstanceUid ?? order.accessionNumber}
+      >
+        {order.studyInstanceUid ? `study ${order.studyInstanceUid}` : order.accessionNumber}
+      </span>
+      <span className="col-span-2 text-xs text-slate-500">{order.reasonText ?? ""}</span>
+      <span className="col-span-2 text-right">
+        <span className={`rounded-full border px-2 py-0.5 text-xs ${statusTone(order.status)}`}>
+          {order.status}
+        </span>
+      </span>
+    </div>
+    {order.aiFindingStatus !== "None" && order.aiFindingDisplay && (
+      <AiFindingBlock order={order} onReview={onReview} reviewing={reviewing} />
+    )}
   </li>
 );
+
+const AiFindingBlock = ({
+  order,
+  onReview,
+  reviewing,
+}: {
+  order: ImagingOrder;
+  onReview: (accepted: boolean) => void;
+  reviewing: boolean;
+}) => {
+  const pending = order.aiFindingStatus === "PendingReview";
+  const confidence =
+    typeof order.aiFindingConfidence === "number"
+      ? ` · ${Math.round(order.aiFindingConfidence * 100)}%`
+      : "";
+  return (
+    <div className="mt-1.5 rounded-md border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-indigo-200">
+          <span className="mr-1 rounded bg-indigo-800/60 px-1 py-0.5 text-[10px] uppercase tracking-wide">
+            AI · advisory
+          </span>
+          {order.aiFindingDisplay}
+          <span className="text-indigo-400">
+            {order.aiFindingInterpretation ? ` (${order.aiFindingInterpretation})` : ""}
+            {confidence}
+          </span>
+        </span>
+        {pending ? (
+          <span className="flex shrink-0 gap-1">
+            <button
+              type="button"
+              onClick={() => onReview(true)}
+              disabled={reviewing}
+              className="rounded border border-emerald-700/60 px-2 py-0.5 text-emerald-200 transition hover:border-emerald-500 disabled:opacity-50"
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              onClick={() => onReview(false)}
+              disabled={reviewing}
+              className="rounded border border-rose-700/60 px-2 py-0.5 text-rose-200 transition hover:border-rose-500 disabled:opacity-50"
+            >
+              Reject
+            </button>
+          </span>
+        ) : (
+          <span className="shrink-0 text-slate-400">
+            {order.aiFindingStatus}
+            {order.aiReviewedBy ? ` · ${order.aiReviewedBy}` : ""}
+          </span>
+        )}
+      </div>
+      {order.aiModelId && (
+        <p className="mt-1 text-[11px] text-slate-500">
+          model {order.aiModelId} — not a diagnosis; clinician sign-off required
+        </p>
+      )}
+    </div>
+  );
+};

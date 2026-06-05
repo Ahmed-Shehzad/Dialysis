@@ -15,6 +15,8 @@ export type ImagingOrderStatus =
   | "Cancelled"
   | string;
 
+export type AiFindingReviewStatus = "None" | "PendingReview" | "Accepted" | "Rejected" | string;
+
 export type ImagingOrder = {
   id: string;
   patientId: string;
@@ -24,6 +26,13 @@ export type ImagingOrder = {
   reasonText?: string | null;
   status: ImagingOrderStatus;
   studyInstanceUid?: string | null;
+  aiFindingStatus: AiFindingReviewStatus;
+  aiModelId?: string | null;
+  aiFindingDisplay?: string | null;
+  aiFindingConfidence?: number | null;
+  aiFindingInterpretation?: string | null;
+  aiFindingSummary?: string | null;
+  aiReviewedBy?: string | null;
 };
 
 export type OrderImagingStudyInput = {
@@ -52,6 +61,17 @@ export const orderImagingStudy = async (input: OrderImagingStudyInput): Promise<
     input,
   );
   return response.data.id;
+};
+
+/** Human-in-the-loop sign-off on an order's advisory AI finding. */
+export const reviewImagingAiFinding = async (
+  imagingOrderId: string,
+  accepted: boolean,
+): Promise<void> => {
+  await apiClient.post(
+    `/ehr/api/v1.0/clinical/imaging-orders/${imagingOrderId}/ai-finding/review`,
+    { accepted },
+  );
 };
 
 // Common dialysis-relevant imaging studies (DICOM modality + body site).
