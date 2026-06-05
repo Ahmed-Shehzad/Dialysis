@@ -4,6 +4,7 @@ using Dialysis.DomainDrivenDesign.DomainEvents;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.DataServices.Ports;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.Medication.Ports;
 using Dialysis.HIS.Operations.Domain.Events;
 using Dialysis.HIS.Operations.Domain.Events.Handlers;
@@ -64,6 +65,7 @@ public static class PersistenceServiceCollectionExtensions
             services.AddScoped<BillingExportEligibilityService>();
             services.AddScoped<IDataImportJobRepository, EfDataImportJobRepository>();
             services.AddScoped<IDeviceReadingRepository, EfDeviceReadingRepository>();
+            services.AddScoped<IDeviceRepository, EfDeviceRepository>();
             services.AddScoped<IIntegrationOutboxMetadataReadModel, EfIntegrationOutboxMetadataReadModel>();
             services.AddScoped<IPatientSearchReadModel, EfPatientSearchReadModel>();
             services.AddScoped<IManagerDashboardReadModel, EfManagerDashboardReadModel>();

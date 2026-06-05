@@ -1,6 +1,6 @@
 using Asp.Versioning;
 using Dialysis.HIE.Inbound.Ingestion;
-using Dialysis.HIE.Inbound.Ports;
+using Dialysis.HIE.Inbound.Mpi;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.AspNetCore.Authorization;
@@ -22,18 +22,18 @@ namespace Dialysis.HIE.Inbound.Controllers;
 public sealed class FhirController : ControllerBase
 {
     private readonly InboundIngestionService _ingestion;
-    private readonly IPatientIndex _patientIndex;
+    private readonly PatientMatchService _matchService;
     private readonly ILogger<FhirController> _logger;
     /// <summary>
     /// FHIR R4 REST surface. Returns native <c>application/fhir+json</c> bodies (spec compliance) so it does
     /// NOT wrap responses in the HATEOAS envelope used by admin endpoints elsewhere in this host.
     /// </summary>
     public FhirController(InboundIngestionService ingestion,
-        IPatientIndex patientIndex,
+        PatientMatchService matchService,
         ILogger<FhirController> logger)
     {
         _ingestion = ingestion;
-        _patientIndex = patientIndex;
+        _matchService = matchService;
         _logger = logger;
     }
     private static readonly FhirJsonDeserializer _parser = new(new DeserializerSettings().UsingMode(DeserializationMode.Recoverable));
@@ -77,11 +77,16 @@ public sealed class FhirController : ControllerBase
         DateOnly? dob = null;
         if (!string.IsNullOrWhiteSpace(birthdate) && DateOnly.TryParse(birthdate, out var parsed))
             dob = parsed;
-        var matches = await _patientIndex.MatchAsync(mrn, family, given, dob, take: 20, cancellationToken).ConfigureAwait(false);
+
+        // Probabilistic match: candidates are scored + ranked, each carrying a confidence (search.score)
+        // and an MCI match grade per the FHIR $match operation.
+        var criteria = new PatientMatchCriteria(mrn, family, given, dob, SexAtBirthCode: null);
+        var matches = await _matchService.FindMatchesAsync(criteria, take: 20, cancellationToken).ConfigureAwait(false);
 
         var bundle = new Bundle { Type = Bundle.BundleType.Searchset, Total = matches.Count };
-        foreach (var m in matches)
+        foreach (var scored in matches)
         {
+            var m = scored.Entry;
             var patient = new Patient { Id = m.ExternalLogicalId };
             if (!string.IsNullOrWhiteSpace(m.MedicalRecordNumber))
             {
@@ -105,11 +110,31 @@ public sealed class FhirController : ControllerBase
             {
                 FullUrl = $"Patient/{m.ExternalLogicalId}",
                 Resource = patient,
+                Search = new Bundle.SearchComponent
+                {
+                    Mode = Bundle.SearchEntryMode.Match,
+                    Score = (decimal)Math.Round(scored.Score, 3),
+                    Extension =
+                    [
+                        new Extension(
+                            "http://hl7.org/fhir/StructureDefinition/match-grade",
+                            new Code(MatchGradeCode(scored.Grade))),
+                    ],
+                },
             });
         }
 
         return FhirResult(Ok(), bundle);
     }
+
+    // FHIR match-grade value set: certain | probable | possible | certainly-not.
+    private static string MatchGradeCode(MatchGrade grade) => grade switch
+    {
+        MatchGrade.Certain => "certain",
+        MatchGrade.Probable => "probable",
+        MatchGrade.Possible => "possible",
+        _ => "certainly-not",
+    };
 
     private static IActionResult FhirResult(IActionResult fallbackStatus, Resource resource)
     {

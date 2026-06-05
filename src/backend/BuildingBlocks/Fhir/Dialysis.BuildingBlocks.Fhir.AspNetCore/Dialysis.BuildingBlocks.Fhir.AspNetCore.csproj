@@ -14,6 +14,7 @@
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Validation/Dialysis.BuildingBlocks.Fhir.Validation.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Terminology/Dialysis.BuildingBlocks.Fhir.Terminology.csproj" />
   </ItemGroup>
 
 </Project>

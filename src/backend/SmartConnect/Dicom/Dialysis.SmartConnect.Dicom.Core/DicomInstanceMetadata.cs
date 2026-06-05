@@ -44,6 +44,9 @@ public sealed record DicomInstanceMetadata
     public DateTimeOffset ReceivedUtc { get; init; }
     public long SizeBytes { get; init; }
     public Guid BlobId { get; init; }
+
+    /// <summary>DICOM Accession Number (0008,0050) — the placer order id linking the study to its EHR order.</summary>
+    public string? AccessionNumber { get; init; }
     public void Deconstruct(out string StudyInstanceUid, out string SeriesInstanceUid, out string SopInstanceUid, out string SopClassUid, out string? PatientId, out string? PatientName, out string? Modality, out DateTimeOffset ReceivedUtc, out long SizeBytes, out Guid BlobId)
     {
         StudyInstanceUid = this.StudyInstanceUid;

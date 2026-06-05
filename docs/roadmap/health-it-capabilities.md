@@ -14,10 +14,10 @@ health information exchange) and turns the **gaps** into a prioritized, scoped r
 | **Electronic Health Records** | ✅ Strong | `EHR` module — chart, orders, notes, allergies/vitals/problems |
 | **Patient Portals** | ✅ Strong | `patient-portal-web` + aggregating `PatientPortal.Bff` — appointments, meds, labs, recent treatments |
 | **Health Information Exchange** | ✅ Strong | `HIE` — FHIR R4, IHE XDS (ITI‑18/41/42/43), TEFCA, consent, `DocumentReference` |
-| **Master Patient Index** | ✅ Good | `HIE` `PatientIndexEntry` / `EfPatientIndex` (deterministic linking) |
-| **Remote Patient Monitoring** | 🟡 Partial | `HIS.Integration/DeviceIngestion` (`IngestDeviceReading`, `EfDeviceReadingRepository`) + PDMS intradialytic telemetry (TimescaleDB hypertable). **No device registry**; dialysis‑machine‑only |
-| **Medical Imaging** | 🟡 Store‑only | `SmartConnect.Dicom.{Core,Dimse,Persistence,Web}` — DICOMweb WADO/STOW/QIDO + DIMSE. **No ordering, no AI** |
-| **Laboratory Information Systems** | 🟡 Partial/stubbed | `SmartConnect` HL7v2 pipeline + `Adapters/Cerner` FHIR adapter; HIS lab path is stub/opt‑in. **No closed order→result loop** |
+| **Master Patient Index** | ✅ Strong | `HIE` `PatientIndexEntry` + **probabilistic linkage** (Jaro-Winkler + weighted `PatientMatchScorer`, blocking candidate pass), FHIR `$match` with score + match-grade, and a **steward review queue** (`PatientLinkReview`, queued on probable cross-source duplicates at ingest, adjudicated via `MpiAdminController` + the hie-web console) |
+| **Remote Patient Monitoring** | ✅ Good | `HIS.Integration` device **registry** (`Device` aggregate, config‑driven `IDeviceTypeCatalog`, register/bind/status API + **his‑web steward console**) governs ingestion (status + patient‑binding enforced, last‑seen stamped, strict mode opt‑in) on top of `IngestDeviceReading` + PDMS intradialytic telemetry (TimescaleDB). *Remaining: load test.* |
+| **Medical Imaging** | ✅ Ordering + AI loop closed | DICOMweb WADO/STOW/QIDO + DIMSE, EHR imaging‑ordering slice (chart **Imaging panel**), the closed order→study loop (accession capture → bridge → link consumer), **and** the AI loop: gated `ImagingAiAnalyzer` (provider‑port + sample model, audited, human‑in‑the‑loop) runs on ingest → `ImagingAiFindingProducedIntegrationEvent` → EHR attaches an advisory finding (pending review) + projects a FHIR `Observation` → clinician **Accept/Reject sign‑off** on the chart. *Remaining: de‑id pixels before a real model hop; real‑model governance (FDA/CE, bias).* |
+| **Laboratory Information Systems** | ✅ Good | Dedicated `Lab` context (order domain + API) → `SmartConnect` ORM/FHIR transforms → ORU bridge → typed result event → Lab records it → EHR chart Labs panel. Closed order→result loop, both transports. *Remaining: live loopback‑LIS e2e (needs infra).* |
 
 **AI / interop enablers already present:** `BuildingBlocks/Fhir.DeIdentification`,
 `BuildingBlocks/Fhir.Terminology`, `Fhir.Validation` (US Core), `Fhir.BulkData`.
@@ -26,55 +26,86 @@ The gaps are about **closing workflow loops on strong rails**, not greenfield bu
 
 ## Roadmap (prioritized)
 
-### P1 — Laboratory Information Systems, end‑to‑end · **M–L (~3–4 sprints)**
+### ✅ P1 — Laboratory Information Systems, end‑to‑end — **delivered** (dedicated `Lab` context)
 Highest clinical ROI: labs (Kt/V, electrolytes, Hgb/ferritin, PTH) drive dialysis dosing.
-- **Slots into:** `SmartConnect/Inbound/*` (HL7v2 ORM/ORU) → `SmartConnect/Adapters/*` (vendor LIS) →
-  FHIR `ServiceRequest`→`DiagnosticReport`/`Observation` mappers (`BuildingBlocks/Fhir` + slice
-  `Fhir/` folders) → **new** order slice in `HIS`/`EHR` and a results panel on the EHR chart.
-- **DoD:** an order placed in EHR/HIS round‑trips to a chart result via the broker; idempotent on
-  placer/filler IDs; one real LIS sandbox exercised e2e.
-- **Detailed plan:** [`lis-integration-plan.md`](./lis-integration-plan.md).
+- **Delivered:** dedicated `Lab` bounded context (order aggregate, persistence, headless API) →
+  `SmartConnect` outbound HL7v2 `ORM^O01` + FHIR `ServiceRequest` transforms (config‑selected) →
+  inbound `ORU^R01` → `Hl7V2OruToLabResultMapper` → host bridge publishes the Lab‑owned
+  `LabResultReceivedIntegrationEvent` → `LabResultReceivedConsumer` records results (idempotent on
+  placer order number) → EHR chart **Labs panel** via the EHR BFF `_x/lab` aggregation. Aspire runs
+  the headless `lab-api` + `postgres-lab`.
+- **Remaining:** a live loopback‑LIS e2e (needs Docker/RabbitMQ/Keycloak). Note: kept **parallel**
+  with EHR's pre‑existing in‑house lab order flow per an explicit decision — a standing duplication
+  to consolidate later if desired.
 
-### P1 — RPM device registry + ingestion hardening · **M (~2–3 sprints)**
-`IngestDeviceReading` exists but there is **no device‑identity registry** — no device→patient/session
-binding, provenance, dedup store, or back‑pressure; and only dialysis machines are modelled.
-- **Slots into:** `HIS.Integration/DeviceIngestion`, `EfDeviceReadingRepository`, PDMS telemetry +
-  TimescaleDB, the durable command bus.
-- **Scope:** `Device` registry aggregate (id, type, patient/session binding, calibration/provenance);
-  dedup on `ExternalMessageId` + partition key; back‑pressure (503); a **device‑type catalog** so new
-  RPM device classes (pulse‑ox, scale, glucose) are config, not code.
-- **DoD:** a registered device's readings bind to the correct patient/session, duplicates are rejected,
-  and a load test sustains the target ingest rate.
+### ✅ P1 — RPM device registry + ingestion hardening — **delivered** (frontend + load test pending)
+`IngestDeviceReading` existed but had **no device‑identity registry**.
+- **Delivered:** `Device` registry aggregate (HIS.Integration/DeviceRegistry) — external id, type,
+  manufacturer/model/serial, patient + optional session binding, calibration date, and a
+  Registered→Active→Suspended/Retired lifecycle; config‑driven `IDeviceTypeCatalog`
+  (`His:DeviceRegistry:DeviceTypes`, new RPM classes are config not code); EF persistence + migration;
+  register/list/get/types + bind/status API. Ingestion is **registry‑governed**: status + patient
+  binding enforced, last‑seen stamped, unknown‑device rejection opt‑in via
+  `His:DeviceRegistry:RequireRegistration`. Dedup on `ExternalMessageId` + unique external id; HTTP
+  back‑pressure via `EnableRateLimiting`.
+- **Remaining:** a device‑reading/registry frontend panel and a sustained‑rate load test.
 
-### P2 — Imaging orders in the clinical workflow (EHR ↔ DICOM) · **M (~2 sprints)**
-DICOMweb store exists but there is **no `ImagingStudy`/radiology ordering** — imaging is store‑only.
-- **Slots into:** `EHR` (imaging order slice) ↔ `SmartConnect.Dicom` (STOW/QIDO) ↔ FHIR `ImagingStudy`;
-  surfaced through the HIE `DocumentReference` preview pipeline.
-- **DoD:** order an imaging study in EHR; the resulting `ImagingStudy`/series is linked on the chart
-  with inline preview.
+### 🟡 P2 — Imaging orders in the clinical workflow (EHR ↔ DICOM) — **mostly delivered**
+DICOMweb store existed but there was **no radiology ordering**.
+- **Delivered:** EHR `ImagingOrder` aggregate (ClinicalNotes) — modality/body‑site/reason, generated
+  accession number, Ordered→…→Completed lifecycle, `LinkStudy`; order/list API on `ClinicalController`;
+  `ImagingOrderPlacedIntegrationEvent` (EHR→DICOM) + `ImagingStudyLinkedIntegrationEvent`;
+  `ImagingStudyLinkedConsumer` correlates a fulfilled study back by accession and completes the order;
+  ehr‑web chart **Imaging panel** (order common dialysis studies + see the linked study UID).
+- **Delivered (producer bridge):** ingestion captures the accession number (0008,0050) into
+  `DicomInstanceMetadata`/`DicomInstanceEntity` (indexed); `IImagingStudyLinkNotifier` seam (no-op default)
+  + the `Dicom.Integration` `TransponderImagingStudyLinkNotifier` publishes `ImagingStudyLinkedIntegrationEvent`
+  (opt-in). The loop is closed end to end (order → accession → STOW → bridge → consumer → chart).
+- **Remaining:** inline study preview via the HIE `DocumentReference` pipeline.
 
-### P2 — AI‑assisted imaging hook · **L (~4 sprints + governance)**
-The headline gain (faster, more‑accurate reads). DICOMweb + de‑id + terminology are the rails; the
-missing piece is inference orchestration.
-- **Slots into:** STOW‑RS ingest event → `Fhir.DeIdentification` → async inference behind an
-  `IImagingInferenceProvider` port (edge model or vendor API) → FHIR `Observation`/finding coded via
-  `Fhir.Terminology`, gated by a feature flag and audited.
-- **Watch‑outs:** model governance, FDA/CE posture, bias/audit, human‑in‑the‑loop. Ship a
-  **provider‑port + one sample model**, never a hard‑wired vendor. Depends on the P2 `ImagingStudy` plumbing.
-- **DoD:** a STOW'd study yields a de‑identified, coded finding attached to the study, gated + audited.
+### ✅ P2 — AI‑assisted imaging hook — **delivered** (advisory, human‑in‑the‑loop)
+- **Delivered:** `IImagingInferenceProvider` provider‑port + de‑identified `ImagingInferenceRequest` → coded
+  `ImagingFinding`; a shipped **non‑diagnostic sample model**; the governed `ImagingAiAnalyzer` (flag‑gate
+  `Dicom:Ai:Enabled`, confidence floor, `RequiresHumanReview`, `IImagingAiAuditSink` audit). Wired into DICOM
+  ingestion via the bridge → `ImagingAiFindingProducedIntegrationEvent` → EHR attaches the advisory finding to
+  the order (`PendingReview`, no‑op once reviewed) and projects a FHIR `Observation` (status `preliminary`) on
+  the `imaging-ai-finding` topic → ehr‑web chart **Accept/Reject sign‑off** (`ehr.imaging.ai.review`).
+- **Remaining:** de‑identify pixel data before a real provider hop; real‑model governance (FDA/CE posture,
+  bias/audit, model registry) before swapping the sample for a production model.
 
 ### P3 — Enabler upgrades · **S–M each**
-- **MPI**: probabilistic/fuzzy matching + steward review queue on `HIE` `PatientIndexEntry`.
-- **Terminology service**: promote `Fhir.Terminology` to `$validate-code` / `$translate` with value‑set
-  governance (underpins both LIS and AI coding).
-- **Public‑health / analytics export**: PHI‑safe de‑identified warehouse export on `Fhir.DeIdentification`
-  + `Fhir.BulkData` (research / disease surveillance).
+- ✅ **MPI** — **delivered**: probabilistic Jaro-Winkler + weighted `PatientMatchScorer` with a blocking
+  candidate pass, FHIR `$match` carrying score + match-grade, and a steward review queue
+  (`PatientLinkReview` queued on probable cross-source duplicates at ingest, `MpiAdminController` +
+  hie-web console to adjudicate). *Remaining: optional auto-link on cross-source Certain.*
+- ✅ **Terminology service** — **delivered**: served FHIR `$validate-code` / `$translate` / `$expand` /
+  `$lookup` (`MapFhirTerminologyEndpoints`, wired in HIE) over a governed `DialysisTerminologyCatalog`
+  (lab LOINC panel + RadLex imaging ValueSets/CodeSystems + local→LOINC ConceptMap, url/version/status),
+  with a `_terminology/catalog` governance listing. **Now wired into the coding paths** via the FHIR‑free
+  `IDialysisCodeValidator` facade: the LIS result consumer validates each observation's LOINC against the
+  governed panel and normalises a local mnemonic via `$translate` (logged non‑conformant otherwise, never
+  dropped); the imaging‑AI analyzer only surfaces a finding whose code `$validate-code` accepts against the
+  governed imaging value set (ungoverned codes dropped + audited). *Remaining: value‑set authoring/versioning
+  admin surface.*
+- ✅ **Public‑health / analytics export** — **delivered**: PHI‑safe de‑identified Bulk Data `$export` on
+  `Fhir.DeIdentification` + `Fhir.BulkData`. The export runner applies the requested de‑identification
+  profile per resource and **fails closed** — a `_deIdentify` request with no `IFhirDeIdentifier` (or an
+  unknown profile) is marked Failed before any byte is written, never streaming identified PHI; present‑but‑empty
+  `_deIdentify` defaults to Safe Harbor. Safe Harbor now drops the narrative on every resource and scrubs the
+  exported types (Patient/Observation/Encounter + AllergyIntolerance/Immunization/MedicationStatement/Procedure).
+  Wired into HIS/EHR/PDMS. *Remaining: LimitedDataSet/Custom field rules; cloud object‑store sink for the
+  warehouse hand‑off.*
 
 ## Suggested sequencing
-1. **LIS e2e** + **RPM registry** in parallel (extend strong existing rails, highest near‑term value).
-2. **Imaging ordering** (closes the EHR↔DICOM loop, de‑risks AI).
-3. **AI imaging** (needs `ImagingStudy` plumbing + governance lead time).
-4. **Enablers** opportunistically alongside.
+1. ~~**LIS e2e** + **RPM registry**~~ — ✅ both delivered (backend + EHR Labs panel + his‑web device console; registry + governed ingestion).
+2. ~~**Imaging ordering**~~ — ✅ closed end to end (EHR order slice + DICOM accession capture + producer bridge + study‑link consumer + chart panel).
+3. ~~**AI imaging**~~ — ✅ closed end to end (ingestion‑gated analyzer → advisory finding → FHIR `Observation` → chart sign‑off).
+4. **Enablers** — ✅ MPI matching + steward queue, terminology `$validate-code`/`$translate` (wired into the
+   LIS + imaging‑AI coding paths), **and** PHI‑safe de‑identified analytics export (`$export` de‑identifies +
+   fails closed) all **delivered**.
+   Loose ends: value‑set authoring surface, LimitedDataSet/Custom de‑id rules + cloud export sink, imaging study
+   preview, AI pixel de‑id + real‑model governance, LIS live e2e, RPM load test, MPI auto-link on Certain,
+   and consolidating the parallel EHR/Lab order paths.
 
 ## Cross‑cutting constraints (apply to every item)
 - New cross‑context flows go through **integration events in `<Module>.Contracts`** + an `IConsumer<>` —

@@ -7,6 +7,7 @@ using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.DataServices.Domain;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.Medication.Domain;
 using Dialysis.HIS.Medication.Domain.ValueObjects;
 using Dialysis.HIS.Operations.Domain;
@@ -53,6 +54,7 @@ public sealed class HisDbContext : ModuleDbContextBase, IUnitOfWork
     public DbSet<BillingExportJob> BillingExportJobs => Set<BillingExportJob>();
     public DbSet<DataImportJob> DataImportJobs => Set<DataImportJob>();
     public DbSet<DeviceReadingRecord> DeviceReadings => Set<DeviceReadingRecord>();
+    public DbSet<Device> Devices => Set<Device>();
 
     public DbSet<LocalUser> LocalUsers => Set<LocalUser>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
@@ -148,6 +150,21 @@ public sealed class HisDbContext : ModuleDbContextBase, IUnitOfWork
             e.HasIndex(d => d.ExternalMessageId)
                 .IsUnique()
                 .HasFilter("\"ExternalMessageId\" IS NOT NULL");
+        });
+
+        modelBuilder.Entity<Device>(e =>
+        {
+            e.ToTable("Devices", "his_integration");
+            e.HasKey(d => d.Id);
+            e.Property(d => d.DeviceId).HasMaxLength(128).IsRequired();
+            e.Property(d => d.DeviceTypeCode).HasMaxLength(64).IsRequired();
+            e.Property(d => d.Manufacturer).HasMaxLength(128);
+            e.Property(d => d.Model).HasMaxLength(128);
+            e.Property(d => d.SerialNumber).HasMaxLength(128);
+            e.Property(d => d.Status).HasConversion<int>();
+            // The external device id is the key ingestion resolves a reading on — unique per registry.
+            e.HasIndex(d => d.DeviceId).IsUnique();
+            e.HasIndex(d => d.PatientId);
         });
 
         modelBuilder.Entity<RaOrgCommunication>(e =>

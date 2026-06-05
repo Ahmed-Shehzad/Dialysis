@@ -46,6 +46,7 @@ public static class PersistenceServiceCollectionExtensions
             services.AddScoped<IOutboundBundleStore, EfOutboundBundleStore>();
             services.AddScoped<IReceivedResourceStore, EfReceivedResourceStore>();
             services.AddScoped<IPatientIndex, EfPatientIndex>();
+            services.AddScoped<IPatientLinkReviewStore, EfPatientLinkReviewStore>();
             services.AddScoped<IConsentRepository, EfConsentRepository>();
             services.AddScoped<ICompositionStore, EfCompositionStore>();
             services.AddScoped<IConsentGate, ConsentGate>();

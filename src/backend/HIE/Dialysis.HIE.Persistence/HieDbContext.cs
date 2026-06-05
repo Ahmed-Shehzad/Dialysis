@@ -4,6 +4,7 @@ using Dialysis.HIE.Consent.Domain;
 using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Tefca.Domain;
 using Dialysis.HIE.Inbound.Domain;
+using Dialysis.HIE.Inbound.Mpi;
 using Dialysis.HIE.OpenEhr.Domain;
 using Dialysis.HIE.Outbound.Domain;
 using Dialysis.HIE.Persistence.Repositories;
@@ -33,6 +34,7 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
     public DbSet<OutboundBundle> OutboundBundles => Set<OutboundBundle>();
     public DbSet<ReceivedResource> ReceivedResources => Set<ReceivedResource>();
     public DbSet<PatientIndexEntry> PatientIndexEntries => Set<PatientIndexEntry>();
+    public DbSet<PatientLinkReview> PatientLinkReviews => Set<PatientLinkReview>();
     public DbSet<ConsentRecord> Consents => Set<ConsentRecord>();
     public DbSet<Composition> Compositions => Set<Composition>();
     public DbSet<DocumentReference> DocumentReferences => Set<DocumentReference>();
@@ -90,6 +92,22 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
                 .HasDatabaseName("UX_PatientIndex_PartnerExternalId");
             e.HasIndex(p => p.MedicalRecordNumber).HasDatabaseName("IX_PatientIndex_Mrn");
             e.HasIndex(p => new { p.FamilyName, p.GivenName }).HasDatabaseName("IX_PatientIndex_Name");
+        });
+
+        modelBuilder.Entity<PatientLinkReview>(e =>
+        {
+            e.ToTable("PatientLinkReviews", "hie_inbound");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.SourcePartnerId).HasMaxLength(64).IsRequired();
+            e.Property(r => r.SourceLabel).HasMaxLength(256).IsRequired();
+            e.Property(r => r.CandidatePartnerId).HasMaxLength(64).IsRequired();
+            e.Property(r => r.CandidateLabel).HasMaxLength(256).IsRequired();
+            e.Property(r => r.Grade).HasMaxLength(16).IsRequired();
+            e.Property(r => r.Status).HasConversion<int>().IsRequired();
+            e.Property(r => r.ReviewedBy).HasMaxLength(128);
+            e.Property(r => r.ReviewNote).HasMaxLength(1000);
+            e.HasIndex(r => r.Status).HasDatabaseName("IX_PatientLinkReviews_Status");
+            e.HasIndex(r => new { r.SourceEntryId, r.CandidateEntryId }).HasDatabaseName("IX_PatientLinkReviews_Pair");
         });
 
         modelBuilder.Entity<ConsentRecord>(e =>

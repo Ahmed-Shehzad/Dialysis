@@ -17,7 +17,7 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migra
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -298,6 +298,10 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migra
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccessionNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<Guid>("BlobId")
                         .HasColumnType("uuid");
 
@@ -340,6 +344,8 @@ namespace Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.Migra
                         .HasColumnType("character varying(128)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccessionNumber");
 
                     b.HasIndex("SopInstanceUid")
                         .IsUnique();

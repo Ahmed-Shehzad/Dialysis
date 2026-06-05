@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Hipaa;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
+using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Dialysis.SmartConnect;
@@ -43,6 +44,12 @@ builder.Services.AddSmartConnectFileReader();
 builder.Services.AddSmartConnectSftpInbound();
 builder.Services.AddSmartConnectTransponderInboundBridgeIfEnabled(builder.Configuration);
 builder.Services.AddHostedService<BuiltInCodeTemplatesSeeder>();
+
+// Transponder bus for the host: required by the transponder-bus outbound adapter, and carries the
+// Lab result bridge that turns a routed inbound ORU into the Lab context's typed result event.
+builder.Services.AddTransponder(t =>
+    t.AddConsumer<Dialysis.SmartConnect.Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent,
+        Dialysis.SmartConnect.Api.Lab.LabResultBridgeConsumer>());
 
 if (builder.Configuration.GetValue("SmartConnect:Demo:Enabled", false))
     builder.Services.AddHostedService<Dialysis.SmartConnect.Api.Demo.SmartConnectDemoSeeder>();

@@ -24,11 +24,15 @@ public static class HiePermissions
     public const string TefcaPartnersAdminister = "hie.tefca.partners.administer";
     public const string TefcaIasJwtIssue = "hie.tefca.ias_jwt.issue";
 
+    /// <summary>Review the MPI duplicate-match queue and adjudicate link/reject decisions (data steward).</summary>
+    public const string MpiStewardReview = "hie.mpi.steward.review";
+
     public static IReadOnlyList<string> All { get; } =
     [
         OutboundPublish,
         InboundReceive,
         ConsentManage,
+        MpiStewardReview,
         OpenEhrRead,
         PartnersAdminister,
         DocumentsView,

@@ -33,6 +33,7 @@ public static class FhirBulkDataServiceCollectionExtensions
             services.TryAddSingleton(TimeProvider.System);
             services.TryAddSingleton<ExportJobQueue>();
             services.TryAddSingleton<NdjsonFeederBinder>();
+            services.TryAddSingleton<ExportJobRunner>();
             services.TryAddSingleton<IExportJobOrchestrator, DefaultExportJobOrchestrator>();
             services.AddHostedService<ExportJobBackgroundProcessor>();
             return services;
@@ -105,7 +106,11 @@ public static class FhirBulkDataServiceCollectionExtensions
         var resourceTypes = context.Request.Query.TryGetValue("_type", out var tv) && tv.Count > 0
             ? tv.ToString().Split(',')
             : [];
-        var deid = context.Request.Query.TryGetValue("_deIdentify", out var dv) ? dv.ToString() : null;
+        // Present-but-empty (?_deIdentify) is treated as the safe default (Safe Harbor) rather than
+        // "no de-identification", so toggling the flag can never accidentally export identified PHI.
+        var deid = context.Request.Query.TryGetValue("_deIdentify", out var dv)
+            ? (string.IsNullOrWhiteSpace(dv.ToString()) ? "SafeHarbor" : dv.ToString())
+            : null;
 
         var job = await orchestrator.EnqueueAsync(
             scope,

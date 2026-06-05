@@ -32,6 +32,7 @@ public sealed class EfDicomInstanceStore : IDicomInstanceStore
             ReceivedUtc = metadata.ReceivedUtc,
             SizeBytes = metadata.SizeBytes,
             BlobId = metadata.BlobId,
+            AccessionNumber = metadata.AccessionNumber,
         });
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -104,5 +105,8 @@ public sealed class EfDicomInstanceStore : IDicomInstanceStore
         row.Modality,
         row.ReceivedUtc,
         row.SizeBytes,
-        row.BlobId);
+        row.BlobId)
+    {
+        AccessionNumber = row.AccessionNumber,
+    };
 }

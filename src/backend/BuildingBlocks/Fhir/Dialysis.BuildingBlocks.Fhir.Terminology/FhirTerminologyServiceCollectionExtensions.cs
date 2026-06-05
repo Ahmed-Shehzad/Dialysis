@@ -25,6 +25,23 @@ public static class FhirTerminologyServiceCollectionExtensions
             services.TryAddSingleton<IUcumService, UcumService>();
             return services;
         }
+
+        /// <summary>
+        /// Registers the governed platform terminology catalog (<see cref="DialysisTerminologyCatalog"/>) —
+        /// the lab/imaging ValueSets, CodeSystems, and ConceptMaps that back <c>$validate-code</c> /
+        /// <c>$translate</c> for platform codes. Registered as a singleton for the operation endpoints +
+        /// governance listing; independent of any upstream <see cref="ITerminologyService"/> a host configures.
+        /// </summary>
+        public IServiceCollection AddDialysisTerminologyCatalog()
+        {
+            services.TryAddSingleton<DialysisTerminologyCatalog>();
+            // FHIR-free facade so coding producers (LIS results, imaging-AI findings) can gate /
+            // normalise codes against the governed value sets + concept maps without touching Parameters.
+            services.TryAddSingleton<IDialysisCodeValidator, DialysisCodeValidator>();
+            services.TryAddSingleton<IUcumService, UcumService>();
+            return services;
+        }
+
         /// <summary>
         /// Registers the production HTTP-backed <see cref="ITerminologyService"/> with Polly retry +
         /// <see cref="MemoryCacheTerminologyDecorator"/> in front. Reads <see cref="FhirTerminologyOptions"/>

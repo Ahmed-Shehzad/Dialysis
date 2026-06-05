@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
+using Dialysis.BuildingBlocks.Fhir.DeIdentification;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
@@ -11,6 +12,7 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.PatientFlow.Fhir;
 using Dialysis.HIS.Persistence;
 using Hl7.Fhir.Model;
@@ -44,11 +46,24 @@ public static class HospitalInformationSystemExtensions
             Action<FhirBuilder>? configureFhir = null,
             Action<IServiceCollection>? configureTransponderTransport = null)
         {
-            _ = configuration;
-
             services.AddHisPersistence(configurePersistence);
 
             services.AddSingleton(new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)));
+
+            // RPM device-type catalog — data-driven: operators add a new device class via
+            // His:DeviceRegistry:DeviceTypes config without a code change; the seed set ships otherwise.
+            services.AddSingleton<IDeviceTypeCatalog>(_ =>
+            {
+                var configured = configuration
+                    .GetSection("His:DeviceRegistry:DeviceTypes")
+                    .Get<List<DeviceType>>();
+                return new DeviceTypeCatalog(
+                    configured is { Count: > 0 } ? configured : DeviceTypeCatalog.Default);
+            });
+
+            // Ingestion ↔ registry policy (RequireRegistration defaults off for rollout safety).
+            services.AddOptions<DeviceIngestionOptions>()
+                .Bind(configuration.GetSection(DeviceIngestionOptions.SectionName));
 
             services.AddTransponder(t =>
             {
@@ -97,6 +112,9 @@ public static class HospitalInformationSystemExtensions
                                   ?? Path.Combine(Path.GetTempPath(), "dialysis-his-bulk-data");
                 services.AddFhirBulkData(storageRoot);
                 services.AddFhirBulkDataOrchestrator();
+                // PHI-safe analytics export: the Safe Harbor de-identifier the export runner applies
+                // when a job is requested with _deIdentify (fail-closed if missing).
+                services.AddFhirDeIdentification();
                 services.AddFhirBulkDataFeeder<HisPatientStubFeeder, Patient>();
                 services.AddFhirBulkDataFeeder<HisAdmissionEncounterFeeder, Encounter>();
             }

@@ -9,6 +9,7 @@ using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Documents.Consumers;
 using Dialysis.HIE.Documents.Invoicing;
 using Dialysis.HIE.Inbound.Ingestion;
+using Dialysis.HIE.Inbound.Mpi;
 using Dialysis.HIE.Outbound;
 using Dialysis.HIE.Outbound.Consumers;
 using Dialysis.HIE.Outbound.Dispatch;
@@ -25,6 +26,7 @@ using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Dialysis.HIE.Composition;
 
@@ -46,6 +48,9 @@ public static class HealthInformationExchangeExtensions
             services.AddHiePersistence(configurePersistence);
 
             services.AddFhirTerminology(configuration, "Hie:Fhir:Terminology");
+            // Governed platform terminology (lab/imaging value sets + concept maps) behind the
+            // $validate-code / $translate / $expand / $lookup endpoints, independent of the upstream tx server.
+            services.AddDialysisTerminologyCatalog();
             services.AddHieConceptCatalog();
 
             services.Configure<OutboundOptions>(configuration.GetSection("Hie:Outbound"));
@@ -139,6 +144,11 @@ public static class HealthInformationExchangeExtensions
             // new archetype is a one-file change — no recompile of the hard-coded projections.
             services.AddArchetypeMappingCatalog();
             services.AddScoped<InboundIngestionService>();
+
+            // Probabilistic MPI: scorer (weights/thresholds from Hie:Mpi) + the candidate match service.
+            services.AddOptions<MpiMatchOptions>().Bind(configuration.GetSection(MpiMatchOptions.SectionName));
+            services.AddSingleton(sp => new PatientMatchScorer(sp.GetRequiredService<IOptions<MpiMatchOptions>>().Value));
+            services.AddScoped<PatientMatchService>();
 
             services.AddHieCqrsAuthorization();
 

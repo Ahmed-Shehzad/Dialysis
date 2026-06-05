@@ -7,6 +7,7 @@ using Dialysis.HIS.DataServices.Features.SearchPatients;
 using Dialysis.HIS.DataServices.Features.SubmitDataImportJob;
 using Dialysis.HIS.DataServices.Ports;
 using Dialysis.HIS.Integration;
+using Dialysis.HIS.Integration.Features.DeviceRegistry;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
 using Dialysis.HIS.Medication;
 using Dialysis.HIS.Medication.Features.PlaceMedicationOrder;
@@ -80,6 +81,11 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddQueryBehavior<SearchPatientsQuery, IReadOnlyList<PatientSearchRow>, AuthorizationPipelineBehavior<SearchPatientsQuery, IReadOnlyList<PatientSearchRow>>>();
             cqrs.AddQueryBehavior<ManagerDashboardQuery, ManagerDashboardSnapshotDto, AuthorizationPipelineBehavior<ManagerDashboardQuery, ManagerDashboardSnapshotDto>>();
             cqrs.AddCommandBehavior<IngestDeviceReadingCommand, Guid, AuthorizationPipelineBehavior<IngestDeviceReadingCommand, Guid>>();
+            cqrs.AddCommandBehavior<RegisterDeviceCommand, Guid, AuthorizationPipelineBehavior<RegisterDeviceCommand, Guid>>();
+            cqrs.AddQueryBehavior<GetDeviceByIdQuery, DeviceDto?, AuthorizationPipelineBehavior<GetDeviceByIdQuery, DeviceDto?>>();
+            cqrs.AddQueryBehavior<ListDevicesQuery, IReadOnlyList<DeviceSummaryDto>, AuthorizationPipelineBehavior<ListDevicesQuery, IReadOnlyList<DeviceSummaryDto>>>();
+            cqrs.AddCommandBehavior<BindDeviceToPatientCommand, Unit, AuthorizationPipelineBehavior<BindDeviceToPatientCommand, Unit>>();
+            cqrs.AddCommandBehavior<ChangeDeviceStatusCommand, Unit, AuthorizationPipelineBehavior<ChangeDeviceStatusCommand, Unit>>();
 
             cqrs.AddQueryBehavior<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>, AuthorizationPipelineBehavior<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>>();
             cqrs.AddQueryBehavior<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>, AuthorizationPipelineBehavior<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>>>();

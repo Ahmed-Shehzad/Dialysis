@@ -35,6 +35,14 @@ public interface ILabOrderRepository
     void Add(LabOrder labOrder);
 }
 
+public interface IImagingOrderRepository
+{
+    Task<ImagingOrder?> GetAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ImagingOrder?> GetByAccessionNumberAsync(string accessionNumber, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ImagingOrder>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default);
+    void Add(ImagingOrder imagingOrder);
+}
+
 public interface ILabResultRepository
 {
     Task<IReadOnlyList<LabResult>> ListByOrderAsync(Guid labOrderId, CancellationToken cancellationToken = default);

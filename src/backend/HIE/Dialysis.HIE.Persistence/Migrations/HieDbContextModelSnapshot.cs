@@ -445,6 +445,74 @@ namespace Dialysis.HIE.Persistence.Migrations
                     b.ToTable("ReceivedResources", "hie_inbound");
                 });
 
+            modelBuilder.Entity("Dialysis.HIE.Inbound.Mpi.PatientLinkReview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CandidateLabel")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("CandidatePartnerId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Grade")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("SourceEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceLabel")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SourcePartnerId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_PatientLinkReviews_Status");
+
+                    b.HasIndex("SourceEntryId", "CandidateEntryId")
+                        .HasDatabaseName("IX_PatientLinkReviews_Pair");
+
+                    b.ToTable("PatientLinkReviews", "hie_inbound");
+                });
+
             modelBuilder.Entity("Dialysis.HIE.OpenEhr.Domain.Composition", b =>
                 {
                     b.Property<Guid>("Id")

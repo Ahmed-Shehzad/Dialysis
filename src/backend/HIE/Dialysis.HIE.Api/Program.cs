@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Hipaa;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
@@ -79,6 +80,9 @@ app.MapGet(
     .AllowAnonymous();
 app.MapGet("/", () => Results.Ok(new { module = "hie", version = "v1" }));
 app.MapHipaaSafeguardsEndpoint();
+// FHIR terminology operations ($validate-code / $translate / $expand / $lookup) + governance catalog,
+// served under api/v1.0/fhir to sit alongside the FhirController's spec-compliant surface.
+app.MapFhirTerminologyEndpoints("/api/v1.0/fhir");
 app.MapControllers();
 
 await app.RunAsync().ConfigureAwait(false);

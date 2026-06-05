@@ -56,6 +56,29 @@ public sealed class LabOrderRepository : ILabOrderRepository
     public void Add(LabOrder labOrder) => _db.LabOrders.Add(labOrder);
 }
 
+public sealed class ImagingOrderRepository : IImagingOrderRepository
+{
+    private readonly EhrDbContext _db;
+    public ImagingOrderRepository(EhrDbContext db) => _db = db;
+
+    public Task<ImagingOrder?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.ImagingOrders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+
+    public Task<ImagingOrder?> GetByAccessionNumberAsync(string accessionNumber, CancellationToken cancellationToken = default) =>
+        _db.ImagingOrders.FirstOrDefaultAsync(o => o.AccessionNumber == accessionNumber, cancellationToken);
+
+    public async Task<IReadOnlyList<ImagingOrder>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default) =>
+        await _db.ImagingOrders
+            .AsNoTracking()
+            .Where(o => o.PatientId == patientId)
+            .OrderByDescending(o => o.Id)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public void Add(ImagingOrder imagingOrder) => _db.ImagingOrders.Add(imagingOrder);
+}
+
 public sealed class LabResultRepository : ILabResultRepository
 {
     private readonly EhrDbContext _db;

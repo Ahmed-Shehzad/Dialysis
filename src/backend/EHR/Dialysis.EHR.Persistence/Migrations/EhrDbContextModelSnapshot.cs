@@ -1004,6 +1004,129 @@ namespace Dialysis.EHR.Persistence.Migrations
                     b.ToTable("Encounters", "ehr_clinical");
                 });
 
+            modelBuilder.Entity("Dialysis.EHR.ClinicalNotes.Domain.ImagingOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccessionNumber")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("AiFindingCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<double?>("AiFindingConfidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("AiFindingDisplay")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("AiFindingInterpretation")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("AiFindingStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AiFindingSummary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("AiFindingSystem")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("AiModelId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("AiReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AiReviewedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("BodySiteCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CancellationReasonCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("DeletedBy");
+
+                    b.Property<Guid>("EncounterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<string>("ModalityCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("OrderingProviderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonText")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StudyInstanceUid")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("UpdatedBy");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessionNumber")
+                        .IsUnique();
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("ImagingOrders", "ehr_clinical");
+                });
+
             modelBuilder.Entity("Dialysis.EHR.ClinicalNotes.Domain.LabOrder", b =>
                 {
                     b.Property<Guid>("Id")

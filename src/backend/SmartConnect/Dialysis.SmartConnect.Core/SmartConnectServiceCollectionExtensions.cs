@@ -9,6 +9,7 @@ using Dialysis.SmartConnect.Endpoints;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins.Authentication;
 using Dialysis.SmartConnect.Inbound;
+using Dialysis.SmartConnect.Lab;
 using Dialysis.SmartConnect.Pharmacy;
 using Dialysis.SmartConnect.Routing;
 using Dialysis.SmartConnect.Fhir;
@@ -153,6 +154,13 @@ public static class SmartConnectServiceCollectionExtensions
             // module reference. Dispatch via TcpOutboundAdapter (MLLP).
             services.AddSingleton<MedicationAdministeredToHl7RasTransformStage>();
             services.AddSingleton<MedicationDeclinedToHl7RgvTransformStage>();
+
+            // Outbound lab mappers — turn a Lab module LabOrderPlacedIntegrationEvent (JSON) into an
+            // HL7 v2.5 ORM^O01 message or a FHIR R4 ServiceRequest bundle for an external Laboratory
+            // Information System. The operator picks the transport per flow route by stage Kind.
+            // Decoupled from the Lab module: the stages deserialise event JSON, no module reference.
+            services.AddSingleton<LabOrderPlacedToHl7OrmTransformStage>();
+            services.AddSingleton<LabOrderPlacedToFhirServiceRequestStage>();
             services.AddSingleton<MessageBuilderTransformStage>();
             services.AddSingleton<MapperTransformStage>(sp => new MapperTransformStage(sp.GetRequiredService<JsonTransformStage>()));
             services.AddSingleton<IteratorRouteFilter>(sp => new IteratorRouteFilter(sp));
@@ -217,6 +225,8 @@ public static class SmartConnectServiceCollectionExtensions
                 registry.RegisterTransformStage(sp.GetRequiredService<VerifyFhirTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MedicationAdministeredToHl7RasTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MedicationDeclinedToHl7RgvTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<LabOrderPlacedToHl7OrmTransformStage>());
+                registry.RegisterTransformStage(sp.GetRequiredService<LabOrderPlacedToFhirServiceRequestStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MessageBuilderTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<MapperTransformStage>());
                 registry.RegisterTransformStage(sp.GetRequiredService<IteratorTransformStage>());

@@ -6,9 +6,12 @@ using Dialysis.EHR.Billing.Features.SubmitClaim;
 using Dialysis.EHR.ClinicalNotes.Features.AttachDiagnosis;
 using Dialysis.EHR.ClinicalNotes.Features.CloseEncounter;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
+using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
+using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
@@ -74,6 +77,8 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<SignClinicalNoteCommand, Unit, AuthorizationPipelineBehavior<SignClinicalNoteCommand, Unit>>();
         c.AddCommandBehavior<OrderPrescriptionCommand, Guid, AuthorizationPipelineBehavior<OrderPrescriptionCommand, Guid>>();
         c.AddCommandBehavior<OrderLabTestCommand, Guid, AuthorizationPipelineBehavior<OrderLabTestCommand, Guid>>();
+        c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
+        c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();
@@ -90,5 +95,6 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<GetPatientChartQuery, PatientChartView, AuthorizationPipelineBehavior<GetPatientChartQuery, PatientChartView>>();
         c.AddQueryBehavior<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>, AuthorizationPipelineBehavior<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>>>();
         c.AddQueryBehavior<ListLabResultsForPatientQuery, IReadOnlyList<LabResultListItem>, AuthorizationPipelineBehavior<ListLabResultsForPatientQuery, IReadOnlyList<LabResultListItem>>>();
+        c.AddQueryBehavior<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>, AuthorizationPipelineBehavior<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>>>();
     }
 }

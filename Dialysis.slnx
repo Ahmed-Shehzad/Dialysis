@@ -211,6 +211,7 @@
   <Folder Name="/src/backend/SmartConnect/Dicom/">
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Core/Dialysis.SmartConnect.Dicom.Core.csproj" />
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Persistence/Dialysis.SmartConnect.Dicom.Persistence.csproj" />
+    <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Integration/Dialysis.SmartConnect.Dicom.Integration.csproj" />
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Dimse/Dialysis.SmartConnect.Dicom.Dimse.csproj" />
     <Project Path="src/backend/SmartConnect/Dicom/Dialysis.SmartConnect.Dicom.Web/Dialysis.SmartConnect.Dicom.Web.csproj" />
   </Folder>
@@ -261,5 +262,13 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Dialysis.ArchitectureTests/Dialysis.ArchitectureTests.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/Lab/">
+    <Project Path="src/backend/Lab/Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
+    <Project Path="src/backend/Lab/Dialysis.Lab.Orders/Dialysis.Lab.Orders.csproj" />
+    <Project Path="src/backend/Lab/Dialysis.Lab.Persistence/Dialysis.Lab.Persistence.csproj" />
+    <Project Path="src/backend/Lab/Dialysis.Lab.Composition/Dialysis.Lab.Composition.csproj" />
+    <Project Path="src/backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj" />
+    <Project Path="src/backend/Lab/Dialysis.Lab.Tests/Dialysis.Lab.Tests.csproj" />
   </Folder>
 </Solution>
