@@ -475,12 +475,15 @@ var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-b
         "http://localhost:" + identityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture))
     .WaitFor(keycloak)
     .WaitFor(hisApi)
+    .WithReference(valkey).WaitFor(valkey)
     // BFF binds Keycloak under section "Identity:Keycloak" (KeycloakBffOptions.SectionName).
     // appsettings.Development.json hardcodes Authority to localhost:8080 — env vars from
     // Aspire override it via the IConfiguration provider chain (env > json).
     .WithEnvironment("Identity__Keycloak__Authority", keycloakRealmUri)
     // Confidential-client secret for the dialysis-bff Keycloak client (overridable per env).
     .WithEnvironment("Identity__Keycloak__ClientSecret", identityBffSecret)
+    // Valkey backs the legacy BFF's server-side cookie ticket store + Data Protection key ring.
+    .WithEnvironment("Bff__DistributedCache__Valkey__ConnectionString", valkey)
     // BFF's YARP cluster "his" defaults to localhost:5288 in appsettings; redirect it to
     // the Aspire-allocated HIS endpoint so token-exchange + proxied API calls resolve.
     .WithEnvironment("ReverseProxy__Clusters__his__Destinations__d1__Address", hisApi.GetEndpoint("http"));
@@ -548,9 +551,13 @@ IResourceBuilder<ProjectResource> AddContextBff(
             "http://localhost:" + port.ToString(System.Globalization.CultureInfo.InvariantCulture))
         .WaitFor(keycloak)
         .WaitFor(moduleApi)
+        .WithReference(valkey).WaitFor(valkey)
         .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
         // Confidential-client secret for this context's Keycloak client (overridable per env).
         .WithEnvironment("Bff__Keycloak__ClientSecret", clientSecret)
+        // Valkey backs the server-side cookie ticket store + Data Protection key ring so the BFF
+        // cookie stays a session key and decrypts across replicas (InstanceName defaults to {slug}-bff).
+        .WithEnvironment("Bff__DistributedCache__Valkey__ConnectionString", valkey)
         .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
 
 var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret);
