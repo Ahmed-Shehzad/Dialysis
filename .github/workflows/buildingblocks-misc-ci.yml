@@ -11,6 +11,7 @@ on:
       - "src/backend/BuildingBlocks/ClinicianNotification/**"
       - "src/backend/BuildingBlocks/Tefca/**"
       - "src/backend/BuildingBlocks/Hipaa/**"
+      - "src/backend/BuildingBlocks/Verifier/**"
       - "src/backend/Shared/**"
       - "src/backend/CQRS/**"
       - "src/backend/DomainDrivenDesign/**"
@@ -26,6 +27,7 @@ on:
       - "src/backend/BuildingBlocks/ClinicianNotification/**"
       - "src/backend/BuildingBlocks/Tefca/**"
       - "src/backend/BuildingBlocks/Hipaa/**"
+      - "src/backend/BuildingBlocks/Verifier/**"
       - "src/backend/Shared/**"
       - "src/backend/CQRS/**"
       - "src/backend/DomainDrivenDesign/**"
@@ -58,6 +60,7 @@ jobs:
           - src/backend/BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.Tests/Dialysis.BuildingBlocks.ClinicianNotification.Tests.csproj
           - src/backend/BuildingBlocks/Tefca/Dialysis.BuildingBlocks.Tefca.Ti.Tests/Dialysis.BuildingBlocks.Tefca.Ti.Tests.csproj
           - src/backend/BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.Tests/Dialysis.BuildingBlocks.Hipaa.Tests.csproj
+          - src/backend/BuildingBlocks/Verifier/Verifier.Core.Tests/Verifier.Core.Tests.csproj
     steps:
       - uses: actions/checkout@v4
 
