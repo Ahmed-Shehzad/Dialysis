@@ -4,6 +4,7 @@ using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
+using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Registration.Features.RegisterPatient;
@@ -121,6 +122,31 @@ public sealed class ClinicalController : ControllerBase
         return Ok(rows);
     }
 
+    /// <summary>Human-in-the-loop sign-off on an order's advisory AI finding (accept or reject).</summary>
+    [HttpPost("imaging-orders/{id:guid}/ai-finding/review")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ReviewImagingAiFindingAsync(
+        Guid id,
+        [FromBody] ReviewImagingAiFindingRequest body,
+        [FromServices] Dialysis.Module.Contracts.Authorization.ICurrentUser currentUser,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var reviewedBy = currentUser.UserId ?? User.Identity?.Name ?? "clinician";
+        try
+        {
+            await _gateway.SendCommandAsync<ReviewImagingAiFindingCommand, Unit>(
+                new ReviewImagingAiFindingCommand(id, body.Accepted, reviewedBy), cancellationToken)
+                .ConfigureAwait(false);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     /// <summary>Imaging-order request body.</summary>
     public sealed record OrderImagingStudyRequest(
         Guid PatientId,
@@ -129,6 +155,9 @@ public sealed class ClinicalController : ControllerBase
         string ModalityCode,
         string BodySiteCode,
         string? ReasonText);
+
+    /// <summary>AI-finding sign-off request body.</summary>
+    public sealed record ReviewImagingAiFindingRequest(bool Accepted);
 
     public sealed record RegisterPatientRequest
     {

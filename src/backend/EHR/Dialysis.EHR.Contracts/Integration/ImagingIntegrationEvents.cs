@@ -35,3 +35,24 @@ public sealed record ImagingStudyLinkedIntegrationEvent(
     string StudyInstanceUid,
     int SeriesCount,
     int InstanceCount) : IIntegrationEvent;
+
+/// <summary>
+/// Raised when AI-assisted imaging inference produces a coded finding for a study (matched to its
+/// order by accession). The finding is <em>advisory</em>: <see cref="RequiresHumanReview"/> is set,
+/// and EHR attaches it to the order as pending clinician sign-off — never auto-final/diagnostic.
+/// </summary>
+public sealed record ImagingAiFindingProducedIntegrationEvent(
+    Guid EventId,
+    DateTime OccurredOn,
+    int SchemaVersion,
+    string AccessionNumber,
+    string StudyInstanceUid,
+    Guid PatientId,
+    string ModelId,
+    string FindingCode,
+    string? FindingSystem,
+    string FindingDisplay,
+    double Confidence,
+    string Interpretation,
+    string? Summary,
+    bool RequiresHumanReview) : IIntegrationEvent;

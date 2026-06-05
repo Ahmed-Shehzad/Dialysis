@@ -110,6 +110,8 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
                 // Imaging study correlated back to its order (by accession) → link + complete it.
                 t.AddConsumer<ImagingStudyLinkedIntegrationEvent, ImagingStudyLinkedConsumer>();
+                // Advisory AI imaging finding → attach to the order, pending clinician sign-off.
+                t.AddConsumer<ImagingAiFindingProducedIntegrationEvent, ImagingAiFindingProducedConsumer>();
                 t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
                 // Cross-module: PDMS completes a session → capture the itemised dialysis charge
                 // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
@@ -119,7 +121,10 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();
 
                 if (enableFhirSubscriptions)
+                {
                     t.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedSubscriptionBroadcaster>();
+                    t.AddConsumer<ImagingAiFindingProducedIntegrationEvent, ImagingAiFindingSubscriptionBroadcaster>();
+                }
             });
             configureTransponderTransport?.Invoke(services);
 

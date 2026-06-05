@@ -14,7 +14,7 @@ public sealed record ListImagingOrdersForPatientQuery(Guid PatientId, int Take =
     public string RequiredPermission => EhrPermissions.ImagingStudyRead;
 }
 
-/// <summary>Imaging order projection for the chart panel.</summary>
+/// <summary>Imaging order projection for the chart panel, including any advisory AI finding.</summary>
 public sealed record ImagingOrderDto(
     Guid Id,
     Guid PatientId,
@@ -23,7 +23,14 @@ public sealed record ImagingOrderDto(
     string BodySiteCode,
     string? ReasonText,
     ImagingOrderStatus Status,
-    string? StudyInstanceUid);
+    string? StudyInstanceUid,
+    AiFindingReviewStatus AiFindingStatus,
+    string? AiModelId,
+    string? AiFindingDisplay,
+    double? AiFindingConfidence,
+    string? AiFindingInterpretation,
+    string? AiFindingSummary,
+    string? AiReviewedBy);
 
 public sealed class ListImagingOrdersForPatientQueryHandler
     : IQueryHandler<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>>
@@ -42,6 +49,8 @@ public sealed class ListImagingOrdersForPatientQueryHandler
 
         return [.. orders.Select(o => new ImagingOrderDto(
             o.Id, o.PatientId, o.AccessionNumber, o.ModalityCode, o.BodySiteCode, o.ReasonText,
-            o.Status, o.StudyInstanceUid))];
+            o.Status, o.StudyInstanceUid,
+            o.AiFindingStatus, o.AiModelId, o.AiFindingDisplay, o.AiFindingConfidence,
+            o.AiFindingInterpretation, o.AiFindingSummary, o.AiReviewedBy))];
     }
 }

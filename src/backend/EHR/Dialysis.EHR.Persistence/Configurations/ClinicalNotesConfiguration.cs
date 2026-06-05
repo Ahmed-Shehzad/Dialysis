@@ -119,6 +119,14 @@ internal static class ClinicalNotesConfiguration
             b.Property(o => o.Status).HasConversion<int>().IsRequired();
             b.Property(o => o.StudyInstanceUid).HasMaxLength(128);
             b.Property(o => o.CancellationReasonCode).HasMaxLength(64);
+            b.Property(o => o.AiModelId).HasMaxLength(64);
+            b.Property(o => o.AiFindingCode).HasMaxLength(64);
+            b.Property(o => o.AiFindingSystem).HasMaxLength(128);
+            b.Property(o => o.AiFindingDisplay).HasMaxLength(256);
+            b.Property(o => o.AiFindingInterpretation).HasMaxLength(32);
+            b.Property(o => o.AiFindingSummary).HasMaxLength(1000);
+            b.Property(o => o.AiFindingStatus).HasConversion<int>().IsRequired();
+            b.Property(o => o.AiReviewedBy).HasMaxLength(128);
             ModuleDbContextBase.MapAuditShadow(b);
         });
 

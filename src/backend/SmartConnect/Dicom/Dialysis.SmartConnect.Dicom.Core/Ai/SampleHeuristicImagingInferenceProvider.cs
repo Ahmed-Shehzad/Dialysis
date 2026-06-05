@@ -27,6 +27,8 @@ public sealed class SampleHeuristicImagingInferenceProvider : IImagingInferenceP
                 Finding("RID39055", "Patent vascular access, no flow-limiting stenosis", 0.62, ImagingFindingInterpretation.Normal),
             ("US", var s) when s.Contains("KIDNEY", StringComparison.Ordinal) || s.Contains("RENAL", StringComparison.Ordinal) =>
                 Finding("RID35811", "Kidneys normal in size and echogenicity", 0.58, ImagingFindingInterpretation.Normal),
+            ("US", _) =>
+                Finding("RID35811", "Ultrasound within normal limits", 0.54, ImagingFindingInterpretation.Indeterminate),
             ("CR", _) or ("DX", _) =>
                 Finding("RID35811", "No acute cardiopulmonary finding", 0.55, ImagingFindingInterpretation.Normal),
             ("CT", _) =>

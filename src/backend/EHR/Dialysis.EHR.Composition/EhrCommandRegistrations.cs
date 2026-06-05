@@ -11,6 +11,7 @@ using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
+using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
@@ -77,6 +78,7 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<OrderPrescriptionCommand, Guid, AuthorizationPipelineBehavior<OrderPrescriptionCommand, Guid>>();
         c.AddCommandBehavior<OrderLabTestCommand, Guid, AuthorizationPipelineBehavior<OrderLabTestCommand, Guid>>();
         c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
+        c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();

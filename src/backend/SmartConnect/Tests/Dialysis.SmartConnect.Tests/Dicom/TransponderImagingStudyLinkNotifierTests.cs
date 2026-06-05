@@ -1,7 +1,9 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.SmartConnect.Dicom;
+using Dialysis.SmartConnect.Dicom.Ai;
 using Dialysis.SmartConnect.Dicom.Integration;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests.Dicom;
@@ -30,15 +32,23 @@ public sealed class TransponderImagingStudyLinkNotifierTests
             AccessionNumber = accession,
         };
 
+    private static ImagingAiAnalyzer Analyzer(bool enabled) =>
+        new(
+            new SampleHeuristicImagingInferenceProvider(),
+            new NoopImagingAiAuditSink(),
+            Options.Create(new ImagingAiOptions { Enabled = enabled, MinConfidence = 0.5 }),
+            TimeProvider.System);
+
     [Fact]
     public async Task Publishes_Linked_Event_With_Accession_And_Study_Async()
     {
         var bus = new RecordingBus();
-        var notifier = new TransponderImagingStudyLinkNotifier(bus);
+        var notifier = new TransponderImagingStudyLinkNotifier(bus, Analyzer(enabled: false));
 
         await notifier.NotifyInstanceIngestedAsync(
             Metadata("IMG-ABC123", _patientId.ToString()), CancellationToken.None);
 
+        // AI disabled → only the study-linked event.
         var ev = Assert.IsType<ImagingStudyLinkedIntegrationEvent>(Assert.Single(bus.Published));
         Assert.Equal("IMG-ABC123", ev.AccessionNumber);
         Assert.Equal("1.2.840.55", ev.StudyInstanceUid);
@@ -46,10 +56,27 @@ public sealed class TransponderImagingStudyLinkNotifierTests
     }
 
     [Fact]
+    public async Task Also_Publishes_Ai_Finding_When_Enabled_Async()
+    {
+        var bus = new RecordingBus();
+        var notifier = new TransponderImagingStudyLinkNotifier(bus, Analyzer(enabled: true));
+
+        // US modality → the sample model produces a finding above the 0.5 floor.
+        await notifier.NotifyInstanceIngestedAsync(Metadata("IMG-ABC123", _patientId.ToString()), CancellationToken.None);
+
+        Assert.Contains(bus.Published, p => p is ImagingStudyLinkedIntegrationEvent);
+        var ai = Assert.Single(bus.Published.OfType<ImagingAiFindingProducedIntegrationEvent>());
+        Assert.Equal("IMG-ABC123", ai.AccessionNumber);
+        Assert.Equal("sample-heuristic-v0", ai.ModelId);
+        Assert.True(ai.RequiresHumanReview);
+        Assert.Equal(_patientId, ai.PatientId);
+    }
+
+    [Fact]
     public async Task Ignores_Instance_Without_Accession_Async()
     {
         var bus = new RecordingBus();
-        var notifier = new TransponderImagingStudyLinkNotifier(bus);
+        var notifier = new TransponderImagingStudyLinkNotifier(bus, Analyzer(enabled: true));
 
         await notifier.NotifyInstanceIngestedAsync(Metadata(accession: null), CancellationToken.None);
 

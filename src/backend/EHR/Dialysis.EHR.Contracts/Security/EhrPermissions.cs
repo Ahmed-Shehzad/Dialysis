@@ -55,6 +55,9 @@ public static class EhrPermissions
     public const string ImagingOrder = "ehr.imaging.order";
     public const string ImagingStudyRead = "ehr.imaging.study.read";
 
+    /// <summary>Review (accept/reject) an advisory AI imaging finding — the human-in-the-loop sign-off.</summary>
+    public const string ImagingAiReview = "ehr.imaging.ai.review";
+
     // Billing
     public const string ChargeCapture = "ehr.billing.charge.capture";
     public const string ClaimSubmit = "ehr.billing.claim.submit";
@@ -74,7 +77,7 @@ public static class EhrPermissions
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach,
         PrescriptionOrder, PrescriptionCancel,
         LabOrder, LabResultRead,
-        ImagingOrder, ImagingStudyRead,
+        ImagingOrder, ImagingStudyRead, ImagingAiReview,
         ChargeCapture, ClaimSubmit, PaymentPost, StatementRead,
         IntegrationOutboundManage, IntegrationInboundIngest,
     ];

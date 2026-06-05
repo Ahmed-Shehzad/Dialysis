@@ -13,6 +13,22 @@ public enum ImagingOrderStatus
     Cancelled = 5,
 }
 
+/// <summary>Review state of an AI-assisted finding attached to an imaging order (human-in-the-loop).</summary>
+public enum AiFindingReviewStatus
+{
+    /// <summary>No AI finding recorded.</summary>
+    None = 0,
+
+    /// <summary>An AI finding is attached and awaiting a clinician's review.</summary>
+    PendingReview = 1,
+
+    /// <summary>A clinician accepted the AI finding.</summary>
+    Accepted = 2,
+
+    /// <summary>A clinician rejected the AI finding.</summary>
+    Rejected = 3,
+}
+
 /// <summary>
 /// A radiology / imaging order placed in EHR. The imaging modality (PACS/RIS, reached through
 /// SmartConnect DICOM) fulfils it and STOWs the study back; the study is correlated to this order by
@@ -49,6 +65,18 @@ public sealed class ImagingOrder : AggregateRoot<Guid>
     public string? StudyInstanceUid { get; private set; }
 
     public string? CancellationReasonCode { get; private set; }
+
+    // --- AI-assisted finding (advisory; human-in-the-loop) ---
+    public string? AiModelId { get; private set; }
+    public string? AiFindingCode { get; private set; }
+    public string? AiFindingSystem { get; private set; }
+    public string? AiFindingDisplay { get; private set; }
+    public double? AiFindingConfidence { get; private set; }
+    public string? AiFindingInterpretation { get; private set; }
+    public string? AiFindingSummary { get; private set; }
+    public AiFindingReviewStatus AiFindingStatus { get; private set; } = AiFindingReviewStatus.None;
+    public string? AiReviewedBy { get; private set; }
+    public DateTime? AiReviewedAtUtc { get; private set; }
 
     /// <summary>Places a new imaging order and raises <see cref="ImagingOrderPlacedIntegrationEvent"/>.</summary>
     public static ImagingOrder Order(
@@ -106,6 +134,51 @@ public sealed class ImagingOrder : AggregateRoot<Guid>
 
         StudyInstanceUid = studyInstanceUid.Trim();
         Status = ImagingOrderStatus.Completed;
+    }
+
+    /// <summary>
+    /// Attaches an advisory AI finding to the order, pending clinician review. No-op once a clinician
+    /// has already reviewed (Accepted/Rejected) so a re-delivered producer event can't overwrite the
+    /// human decision; returns whether the finding was recorded.
+    /// </summary>
+    public bool RecordAiFinding(
+        string modelId,
+        string code,
+        string? system,
+        string display,
+        double confidence,
+        string? interpretation,
+        string? summary)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(modelId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(display);
+        if (AiFindingStatus is AiFindingReviewStatus.Accepted or AiFindingReviewStatus.Rejected)
+            return false;
+
+        AiModelId = modelId.Trim();
+        AiFindingCode = code.Trim();
+        AiFindingSystem = string.IsNullOrWhiteSpace(system) ? null : system.Trim();
+        AiFindingDisplay = display.Trim();
+        AiFindingConfidence = confidence;
+        AiFindingInterpretation = string.IsNullOrWhiteSpace(interpretation) ? null : interpretation.Trim();
+        AiFindingSummary = string.IsNullOrWhiteSpace(summary) ? null : summary.Trim();
+        AiFindingStatus = AiFindingReviewStatus.PendingReview;
+        AiReviewedBy = null;
+        AiReviewedAtUtc = null;
+        return true;
+    }
+
+    /// <summary>Records a clinician's sign-off on the AI finding (accept or reject).</summary>
+    public void ReviewAiFinding(bool accepted, string reviewedBy, DateTime nowUtc)
+    {
+        if (AiFindingStatus != AiFindingReviewStatus.PendingReview)
+            throw new InvalidOperationException("There is no AI finding pending review on this order.");
+        ArgumentException.ThrowIfNullOrWhiteSpace(reviewedBy);
+
+        AiFindingStatus = accepted ? AiFindingReviewStatus.Accepted : AiFindingReviewStatus.Rejected;
+        AiReviewedBy = reviewedBy.Trim();
+        AiReviewedAtUtc = nowUtc;
     }
 
     /// <summary>Marks the order scheduled / in-progress as the modality reports back.</summary>
