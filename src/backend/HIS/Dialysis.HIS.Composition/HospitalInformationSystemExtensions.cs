@@ -11,6 +11,7 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.HIS.Integration.DeviceIngestion;
+using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.PatientFlow.Fhir;
 using Dialysis.HIS.Persistence;
 using Hl7.Fhir.Model;
@@ -44,11 +45,20 @@ public static class HospitalInformationSystemExtensions
             Action<FhirBuilder>? configureFhir = null,
             Action<IServiceCollection>? configureTransponderTransport = null)
         {
-            _ = configuration;
-
             services.AddHisPersistence(configurePersistence);
 
             services.AddSingleton(new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)));
+
+            // RPM device-type catalog — data-driven: operators add a new device class via
+            // His:DeviceRegistry:DeviceTypes config without a code change; the seed set ships otherwise.
+            services.AddSingleton<IDeviceTypeCatalog>(_ =>
+            {
+                var configured = configuration
+                    .GetSection("His:DeviceRegistry:DeviceTypes")
+                    .Get<List<DeviceType>>();
+                return new DeviceTypeCatalog(
+                    configured is { Count: > 0 } ? configured : DeviceTypeCatalog.Default);
+            });
 
             services.AddTransponder(t =>
             {
