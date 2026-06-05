@@ -10,6 +10,7 @@ const HIS_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/today", label: "Today" },
   { to: "/workflows", label: "Workflows" },
   { to: "/admin/billing/exports", label: "Billing exports" },
+  { to: "/admin/devices", label: "Devices" },
 ];
 
 const ThemeToggle = () => {

@@ -10,6 +10,10 @@ const BillingExportsPage = lazyPage(
   () => import("@/modules/his/admin/BillingExportsPage"),
   "BillingExportsPage",
 );
+const DeviceRegistryPage = lazyPage(
+  () => import("@/modules/his/admin/DeviceRegistryPage"),
+  "DeviceRegistryPage",
+);
 
 export const hisModule: ModuleManifest = {
   slug: "his",
@@ -25,6 +29,7 @@ export const hisModule: ModuleManifest = {
       <Route path="his/today" element={<HisTodayPage />} />
       <Route path="workflows/his" element={<HisWorkflowsPage />} />
       <Route path="admin/billing/exports" element={<BillingExportsPage />} />
+      <Route path="admin/devices" element={<DeviceRegistryPage />} />
     </>
   ),
 };

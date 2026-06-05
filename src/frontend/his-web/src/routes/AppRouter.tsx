@@ -13,6 +13,10 @@ const BillingExportsPage = lazyPage(
   () => import("@/modules/his/admin/BillingExportsPage"),
   "BillingExportsPage",
 );
+const DeviceRegistryPage = lazyPage(
+  () => import("@/modules/his/admin/DeviceRegistryPage"),
+  "DeviceRegistryPage",
+);
 
 // After this many milliseconds in "loading", surface a manual sign-in button so the user
 // always has an out — even if the auth probe is genuinely stuck on some upstream hop.
@@ -67,6 +71,7 @@ export const AppRouter = () => (
       <Route path="today" element={<HisTodayPage />} />
       <Route path="workflows" element={<HisWorkflowsPage />} />
       <Route path="admin/billing/exports" element={<BillingExportsPage />} />
+      <Route path="admin/devices" element={<DeviceRegistryPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
