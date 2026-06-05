@@ -3,6 +3,7 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.HIE.Inbound.Domain;
+using Dialysis.HIE.Inbound.Mpi;
 using Dialysis.HIE.Inbound.Ports;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -21,6 +22,10 @@ public sealed class InboundIngestionService
 
     private readonly IPatientIndex _patientIndex;
 
+    private readonly PatientMatchService _matchService;
+
+    private readonly IPatientLinkReviewStore _linkReviews;
+
     private readonly IConsentGate _consentGate;
 
     private readonly ITransponderOutbox? _transponderOutbox;
@@ -34,6 +39,8 @@ public sealed class InboundIngestionService
     /// </summary>
     public InboundIngestionService(IReceivedResourceStore resourceStore,
         IPatientIndex patientIndex,
+        PatientMatchService matchService,
+        IPatientLinkReviewStore linkReviews,
         IConsentGate consentGate,
         ITransponderOutbox? transponderOutbox,
         TimeProvider timeProvider,
@@ -41,6 +48,8 @@ public sealed class InboundIngestionService
     {
         _resourceStore = resourceStore;
         _patientIndex = patientIndex;
+        _matchService = matchService;
+        _linkReviews = linkReviews;
         _consentGate = consentGate;
         _transponderOutbox = transponderOutbox;
         _timeProvider = timeProvider;
@@ -206,7 +215,8 @@ public sealed class InboundIngestionService
             dob,
             patient.Gender?.ToString(),
             _timeProvider.GetUtcNow().UtcDateTime);
-        await _patientIndex.UpsertAsync(entry, cancellationToken).ConfigureAwait(false);
+        var persisted = await _patientIndex.UpsertAsync(entry, cancellationToken).ConfigureAwait(false);
+        await DetectDuplicatesAsync(persisted, cancellationToken).ConfigureAwait(false);
 
         await EmitAsync(new ExternalPatientReferenceIngestedIntegrationEvent(
             Guid.NewGuid(),
@@ -220,6 +230,38 @@ public sealed class InboundIngestionService
             dob,
             patient.Gender?.ToString()), cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Probabilistic duplicate detection: scores the just-ingested patient against existing index
+    /// entries and queues a steward review for any other record that scores Probable/Certain — never
+    /// auto-linking. Deduped on the unordered entry pair so repeated ingests don't pile up reviews.
+    /// </summary>
+    private async Task DetectDuplicatesAsync(Domain.PatientIndexEntry source, CancellationToken cancellationToken)
+    {
+        var criteria = new Mpi.PatientMatchCriteria(
+            source.MedicalRecordNumber, source.FamilyName, source.GivenName, source.DateOfBirth, source.SexAtBirthCode);
+
+        var matches = await _matchService.FindMatchesAsync(criteria, take: 10, cancellationToken).ConfigureAwait(false);
+        foreach (var match in matches)
+        {
+            if (match.Entry.Id == source.Id || match.Grade < Mpi.MatchGrade.Probable)
+            {
+                continue;
+            }
+            if (await _linkReviews.ExistsForPairAsync(source.Id, match.Entry.Id, cancellationToken).ConfigureAwait(false))
+            {
+                continue;
+            }
+
+            _linkReviews.Add(Mpi.PatientLinkReview.Raise(
+                source.Id, source.PartnerId, Label(source),
+                match.Entry.Id, match.Entry.PartnerId, Label(match.Entry),
+                match.Score, match.Grade, _timeProvider.GetUtcNow().UtcDateTime));
+        }
+    }
+
+    private static string Label(Domain.PatientIndexEntry e) =>
+        $"{e.FamilyName}, {e.GivenName} {(e.DateOfBirth?.ToString("yyyy-MM-dd") ?? "?")} [{e.PartnerId}]".Trim();
 
     private async Task EmitAsync<T>(T evt, CancellationToken cancellationToken)
     {
