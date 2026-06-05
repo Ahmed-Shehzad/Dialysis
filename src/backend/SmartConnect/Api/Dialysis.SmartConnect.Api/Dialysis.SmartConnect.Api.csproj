@@ -12,6 +12,11 @@
   <ItemGroup>
     <ProjectReference Include="../../Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
     <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
+    <!-- DICOMweb (WADO/QIDO/STOW-RS) read/store surface for imaging studies. The endpoints live in
+         Dicom.Web; Dicom.Persistence supplies the EF instance store (on SmartConnectDbContext) +
+         ingestion service. -->
+    <ProjectReference Include="../../Dicom/Dialysis.SmartConnect.Dicom.Web/Dialysis.SmartConnect.Dicom.Web.csproj" />
+    <ProjectReference Include="../../Dicom/Dialysis.SmartConnect.Dicom.Persistence/Dialysis.SmartConnect.Dicom.Persistence.csproj" />
     <!-- Lab integration: the host bridges inbound ORU results into the Lab context's typed event.
          Referencing Lab.Contracts from the host is permitted by the module-boundary arch test. -->
     <ProjectReference Include="../../../Lab/Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
