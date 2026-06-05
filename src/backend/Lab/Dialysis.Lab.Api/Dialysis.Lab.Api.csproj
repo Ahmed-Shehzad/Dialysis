@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Lab.Api</RootNamespace>
+    <Description>Laboratory module HTTP host — lab orders + (Phase 1) results. Headless: reached via the EHR BFF aggregation.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Lab.Orders/Dialysis.Lab.Orders.csproj" />
+    <ProjectReference Include="../Dialysis.Lab.Persistence/Dialysis.Lab.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.Lab.Composition/Dialysis.Lab.Composition.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>
