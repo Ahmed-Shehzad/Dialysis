@@ -488,6 +488,52 @@ var web = builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
     .WithHttpEndpoint(env: "PORT", port: vitePort, targetPort: vitePort, isProxied: false)
     .PublishAsDockerFile();
 
+// --- Per-context BFFs + React apps ---------------------------------------
+// One React client per bounded context, each fronted by its own BFF. The gateway routes
+// /<ctx>/identity + /<ctx>/api + /<ctx>/hubs → <ctx>-bff (it attaches the session bearer and
+// proxies to the module API) and /<ctx>/* → <ctx>-web. BFF + web ports are pinned so the
+// gateway's static dev cluster addresses and the Keycloak redirect_uris stay in lockstep.
+// The legacy "web" (dialysis-web) above stays as the /{**catch-all} fallback during migration.
+IResourceBuilder<ProjectResource> AddContextBff(
+    IResourceBuilder<ProjectResource> bff,
+    int port,
+    IResourceBuilder<ProjectResource> moduleApi) =>
+    bff.WithEndpoint("http", e =>
+        {
+            e.Port = port;
+            e.TargetPort = port;
+            e.IsProxied = false;
+        })
+        .WithEnvironment("ASPNETCORE_URLS",
+            "http://localhost:" + port.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        .WaitFor(keycloak)
+        .WaitFor(moduleApi)
+        .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
+        .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
+
+var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi);
+var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi);
+var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi);
+var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi);
+var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi);
+
+IResourceBuilder<NodeAppResource> AddContextWeb(string slug, int port) =>
+    builder.AddNpmApp($"{slug}-web", $"../../frontend/{slug}-web", "dev")
+        .WithReference(gateway).WaitFor(gateway)
+        .WithEnvironment("BROWSER", "none")
+        .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
+        .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
+        .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
+        .PublishAsDockerFile();
+
+// Web apps are added as each context's React app lands. his-web is the first; ehr/pdms/
+// smartconnect/hie web apps are wired here as they are created (their BFFs already exist above).
+var hisWeb = AddContextWeb("his", 5331);
+
+// Keep the per-context BFFs up before the gateway so the /<ctx>/* routes resolve on first hit.
+gateway.WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff);
+_ = hisWeb;
+
 // --- Compose-publish decoration -------------------------------------------
 // Every overlay concern that used to live in `docker-compose.override.yaml` is applied
 // here as a `PublishAsDockerComposeService` callback — runs only under the compose
