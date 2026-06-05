@@ -71,19 +71,20 @@ cd deploy/compose/prod          # or dev / staging
 docker compose up -d --build
 ```
 
-This builds the module-API + gateway + identity-BFF images from the repo using
-`Dockerfile.module` / `Dockerfile.gateway` (the build stanzas Aspire wrote); pulls the
-infra images (Postgres, Valkey, RabbitMQ, Keycloak, SonarQube); and brings the whole
-topology up. The browser entry point is **`http://localhost:9090`** — same as the dev
-Aspire loop.
+This builds **every** host image from the repo — the five module APIs + identity BFF + the
+seven per-context BFFs via `Dockerfile.module`, the gateway via `Dockerfile.gateway`, and the
+seven SPAs via their own `src/frontend/<ctx>/Dockerfile` (nginx) — pulls the infra images
+(Postgres, Valkey, RabbitMQ, Keycloak, SonarQube), and brings the whole topology up. The
+gateway's ReverseProxy clusters are rewritten from their dev-time `localhost` addresses to the
+compose service hostnames (`his-bff:5301`, `his-web:80`, … — note the `admin-web`→`identity-web`
+and `portal-web`→`patient-portal-web` cluster/service name mapping). The browser entry point is
+**`http://localhost:9090`** — same as the dev Aspire loop.
 
-> **Per-context BFFs + web apps.** Since the BFF-per-context refactor, the seven per-context
-> BFFs (`his-bff` … `portal-bff`) and seven SPAs (`his-web` … `patient-portal-web`) are emitted
-> as services that reference a pre-built `${<CTX>_*_IMAGE}` rather than carrying a `build:`
-> stanza, and the gateway's per-context cluster destinations still resolve to `localhost`. A
-> follow-up adds the build stanzas + container-hostname cluster overrides so `docker compose up
-> --build` brings the per-context topology up end-to-end. Until then this command stands up the
-> module APIs, gateway, identity BFF, and infra.
+> **Browser-facing Keycloak.** The BFFs reach Keycloak in-cluster at `http://keycloak:8080`, but
+> a real end-user login also needs Keycloak's *issuer/authorization* URLs to be browser-reachable
+> (e.g. `KC_HOSTNAME`), since the OIDC challenge redirects the browser to Keycloak directly. The
+> realm's redirect URIs already target `http://localhost:9090/*`; confirm the Keycloak hostname
+> wiring when you first stand the stack up for an interactive login.
 
 Scale a module horizontally:
 
