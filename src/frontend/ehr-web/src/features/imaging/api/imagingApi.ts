@@ -44,10 +44,7 @@ export type OrderImagingStudyInput = {
   reasonText?: string | null;
 };
 
-export const fetchImagingOrders = async (
-  patientId: string,
-  take = 25,
-): Promise<ImagingOrder[]> => {
+export const fetchImagingOrders = async (patientId: string, take = 25): Promise<ImagingOrder[]> => {
   const response = await apiClient.get<HateoasEnvelope<ImagingOrder[]> | ImagingOrder[]>(
     `/ehr/api/v1.0/clinical/patients/${patientId}/imaging-orders`,
     { params: { take } },

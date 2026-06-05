@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Dialysis.Module.Hosting.Testing</RootNamespace>
     <Description>Shared module test infrastructure: ModuleWebApplicationFactory base that spins up a per-fixture PostgreSQL container and points the module's DbContext at it.</Description>
+    <!-- A test-helper library (WebApplicationFactory base), not a runnable suite. Exclude it from
+         `dotnet test Dialysis.slnx` so VSTest doesn't try to execute it as a test project. -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>

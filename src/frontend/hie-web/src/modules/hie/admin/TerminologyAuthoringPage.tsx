@@ -31,7 +31,8 @@ export const TerminologyAuthoringPage = () => {
     queryFn: fetchAuthoredTerminology,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["hie", "terminology"], exact: false });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["hie", "terminology"], exact: false });
   const rows = query.data ?? [];
 
   return (
@@ -41,7 +42,8 @@ export const TerminologyAuthoringPage = () => {
           <h1 className="text-lg font-semibold text-slate-100">Terminology authoring</h1>
           <p className="text-sm text-slate-400">
             Governed CodeSystems / ValueSets / ConceptMaps. Active resources are overlaid onto the
-            catalog at host startup and served by the terminology operations. A new version is a new row.
+            catalog at host startup and served by the terminology operations. A new version is a new
+            row.
           </p>
         </div>
         <button
@@ -54,7 +56,9 @@ export const TerminologyAuthoringPage = () => {
       </div>
 
       {query.isLoading && <div className="text-sm text-slate-400">Loading…</div>}
-      {query.isError && <div className="text-sm text-rose-300">Could not load resources. Retry shortly.</div>}
+      {query.isError && (
+        <div className="text-sm text-rose-300">Could not load resources. Retry shortly.</div>
+      )}
       {!query.isLoading && rows.length === 0 && (
         <div className="rounded border border-dashed border-slate-700 p-6 text-sm text-slate-400">
           No authored terminology yet — only the built-in catalog is served. Add a resource here.
@@ -77,11 +81,16 @@ export const TerminologyAuthoringPage = () => {
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-slate-800/60">
                 <td className="py-2 align-top">{row.resourceType}</td>
-                <td className="py-2 align-top font-mono text-xs break-all text-slate-300">{row.url}</td>
+                <td className="py-2 align-top font-mono text-xs break-all text-slate-300">
+                  {row.url}
+                </td>
                 <td className="py-2 align-top">{row.version}</td>
-                <td className={`py-2 align-top ${STATUS_CLASS[row.status] ?? "text-slate-300"}`}>{row.status}</td>
+                <td className={`py-2 align-top ${STATUS_CLASS[row.status] ?? "text-slate-300"}`}>
+                  {row.status}
+                </td>
                 <td className="py-2 align-top font-mono text-xs">
-                  {new Date(row.updatedAtUtc).toISOString().slice(0, 16).replace("T", " ")} · {row.updatedBy}
+                  {new Date(row.updatedAtUtc).toISOString().slice(0, 16).replace("T", " ")} ·{" "}
+                  {row.updatedBy}
                 </td>
                 <td className="py-2 align-top text-right">
                   <button
@@ -138,8 +147,11 @@ const TerminologyDrawer = ({
   });
 
   const canSave =
-    url.trim().length > 0 && version.trim().length > 0 && name.trim().length > 0 &&
-    fhirJson.trim().length > 0 && !upsert.isPending;
+    url.trim().length > 0 &&
+    version.trim().length > 0 &&
+    name.trim().length > 0 &&
+    fhirJson.trim().length > 0 &&
+    !upsert.isPending;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-end bg-slate-950/70" role="dialog">
@@ -225,12 +237,14 @@ const TerminologyDrawer = ({
           />
         </label>
         <p className="mt-2 text-xs text-slate-500">
-          The body must be a {resourceType} whose <code>url</code> matches the canonical URL above; it
-          is validated server-side before it is stored.
+          The body must be a {resourceType} whose <code>url</code> matches the canonical URL above;
+          it is validated server-side before it is stored.
         </p>
 
         {(upsert.isError || remove.isError) && (
-          <div className="mt-3 text-xs text-rose-300">Save failed — check the FHIR JSON and retry.</div>
+          <div className="mt-3 text-xs text-rose-300">
+            Save failed — check the FHIR JSON and retry.
+          </div>
         )}
 
         <div className="mt-5 flex justify-between gap-2 text-sm">

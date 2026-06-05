@@ -46,19 +46,21 @@ export const fetchDevices = async (take = 100): Promise<DeviceSummary[]> => {
 };
 
 export const fetchDeviceTypes = async (): Promise<DeviceType[]> => {
-  const response = await apiClient.get<HateoasEnvelope<DeviceType[]> | DeviceType[]>(`${BASE}/types`);
+  const response = await apiClient.get<HateoasEnvelope<DeviceType[]> | DeviceType[]>(
+    `${BASE}/types`,
+  );
   return unwrap(response.data);
 };
 
 export const registerDevice = async (input: RegisterDeviceInput): Promise<{ id: string }> => {
-  const response = await apiClient.post<HateoasEnvelope<{ id: string }> | { id: string }>(BASE, input);
+  const response = await apiClient.post<HateoasEnvelope<{ id: string }> | { id: string }>(
+    BASE,
+    input,
+  );
   return unwrap(response.data);
 };
 
-export const changeDeviceStatus = async (
-  id: string,
-  action: DeviceStatusAction,
-): Promise<void> => {
+export const changeDeviceStatus = async (id: string, action: DeviceStatusAction): Promise<void> => {
   await apiClient.post(`${BASE}/${id}/status`, { action });
 };
 

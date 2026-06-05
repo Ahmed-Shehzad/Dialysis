@@ -10,7 +10,8 @@ import {
 } from "@/features/lab/api/labApi";
 import { humanizeError } from "@/lib/api/humanizeError";
 
-const formatDateTime = (iso?: string | null): string => (iso ? new Date(iso).toLocaleString() : "—");
+const formatDateTime = (iso?: string | null): string =>
+  iso ? new Date(iso).toLocaleString() : "—";
 
 const STATUS_TONE: Record<string, string> = {
   Placed: "border-slate-700 bg-slate-900/40 text-slate-300",
@@ -102,7 +103,10 @@ const LabOrderRow = ({ order }: { order: LabOrderSummary }) => {
         className="grid w-full grid-cols-12 items-center gap-2 text-left"
         aria-expanded={expanded}
       >
-        <span className="col-span-4 truncate font-mono text-xs text-slate-300" title={order.placerOrderNumber}>
+        <span
+          className="col-span-4 truncate font-mono text-xs text-slate-300"
+          title={order.placerOrderNumber}
+        >
           {order.placerOrderNumber}
         </span>
         <span className="col-span-2 text-xs text-slate-400">

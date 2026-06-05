@@ -40,7 +40,9 @@ export const useBffNotifications = (): void => {
 
     connection
       .start()
-      .then(() => (active && patientId ? connection.invoke("WatchPatientAsync", patientId) : undefined))
+      .then(() =>
+        active && patientId ? connection.invoke("WatchPatientAsync", patientId) : undefined,
+      )
       .catch(() => undefined);
 
     return () => {

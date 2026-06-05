@@ -41,8 +41,8 @@ export const MpiStewardPage = () => {
       <header>
         <h1 className="text-lg font-semibold text-slate-100">MPI duplicate review queue</h1>
         <p className="text-sm text-slate-400">
-          Probable cross-source patient matches awaiting steward adjudication. Link confirms the same
-          person; reject marks them distinct. Nothing is auto-linked.
+          Probable cross-source patient matches awaiting steward adjudication. Link confirms the
+          same person; reject marks them distinct. Nothing is auto-linked.
         </p>
       </header>
 
@@ -112,7 +112,11 @@ const ReviewRow = ({
     </div>
     <div className="mt-2 grid gap-2 sm:grid-cols-2">
       <RecordCard heading="Incoming" label={review.sourceLabel} partner={review.sourcePartnerId} />
-      <RecordCard heading="Existing candidate" label={review.candidateLabel} partner={review.candidatePartnerId} />
+      <RecordCard
+        heading="Existing candidate"
+        label={review.candidateLabel}
+        partner={review.candidatePartnerId}
+      />
     </div>
   </li>
 );

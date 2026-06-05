@@ -57,13 +57,15 @@ export const ImagingPanel = ({ patientId }: { patientId: string }) => {
         bodySiteCode: study.bodySiteCode,
       });
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["ehr", "imaging", patientId] }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["ehr", "imaging", patientId] }),
   });
 
   const review = useMutation({
     mutationFn: ({ id, accepted }: { id: string; accepted: boolean }) =>
       reviewImagingAiFinding(id, accepted),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["ehr", "imaging", patientId] }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["ehr", "imaging", patientId] }),
   });
 
   const rows = orders.data ?? [];

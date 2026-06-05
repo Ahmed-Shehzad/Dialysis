@@ -18,7 +18,10 @@ const TefcaPartnersPage = lazyPage(
   () => import("@/modules/hie/admin/TefcaPartnersPage"),
   "TefcaPartnersPage",
 );
-const MpiStewardPage = lazyPage(() => import("@/modules/hie/admin/MpiStewardPage"), "MpiStewardPage");
+const MpiStewardPage = lazyPage(
+  () => import("@/modules/hie/admin/MpiStewardPage"),
+  "MpiStewardPage",
+);
 const TerminologyAuthoringPage = lazyPage(
   () => import("@/modules/hie/admin/TerminologyAuthoringPage"),
   "TerminologyAuthoringPage",

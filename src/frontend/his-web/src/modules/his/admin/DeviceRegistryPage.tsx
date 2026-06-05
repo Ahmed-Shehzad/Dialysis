@@ -23,7 +23,8 @@ const STATUS_TONE: Record<string, string> = {
 const statusTone = (status: DeviceStatus): string =>
   STATUS_TONE[status] ?? "border-slate-600 bg-slate-800/60 text-slate-300";
 
-const formatTime = (iso?: string | null): string => (iso ? new Date(iso).toLocaleString() : "never");
+const formatTime = (iso?: string | null): string =>
+  iso ? new Date(iso).toLocaleString() : "never";
 
 /**
  * Steward console for the RPM device registry. Register a device against the configured
@@ -227,7 +228,10 @@ const DeviceRow = ({
 
   return (
     <li className="grid grid-cols-12 items-center gap-2 py-2">
-      <span className="col-span-3 truncate font-mono text-xs text-slate-200" title={device.deviceId}>
+      <span
+        className="col-span-3 truncate font-mono text-xs text-slate-200"
+        title={device.deviceId}
+      >
         {device.deviceId}
       </span>
       <span className="col-span-2 text-xs text-slate-400">{device.deviceTypeCode}</span>
