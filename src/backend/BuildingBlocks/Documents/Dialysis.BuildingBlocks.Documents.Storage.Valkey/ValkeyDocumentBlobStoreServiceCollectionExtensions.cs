@@ -13,9 +13,9 @@ public static class ValkeyDocumentBlobStoreServiceCollectionExtensions
         /// Replaces the registered <see cref="IDocumentBlobStore"/> with <see cref="ValkeyDocumentBlobStore"/>
         /// when a connection string is present in <paramref name="valkeySection"/> (the same
         /// <c>&lt;Module&gt;:DistributedCache:Valkey</c> section the cache binds). The store resolves the
-        /// shared <see cref="StackExchange.Redis.IConnectionMultiplexer"/> that
-        /// <c>AddValkeyDistributedCache</c> registers, so callers must register the cache first
-        /// (module hosting does this before the composition extensions run).
+        /// shared <see cref="Valkey.Glide.IConnectionMultiplexer"/> that <c>AddValkeyDistributedCache</c>
+        /// registers, so callers must register the cache first (module hosting does this before the
+        /// composition extensions run).
         ///
         /// When Valkey is not configured this is a no-op — the caller's previously-registered
         /// in-memory / filesystem default stands, so dev without Valkey and tests keep working.

@@ -32,12 +32,11 @@
     <PackageVersion Include="Fhir.Metrics" Version="1.3.1" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection" Version="10.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.8" />
+    <!-- StackExchange.Redis remains only for the PDMS SignalR backplane (Microsoft.AspNetCore.SignalR.StackExchangeRedis);
+         all other Valkey use (cache, data-protection key ring, health check, document blob store) is on Valkey GLIDE. -->
     <PackageVersion Include="StackExchange.Redis" Version="2.13.17" />
-    <PackageVersion Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.RabbitMQ" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />

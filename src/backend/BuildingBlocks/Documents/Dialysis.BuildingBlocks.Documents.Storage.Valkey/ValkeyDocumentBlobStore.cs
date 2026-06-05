@@ -1,9 +1,9 @@
-using StackExchange.Redis;
+using Valkey.Glide;
 
 namespace Dialysis.BuildingBlocks.Documents.Storage.Valkey;
 
 /// <summary>
-/// Valkey/Redis-backed <see cref="IDocumentBlobStore"/>. Unlike the in-memory and filesystem
+/// Valkey-backed <see cref="IDocumentBlobStore"/> using the Valkey GLIDE client. Unlike the in-memory and filesystem
 /// stores, this resolves the same bytes from every module process in the modular monolith —
 /// PDMS writes a report blob and HIE's Documents board reads it back by the same storage-ref.
 ///
@@ -58,5 +58,5 @@ public sealed class ValkeyDocumentBlobStore : IDocumentBlobStore
             .ConfigureAwait(false);
     }
 
-    private static RedisKey KeyFor(string storageRef) => KeyPrefix + storageRef;
+    private static string KeyFor(string storageRef) => KeyPrefix + storageRef;
 }

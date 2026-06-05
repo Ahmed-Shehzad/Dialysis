@@ -99,6 +99,12 @@ var signalRBuilder = builder.Services.AddSignalR(o =>
 var valkeyConnectionString = builder.Configuration["Pdms:DistributedCache:Valkey:ConnectionString"];
 if (!string.IsNullOrWhiteSpace(valkeyConnectionString))
 {
+    // This is the ONLY remaining StackExchange.Redis use in the codebase. The rest of the Valkey
+    // data plane (distributed cache, Data Protection key ring, health check, document blob store)
+    // runs on Valkey GLIDE. The SignalR backplane stays on StackExchange.Redis deliberately: there
+    // is no first-class GLIDE HubLifetimeManager, and a conformant port would mean vendoring a fork
+    // of internal .NET SignalR types (ClientResultsManager, MemoryBufferWriter, …) on top of GLIDE's
+    // preview pub/sub — a large, fragile surface for the single hub that uses the backplane.
     signalRBuilder.AddStackExchangeRedis(valkeyConnectionString, o =>
     {
         // Channel prefix isolates PDMS pub/sub traffic from other modules that may share Valkey.
