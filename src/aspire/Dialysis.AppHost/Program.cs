@@ -581,9 +581,11 @@ var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bf
 // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context
 // (the chart's Labs panel) under /ehr/api/_x/lab/*.
 var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret)
-    .WaitFor(hieApi).WaitFor(labApi)
+    .WaitFor(hieApi).WaitFor(labApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"))
+    // DICOMweb (imaging study preview card on the chart) — /ehr/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
 // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
 var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret)
     .WaitFor(ehrApi).WaitFor(hieApi)

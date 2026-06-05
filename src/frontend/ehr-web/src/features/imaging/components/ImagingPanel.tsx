@@ -9,6 +9,7 @@ import {
   type ImagingOrder,
   type ImagingOrderStatus,
 } from "@/features/imaging/api/imagingApi";
+import { StudyPreview } from "@/features/imaging/components/StudyPreview";
 import { humanizeError } from "@/lib/api/humanizeError";
 
 const STATUS_TONE: Record<string, string> = {
@@ -166,6 +167,11 @@ const ImagingRow = ({
         </span>
       </span>
     </div>
+    {order.studyInstanceUid && (
+      <div className="mt-1 pl-[calc(2/12*100%)]">
+        <StudyPreview studyInstanceUid={order.studyInstanceUid} />
+      </div>
+    )}
     {order.aiFindingStatus !== "None" && order.aiFindingDisplay && (
       <AiFindingBlock order={order} onReview={onReview} reviewing={reviewing} />
     )}
