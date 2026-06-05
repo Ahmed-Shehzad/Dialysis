@@ -81,18 +81,29 @@ DICOMweb store existed but there was **no radiology ordering**.
 - ✅ **Terminology service** — **delivered**: served FHIR `$validate-code` / `$translate` / `$expand` /
   `$lookup` (`MapFhirTerminologyEndpoints`, wired in HIE) over a governed `DialysisTerminologyCatalog`
   (lab LOINC panel + RadLex imaging ValueSets/CodeSystems + local→LOINC ConceptMap, url/version/status),
-  with a `_terminology/catalog` governance listing. *Remaining: value‑set authoring/versioning admin
-  surface; call `$validate-code` from the EHR/Lab/AI coding paths before persisting.*
-- **Public‑health / analytics export**: PHI‑safe de‑identified warehouse export on `Fhir.DeIdentification`
-  + `Fhir.BulkData` (research / disease surveillance).
+  with a `_terminology/catalog` governance listing. **Now wired into the coding paths** via the FHIR‑free
+  `IDialysisCodeValidator` facade: the LIS result consumer validates each observation's LOINC against the
+  governed panel and normalises a local mnemonic via `$translate` (logged non‑conformant otherwise, never
+  dropped); the imaging‑AI analyzer only surfaces a finding whose code `$validate-code` accepts against the
+  governed imaging value set (ungoverned codes dropped + audited). *Remaining: value‑set authoring/versioning
+  admin surface.*
+- ✅ **Public‑health / analytics export** — **delivered**: PHI‑safe de‑identified Bulk Data `$export` on
+  `Fhir.DeIdentification` + `Fhir.BulkData`. The export runner applies the requested de‑identification
+  profile per resource and **fails closed** — a `_deIdentify` request with no `IFhirDeIdentifier` (or an
+  unknown profile) is marked Failed before any byte is written, never streaming identified PHI; present‑but‑empty
+  `_deIdentify` defaults to Safe Harbor. Safe Harbor now drops the narrative on every resource and scrubs the
+  exported types (Patient/Observation/Encounter + AllergyIntolerance/Immunization/MedicationStatement/Procedure).
+  Wired into HIS/EHR/PDMS. *Remaining: LimitedDataSet/Custom field rules; cloud object‑store sink for the
+  warehouse hand‑off.*
 
 ## Suggested sequencing
 1. ~~**LIS e2e** + **RPM registry**~~ — ✅ both delivered (backend + EHR Labs panel + his‑web device console; registry + governed ingestion).
 2. ~~**Imaging ordering**~~ — ✅ closed end to end (EHR order slice + DICOM accession capture + producer bridge + study‑link consumer + chart panel).
 3. ~~**AI imaging**~~ — ✅ closed end to end (ingestion‑gated analyzer → advisory finding → FHIR `Observation` → chart sign‑off).
-4. **Enablers** — 🟡 MPI matching + steward queue **and** terminology `$validate-code`/`$translate`
-   **delivered**; **next**: PHI‑safe de‑identified analytics export.
-   Loose ends: wire `$validate-code` into the coding paths + a value‑set authoring surface, imaging study
+4. **Enablers** — ✅ MPI matching + steward queue, terminology `$validate-code`/`$translate` (wired into the
+   LIS + imaging‑AI coding paths), **and** PHI‑safe de‑identified analytics export (`$export` de‑identifies +
+   fails closed) all **delivered**.
+   Loose ends: value‑set authoring surface, LimitedDataSet/Custom de‑id rules + cloud export sink, imaging study
    preview, AI pixel de‑id + real‑model governance, LIS live e2e, RPM load test, MPI auto-link on Certain,
    and consolidating the parallel EHR/Lab order paths.
 
