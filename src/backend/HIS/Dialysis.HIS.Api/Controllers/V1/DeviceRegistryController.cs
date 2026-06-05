@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.Integration.Features.DeviceRegistry;
@@ -27,10 +28,61 @@ public sealed class DeviceRegistryController : HisHateoasControllerBase
     public async Task<IActionResult> RegisterAsync(
         [FromBody] RegisterDeviceCommand command, CancellationToken cancellationToken)
     {
-        var id = await _gateway
-            .SendCommandAsync<RegisterDeviceCommand, Guid>(command, cancellationToken)
-            .ConfigureAwait(false);
-        return CreatedResource($"{Request.Path}/{id}", new RegisterDeviceResponse(id), LinkCapabilitiesIndex());
+        try
+        {
+            var id = await _gateway
+                .SendCommandAsync<RegisterDeviceCommand, Guid>(command, cancellationToken)
+                .ConfigureAwait(false);
+            return CreatedResource($"{Request.Path}/{id}", new RegisterDeviceResponse(id), LinkCapabilitiesIndex());
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>Binds a registered device to a patient (and optional session) so its readings are attributed.</summary>
+    [HttpPost("{id:guid}/bind")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> BindAsync(
+        Guid id, [FromBody] BindDeviceRequest body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        try
+        {
+            await _gateway
+                .SendCommandAsync<BindDeviceToPatientCommand, Unit>(
+                    new BindDeviceToPatientCommand(id, body.PatientId, body.SessionId), cancellationToken)
+                .ConfigureAwait(false);
+            return NoContent();
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>Applies a lifecycle transition (suspend / activate / retire) to a registered device.</summary>
+    [HttpPost("{id:guid}/status")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeStatusAsync(
+        Guid id, [FromBody] ChangeDeviceStatusRequest body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        try
+        {
+            await _gateway
+                .SendCommandAsync<ChangeDeviceStatusCommand, Unit>(
+                    new ChangeDeviceStatusCommand(id, body.Action), cancellationToken)
+                .ConfigureAwait(false);
+            return NoContent();
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     /// <summary>Lists registered devices, most-recently-registered first.</summary>
@@ -64,4 +116,10 @@ public sealed class DeviceRegistryController : HisHateoasControllerBase
 
     /// <summary>201 response body for a registered device.</summary>
     public sealed record RegisterDeviceResponse(Guid Id);
+
+    /// <summary>Request body to bind a device to a patient and optional session.</summary>
+    public sealed record BindDeviceRequest(Guid PatientId, Guid? SessionId);
+
+    /// <summary>Request body to change a device's lifecycle status.</summary>
+    public sealed record ChangeDeviceStatusRequest(DeviceStatusAction Action);
 }

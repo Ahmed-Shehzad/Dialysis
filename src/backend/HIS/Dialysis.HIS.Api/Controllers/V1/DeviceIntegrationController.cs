@@ -61,8 +61,17 @@ public sealed class DeviceIntegrationController : HisHateoasControllerBase
             }
         }
 
-        var id = await _gateway.SendCommandAsync<IngestDeviceReadingCommand, Guid>(commandWithId, cancellationToken).ConfigureAwait(false);
-        return CreatedResource($"{Request.Path}/{id}", new IngestDeviceReadingResponse(id), LinkCapabilitiesIndex());
+        try
+        {
+            var id = await _gateway.SendCommandAsync<IngestDeviceReadingCommand, Guid>(commandWithId, cancellationToken).ConfigureAwait(false);
+            return CreatedResource($"{Request.Path}/{id}", new IngestDeviceReadingResponse(id), LinkCapabilitiesIndex());
+        }
+        catch (Dialysis.DomainDrivenDesign.Exceptions.DomainException ex)
+        {
+            // Registry governance rejected the reading (unknown/suspended/retired device, or a
+            // patient-binding mismatch). Surface as a 400 rather than a 500.
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     public sealed record IngestDeviceReadingResponse

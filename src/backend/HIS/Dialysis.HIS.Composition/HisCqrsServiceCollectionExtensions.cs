@@ -84,6 +84,8 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<RegisterDeviceCommand, Guid, AuthorizationPipelineBehavior<RegisterDeviceCommand, Guid>>();
             cqrs.AddQueryBehavior<GetDeviceByIdQuery, DeviceDto?, AuthorizationPipelineBehavior<GetDeviceByIdQuery, DeviceDto?>>();
             cqrs.AddQueryBehavior<ListDevicesQuery, IReadOnlyList<DeviceSummaryDto>, AuthorizationPipelineBehavior<ListDevicesQuery, IReadOnlyList<DeviceSummaryDto>>>();
+            cqrs.AddCommandBehavior<BindDeviceToPatientCommand, Unit, AuthorizationPipelineBehavior<BindDeviceToPatientCommand, Unit>>();
+            cqrs.AddCommandBehavior<ChangeDeviceStatusCommand, Unit, AuthorizationPipelineBehavior<ChangeDeviceStatusCommand, Unit>>();
 
             cqrs.AddQueryBehavior<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>, AuthorizationPipelineBehavior<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>>();
             cqrs.AddQueryBehavior<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>, AuthorizationPipelineBehavior<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>>>();

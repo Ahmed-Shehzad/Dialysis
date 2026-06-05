@@ -60,6 +60,10 @@ public static class HospitalInformationSystemExtensions
                     configured is { Count: > 0 } ? configured : DeviceTypeCatalog.Default);
             });
 
+            // Ingestion ↔ registry policy (RequireRegistration defaults off for rollout safety).
+            services.AddOptions<DeviceIngestionOptions>()
+                .Bind(configuration.GetSection(DeviceIngestionOptions.SectionName));
+
             services.AddTransponder(t =>
             {
                 if (enableFhirSubscriptions)
