@@ -44,33 +44,54 @@ public static class ComposePublishExtensions
         });
 
     /// <summary>
-    /// Identity BFF — same generic <c>Dockerfile.module</c> as the module APIs, but binds
-    /// directly to the pinned host port (no 8080 indirection) because the gateway's
-    /// ReverseProxy cluster targets it by hostname:port.
+    /// A BFF (the legacy identity BFF or any per-context BFF) — same generic
+    /// <c>Dockerfile.module</c> as the module APIs, but bound directly to its pinned host port
+    /// (no 8080 indirection) because the gateway's ReverseProxy cluster targets it by hostname:port.
     /// </summary>
-    public static IResourceBuilder<ProjectResource> WithIdentityBffDeployment(
+    public static IResourceBuilder<ProjectResource> WithBffDeployment(
         this IResourceBuilder<ProjectResource> builder,
+        string projectRelativePath,
+        string assemblyDllName,
         int hostPort,
         string environment) =>
         builder.PublishAsDockerComposeService((_, service) =>
         {
-            ApplyModuleDockerfileBuild(
-                service,
-                "src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj",
-                "Dialysis.Identity.Bff.dll");
+            ApplyModuleDockerfileBuild(service, projectRelativePath, assemblyDllName);
             ApplyHostPort(service, hostPort, hostPort);
             ApplyAspNetEnvironment(service, environment, hostPort);
         });
 
     /// <summary>
+    /// A per-context SPA — built from its own <c>Dockerfile</c> next to the sources (nginx serving
+    /// the static bundle on container port 80). The gateway reaches it by service hostname on :80;
+    /// the host-port map is for direct debugging. <c>BROWSER=none</c> is a Vite dev-time hint and is
+    /// dropped from the published image.
+    /// </summary>
+    public static IResourceBuilder<NodeAppResource> WithWebDeployment(
+        this IResourceBuilder<NodeAppResource> builder,
+        string frontendFolder,
+        int hostPort) =>
+        builder.PublishAsDockerComposeService((_, service) =>
+        {
+            service.Build = new Build
+            {
+                Context = RepoRootFromCompose + "/src/frontend/" + frontendFolder,
+                Dockerfile = "Dockerfile",
+            };
+            ApplyHostPort(service, hostPort, 80);
+            service.Environment.Remove("BROWSER");
+        });
+
+    /// <summary>
     /// YARP gateway — dedicated <c>Dockerfile.gateway</c>, browser-facing port, gateway HSTS
-    /// + ForwardedHeaders, identity cluster redirected to the container hostname.
+    /// + ForwardedHeaders, and every ReverseProxy cluster destination redirected from its
+    /// dev-time <c>localhost</c> binding to the compose service hostname.
     /// </summary>
     public static IResourceBuilder<ProjectResource> WithGatewayDeployment(
         this IResourceBuilder<ProjectResource> builder,
         int hostPort,
-        int identityBffHostPort,
-        string environment) =>
+        string environment,
+        IReadOnlyList<(string ClusterId, string Address)> clusterOverrides) =>
         builder.PublishAsDockerComposeService((_, service) =>
         {
             service.Build = new Build
@@ -85,30 +106,14 @@ public static class ComposePublishExtensions
                 service.Environment["Gateway__UseHsts"] = "true";
                 service.Environment["Gateway__UseForwardedHeaders"] = "true";
             }
-            // The gateway resolves the BFF by service name inside the compose network;
-            // override the dev-time localhost binding so YARP forwards to the right hop.
-            service.Environment["ReverseProxy__Clusters__identity__Destinations__d1__Address"] =
-                "http://identity-bff:" + identityBffHostPort + "/";
-            ApplyReplicas(service, environment);
-        });
-
-    /// <summary>
-    /// SPA — already <c>.PublishAsDockerFile()</c>'d in the AppHost; redirects the build to
-    /// the per-app Dockerfile next to the SPA sources and host-maps the nginx port.
-    /// </summary>
-    public static IResourceBuilder<NodeAppResource> WithWebDeployment(
-        this IResourceBuilder<NodeAppResource> builder,
-        int hostPort) =>
-        builder.PublishAsDockerComposeService((_, service) =>
-        {
-            service.Build = new Build
+            // The gateway resolves each upstream by service name inside the compose network;
+            // override the dev-time localhost cluster addresses so YARP forwards to the right hop.
+            foreach (var (clusterId, address) in clusterOverrides)
             {
-                Context = RepoRootFromCompose + "/src/frontend/dialysis-web",
-                Dockerfile = "Dockerfile",
-            };
-            ApplyHostPort(service, hostPort, 80);
-            // BROWSER=none is a Vite dev-time hint; not meaningful for the published image.
-            service.Environment.Remove("BROWSER");
+                service.Environment[
+                    $"ReverseProxy__Clusters__{clusterId}__Destinations__d1__Address"] = address;
+            }
+            ApplyReplicas(service, environment);
         });
 
     /// <summary>Per-module Postgres — host-mapped port + <c>pg_isready</c> healthcheck.</summary>

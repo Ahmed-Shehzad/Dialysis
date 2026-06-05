@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           /\/$/,
           "",
         );
-        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/");
+        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/his/");
         const providerParam = provider ? "&provider=" + encodeURIComponent(provider) : "";
         const target = apiBase + "/his/identity/login?" + returnUrlParam + providerParam;
         console.info(
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "",
         );
         const target =
-          apiBase + "/his/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/");
+          apiBase + "/his/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/his/");
         console.info("[auth] signOut → navigating to", target);
         globalThis.location.assign(target);
       },
