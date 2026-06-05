@@ -108,6 +108,8 @@ public static class EhrCompositionExtensions
             {
                 t.AddConsumer<PrescriptionOrderedIntegrationEvent, PrescriptionOrderedConsumer>();
                 t.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
+                // Imaging study correlated back to its order (by accession) → link + complete it.
+                t.AddConsumer<ImagingStudyLinkedIntegrationEvent, ImagingStudyLinkedConsumer>();
                 t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
                 // Cross-module: PDMS completes a session → capture the itemised dialysis charge
                 // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
