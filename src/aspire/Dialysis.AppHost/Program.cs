@@ -52,6 +52,46 @@ var isKubernetesPublish = publishing && string.Equals(publisherName, "k8s", Stri
 // run-time then. `k8sEnv` stays non-null only when the k8s publisher is active so the
 // Ingress block at the bottom of this file can attach a route to the gateway.
 Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.Kubernetes.KubernetesEnvironmentResource>? k8SEnv = null;
+
+// WORKAROUND (Aspire 13.4.x compose + k8s publishers): the publisher runs its `before-start`
+// phase — and with it the framework's own non-idempotent `prepare-deployment-targets-{env}`
+// step — TWICE against the same in-memory model. That step appends a DeploymentTargetAnnotation
+// to every compute resource on each pass, so each one ends up with two. The downstream readers
+// (push-prereq / publish-{env} / publish-manifest) call ResourceExtensions.GetDeploymentTargetAnnotation,
+// whose SingleOrDefault then throws "Sequence contains more than one matching element" and no
+// artifact is written. (Web NodeApps escape it because PublishAsDockerFile pre-assigns their
+// target, so prepare skips them — confirmed by per-resource annotation dumps.)
+//
+// Collapse the duplicates back to a single annotation after prepare has run and before the
+// readers execute: dependsOn keeps us after the per-env prepare step; requiredBy keeps us inside
+// before-start (ahead of push-prereq/publish-*). We keep the LAST annotation because the final
+// prepare pass also overwrote the environment's internal ResourceMapping with that pass's service.
+// The step is idempotent (always reduces to ≤1), so it is safe under the double-run. Remove once
+// the upstream double-execution is fixed (reproduced on 13.4.0 and 13.4.2, compose and k8s).
+void DedupeDeploymentTargets(string environmentName)
+{
+#pragma warning disable ASPIREPIPELINES001
+    builder.Pipeline.AddStep(
+        "dialysis-dedupe-deployment-targets-" + environmentName,
+        (Aspire.Hosting.Pipelines.PipelineStepContext ctx) =>
+        {
+            foreach (var resource in ctx.Model.Resources)
+            {
+                var targets = resource.Annotations
+                    .OfType<Aspire.Hosting.ApplicationModel.DeploymentTargetAnnotation>()
+                    .ToList();
+                for (var i = 0; i < targets.Count - 1; i++)
+                {
+                    resource.Annotations.Remove(targets[i]);
+                }
+            }
+            return System.Threading.Tasks.Task.CompletedTask;
+        },
+        "prepare-deployment-targets-" + environmentName,
+        "before-start");
+#pragma warning restore ASPIREPIPELINES001
+}
+
 if (isComposePublish)
 {
     builder.AddDockerComposeEnvironment("compose")
@@ -91,6 +131,8 @@ if (isComposePublish)
                     },
                 };
         });
+
+    DedupeDeploymentTargets("compose");
 }
 
 // --- Kubernetes / Helm publisher -----------------------------------------
@@ -119,6 +161,7 @@ if (isKubernetesPublish)
             helm.WithNamespace("dialysis-" + deployEnv);
             helm.WithReleaseName("dialysis");
         });
+    DedupeDeploymentTargets("k8s");
 }
 
 // --- Constants -------------------------------------------------------------
@@ -490,7 +533,6 @@ if (isKubernetesPublish)
 // /<ctx>/identity + /<ctx>/api + /<ctx>/hubs → <ctx>-bff (it attaches the session bearer and
 // proxies to the module API) and /<ctx>/* → <ctx>-web. BFF + web ports are pinned so the
 // gateway's static dev cluster addresses and the Keycloak redirect_uris stay in lockstep.
-// The legacy "web" (dialysis-web) above stays as the /{**catch-all} fallback during migration.
 IResourceBuilder<ProjectResource> AddContextBff(
     IResourceBuilder<ProjectResource> bff,
     int port,
@@ -546,8 +588,7 @@ IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
         .PublishAsDockerFile();
 
 // One React app per bounded context (folder name = Aspire resource; the app's own /<ctx> base
-// is set in its vite.config). The gateway reaches each on its pinned port. The legacy dialysis-web
-// "web" resource stays as the /{**catch-all} fallback until it is retired.
+// is set in its vite.config). The gateway reaches each on its pinned port.
 var hisWeb = AddContextWeb("his-web", 5331);
 var ehrWeb = AddContextWeb("ehr-web", 5332);
 var pdmsWeb = AddContextWeb("pdms-web", 5333);
@@ -560,7 +601,6 @@ var portalWeb = AddContextWeb("patient-portal-web", 5337); // served at /portal
 gateway
     .WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff)
     .WaitFor(adminBff).WaitFor(portalBff);
-_ = (hisWeb, ehrWeb, pdmsWeb, smartConnectWeb, hieWeb, identityWeb, portalWeb);
 
 // --- Compose-publish decoration -------------------------------------------
 // Every overlay concern that used to live in `docker-compose.override.yaml` is applied
@@ -599,8 +639,66 @@ if (isComposePublish)
         moduleConfigPrefix: "Hie",
         hostPort: 5292,
         environment: deployEnv);
-    identityBff.WithIdentityBffDeployment(hostPort: identityBffPort, environment: deployEnv);
-    gateway.WithGatewayDeployment(hostPort: gatewayPort, identityBffHostPort: identityBffPort, environment: deployEnv);
+    identityBff.WithBffDeployment(
+        "src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj",
+        "Dialysis.Identity.Bff.dll", identityBffPort, deployEnv);
+
+    // Per-context BFFs: generic Dockerfile.module build, pinned port, reached by the gateway by
+    // service name. (project, dll) varies per module — not derivable from a single pattern.
+    (IResourceBuilder<ProjectResource> Bff, string Project, string Dll, int Port)[] contextBffs =
+    [
+        (hisBff, "src/backend/HIS/Dialysis.HIS.Bff/Dialysis.HIS.Bff.csproj", "Dialysis.HIS.Bff.dll", 5301),
+        (ehrBff, "src/backend/EHR/Dialysis.EHR.Bff/Dialysis.EHR.Bff.csproj", "Dialysis.EHR.Bff.dll", 5302),
+        (pdmsBff, "src/backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj", "Dialysis.PDMS.Bff.dll", 5303),
+        (smartConnectBff, "src/backend/SmartConnect/Dialysis.SmartConnect.Bff/Dialysis.SmartConnect.Bff.csproj", "Dialysis.SmartConnect.Bff.dll", 5304),
+        (hieBff, "src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj", "Dialysis.HIE.Bff.dll", 5305),
+        (adminBff, "src/backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj", "Dialysis.Admin.Bff.dll", 5306),
+        (portalBff, "src/backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj", "Dialysis.PatientPortal.Bff.dll", 5307),
+    ];
+    foreach (var (bff, project, dll, port) in contextBffs)
+    {
+        bff.WithBffDeployment(project, dll, port, deployEnv);
+    }
+
+    // Per-context SPAs: built from their own nginx Dockerfile; the gateway reaches each on :80.
+    (IResourceBuilder<NodeAppResource> Web, string Folder, int Port)[] contextWebs =
+    [
+        (hisWeb, "his-web", 5331),
+        (ehrWeb, "ehr-web", 5332),
+        (pdmsWeb, "pdms-web", 5333),
+        (smartConnectWeb, "smartconnect-web", 5334),
+        (hieWeb, "hie-web", 5335),
+        (identityWeb, "identity-web", 5336),
+        (portalWeb, "patient-portal-web", 5337),
+    ];
+    foreach (var (web, folder, port) in contextWebs)
+    {
+        web.WithWebDeployment(folder, port);
+    }
+
+    // Redirect every gateway ReverseProxy cluster from its dev-time localhost address to the
+    // compose service hostname. Cluster ids match the gateway's appsettings.json; note the two
+    // web clusters whose id differs from the resource/service name (admin-web→identity-web,
+    // portal-web→patient-portal-web). Webs are nginx on :80; BFFs on their pinned port.
+    gateway.WithGatewayDeployment(gatewayPort, deployEnv,
+    [
+        ("identity", "http://identity-bff:" + identityBffPort + "/"),
+        ("his-bff", "http://his-bff:5301/"),
+        ("ehr-bff", "http://ehr-bff:5302/"),
+        ("pdms-bff", "http://pdms-bff:5303/"),
+        ("smartconnect-bff", "http://smartconnect-bff:5304/"),
+        ("hie-bff", "http://hie-bff:5305/"),
+        ("admin-bff", "http://admin-bff:5306/"),
+        ("portal-bff", "http://portal-bff:5307/"),
+        ("his-web", "http://his-web:80/"),
+        ("ehr-web", "http://ehr-web:80/"),
+        ("pdms-web", "http://pdms-web:80/"),
+        ("smartconnect-web", "http://smartconnect-web:80/"),
+        ("hie-web", "http://hie-web:80/"),
+        ("admin-web", "http://identity-web:80/"),
+        ("portal-web", "http://patient-portal-web:80/"),
+        ("keycloak", "http://keycloak:8080/"),
+    ]);
 
     hisPgServer.WithPublishedDatabasePort(hostPort: 5440, databaseName: "dialysis_his", environment: deployEnv);
     smartconnectPgServer.WithPublishedDatabasePort(hostPort: 5441, databaseName: "dialysis_smartconnect", environment: deployEnv);
