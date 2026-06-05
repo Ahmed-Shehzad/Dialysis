@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           /\/$/,
           "",
         );
-        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/");
+        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/smartconnect/");
         const providerParam = provider ? "&provider=" + encodeURIComponent(provider) : "";
         const target = apiBase + "/smartconnect/identity/login?" + returnUrlParam + providerParam;
         console.info(
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "",
         );
         const target =
-          apiBase + "/smartconnect/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/");
+          apiBase + "/smartconnect/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/smartconnect/");
         console.info("[auth] signOut → navigating to", target);
         globalThis.location.assign(target);
       },
