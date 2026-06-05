@@ -96,6 +96,7 @@ if (!string.IsNullOrWhiteSpace(app.Configuration["SmartConnect:Authentication:Au
 dicomWeb.MapQidoRs();
 dicomWeb.MapWadoRs();
 dicomWeb.MapStowRs();
+dicomWeb.MapDicomRenderedRs();
 
 await app.RunAsync().ConfigureAwait(false);
 

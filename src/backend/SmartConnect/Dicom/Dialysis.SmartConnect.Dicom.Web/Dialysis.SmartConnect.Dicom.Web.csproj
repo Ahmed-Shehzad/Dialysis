@@ -19,6 +19,9 @@
 
   <ItemGroup>
     <PackageReference Include="fo-dicom" />
+    <!-- Cross-platform (managed, no native codecs) frame rendering to PNG for the WADO rendered
+         endpoint that backs the chart imaging viewer. -->
+    <PackageReference Include="fo-dicom.Imaging.ImageSharp" />
   </ItemGroup>
 
 </Project>

@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudyMetadata } from "@/features/imaging/api/dicomApi";
+import { StudyViewerModal } from "@/features/imaging/components/StudyViewerModal";
 
 /**
- * Inline preview badge for a linked DICOM study on the chart Imaging panel: shows the modality and
- * number of images pulled from DICOMweb QIDO-RS (via the EHR BFF). Best-effort — until the study has
- * actually been received into the DICOM store it renders a quiet "not yet received" hint.
+ * Inline preview for a linked DICOM study on the chart Imaging panel: shows the modality + number of
+ * images (QIDO-RS via the EHR BFF) and a "View" button that opens the server-rendered study viewer.
+ * Best-effort — until the study has actually been received into the DICOM store it renders a quiet
+ * "not yet received" hint.
  */
 export const StudyPreview = ({ studyInstanceUid }: { studyInstanceUid: string }) => {
+  const [open, setOpen] = useState(false);
   const query = useQuery({
     queryKey: ["ehr", "dicom", "study", studyInstanceUid],
     queryFn: () => fetchStudyMetadata(studyInstanceUid),
@@ -24,11 +28,27 @@ export const StudyPreview = ({ studyInstanceUid }: { studyInstanceUid: string })
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900/40 px-1.5 py-0.5 text-[11px] text-slate-300">
-      {meta.modality && <span className="font-mono">{meta.modality}</span>}
-      <span>
-        · {meta.instanceCount} image{meta.instanceCount === 1 ? "" : "s"}
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-900/40 px-1.5 py-0.5 text-[11px] text-slate-300">
+        {meta.modality && <span className="font-mono">{meta.modality}</span>}
+        <span>
+          · {meta.instanceCount} image{meta.instanceCount === 1 ? "" : "s"}
+        </span>
       </span>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded border border-clinic-700/70 px-1.5 py-0.5 text-[11px] text-clinic-200 hover:border-clinic-500"
+      >
+        View
+      </button>
+      {open && (
+        <StudyViewerModal
+          studyInstanceUid={studyInstanceUid}
+          instanceCount={meta.instanceCount}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </span>
   );
 };
