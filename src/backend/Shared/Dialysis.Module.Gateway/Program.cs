@@ -6,6 +6,14 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
+// Defense-in-depth header ceiling. The gateway is the single browser origin for seven per-context
+// BFF cookies. The BFFs now keep their cookies down to a session key (server-side ticket store), so
+// this should never be exercised in steady state — but raising the limit above Kestrel's 32 KB
+// default means a transient cookie pile-up (e.g. a stale pre-fix cookie still in the browser, or a
+// large upstream-IdP token during a brokered login) degrades gracefully instead of hard-failing the
+// SPA load with HTTP 431 "Request Header Fields Too Large".
+builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestHeadersTotalSize = 64 * 1024);
+
 const string corsPolicyName = "SpaCors";
 const string anonymousRateLimitPolicy = "anonymous";
 const string authenticatedRateLimitPolicy = "authenticated";
