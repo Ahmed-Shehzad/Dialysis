@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEhrPatient, fetchPatientChart, type ChartItem } from "@/features/ehr/api/ehrApi";
 import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
+import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
@@ -250,6 +251,8 @@ export const EhrChartPage = () => {
           </div>
 
           <RecentNotesPanel patientId={patientId} />
+
+          <LabResultsPanel patientId={patientId} />
 
           <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <h3 className="mb-2 text-sm font-medium text-slate-200">

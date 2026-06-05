@@ -210,12 +210,14 @@ var ehrPgServer = Pg(builder, "postgres-ehr");
 var pdmsPgServer = PgTimescale(builder, "postgres-pdms");
 var smartconnectPgServer = Pg(builder, "postgres-smartconnect");
 var hiePgServer = Pg(builder, "postgres-hie");
+var labPgServer = Pg(builder, "postgres-lab");
 
 var hisDb = hisPgServer.AddDatabase("His", databaseName: "dialysis_his");
 var ehrDb = ehrPgServer.AddDatabase("Ehr", databaseName: "dialysis_ehr");
 var pdmsDb = pdmsPgServer.AddDatabase("Pdms", databaseName: "dialysis_pdms");
 var smartconnectDb = smartconnectPgServer.AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
 var hieDb = hiePgServer.AddDatabase("Hie", databaseName: "dialysis_hie");
+var labDb = labPgServer.AddDatabase("Lab", databaseName: "dialysis_lab");
 
 // --- SonarQube (auto-start with the AppHost) ------------------------------
 //
@@ -395,6 +397,21 @@ var hieApi = builder.AddProject<Projects.Dialysis_HIE_Api>("hie-api")
     .WithEnvironment("Hie__Authentication__Audience", "account")
     .WithEnvironment("Hie__Demo__Enabled", "true");
 
+// Lab is a headless bounded context: no BFF/SPA of its own — order-entry stays in EHR and the
+// chart's Labs panel reaches it through the EHR BFF's _x/lab aggregation. It still needs its own
+// Postgres + the bus: it publishes LabOrderPlacedIntegrationEvent (SmartConnect transmits it to the
+// LIS) and consumes the bridged LabResultReceivedIntegrationEvent to record results on the order.
+var labApi = builder.AddProject<Projects.Dialysis_Lab_Api>("lab-api")
+    .WithReference(labDb).WaitFor(labDb)
+    .WithReference(rabbit).WaitFor(rabbit)
+    .WithReference(valkey).WaitFor(valkey)
+    .WaitFor(keycloak)
+    .WithEnvironment("Lab__Transponder__EnableOutboxRelay", "true")
+    .WithEnvironment("Lab__Transponder__RabbitMq__ConnectionUri", rabbit)
+    .WithEnvironment("Lab__DistributedCache__Valkey__ConnectionString", valkey)
+    .WithEnvironment("Lab__Authentication__Authority", keycloakRealmUri)
+    .WithEnvironment("Lab__Authentication__Audience", "account");
+
 var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-bff")
     // Pin the BFF to a deterministic host port. The dialysis-bff Keycloak client only
     // accepts redirect_uris under http://localhost:5275/* (and the gateway port). Letting
@@ -488,10 +505,12 @@ IResourceBuilder<ProjectResource> AddContextBff(
         .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
 
 var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi);
-// EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/*.
+// EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context
+// (the chart's Labs panel) under /ehr/api/_x/lab/*.
 var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi)
-    .WaitFor(hieApi)
-    .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"));
+    .WaitFor(hieApi).WaitFor(labApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"));
 // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
 var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi)
     .WaitFor(ehrApi).WaitFor(hieApi)
@@ -575,6 +594,12 @@ if (isComposePublish)
         moduleConfigPrefix: "Hie",
         hostPort: 5292,
         environment: deployEnv);
+    labApi.WithModuleDeployment(
+        projectRelativePath: "src/backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj",
+        assemblyDllName: "Dialysis.Lab.Api.dll",
+        moduleConfigPrefix: "Lab",
+        hostPort: 5293,
+        environment: deployEnv);
     identityBff.WithIdentityBffDeployment(hostPort: identityBffPort, environment: deployEnv);
     gateway.WithGatewayDeployment(hostPort: gatewayPort, identityBffHostPort: identityBffPort, environment: deployEnv);
 
@@ -583,6 +608,7 @@ if (isComposePublish)
     ehrPgServer.WithPublishedDatabasePort(hostPort: 5442, databaseName: "dialysis_ehr", environment: deployEnv);
     pdmsPgServer.WithPublishedDatabasePort(hostPort: 5443, databaseName: "dialysis_pdms", environment: deployEnv);
     hiePgServer.WithPublishedDatabasePort(hostPort: 5445, databaseName: "dialysis_hie", environment: deployEnv);
+    labPgServer.WithPublishedDatabasePort(hostPort: 5446, databaseName: "dialysis_lab", environment: deployEnv);
 
     rabbit.WithPublishedPorts((5672, 5672), (15672, 15672));
     valkey.WithPublishedPorts((6379, 6379));

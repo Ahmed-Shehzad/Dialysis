@@ -33,6 +33,7 @@
     <ProjectReference Include="../../backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
     <ProjectReference Include="../../backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
     <ProjectReference Include="../../backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
+    <ProjectReference Include="../../backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj" />
     <ProjectReference Include="../../backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj" />
     <ProjectReference Include="../../backend/HIS/Dialysis.HIS.Bff/Dialysis.HIS.Bff.csproj" />
     <ProjectReference Include="../../backend/EHR/Dialysis.EHR.Bff/Dialysis.EHR.Bff.csproj" />
