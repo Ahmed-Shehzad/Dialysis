@@ -1,4 +1,4 @@
-# SPA CI for src/frontend/dialysis-web: install → lint → typecheck → build.
+# SPA CI for src/frontend/dialysis-web: install → lint → typecheck → unit tests → build.
 # Playwright E2E is intentionally not run here — the suite requires the live Aspire
 # stack (Keycloak + five module APIs + five Postgres containers) and is documented
 # in playwright.config.ts as a developer-driven smoke. It can be triggered manually
@@ -53,6 +53,9 @@ jobs:
 
       - name: Type check
         run: npm run typecheck
+
+      - name: Unit tests (Vitest)
+        run: npm run test:unit
 
       - name: Build
         run: npm run build
