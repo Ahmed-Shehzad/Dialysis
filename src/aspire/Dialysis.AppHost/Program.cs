@@ -577,7 +577,10 @@ IResourceBuilder<ProjectResource> AddContextBff(
         .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
         .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
 
-var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret);
+var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret)
+    .WaitFor(smartConnectApi)
+    // DICOMweb imaging viewer reachable from this context — /his/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
 // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context
 // (the chart's Labs panel) under /ehr/api/_x/lab/*.
 var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret)
@@ -588,23 +591,32 @@ var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bf
     .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
 // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
 var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret)
-    .WaitFor(ehrApi).WaitFor(hieApi)
+    .WaitFor(ehrApi).WaitFor(hieApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"))
+    // DICOMweb imaging viewer for the chairside view — /pdms/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
 var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret);
-var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret);
+var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret)
+    .WaitFor(smartConnectApi)
+    // DICOMweb imaging viewer reachable from this context — /hie/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
 // Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
 var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret)
-    .WaitFor(ehrApi).WaitFor(pdmsApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"))
+    // DICOMweb imaging viewer for the admin console — /admin/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
 // Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
 var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret)
-    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"))
+    // DICOMweb imaging viewer for the patient portal — /portal/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
 
 IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
     builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")
