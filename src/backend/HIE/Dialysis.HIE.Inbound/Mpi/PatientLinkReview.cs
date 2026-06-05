@@ -17,7 +17,9 @@ public enum PatientLinkReviewStatus
 /// A probable-duplicate pair surfaced for human (steward) adjudication. Created when an inbound
 /// patient reference scores a <see cref="MatchGrade.Probable"/> match against an existing index
 /// entry from a different source — strong enough to suspect a duplicate, not strong enough to
-/// auto-link. The steward links (same person) or rejects (distinct). Stored, never auto-resolved.
+/// auto-link. The steward links (same person) or rejects (distinct). A cross-source <b>Certain</b>
+/// match may instead be auto-linked at ingest (see <see cref="AutoLink"/>) when the site opts in via
+/// <see cref="MpiMatchOptions.AutoLinkCertainMatches"/>; the resolved review is the link record either way.
 /// </summary>
 public sealed class PatientLinkReview
 {
@@ -61,6 +63,24 @@ public sealed class PatientLinkReview
             Status = PatientLinkReviewStatus.Pending,
             CreatedAtUtc = nowUtc,
         };
+
+    /// <summary>
+    /// Creates an already-resolved (Linked) review for a cross-source Certain match, attributed to
+    /// <paramref name="actor"/>. Same record shape as a steward-approved link, so the steward console
+    /// and downstream readers treat auto-links and manual links identically.
+    /// </summary>
+    public static PatientLinkReview AutoLink(
+        Guid sourceEntryId, string sourcePartnerId, string sourceLabel,
+        Guid candidateEntryId, string candidatePartnerId, string candidateLabel,
+        double score, MatchGrade grade, string actor, DateTime nowUtc)
+    {
+        var review = Raise(
+            sourceEntryId, sourcePartnerId, sourceLabel,
+            candidateEntryId, candidatePartnerId, candidateLabel,
+            score, grade, nowUtc);
+        review.Resolve(linked: true, reviewedBy: actor, note: "Auto-linked: cross-source Certain match.", nowUtc);
+        return review;
+    }
 
     /// <summary>Records the steward's adjudication (link = same person, else distinct).</summary>
     public void Resolve(bool linked, string reviewedBy, string? note, DateTime nowUtc)

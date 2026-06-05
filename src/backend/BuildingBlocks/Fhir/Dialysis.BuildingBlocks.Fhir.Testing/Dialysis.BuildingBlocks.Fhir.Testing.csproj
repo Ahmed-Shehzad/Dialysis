@@ -7,6 +7,9 @@
     <RootNamespace>Dialysis.BuildingBlocks.Fhir.Testing</RootNamespace>
     <AssemblyName>Dialysis.BuildingBlocks.Fhir.Testing</AssemblyName>
     <Description>xUnit-friendly FHIR test helpers: resource equality assertions, JSON snapshot comparisons, fake readers/searchers/consent gates.</Description>
+    <!-- A test-helper library (xUnit fixtures/assertions), not a runnable suite. Exclude it from
+         `dotnet test Dialysis.slnx` so VSTest doesn't try to execute it as a test project. -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>

@@ -13,6 +13,7 @@ const HIE_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/admin/documents", label: "Documents" },
   { to: "/admin/tefca/partners", label: "Partners" },
   { to: "/admin/mpi/reviews", label: "MPI reviews" },
+  { to: "/admin/terminology", label: "Terminology" },
 ];
 
 const ThemeToggle = () => {

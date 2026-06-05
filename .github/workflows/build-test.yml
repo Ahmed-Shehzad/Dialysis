@@ -1,0 +1,136 @@
+# Solution build + full test suite, driven end-to-end by the NUKE build (build/Build.cs).
+#
+# `./build.sh Test` runs Restore → Compile → Test over Dialysis.slnx, which includes the
+# NetArchTest module-boundary gates (tests/Dialysis.ArchitectureTests) and every per-module
+# test project — so this single workflow replaces the former per-module / solution /
+# buildingblocks / nuke workflows. Tests run in-memory (EF + in-memory Transponder), no infra.
+#
+# `./build.sh Pack` then exercises the NuGet packaging path and uploads the .nupkg artifacts.
+#
+# The HIS outbox-relay golden path (real SQL Server + RabbitMQ) stays opt-in: it runs only on
+# manual `workflow_dispatch`, mirroring its previous HIS_CI_OUTBOX_E2E=1 gating.
+name: Build & Test
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "build/**"
+      - "build.sh"
+      - "build.cmd"
+      - "build.ps1"
+      - ".nuke/**"
+      - "Directory.Packages.props"
+      - "Directory.Build.props"
+      - "Directory.Build.targets"
+      - "Dialysis.slnx"
+      - "global.json"
+      - ".github/workflows/build-test.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "build/**"
+      - "build.sh"
+      - "build.cmd"
+      - "build.ps1"
+      - ".nuke/**"
+      - "Directory.Packages.props"
+      - "Directory.Build.props"
+      - "Directory.Build.targets"
+      - "Dialysis.slnx"
+      - "global.json"
+      - ".github/workflows/build-test.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: build-test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+jobs:
+  build-test:
+    name: NUKE Test + Pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # One NUKE invocation runs Restore → Compile once, then both Test (full suite incl.
+      # architecture gates) and Pack (NuGet packaging). Test failing stops the build before Pack.
+      - name: Test + Pack (Release) via NUKE
+        run: ./build.sh Test Pack --configuration Release
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: artifacts/test-results
+          if-no-files-found: warn
+
+      - name: Upload NuGet packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: warn
+
+  # Opt-in (manual dispatch only): the HIS outbox-relay golden path against real SQL Server +
+  # RabbitMQ. The default Build & Test run above exercises HIS in-memory; this job covers the
+  # transactional outbox → relay → broker path that needs infrastructure.
+  his-outbox-e2e:
+    name: HIS outbox relay golden path (SQL + RabbitMQ)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "HisCi_Sql_Passw0rd!"
+        ports:
+          - "1433:1433"
+      rabbitmq:
+        image: rabbitmq:3.13-alpine
+        ports:
+          - "5672:5672"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Wait for SQL Server and RabbitMQ
+        run: sleep 25
+
+      - name: Build HIS tests
+        run: dotnet build src/backend/HIS/Dialysis.HIS.Tests/Dialysis.HIS.Tests.csproj --configuration Release
+
+      - name: Outbox relay golden path
+        env:
+          HIS_CI_OUTBOX_E2E: "1"
+          ConnectionStrings__His: "Server=127.0.0.1,1433;Database=HisCi;User Id=sa;Password=HisCi_Sql_Passw0rd!;TrustServerCertificate=True;Encrypt=False;"
+          His__Transponder__EnableOutboxRelay: "true"
+          His__Transponder__RabbitMq__ConnectionUri: "amqp://guest:guest@127.0.0.1:5672/"
+        run: >
+          dotnet test src/backend/HIS/Dialysis.HIS.Tests/Dialysis.HIS.Tests.csproj
+          --configuration Release --no-build
+          --filter "FullyQualifiedName~HisOutboxRelayGoldenPathTests"

@@ -13,6 +13,8 @@ using Dialysis.SmartConnect.Inbound.FileReader;
 using Dialysis.SmartConnect.Inbound.Mllp;
 using Dialysis.SmartConnect.Inbound.Sftp;
 using Dialysis.SmartConnect.Inbound.Transponder;
+using Dialysis.SmartConnect.Dicom.Persistence;
+using Dialysis.SmartConnect.Dicom.Web;
 using Dialysis.SmartConnect.Management.AspNetCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
 
@@ -27,6 +29,8 @@ builder.AddModuleHost<SmartConnectPermissionCatalog>(new ModuleHostingOptions
 
 builder.Services.AddSmartConnectPersistenceInMemory(databaseName: "SmartConnectApi");
 builder.Services.AddSmartConnectCore();
+// DICOMweb instance store + ingestion (on SmartConnectDbContext; uses the host's IAttachmentBlobStore).
+builder.Services.AddDicomIngestion();
 builder.Services.AddSmartConnectDataPruner(o =>
 {
     var hours = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:IntervalHours");
@@ -80,6 +84,19 @@ app.MapSmartConnectAttachmentRoutes();
 app.MapSmartConnectAlertRoutes();
 app.MapSmartConnectEventsRoutes();
 app.MapSmartConnectPrunerRoutes();
+
+// DICOMweb (PS3.18) — QIDO-RS search, WADO-RS retrieve, STOW-RS store — under /dicom-web. PHI:
+// secured with RequireAuthorization wherever an identity authority is configured (Aspire dev + all
+// deployments); the no-Authority bare path registers no auth services, so the gate is guarded.
+var dicomWeb = app.MapGroup("/dicom-web").WithTags("DICOMweb");
+if (!string.IsNullOrWhiteSpace(app.Configuration["SmartConnect:Authentication:Authority"]))
+{
+    dicomWeb.RequireAuthorization();
+}
+dicomWeb.MapQidoRs();
+dicomWeb.MapWadoRs();
+dicomWeb.MapStowRs();
+dicomWeb.MapDicomRenderedRs();
 
 await app.RunAsync().ConfigureAwait(false);
 

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dialysis.Module.Bff.Events</RootNamespace>
+    <Description>Event-driven push for per-context BFFs: consume integration events over Transponder/RabbitMQ (consume-only, no DbContext/outbox) and fan them out to the context SPA over a SignalR notifications hub scoped to patient/user groups. Pairs with Dialysis.Module.Bff.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- SignalR backplane over Valkey so notifications fan out across BFF replicas. This is the
+         same StackExchange.Redis SignalR backplane PDMS uses for its vitals hub. -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+  </ItemGroup>
+
+</Project>

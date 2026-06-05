@@ -492,15 +492,12 @@ var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-b
         "http://localhost:" + identityBffPort.ToString(System.Globalization.CultureInfo.InvariantCulture))
     .WaitFor(keycloak)
     .WaitFor(hisApi)
-    .WithReference(valkey).WaitFor(valkey)
     // BFF binds Keycloak under section "Identity:Keycloak" (KeycloakBffOptions.SectionName).
     // appsettings.Development.json hardcodes Authority to localhost:8080 — env vars from
     // Aspire override it via the IConfiguration provider chain (env > json).
     .WithEnvironment("Identity__Keycloak__Authority", keycloakRealmUri)
     // Confidential-client secret for the dialysis-bff Keycloak client (overridable per env).
     .WithEnvironment("Identity__Keycloak__ClientSecret", identityBffSecret)
-    // Valkey backs the legacy BFF's server-side cookie ticket store + Data Protection key ring.
-    .WithEnvironment("Bff__DistributedCache__Valkey__ConnectionString", valkey)
     // BFF's YARP cluster "his" defaults to localhost:5288 in appsettings; redirect it to
     // the Aspire-allocated HIS endpoint so token-exchange + proxied API calls resolve.
     .WithEnvironment("ReverseProxy__Clusters__his__Destinations__d1__Address", hisApi.GetEndpoint("http"));
@@ -568,41 +565,58 @@ IResourceBuilder<ProjectResource> AddContextBff(
             "http://localhost:" + port.ToString(System.Globalization.CultureInfo.InvariantCulture))
         .WaitFor(keycloak)
         .WaitFor(moduleApi)
-        .WithReference(valkey).WaitFor(valkey)
         .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
         // Confidential-client secret for this context's Keycloak client (overridable per env).
         .WithEnvironment("Bff__Keycloak__ClientSecret", clientSecret)
-        // Valkey backs the server-side cookie ticket store + Data Protection key ring so the BFF
-        // cookie stays a session key and decrypts across replicas (InstanceName defaults to {slug}-bff).
-        .WithEnvironment("Bff__DistributedCache__Valkey__ConnectionString", valkey)
-        .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
+        .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"))
+        // Event-driven push: the BFF consumes integration events off RabbitMQ (its own bff-<slug>
+        // queue) and fans them to the SPA over SignalR, with Valkey as the cross-replica backplane.
+        // Consume-only — no DbContext/outbox. Harmless for BFFs that don't call AddModuleBffEvents.
+        .WithReference(rabbit).WaitFor(rabbit)
+        .WithReference(valkey).WaitFor(valkey)
+        .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
+        .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
 
-var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret);
+var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret)
+    .WaitFor(smartConnectApi)
+    // DICOMweb imaging viewer reachable from this context — /his/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
 // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context
 // (the chart's Labs panel) under /ehr/api/_x/lab/*.
 var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret)
-    .WaitFor(hieApi).WaitFor(labApi)
+    .WaitFor(hieApi).WaitFor(labApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"))
+    // DICOMweb (imaging study preview card on the chart) — /ehr/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
 // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
 var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret)
-    .WaitFor(ehrApi).WaitFor(hieApi)
+    .WaitFor(ehrApi).WaitFor(hieApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"))
+    // DICOMweb imaging viewer for the chairside view — /pdms/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
 var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret);
-var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret);
+var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret)
+    .WaitFor(smartConnectApi)
+    // DICOMweb imaging viewer reachable from this context — /hie/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
 // Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
 var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret)
-    .WaitFor(ehrApi).WaitFor(pdmsApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"))
+    // DICOMweb imaging viewer for the admin console — /admin/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
 // Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
 var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret)
-    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi).WaitFor(smartConnectApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
-    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"))
+    // DICOMweb imaging viewer for the patient portal — /portal/api/_x/dicom/dicom-web/* → SmartConnect.
+    .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
 
 IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
     builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")

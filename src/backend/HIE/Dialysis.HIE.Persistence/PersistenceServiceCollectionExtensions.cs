@@ -52,6 +52,7 @@ public static class PersistenceServiceCollectionExtensions
             services.AddScoped<IConsentGate, ConsentGate>();
             services.AddScoped<IDocumentReferenceRepository, EfDocumentReferenceRepository>();
             services.AddScoped<IDocumentRetentionPolicyRepository, EfDocumentRetentionPolicyRepository>();
+            services.AddScoped<Inbound.Terminology.IAuthoredTerminologyRepository, EfAuthoredTerminologyRepository>();
             services.AddScoped<IQhinPartnerRepository, EfQhinPartnerRepository>();
             services.AddScoped<IErasureRequestStore, EfErasureRequestStore>();
             services.AddScoped<IRestrictionRequestStore, EfRestrictionRequestStore>();

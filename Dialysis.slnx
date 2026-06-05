@@ -50,6 +50,7 @@
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions/Dialysis.BuildingBlocks.Fhir.Subscriptions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.ObjectStorage/Dialysis.BuildingBlocks.Fhir.BulkData.ObjectStorage.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Validation/Dialysis.BuildingBlocks.Fhir.Validation.csproj" />
@@ -159,6 +160,8 @@
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Bff.Events/Dialysis.Module.Bff.Events.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Bff.Events.Tests/Dialysis.Module.Bff.Events.Tests.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </Folder>
   <Folder Name="/src/backend/HIS/">

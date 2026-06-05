@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "@/lib/api/apiClient";
-import {
-  bindDevice,
-  changeDeviceStatus,
-  fetchDevices,
-  registerDevice,
-} from "./devicesApi";
+import { bindDevice, changeDeviceStatus, fetchDevices, registerDevice } from "./devicesApi";
 
 describe("devicesApi", () => {
   afterEach(() => vi.restoreAllMocks());

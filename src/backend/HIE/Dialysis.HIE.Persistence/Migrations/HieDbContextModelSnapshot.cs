@@ -513,6 +513,61 @@ namespace Dialysis.HIE.Persistence.Migrations
                     b.ToTable("PatientLinkReviews", "hie_inbound");
                 });
 
+            modelBuilder.Entity("Dialysis.HIE.Inbound.Terminology.AuthoredTerminologyResource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FhirJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ResourceType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Url", "Version")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AuthoredTerminologyResources_UrlVersion");
+
+                    b.ToTable("AuthoredTerminologyResources", "hie_terminology");
+                });
+
             modelBuilder.Entity("Dialysis.HIE.OpenEhr.Domain.Composition", b =>
                 {
                     b.Property<Guid>("Id")

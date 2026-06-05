@@ -53,6 +53,22 @@ public sealed class MpiReviewQueueTests
     }
 
     [Fact]
+    public void Auto_Link_Produces_A_Resolved_Linked_Review_Attributed_To_The_Actor()
+    {
+        var review = PatientLinkReview.AutoLink(
+            Guid.NewGuid(), "partner-a", "Smith, John 1980-05-01 [partner-a]",
+            Guid.NewGuid(), "partner-b", "Smith, John 1980-05-01 [partner-b]",
+            0.96, MatchGrade.Certain, "auto-link", DateTime.UtcNow);
+
+        review.Status.ShouldBe(PatientLinkReviewStatus.Linked);
+        review.Grade.ShouldBe("Certain");
+        review.ReviewedBy.ShouldBe("auto-link");
+        review.ReviewedAtUtc.ShouldNotBeNull();
+        // Already resolved — a steward can't re-adjudicate an auto-link.
+        Should.Throw<InvalidOperationException>(() => review.Resolve(false, "steward", null, DateTime.UtcNow));
+    }
+
+    [Fact]
     public async Task Resolve_Handler_Records_Decision_Async()
     {
         var review = PatientLinkReview.Raise(

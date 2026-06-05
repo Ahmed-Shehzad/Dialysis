@@ -27,12 +27,20 @@ public static class HiePermissions
     /// <summary>Review the MPI duplicate-match queue and adjudicate link/reject decisions (data steward).</summary>
     public const string MpiStewardReview = "hie.mpi.steward.review";
 
+    /// <summary>View the authored terminology resources (value-set / code-system / concept-map governance).</summary>
+    public const string TerminologyView = "hie.terminology.view";
+
+    /// <summary>Author / version / retire terminology resources (terminology governance lead).</summary>
+    public const string TerminologyAuthor = "hie.terminology.author";
+
     public static IReadOnlyList<string> All { get; } =
     [
         OutboundPublish,
         InboundReceive,
         ConsentManage,
         MpiStewardReview,
+        TerminologyView,
+        TerminologyAuthor,
         OpenEhrRead,
         PartnersAdminister,
         DocumentsView,

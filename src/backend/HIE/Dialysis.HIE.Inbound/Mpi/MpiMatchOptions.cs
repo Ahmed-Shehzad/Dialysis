@@ -24,4 +24,16 @@ public sealed class MpiMatchOptions
 
     /// <summary>≥ this score is surfaced as a possible match (e.g. on $match), below it is dropped.</summary>
     public double PossibleThreshold { get; set; } = 0.55;
+
+    /// <summary>
+    /// When true, a cross-source <see cref="MatchGrade.Certain"/> match at ingest is auto-linked
+    /// (recorded as a resolved-Linked <see cref="PatientLinkReview"/> attributed to
+    /// <see cref="AutoLinkActor"/>) instead of being queued for a steward. Probable matches and
+    /// same-source matches are always queued. Default off — linking stays human-in-the-loop until a
+    /// site opts in.
+    /// </summary>
+    public bool AutoLinkCertainMatches { get; set; }
+
+    /// <summary>Actor recorded as the reviewer on an auto-linked pair.</summary>
+    public string AutoLinkActor { get; set; } = "auto-link";
 }
