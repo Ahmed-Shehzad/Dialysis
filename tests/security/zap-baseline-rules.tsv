@@ -27,8 +27,12 @@
 10054	IGNORE	http://localhost.*
 10054	FAIL	https://.*
 
-# 10055 Cookie Without SameSite Attribute: every cookie we set declares SameSite=Lax.
-10055	FAIL	.*
+# 10055 CSP: Wildcard Directive. The DEV gateway CSP intentionally relaxes script-src to
+# 'unsafe-inline' 'unsafe-eval' for Vite HMR (and the root launchpad uses an inline <style>),
+# which ZAP flags as a permissive/wildcard directive. Localhost-only dev carve-out — the
+# production CSP (script-src 'self', no unsafe-eval) is strict, so FAIL on real https hosts.
+10055	IGNORE	http://localhost.*
+10055	FAIL	https://.*
 
 # 10094 Base Tag Analysis: the SPA's index.html has `<base href="/">`; that's expected.
 10094	IGNORE	http://localhost:9090/
