@@ -18,6 +18,7 @@ const TefcaPartnersPage = lazyPage(
   () => import("@/modules/hie/admin/TefcaPartnersPage"),
   "TefcaPartnersPage",
 );
+const MpiStewardPage = lazyPage(() => import("@/modules/hie/admin/MpiStewardPage"), "MpiStewardPage");
 
 const LOADING_FALLBACK_AFTER_MS = 2000;
 
@@ -73,6 +74,7 @@ export const AppRouter = () => (
       <Route path="admin/documents" element={<DocumentsPage />} />
       <Route path="admin/documents/retention" element={<DocumentRetentionPage />} />
       <Route path="admin/tefca/partners" element={<TefcaPartnersPage />} />
+      <Route path="admin/mpi/reviews" element={<MpiStewardPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
