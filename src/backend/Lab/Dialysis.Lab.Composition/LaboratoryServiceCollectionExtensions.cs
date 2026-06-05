@@ -1,5 +1,7 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
+using Dialysis.Lab.Contracts.IntegrationEvents;
+using Dialysis.Lab.Orders.Consumers;
 using Dialysis.Lab.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +27,12 @@ public static class LaboratoryServiceCollectionExtensions
 
         services.AddLabPersistence(configurePersistence);
 
-        services.AddTransponder(_ => { });
+        services.AddTransponder(t =>
+        {
+            // Close the loop: SmartConnect maps an inbound ORU/Observation back to the placing order
+            // and emits LabResultReceivedIntegrationEvent; the Lab context records the observations.
+            t.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedConsumer>();
+        });
         configureTransponderTransport?.Invoke(services);
 
         services.AddLabCqrs();
