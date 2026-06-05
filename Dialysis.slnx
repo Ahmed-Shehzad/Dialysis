@@ -127,6 +127,7 @@
     <Project Path="src/backend/EHR/Dialysis.EHR.Persistence/Dialysis.EHR.Persistence.csproj" />
     <Project Path="src/backend/EHR/Dialysis.EHR.Composition/Dialysis.EHR.Composition.csproj" />
     <Project Path="src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj" />
+    <Project Path="src/backend/EHR/Dialysis.EHR.Bff/Dialysis.EHR.Bff.csproj" />
     <Project Path="src/backend/EHR/Dialysis.EHR.Tests/Dialysis.EHR.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/EHR/Persistence/">
@@ -145,6 +146,7 @@
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Composition/Dialysis.PDMS.Composition.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
+    <Project Path="src/backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj" />
     <Project Path="src/backend/PDMS/Dialysis.PDMS.Tests/Dialysis.PDMS.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/PDMS/Persistence/">
@@ -156,10 +158,12 @@
     <Project Path="src/backend/Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </Folder>
   <Folder Name="/src/backend/HIS/">
     <Project Path="src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj" />
+    <Project Path="src/backend/HIS/Dialysis.HIS.Bff/Dialysis.HIS.Bff.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Composition/Dialysis.HIS.Composition.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <Project Path="src/backend/HIS/Dialysis.HIS.DataServices/Dialysis.HIS.DataServices.csproj" />
@@ -176,6 +180,7 @@
   </Folder>
   <Folder Name="/src/backend/Identity/">
     <Project Path="src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj" />
+    <Project Path="src/backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj" />
     <Project Path="src/backend/Identity/Dialysis.Identity.Contracts/Dialysis.Identity.Contracts.csproj" />
     <Project Path="src/backend/Identity/Dialysis.Identity.Provisioning/Dialysis.Identity.Provisioning.csproj" />
     <Project Path="src/backend/Identity/Dialysis.Identity.Persistence/Dialysis.Identity.Persistence.csproj" />
@@ -195,6 +200,8 @@
     <Project Path="src/backend/HIE/Dialysis.HIE.Persistence/Dialysis.HIE.Persistence.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Composition/Dialysis.HIE.Composition.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
+    <Project Path="src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj" />
+    <Project Path="src/backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Xds/Dialysis.HIE.Xds.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Tests/Dialysis.HIE.Tests.csproj" />
   </Folder>
@@ -232,6 +239,7 @@
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Api/">
     <Project Path="src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
+    <Project Path="src/backend/SmartConnect/Dialysis.SmartConnect.Bff/Dialysis.SmartConnect.Bff.csproj" />
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Contracts/">
     <Project Path="src/backend/SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />

@@ -459,34 +459,84 @@ if (isKubernetesPublish)
     gateway.WithExternalHttpEndpoints();
 }
 
-// --- Frontend (Vite dev server) -------------------------------------------
-//
-// Browser entry point is the gateway at http://localhost:9090 — the gateway proxies
-// /{**catch-all} to Vite via the new "web" YARP cluster. The SPA itself is therefore an
-// internal-only resource: WithExternalHttpEndpoints is intentionally NOT called here so
-// users don't land on the SPA's own port (which would be cross-origin to the gateway and
-// break the OIDC cookie round trip).
-//
-// VITE_GATEWAY_URL / VITE_API_BASE_URL are kept for two reasons: (a) the Vite dev proxy
-// still resolves API calls when the SPA is opened directly during local debugging, and
-// (b) apiClient.ts uses VITE_API_BASE_URL as axios baseURL when set. Both point at the
-// gateway so that all API/identity calls stay on the gateway origin.
-//
-// Dependency install: `npm run dev` runs the `predev` script (defined in package.json),
-// which executes `npm install`. That makes `node_modules` self-healing on every AppHost
-// start — no manual `npm install` step required, and a no-op after the first install when
-// package-lock.json is already in sync.
-const int vitePort = 5173;
-var web = builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
-    .WithReference(gateway).WaitFor(gateway)
-    .WithEnvironment("BROWSER", "none")
-    .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
-    .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
-    // Pin the Vite port so the gateway's "web" YARP cluster (Address: http://localhost:5173/)
-    // can reliably reach it. isProxied:false skips DCP proxy entirely — there is no need
-    // for it now that the gateway is the single browser-facing origin.
-    .WithHttpEndpoint(env: "PORT", port: vitePort, targetPort: vitePort, isProxied: false)
-    .PublishAsDockerFile();
+// --- Frontend ------------------------------------------------------------
+// The single dialysis-web SPA has been retired in favour of one app per bounded context
+// (defined below). Browser entry point is still the gateway at http://localhost:9090 — its
+// root serves a launchpad and /<ctx>/* routes to each app + its BFF.
+
+// --- Per-context BFFs + React apps ---------------------------------------
+// One React client per bounded context, each fronted by its own BFF. The gateway routes
+// /<ctx>/identity + /<ctx>/api + /<ctx>/hubs → <ctx>-bff (it attaches the session bearer and
+// proxies to the module API) and /<ctx>/* → <ctx>-web. BFF + web ports are pinned so the
+// gateway's static dev cluster addresses and the Keycloak redirect_uris stay in lockstep.
+// The legacy "web" (dialysis-web) above stays as the /{**catch-all} fallback during migration.
+IResourceBuilder<ProjectResource> AddContextBff(
+    IResourceBuilder<ProjectResource> bff,
+    int port,
+    IResourceBuilder<ProjectResource> moduleApi) =>
+    bff.WithEndpoint("http", e =>
+        {
+            e.Port = port;
+            e.TargetPort = port;
+            e.IsProxied = false;
+        })
+        .WithEnvironment("ASPNETCORE_URLS",
+            "http://localhost:" + port.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        .WaitFor(keycloak)
+        .WaitFor(moduleApi)
+        .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
+        .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
+
+var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi);
+// EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/*.
+var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi)
+    .WaitFor(hieApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"));
+// PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
+var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi)
+    .WaitFor(ehrApi).WaitFor(hieApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"));
+var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi);
+var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi);
+// Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
+var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"));
+// Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
+var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"));
+
+IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
+    builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")
+        .WithReference(gateway).WaitFor(gateway)
+        .WithEnvironment("BROWSER", "none")
+        .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
+        .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
+        .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
+        .PublishAsDockerFile();
+
+// One React app per bounded context (folder name = Aspire resource; the app's own /<ctx> base
+// is set in its vite.config). The gateway reaches each on its pinned port. The legacy dialysis-web
+// "web" resource stays as the /{**catch-all} fallback until it is retired.
+var hisWeb = AddContextWeb("his-web", 5331);
+var ehrWeb = AddContextWeb("ehr-web", 5332);
+var pdmsWeb = AddContextWeb("pdms-web", 5333);
+var smartConnectWeb = AddContextWeb("smartconnect-web", 5334);
+var hieWeb = AddContextWeb("hie-web", 5335);
+var identityWeb = AddContextWeb("identity-web", 5336); // served at /admin
+var portalWeb = AddContextWeb("patient-portal-web", 5337); // served at /portal
+
+// Keep the per-context BFFs up before the gateway so the /<ctx>/* routes resolve on first hit.
+gateway
+    .WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff)
+    .WaitFor(adminBff).WaitFor(portalBff);
+_ = (hisWeb, ehrWeb, pdmsWeb, smartConnectWeb, hieWeb, identityWeb, portalWeb);
 
 // --- Compose-publish decoration -------------------------------------------
 // Every overlay concern that used to live in `docker-compose.override.yaml` is applied
@@ -538,8 +588,6 @@ if (isComposePublish)
     valkey.WithPublishedPorts((6379, 6379));
     keycloak.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
     sonarqube.WithPublishedPorts((9000, 9000));
-
-    web.WithWebDeployment(hostPort: 8080);
 }
 
 // --- Kubernetes Ingress ---------------------------------------------------
