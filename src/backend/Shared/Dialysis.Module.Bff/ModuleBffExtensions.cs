@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Dialysis.BuildingBlocks.DistributedCache.Valkey;
 using Dialysis.Module.Bff.Configuration;
 using Dialysis.Module.Bff.Federation;
 using Dialysis.Module.Bff.Services;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -48,6 +50,31 @@ public static class ModuleBffExtensions
         var module = config.GetSection(ModuleBffOptions.SectionName).Get<ModuleBffOptions>() ?? new ModuleBffOptions();
         var routes = new BffRoutePaths(module.ResolveBasePath());
         builder.Services.AddSingleton(routes);
+
+        // Server-side cookie ticket store. SaveTokens=true (below) keeps the Keycloak access/id/
+        // refresh bundle on the auth ticket; without a session store the cookie middleware packs that
+        // bundle into the browser cookie and chunks it across .CookieC1/C2/…, and on the single shared
+        // gateway origin those per-context cookies accumulate past Kestrel's 32 KB header limit → 431.
+        // Backing the ticket store with Valkey (in-memory distributed cache as a dev fallback) keeps
+        // only a session key in the cookie and lets the store survive across BFF replicas; the same
+        // call wires the Data Protection key ring so the cookie itself decrypts on any replica.
+        var valkeySection = config.GetSection("Bff:DistributedCache:Valkey");
+        if (!string.IsNullOrWhiteSpace(valkeySection["ConnectionString"]))
+        {
+            if (string.IsNullOrWhiteSpace(valkeySection["InstanceName"]))
+                valkeySection["InstanceName"] = string.IsNullOrWhiteSpace(module.Slug) ? "bff" : $"{module.Slug}-bff";
+            builder.Services.AddValkeyDistributedCache(valkeySection);
+        }
+        else
+        {
+            builder.Services.AddDistributedMemoryCache();
+        }
+
+        var ticketKeyPrefix = module.ResolveCookieName() + ":ticket:";
+        builder.Services.AddSingleton<ITicketStore>(sp =>
+            new DistributedCacheTicketStore(sp.GetRequiredService<IDistributedCache>(), ticketKeyPrefix));
+        builder.Services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+            .Configure<ITicketStore>((o, store) => o.SessionStore = store);
 
         var kc = config.GetSection(KeycloakBffOptions.SectionName).Get<KeycloakBffOptions>() ?? new KeycloakBffOptions();
         var authority = kc.Authority?.Trim() ?? "";

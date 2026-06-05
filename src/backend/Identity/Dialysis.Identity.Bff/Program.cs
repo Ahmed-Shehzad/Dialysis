@@ -1,11 +1,14 @@
 using System.Net.Http.Headers;
+using Dialysis.BuildingBlocks.DistributedCache.Valkey;
 using Dialysis.Identity.Bff.Configuration;
 using Dialysis.Identity.Bff.Federation;
 using Dialysis.Identity.Bff.Services;
+using Dialysis.Module.Bff;
 using Dialysis.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Dialysis.Identity.Bff;
 using Yarp.ReverseProxy.Transforms;
@@ -16,6 +19,26 @@ builder.AddServiceDefaults();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddAuthorization();
+
+// Server-side cookie ticket store (see DistributedCacheTicketStore): keeps the SaveTokens=true
+// Keycloak token bundle off the browser cookie so the BFF cookie stays a short session key on the
+// shared gateway origin. Valkey when configured (also wires the Data Protection key ring for
+// multi-replica cookie decryption), in-memory distributed cache as the dev fallback.
+var idValkeySection = builder.Configuration.GetSection("Bff:DistributedCache:Valkey");
+if (!string.IsNullOrWhiteSpace(idValkeySection["ConnectionString"]))
+{
+    if (string.IsNullOrWhiteSpace(idValkeySection["InstanceName"]))
+        idValkeySection["InstanceName"] = "identity-bff";
+    builder.Services.AddValkeyDistributedCache(idValkeySection);
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+}
+builder.Services.AddSingleton<ITicketStore>(sp =>
+    new DistributedCacheTicketStore(sp.GetRequiredService<IDistributedCache>(), "Dialysis.Identity.Bff:ticket:"));
+builder.Services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+    .Configure<ITicketStore>((o, store) => o.SessionStore = store);
 builder.Services.Configure<KeycloakBffOptions>(builder.Configuration.GetSection(KeycloakBffOptions.SectionName));
 builder.Services.Configure<BffSpaOptions>(builder.Configuration.GetSection(BffSpaOptions.SectionName));
 builder.Services.Configure<IdentityFederationOptions>(builder.Configuration.GetSection(IdentityFederationOptions.SectionName));
@@ -43,6 +66,11 @@ builder.Services.AddAuthentication(options =>
     .AddCookie(o =>
     {
         o.Cookie.Name = "Dialysis.Identity.Bff";
+        // Path-scope the cookie to this BFF's base (/identity) so it isn't sent on every other
+        // context's path on the shared gateway origin. Without this the legacy cookie rides on
+        // /smartconnect, /ehr, … and piles onto each context's own cookie — the accumulation that
+        // overflowed Kestrel's header limit and produced HTTP 431 on plain SPA loads.
+        o.Cookie.Path = BffRoutes.Base;
         o.Cookie.SameSite = SameSiteMode.Lax;
         // Hand cookie validation off to ITokenRefreshService so the cached Keycloak access
         // token rolls forward before it expires. Without this, the BFF session cookie outlives

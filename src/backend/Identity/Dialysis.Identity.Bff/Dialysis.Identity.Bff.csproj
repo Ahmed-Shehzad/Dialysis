@@ -15,6 +15,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+    <!-- Valkey-backed IDistributedCache + Data Protection key ring for the server-side cookie
+         ticket store (shrinks the auth cookie to a session key on the shared gateway origin). -->
+    <ProjectReference Include="../../BuildingBlocks/DistributedCache/Dialysis.BuildingBlocks.DistributedCache.Valkey/Dialysis.BuildingBlocks.DistributedCache.Valkey.csproj" />
+    <!-- Shared BFF building block — reuse DistributedCacheTicketStore rather than duplicate it. -->
+    <ProjectReference Include="../../Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
   </ItemGroup>
 
 </Project>
