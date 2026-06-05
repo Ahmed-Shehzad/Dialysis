@@ -1,0 +1,16 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "identity-bff-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "identity-bff"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "{{ .Values.config.identity_bff.OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY }}"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "{{ .Values.config.identity_bff.ASPNETCORE_FORWARDEDHEADERS_ENABLED }}"
+  HTTP_PORTS: "{{ .Values.config.identity_bff.HTTP_PORTS }}"
+  ASPNETCORE_URLS: "{{ .Values.config.identity_bff.ASPNETCORE_URLS }}"
+  Identity__Keycloak__Authority: "{{ .Values.config.identity_bff.Identity__Keycloak__Authority }}"
+  ReverseProxy__Clusters__his__Destinations__d1__Address: "http://his-api-service:{{ .Values.parameters.his_api.port_http }}"

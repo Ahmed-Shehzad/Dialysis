@@ -1,0 +1,18 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "ehr-web-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "ehr-web"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  NODE_ENV: "{{ .Values.config.ehr_web.NODE_ENV }}"
+  GATEWAY_HTTP: "{{ .Values.config.ehr_web.GATEWAY_HTTP }}"
+  services__gateway__http__0: "{{ .Values.config.ehr_web.services__gateway__http__0 }}"
+  GATEWAY_HTTPS: "{{ .Values.config.ehr_web.GATEWAY_HTTPS }}"
+  BROWSER: "{{ .Values.config.ehr_web.BROWSER }}"
+  VITE_GATEWAY_URL: "{{ .Values.config.ehr_web.VITE_GATEWAY_URL }}"
+  VITE_API_BASE_URL: "{{ .Values.config.ehr_web.VITE_API_BASE_URL }}"
+  PORT: "{{ .Values.config.ehr_web.PORT }}"

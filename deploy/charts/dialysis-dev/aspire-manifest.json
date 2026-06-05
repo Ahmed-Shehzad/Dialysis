@@ -1,0 +1,1364 @@
+{
+  "resources": {
+    "k8s": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "rabbitmq": {
+      "type": "container.v1",
+      "connectionString": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+      "image": "docker.io/library/rabbitmq:4.3-management",
+      "env": {
+        "RABBITMQ_DEFAULT_USER": "guest",
+        "RABBITMQ_DEFAULT_PASS": "{rabbitmq-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5672
+        },
+        "management": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 15672
+        }
+      }
+    },
+    "valkey": {
+      "type": "container.v1",
+      "connectionString": "{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port},password={valkey-password.value}",
+      "image": "docker.io/valkey/valkey:9.1",
+      "entrypoint": "/bin/sh",
+      "args": [
+        "-c",
+        "valkey-server --requirepass $VALKEY_PASSWORD"
+      ],
+      "env": {
+        "VALKEY_PASSWORD": "{valkey-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 6379
+        }
+      }
+    },
+    "keycloak": {
+      "type": "container.v1",
+      "image": "quay.io/keycloak/keycloak:26.0",
+      "args": [
+        "start-dev",
+        "--import-realm"
+      ],
+      "env": {
+        "KC_BOOTSTRAP_ADMIN_USERNAME": "admin",
+        "KC_BOOTSTRAP_ADMIN_PASSWORD": "admin",
+        "KC_DB": "dev-mem",
+        "KC_HEALTH_ENABLED": "true",
+        "KC_HTTP_ENABLED": "true"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "port": 8081,
+          "targetPort": 8080
+        }
+      }
+    },
+    "his-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{his-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "ehr-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{ehr-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "pdms-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{pdms-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "smartconnect-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{smartconnect-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "hie-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{hie-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "admin-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{admin-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "portal-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{portal-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "identity-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{identity-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "postgres-his": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-his.bindings.tcp.host};Port={postgres-his.bindings.tcp.port};Username=postgres;Password={postgres-his-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-his-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-his-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "postgres-ehr": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-ehr.bindings.tcp.host};Port={postgres-ehr.bindings.tcp.port};Username=postgres;Password={postgres-ehr-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-ehr-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-ehr-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "postgres-pdms": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-pdms.bindings.tcp.host};Port={postgres-pdms.bindings.tcp.port};Username=postgres;Password={postgres-pdms-password.value}",
+      "image": "docker.io/timescale/timescaledb:latest-pg17",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-pdms-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-pdms-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "postgres-smartconnect": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-smartconnect.bindings.tcp.host};Port={postgres-smartconnect.bindings.tcp.port};Username=postgres;Password={postgres-smartconnect-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-smartconnect-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-smartconnect-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "postgres-hie": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-hie.bindings.tcp.host};Port={postgres-hie.bindings.tcp.port};Username=postgres;Password={postgres-hie-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-hie-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-hie-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "postgres-lab": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-lab.bindings.tcp.host};Port={postgres-lab.bindings.tcp.port};Username=postgres;Password={postgres-lab-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-lab-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-lab-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "His": {
+      "type": "value.v0",
+      "connectionString": "{postgres-his.connectionString};Database=dialysis_his"
+    },
+    "Ehr": {
+      "type": "value.v0",
+      "connectionString": "{postgres-ehr.connectionString};Database=dialysis_ehr"
+    },
+    "Pdms": {
+      "type": "value.v0",
+      "connectionString": "{postgres-pdms.connectionString};Database=dialysis_pdms"
+    },
+    "SmartConnect": {
+      "type": "value.v0",
+      "connectionString": "{postgres-smartconnect.connectionString};Database=dialysis_smartconnect"
+    },
+    "Hie": {
+      "type": "value.v0",
+      "connectionString": "{postgres-hie.connectionString};Database=dialysis_hie"
+    },
+    "Lab": {
+      "type": "value.v0",
+      "connectionString": "{postgres-lab.connectionString};Database=dialysis_lab"
+    },
+    "sonar-pg-password": {
+      "type": "parameter.v0",
+      "value": "{sonar-pg-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "postgres-sonarqube": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-sonarqube.bindings.tcp.host};Port={postgres-sonarqube.bindings.tcp.port};Username=postgres;Password={sonar-pg-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-sonarqube-pg-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{sonar-pg-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "sonarqube": {
+      "type": "container.v1",
+      "image": "sonarqube:26.5.0.122743-community",
+      "volumes": [
+        {
+          "name": "dialysis-sonarqube-data",
+          "target": "/opt/sonarqube/data",
+          "readOnly": false
+        },
+        {
+          "name": "dialysis-sonarqube-logs",
+          "target": "/opt/sonarqube/logs",
+          "readOnly": false
+        },
+        {
+          "name": "dialysis-sonarqube-extensions",
+          "target": "/opt/sonarqube/extensions",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "SONAR_JDBC_URL": "jdbc:postgresql://postgres-sonarqube:5432/postgres",
+        "SONAR_JDBC_USERNAME": "postgres",
+        "SONAR_JDBC_PASSWORD": "{sonar-pg-password.value}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9000
+        }
+      }
+    },
+    "his-api": {
+      "type": "project.v1",
+      "path": "../../../src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{his-api.bindings.http.targetPort}",
+        "ConnectionStrings__His": "{His.connectionString}",
+        "HIS_HOST": "{postgres-his.bindings.tcp.host}",
+        "HIS_PORT": "{postgres-his.bindings.tcp.port}",
+        "HIS_USERNAME": "postgres",
+        "HIS_PASSWORD": "{postgres-his-password.value}",
+        "HIS_URI": "postgresql://postgres:{postgres-his-password-uri-encoded.value}@{postgres-his.bindings.tcp.host}:{postgres-his.bindings.tcp.port}/dialysis_his",
+        "HIS_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-his.bindings.tcp.host}:{postgres-his.bindings.tcp.port}/dialysis_his",
+        "HIS_DATABASENAME": "dialysis_his",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "His__Transponder__EnableOutboxRelay": "true",
+        "His__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "His__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "His__Authentication__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "His__Authentication__Audience": "account",
+        "His__Fhir__Enabled": "true",
+        "His__Demo__Enabled": "true"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "ehr-api": {
+      "type": "project.v1",
+      "path": "../../../src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{ehr-api.bindings.http.targetPort}",
+        "ConnectionStrings__Ehr": "{Ehr.connectionString}",
+        "EHR_HOST": "{postgres-ehr.bindings.tcp.host}",
+        "EHR_PORT": "{postgres-ehr.bindings.tcp.port}",
+        "EHR_USERNAME": "postgres",
+        "EHR_PASSWORD": "{postgres-ehr-password.value}",
+        "EHR_URI": "postgresql://postgres:{postgres-ehr-password-uri-encoded.value}@{postgres-ehr.bindings.tcp.host}:{postgres-ehr.bindings.tcp.port}/dialysis_ehr",
+        "EHR_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-ehr.bindings.tcp.host}:{postgres-ehr.bindings.tcp.port}/dialysis_ehr",
+        "EHR_DATABASENAME": "dialysis_ehr",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Ehr__Transponder__EnableOutboxRelay": "true",
+        "Ehr__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Ehr__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "Ehr__Authentication__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Ehr__Authentication__Audience": "account",
+        "Ehr__Demo__Enabled": "true",
+        "Ehr__Demo__RegistrationSimulator": "true"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "pdms-api": {
+      "type": "project.v1",
+      "path": "../../../src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{pdms-api.bindings.http.targetPort}",
+        "ConnectionStrings__Pdms": "{Pdms.connectionString}",
+        "PDMS_HOST": "{postgres-pdms.bindings.tcp.host}",
+        "PDMS_PORT": "{postgres-pdms.bindings.tcp.port}",
+        "PDMS_USERNAME": "postgres",
+        "PDMS_PASSWORD": "{postgres-pdms-password.value}",
+        "PDMS_URI": "postgresql://postgres:{postgres-pdms-password-uri-encoded.value}@{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "PDMS_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "PDMS_DATABASENAME": "dialysis_pdms",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Pdms__Transponder__EnableOutboxRelay": "true",
+        "Pdms__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Pdms__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "Pdms__Authentication__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Pdms__Authentication__Audience": "account",
+        "Pdms__Demo__Enabled": "true",
+        "Pdms__Demo__VitalsTicker": "true",
+        "Pdms__Demo__MachineTelemetrySimulator": "true",
+        "Pdms__Demo__LifecycleSimulator": "true"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "smartconnect-api": {
+      "type": "project.v1",
+      "path": "../../../src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{smartconnect-api.bindings.http.targetPort}",
+        "ConnectionStrings__SmartConnect": "{SmartConnect.connectionString}",
+        "SMARTCONNECT_HOST": "{postgres-smartconnect.bindings.tcp.host}",
+        "SMARTCONNECT_PORT": "{postgres-smartconnect.bindings.tcp.port}",
+        "SMARTCONNECT_USERNAME": "postgres",
+        "SMARTCONNECT_PASSWORD": "{postgres-smartconnect-password.value}",
+        "SMARTCONNECT_URI": "postgresql://postgres:{postgres-smartconnect-password-uri-encoded.value}@{postgres-smartconnect.bindings.tcp.host}:{postgres-smartconnect.bindings.tcp.port}/dialysis_smartconnect",
+        "SMARTCONNECT_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-smartconnect.bindings.tcp.host}:{postgres-smartconnect.bindings.tcp.port}/dialysis_smartconnect",
+        "SMARTCONNECT_DATABASENAME": "dialysis_smartconnect",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "SmartConnect__Transponder__EnableOutboxRelay": "true",
+        "SmartConnect__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "SmartConnect__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "SmartConnect__Authentication__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "SmartConnect__Authentication__Audience": "account",
+        "SmartConnect__Demo__Enabled": "true",
+        "SmartConnect__Demo__Hl7Simulator": "true",
+        "SmartConnect__SourceConnectors__0__Name": "Hl7Mllp",
+        "SmartConnect__SourceConnectors__0__Kind": "mllp",
+        "SmartConnect__SourceConnectors__0__DefaultFlowId": "b1d10001-0001-4000-8000-000000000001",
+        "SmartConnect__SourceConnectors__0__Parameters__Port": "2575",
+        "SmartConnect__SourceConnectors__1__Name": "LocalDrop",
+        "SmartConnect__SourceConnectors__1__Kind": "file-reader",
+        "SmartConnect__SourceConnectors__1__DefaultFlowId": "b1d10001-0001-4000-8000-000000000001",
+        "SmartConnect__SourceConnectors__1__Parameters__Directory": "./tmp/smartconnect/drop",
+        "SmartConnect__SourceConnectors__1__Parameters__Pattern": "*.hl7"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "hie-api": {
+      "type": "project.v1",
+      "path": "../../../src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{hie-api.bindings.http.targetPort}",
+        "ConnectionStrings__Hie": "{Hie.connectionString}",
+        "HIE_HOST": "{postgres-hie.bindings.tcp.host}",
+        "HIE_PORT": "{postgres-hie.bindings.tcp.port}",
+        "HIE_USERNAME": "postgres",
+        "HIE_PASSWORD": "{postgres-hie-password.value}",
+        "HIE_URI": "postgresql://postgres:{postgres-hie-password-uri-encoded.value}@{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HIE_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HIE_DATABASENAME": "dialysis_hie",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Hie__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Hie__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "Hie__Authentication__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Hie__Authentication__Audience": "account",
+        "Hie__Demo__Enabled": "true"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "lab-api": {
+      "type": "project.v1",
+      "path": "../../../src/backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{lab-api.bindings.http.targetPort}",
+        "ConnectionStrings__Lab": "{Lab.connectionString}",
+        "LAB_HOST": "{postgres-lab.bindings.tcp.host}",
+        "LAB_PORT": "{postgres-lab.bindings.tcp.port}",
+        "LAB_USERNAME": "postgres",
+        "LAB_PASSWORD": "{postgres-lab-password.value}",
+        "LAB_URI": "postgresql://postgres:{postgres-lab-password-uri-encoded.value}@{postgres-lab.bindings.tcp.host}:{postgres-lab.bindings.tcp.port}/dialysis_lab",
+        "LAB_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-lab.bindings.tcp.host}:{postgres-lab.bindings.tcp.port}/dialysis_lab",
+        "LAB_DATABASENAME": "dialysis_lab",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Lab__Transponder__EnableOutboxRelay": "true",
+        "Lab__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Lab__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "Lab__Authentication__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Lab__Authentication__Audience": "account"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "identity-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{identity-bff.bindings.http.targetPort}",
+        "ASPNETCORE_URLS": "http://localhost:5275",
+        "Identity__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Identity__Keycloak__ClientSecret": "{identity-bff-client-secret.value}",
+        "ReverseProxy__Clusters__his__Destinations__d1__Address": "{his-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5275
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "gateway": {
+      "type": "project.v1",
+      "path": "../../../src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{gateway.bindings.http.targetPort}",
+        "ASPNETCORE_URLS": "http://localhost:9090",
+        "HIS_API_HTTP": "{his-api.bindings.http.url}",
+        "services__his-api__http__0": "{his-api.bindings.http.url}",
+        "HIS_API_HTTPS": "{his-api.bindings.https.url}",
+        "services__his-api__https__0": "{his-api.bindings.https.url}",
+        "EHR_API_HTTP": "{ehr-api.bindings.http.url}",
+        "services__ehr-api__http__0": "{ehr-api.bindings.http.url}",
+        "EHR_API_HTTPS": "{ehr-api.bindings.https.url}",
+        "services__ehr-api__https__0": "{ehr-api.bindings.https.url}",
+        "PDMS_API_HTTP": "{pdms-api.bindings.http.url}",
+        "services__pdms-api__http__0": "{pdms-api.bindings.http.url}",
+        "PDMS_API_HTTPS": "{pdms-api.bindings.https.url}",
+        "services__pdms-api__https__0": "{pdms-api.bindings.https.url}",
+        "SMARTCONNECT_API_HTTP": "{smartconnect-api.bindings.http.url}",
+        "services__smartconnect-api__http__0": "{smartconnect-api.bindings.http.url}",
+        "SMARTCONNECT_API_HTTPS": "{smartconnect-api.bindings.https.url}",
+        "services__smartconnect-api__https__0": "{smartconnect-api.bindings.https.url}",
+        "HIE_API_HTTP": "{hie-api.bindings.http.url}",
+        "services__hie-api__http__0": "{hie-api.bindings.http.url}",
+        "HIE_API_HTTPS": "{hie-api.bindings.https.url}",
+        "services__hie-api__https__0": "{hie-api.bindings.https.url}",
+        "IDENTITY_BFF_HTTP": "{identity-bff.bindings.http.url}",
+        "services__identity-bff__http__0": "{identity-bff.bindings.http.url}",
+        "IDENTITY_BFF_HTTPS": "{identity-bff.bindings.https.url}",
+        "services__identity-bff__https__0": "{identity-bff.bindings.https.url}",
+        "Gateway__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Gateway__Audience": "account",
+        "Gateway__RequireAuthentication": "true",
+        "ReverseProxy__Clusters__identity__Destinations__d1__Address": "http://localhost:5275/"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9090,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "external": true
+        }
+      }
+    },
+    "his-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/HIS/Dialysis.HIS.Bff/Dialysis.HIS.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5301",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{his-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{his-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "Bff__Module__Aggregations__0__Address": "{smartconnect-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5301
+        }
+      }
+    },
+    "ehr-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/EHR/Dialysis.EHR.Bff/Dialysis.EHR.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5302",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{ehr-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{ehr-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "Bff__Module__Aggregations__0__Address": "{hie-api.bindings.http.url}",
+        "Bff__Module__Aggregations__1__Address": "{lab-api.bindings.http.url}",
+        "Bff__Module__Aggregations__2__Address": "{smartconnect-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5302
+        }
+      }
+    },
+    "pdms-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5303",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{pdms-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{pdms-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "Bff__Module__Aggregations__0__Address": "{ehr-api.bindings.http.url}",
+        "Bff__Module__Aggregations__1__Address": "{hie-api.bindings.http.url}",
+        "Bff__Module__Aggregations__2__Address": "{smartconnect-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5303
+        }
+      }
+    },
+    "smartconnect-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/SmartConnect/Dialysis.SmartConnect.Bff/Dialysis.SmartConnect.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5304",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{smartconnect-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{smartconnect-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5304
+        }
+      }
+    },
+    "hie-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5305",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{hie-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{hie-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "Bff__Module__Aggregations__0__Address": "{smartconnect-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5305
+        }
+      }
+    },
+    "admin-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5306",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{admin-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{hie-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "Bff__Module__Aggregations__0__Address": "{his-api.bindings.http.url}",
+        "Bff__Module__Aggregations__1__Address": "{ehr-api.bindings.http.url}",
+        "Bff__Module__Aggregations__2__Address": "{pdms-api.bindings.http.url}",
+        "Bff__Module__Aggregations__3__Address": "{smartconnect-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5306
+        }
+      }
+    },
+    "portal-bff": {
+      "type": "project.v1",
+      "path": "../../../src/backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://localhost:5307",
+        "Bff__Keycloak__Authority": "{keycloak.bindings.http.url}/realms/dialysis",
+        "Bff__Keycloak__ClientSecret": "{portal-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{his-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "RABBITMQ_HOST": "{rabbitmq.bindings.tcp.host}",
+        "RABBITMQ_PORT": "{rabbitmq.bindings.tcp.port}",
+        "RABBITMQ_USERNAME": "guest",
+        "RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "RABBITMQ_URI": "amqp://guest:{rabbitmq-password-uri-encoded.value}@{rabbitmq.bindings.tcp.host}:{rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "VALKEY_HOST": "{valkey.bindings.tcp.host}",
+        "VALKEY_PORT": "{valkey.bindings.tcp.port}",
+        "VALKEY_PASSWORD": "{valkey-password.value}",
+        "VALKEY_URI": "valkey://:{valkey-password-uri-encoded.value}@{valkey.bindings.tcp.host}:{valkey.bindings.tcp.port}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "Bff__Module__Aggregations__0__Address": "{ehr-api.bindings.http.url}",
+        "Bff__Module__Aggregations__1__Address": "{pdms-api.bindings.http.url}",
+        "Bff__Module__Aggregations__2__Address": "{hie-api.bindings.http.url}",
+        "Bff__Module__Aggregations__3__Address": "{smartconnect-api.bindings.http.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5307
+        }
+      }
+    },
+    "his-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/his-web",
+        "dockerfile": "../../../src/frontend/his-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{his-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5331
+        }
+      }
+    },
+    "ehr-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/ehr-web",
+        "dockerfile": "../../../src/frontend/ehr-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{ehr-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5332
+        }
+      }
+    },
+    "pdms-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/pdms-web",
+        "dockerfile": "../../../src/frontend/pdms-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{pdms-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5333
+        }
+      }
+    },
+    "smartconnect-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/smartconnect-web",
+        "dockerfile": "../../../src/frontend/smartconnect-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{smartconnect-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5334
+        }
+      }
+    },
+    "hie-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/hie-web",
+        "dockerfile": "../../../src/frontend/hie-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{hie-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5335
+        }
+      }
+    },
+    "identity-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/identity-web",
+        "dockerfile": "../../../src/frontend/identity-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{identity-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5336
+        }
+      }
+    },
+    "patient-portal-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../src/frontend/patient-portal-web",
+        "dockerfile": "../../../src/frontend/patient-portal-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "GATEWAY_HTTP": "{gateway.bindings.http.url}",
+        "services__gateway__http__0": "{gateway.bindings.http.url}",
+        "GATEWAY_HTTPS": "{gateway.bindings.https.url}",
+        "services__gateway__https__0": "{gateway.bindings.https.url}",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "{gateway.bindings.http.url}",
+        "VITE_API_BASE_URL": "{gateway.bindings.http.url}",
+        "PORT": "{patient-portal-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5337
+        }
+      }
+    },
+    "rabbitmq-password": {
+      "type": "parameter.v0",
+      "value": "{rabbitmq-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22,
+              "special": false
+            }
+          }
+        }
+      }
+    },
+    "rabbitmq-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{rabbitmq-password.value}",
+      "filter": "uri"
+    },
+    "valkey-password": {
+      "type": "parameter.v0",
+      "value": "{valkey-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22,
+              "special": false
+            }
+          }
+        }
+      }
+    },
+    "valkey-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{valkey-password.value}",
+      "filter": "uri"
+    },
+    "postgres-his-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-his-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-his-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-his-password.value}",
+      "filter": "uri"
+    },
+    "postgres-ehr-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-ehr-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-ehr-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-ehr-password.value}",
+      "filter": "uri"
+    },
+    "postgres-pdms-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-pdms-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-pdms-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-pdms-password.value}",
+      "filter": "uri"
+    },
+    "postgres-smartconnect-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-smartconnect-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-smartconnect-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-smartconnect-password.value}",
+      "filter": "uri"
+    },
+    "postgres-hie-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-hie-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-hie-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-hie-password.value}",
+      "filter": "uri"
+    },
+    "postgres-lab-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-lab-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-lab-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-lab-password.value}",
+      "filter": "uri"
+    }
+  }
+}

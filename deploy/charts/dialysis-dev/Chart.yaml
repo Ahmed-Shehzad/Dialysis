@@ -1,0 +1,11 @@
+apiVersion: "v2"
+name: "dialysis-dev"
+version: "0.1.0"
+kubeVersion: ">= 1.18.0-0"
+description: "Dialysis modular monolith (dev) — every module API, the BFF, the gateway, the SPA, plus per-module Postgres, RabbitMQ, Valkey, Keycloak. Generated from the Aspire AppHost; do not hand-edit the manifests, re-run the NUKE PublishKubernetes target."
+type: "application"
+keywords:
+  - "aspire"
+  - "kubernetes"
+appVersion: "0.1.0"
+deprecated: false

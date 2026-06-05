@@ -1,0 +1,6 @@
+{
+  "resources": {
+    "k8s": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "rabbitmq": {

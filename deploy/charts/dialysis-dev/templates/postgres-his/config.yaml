@@ -1,0 +1,13 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "postgres-his-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "postgres-his"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  POSTGRES_HOST_AUTH_METHOD: "{{ .Values.config.postgres_his.POSTGRES_HOST_AUTH_METHOD }}"
+  POSTGRES_INITDB_ARGS: "{{ .Values.config.postgres_his.POSTGRES_INITDB_ARGS }}"
+  POSTGRES_USER: "{{ .Values.config.postgres_his.POSTGRES_USER }}"

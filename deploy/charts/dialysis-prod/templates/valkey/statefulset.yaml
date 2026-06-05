@@ -1,0 +1,43 @@
+---
+apiVersion: "apps/v1"
+kind: "StatefulSet"
+metadata:
+  name: "valkey-statefulset"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "valkey"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ .Chart.Name }}"
+        app.kubernetes.io/component: "valkey"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+    spec:
+      containers:
+        - command:
+            - "/bin/sh"
+          image: "docker.io/valkey/valkey:9.1"
+          name: "valkey"
+          envFrom:
+            - secretRef:
+                name: "valkey-secrets"
+          args:
+            - "-c"
+            - "valkey-server --requirepass $VALKEY_PASSWORD"
+          ports:
+            - name: "tcp"
+              protocol: "TCP"
+              containerPort: 6379
+          imagePullPolicy: "IfNotPresent"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ .Chart.Name }}"
+      app.kubernetes.io/component: "valkey"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  replicas: 1
+  persistentVolumeClaimRetentionPolicy: {}
+  updateStrategy:
+    rollingUpdate: {}
+    type: "RollingUpdate"
