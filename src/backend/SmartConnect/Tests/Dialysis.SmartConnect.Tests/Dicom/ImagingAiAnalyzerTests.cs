@@ -16,12 +16,14 @@ public sealed class ImagingAiAnalyzerTests
     private static ImagingAiAnalyzer Analyzer(
         ImagingAiOptions options,
         out RecordingAudit audit,
-        IImagingInferenceProvider? provider = null)
+        IImagingInferenceProvider? provider = null,
+        IImagingFindingCodeValidator? codeValidator = null)
     {
         audit = new RecordingAudit();
         return new ImagingAiAnalyzer(
             provider ?? new SampleHeuristicImagingInferenceProvider(),
             audit,
+            codeValidator ?? new PermissiveImagingFindingCodeValidator(),
             Options.Create(options),
             TimeProvider.System);
     }
@@ -66,12 +68,33 @@ public sealed class ImagingAiAnalyzerTests
     }
 
     [Fact]
+    public async Task Drops_Finding_With_Ungoverned_Code_And_Audits_Async()
+    {
+        var analyzer = Analyzer(
+            new ImagingAiOptions { Enabled = true, MinConfidence = 0.5 },
+            out var audit,
+            codeValidator: new RejectingCodeValidator());
+
+        var result = await analyzer.AnalyzeAsync(_avfUltrasound, CancellationToken.None);
+
+        Assert.Null(result); // code not in the governed value set → not surfaced
+        var entry = Assert.Single(audit.Entries);
+        Assert.False(entry.FindingProduced); // but the attempt (with the offending code) is audited
+        Assert.Equal("RID39055", entry.Code);
+    }
+
+    [Fact]
     public async Task Sample_Provider_Declines_Unknown_Modality_Async()
     {
         var finding = await new SampleHeuristicImagingInferenceProvider()
             .AnalyzeAsync(new ImagingInferenceRequest("1.2.3", "ZZ", "Nowhere", null), CancellationToken.None);
 
         Assert.Null(finding);
+    }
+
+    private sealed class RejectingCodeValidator : IImagingFindingCodeValidator
+    {
+        public ValueTask<bool> IsGovernedAsync(string system, string code, CancellationToken cancellationToken) => new(false);
     }
 
     private sealed class RecordingAudit : IImagingAiAuditSink

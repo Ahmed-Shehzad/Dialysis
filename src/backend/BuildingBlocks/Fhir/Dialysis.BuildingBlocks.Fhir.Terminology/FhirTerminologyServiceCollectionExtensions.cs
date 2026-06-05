@@ -35,6 +35,9 @@ public static class FhirTerminologyServiceCollectionExtensions
         public IServiceCollection AddDialysisTerminologyCatalog()
         {
             services.TryAddSingleton<DialysisTerminologyCatalog>();
+            // FHIR-free facade so coding producers (LIS results, imaging-AI findings) can gate /
+            // normalise codes against the governed value sets + concept maps without touching Parameters.
+            services.TryAddSingleton<IDialysisCodeValidator, DialysisCodeValidator>();
             services.TryAddSingleton<IUcumService, UcumService>();
             return services;
         }

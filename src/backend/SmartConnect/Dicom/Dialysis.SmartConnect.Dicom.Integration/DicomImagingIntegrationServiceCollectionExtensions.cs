@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.SmartConnect.Dicom.Ai;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,10 @@ public static class DicomImagingIntegrationServiceCollectionExtensions
 {
     public static IServiceCollection AddDicomImagingStudyLinkBridge(this IServiceCollection services, IConfiguration configuration)
     {
+        // Governed terminology + the validator that gates AI findings against the imaging value set.
+        // Registered before AddImagingAi so its TryAdd default (permissive) doesn't win.
+        services.AddDialysisTerminologyCatalog();
+        services.AddScoped<IImagingFindingCodeValidator, TerminologyImagingFindingCodeValidator>();
         services.AddImagingAi(configuration);
         services.RemoveAll<IImagingStudyLinkNotifier>();
         services.AddScoped<IImagingStudyLinkNotifier, TransponderImagingStudyLinkNotifier>();

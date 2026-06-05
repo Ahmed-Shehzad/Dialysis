@@ -36,6 +36,7 @@ public sealed class TransponderImagingStudyLinkNotifierTests
         new(
             new SampleHeuristicImagingInferenceProvider(),
             new NoopImagingAiAuditSink(),
+            new PermissiveImagingFindingCodeValidator(),
             Options.Create(new ImagingAiOptions { Enabled = enabled, MinConfidence = 0.5 }),
             TimeProvider.System);
 

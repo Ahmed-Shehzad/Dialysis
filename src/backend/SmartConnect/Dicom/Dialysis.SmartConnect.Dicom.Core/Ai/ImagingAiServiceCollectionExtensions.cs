@@ -18,6 +18,9 @@ public static class ImagingAiServiceCollectionExtensions
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddScoped<IImagingInferenceProvider, SampleHeuristicImagingInferenceProvider>();
         services.TryAddScoped<IImagingAiAuditSink, NoopImagingAiAuditSink>();
+        // Default governs nothing; the DICOM imaging bridge swaps in a terminology-backed validator
+        // (registered before this call so TryAdd keeps it) to gate findings against the governed value set.
+        services.TryAddScoped<IImagingFindingCodeValidator, PermissiveImagingFindingCodeValidator>();
         services.TryAddScoped<ImagingAiAnalyzer>();
         return services;
     }

@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.Lab.Contracts;
@@ -20,6 +21,7 @@ namespace Dialysis.Lab.Tests;
 public sealed class LabResultReceivedConsumerTests
 {
     private static readonly DateTime _resultedAt = new(2026, 6, 5, 11, 30, 0, DateTimeKind.Utc);
+    private static readonly IDialysisCodeValidator _codeValidator = new DialysisCodeValidator(new DialysisTerminologyCatalog());
 
     [Fact]
     public async Task Records_Results_And_Resolves_Matching_Order_Async()
@@ -34,7 +36,7 @@ public sealed class LabResultReceivedConsumerTests
 
         var repository = new FakeRepository(order);
         var unitOfWork = new CountingUnitOfWork();
-        var consumer = new LabResultReceivedConsumer(repository, unitOfWork, NullLogger<LabResultReceivedConsumer>.Instance);
+        var consumer = new LabResultReceivedConsumer(repository, unitOfWork, _codeValidator, NullLogger<LabResultReceivedConsumer>.Instance);
 
         var ev = new LabResultReceivedIntegrationEvent(
             EventId: Guid.NewGuid(),
@@ -65,7 +67,7 @@ public sealed class LabResultReceivedConsumerTests
     {
         var repository = new FakeRepository();
         var unitOfWork = new CountingUnitOfWork();
-        var consumer = new LabResultReceivedConsumer(repository, unitOfWork, NullLogger<LabResultReceivedConsumer>.Instance);
+        var consumer = new LabResultReceivedConsumer(repository, unitOfWork, _codeValidator, NullLogger<LabResultReceivedConsumer>.Instance);
 
         var ev = new LabResultReceivedIntegrationEvent(
             EventId: Guid.NewGuid(),
@@ -81,6 +83,39 @@ public sealed class LabResultReceivedConsumerTests
         await consumer.HandleAsync(Context(ev));
 
         unitOfWork.SaveCount.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Normalizes_A_Local_Lab_Code_To_Loinc_When_Recording_Async()
+    {
+        var order = LabOrder.Place(
+            patientId: Guid.NewGuid(),
+            tests: [new LabTestItem("2160-0", "Creatinine")],
+            priority: LabOrderPriority.Routine,
+            specimen: "Serum",
+            placedBy: "dr-house",
+            nowUtc: DateTime.UtcNow);
+
+        var repository = new FakeRepository(order);
+        var unitOfWork = new CountingUnitOfWork();
+        var consumer = new LabResultReceivedConsumer(repository, unitOfWork, _codeValidator, NullLogger<LabResultReceivedConsumer>.Instance);
+
+        var ev = new LabResultReceivedIntegrationEvent(
+            EventId: Guid.NewGuid(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            PlacerOrderNumber: order.PlacerOrderNumber,
+            FillerOrderNumber: "FILL-100",
+            PatientId: order.PatientId,
+            Status: LabOrderStatus.Resulted,
+            // Inbound feed sent the local mnemonic "CR" in the code slot; the consumer should map it to LOINC.
+            Observations: [new LabObservationContract("CR", "Creatinine (local)", "1.2", "mg/dL", "0.6-1.3", LabResultInterpretation.Normal)],
+            ResultedAtUtc: _resultedAt);
+
+        await consumer.HandleAsync(Context(ev));
+
+        order.Results.Count.ShouldBe(1);
+        order.Results.First().LoincCode.ShouldBe("2160-0");
     }
 
     private static ConsumeContext<LabResultReceivedIntegrationEvent> Context(LabResultReceivedIntegrationEvent ev) =>

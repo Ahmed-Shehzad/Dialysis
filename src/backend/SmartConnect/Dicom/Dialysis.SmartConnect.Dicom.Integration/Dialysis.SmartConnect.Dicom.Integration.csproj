@@ -12,6 +12,7 @@
     <ProjectReference Include="../Dialysis.SmartConnect.Dicom.Core/Dialysis.SmartConnect.Dicom.Core.csproj" />
     <ProjectReference Include="../../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Terminology/Dialysis.BuildingBlocks.Fhir.Terminology.csproj" />
   </ItemGroup>
 
   <ItemGroup>

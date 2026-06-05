@@ -18,17 +18,20 @@ public sealed class ImagingAiAnalyzer
 {
     private readonly IImagingInferenceProvider _provider;
     private readonly IImagingAiAuditSink _audit;
+    private readonly IImagingFindingCodeValidator _codeValidator;
     private readonly ImagingAiOptions _options;
     private readonly TimeProvider _clock;
 
     public ImagingAiAnalyzer(
         IImagingInferenceProvider provider,
         IImagingAiAuditSink audit,
+        IImagingFindingCodeValidator codeValidator,
         IOptions<ImagingAiOptions> options,
         TimeProvider clock)
     {
         _provider = provider;
         _audit = audit;
+        _codeValidator = codeValidator;
         _options = options.Value;
         _clock = clock;
     }
@@ -52,6 +55,18 @@ public sealed class ImagingAiAnalyzer
             await _audit.RecordAsync(
                 new ImagingAiAuditEntry(_provider.ModelId, request.StudyInstanceUid, request.AccessionNumber,
                     FindingProduced: false, Code: finding?.Code, Confidence: finding?.Confidence, AtUtc: now),
+                cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+
+        // Terminology governance: a finding may only surface a code from the platform's governed
+        // imaging value set. An ungoverned code is dropped (never reaches the chart) but the attempt is
+        // audited with the offending code so model drift / vocabulary mismatch is visible for review.
+        if (!await _codeValidator.IsGovernedAsync(finding.System, finding.Code, cancellationToken).ConfigureAwait(false))
+        {
+            await _audit.RecordAsync(
+                new ImagingAiAuditEntry(_provider.ModelId, request.StudyInstanceUid, request.AccessionNumber,
+                    FindingProduced: false, Code: finding.Code, Confidence: finding.Confidence, AtUtc: now),
                 cancellationToken).ConfigureAwait(false);
             return null;
         }

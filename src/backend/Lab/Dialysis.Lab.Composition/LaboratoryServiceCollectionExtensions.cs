@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.Lab.Contracts.IntegrationEvents;
@@ -26,6 +27,10 @@ public static class LaboratoryServiceCollectionExtensions
         _ = configuration;
 
         services.AddLabPersistence(configurePersistence);
+
+        // Governed terminology so the result consumer can validate/normalise observation codes
+        // (LOINC panel + local→LOINC concept map) before recording them on the order.
+        services.AddDialysisTerminologyCatalog();
 
         services.AddTransponder(t =>
         {
