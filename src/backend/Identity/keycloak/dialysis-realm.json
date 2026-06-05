@@ -767,6 +767,206 @@
         "offline_access",
         "microprofile-jwt"
       ]
+    },
+    {
+      "id": "f96caaec-558b-41a1-859a-6b66a91923de",
+      "clientId": "dialysis-admin-bff",
+      "name": "Dialysis Identity BFF",
+      "description": "Confidential client for ASP.NET BFF (authorization code + token exchange)",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "admin-bff-dev-secret-change-me",
+      "redirectUris": [
+        "http://localhost:9090/admin/*",
+        "http://127.0.0.1:9090/admin/*",
+        "https://localhost:9090/admin/*",
+        "http://localhost:5173/admin/*"
+      ],
+      "webOrigins": [
+        "http://localhost:9090",
+        "http://127.0.0.1:9090",
+        "https://localhost:9090",
+        "http://localhost:5173"
+      ],
+      "notBefore": 0,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "attributes": {
+        "standard.token.exchange.enabled": "true",
+        "post.logout.redirect.uris": "+"
+      },
+      "protocolMappers": [
+        {
+          "id": "3a3be1c1-97f6-490e-84eb-18d8d3ad24ef",
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "7cfb573c-9462-4091-a5de-212bc868cb2c",
+          "name": "aud-account",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "account",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "id": "9bd95acd-279c-4c06-bf27-8d8d88d9c13c",
+          "name": "dev-dialysis-permissions",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "dialysis_permission",
+            "claim.value": "[\"his.operations.staff.assign\",\"his.operations.inventory.move\",\"his.data.import.submit\",\"his.data.search\",\"his.data.report\",\"his.data.share.read\",\"his.integration.device.ingest\",\"his.ra.capabilities.read\",\"his.ra.commands.write\",\"his.security.manage\",\"his.scheduling.book\",\"his.patientflow.admit\",\"his.patientflow.queue.read\",\"his.patientflow.queue.manage\",\"his.patientaccess.portal.read\",\"his.medication.order.place\",\"pdms.session.schedule\",\"pdms.session.start\",\"pdms.session.pause\",\"pdms.session.resume\",\"pdms.session.complete\",\"pdms.session.abort\",\"pdms.session.read\",\"pdms.reading.record\",\"pdms.reading.read\",\"pdms.prescription.write\",\"pdms.dry-weight.assess\",\"pdms.vascular-access.record\",\"pdms.alarm.read\",\"pdms.alarm.acknowledge\",\"ehr.registration.patient.register\",\"ehr.registration.patient.update\",\"ehr.registration.patient.merge\",\"ehr.registration.patient.read\",\"ehr.patientchart.read\",\"ehr.patientchart.allergy.record\",\"ehr.patientchart.problem.record\",\"ehr.patientchart.vitals.record\",\"ehr.patientchart.immunization.record\",\"ehr.patientchart.medication.record\",\"ehr.scheduling.appointment.book\",\"ehr.scheduling.appointment.cancel\",\"ehr.scheduling.appointment.reschedule\",\"ehr.scheduling.appointment.check-in\",\"ehr.scheduling.read\",\"ehr.portal.read\",\"ehr.portal.appointment.request\",\"ehr.portal.message.send\",\"ehr.clinical.encounter.start\",\"ehr.clinical.encounter.close\",\"ehr.clinical.note.write\",\"ehr.clinical.note.sign\",\"ehr.clinical.note.read\",\"ehr.clinical.diagnosis.attach\",\"ehr.prescription.order\",\"ehr.prescription.cancel\",\"ehr.lab.order\",\"ehr.lab.result.read\",\"ehr.billing.charge.capture\",\"ehr.billing.claim.submit\",\"ehr.billing.payment.post\",\"ehr.billing.statement.read\",\"ehr.integration.outbound.manage\",\"ehr.integration.inbound.ingest\",\"hie.outbound.publish\",\"hie.inbound.receive\",\"hie.consent.manage\",\"hie.openehr.read\",\"hie.partners.administer\",\"hie.documents.view\",\"hie.documents.upload\",\"hie.documents.fill\",\"hie.documents.sign\",\"hie.documents.delete\",\"hie.documents.retention.view\",\"hie.documents.retention.administer\",\"hie.tefca.partners.view\",\"hie.tefca.partners.administer\",\"hie.tefca.ias_jwt.issue\",\"smartconnect.flows.read\",\"smartconnect.flows.write\",\"smartconnect.flows.runtime.control\",\"smartconnect.groups.write\",\"smartconnect.messages.read\",\"smartconnect.messages.reprocess\",\"smartconnect.configuration-map.write\",\"smartconnect.events.read\",\"smartconnect.pruner.read\",\"smartconnect.code-template-libraries.read\",\"smartconnect.code-template-libraries.write\",\"smartconnect.attachments.read\",\"smartconnect.attachments.write\",\"smartconnect.alert-rules.read\",\"smartconnect.alert-rules.write\",\"smartconnect.alert-events.read\",\"identity.user.provision\",\"identity.user.deactivate\",\"identity.user.read\",\"identity.role.define\",\"identity.role.assign\",\"identity.role.revoke\",\"identity.role.read\",\"identity.permission.grant\",\"identity.permission.revoke\",\"identity.audit.read\"]",
+            "jsonType.label": "JSON",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "1d1a94cf-6465-4c55-9a46-b18d46c5f2a4",
+      "clientId": "dialysis-portal-bff",
+      "name": "Dialysis Identity BFF",
+      "description": "Confidential client for ASP.NET BFF (authorization code + token exchange)",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "portal-bff-dev-secret-change-me",
+      "redirectUris": [
+        "http://localhost:9090/portal/*",
+        "http://127.0.0.1:9090/portal/*",
+        "https://localhost:9090/portal/*",
+        "http://localhost:5173/portal/*"
+      ],
+      "webOrigins": [
+        "http://localhost:9090",
+        "http://127.0.0.1:9090",
+        "https://localhost:9090",
+        "http://localhost:5173"
+      ],
+      "notBefore": 0,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "attributes": {
+        "standard.token.exchange.enabled": "true",
+        "post.logout.redirect.uris": "+"
+      },
+      "protocolMappers": [
+        {
+          "id": "494c4b93-fb23-4ef5-8ae9-a5b8041a771d",
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "4a35525d-7592-43ca-b7b0-3b3c62252691",
+          "name": "aud-account",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "account",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "id": "3d427d15-768f-49c3-989b-d7f2663e42fd",
+          "name": "dev-dialysis-permissions",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "dialysis_permission",
+            "claim.value": "[\"his.operations.staff.assign\",\"his.operations.inventory.move\",\"his.data.import.submit\",\"his.data.search\",\"his.data.report\",\"his.data.share.read\",\"his.integration.device.ingest\",\"his.ra.capabilities.read\",\"his.ra.commands.write\",\"his.security.manage\",\"his.scheduling.book\",\"his.patientflow.admit\",\"his.patientflow.queue.read\",\"his.patientflow.queue.manage\",\"his.patientaccess.portal.read\",\"his.medication.order.place\",\"pdms.session.schedule\",\"pdms.session.start\",\"pdms.session.pause\",\"pdms.session.resume\",\"pdms.session.complete\",\"pdms.session.abort\",\"pdms.session.read\",\"pdms.reading.record\",\"pdms.reading.read\",\"pdms.prescription.write\",\"pdms.dry-weight.assess\",\"pdms.vascular-access.record\",\"pdms.alarm.read\",\"pdms.alarm.acknowledge\",\"ehr.registration.patient.register\",\"ehr.registration.patient.update\",\"ehr.registration.patient.merge\",\"ehr.registration.patient.read\",\"ehr.patientchart.read\",\"ehr.patientchart.allergy.record\",\"ehr.patientchart.problem.record\",\"ehr.patientchart.vitals.record\",\"ehr.patientchart.immunization.record\",\"ehr.patientchart.medication.record\",\"ehr.scheduling.appointment.book\",\"ehr.scheduling.appointment.cancel\",\"ehr.scheduling.appointment.reschedule\",\"ehr.scheduling.appointment.check-in\",\"ehr.scheduling.read\",\"ehr.portal.read\",\"ehr.portal.appointment.request\",\"ehr.portal.message.send\",\"ehr.clinical.encounter.start\",\"ehr.clinical.encounter.close\",\"ehr.clinical.note.write\",\"ehr.clinical.note.sign\",\"ehr.clinical.note.read\",\"ehr.clinical.diagnosis.attach\",\"ehr.prescription.order\",\"ehr.prescription.cancel\",\"ehr.lab.order\",\"ehr.lab.result.read\",\"ehr.billing.charge.capture\",\"ehr.billing.claim.submit\",\"ehr.billing.payment.post\",\"ehr.billing.statement.read\",\"ehr.integration.outbound.manage\",\"ehr.integration.inbound.ingest\",\"hie.outbound.publish\",\"hie.inbound.receive\",\"hie.consent.manage\",\"hie.openehr.read\",\"hie.partners.administer\",\"hie.documents.view\",\"hie.documents.upload\",\"hie.documents.fill\",\"hie.documents.sign\",\"hie.documents.delete\",\"hie.documents.retention.view\",\"hie.documents.retention.administer\",\"hie.tefca.partners.view\",\"hie.tefca.partners.administer\",\"hie.tefca.ias_jwt.issue\",\"smartconnect.flows.read\",\"smartconnect.flows.write\",\"smartconnect.flows.runtime.control\",\"smartconnect.groups.write\",\"smartconnect.messages.read\",\"smartconnect.messages.reprocess\",\"smartconnect.configuration-map.write\",\"smartconnect.events.read\",\"smartconnect.pruner.read\",\"smartconnect.code-template-libraries.read\",\"smartconnect.code-template-libraries.write\",\"smartconnect.attachments.read\",\"smartconnect.attachments.write\",\"smartconnect.alert-rules.read\",\"smartconnect.alert-rules.write\",\"smartconnect.alert-events.read\",\"identity.user.provision\",\"identity.user.deactivate\",\"identity.user.read\",\"identity.role.define\",\"identity.role.assign\",\"identity.role.revoke\",\"identity.role.read\",\"identity.permission.grant\",\"identity.permission.revoke\",\"identity.audit.read\"]",
+            "jsonType.label": "JSON",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
     }
   ],
   "identityProviders": [

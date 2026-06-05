@@ -21,13 +21,13 @@ export type ConsentDto = {
 
 export const fetchConsentsForPatient = async (patientId: string): Promise<ConsentDto[]> => {
   const response = await apiClient.get<HateoasEnvelope<ConsentDto[]>>(
-    `/ehr/api/_x/hie/v1.0/hie/consents/patient/${patientId}`,
+    `/ehr/api/_x/hie/api/v1.0/hie/consents/patient/${patientId}`,
   );
   return unwrap(response.data);
 };
 
 export const revokeConsent = async (consentId: string): Promise<void> => {
-  await apiClient.delete(`/ehr/api/_x/hie/v1.0/hie/consents/${consentId}`);
+  await apiClient.delete(`/ehr/api/_x/hie/api/v1.0/hie/consents/${consentId}`);
 };
 
 export type PatientMatchQuery = {
@@ -38,7 +38,7 @@ export type PatientMatchQuery = {
 };
 
 export const submitFhirBundle = async (bundleJson: string, partner: string): Promise<unknown> => {
-  const response = await apiClient.post("/ehr/api/_x/hie/v1.0/fhir/Bundle", bundleJson, {
+  const response = await apiClient.post("/ehr/api/_x/hie/api/v1.0/fhir/Bundle", bundleJson, {
     headers: {
       "Content-Type": "application/fhir+json",
       "X-HIE-Partner": partner,
@@ -49,7 +49,7 @@ export const submitFhirBundle = async (bundleJson: string, partner: string): Pro
 };
 
 export const patientMatch = async (query: PatientMatchQuery): Promise<unknown> => {
-  const response = await apiClient.get("/ehr/api/_x/hie/v1.0/fhir/Patient/$match", {
+  const response = await apiClient.get("/ehr/api/_x/hie/api/v1.0/fhir/Patient/$match", {
     params: query,
     headers: { Accept: "application/fhir+json" },
   });
@@ -94,14 +94,14 @@ export const fetchOutboundBundles = async (
   const params: Record<string, string | number> = { take };
   if (statusFilter !== null) params.status = statusFilter;
   const response = await apiClient.get<HateoasEnvelope<OutboundBundleDto[]>>(
-    "/ehr/api/_x/hie/v1.0/hie/ops/outbound",
+    "/ehr/api/_x/hie/api/v1.0/hie/ops/outbound",
     { params },
   );
   return unwrap(response.data);
 };
 
 export const retryOutboundBundle = async (bundleId: string): Promise<void> => {
-  await apiClient.post(`/ehr/api/_x/hie/v1.0/hie/ops/outbound/${bundleId}/retry`);
+  await apiClient.post(`/ehr/api/_x/hie/api/v1.0/hie/ops/outbound/${bundleId}/retry`);
 };
 
 export type InboundResourceDto = {
@@ -120,7 +120,7 @@ export const fetchInboundResources = async (
   const params: Record<string, string | number> = { take };
   if (partnerId) params.partnerId = partnerId;
   const response = await apiClient.get<HateoasEnvelope<InboundResourceDto[]>>(
-    "/ehr/api/_x/hie/v1.0/hie/ops/inbound",
+    "/ehr/api/_x/hie/api/v1.0/hie/ops/inbound",
     { params },
   );
   return unwrap(response.data);
@@ -136,7 +136,7 @@ export type PartnerStatusDto = {
 
 export const fetchPartners = async (): Promise<PartnerStatusDto[]> => {
   const response = await apiClient.get<HateoasEnvelope<PartnerStatusDto[]>>(
-    "/ehr/api/_x/hie/v1.0/hie/ops/partners",
+    "/ehr/api/_x/hie/api/v1.0/hie/ops/partners",
   );
   return unwrap(response.data);
 };

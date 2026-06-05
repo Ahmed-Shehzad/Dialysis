@@ -523,9 +523,21 @@ var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms
     .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"));
 var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi);
 var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi);
+// Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
+var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"));
+// Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
+var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi)
+    .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"));
 
-IResourceBuilder<NodeAppResource> AddContextWeb(string slug, int port) =>
-    builder.AddNpmApp($"{slug}-web", $"../../frontend/{slug}-web", "dev")
+IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
+    builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")
         .WithReference(gateway).WaitFor(gateway)
         .WithEnvironment("BROWSER", "none")
         .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
@@ -533,18 +545,22 @@ IResourceBuilder<NodeAppResource> AddContextWeb(string slug, int port) =>
         .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
         .PublishAsDockerFile();
 
-// One React app per bounded context, each served by the gateway under /<ctx>/* and fronted by
-// its own BFF (defined above). The legacy dialysis-web "web" resource stays as the /{**catch-all}
-// fallback until it is retired.
-var hisWeb = AddContextWeb("his", 5331);
-var ehrWeb = AddContextWeb("ehr", 5332);
-var pdmsWeb = AddContextWeb("pdms", 5333);
-var smartConnectWeb = AddContextWeb("smartconnect", 5334);
-var hieWeb = AddContextWeb("hie", 5335);
+// One React app per bounded context (folder name = Aspire resource; the app's own /<ctx> base
+// is set in its vite.config). The gateway reaches each on its pinned port. The legacy dialysis-web
+// "web" resource stays as the /{**catch-all} fallback until it is retired.
+var hisWeb = AddContextWeb("his-web", 5331);
+var ehrWeb = AddContextWeb("ehr-web", 5332);
+var pdmsWeb = AddContextWeb("pdms-web", 5333);
+var smartConnectWeb = AddContextWeb("smartconnect-web", 5334);
+var hieWeb = AddContextWeb("hie-web", 5335);
+var identityWeb = AddContextWeb("identity-web", 5336); // served at /admin
+var portalWeb = AddContextWeb("patient-portal-web", 5337); // served at /portal
 
 // Keep the per-context BFFs up before the gateway so the /<ctx>/* routes resolve on first hit.
-gateway.WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff);
-_ = (hisWeb, ehrWeb, pdmsWeb, smartConnectWeb, hieWeb);
+gateway
+    .WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff)
+    .WaitFor(adminBff).WaitFor(portalBff);
+_ = (hisWeb, ehrWeb, pdmsWeb, smartConnectWeb, hieWeb, identityWeb, portalWeb);
 
 // --- Compose-publish decoration -------------------------------------------
 // Every overlay concern that used to live in `docker-compose.override.yaml` is applied

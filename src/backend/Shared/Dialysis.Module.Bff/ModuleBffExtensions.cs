@@ -153,11 +153,11 @@ public static class ModuleBffExtensions
                     ClusterId = $"agg-{agg.Key}",
                     Order = -1,
                     Match = new RouteMatch { Path = prefix + "/{**remainder}" },
-                    Transforms =
-                    [
-                        new Dictionary<string, string> { ["PathRemovePrefix"] = prefix },
-                        new Dictionary<string, string> { ["PathPrefix"] = "/api" },
-                    ],
+                    // Strip the aggregation prefix and forward the remainder verbatim — the SPA
+                    // supplies the upstream module's exact path (e.g. /api/v1.0/… or /admin/…)
+                    // after _x/{key}, so a single SPA-side rewrite of /api/{key}/ → {base}/api/_x/{key}/
+                    // works regardless of where the endpoint is mounted on the upstream.
+                    Transforms = [new Dictionary<string, string> { ["PathRemovePrefix"] = prefix }],
                 });
                 clusterList.Add(new ClusterConfig
                 {

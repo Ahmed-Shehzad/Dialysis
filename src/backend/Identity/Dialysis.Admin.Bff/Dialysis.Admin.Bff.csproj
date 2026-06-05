@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dialysis.Admin.Bff</RootNamespace>
+    <Description>Admin console BFF (identity-web): auth + proxies /admin/api to the data-protection / HIPAA endpoints hosted on HIE.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

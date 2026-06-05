@@ -39,6 +39,8 @@
     <ProjectReference Include="../../backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj" />
     <ProjectReference Include="../../backend/SmartConnect/Dialysis.SmartConnect.Bff/Dialysis.SmartConnect.Bff.csproj" />
     <ProjectReference Include="../../backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj" />
+    <ProjectReference Include="../../backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj" />
+    <ProjectReference Include="../../backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj" />
     <ProjectReference Include="../../backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
   </ItemGroup>
 

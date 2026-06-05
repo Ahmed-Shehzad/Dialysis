@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Theme tokens. Default (:root) is the dark theme — values are the exact
+ * Tailwind v3 `slate` triplets, so dark is pixel-identical to before the
+ * toggle existed. `html.light` overrides with a reversed neutral ramp
+ * (dark text on light surfaces) plus deep-green clinic text shades.
+ * Components keep using `slate-*` / `clinic-*` utilities unchanged.
+ */
+:root {
+  color-scheme: dark;
+
+  --c-slate-50: 248 250 252;
+  --c-slate-100: 241 245 249;
+  --c-slate-200: 226 232 240;
+  --c-slate-300: 203 213 225;
+  --c-slate-400: 148 163 184;
+  --c-slate-500: 100 116 139;
+  --c-slate-600: 71 85 105;
+  --c-slate-700: 51 65 85;
+  --c-slate-800: 30 41 59;
+  --c-slate-900: 15 23 42;
+  --c-slate-950: 2 6 23;
+
+  --c-clinic-50: 230 247 241;
+  --c-clinic-100: 196 236 224;
+  --c-clinic-200: 147 221 198;
+  --c-clinic-300: 89 202 166;
+}
+
+html.light {
+  color-scheme: light;
+
+  /* Reversed around shade 500 so light surfaces + dark text fall out
+     automatically for every existing slate utility. */
+  --c-slate-50: 2 6 23;
+  --c-slate-100: 15 23 42;
+  --c-slate-200: 30 41 59;
+  --c-slate-300: 51 65 85;
+  --c-slate-400: 71 85 105;
+  --c-slate-500: 100 116 139;
+  --c-slate-600: 148 163 184;
+  --c-slate-700: 203 213 225;
+  --c-slate-800: 226 232 240;
+  --c-slate-900: 241 245 249;
+  --c-slate-950: 248 250 252;
+
+  /* Deep greens so clinic text stays readable on light surfaces. */
+  --c-clinic-50: 6 67 47;
+  --c-clinic-100: 1 89 65;
+  --c-clinic-200: 0 110 79;
+  --c-clinic-300: 0 133 95;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
