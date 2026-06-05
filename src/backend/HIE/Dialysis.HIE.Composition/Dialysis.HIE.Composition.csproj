@@ -24,6 +24,7 @@
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Storage.Valkey/Dialysis.BuildingBlocks.Documents.Storage.Valkey.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Signing/Dialysis.BuildingBlocks.Documents.Signing.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Terminology/Dialysis.BuildingBlocks.Fhir.Terminology.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.CdaBridge/Dialysis.BuildingBlocks.Fhir.CdaBridge.csproj" />
     <ProjectReference Include="../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />
     <ProjectReference Include="../../PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />

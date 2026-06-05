@@ -2,6 +2,8 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.HIE.Api.Hateoas;
 using Dialysis.HIE.Inbound.Features.ListInboundResources;
+using Dialysis.HIE.Outbound.CareSummary;
+using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
 using Dialysis.HIE.Outbound.Features.ListPartners;
 using Dialysis.HIE.Outbound.Features.RetryOutboundBundle;
@@ -61,6 +63,28 @@ public sealed class HieOpsAdminController : ControllerBase
         await _cqrs.SendCommandAsync<RetryOutboundBundleCommand, Unit>(
             new RetryOutboundBundleCommand(bundleId), cancellationToken).ConfigureAwait(false);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Assembles a Continuity of Care Document (CCD) for the patient from the FHIR resources HIE
+    /// has already mapped and queues it for Directed Exchange. Returns <c>200</c> with the queued
+    /// bundle id when generated, or <c>422</c> when there's nothing to summarise / consent denied.
+    /// Optional <c>?purpose=</c> sets the TEFCA permitted purpose (defaults to Treatment).
+    /// </summary>
+    [HttpPost("outbound/care-summary/{patientId:guid}")]
+    [ProducesResponseType(typeof(ResourceEnvelope<CareSummaryResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResourceEnvelope<CareSummaryResult>), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> GenerateCareSummaryAsync(
+        Guid patientId,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<GenerateCareSummaryCommand, CareSummaryResult>(
+            new GenerateCareSummaryCommand(patientId, purpose), cancellationToken).ConfigureAwait(false);
+        var envelope = new ResourceEnvelope<CareSummaryResult>(
+            result,
+            [new LinkDto("self", $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}", "POST")]);
+        return result.Generated ? Ok(envelope) : UnprocessableEntity(envelope);
     }
 
     /// <summary>

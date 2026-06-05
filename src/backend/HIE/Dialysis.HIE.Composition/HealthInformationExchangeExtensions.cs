@@ -16,6 +16,7 @@ using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.HIE.Outbound.Partners;
 using Dialysis.HIE.Outbound.Partners.Http;
+using Dialysis.BuildingBlocks.Fhir.CdaBridge;
 using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.HIE.Core.Coding;
 using Dialysis.HIE.OpenEhr;
@@ -136,6 +137,10 @@ public static class HealthInformationExchangeExtensions
             services.AddScoped<AdverseEventMapper>();
 
             services.AddScoped<OutboundQueueWriter>();
+            // C-CDA CCD generation for Directed Exchange: the FHIR→CDA mapper + the assembler that
+            // folds a patient's already-mapped resources into a CCD and queues it as a DocumentReference.
+            services.AddFhirCdaBridge();
+            services.AddScoped<Dialysis.HIE.Outbound.CareSummary.CareSummaryAssembler>();
             services.AddFhirHttpPartnerEndpoints(configuration);
             services.AddSingleton<IPartnerEndpointResolver, PartnerEndpointResolver>();
             services.AddScoped<IOutboundDispatcher, OutboundDispatcher>();

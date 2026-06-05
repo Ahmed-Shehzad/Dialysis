@@ -34,6 +34,13 @@ public sealed class EfOutboundBundleStore : IOutboundBundleStore
     public Task<OutboundBundle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.OutboundBundles.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<OutboundBundle>> ListForPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+        await _db.OutboundBundles.AsNoTracking()
+            .Where(b => b.PatientId == patientId)
+            .OrderByDescending(b => b.CreatedAtUtc)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _db.SaveChangesAsync(cancellationToken);
 }

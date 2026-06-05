@@ -17,5 +17,11 @@ public interface IOutboundBundleStore
     /// <summary>Loads a single bundle by id for the retry command. Returns <c>null</c> on miss.</summary>
     Task<OutboundBundle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Every bundle for one patient, most-recent first. Backs the care-summary assembler, which
+    /// aggregates the FHIR resources HIE has already mapped for the patient into a C-CDA CCD.
+    /// </summary>
+    Task<IReadOnlyList<OutboundBundle>> ListForPatientAsync(Guid patientId, CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
