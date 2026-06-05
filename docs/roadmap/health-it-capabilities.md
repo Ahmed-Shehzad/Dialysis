@@ -89,8 +89,11 @@ DICOMweb store existed but there was **no radiology ordering**.
   `IDialysisCodeValidator` facade: the LIS result consumer validates each observation's LOINC against the
   governed panel and normalises a local mnemonic via `$translate` (logged non‑conformant otherwise, never
   dropped); the imaging‑AI analyzer only surfaces a finding whose code `$validate-code` accepts against the
-  governed imaging value set (ungoverned codes dropped + audited). *Remaining: value‑set authoring/versioning
-  admin surface.*
+  governed imaging value set (ungoverned codes dropped + audited). **Value‑set authoring/versioning admin
+  surface now delivered**: `AuthoredTerminologyResource` (hie_terminology schema) + CQRS CRUD with
+  fail‑closed FHIR‑JSON validation + `TerminologyAdminController` (`hie.terminology.view`/`author`) + a
+  hie‑web "Terminology" admin page; a `TerminologyCatalogLoader` overlays every `active` authored resource
+  onto the catalog at startup so it serves via `$validate-code`/`$expand`/`$translate` alongside the built‑ins.
 - ✅ **Public‑health / analytics export** — **delivered**: PHI‑safe de‑identified Bulk Data `$export` on
   `Fhir.DeIdentification` + `Fhir.BulkData`. The export runner applies the requested de‑identification
   profile per resource and **fails closed** — a `_deIdentify` request with no `IFhirDeIdentifier` (or an
