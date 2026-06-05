@@ -51,6 +51,10 @@ public static class EhrPermissions
     public const string LabOrder = "ehr.lab.order";
     public const string LabResultRead = "ehr.lab.result.read";
 
+    // Imaging
+    public const string ImagingOrder = "ehr.imaging.order";
+    public const string ImagingStudyRead = "ehr.imaging.study.read";
+
     // Billing
     public const string ChargeCapture = "ehr.billing.charge.capture";
     public const string ClaimSubmit = "ehr.billing.claim.submit";
@@ -70,6 +74,7 @@ public static class EhrPermissions
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach,
         PrescriptionOrder, PrescriptionCancel,
         LabOrder, LabResultRead,
+        ImagingOrder, ImagingStudyRead,
         ChargeCapture, ClaimSubmit, PaymentPost, StatementRead,
         IntegrationOutboundManage, IntegrationInboundIngest,
     ];

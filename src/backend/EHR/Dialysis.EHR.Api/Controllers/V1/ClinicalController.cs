@@ -1,6 +1,8 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
+using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
@@ -87,6 +89,46 @@ public sealed class ClinicalController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return Created($"/api/v1.0/clinical/lab-orders/{id}", new { id });
     }
+
+    /// <summary>Orders an imaging study; the modality fulfils it and STOWs the study back via DICOM.</summary>
+    [HttpPost("imaging-orders")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> OrderImagingStudyAsync(
+        [FromBody] OrderImagingStudyRequest body,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var id = await _gateway.SendCommandAsync<OrderImagingStudyCommand, Guid>(
+            new OrderImagingStudyCommand(
+                body.PatientId,
+                body.EncounterId,
+                body.OrderingProviderId,
+                body.ModalityCode,
+                body.BodySiteCode,
+                body.ReasonText),
+            cancellationToken).ConfigureAwait(false);
+        return Created($"/api/v1.0/clinical/imaging-orders/{id}", new { id });
+    }
+
+    /// <summary>Lists a patient's imaging orders (most-recent first) for the chart imaging panel.</summary>
+    [HttpGet("patients/{patientId:guid}/imaging-orders")]
+    [ProducesResponseType(typeof(IReadOnlyList<ImagingOrderDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListImagingOrdersAsync(
+        Guid patientId, [FromQuery] int take = 50, CancellationToken cancellationToken = default)
+    {
+        var rows = await _gateway.SendQueryAsync<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>>(
+            new ListImagingOrdersForPatientQuery(patientId, take), cancellationToken).ConfigureAwait(false);
+        return Ok(rows);
+    }
+
+    /// <summary>Imaging-order request body.</summary>
+    public sealed record OrderImagingStudyRequest(
+        Guid PatientId,
+        Guid EncounterId,
+        Guid OrderingProviderId,
+        string ModalityCode,
+        string BodySiteCode,
+        string? ReasonText);
 
     public sealed record RegisterPatientRequest
     {

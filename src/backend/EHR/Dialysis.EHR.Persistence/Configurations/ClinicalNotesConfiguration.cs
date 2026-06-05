@@ -104,6 +104,24 @@ internal static class ClinicalNotesConfiguration
             ModuleDbContextBase.MapAuditShadow(b);
         });
 
+        modelBuilder.Entity<ImagingOrder>(b =>
+        {
+            b.ToTable("ImagingOrders", Schema);
+            b.HasKey(o => o.Id);
+            b.Property(o => o.PatientId).IsRequired();
+            b.Property(o => o.EncounterId).IsRequired();
+            b.HasIndex(o => o.PatientId);
+            b.Property(o => o.AccessionNumber).HasMaxLength(32).IsRequired();
+            b.HasIndex(o => o.AccessionNumber).IsUnique();
+            b.Property(o => o.ModalityCode).HasMaxLength(16).IsRequired();
+            b.Property(o => o.BodySiteCode).HasMaxLength(64).IsRequired();
+            b.Property(o => o.ReasonText).HasMaxLength(1000);
+            b.Property(o => o.Status).HasConversion<int>().IsRequired();
+            b.Property(o => o.StudyInstanceUid).HasMaxLength(128);
+            b.Property(o => o.CancellationReasonCode).HasMaxLength(64);
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
         modelBuilder.Entity<LabResult>(b =>
         {
             b.ToTable("LabResults", Schema);
