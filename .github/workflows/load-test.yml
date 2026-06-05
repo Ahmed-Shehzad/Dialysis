@@ -17,6 +17,7 @@ on:
           - durable-write-flow.js
           - sync-write-baseline.js
           - mixed-workload.js
+          - rpm-device-ingestion.js
 
 permissions: { contents: read }
 
