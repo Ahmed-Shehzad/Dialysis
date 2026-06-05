@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Dialysis.EHR.Bff</RootNamespace>
+    <Description>EHR Backend-for-Frontend: serves the ehr React app's auth + proxies /ehr/api to the EHR module API.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>
