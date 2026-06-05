@@ -21,7 +21,30 @@ public static class QidoRsEndpoint
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         endpoints.MapGet("/studies", HandleSearchAsync);
+        endpoints.MapGet("/studies/{studyUid}/instances", HandleStudyInstancesAsync);
         return endpoints;
+    }
+
+    /// <summary>
+    /// Instance-level QIDO-RS query: every instance under a study (series + SOP UIDs, ordinal instance
+    /// number, modality), ordered by series then SOP. Backs the chart viewer's instance paging.
+    /// </summary>
+    public static async Task<IResult> HandleStudyInstancesAsync(
+        string studyUid,
+        [FromServices] IDicomInstanceStore instances,
+        CancellationToken cancellationToken)
+    {
+        var list = await instances.GetByStudyAsync(studyUid, cancellationToken).ConfigureAwait(false);
+        return Results.Json(list
+            .Select((m, index) => new Dictionary<string, object?>
+            {
+                ["0020000D"] = new { vr = "UI", Value = new[] { m.StudyInstanceUid } },
+                ["0020000E"] = new { vr = "UI", Value = new[] { m.SeriesInstanceUid } },
+                ["00080018"] = new { vr = "UI", Value = new[] { m.SopInstanceUid } },
+                ["00200013"] = new { vr = "IS", Value = new[] { index + 1 } }, // ordinal instance number
+                ["00080060"] = new { vr = "CS", Value = new[] { m.Modality ?? "" } },
+            })
+            .ToArray());
     }
 
     /// <summary>Study-level QIDO-RS query.</summary>
