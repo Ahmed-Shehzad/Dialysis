@@ -512,8 +512,15 @@ IResourceBuilder<ProjectResource> AddContextBff(
         .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
 
 var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi);
-var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi);
-var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi);
+// EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/*.
+var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi)
+    .WaitFor(hieApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"));
+// PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
+var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi)
+    .WaitFor(ehrApi).WaitFor(hieApi)
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"));
 var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi);
 var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi);
 

@@ -12,14 +12,14 @@ type Envelope<T> = { data: T };
 
 export const fetchRetentionPolicies = async (): Promise<RetentionPolicyRow[]> => {
   const response = await apiClient.get<Envelope<RetentionPolicyRow[]>>(
-    "/pdms/api/v1.0/documents/retention/policies",
+    "/pdms/api/_x/hie/v1.0/documents/retention/policies",
   );
   return response.data?.data ?? [];
 };
 
 export const upsertRetentionPolicy = async (kind: string, retentionDays: number): Promise<void> => {
   await apiClient.put(
-    `/pdms/api/v1.0/documents/retention/policies/${encodeURIComponent(kind)}`,
+    `/pdms/api/_x/hie/v1.0/documents/retention/policies/${encodeURIComponent(kind)}`,
     {
       retentionDays,
     },
@@ -28,6 +28,6 @@ export const upsertRetentionPolicy = async (kind: string, retentionDays: number)
 
 export const deleteRetentionPolicy = async (kind: string): Promise<void> => {
   await apiClient.delete(
-    `/pdms/api/v1.0/documents/retention/policies/${encodeURIComponent(kind)}`,
+    `/pdms/api/_x/hie/v1.0/documents/retention/policies/${encodeURIComponent(kind)}`,
   );
 };

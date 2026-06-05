@@ -134,8 +134,43 @@ public static class ModuleBffExtensions
                 },
             };
 
+            var routeList = new List<RouteConfig> { apiRoute, hubRoute };
+            var clusterList = new List<ClusterConfig> { cluster };
+
+            // Cross-context aggregations: {base}/api/_x/{key}/{rest} → {upstream}/api/{rest}. More
+            // specific than the catch-all {base}/api/{**}, and given a lower Order so YARP prefers it.
+            foreach (var agg in module.Aggregations)
+            {
+                if (string.IsNullOrWhiteSpace(agg.Key) || string.IsNullOrWhiteSpace(agg.Address)
+                    || !Uri.TryCreate(agg.Address, UriKind.Absolute, out _))
+                {
+                    continue;
+                }
+                var prefix = $"{basePath}/api/_x/{agg.Key}";
+                routeList.Add(new RouteConfig
+                {
+                    RouteId = $"{module.Slug}-agg-{agg.Key}",
+                    ClusterId = $"agg-{agg.Key}",
+                    Order = -1,
+                    Match = new RouteMatch { Path = prefix + "/{**remainder}" },
+                    Transforms =
+                    [
+                        new Dictionary<string, string> { ["PathRemovePrefix"] = prefix },
+                        new Dictionary<string, string> { ["PathPrefix"] = "/api" },
+                    ],
+                });
+                clusterList.Add(new ClusterConfig
+                {
+                    ClusterId = $"agg-{agg.Key}",
+                    Destinations = new Dictionary<string, DestinationConfig>(StringComparer.Ordinal)
+                    {
+                        ["d1"] = new DestinationConfig { Address = agg.Address },
+                    },
+                });
+            }
+
             builder.Services.AddReverseProxy()
-                .LoadFromMemory([apiRoute, hubRoute], [cluster])
+                .LoadFromMemory(routeList, clusterList)
                 .AddTransforms(transforms =>
                 {
                     // Attach the session's Keycloak access token (kept on the cookie ticket by

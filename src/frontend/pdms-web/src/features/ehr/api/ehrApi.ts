@@ -62,7 +62,7 @@ const stripEmpty = (filters: PatientSearchFilters): Record<string, string | numb
 export const searchEhrPatientsPage = async (
   filters: PatientSearchFilters = {},
 ): Promise<PatientSearchPage> => {
-  const response = await apiClient.get<PatientSearchPage>("/pdms/api/v1.0/patients", {
+  const response = await apiClient.get<PatientSearchPage>("/pdms/api/_x/ehr/v1.0/patients", {
     params: stripEmpty({ take: 25, skip: 0, ...filters }),
   });
   return response.data ?? { items: [], totalCount: 0, skip: 0, take: filters.take ?? 25 };
@@ -76,7 +76,7 @@ export const searchEhrPatients = async (q?: string, take = 25): Promise<EhrPatie
 
 export const fetchPatientChart = async (patientId: string): Promise<PatientChartView> => {
   const response = await apiClient.get<PatientChartView>(
-    `/pdms/api/v1.0/patients/${patientId}/chart`,
+    `/pdms/api/_x/ehr/v1.0/patients/${patientId}/chart`,
   );
   return response.data;
 };
@@ -115,7 +115,7 @@ export const fetchPatientNotes = async (
   take = 20,
 ): Promise<ClinicalNoteListItem[]> => {
   const response = await apiClient.get<ClinicalNoteListItem[]>(
-    `/pdms/api/v1.0/patients/${patientId}/notes`,
+    `/pdms/api/_x/ehr/v1.0/patients/${patientId}/notes`,
     { params: { take } },
   );
   return response.data ?? [];
@@ -156,7 +156,7 @@ export const fetchPatientLabResults = async (
   take = 50,
 ): Promise<LabResultListItem[]> => {
   const response = await apiClient.get<LabResultListItem[]>(
-    `/pdms/api/v1.0/patients/${patientId}/lab-results`,
+    `/pdms/api/_x/ehr/v1.0/patients/${patientId}/lab-results`,
     { params: { lookbackDays, take } },
   );
   return response.data ?? [];
@@ -178,7 +178,7 @@ export type EhrPatientDetail = {
 export const fetchEhrPatient = async (patientId: string): Promise<EhrPatientDetail | null> => {
   try {
     const response = await apiClient.get<EhrPatientDetail>(
-      `/pdms/api/v1.0/patients/${patientId}`,
+      `/pdms/api/_x/ehr/v1.0/patients/${patientId}`,
     );
     return response.data;
   } catch (error) {
@@ -220,7 +220,7 @@ export type OrderLabTestRequest = {
 
 export const registerPatient = async (body: RegisterPatientRequest): Promise<string> => {
   const response = await apiClient.post<{ id: string }>(
-    "/pdms/api/v1.0/clinical/patients",
+    "/pdms/api/_x/ehr/v1.0/clinical/patients",
     body,
   );
   return response.data.id;
@@ -228,21 +228,21 @@ export const registerPatient = async (body: RegisterPatientRequest): Promise<str
 
 export const startEncounter = async (body: StartEncounterRequest): Promise<string> => {
   const response = await apiClient.post<{ id: string }>(
-    "/pdms/api/v1.0/clinical/encounters",
+    "/pdms/api/_x/ehr/v1.0/clinical/encounters",
     body,
   );
   return response.data.id;
 };
 
 export const signClinicalNote = async (body: SignNoteRequest): Promise<void> => {
-  await apiClient.post(`/pdms/api/v1.0/clinical/notes/${body.noteId}/sign`, {
+  await apiClient.post(`/pdms/api/_x/ehr/v1.0/clinical/notes/${body.noteId}/sign`, {
     signingProviderId: body.signingProviderId,
   });
 };
 
 export const orderLabTest = async (body: OrderLabTestRequest): Promise<string> => {
   const response = await apiClient.post<{ id: string }>(
-    "/pdms/api/v1.0/clinical/lab-orders",
+    "/pdms/api/_x/ehr/v1.0/clinical/lab-orders",
     body,
   );
   return response.data.id;
@@ -260,7 +260,7 @@ export type DraftClinicalNoteRequest = {
 
 export const draftClinicalNote = async (body: DraftClinicalNoteRequest): Promise<string> => {
   const response = await apiClient.post<{ id: string }>(
-    "/pdms/api/v1.0/clinical/notes/draft",
+    "/pdms/api/_x/ehr/v1.0/clinical/notes/draft",
     body,
   );
   return response.data.id;

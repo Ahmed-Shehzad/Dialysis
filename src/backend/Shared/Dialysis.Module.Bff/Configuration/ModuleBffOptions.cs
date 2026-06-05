@@ -30,6 +30,15 @@ public sealed class ModuleBffOptions
     /// </summary>
     public string ModuleApiAddress { get; set; } = "";
 
+    /// <summary>
+    /// Cross-context aggregations. A per-context app may only talk to its own BFF (path-scoped
+    /// cookies block calling another context's BFF directly), so when it needs a read owned by
+    /// another module the BFF proxies it. Each entry routes <c>{BasePath}/api/_x/{Key}/{rest}</c>
+    /// to <c>{Address}/api/{rest}</c>, attaching the same session bearer — e.g. EHR aggregating
+    /// HIE consent, or PDMS aggregating EHR patient demographics. Empty for most contexts.
+    /// </summary>
+    public IList<ModuleBffAggregation> Aggregations { get; set; } = [];
+
     /// <summary>Resolved base path: explicit <see cref="BasePath"/> or <c>/{Slug}</c>.</summary>
     public string ResolveBasePath()
     {
@@ -38,6 +47,16 @@ public sealed class ModuleBffOptions
         if (string.IsNullOrWhiteSpace(Slug))
             throw new InvalidOperationException($"Set {SectionName}:Slug (or {SectionName}:BasePath).");
         return "/" + Slug.Trim('/');
+    }
+
+    /// <summary>One cross-context upstream the BFF aggregates under <c>{BasePath}/api/_x/{Key}/…</c>.</summary>
+    public sealed class ModuleBffAggregation
+    {
+        /// <summary>Upstream slug used in the path, e.g. <c>hie</c> for EHR→HIE consent.</summary>
+        public string Key { get; set; } = "";
+
+        /// <summary>Absolute base address of the upstream module API (e.g. <c>http://localhost:5095/</c>).</summary>
+        public string Address { get; set; } = "";
     }
 
     /// <summary>Resolved cookie name: explicit <see cref="CookieName"/> or <c>Dialysis.{Slug}.Bff</c>.</summary>

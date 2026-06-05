@@ -77,7 +77,7 @@ type ListFilters = {
 type Envelope<T> = { data: T };
 
 export const fetchDocuments = async (filters: ListFilters = {}): Promise<DocumentRow[]> => {
-  const response = await apiClient.get<Envelope<DocumentRow[]>>("/pdms/api/v1.0/documents", {
+  const response = await apiClient.get<Envelope<DocumentRow[]>>("/pdms/api/_x/hie/v1.0/documents", {
     params: filters,
   });
   return response.data?.data ?? [];
@@ -86,7 +86,7 @@ export const fetchDocuments = async (filters: ListFilters = {}): Promise<Documen
 export const fetchDocumentDetail = async (id: string): Promise<DocumentDetail | null> => {
   try {
     const response = await apiClient.get<Envelope<DocumentDetail>>(
-      `/pdms/api/v1.0/documents/${id}`,
+      `/pdms/api/_x/hie/v1.0/documents/${id}`,
     );
     return response.data?.data ?? null;
   } catch (error) {
@@ -95,7 +95,7 @@ export const fetchDocumentDetail = async (id: string): Promise<DocumentDetail | 
   }
 };
 
-export const documentBinaryUrl = (id: string): string => `/pdms/api/v1.0/documents/${id}/binary`;
+export const documentBinaryUrl = (id: string): string => `/pdms/api/_x/hie/v1.0/documents/${id}/binary`;
 
 /**
  * Downloads the raw document bytes through the authenticated apiClient (so the Bearer token +
@@ -129,7 +129,7 @@ export type UploadDocumentInput = {
 
 export const uploadDocument = async (input: UploadDocumentInput): Promise<string> => {
   const response = await apiClient.post<Envelope<{ documentId: string }>>(
-    "/pdms/api/v1.0/documents",
+    "/pdms/api/_x/hie/v1.0/documents",
     input,
   );
   return response.data.data.documentId;
@@ -149,14 +149,14 @@ export type SignDocumentInput = {
 
 export const signDocument = async (id: string, input: SignDocumentInput): Promise<string> => {
   const response = await apiClient.post<Envelope<{ documentId: string }>>(
-    `/pdms/api/v1.0/documents/${id}/sign`,
+    `/pdms/api/_x/hie/v1.0/documents/${id}/sign`,
     input,
   );
   return response.data.data.documentId;
 };
 
 export const deleteDocument = async (id: string): Promise<void> => {
-  await apiClient.delete(`/pdms/api/v1.0/documents/${id}`);
+  await apiClient.delete(`/pdms/api/_x/hie/v1.0/documents/${id}`);
 };
 
 export type FillDocumentResult = {
@@ -170,7 +170,7 @@ export const fillDocumentAcroForm = async (
   fieldValues: Record<string, string>,
 ): Promise<FillDocumentResult> => {
   const response = await apiClient.post<Envelope<FillDocumentResult>>(
-    `/pdms/api/v1.0/documents/${id}/fill`,
+    `/pdms/api/_x/hie/v1.0/documents/${id}/fill`,
     { fieldValues },
   );
   return response.data.data;
@@ -179,14 +179,14 @@ export const fillDocumentAcroForm = async (
 export const setJavaScriptExecution = async (id: string, allow: boolean): Promise<boolean> => {
   const response = await apiClient.post<
     Envelope<{ documentId: string; allowJavaScriptExecution: boolean }>
-  >(`/pdms/api/v1.0/documents/${id}/javascript-execution`, { allow });
+  >(`/pdms/api/_x/hie/v1.0/documents/${id}/javascript-execution`, { allow });
   return response.data.data.allowJavaScriptExecution;
 };
 
 export const fetchDocumentPreview = async (id: string): Promise<DocumentPreview | null> => {
   try {
     const response = await apiClient.get<Envelope<DocumentPreview>>(
-      `/pdms/api/v1.0/documents/${id}/preview`,
+      `/pdms/api/_x/hie/v1.0/documents/${id}/preview`,
     );
     return response.data?.data ?? null;
   } catch (error) {
