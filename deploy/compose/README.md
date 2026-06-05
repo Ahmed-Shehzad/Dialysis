@@ -71,11 +71,19 @@ cd deploy/compose/prod          # or dev / staging
 docker compose up -d --build
 ```
 
-This builds every host image from the repo using `Dockerfile.module`, `Dockerfile.gateway`,
-and `src/frontend/dialysis-web/Dockerfile` (the build stanzas Aspire wrote); pulls the
+This builds the module-API + gateway + identity-BFF images from the repo using
+`Dockerfile.module` / `Dockerfile.gateway` (the build stanzas Aspire wrote); pulls the
 infra images (Postgres, Valkey, RabbitMQ, Keycloak, SonarQube); and brings the whole
 topology up. The browser entry point is **`http://localhost:9090`** — same as the dev
 Aspire loop.
+
+> **Per-context BFFs + web apps.** Since the BFF-per-context refactor, the seven per-context
+> BFFs (`his-bff` … `portal-bff`) and seven SPAs (`his-web` … `patient-portal-web`) are emitted
+> as services that reference a pre-built `${<CTX>_*_IMAGE}` rather than carrying a `build:`
+> stanza, and the gateway's per-context cluster destinations still resolve to `localhost`. A
+> follow-up adds the build stanzas + container-hostname cluster overrides so `docker compose up
+> --build` brings the per-context topology up end-to-end. Until then this command stands up the
+> module APIs, gateway, identity BFF, and infra.
 
 Scale a module horizontally:
 
@@ -141,9 +149,11 @@ The AppHost declares each secret as an Aspire **secret parameter** rather than a
 
 Each parameter **defaults to the dev secret** committed in
 `src/backend/Identity/keycloak/dialysis-realm.json` (`<ctx>-bff-dev-secret-change-me`), so the
-dev F5 loop and the `dev` / `staging` compose shapes work with no extra steps. Because the
-value is a `secret: true` parameter, Aspire emits it into the generated **`.env`** (compose) /
-parameter value (k8s) — it is *not* baked into the image.
+dev F5 loop works with no extra steps. Because the value is a `secret: true` parameter, Aspire
+emits the dev default only into the generated **`.env.Development`** and leaves the base **`.env`**
+entry **blank** — it is *not* baked into the image. So `docker compose` runs that load
+`.env.Development` get the dev secret out of the box, while the production `.env` stays empty for
+the operator to fill.
 
 **For `prod` you MUST override both sides:**
 
@@ -182,6 +192,7 @@ operator-managed realm rotates the client secret away from the dev value.
 | Symptom | Likely cause |
 |---|---|
 | `docker compose config` reports an undefined service | The AppHost added a new resource but you didn't regenerate. `./build.sh PublishAllCompose`. |
+| Publish fails: `Sequence contains more than one matching element` (no `docker-compose.yaml` written) | Aspire 13.4.x runs the publisher's `before-start` phase — and its non-idempotent `prepare-deployment-targets-*` step — twice, so every compute resource accrues two `DeploymentTargetAnnotation`s. The AppHost installs a `dialysis-dedupe-deployment-targets-*` pipeline step to collapse the duplicates; keep it until the upstream double-run is fixed. |
 | Module API → Keycloak fails inside compose | Compose network DNS — `keycloak` resolves only inside the compose project. Verify all services are on the auto-generated network. |
 | OIDC redirect_uri mismatch | The published YAML uses container hostnames; the realm import (`src/backend/Identity/keycloak/dialysis-realm.json`) registers `http://localhost:9090/*` and `http://localhost:5275/*` — those work via the host port mappings the AppHost writes. Don't change either side unless the other moves with it. |
 | `/{ctx}/identity/login` returns HTTP 500 (`invalid_request` / "Authentication failed") | The BFF's confidential-client secret is empty or doesn't match its Keycloak client. See §"BFF client secrets" — set the `<ctx>-bff-client-secret` parameter and the matching realm client secret. |

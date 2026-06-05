@@ -92,25 +92,6 @@ public static class ComposePublishExtensions
             ApplyReplicas(service, environment);
         });
 
-    /// <summary>
-    /// SPA — already <c>.PublishAsDockerFile()</c>'d in the AppHost; redirects the build to
-    /// the per-app Dockerfile next to the SPA sources and host-maps the nginx port.
-    /// </summary>
-    public static IResourceBuilder<NodeAppResource> WithWebDeployment(
-        this IResourceBuilder<NodeAppResource> builder,
-        int hostPort) =>
-        builder.PublishAsDockerComposeService((_, service) =>
-        {
-            service.Build = new Build
-            {
-                Context = RepoRootFromCompose + "/src/frontend/dialysis-web",
-                Dockerfile = "Dockerfile",
-            };
-            ApplyHostPort(service, hostPort, 80);
-            // BROWSER=none is a Vite dev-time hint; not meaningful for the published image.
-            service.Environment.Remove("BROWSER");
-        });
-
     /// <summary>Per-module Postgres — host-mapped port + <c>pg_isready</c> healthcheck.</summary>
     public static IResourceBuilder<PostgresServerResource> WithPublishedDatabasePort(
         this IResourceBuilder<PostgresServerResource> builder,
