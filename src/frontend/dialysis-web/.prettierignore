@@ -1,9 +1,0 @@
-dist
-build
-coverage
-node_modules
-test-results
-playwright-report
-**/*.tsbuildinfo
-e2e/__shots__
-package-lock.json

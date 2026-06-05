@@ -77,9 +77,12 @@ type ListFilters = {
 type Envelope<T> = { data: T };
 
 export const fetchDocuments = async (filters: ListFilters = {}): Promise<DocumentRow[]> => {
-  const response = await apiClient.get<Envelope<DocumentRow[]>>("/pdms/api/_x/hie/api/v1.0/documents", {
-    params: filters,
-  });
+  const response = await apiClient.get<Envelope<DocumentRow[]>>(
+    "/pdms/api/_x/hie/api/v1.0/documents",
+    {
+      params: filters,
+    },
+  );
   return response.data?.data ?? [];
 };
 
@@ -95,7 +98,8 @@ export const fetchDocumentDetail = async (id: string): Promise<DocumentDetail | 
   }
 };
 
-export const documentBinaryUrl = (id: string): string => `/pdms/api/_x/hie/api/v1.0/documents/${id}/binary`;
+export const documentBinaryUrl = (id: string): string =>
+  `/pdms/api/_x/hie/api/v1.0/documents/${id}/binary`;
 
 /**
  * Downloads the raw document bytes through the authenticated apiClient (so the Bearer token +

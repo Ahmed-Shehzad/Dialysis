@@ -45,7 +45,9 @@ export const AppShell = ({ children }: { children?: ReactNode }) => {
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
-            <h1 className="text-lg font-semibold tracking-tight text-clinic-50">Dialysis · Chairside</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-clinic-50">
+              Dialysis · Chairside
+            </h1>
             <nav className="flex flex-wrap gap-1" aria-label="Chairside">
               {PDMS_NAV.map((item) => (
                 <NavLink key={item.to} to={item.to} className={navClass}>

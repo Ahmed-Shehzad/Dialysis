@@ -121,7 +121,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           /\/$/,
           "",
         );
-        const target = apiBase + "/portal/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/");
+        const target =
+          apiBase + "/portal/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/");
         console.info("[auth] signOut → navigating to", target);
         globalThis.location.assign(target);
       },

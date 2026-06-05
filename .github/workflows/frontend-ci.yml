@@ -1,8 +1,5 @@
-# SPA CI for src/frontend/dialysis-web: install → lint → typecheck → unit tests → build.
-# Playwright E2E is intentionally not run here — the suite requires the live Aspire
-# stack (Keycloak + five module APIs + five Postgres containers) and is documented
-# in playwright.config.ts as a developer-driven smoke. It can be triggered manually
-# via workflow_dispatch if the environment is provisioned.
+# SPA CI for the per-context React apps under src/frontend/*-web:
+# install → format check → lint → typecheck → unit tests → build, one job per app.
 name: Frontend CI
 
 on:
@@ -20,19 +17,28 @@ concurrency:
   group: frontend-ci-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: src/frontend/dialysis-web
-
 env:
-  # Husky's prepare-script hook installs git hooks for dev machines. CI doesn't
-  # need them and HUSKY=0 makes the prepare script a no-op (husky v9 contract).
+  # Husky hooks are dev-only; CI doesn't need them.
   HUSKY: "0"
 
 jobs:
   spa:
-    name: SPA build + checks
+    name: ${{ matrix.app }} build + checks
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - his-web
+          - ehr-web
+          - pdms-web
+          - smartconnect-web
+          - hie-web
+          - identity-web
+          - patient-portal-web
+    defaults:
+      run:
+        working-directory: src/frontend/${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +46,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: src/frontend/dialysis-web/package-lock.json
+          cache-dependency-path: src/frontend/${{ matrix.app }}/package-lock.json
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -59,11 +65,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Upload dist artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dialysis-web-dist
-          path: src/frontend/dialysis-web/dist
-          retention-days: 7

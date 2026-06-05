@@ -85,9 +85,7 @@ export const fetchDocuments = async (filters: ListFilters = {}): Promise<Documen
 
 export const fetchDocumentDetail = async (id: string): Promise<DocumentDetail | null> => {
   try {
-    const response = await apiClient.get<Envelope<DocumentDetail>>(
-      `/hie/api/v1.0/documents/${id}`,
-    );
+    const response = await apiClient.get<Envelope<DocumentDetail>>(`/hie/api/v1.0/documents/${id}`);
     return response.data?.data ?? null;
   } catch (error) {
     if ((error as { response?: { status?: number } }).response?.status === 404) return null;

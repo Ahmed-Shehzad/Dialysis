@@ -177,9 +177,7 @@ export type EhrPatientDetail = {
 /** Returns identity / demographics for one patient. Returns null on 404. */
 export const fetchEhrPatient = async (patientId: string): Promise<EhrPatientDetail | null> => {
   try {
-    const response = await apiClient.get<EhrPatientDetail>(
-      `/ehr/api/v1.0/patients/${patientId}`,
-    );
+    const response = await apiClient.get<EhrPatientDetail>(`/ehr/api/v1.0/patients/${patientId}`);
     return response.data;
   } catch (error) {
     const status = (error as { response?: { status?: number } })?.response?.status;
@@ -219,18 +217,12 @@ export type OrderLabTestRequest = {
 };
 
 export const registerPatient = async (body: RegisterPatientRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>(
-    "/ehr/api/v1.0/clinical/patients",
-    body,
-  );
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/patients", body);
   return response.data.id;
 };
 
 export const startEncounter = async (body: StartEncounterRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>(
-    "/ehr/api/v1.0/clinical/encounters",
-    body,
-  );
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/encounters", body);
   return response.data.id;
 };
 
@@ -241,10 +233,7 @@ export const signClinicalNote = async (body: SignNoteRequest): Promise<void> => 
 };
 
 export const orderLabTest = async (body: OrderLabTestRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>(
-    "/ehr/api/v1.0/clinical/lab-orders",
-    body,
-  );
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/lab-orders", body);
   return response.data.id;
 };
 
@@ -259,10 +248,7 @@ export type DraftClinicalNoteRequest = {
 };
 
 export const draftClinicalNote = async (body: DraftClinicalNoteRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>(
-    "/ehr/api/v1.0/clinical/notes/draft",
-    body,
-  );
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/notes/draft", body);
   return response.data.id;
 };
 

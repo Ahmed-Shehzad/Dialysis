@@ -63,10 +63,7 @@ export const fetchRotations = async (chairId?: string): Promise<OnCallRotation[]
 export const createRotation = async (
   request: Omit<OnCallRotation, "id">,
 ): Promise<OnCallRotation> => {
-  const response = await apiClient.post<OnCallRotation>(
-    "/pdms/api/v1.0/oncall/rotations",
-    request,
-  );
+  const response = await apiClient.post<OnCallRotation>("/pdms/api/v1.0/oncall/rotations", request);
   return response.data;
 };
 

@@ -459,34 +459,10 @@ if (isKubernetesPublish)
     gateway.WithExternalHttpEndpoints();
 }
 
-// --- Frontend (Vite dev server) -------------------------------------------
-//
-// Browser entry point is the gateway at http://localhost:9090 — the gateway proxies
-// /{**catch-all} to Vite via the new "web" YARP cluster. The SPA itself is therefore an
-// internal-only resource: WithExternalHttpEndpoints is intentionally NOT called here so
-// users don't land on the SPA's own port (which would be cross-origin to the gateway and
-// break the OIDC cookie round trip).
-//
-// VITE_GATEWAY_URL / VITE_API_BASE_URL are kept for two reasons: (a) the Vite dev proxy
-// still resolves API calls when the SPA is opened directly during local debugging, and
-// (b) apiClient.ts uses VITE_API_BASE_URL as axios baseURL when set. Both point at the
-// gateway so that all API/identity calls stay on the gateway origin.
-//
-// Dependency install: `npm run dev` runs the `predev` script (defined in package.json),
-// which executes `npm install`. That makes `node_modules` self-healing on every AppHost
-// start — no manual `npm install` step required, and a no-op after the first install when
-// package-lock.json is already in sync.
-const int vitePort = 5173;
-var web = builder.AddNpmApp("web", "../../frontend/dialysis-web", "dev")
-    .WithReference(gateway).WaitFor(gateway)
-    .WithEnvironment("BROWSER", "none")
-    .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
-    .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
-    // Pin the Vite port so the gateway's "web" YARP cluster (Address: http://localhost:5173/)
-    // can reliably reach it. isProxied:false skips DCP proxy entirely — there is no need
-    // for it now that the gateway is the single browser-facing origin.
-    .WithHttpEndpoint(env: "PORT", port: vitePort, targetPort: vitePort, isProxied: false)
-    .PublishAsDockerFile();
+// --- Frontend ------------------------------------------------------------
+// The single dialysis-web SPA has been retired in favour of one app per bounded context
+// (defined below). Browser entry point is still the gateway at http://localhost:9090 — its
+// root serves a launchpad and /<ctx>/* routes to each app + its BFF.
 
 // --- Per-context BFFs + React apps ---------------------------------------
 // One React client per bounded context, each fronted by its own BFF. The gateway routes
@@ -612,8 +588,6 @@ if (isComposePublish)
     valkey.WithPublishedPorts((6379, 6379));
     keycloak.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
     sonarqube.WithPublishedPorts((9000, 9000));
-
-    web.WithWebDeployment(hostPort: 8080);
 }
 
 // --- Kubernetes Ingress ---------------------------------------------------

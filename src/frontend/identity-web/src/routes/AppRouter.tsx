@@ -6,7 +6,10 @@ import { LoginPage } from "@/pages/LoginPage";
 import { lazyPage } from "@/shared/lazyPage";
 
 // Admin console (identity-web): single-context app under the gateway's /admin/* and its own BFF.
-const AdminHubPage = lazyPage(() => import("@/modules/identity/admin/AdminHubPage"), "AdminHubPage");
+const AdminHubPage = lazyPage(
+  () => import("@/modules/identity/admin/AdminHubPage"),
+  "AdminHubPage",
+);
 const IdentityAdminPage = lazyPage(
   () => import("@/modules/identity/admin/IdentityAdminPage"),
   "IdentityAdminPage",
@@ -16,7 +19,10 @@ const HipaaDashboardPage = lazyPage(
   "HipaaDashboardPage",
 );
 const RopaPage = lazyPage(() => import("@/modules/identity/admin/RopaPage"), "RopaPage");
-const ConsentsPage = lazyPage(() => import("@/modules/identity/admin/ConsentsPage"), "ConsentsPage");
+const ConsentsPage = lazyPage(
+  () => import("@/modules/identity/admin/ConsentsPage"),
+  "ConsentsPage",
+);
 const DataSubjectRightsPage = lazyPage(
   () => import("@/modules/identity/admin/DataSubjectRightsPage"),
   "DataSubjectRightsPage",

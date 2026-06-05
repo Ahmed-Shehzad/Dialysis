@@ -24,10 +24,10 @@ export const receiveStock = async (
   units: number,
   reason: string,
 ): Promise<InventoryItem> => {
-  const response = await apiClient.post<InventoryItem>(
-    `/pdms/api/v1.0/inventory/${id}/receive`,
-    { units, reason },
-  );
+  const response = await apiClient.post<InventoryItem>(`/pdms/api/v1.0/inventory/${id}/receive`, {
+    units,
+    reason,
+  });
   return response.data;
 };
 
@@ -36,9 +36,9 @@ export const adjustStock = async (
   newOnHandUnits: number,
   reason: string,
 ): Promise<InventoryItem> => {
-  const response = await apiClient.post<InventoryItem>(
-    `/pdms/api/v1.0/inventory/${id}/adjust`,
-    { newOnHandUnits, reason },
-  );
+  const response = await apiClient.post<InventoryItem>(`/pdms/api/v1.0/inventory/${id}/adjust`, {
+    newOnHandUnits,
+    reason,
+  });
   return response.data;
 };

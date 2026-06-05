@@ -44,7 +44,8 @@ const currentOrigin = (): string => globalThis.window?.location?.origin ?? "";
 const buildReturnTarget = (returnPath: string): string => currentOrigin() + returnPath;
 
 export const buildLoginUrl = (returnPath = "/", provider?: string): string => {
-  const url = "/smartconnect/identity/login?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
+  const url =
+    "/smartconnect/identity/login?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
   return provider ? url + "&provider=" + encodeURIComponent(provider) : url;
 };
 

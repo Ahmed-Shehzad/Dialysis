@@ -16,9 +16,12 @@ export type DialysisSessionSummary = {
 };
 
 export const fetchActiveSessions = async (activeOnly = true): Promise<DialysisSessionSummary[]> => {
-  const response = await apiClient.get<DialysisSessionSummary[]>("/admin/api/_x/pdms/api/v1.0/sessions", {
-    params: { activeOnly, take: 100 },
-  });
+  const response = await apiClient.get<DialysisSessionSummary[]>(
+    "/admin/api/_x/pdms/api/v1.0/sessions",
+    {
+      params: { activeOnly, take: 100 },
+    },
+  );
   return response.data ?? [];
 };
 
@@ -133,7 +136,10 @@ export type ScheduleSessionRequest = {
 };
 
 export const scheduleSession = async (body: ScheduleSessionRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>("/admin/api/_x/pdms/api/v1.0/sessions", body);
+  const response = await apiClient.post<{ id: string }>(
+    "/admin/api/_x/pdms/api/v1.0/sessions",
+    body,
+  );
   return response.data.id;
 };
 
@@ -147,7 +153,9 @@ export const resumeSession = (sessionId: string) =>
   apiClient.post(`/admin/api/_x/pdms/api/v1.0/sessions/${sessionId}/resume`);
 
 export const completeSession = (sessionId: string, achievedUfVolumeLiters: number) =>
-  apiClient.post(`/admin/api/_x/pdms/api/v1.0/sessions/${sessionId}/complete`, { achievedUfVolumeLiters });
+  apiClient.post(`/admin/api/_x/pdms/api/v1.0/sessions/${sessionId}/complete`, {
+    achievedUfVolumeLiters,
+  });
 
 export const abortSession = (sessionId: string, reasonCode: string) =>
   apiClient.post(`/admin/api/_x/pdms/api/v1.0/sessions/${sessionId}/abort`, { reasonCode });

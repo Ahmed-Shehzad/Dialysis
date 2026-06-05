@@ -18,12 +18,9 @@ export const fetchRetentionPolicies = async (): Promise<RetentionPolicyRow[]> =>
 };
 
 export const upsertRetentionPolicy = async (kind: string, retentionDays: number): Promise<void> => {
-  await apiClient.put(
-    `/admin/api/v1.0/documents/retention/policies/${encodeURIComponent(kind)}`,
-    {
-      retentionDays,
-    },
-  );
+  await apiClient.put(`/admin/api/v1.0/documents/retention/policies/${encodeURIComponent(kind)}`, {
+    retentionDays,
+  });
 };
 
 export const deleteRetentionPolicy = async (kind: string): Promise<void> => {

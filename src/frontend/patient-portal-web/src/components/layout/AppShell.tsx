@@ -6,9 +6,7 @@ import { useTheme } from "@/features/theme/ThemeProvider";
 import { PatientContextBar } from "@/shell/PatientContextBar";
 
 // Single-context (Portal) navigation. Paths are absolute within the app's `/portal` router basename.
-const PORTAL_NAV: ReadonlyArray<{ to: string; label: string }> = [
-  { to: "/", label: "My portal" },
-];
+const PORTAL_NAV: ReadonlyArray<{ to: string; label: string }> = [{ to: "/", label: "My portal" }];
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();

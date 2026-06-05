@@ -207,8 +207,42 @@ app.MapHealthChecks("/health/ready");
 app.MapGet("/_gateway", () => Results.Ok(new
 {
     gateway = "dialysis",
-    routes = new[] { "/identity", "/his", "/smartconnect", "/ehr", "/pdms", "/hie", "/fhir", "/hubs" },
+    apps = new[] { "/his", "/ehr", "/pdms", "/smartconnect", "/hie", "/admin", "/portal" },
 })).AllowAnonymous();
+
+// Root launchpad. Each bounded context is its own app under /<ctx>/* (own BFF, own cookie);
+// there is no single SPA anymore, so the gateway root is a thin chooser. Replaces the old
+// catch-all → dialysis-web route.
+const string launchpadHtml = """
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dialysis</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;font:16px/1.5 system-ui,sans-serif;background:#020617;color:#e2e8f0;min-height:100vh;display:grid;place-items:center}
+  main{max-width:46rem;padding:2rem}
+  h1{font-size:1.6rem;margin:0 0 .25rem}
+  p{color:#94a3b8;margin:0 0 1.5rem}
+  ul{list-style:none;padding:0;margin:0;display:grid;gap:.5rem;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr))}
+  a{display:block;padding:.85rem 1rem;border:1px solid #1e293b;border-radius:.6rem;background:#0f172a;color:#e2e8f0;text-decoration:none}
+  a:hover{border-color:#475569;background:#1e293b}
+  b{display:block;color:#f8fafc}small{color:#94a3b8}
+</style></head>
+<body><main>
+  <h1>Dialysis Care Operations</h1>
+  <p>Pick a workspace. Sign in once — the others follow via single sign-on.</p>
+  <ul>
+    <li><a href="/his/"><b>Front Desk</b><small>Patient access · queue</small></a></li>
+    <li><a href="/ehr/"><b>Chart</b><small>Record · orders · notes</small></a></li>
+    <li><a href="/pdms/"><b>Chairside</b><small>Live treatment · vitals</small></a></li>
+    <li><a href="/smartconnect/"><b>Feeds</b><small>Integrations · HL7</small></a></li>
+    <li><a href="/hie/"><b>Exchange</b><small>FHIR · documents</small></a></li>
+    <li><a href="/admin/"><b>Admin</b><small>Identity · GDPR · HIPAA</small></a></li>
+    <li><a href="/portal/"><b>My portal</b><small>Patient-facing</small></a></li>
+  </ul>
+</main></body></html>
+""";
+app.MapGet("/", () => Results.Content(launchpadHtml, "text/html; charset=utf-8")).AllowAnonymous();
 
 app.MapReverseProxy(pipeline =>
 {

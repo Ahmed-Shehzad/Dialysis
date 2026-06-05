@@ -8,7 +8,10 @@ import { lazyPage } from "@/shared/lazyPage";
 // PDMS (Chairside) is a single-context app served under the gateway's /pdms/* and its own BFF.
 const SessionsPage = lazyPage(() => import("@/pages/SessionsPage"), "SessionsPage");
 const SessionLivePage = lazyPage(() => import("@/pages/SessionLivePage"), "SessionLivePage");
-const ChairBoardPage = lazyPage(() => import("@/modules/pdms/chairs/ChairBoardPage"), "ChairBoardPage");
+const ChairBoardPage = lazyPage(
+  () => import("@/modules/pdms/chairs/ChairBoardPage"),
+  "ChairBoardPage",
+);
 const InventoryPage = lazyPage(() => import("@/modules/pdms/admin/InventoryPage"), "InventoryPage");
 const ReportingTemplatesPage = lazyPage(
   () => import("@/modules/pdms/admin/ReportingTemplatesPage"),

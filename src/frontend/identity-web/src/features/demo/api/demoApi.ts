@@ -10,6 +10,8 @@ export type DemoResetResult = {
  * 2 scheduled-for-stage). Dev-only: the endpoint 404s when `Pdms:Demo:Enabled` is off.
  */
 export const resetDemoSessions = async (): Promise<DemoResetResult> => {
-  const response = await apiClient.post<DemoResetResult>("/admin/api/_x/pdms/api/v1.0/demo/reset-sessions");
+  const response = await apiClient.post<DemoResetResult>(
+    "/admin/api/_x/pdms/api/v1.0/demo/reset-sessions",
+  );
   return response.data;
 };
