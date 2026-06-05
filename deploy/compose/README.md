@@ -118,6 +118,55 @@ PR #131 pushed every overlay concern into the AppHost via
 6. **Replicas** — `ApplyReplicas` writes `deploy.replicas` per service; `2` for module
    APIs / gateway under `prod`, `1` everywhere else. Scale-out via `--scale` still works.
 
+## BFF client secrets
+
+Every per-context BFF (`his`, `ehr`, `pdms`, `smartconnect`, `hie`, `admin`, `portal`) and the
+legacy identity BFF authenticates to Keycloak as a **confidential client** (`publicClient:
+false`). The BFF must present its client secret on the token + pushed-authorization (PAR)
+endpoints — without it, the `/{ctx}/identity/login` challenge fails with `invalid_request /
+"Authentication failed"` and the BFF returns **HTTP 500**.
+
+The AppHost declares each secret as an Aspire **secret parameter** rather than a baked string:
+
+| Parameter (`builder.AddParameter`) | Feeds env var | Keycloak client |
+|---|---|---|
+| `his-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-his-bff` |
+| `ehr-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-ehr-bff` |
+| `pdms-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-pdms-bff` |
+| `smartconnect-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-smartconnect-bff` |
+| `hie-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-hie-bff` |
+| `admin-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-admin-bff` |
+| `portal-bff-client-secret` | `Bff__Keycloak__ClientSecret` | `dialysis-portal-bff` |
+| `identity-bff-client-secret` | `Identity__Keycloak__ClientSecret` | `dialysis-bff` |
+
+Each parameter **defaults to the dev secret** committed in
+`src/backend/Identity/keycloak/dialysis-realm.json` (`<ctx>-bff-dev-secret-change-me`), so the
+dev F5 loop and the `dev` / `staging` compose shapes work with no extra steps. Because the
+value is a `secret: true` parameter, Aspire emits it into the generated **`.env`** (compose) /
+parameter value (k8s) — it is *not* baked into the image.
+
+**For `prod` you MUST override both sides:**
+
+1. Set a real secret per BFF in the deployment environment. For compose, edit the generated
+   `prod/.env` (or inject from your secret store / CI):
+
+   ```dotenv
+   his-bff-client-secret=<real-secret-from-vault>
+   smartconnect-bff-client-secret=<real-secret-from-vault>
+   # … one line per BFF parameter above
+   ```
+
+   (ASP.NET also reads the canonical env vars directly — e.g.
+   `Bff__Keycloak__ClientSecret` / `Identity__Keycloak__ClientSecret` — if you prefer to set
+   those instead of the parameter names.)
+
+2. Set the **matching** secret on the corresponding client in your prod Keycloak realm. The
+   k8s chart deliberately ships Keycloak *without* the bundled dev realm (operators import
+   their own), so the two sides only line up if you configure them to.
+
+Leaving the `…-change-me` defaults in `prod` is a hard failure: login 500s the moment the
+operator-managed realm rotates the client secret away from the dev value.
+
 ## Relationship to other compose files in the repo
 
 | File | Lives | Purpose | Keep? |
@@ -135,5 +184,6 @@ PR #131 pushed every overlay concern into the AppHost via
 | `docker compose config` reports an undefined service | The AppHost added a new resource but you didn't regenerate. `./build.sh PublishAllCompose`. |
 | Module API → Keycloak fails inside compose | Compose network DNS — `keycloak` resolves only inside the compose project. Verify all services are on the auto-generated network. |
 | OIDC redirect_uri mismatch | The published YAML uses container hostnames; the realm import (`src/backend/Identity/keycloak/dialysis-realm.json`) registers `http://localhost:9090/*` and `http://localhost:5275/*` — those work via the host port mappings the AppHost writes. Don't change either side unless the other moves with it. |
+| `/{ctx}/identity/login` returns HTTP 500 (`invalid_request` / "Authentication failed") | The BFF's confidential-client secret is empty or doesn't match its Keycloak client. See §"BFF client secrets" — set the `<ctx>-bff-client-secret` parameter and the matching realm client secret. |
 | `docker compose up` hangs on image pull | Docker Hub rate-limited. Authenticate (`docker login`) or pre-pull the infra images. |
 | `dev` shape behaves like prod | Check that `./build.sh PublishCompose --environment dev` actually wrote to `deploy/compose/dev/` and that you ran `docker compose` from that folder, not from `deploy/compose/prod/`. |
