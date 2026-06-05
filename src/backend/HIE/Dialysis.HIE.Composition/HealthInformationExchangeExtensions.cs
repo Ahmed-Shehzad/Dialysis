@@ -48,6 +48,9 @@ public static class HealthInformationExchangeExtensions
             services.AddHiePersistence(configurePersistence);
 
             services.AddFhirTerminology(configuration, "Hie:Fhir:Terminology");
+            // Governed platform terminology (lab/imaging value sets + concept maps) behind the
+            // $validate-code / $translate / $expand / $lookup endpoints, independent of the upstream tx server.
+            services.AddDialysisTerminologyCatalog();
             services.AddHieConceptCatalog();
 
             services.Configure<OutboundOptions>(configuration.GetSection("Hie:Outbound"));
