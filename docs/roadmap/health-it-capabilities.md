@@ -15,8 +15,8 @@ health information exchange) and turns the **gaps** into a prioritized, scoped r
 | **Patient Portals** | ✅ Strong | `patient-portal-web` + aggregating `PatientPortal.Bff` — appointments, meds, labs, recent treatments |
 | **Health Information Exchange** | ✅ Strong | `HIE` — FHIR R4, IHE XDS (ITI‑18/41/42/43), TEFCA, consent, `DocumentReference` |
 | **Master Patient Index** | ✅ Good | `HIE` `PatientIndexEntry` / `EfPatientIndex` (deterministic linking) |
-| **Remote Patient Monitoring** | ✅ Good | `HIS.Integration` device **registry** (`Device` aggregate, config‑driven `IDeviceTypeCatalog`, register/bind/status API) governs ingestion (status + patient‑binding enforced, last‑seen stamped, strict mode opt‑in) on top of `IngestDeviceReading` + PDMS intradialytic telemetry (TimescaleDB). *Remaining: device‑reading frontend + load test.* |
-| **Medical Imaging** | 🟡 Store‑only | `SmartConnect.Dicom.{Core,Dimse,Persistence,Web}` — DICOMweb WADO/STOW/QIDO + DIMSE. **No ordering, no AI** |
+| **Remote Patient Monitoring** | ✅ Good | `HIS.Integration` device **registry** (`Device` aggregate, config‑driven `IDeviceTypeCatalog`, register/bind/status API + **his‑web steward console**) governs ingestion (status + patient‑binding enforced, last‑seen stamped, strict mode opt‑in) on top of `IngestDeviceReading` + PDMS intradialytic telemetry (TimescaleDB). *Remaining: load test.* |
+| **Medical Imaging** | 🟡 Ordering wired | `SmartConnect.Dicom.{Core,Dimse,Persistence,Web}` DICOMweb WADO/STOW/QIDO + DIMSE, **plus** EHR imaging‑ordering slice (`ImagingOrder` aggregate, order/list API, chart **Imaging panel**) and the `ImagingStudyLinkedConsumer` that links a fulfilled study back by accession. *Remaining: DICOM STOW producer bridge (capture accession + emit the linked event); AI is P2 below.* |
 | **Laboratory Information Systems** | ✅ Good | Dedicated `Lab` context (order domain + API) → `SmartConnect` ORM/FHIR transforms → ORU bridge → typed result event → Lab records it → EHR chart Labs panel. Closed order→result loop, both transports. *Remaining: live loopback‑LIS e2e (needs infra).* |
 
 **AI / interop enablers already present:** `BuildingBlocks/Fhir.DeIdentification`,
@@ -50,12 +50,16 @@ Highest clinical ROI: labs (Kt/V, electrolytes, Hgb/ferritin, PTH) drive dialysi
   back‑pressure via `EnableRateLimiting`.
 - **Remaining:** a device‑reading/registry frontend panel and a sustained‑rate load test.
 
-### P2 — Imaging orders in the clinical workflow (EHR ↔ DICOM) · **M (~2 sprints)**
-DICOMweb store exists but there is **no `ImagingStudy`/radiology ordering** — imaging is store‑only.
-- **Slots into:** `EHR` (imaging order slice) ↔ `SmartConnect.Dicom` (STOW/QIDO) ↔ FHIR `ImagingStudy`;
-  surfaced through the HIE `DocumentReference` preview pipeline.
-- **DoD:** order an imaging study in EHR; the resulting `ImagingStudy`/series is linked on the chart
-  with inline preview.
+### 🟡 P2 — Imaging orders in the clinical workflow (EHR ↔ DICOM) — **mostly delivered**
+DICOMweb store existed but there was **no radiology ordering**.
+- **Delivered:** EHR `ImagingOrder` aggregate (ClinicalNotes) — modality/body‑site/reason, generated
+  accession number, Ordered→…→Completed lifecycle, `LinkStudy`; order/list API on `ClinicalController`;
+  `ImagingOrderPlacedIntegrationEvent` (EHR→DICOM) + `ImagingStudyLinkedIntegrationEvent`;
+  `ImagingStudyLinkedConsumer` correlates a fulfilled study back by accession and completes the order;
+  ehr‑web chart **Imaging panel** (order common dialysis studies + see the linked study UID).
+- **Remaining:** the DICOM STOW **producer bridge** — capture the accession number (tag 0008,0050) in
+  `DicomInstanceMetadata` and emit `ImagingStudyLinkedIntegrationEvent` from the SmartConnect DICOM STOW
+  path (symmetric to the Lab ORU bridge); inline study preview via the HIE `DocumentReference` pipeline.
 
 ### P2 — AI‑assisted imaging hook · **L (~4 sprints + governance)**
 The headline gain (faster, more‑accurate reads). DICOMweb + de‑id + terminology are the rails; the
@@ -75,11 +79,11 @@ missing piece is inference orchestration.
   + `Fhir.BulkData` (research / disease surveillance).
 
 ## Suggested sequencing
-1. ~~**LIS e2e** + **RPM registry**~~ — ✅ both delivered (backend + EHR Labs panel; registry + governed ingestion).
-2. **Imaging ordering** (closes the EHR↔DICOM loop, de‑risks AI) — **next**.
-3. **AI imaging** (needs `ImagingStudy` plumbing + governance lead time).
-4. **Enablers** opportunistically alongside. Loose ends on the delivered items: LIS live e2e,
-   RPM device‑reading frontend + load test, and consolidating the parallel EHR/Lab order paths.
+1. ~~**LIS e2e** + **RPM registry**~~ — ✅ both delivered (backend + EHR Labs panel + his‑web device console; registry + governed ingestion).
+2. ~~**Imaging ordering**~~ — 🟡 EHR order slice + study‑link consumer + chart panel delivered; DICOM STOW producer bridge remaining.
+3. **AI imaging** (needs the `ImagingStudy` plumbing finished + governance lead time) — **next**.
+4. **Enablers** opportunistically alongside. Loose ends: imaging DICOM producer bridge + preview, LIS live
+   e2e, RPM load test, and consolidating the parallel EHR/Lab order paths.
 
 ## Cross‑cutting constraints (apply to every item)
 - New cross‑context flows go through **integration events in `<Module>.Contracts`** + an `IConsumer<>` —
