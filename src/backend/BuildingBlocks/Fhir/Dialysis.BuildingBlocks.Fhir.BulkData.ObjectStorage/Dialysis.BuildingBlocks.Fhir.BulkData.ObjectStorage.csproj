@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Fhir.BulkData.ObjectStorage</RootNamespace>
+    <AssemblyName>Dialysis.BuildingBlocks.Fhir.BulkData.ObjectStorage</AssemblyName>
+    <Description>Cloud object-store sinks for FHIR Bulk Data $export NDJSON output (S3/MinIO + Azure Blob/Azurite), for the de-identified warehouse hand-off. Mirrors the SmartConnect attachment blob stores.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Storage.Blobs" />
+  </ItemGroup>
+
+</Project>

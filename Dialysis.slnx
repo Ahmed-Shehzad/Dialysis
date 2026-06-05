@@ -50,6 +50,7 @@
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions/Dialysis.BuildingBlocks.Fhir.Subscriptions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData/Dialysis.BuildingBlocks.Fhir.BulkData.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.ObjectStorage/Dialysis.BuildingBlocks.Fhir.BulkData.ObjectStorage.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore/Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Smart/Dialysis.BuildingBlocks.Fhir.Smart.csproj" />
     <Project Path="src/backend/BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Validation/Dialysis.BuildingBlocks.Fhir.Validation.csproj" />
