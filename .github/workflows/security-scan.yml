@@ -59,11 +59,16 @@ jobs:
       fail-fast: false
       matrix:
         app: [his-web, ehr-web, pdms-web, smartconnect-web, hie-web, identity-web, patient-portal-web]
-    defaults: { run: { working-directory: src/frontend/${{ matrix.app }} } }
+    defaults:
+      run:
+        working-directory: src/frontend/${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm, cache-dependency-path: src/frontend/${{ matrix.app }}/package-lock.json }
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/frontend/${{ matrix.app }}/package-lock.json
       - run: npm ci
       - name: npm audit
         run: |
