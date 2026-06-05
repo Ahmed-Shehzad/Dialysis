@@ -23,11 +23,14 @@ public sealed class DialysisTerminologyCatalog
 
     private const string Version = "1.0.0";
 
-    /// <summary>The seeded terminology service answering operations against the platform's resources.</summary>
-    public ITerminologyService Service { get; }
+    private readonly InMemoryTerminologyService _service;
+    private readonly List<CanonicalResourceSummary> _resources;
 
-    /// <summary>Governance listing of every canonical resource in the catalog.</summary>
-    public IReadOnlyList<CanonicalResourceSummary> Resources { get; }
+    /// <summary>The seeded terminology service answering operations against the platform's resources.</summary>
+    public ITerminologyService Service => _service;
+
+    /// <summary>Governance listing of every canonical resource in the catalog (built-ins + authored).</summary>
+    public IReadOnlyList<CanonicalResourceSummary> Resources => _resources;
 
     public DialysisTerminologyCatalog()
     {
@@ -37,19 +40,55 @@ public sealed class DialysisTerminologyCatalog
         var localLab = LocalLabCodeSystem();
         var labMap = LocalLabToLoinc();
 
-        Service = new InMemoryTerminologyService()
+        _service = new InMemoryTerminologyService()
             .Register(radlex)
             .Register(localLab)
             .Register(labPanel)
             .Register(imagingFindings)
             .Register(labMap);
 
-        Resources =
+        _resources =
         [
             Summary(radlex), Summary(localLab),
             Summary(labPanel), Summary(imagingFindings),
             Summary(labMap),
         ];
+    }
+
+    /// <summary>
+    /// Overlays an authored canonical resource onto the catalog (registering it with the service and
+    /// adding it to the governance listing). Called at host startup by the authoring store loader so
+    /// DB-authored ValueSets/CodeSystems/ConceptMaps serve via <c>$validate-code</c> / <c>$expand</c> /
+    /// <c>$translate</c> alongside the built-ins. A later registration for the same canonical url wins.
+    /// </summary>
+    public void Register(Resource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        switch (resource)
+        {
+            case CodeSystem cs:
+                _service.Register(cs);
+                ReplaceSummary(Summary(cs));
+                break;
+            case ValueSet vs:
+                _service.Register(vs);
+                ReplaceSummary(Summary(vs));
+                break;
+            case ConceptMap map:
+                _service.Register(map);
+                ReplaceSummary(Summary(map));
+                break;
+            default:
+                throw new ArgumentException(
+                    $"Only CodeSystem, ValueSet and ConceptMap can be authored; got {resource.TypeName}.",
+                    nameof(resource));
+        }
+    }
+
+    private void ReplaceSummary(CanonicalResourceSummary summary)
+    {
+        _resources.RemoveAll(r => r.ResourceType == summary.ResourceType && r.Url == summary.Url);
+        _resources.Add(summary);
     }
 
     private static CanonicalResourceSummary Summary(CodeSystem cs) =>

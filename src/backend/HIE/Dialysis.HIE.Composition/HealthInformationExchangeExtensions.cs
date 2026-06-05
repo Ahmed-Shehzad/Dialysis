@@ -52,6 +52,9 @@ public static class HealthInformationExchangeExtensions
             // $validate-code / $translate / $expand / $lookup endpoints, independent of the upstream tx server.
             services.AddDialysisTerminologyCatalog();
             services.AddHieConceptCatalog();
+            // Overlay operator-authored (DB) terminology onto the in-memory catalog at startup so
+            // authored ValueSets/CodeSystems/ConceptMaps serve via the terminology endpoints.
+            services.AddHostedService<Dialysis.HIE.Inbound.Terminology.TerminologyCatalogLoader>();
 
             services.Configure<OutboundOptions>(configuration.GetSection("Hie:Outbound"));
 

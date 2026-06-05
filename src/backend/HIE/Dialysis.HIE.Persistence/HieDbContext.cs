@@ -5,6 +5,7 @@ using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Tefca.Domain;
 using Dialysis.HIE.Inbound.Domain;
 using Dialysis.HIE.Inbound.Mpi;
+using Dialysis.HIE.Inbound.Terminology;
 using Dialysis.HIE.OpenEhr.Domain;
 using Dialysis.HIE.Outbound.Domain;
 using Dialysis.HIE.Persistence.Repositories;
@@ -44,6 +45,7 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
     public DbSet<RestrictionRequestRow> RestrictionRequests => Set<RestrictionRequestRow>();
     public DbSet<QhinPartner> QhinPartners => Set<QhinPartner>();
     public DbSet<QhinTrustAnchor> QhinTrustAnchors => Set<QhinTrustAnchor>();
+    public DbSet<AuthoredTerminologyResource> AuthoredTerminologyResources => Set<AuthoredTerminologyResource>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -185,6 +187,23 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
             e.HasIndex(p => p.Kind)
                 .IsUnique()
                 .HasDatabaseName("UX_DocumentRetentionPolicies_Kind");
+        });
+
+        modelBuilder.Entity<AuthoredTerminologyResource>(e =>
+        {
+            e.ToTable("AuthoredTerminologyResources", "hie_terminology");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.ResourceType).HasMaxLength(32).IsRequired();
+            e.Property(r => r.Url).HasMaxLength(512).IsRequired();
+            e.Property(r => r.Version).HasMaxLength(64).IsRequired();
+            e.Property(r => r.Status).HasMaxLength(16).IsRequired();
+            e.Property(r => r.Name).HasMaxLength(256).IsRequired();
+            e.Property(r => r.FhirJson).IsRequired();
+            e.Property(r => r.UpdatedBy).HasMaxLength(128).IsRequired();
+            // One row per canonical (url, version) — a new version is a new row.
+            e.HasIndex(r => new { r.Url, r.Version })
+                .IsUnique()
+                .HasDatabaseName("UX_AuthoredTerminologyResources_UrlVersion");
         });
 
         modelBuilder.Entity<ErasureRequestRow>(e =>
