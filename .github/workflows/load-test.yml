@@ -39,12 +39,26 @@ jobs:
           sudo apt-get update && sudo apt-get install -y k6 jq
       - name: Start Aspire stack
         run: |
-          dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard &
+          dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
-          for i in {1..120}; do
-            if curl -sf http://localhost:9090/ >/dev/null; then break; fi
-            sleep 2
+          # Connection-based readiness on :9090, up to ~10 min for the heavy stack; fail with the
+          # AppHost log if the gateway never comes up rather than load-testing a dead port.
+          echo "Waiting for gateway on :9090 …"
+          ready=0
+          for i in $(seq 1 150); do
+            if curl -s -o /dev/null --max-time 5 http://localhost:9090/; then
+              echo "Gateway reachable after ~$((i * 4))s."
+              ready=1
+              break
+            fi
+            sleep 4
           done
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::Aspire gateway never became reachable on :9090 within ~10 min."
+            echo '----- AppHost log (tail) -----'
+            tail -n 250 /tmp/aspire.log || true
+            exit 1
+          fi
       - name: Seed a session for the load run
         id: seed
         run: |
