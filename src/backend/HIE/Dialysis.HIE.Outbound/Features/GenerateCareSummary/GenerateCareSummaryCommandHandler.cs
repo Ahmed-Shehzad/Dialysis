@@ -9,5 +9,5 @@ public sealed class GenerateCareSummaryCommandHandler : ICommandHandler<Generate
     public GenerateCareSummaryCommandHandler(CareSummaryAssembler assembler) => _assembler = assembler;
 
     public Task<CareSummaryResult> HandleAsync(GenerateCareSummaryCommand request, CancellationToken cancellationToken) =>
-        _assembler.AssembleAndEnqueueAsync(request.PatientId, request.Purpose, cancellationToken);
+        _assembler.AssembleAndEnqueueAsync(request.PatientId, request.Purpose, cancellationToken: cancellationToken);
 }

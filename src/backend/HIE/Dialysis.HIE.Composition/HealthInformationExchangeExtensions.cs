@@ -68,6 +68,8 @@ public static class HealthInformationExchangeExtensions
                 bus.AddConsumer<EncounterOpenedIntegrationEvent, EncounterOpenedConsumer>();
                 bus.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedConsumer>();
                 bus.AddConsumer<ClinicalNoteSignedIntegrationEvent, ClinicalNoteSignedConsumer>();
+                // Transfer-of-care: a referral assembles + pushes a CCD to the receiving org.
+                bus.AddConsumer<ReferralRequestedIntegrationEvent, ReferralRequestedConsumer>();
                 bus.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
                 bus.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedConsumer>();
                 bus.AddConsumer<DialysisSessionStartedIntegrationEvent, DialysisSessionStartedConsumer>();
@@ -137,6 +139,8 @@ public static class HealthInformationExchangeExtensions
             services.AddScoped<DialysisSessionMapper>();
             services.AddScoped<AdverseEventMapper>();
 
+            // Per-partner routing — replaces the old single hard-coded DefaultPartnerId.
+            services.AddSingleton<IPartnerRouter, ConfiguredPartnerRouter>();
             services.AddScoped<OutboundQueueWriter>();
             // C-CDA CCD generation for Directed Exchange: the FHIR→CDA mapper + the assembler that
             // folds a patient's already-mapped resources into a CCD and queues it as a DocumentReference.

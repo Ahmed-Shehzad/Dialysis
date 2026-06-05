@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Fhir.CdaBridge;
 using Dialysis.BuildingBlocks.Fhir.Tefca;
 using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.HIE.Outbound.Domain;
+using Dialysis.HIE.Outbound.Partners;
 using Dialysis.HIE.Outbound.Ports;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -42,6 +43,7 @@ public sealed class CareSummaryAssembler
     private readonly IOutboundBundleStore _store;
     private readonly IFhirToCdaMapper _cdaMapper;
     private readonly IConsentGate _consentGate;
+    private readonly IPartnerRouter _partnerRouter;
     private readonly TimeProvider _timeProvider;
     private readonly OutboundOptions _options;
     private readonly ILogger<CareSummaryAssembler> _logger;
@@ -50,6 +52,7 @@ public sealed class CareSummaryAssembler
         IOutboundBundleStore store,
         IFhirToCdaMapper cdaMapper,
         IConsentGate consentGate,
+        IPartnerRouter partnerRouter,
         TimeProvider timeProvider,
         IOptions<OutboundOptions> options,
         ILogger<CareSummaryAssembler> logger)
@@ -57,6 +60,7 @@ public sealed class CareSummaryAssembler
         _store = store;
         _cdaMapper = cdaMapper;
         _consentGate = consentGate;
+        _partnerRouter = partnerRouter;
         _timeProvider = timeProvider;
         _options = options.Value;
         _logger = logger;
@@ -72,10 +76,14 @@ public sealed class CareSummaryAssembler
     public async Task<CareSummaryResult> AssembleAndEnqueueAsync(
         Guid patientId,
         string? purposeOfUse = null,
+        string? destinationPartnerId = null,
         CancellationToken cancellationToken = default)
     {
         var purpose = string.IsNullOrWhiteSpace(purposeOfUse) ? TefcaPermittedPurposes.Treatment : purposeOfUse;
-        var partnerId = _options.DefaultPartnerId;
+        // A referral targets an explicit destination; otherwise route to the primary partner.
+        var partnerId = !string.IsNullOrWhiteSpace(destinationPartnerId)
+            ? destinationPartnerId
+            : _partnerRouter.ResolvePartners(patientId, ConsentScopes.ClinicalNotes).FirstOrDefault() ?? _options.DefaultPartnerId;
 
         var bundles = await _store.ListForPatientAsync(patientId, cancellationToken).ConfigureAwait(false);
         var resources = ParseLatestPerResource(bundles);

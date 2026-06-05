@@ -2,8 +2,15 @@ namespace Dialysis.HIE.Outbound;
 
 public sealed class OutboundOptions
 {
-    /// <summary>Default partner id used when an event-to-partner routing strategy is not yet configured.</summary>
+    /// <summary>Default partner id used when no routing partners are configured.</summary>
     public string DefaultPartnerId { get; set; } = "default";
+
+    /// <summary>
+    /// Partners an event-driven disclosure is routed to (broadcast). Empty falls back to
+    /// <see cref="DefaultPartnerId"/>, preserving single-partner behaviour. Bound from
+    /// <c>Hie:Outbound:RoutingPartners</c>.
+    /// </summary>
+    public List<string> RoutingPartners { get; init; } = [];
 
     /// <summary>Maximum delivery attempts before the bundle is marked Failed.</summary>
     public int MaxAttempts { get; set; } = 5;
