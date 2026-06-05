@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           /\/$/,
           "",
         );
-        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/");
+        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/ehr/");
         const providerParam = provider ? "&provider=" + encodeURIComponent(provider) : "";
         const target = apiBase + "/ehr/identity/login?" + returnUrlParam + providerParam;
         console.info(
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "",
         );
         const target =
-          apiBase + "/ehr/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/");
+          apiBase + "/ehr/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/ehr/");
         console.info("[auth] signOut → navigating to", target);
         globalThis.location.assign(target);
       },

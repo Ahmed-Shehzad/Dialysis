@@ -183,6 +183,25 @@ if (!isKubernetesPublish)
 var keycloakRealmUri = ReferenceExpression.Create(
     $"{keycloak.GetEndpoint("http")}/realms/{keycloakRealm}");
 
+// --- BFF OIDC client secrets ----------------------------------------------
+// Every per-context BFF (and the legacy identity BFF) is a CONFIDENTIAL Keycloak client, so
+// the BFF must authenticate to Keycloak's token + pushed-authorization (PAR) endpoints with
+// its client secret — without it the /{ctx}/identity/login challenge 500s ("Authentication
+// failed"). The defaults below match the dev secrets in
+// src/backend/Identity/keycloak/dialysis-realm.json, so the dev F5 loop and the dev/staging
+// compose shapes work out of the box. Declaring them as secret parameters (not bare strings)
+// means Aspire surfaces each as a generated `.env` entry (compose) / parameter value (k8s)
+// rather than baking the dev secret into the image, so a real deployment overrides it from a
+// secret store. See deploy/compose/README.md §"BFF client secrets".
+var hisBffSecret = builder.AddParameter("his-bff-client-secret", "his-bff-dev-secret-change-me", secret: true);
+var ehrBffSecret = builder.AddParameter("ehr-bff-client-secret", "ehr-bff-dev-secret-change-me", secret: true);
+var pdmsBffSecret = builder.AddParameter("pdms-bff-client-secret", "pdms-bff-dev-secret-change-me", secret: true);
+var smartConnectBffSecret = builder.AddParameter("smartconnect-bff-client-secret", "smartconnect-bff-dev-secret-change-me", secret: true);
+var hieBffSecret = builder.AddParameter("hie-bff-client-secret", "hie-bff-dev-secret-change-me", secret: true);
+var adminBffSecret = builder.AddParameter("admin-bff-client-secret", "admin-bff-dev-secret-change-me", secret: true);
+var portalBffSecret = builder.AddParameter("portal-bff-client-secret", "portal-bff-dev-secret-change-me", secret: true);
+var identityBffSecret = builder.AddParameter("identity-bff-client-secret", "bff-dev-secret-change-me", secret: true);
+
 // --- Per-module Postgres ---------------------------------------------------
 
 static IResourceBuilder<PostgresServerResource> Pg(IDistributedApplicationBuilder b, string name) =>
@@ -417,6 +436,8 @@ var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-b
     // appsettings.Development.json hardcodes Authority to localhost:8080 — env vars from
     // Aspire override it via the IConfiguration provider chain (env > json).
     .WithEnvironment("Identity__Keycloak__Authority", keycloakRealmUri)
+    // Confidential-client secret for the dialysis-bff Keycloak client (overridable per env).
+    .WithEnvironment("Identity__Keycloak__ClientSecret", identityBffSecret)
     // BFF's YARP cluster "his" defaults to localhost:5288 in appsettings; redirect it to
     // the Aspire-allocated HIS endpoint so token-exchange + proxied API calls resolve.
     .WithEnvironment("ReverseProxy__Clusters__his__Destinations__d1__Address", hisApi.GetEndpoint("http"));
@@ -473,7 +494,8 @@ if (isKubernetesPublish)
 IResourceBuilder<ProjectResource> AddContextBff(
     IResourceBuilder<ProjectResource> bff,
     int port,
-    IResourceBuilder<ProjectResource> moduleApi) =>
+    IResourceBuilder<ProjectResource> moduleApi,
+    IResourceBuilder<ParameterResource> clientSecret) =>
     bff.WithEndpoint("http", e =>
         {
             e.Port = port;
@@ -485,28 +507,30 @@ IResourceBuilder<ProjectResource> AddContextBff(
         .WaitFor(keycloak)
         .WaitFor(moduleApi)
         .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
+        // Confidential-client secret for this context's Keycloak client (overridable per env).
+        .WithEnvironment("Bff__Keycloak__ClientSecret", clientSecret)
         .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
 
-var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi);
+var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret);
 // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/*.
-var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi)
+var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret)
     .WaitFor(hieApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"));
 // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
-var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi)
+var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret)
     .WaitFor(ehrApi).WaitFor(hieApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"));
-var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi);
-var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi);
+var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret);
+var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret);
 // Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
-var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi)
+var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret)
     .WaitFor(ehrApi).WaitFor(pdmsApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"));
 // Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
-var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi)
+var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret)
     .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi)
     .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
     .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
