@@ -19,6 +19,15 @@ public static class HisPermissions
 
     public const string DeviceIngest = "his.integration.device.ingest";
 
+    /// <summary>Register a device in the RPM device registry.</summary>
+    public const string DeviceRegister = "his.integration.device.register";
+
+    /// <summary>Manage a registered device (bind/unbind patient, suspend, retire, recalibrate).</summary>
+    public const string DeviceManage = "his.integration.device.manage";
+
+    /// <summary>Read the device registry (list + detail).</summary>
+    public const string DeviceRead = "his.integration.device.read";
+
     /// <summary>Read extended RA capability modules (Tummers et al. 2021) exposed under <c>reference-architecture/capabilities</c>.</summary>
     public const string RaCapabilitiesRead = "his.ra.capabilities.read";
 
@@ -47,6 +56,9 @@ public static class HisPermissions
         DataReport,
         DataShareRead,
         DeviceIngest,
+        DeviceRegister,
+        DeviceManage,
+        DeviceRead,
         RaCapabilitiesRead,
         RaCommandsWrite,
         SecurityManage,
