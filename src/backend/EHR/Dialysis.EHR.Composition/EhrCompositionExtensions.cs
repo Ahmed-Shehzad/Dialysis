@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
+using Dialysis.BuildingBlocks.Fhir.DeIdentification;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
@@ -186,6 +187,9 @@ public static class EhrCompositionExtensions
                     ?? Path.Combine(Path.GetTempPath(), "dialysis-ehr-bulk-data");
                 services.AddFhirBulkData(storageRoot);
                 services.AddFhirBulkDataOrchestrator();
+                // PHI-safe analytics export: the Safe Harbor de-identifier the export runner applies
+                // when a job is requested with _deIdentify (fail-closed if missing).
+                services.AddFhirDeIdentification();
                 services.AddFhirBulkDataFeeder<EhrPatientFhirFeeder, Hl7.Fhir.Model.Patient>();
                 services.AddFhirBulkDataFeeder<EhrVitalSignObservationFeeder, Hl7.Fhir.Model.Observation>();
                 services.AddFhirBulkDataFeeder<EhrAllergyIntoleranceFeeder, Hl7.Fhir.Model.AllergyIntolerance>();

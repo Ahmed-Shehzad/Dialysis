@@ -13,6 +13,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.Core/Dialysis.BuildingBlocks.Fhir.Core.csproj" />
     <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.AspNetCore/Dialysis.BuildingBlocks.Fhir.AspNetCore.csproj" />
+    <ProjectReference Include="../Dialysis.BuildingBlocks.Fhir.DeIdentification/Dialysis.BuildingBlocks.Fhir.DeIdentification.csproj" />
   </ItemGroup>
 
 </Project>
