@@ -12,6 +12,9 @@
   <ItemGroup>
     <ProjectReference Include="../../Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
     <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
+    <!-- Lab integration: the host bridges inbound ORU results into the Lab context's typed event.
+         Referencing Lab.Contracts from the host is permitted by the module-boundary arch test. -->
+    <ProjectReference Include="../../../Lab/Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Abstractions/Dialysis.SmartConnect.Inbound.Abstractions.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.AspNetCore/Dialysis.SmartConnect.Inbound.AspNetCore.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.FileReader/Dialysis.SmartConnect.Inbound.FileReader.csproj" />
