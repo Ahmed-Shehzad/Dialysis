@@ -73,7 +73,8 @@ public sealed class OutboundQueueWriter
             resource.Id ?? Guid.NewGuid().ToString(),
             partnerId,
             fhirJson,
-            _timeProvider.GetUtcNow().UtcDateTime);
+            _timeProvider.GetUtcNow().UtcDateTime,
+            purpose);
 
         await _store.AddAsync(bundle, cancellationToken).ConfigureAwait(false);
         await _store.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

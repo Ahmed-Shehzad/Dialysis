@@ -13,6 +13,7 @@
     <ProjectReference Include="../Dialysis.HIE.Core.Abstraction/Dialysis.HIE.Core.Abstraction.csproj" />
     <ProjectReference Include="../Dialysis.HIE.Core/Dialysis.HIE.Core.csproj" />
     <ProjectReference Include="../Dialysis.HIE.OpenEhr/Dialysis.HIE.OpenEhr.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Tefca/Dialysis.HIE.Tefca.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Tefca/Dialysis.BuildingBlocks.Fhir.Tefca.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.CdaBridge/Dialysis.BuildingBlocks.Fhir.CdaBridge.csproj" />
     <ProjectReference Include="../../EHR/Dialysis.EHR.Contracts/Dialysis.EHR.Contracts.csproj" />

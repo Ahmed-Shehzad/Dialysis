@@ -61,6 +61,7 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
             e.Property(b => b.LogicalId).HasMaxLength(128).IsRequired();
             e.Property(b => b.PartnerId).HasMaxLength(64).IsRequired();
             e.Property(b => b.FhirJson).IsRequired();
+            e.Property(b => b.Purpose).HasMaxLength(64);
             e.Property(b => b.LastFailureReason).HasMaxLength(1024);
             e.Property(b => b.Status).HasConversion<int>();
             e.HasIndex(b => new { b.Status, b.NextAttemptAtUtc }).HasDatabaseName("IX_OutboundBundles_Status_NextAttempt");

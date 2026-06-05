@@ -115,7 +115,8 @@ public sealed class CareSummaryAssembler
             documentReference.Id!,
             partnerId,
             SerializeFhirJson(documentReference),
-            now);
+            now,
+            purpose);
 
         await _store.AddAsync(outbound, cancellationToken).ConfigureAwait(false);
         await _store.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

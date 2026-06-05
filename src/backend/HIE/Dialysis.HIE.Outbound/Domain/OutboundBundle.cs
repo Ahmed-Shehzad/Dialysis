@@ -12,6 +12,14 @@ public sealed class OutboundBundle
     public string LogicalId { get; private set; } = string.Empty;
     public string PartnerId { get; private set; } = string.Empty;
     public string FhirJson { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// TEFCA permitted purpose this disclosure was enqueued under. Travels to the wire so the
+    /// per-call IAS JWT can assert it. Null on bundles enqueued before purpose governance — the
+    /// dispatcher defaults those to Treatment.
+    /// </summary>
+    public string? Purpose { get; private set; }
+
     public OutboundBundleStatus Status { get; private set; }
     public int Attempts { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
@@ -21,7 +29,7 @@ public sealed class OutboundBundle
 
     private OutboundBundle() { }
 
-    public OutboundBundle(Guid patientId, string resourceType, string logicalId, string partnerId, string fhirJson, DateTime createdAtUtc)
+    public OutboundBundle(Guid patientId, string resourceType, string logicalId, string partnerId, string fhirJson, DateTime createdAtUtc, string? purpose = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(resourceType);
         ArgumentException.ThrowIfNullOrWhiteSpace(logicalId);
@@ -33,6 +41,7 @@ public sealed class OutboundBundle
         LogicalId = logicalId;
         PartnerId = partnerId;
         FhirJson = fhirJson;
+        Purpose = string.IsNullOrWhiteSpace(purpose) ? null : purpose.Trim();
         Status = OutboundBundleStatus.Pending;
         Attempts = 0;
         CreatedAtUtc = createdAtUtc;
