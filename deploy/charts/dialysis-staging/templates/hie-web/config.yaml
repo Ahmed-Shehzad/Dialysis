@@ -1,0 +1,18 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "hie-web-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "hie-web"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  NODE_ENV: "{{ .Values.config.hie_web.NODE_ENV }}"
+  GATEWAY_HTTP: "{{ .Values.config.hie_web.GATEWAY_HTTP }}"
+  services__gateway__http__0: "{{ .Values.config.hie_web.services__gateway__http__0 }}"
+  GATEWAY_HTTPS: "{{ .Values.config.hie_web.GATEWAY_HTTPS }}"
+  BROWSER: "{{ .Values.config.hie_web.BROWSER }}"
+  VITE_GATEWAY_URL: "{{ .Values.config.hie_web.VITE_GATEWAY_URL }}"
+  VITE_API_BASE_URL: "{{ .Values.config.hie_web.VITE_API_BASE_URL }}"
+  PORT: "{{ .Values.config.hie_web.PORT }}"
