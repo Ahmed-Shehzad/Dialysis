@@ -14,6 +14,9 @@ public static class DicomServiceCollectionExtensions
     {
         services.TryAddScoped<IDicomInstanceStore, EfDicomInstanceStore>();
         services.TryAddScoped<IDicomIngestionService, DicomIngestionService>();
+        // No-op by default — a host opts into order correlation by registering the real notifier
+        // (Dicom.Integration bridge) before this call, since TryAdd won't overwrite it.
+        services.TryAddScoped<IImagingStudyLinkNotifier, NoopImagingStudyLinkNotifier>();
         services.TryAddSingleton(TimeProvider.System);
         return services;
     }

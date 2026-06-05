@@ -15,6 +15,9 @@ public sealed class DicomInstanceEntity
     public string? PatientId { get; set; }
     public string? PatientName { get; set; }
     public string? Modality { get; set; }
+
+    /// <summary>DICOM Accession Number (0008,0050) — links the study to its originating order.</summary>
+    public string? AccessionNumber { get; set; }
     public DateTimeOffset ReceivedUtc { get; set; }
     public long SizeBytes { get; set; }
     /// <summary>Foreign key into <see cref="AttachmentEntity"/>.</summary>

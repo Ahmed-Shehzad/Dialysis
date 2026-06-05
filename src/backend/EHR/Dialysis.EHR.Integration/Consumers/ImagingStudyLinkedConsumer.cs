@@ -44,6 +44,13 @@ public sealed class ImagingStudyLinkedConsumer : IConsumer<ImagingStudyLinkedInt
             return;
         }
 
+        // Idempotent: the DICOM bridge emits per ingested instance, so a study with many instances
+        // produces many events for the same order — link once.
+        if (string.Equals(order.StudyInstanceUid, message.StudyInstanceUid, StringComparison.Ordinal))
+        {
+            return;
+        }
+
         order.LinkStudy(message.StudyInstanceUid);
         await _unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
 

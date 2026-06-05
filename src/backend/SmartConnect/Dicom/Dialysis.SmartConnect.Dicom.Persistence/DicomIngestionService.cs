@@ -13,6 +13,7 @@ public sealed class DicomIngestionService : IDicomIngestionService
 {
     private readonly IAttachmentBlobStore _blobs;
     private readonly IDicomInstanceStore _instances;
+    private readonly IImagingStudyLinkNotifier _linkNotifier;
     private readonly TimeProvider _timeProvider;
     /// <summary>
     /// Default ingestion: writes the .dcm bytes to <see cref="IAttachmentBlobStore"/>, records the
@@ -22,10 +23,12 @@ public sealed class DicomIngestionService : IDicomIngestionService
     /// </summary>
     public DicomIngestionService(IAttachmentBlobStore blobs,
         IDicomInstanceStore instances,
+        IImagingStudyLinkNotifier linkNotifier,
         TimeProvider timeProvider)
     {
         _blobs = blobs;
         _instances = instances;
+        _linkNotifier = linkNotifier;
         _timeProvider = timeProvider;
     }
     public async Task<DicomInstanceMetadata> IngestAsync(DicomFile dicomFile, CancellationToken cancellationToken)
@@ -40,6 +43,7 @@ public sealed class DicomIngestionService : IDicomIngestionService
         var patientId = ds.GetSingleValueOrDefault<string?>(DicomTag.PatientID, null);
         var patientName = ds.GetSingleValueOrDefault<string?>(DicomTag.PatientName, null);
         var modality = ds.GetSingleValueOrDefault<string?>(DicomTag.Modality, null);
+        var accessionNumber = ds.GetSingleValueOrDefault<string?>(DicomTag.AccessionNumber, null);
 
         if (string.IsNullOrEmpty(studyUid) || string.IsNullOrEmpty(seriesUid) || string.IsNullOrEmpty(sopUid))
         {
@@ -64,9 +68,20 @@ public sealed class DicomIngestionService : IDicomIngestionService
             Modality: modality,
             ReceivedUtc: _timeProvider.GetUtcNow(),
             SizeBytes: bytes.LongLength,
-            BlobId: blobId);
+            BlobId: blobId)
+        {
+            AccessionNumber = string.IsNullOrWhiteSpace(accessionNumber) ? null : accessionNumber,
+        };
 
         await _instances.AddAsync(metadata, cancellationToken).ConfigureAwait(false);
+
+        // Correlate the study to its originating order when an accession number is present. No-op by
+        // default; a host wires the real notifier to publish ImagingStudyLinkedIntegrationEvent.
+        if (metadata.AccessionNumber is not null)
+        {
+            await _linkNotifier.NotifyInstanceIngestedAsync(metadata, cancellationToken).ConfigureAwait(false);
+        }
+
         return metadata;
     }
 }

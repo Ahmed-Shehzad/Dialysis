@@ -197,8 +197,10 @@ public sealed class SmartConnectDbContext : DbContext, IUnitOfWork
             b.Property(e => e.PatientId).HasMaxLength(64);
             b.Property(e => e.PatientName).HasMaxLength(256);
             b.Property(e => e.Modality).HasMaxLength(16);
+            b.Property(e => e.AccessionNumber).HasMaxLength(64);
             b.HasIndex(e => e.SopInstanceUid).IsUnique();
             b.HasIndex(e => e.StudyInstanceUid);
+            b.HasIndex(e => e.AccessionNumber);
             b.HasIndex(e => new { e.PatientId, e.ReceivedUtc });
         });
     }
