@@ -23,7 +23,7 @@ public sealed class PatientRegisteredConsumer : IConsumer<PatientRegisteredInteg
             context.Message.PatientId,
             (IFhirResourceMapper<PatientRegisteredIntegrationEvent, Patient>)_mapper,
             ConsentScopes.Demographics,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class PatientDemographicsUpdatedConsumer : IConsumer<PatientDemographicsUpdatedIntegrationEvent>
@@ -41,7 +41,7 @@ public sealed class PatientDemographicsUpdatedConsumer : IConsumer<PatientDemogr
             context.Message.PatientId,
             (IFhirResourceMapper<PatientDemographicsUpdatedIntegrationEvent, Patient>)_mapper,
             ConsentScopes.Demographics,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class PatientsMergedConsumer : IConsumer<PatientsMergedIntegrationEvent>
@@ -59,5 +59,5 @@ public sealed class PatientsMergedConsumer : IConsumer<PatientsMergedIntegration
             context.Message.SurvivingPatientId,
             (IFhirResourceMapper<PatientsMergedIntegrationEvent, Patient>)_mapper,
             ConsentScopes.Demographics,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }

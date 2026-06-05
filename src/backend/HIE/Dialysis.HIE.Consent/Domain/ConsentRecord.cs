@@ -12,13 +12,22 @@ public sealed class ConsentRecord
     public string PartnerId { get; private set; } = string.Empty;
     public string Scope { get; private set; } = string.Empty;
     public ConsentDirection Direction { get; private set; }
+
+    /// <summary>
+    /// The TEFCA permitted purpose this consent is scoped to (one of
+    /// <c>TefcaPermittedPurposes</c>). <b>Null</b> means "any purpose" — the record honours a request
+    /// regardless of the purpose it declares, which is the back-compatible default for consents
+    /// captured before purpose governance. A non-null value only honours a matching purpose.
+    /// </summary>
+    public string? Purpose { get; private set; }
+
     public DateTime EffectiveFromUtc { get; private set; }
     public DateTime? EffectiveToUtc { get; private set; }
     public DateTime? RevokedAtUtc { get; private set; }
 
     private ConsentRecord() { }
 
-    public ConsentRecord(Guid patientId, string partnerId, string scope, ConsentDirection direction, DateTime effectiveFromUtc, DateTime? effectiveToUtc)
+    public ConsentRecord(Guid patientId, string partnerId, string scope, ConsentDirection direction, DateTime effectiveFromUtc, DateTime? effectiveToUtc, string? purpose = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(partnerId);
         ArgumentException.ThrowIfNullOrWhiteSpace(scope);
@@ -27,6 +36,7 @@ public sealed class ConsentRecord
         PartnerId = partnerId;
         Scope = scope;
         Direction = direction;
+        Purpose = string.IsNullOrWhiteSpace(purpose) ? null : purpose.Trim();
         EffectiveFromUtc = effectiveFromUtc;
         EffectiveToUtc = effectiveToUtc;
     }

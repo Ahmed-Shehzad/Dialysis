@@ -10,6 +10,8 @@ using Dialysis.HIE.OpenEhr.Domain;
 using Dialysis.HIE.Outbound.Domain;
 using Dialysis.HIE.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
 
 namespace Dialysis.HIE.Persistence;
@@ -119,6 +121,7 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
             e.Property(c => c.PartnerId).HasMaxLength(64).IsRequired();
             e.Property(c => c.Scope).HasMaxLength(64).IsRequired();
             e.Property(c => c.Direction).HasConversion<int>();
+            e.Property(c => c.Purpose).HasMaxLength(64);
             e.HasIndex(c => new { c.PatientId, c.PartnerId, c.Scope, c.Direction })
                 .HasDatabaseName("IX_Consents_PatientPartnerScopeDirection");
         });
@@ -233,6 +236,18 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
             e.HasIndex(r => r.PatientId).HasDatabaseName("IX_RestrictionRequests_PatientId");
         });
 
+        // Permitted-purpose allow-list persists as a single delimited column (an empty list = "all
+        // purposes"). The unit-separator delimiter can't collide with the PascalCase purpose tokens.
+        var allowedPurposesConverter = new ValueConverter<List<string>, string>(
+            v => string.Join('\u001f', v),
+            v => string.IsNullOrEmpty(v)
+                ? new List<string>()
+                : v.Split('\u001f', StringSplitOptions.RemoveEmptyEntries).ToList());
+        var allowedPurposesComparer = new ValueComparer<List<string>>(
+            (a, b) => (a ?? new List<string>()).SequenceEqual(b ?? new List<string>()),
+            v => v.Aggregate(0, (h, s) => HashCode.Combine(h, StringComparer.Ordinal.GetHashCode(s))),
+            v => v.ToList());
+
         modelBuilder.Entity<QhinPartner>(e =>
         {
             e.ToTable("QhinPartners", "hie_tefca");
@@ -244,6 +259,13 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
             e.Property(p => p.MtlsCertStorageRef).HasMaxLength(512);
             e.Property(p => p.MtlsCertThumbprint).HasMaxLength(128);
             e.Property(p => p.UpdatedBy).HasMaxLength(128).IsRequired();
+            e.Ignore(p => p.AllowedPurposes);
+            e.Property<List<string>>("_allowedPurposes")
+                .HasColumnName("AllowedPurposes")
+                .HasConversion(allowedPurposesConverter, allowedPurposesComparer)
+                .HasMaxLength(512)
+                .IsRequired()
+                .HasDefaultValue(new List<string>());
             e.HasMany(p => p.TrustAnchors)
                 .WithOne()
                 .HasForeignKey(a => a.QhinPartnerId)

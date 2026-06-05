@@ -8,13 +8,16 @@ public sealed class EfConsentRepository : IConsentRepository
 {
     private readonly HieDbContext _db;
     public EfConsentRepository(HieDbContext db) => _db = db;
-    public async Task<ConsentRecord?> FindActiveAsync(Guid patientId, string partnerId, string scope, ConsentDirection direction, DateTime atUtc, CancellationToken cancellationToken = default)
+    public async Task<ConsentRecord?> FindActiveAsync(Guid patientId, string partnerId, string scope, ConsentDirection direction, DateTime atUtc, string? purpose = null, CancellationToken cancellationToken = default)
     {
         return await _db.Consents
             .Where(c => c.PatientId == patientId
                 && c.PartnerId == partnerId
                 && c.Scope == scope
                 && c.Direction == direction
+                // A null Purpose on the record is a wildcard that honours any requested purpose;
+                // a specific purpose only matches a request declaring that same purpose.
+                && (c.Purpose == null || purpose == null || c.Purpose == purpose)
                 && c.RevokedAtUtc == null
                 && c.EffectiveFromUtc <= atUtc
                 && (c.EffectiveToUtc == null || c.EffectiveToUtc > atUtc))
@@ -23,7 +26,7 @@ public sealed class EfConsentRepository : IConsentRepository
             .ConfigureAwait(false);
     }
 
-    public async Task<ConsentRecord?> FindActiveByExternalReferenceAsync(string externalPatientReference, string partnerId, string scope, ConsentDirection direction, DateTime atUtc, CancellationToken cancellationToken = default)
+    public async Task<ConsentRecord?> FindActiveByExternalReferenceAsync(string externalPatientReference, string partnerId, string scope, ConsentDirection direction, DateTime atUtc, string? purpose = null, CancellationToken cancellationToken = default)
     {
         // v1: inbound consents are issued against an internal patient id; partners that haven't been matched
         // yet are allowed if a wildcard consent with PatientId = Guid.Empty exists for the (partner, scope).
@@ -32,6 +35,7 @@ public sealed class EfConsentRepository : IConsentRepository
                 && c.PartnerId == partnerId
                 && c.Scope == scope
                 && c.Direction == direction
+                && (c.Purpose == null || purpose == null || c.Purpose == purpose)
                 && c.RevokedAtUtc == null
                 && c.EffectiveFromUtc <= atUtc
                 && (c.EffectiveToUtc == null || c.EffectiveToUtc > atUtc))

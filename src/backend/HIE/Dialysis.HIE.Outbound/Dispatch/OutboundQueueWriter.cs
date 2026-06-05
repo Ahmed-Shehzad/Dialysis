@@ -1,5 +1,6 @@
 using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
+using Dialysis.BuildingBlocks.Fhir.Tefca;
 using Dialysis.HIE.Outbound.Domain;
 using Dialysis.HIE.Outbound.Ports;
 using Hl7.Fhir.Model;
@@ -46,17 +47,20 @@ public sealed class OutboundQueueWriter
         Guid patientId,
         IFhirResourceMapper<TEvent, TResource> mapper,
         string consentScope,
+        string? purposeOfUse = null,
         CancellationToken cancellationToken = default)
         where TEvent : class
         where TResource : Resource
     {
+        // Cross-org clinical disclosures are made for care delivery unless a consumer says otherwise.
+        var purpose = string.IsNullOrWhiteSpace(purposeOfUse) ? TefcaPermittedPurposes.Treatment : purposeOfUse;
         var partnerId = _options.DefaultPartnerId;
-        var allowed = await _consentGate.CheckOutboundAsync(patientId, partnerId, consentScope, cancellationToken).ConfigureAwait(false);
+        var allowed = await _consentGate.CheckOutboundAsync(patientId, partnerId, consentScope, purpose, cancellationToken).ConfigureAwait(false);
         if (!allowed)
         {
             _logger.LogInformation(
-                "Outbound disclosure suppressed: no active consent for patient {PatientId} → partner {PartnerId} scope {Scope}",
-                patientId, partnerId, consentScope);
+                "Outbound disclosure suppressed: no active consent for patient {PatientId} → partner {PartnerId} scope {Scope} purpose {Purpose}",
+                patientId, partnerId, consentScope, purpose);
             return;
         }
 

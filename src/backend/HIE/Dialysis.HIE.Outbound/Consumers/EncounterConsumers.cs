@@ -23,7 +23,7 @@ public sealed class EncounterOpenedConsumer : IConsumer<EncounterOpenedIntegrati
             context.Message.PatientId,
             (IFhirResourceMapper<EncounterOpenedIntegrationEvent, Encounter>)_mapper,
             ConsentScopes.Encounters,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class EncounterClosedConsumer : IConsumer<EncounterClosedIntegrationEvent>
@@ -41,7 +41,7 @@ public sealed class EncounterClosedConsumer : IConsumer<EncounterClosedIntegrati
             context.Message.PatientId,
             (IFhirResourceMapper<EncounterClosedIntegrationEvent, Encounter>)_mapper,
             ConsentScopes.Encounters,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class ClinicalNoteSignedConsumer : IConsumer<ClinicalNoteSignedIntegrationEvent>
@@ -59,5 +59,5 @@ public sealed class ClinicalNoteSignedConsumer : IConsumer<ClinicalNoteSignedInt
             context.Message.PatientId,
             (IFhirResourceMapper<ClinicalNoteSignedIntegrationEvent, DocumentReference>)_mapper,
             ConsentScopes.ClinicalNotes,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }

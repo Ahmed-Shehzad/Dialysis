@@ -23,7 +23,7 @@ public sealed class LabOrderPlacedConsumer : IConsumer<LabOrderPlacedIntegration
             context.Message.PatientId,
             (IFhirResourceMapper<LabOrderPlacedIntegrationEvent, ServiceRequest>)_mapper,
             ConsentScopes.Labs,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class LabResultReceivedConsumer : IConsumer<LabResultReceivedIntegrationEvent>
@@ -41,5 +41,5 @@ public sealed class LabResultReceivedConsumer : IConsumer<LabResultReceivedInteg
             context.Message.PatientId,
             (IFhirResourceMapper<LabResultReceivedIntegrationEvent, Observation>)_mapper,
             ConsentScopes.Labs,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
