@@ -159,6 +159,8 @@
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Bff.Events/Dialysis.Module.Bff.Events.csproj" />
+    <Project Path="src/backend/Shared/Dialysis.Module.Bff.Events.Tests/Dialysis.Module.Bff.Events.Tests.csproj" />
     <Project Path="src/backend/Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </Folder>
   <Folder Name="/src/backend/HIS/">

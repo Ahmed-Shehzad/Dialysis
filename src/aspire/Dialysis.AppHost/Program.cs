@@ -568,7 +568,14 @@ IResourceBuilder<ProjectResource> AddContextBff(
         .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
         // Confidential-client secret for this context's Keycloak client (overridable per env).
         .WithEnvironment("Bff__Keycloak__ClientSecret", clientSecret)
-        .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"));
+        .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"))
+        // Event-driven push: the BFF consumes integration events off RabbitMQ (its own bff-<slug>
+        // queue) and fans them to the SPA over SignalR, with Valkey as the cross-replica backplane.
+        // Consume-only — no DbContext/outbox. Harmless for BFFs that don't call AddModuleBffEvents.
+        .WithReference(rabbit).WaitFor(rabbit)
+        .WithReference(valkey).WaitFor(valkey)
+        .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
+        .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
 
 var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret);
 // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context

@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { ToastHost } from "@/features/durable-commands";
+import { useBffNotifications } from "@/features/notifications/useBffNotifications";
 import { useTheme } from "@/features/theme/ThemeProvider";
 import { PatientContextBar } from "@/shell/PatientContextBar";
 
@@ -39,6 +40,8 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 // (e.g. to the EHR app) is a full-page hop to another /{context} app, not an in-app link.
 export const AppShell = ({ children }: { children?: ReactNode }) => {
   const { user, signOut, status } = useAuth();
+  // Live BFF push: chairside alarms etc. for the selected patient surface as toasts.
+  useBffNotifications();
 
   return (
     <div className="min-h-full">
