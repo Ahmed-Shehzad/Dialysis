@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
+using Dialysis.BuildingBlocks.DataProtection.Restriction;
 
 namespace Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 
@@ -11,7 +12,7 @@ namespace Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 ///   <item>Art. 17 — approve → run every registered <see cref="IPatientEraser"/> in sequence
 ///     and persist the composite outcome on the request row.</item>
 ///   <item>Art. 17 — reject → mark the row rejected with the operator's reason.</item>
-///   <item>Art. 18 — restriction → currently filed as a stub; future module integration.</item>
+///   <item>Art. 18 — restriction → file via <see cref="IRestrictionRequestStore"/>; lifted by an operator.</item>
 /// </list>
 /// </summary>
 public sealed class DefaultDataSubjectRightsService : IDataSubjectRightsService
@@ -19,21 +20,25 @@ public sealed class DefaultDataSubjectRightsService : IDataSubjectRightsService
     private readonly IEnumerable<IModuleDataExtractor> _extractors;
     private readonly IEnumerable<IPatientEraser> _erasers;
     private readonly IErasureRequestStore _requestStore;
+    private readonly IRestrictionRequestStore _restrictionStore;
     private readonly TimeProvider _clock;
 
     public DefaultDataSubjectRightsService(
         IEnumerable<IModuleDataExtractor> extractors,
         IEnumerable<IPatientEraser> erasers,
         IErasureRequestStore requestStore,
+        IRestrictionRequestStore restrictionStore,
         TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(extractors);
         ArgumentNullException.ThrowIfNull(erasers);
         ArgumentNullException.ThrowIfNull(requestStore);
+        ArgumentNullException.ThrowIfNull(restrictionStore);
         ArgumentNullException.ThrowIfNull(clock);
         _extractors = extractors;
         _erasers = erasers;
         _requestStore = requestStore;
+        _restrictionStore = restrictionStore;
         _clock = clock;
     }
 
@@ -128,15 +133,49 @@ public sealed class DefaultDataSubjectRightsService : IDataSubjectRightsService
         int take, CancellationToken cancellationToken) =>
         _requestStore.ListByStatusAsync(ErasureRequestStatus.Pending, take, cancellationToken);
 
-    public Task<Guid> RequestRestrictionAsync(
+    public async Task<Guid> RequestRestrictionAsync(
         Guid patientId, string requestedBy, string? reason, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(requestedBy);
-        // v1: filed as a stub — module-level restriction is a deferred concern. Returning a
-        // synthesised id keeps the existing endpoint contract while the persistence story
-        // catches up. The audit row is the contract this method must honour later.
-        _ = patientId;
-        _ = reason;
-        return Task.FromResult(Guid.CreateVersion7());
+        var request = new RestrictionRequest(
+            Id: Guid.CreateVersion7(),
+            PatientId: patientId,
+            Status: RestrictionRequestStatus.Active,
+            RequestedBy: requestedBy,
+            RequestedAtUtc: _clock.GetUtcNow(),
+            Reason: reason,
+            LiftedBy: null,
+            LiftedAtUtc: null,
+            LiftReason: null);
+        await _restrictionStore.SaveAsync(request, cancellationToken).ConfigureAwait(false);
+        return request.Id;
+    }
+
+    public Task<IReadOnlyList<RestrictionRequest>> ListActiveRestrictionsAsync(
+        int take, CancellationToken cancellationToken) =>
+        _restrictionStore.ListByStatusAsync(RestrictionRequestStatus.Active, take, cancellationToken);
+
+    public async Task<RestrictionRequest> LiftRestrictionAsync(
+        Guid requestId, string liftedBy, string reason, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(liftedBy);
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        var existing = await _restrictionStore.FindAsync(requestId, cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Restriction request '{requestId}' not found.");
+        if (existing.Status != RestrictionRequestStatus.Active)
+        {
+            throw new InvalidOperationException(
+                $"Restriction request '{requestId}' is already {existing.Status}.");
+        }
+
+        var updated = existing with
+        {
+            Status = RestrictionRequestStatus.Lifted,
+            LiftedBy = liftedBy,
+            LiftedAtUtc = _clock.GetUtcNow(),
+            LiftReason = reason,
+        };
+        await _restrictionStore.SaveAsync(updated, cancellationToken).ConfigureAwait(false);
+        return updated;
     }
 }

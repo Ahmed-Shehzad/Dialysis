@@ -1,9 +1,12 @@
 using Dialysis.CQRS.Queries;
+using Dialysis.HIS.Contracts.Security;
 
 namespace Dialysis.HIS.Operations.Features.GetBillingExportJobById;
 
-public sealed record GetBillingExportJobByIdQuery : IQuery<BillingExportJobStatusDto?>
+public sealed record GetBillingExportJobByIdQuery : IQuery<BillingExportJobStatusDto?>, IPermissionedCommand
 {
+    /// <summary>Billing export job status exposes payer codes and periods — gated on the billing/report permission.</summary>
+    public string RequiredPermission => HisPermissions.DataReport;
     public GetBillingExportJobByIdQuery(Guid Id) => this.Id = Id;
     public Guid Id { get; init; }
     public void Deconstruct(out Guid id) => id = this.Id;

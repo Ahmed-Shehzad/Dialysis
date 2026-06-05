@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
+using Dialysis.BuildingBlocks.DataProtection.Restriction;
 using Dialysis.BuildingBlocks.DataProtection.Retention;
 using Dialysis.BuildingBlocks.DataProtection.Ropa;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,6 +66,8 @@ public static class DataProtectionServiceCollectionExtensions
         // back to the in-memory baseline below so DI validation succeeds without an erasure
         // persistence story of their own.
         services.TryAddSingleton<IErasureRequestStore, InMemoryErasureRequestStore>();
+        // Art. 18 restriction store — same baseline/EF split as erasure above.
+        services.TryAddSingleton<IRestrictionRequestStore, InMemoryRestrictionRequestStore>();
         services.TryAddScoped<IDataSubjectRightsService, DefaultDataSubjectRightsService>();
 
         return services;

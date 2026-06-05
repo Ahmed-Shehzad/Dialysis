@@ -44,9 +44,24 @@ public interface IDataSubjectRightsService
     Task<IReadOnlyList<ErasureRequest>> ListPendingErasureRequestsAsync(
         int take, CancellationToken cancellationToken);
 
-    /// <summary>Art. 18 — restrict processing pending resolution of a dispute.</summary>
+    /// <summary>
+    /// Art. 18 — file a restriction-of-processing request. Persists an
+    /// <see cref="RestrictionRequestStatus.Active"/> audit row and returns its id; an operator
+    /// lifts it once the dispute that prompted it is resolved.
+    /// </summary>
     Task<Guid> RequestRestrictionAsync(
         Guid patientId, string requestedBy, string? reason, CancellationToken cancellationToken);
+
+    /// <summary>Operator-facing list of active restriction requests.</summary>
+    Task<IReadOnlyList<RestrictionRequest>> ListActiveRestrictionsAsync(
+        int take, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Art. 18 — lift an active restriction once its dispute is resolved. The audit row captures
+    /// who lifted it and why so a regulator can verify the decision.
+    /// </summary>
+    Task<RestrictionRequest> LiftRestrictionAsync(
+        Guid requestId, string liftedBy, string reason, CancellationToken cancellationToken);
 }
 
 /// <summary>

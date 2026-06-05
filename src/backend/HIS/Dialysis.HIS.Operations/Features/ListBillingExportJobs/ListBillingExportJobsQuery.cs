@@ -1,4 +1,5 @@
 using Dialysis.CQRS.Queries;
+using Dialysis.HIS.Contracts.Security;
 
 namespace Dialysis.HIS.Operations.Features.ListBillingExportJobs;
 
@@ -7,8 +8,11 @@ namespace Dialysis.HIS.Operations.Features.ListBillingExportJobs;
 /// to a single status. Drives the <c>/admin/billing/exports</c> SPA page; the
 /// <c>OperationsController</c> exposes this on <c>GET /api/v1.0/operations/billing/export-jobs</c>.
 /// </summary>
-public sealed record ListBillingExportJobsQuery : IQuery<IReadOnlyList<BillingExportJobRow>>
+public sealed record ListBillingExportJobsQuery : IQuery<IReadOnlyList<BillingExportJobRow>>, IPermissionedCommand
 {
+    /// <summary>Billing export job rows expose payer codes and periods — gated on the billing/report permission.</summary>
+    public string RequiredPermission => HisPermissions.DataReport;
+
     /// <summary>
     /// Operator-dashboard query: returns recent <c>BillingExportJob</c> rows, optionally filtered
     /// to a single status. Drives the <c>/admin/billing/exports</c> SPA page; the
