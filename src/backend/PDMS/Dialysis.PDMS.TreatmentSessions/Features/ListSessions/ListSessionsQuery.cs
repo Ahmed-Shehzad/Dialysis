@@ -12,7 +12,9 @@ public sealed record DialysisSessionListItem
         DateTime ScheduledStartUtc,
         DateTime? ActualStartUtc,
         DateTime? ActualEndUtc,
-        Guid? MachineId)
+        Guid? MachineId,
+        DateTime? PausedAtUtc,
+        int AccumulatedPausedSeconds)
     {
         this.Id = Id;
         this.PatientId = PatientId;
@@ -21,6 +23,8 @@ public sealed record DialysisSessionListItem
         this.ActualStartUtc = ActualStartUtc;
         this.ActualEndUtc = ActualEndUtc;
         this.MachineId = MachineId;
+        this.PausedAtUtc = PausedAtUtc;
+        this.AccumulatedPausedSeconds = AccumulatedPausedSeconds;
     }
     public Guid Id { get; init; }
     public Guid PatientId { get; init; }
@@ -29,7 +33,11 @@ public sealed record DialysisSessionListItem
     public DateTime? ActualStartUtc { get; init; }
     public DateTime? ActualEndUtc { get; init; }
     public Guid? MachineId { get; init; }
-    public void Deconstruct(out Guid Id, out Guid PatientId, out string Status, out DateTime ScheduledStartUtc, out DateTime? ActualStartUtc, out DateTime? ActualEndUtc, out Guid? MachineId)
+    /// <summary>When the session entered its current pause, or null while running / ended.</summary>
+    public DateTime? PausedAtUtc { get; init; }
+    /// <summary>Total seconds spent paused so far (excluding any open pause) — lets the live timer exclude pauses.</summary>
+    public int AccumulatedPausedSeconds { get; init; }
+    public void Deconstruct(out Guid Id, out Guid PatientId, out string Status, out DateTime ScheduledStartUtc, out DateTime? ActualStartUtc, out DateTime? ActualEndUtc, out Guid? MachineId, out DateTime? PausedAtUtc, out int AccumulatedPausedSeconds)
     {
         Id = this.Id;
         PatientId = this.PatientId;
@@ -38,6 +46,8 @@ public sealed record DialysisSessionListItem
         ActualStartUtc = this.ActualStartUtc;
         ActualEndUtc = this.ActualEndUtc;
         MachineId = this.MachineId;
+        PausedAtUtc = this.PausedAtUtc;
+        AccumulatedPausedSeconds = this.AccumulatedPausedSeconds;
     }
 }
 

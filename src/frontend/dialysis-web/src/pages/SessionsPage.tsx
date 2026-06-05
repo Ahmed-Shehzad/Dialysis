@@ -81,6 +81,7 @@ export const SessionsPage = () => {
         ]}
         rightSlot={
           <select
+            aria-label="Filter sessions by status"
             value={filter}
             onChange={(e) => setFilter(e.target.value as StatusFilter)}
             className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100"

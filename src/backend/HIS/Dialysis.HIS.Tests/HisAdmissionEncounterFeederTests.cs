@@ -74,7 +74,7 @@ public sealed class HisAdmissionEncounterFeederTests
         Status: ExportJobStatus.InProgress,
         CreatedAt: DateTimeOffset.UtcNow,
         CompletedAt: null,
-        Outputs: Array.Empty<ExportJobOutput>(),
+        Outputs: [],
         Error: null);
 
     private sealed class InMemoryAdmissions : IAdmissionRepository
@@ -95,7 +95,8 @@ public sealed class HisAdmissionEncounterFeederTests
                 if (since is { } cutoff)
                 {
                     var latestUtc = admission.DischargedAtUtc ?? admission.AdmittedAtUtc;
-                    if (latestUtc < cutoff.UtcDateTime) continue;
+                    if (latestUtc < cutoff.UtcDateTime)
+                        continue;
                 }
                 yield return admission;
                 await Task.Yield();
@@ -112,7 +113,8 @@ public sealed class HisAdmissionEncounterFeederTests
                 if (since is { } cutoff)
                 {
                     var latestUtc = admission.DischargedAtUtc ?? admission.AdmittedAtUtc;
-                    if (latestUtc < cutoff.UtcDateTime) continue;
+                    if (latestUtc < cutoff.UtcDateTime)
+                        continue;
                 }
                 if (seen.Add(admission.PatientId))
                 {

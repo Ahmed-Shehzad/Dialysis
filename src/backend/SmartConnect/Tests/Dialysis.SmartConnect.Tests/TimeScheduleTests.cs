@@ -40,5 +40,5 @@ public sealed class TimeScheduleTests
     }
 
     [Fact]
-    public void Empty_Times_Throws() => Assert.Throws<ArgumentException>(() => new TimeSchedule(Array.Empty<TimeOnly>()));
+    public void Empty_Times_Throws() => Assert.Throws<ArgumentException>(() => new TimeSchedule([]));
 }

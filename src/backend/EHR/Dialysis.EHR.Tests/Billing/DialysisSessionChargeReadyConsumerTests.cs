@@ -3,6 +3,8 @@ using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Billing.Consumers;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
+using Dialysis.EHR.Contracts.Integration;
+using Dialysis.Module.Contracts.Billing;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
@@ -11,28 +13,37 @@ using Xunit;
 namespace Dialysis.EHR.Tests.Billing;
 
 /// <summary>
-/// Idempotency-focused tests for the PDMS → EHR charge bridge. The consumer must capture
-/// a <see cref="Charge"/> on first delivery and exit silently on re-delivery — RabbitMQ
-/// can deliver the same event twice on a reconnect and the charge ledger must not double.
+/// Tests for the PDMS → EHR charge bridge. The consumer prices the session via the shared
+/// <see cref="DialysisTariff"/>, captures a <see cref="Charge"/> on first delivery, publishes
+/// the invoice-ready event for HIE, and exits silently on re-delivery — RabbitMQ can deliver
+/// the same event twice on a reconnect and the charge ledger must not double.
 /// </summary>
 public sealed class DialysisSessionChargeReadyConsumerTests
 {
     [Fact]
-    public async Task First_Delivery_Captures_A_Charge_With_The_Resolved_Fee_Async()
+    public async Task First_Delivery_Captures_An_Itemised_Charge_And_Publishes_The_Invoice_Async()
     {
         var charges = new StubChargeRepo();
-        var idempotency = new StubIdempotency();
-        var feeSchedule = new StubFeeSchedule(new Money(250.00m, "USD"));
+        var bus = new CapturingBus();
         var unitOfWork = new StubUnitOfWork();
         var consumer = new DialysisSessionChargeReadyConsumer(
-            charges, idempotency, feeSchedule, unitOfWork, NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
+            charges, new StubIdempotency(), bus, TimeProvider.System, unitOfWork,
+            NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
 
-        await consumer.HandleAsync(Context(NewEvent(modality: "HD", cpt: "90935")));
+        var expected = DialysisTariff.Compute("HD", 240, 2.5m);
+        await consumer.HandleAsync(Context(NewEvent(modality: "HD", cpt: "90935", uf: 2.5m)));
 
         charges.Added.Count.ShouldBe(1);
         charges.Added[0].CptCode.ShouldBe("90935");
-        charges.Added[0].BilledAmount.Amount.ShouldBe(250.00m);
+        charges.Added[0].BilledAmount.Amount.ShouldBe(expected.Total);
         unitOfWork.Saved.ShouldBeTrue();
+
+        var invoice = bus.Published.OfType<DialysisInvoiceReadyIntegrationEvent>().ShouldHaveSingleItem();
+        invoice.Total.ShouldBe(expected.Total);
+        invoice.Lines.Count.ShouldBe(expected.Lines.Count);
+        invoice.ChargeId.ShouldBe(charges.Added[0].Id);
+        invoice.InvoiceNumber.ShouldStartWith("INV-");
+        invoice.DurationMinutes.ShouldBe(240);
     }
 
     [Fact]
@@ -40,10 +51,9 @@ public sealed class DialysisSessionChargeReadyConsumerTests
     {
         var sessionId = Guid.NewGuid();
         var charges = new StubChargeRepo();
-        var idempotency = new StubIdempotency();
-        var fee = new StubFeeSchedule(new Money(250.00m, "USD"));
         var consumer = new DialysisSessionChargeReadyConsumer(
-            charges, idempotency, fee, new StubUnitOfWork(), NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
+            charges, new StubIdempotency(), new CapturingBus(), TimeProvider.System, new StubUnitOfWork(),
+            NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
 
         var first = NewEvent(sessionId: sessionId, modality: "HD", cpt: "90935");
 
@@ -58,8 +68,8 @@ public sealed class DialysisSessionChargeReadyConsumerTests
     {
         var charges = new StubChargeRepo();
         var consumer = new DialysisSessionChargeReadyConsumer(
-            charges, new StubIdempotency(), new StubFeeSchedule(new Money(100m, "USD")),
-            new StubUnitOfWork(), NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
+            charges, new StubIdempotency(), new CapturingBus(), TimeProvider.System, new StubUnitOfWork(),
+            NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
 
         foreach (var modality in new[] { "HD", "PD", "Haemodialysis", "Peritoneal" })
         {
@@ -73,7 +83,8 @@ public sealed class DialysisSessionChargeReadyConsumerTests
     private static DialysisSessionChargeReadyIntegrationEvent NewEvent(
         Guid? sessionId = null,
         string modality = "HD",
-        string cpt = "90935") => new(
+        string cpt = "90935",
+        decimal uf = 2.5m) => new(
         EventId: Guid.CreateVersion7(),
         OccurredOn: DateTime.UtcNow,
         SchemaVersion: 1,
@@ -82,16 +93,25 @@ public sealed class DialysisSessionChargeReadyConsumerTests
         Modality: modality,
         DurationMinutes: 240,
         CompletedAtUtc: DateTime.UtcNow,
-        CptCode: cpt);
+        CptCode: cpt,
+        AchievedUfVolumeLiters: uf);
 
     private static ConsumeContext<DialysisSessionChargeReadyIntegrationEvent> Context(DialysisSessionChargeReadyIntegrationEvent message) =>
-        new(message, CancellationToken.None, NullBus.Instance);
+        new(message, CancellationToken.None, new CapturingBus());
 
-    private sealed class NullBus : ITransponderBus
+    private sealed class CapturingBus : ITransponderBus
     {
-        public static NullBus Instance { get; } = new();
-        public Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class => Task.CompletedTask;
-        public Task PublishAsync<T>(T message, TransponderPublishOptions options, CancellationToken cancellationToken = default) where T : class => Task.CompletedTask;
+        public List<object> Published { get; } = new();
+        public Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
+        {
+            Published.Add(message);
+            return Task.CompletedTask;
+        }
+        public Task PublishAsync<T>(T message, TransponderPublishOptions options, CancellationToken cancellationToken = default) where T : class
+        {
+            Published.Add(message);
+            return Task.CompletedTask;
+        }
         public Task PublishPreparedAsync(string routingKey, object message, TransponderPublishOptions options, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task PublishLargeAsync<T>(T message, TransponderLargeMessageOptions? options = null, CancellationToken cancellationToken = default) where T : class => Task.CompletedTask;
     }
@@ -119,13 +139,6 @@ public sealed class DialysisSessionChargeReadyConsumerTests
             _seen[(sessionId, cptCode)] = chargeId;
             return Task.CompletedTask;
         }
-    }
-
-    private sealed class StubFeeSchedule : ICptFeeSchedule
-    {
-        private readonly Money _amount;
-        public StubFeeSchedule(Money amount) => _amount = amount;
-        public Task<Money> LookupAsync(string cptCode, CancellationToken cancellationToken) => Task.FromResult(_amount);
     }
 
     private sealed class StubUnitOfWork : IUnitOfWork

@@ -23,7 +23,7 @@ public static class DataProtectionEndpointExtensions
             admin.MapGet("/ropa", (IRopaGenerator generator) =>
                 {
                     var doc = generator.Generate();
-                    return Results.Ok(doc);
+                    return Results.Ok(RopaView.From(doc));
                 })
                 .WithName("DataProtection_Ropa");
 

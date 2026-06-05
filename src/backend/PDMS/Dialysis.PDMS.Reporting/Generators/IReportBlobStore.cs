@@ -16,8 +16,12 @@ public interface IReportBlobStore
 /// <summary>Repository for the <see cref="Domain.SessionReport"/> aggregate.</summary>
 public interface ISessionReportRepository
 {
-    void Add(Domain.SessionReport report);
+    /// <summary>Stages a new report; persisted by the consumer's unit of work.</summary>
+    Task AddAsync(Domain.SessionReport report, CancellationToken cancellationToken);
     Task<Domain.SessionReport?> FindAsync(Guid reportId, CancellationToken cancellationToken);
+
+    /// <summary>Returns every report already produced for a session — the consumer's idempotency key is <c>(SessionId, Kind)</c>.</summary>
+    Task<IReadOnlyList<Domain.SessionReport>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken);
 }
 
 /// <summary>Repository for the operator-authored <see cref="Domain.ReportTemplate"/>.</summary>

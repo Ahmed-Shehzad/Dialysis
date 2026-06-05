@@ -124,7 +124,7 @@ public sealed class ChannelWriterOutboundAdapter : IOutboundAdapter
         opts.MetadataPropagation switch
         {
             ChannelWriterMetadataPropagation.All => source,
-            ChannelWriterMetadataPropagation.None => ImmutableDictionary<string, string>.Empty,
+            ChannelWriterMetadataPropagation.None => [],
             ChannelWriterMetadataPropagation.Whitelist => FilterByWhitelist(source, opts.MetadataKeys),
             _ => source,
         };
@@ -135,7 +135,7 @@ public sealed class ChannelWriterOutboundAdapter : IOutboundAdapter
     {
         if (keys.Count == 0)
         {
-            return ImmutableDictionary<string, string>.Empty;
+            return [];
         }
 
         var allowed = new HashSet<string>(keys, StringComparer.Ordinal);

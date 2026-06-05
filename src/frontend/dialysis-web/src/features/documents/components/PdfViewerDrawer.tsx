@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Document, Page, pdfjs } from "react-pdf";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import {
   deleteDocument,
   documentBinaryUrl,
+  downloadDocumentBinary,
   fetchDocumentDetail,
   fetchDocumentPreview,
   fillDocumentAcroForm,
@@ -15,6 +17,7 @@ import {
   type PadesLevel,
   type SignerKind,
 } from "@/features/documents/api/documentsApi";
+import { useAuth } from "@/features/auth/components/AuthProvider";
 
 // pdfjs worker is shipped as an ES module; Vite resolves it via the ?url import. With
 // the worker wired the viewer can render annotations + AcroForm widgets inline.
@@ -23,6 +26,85 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 type Props = {
   documentId: string;
   onClose: () => void;
+};
+
+/** A single editable AcroForm field surfaced from the PDF via pdfjs. */
+type AcroField = {
+  name: string;
+  type: "text" | "checkbox" | "combobox";
+  required: boolean;
+  multiline: boolean;
+  options: string[];
+};
+
+// Friendly labels for the invoice's fields; falls back to the raw field name for any other PDF.
+const FIELD_LABELS: Record<string, string> = {
+  BillToName: "Bill to (name)",
+  BillToAddress: "Bill to (address)",
+  PayerCode: "Payer",
+  PoNumber: "PO number",
+  Remarks: "Remarks",
+  Reviewed: "Reviewed",
+};
+
+// Fields we always treat as required even if a viewer doesn't surface the AcroForm Required flag.
+const ALWAYS_REQUIRED = new Set(["BillToName", "PayerCode"]);
+
+const labelFor = (name: string): string => FIELD_LABELS[name] ?? name;
+
+type PdfjsWidget = {
+  type?: string;
+  value?: unknown;
+  required?: boolean;
+  multiline?: boolean;
+  items?: { displayValue?: string; exportValue?: string }[];
+};
+
+/** Maps a single pdfjs widget into a typed field + its initial value, or null if unsupported. */
+const mapWidget = (name: string, w: PdfjsWidget): { field: AcroField; value: string } | null => {
+  const required = Boolean(w.required) || ALWAYS_REQUIRED.has(name);
+  const stringValue = typeof w.value === "string" ? w.value : "";
+  if (w.type === "text") {
+    return {
+      field: { name, type: "text", required, multiline: Boolean(w.multiline), options: [] },
+      value: stringValue,
+    };
+  }
+  if (w.type === "combobox" || w.type === "listbox") {
+    const options = (w.items ?? [])
+      .map((i) => i.exportValue ?? i.displayValue ?? "")
+      .filter((o) => o.length > 0);
+    return {
+      field: { name, type: "combobox", required, multiline: false, options },
+      value: stringValue,
+    };
+  }
+  if (w.type === "checkbox") {
+    const checked = w.value === true || (stringValue !== "Off" && stringValue !== "");
+    return {
+      field: { name, type: "checkbox", required, multiline: false, options: [] },
+      value: checked ? "true" : "false",
+    };
+  }
+  return null;
+};
+
+/** Maps pdfjs field objects into the typed, editable field list the drawer renders. */
+const toAcroFields = (
+  fieldObjects: Record<string, PdfjsWidget[]> | null,
+): { fields: AcroField[]; values: Record<string, string> } => {
+  const fields: AcroField[] = [];
+  const values: Record<string, string> = {};
+  if (!fieldObjects) return { fields, values };
+
+  for (const [name, widgets] of Object.entries(fieldObjects)) {
+    const mapped = mapWidget(name, widgets?.[0] ?? {});
+    if (mapped) {
+      fields.push(mapped.field);
+      values[name] = mapped.value;
+    }
+  }
+  return { fields, values };
 };
 
 /**
@@ -40,13 +122,18 @@ type Props = {
  */
 export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   const queryClient = useQueryClient();
+  const { getAccessToken } = useAuth();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [signMode, setSignMode] = useState<SignerKind>("Platform");
   const [signerUserId, setSignerUserId] = useState("");
   const [signReason, setSignReason] = useState("");
   const [signLevel, setSignLevel] = useState<PadesLevel>("LT");
   const [tspCredentialId, setTspCredentialId] = useState("");
-  const [fillForm, setFillForm] = useState("");
+  const [fields, setFields] = useState<AcroField[]>([]);
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  // Bumped after a successful fill so the <Document> re-fetches the (now baked) bytes.
+  const [reloadKey, setReloadKey] = useState(0);
   const [fillFeedback, setFillFeedback] = useState<{ filled: string[]; unknown: string[] } | null>(
     null,
   );
@@ -89,16 +176,103 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
   });
 
   const fillMutation = useMutation({
-    mutationFn: () => {
-      const trimmed = fillForm.trim();
-      const values = trimmed.length === 0 ? {} : (JSON.parse(trimmed) as Record<string, string>);
-      return fillDocumentAcroForm(documentId, values);
-    },
+    mutationFn: (values: Record<string, string>) => fillDocumentAcroForm(documentId, values),
     onSuccess: (result) => {
       setFillFeedback({ filled: result.filledFieldNames, unknown: result.unknownFields });
+      // Re-fetch the now-baked bytes so the preview reflects the saved values.
+      setReloadKey((k) => k + 1);
       invalidate();
     },
   });
+
+  const loadFormFields = async (pdf: PDFDocumentProxy) => {
+    setNumPages(pdf.numPages);
+    try {
+      const objects = await pdf.getFieldObjects();
+      const mapped = toAcroFields(objects);
+      setFields(mapped.fields);
+      setFormValues(mapped.values);
+      setFormErrors({});
+    } catch {
+      setFields([]);
+    }
+  };
+
+  const updateField = (name: string, value: string) => {
+    setFormValues((prev) => ({ ...prev, [name]: value }));
+    setFormErrors((prev) => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  };
+
+  const saveForm = () => {
+    const errors: Record<string, string> = {};
+    for (const f of fields) {
+      if (f.required && f.type !== "checkbox" && !formValues[f.name]?.trim()) {
+        errors[f.name] = "This field is required.";
+      }
+    }
+    setFormErrors(errors);
+    if (Object.keys(errors).length === 0) fillMutation.mutate(formValues);
+  };
+
+  const fieldInputClass =
+    "mt-1 w-full rounded border border-slate-700 bg-slate-800/60 p-2 text-slate-100";
+
+  const renderFieldInput = (f: AcroField) => {
+    const aria = labelFor(f.name);
+    if (f.type === "checkbox") {
+      return (
+        <input
+          type="checkbox"
+          aria-label={aria}
+          checked={formValues[f.name] === "true"}
+          onChange={(e) => updateField(f.name, e.target.checked ? "true" : "false")}
+          className="ml-2 align-middle accent-emerald-500"
+        />
+      );
+    }
+    if (f.type === "combobox") {
+      return (
+        <select
+          aria-label={aria}
+          value={formValues[f.name] ?? ""}
+          onChange={(e) => updateField(f.name, e.target.value)}
+          className={fieldInputClass}
+        >
+          <option value="">— select —</option>
+          {f.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    if (f.multiline) {
+      return (
+        <textarea
+          aria-label={aria}
+          value={formValues[f.name] ?? ""}
+          onChange={(e) => updateField(f.name, e.target.value)}
+          rows={2}
+          className={fieldInputClass}
+        />
+      );
+    }
+    return (
+      <input
+        type="text"
+        aria-label={aria}
+        value={formValues[f.name] ?? ""}
+        onChange={(e) => updateField(f.name, e.target.value)}
+        className={fieldInputClass}
+      />
+    );
+  };
 
   const jsToggleMutation = useMutation({
     mutationFn: (allow: boolean) => setJavaScriptExecution(documentId, allow),
@@ -124,6 +298,19 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
     }),
     [enableScripting],
   );
+
+  // react-pdf fetches the bytes itself (it doesn't go through the axios apiClient), so the Bearer
+  // token the interceptor normally attaches is missing and the module API 401s. Pass the token as
+  // an explicit httpHeader on the pdfjs request Source. The `?v=` bumps after a fill so the baked
+  // bytes re-fetch. Memoized on the token + reloadKey so the document isn't re-fetched per render.
+  const pdfFileSource = useMemo(() => {
+    const token = getAccessToken();
+    return {
+      url: `${documentBinaryUrl(documentId)}?v=${reloadKey}`,
+      httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      withCredentials: true,
+    };
+  }, [documentId, reloadKey, getAccessToken]);
 
   return (
     <div className="fixed inset-0 z-40 flex bg-slate-950/70" role="dialog">
@@ -168,8 +355,9 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
           <div className="col-span-2 overflow-y-auto bg-slate-950 p-4">
             {isPdf ? (
               <Document
-                file={documentBinaryUrl(documentId)}
-                onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+                key={reloadKey}
+                file={pdfFileSource}
+                onLoadSuccess={(pdf) => void loadFormFields(pdf)}
                 options={pdfDocumentOptions}
                 loading={<div className="text-sm text-slate-400">Loading PDF…</div>}
                 error={<div className="text-sm text-rose-300">Could not render PDF.</div>}
@@ -178,6 +366,7 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                   <Page
                     key={`page_${i + 1}`}
                     pageNumber={i + 1}
+                    renderForms
                     renderAnnotationLayer
                     renderTextLayer
                     width={640}
@@ -189,7 +378,8 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                 preview={preview.data}
                 isLoading={preview.isLoading}
                 mimeType={doc?.mimeType ?? ""}
-                downloadHref={documentBinaryUrl(documentId)}
+                documentId={documentId}
+                filename={doc?.title ?? `document-${documentId}`}
               />
             )}
           </div>
@@ -223,41 +413,51 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
 
             {doc?.hasAcroForms && (
               <>
-                <h3 className="mb-3 text-sm font-semibold text-slate-200">Fill AcroForm</h3>
+                <h3 className="mb-3 text-sm font-semibold text-slate-200">
+                  Review &amp; edit (AcroForm)
+                </h3>
                 <p className="mb-2 text-[11px] text-slate-500">
-                  Paste a JSON object of <code>{"{ fieldName: value }"}</code>. Checkboxes accept
-                  true/false/yes/no/1/0. Server bakes values into the PDF; a subsequent signature
-                  covers the filled bytes.
+                  Edit the fields below and Save — values are validated, baked into the PDF, and the
+                  preview refreshes. Demo only (no claim submission).
                 </p>
-                <textarea
-                  value={fillForm}
-                  onChange={(e) => setFillForm(e.target.value)}
-                  rows={6}
-                  placeholder={'{"patient.name":"Jane Doe","consent.signed":"true"}'}
-                  className="mb-2 w-full rounded border border-slate-700 bg-slate-800/60 p-2 font-mono text-xs text-slate-100"
-                />
+                {fields.length === 0 ? (
+                  <p className="mb-4 text-[11px] text-slate-500">Loading form fields…</p>
+                ) : (
+                  <div className="mb-3 space-y-3">
+                    {fields.map((f) => (
+                      <label key={f.name} className="block text-xs">
+                        <span className="text-slate-400">
+                          {labelFor(f.name)}
+                          {f.required && <span className="text-rose-400"> *</span>}
+                        </span>
+                        {renderFieldInput(f)}
+                        {formErrors[f.name] && (
+                          <span className="mt-1 block text-rose-300">{formErrors[f.name]}</span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                )}
                 {fillFeedback && (
                   <div className="mb-2 text-[11px] text-slate-300">
-                    <div>Filled {fillFeedback.filled.length} field(s).</div>
+                    <div>Saved {fillFeedback.filled.length} field(s) into the PDF.</div>
                     {fillFeedback.unknown.length > 0 && (
                       <div className="text-amber-300">
-                        Unknown keys (ignored): {fillFeedback.unknown.join(", ")}
+                        Ignored: {fillFeedback.unknown.join(", ")}
                       </div>
                     )}
                   </div>
                 )}
                 {fillMutation.isError && (
-                  <div className="mb-2 text-xs text-rose-300">
-                    Fill failed — check JSON syntax and try again.
-                  </div>
+                  <div className="mb-2 text-xs text-rose-300">Save failed — retry shortly.</div>
                 )}
                 <button
                   type="button"
-                  onClick={() => fillMutation.mutate()}
-                  disabled={fillMutation.isPending}
+                  onClick={saveForm}
+                  disabled={fillMutation.isPending || fields.length === 0}
                   className="mb-6 w-full rounded bg-sky-600 px-3 py-2 text-slate-50 hover:bg-sky-500 disabled:opacity-50"
                 >
-                  {fillMutation.isPending ? "Filling…" : "Save filled form"}
+                  {fillMutation.isPending ? "Saving…" : "Save changes"}
                 </button>
               </>
             )}
@@ -380,18 +580,29 @@ type NonPdfPreviewProps = {
   preview: Awaited<ReturnType<typeof fetchDocumentPreview>> | undefined;
   isLoading: boolean;
   mimeType: string;
-  downloadHref: string;
+  documentId: string;
+  filename: string;
 };
 
-const NonPdfPreview = ({ preview, isLoading, mimeType, downloadHref }: NonPdfPreviewProps) => {
+const NonPdfPreview = ({
+  preview,
+  isLoading,
+  mimeType,
+  documentId,
+  filename,
+}: NonPdfPreviewProps) => {
+  // The /binary endpoint requires a Bearer token, so download via the authenticated apiClient
+  // (object-URL save) rather than a plain anchor that would 401 against the module API.
+  const download = () => void downloadDocumentBinary(documentId, filename);
+
   if (isLoading) return <div className="text-sm text-slate-400">Loading preview…</div>;
   if (!preview)
     return (
       <div className="text-sm text-slate-400">
         Preview unavailable.{" "}
-        <a className="text-sky-300 underline" href={downloadHref}>
+        <button type="button" className="text-sky-300 underline" onClick={download}>
           Download the original
-        </a>{" "}
+        </button>{" "}
         ({mimeType}).
       </div>
     );
@@ -424,12 +635,13 @@ const NonPdfPreview = ({ preview, isLoading, mimeType, downloadHref }: NonPdfPre
         {mimeType} is not rendered in-app. Office documents, scanned images, and other binary kinds
         can be downloaded and opened in their native viewer.
       </div>
-      <a
-        href={downloadHref}
+      <button
+        type="button"
+        onClick={download}
         className="inline-block rounded bg-sky-600 px-3 py-1.5 text-slate-50 hover:bg-sky-500"
       >
         Download original
-      </a>
+      </button>
     </div>
   );
 };

@@ -19,7 +19,7 @@ public sealed class PerformedProcedure : Entity<Guid>
 
     public string? Display { get; private set; }
 
-    public IReadOnlyList<string> ModifierCodes { get; private set; } = Array.Empty<string>();
+    public IReadOnlyList<string> ModifierCodes { get; private set; } = [];
 
     public DateTime PerformedAtUtc { get; private set; }
 
@@ -42,7 +42,7 @@ public sealed class PerformedProcedure : Entity<Guid>
             Display = string.IsNullOrWhiteSpace(display) ? null : display.Trim(),
             PerformedAtUtc = performedAtUtc,
             PerformingProviderId = performingProviderId,
-            ModifierCodes = modifierCodes ?? Array.Empty<string>(),
+            ModifierCodes = modifierCodes ?? [],
         };
     }
 }

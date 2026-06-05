@@ -97,7 +97,7 @@ public sealed class PdmsDialysisSessionProcedureFeederTests
         Status: ExportJobStatus.InProgress,
         CreatedAt: DateTimeOffset.UtcNow,
         CompletedAt: null,
-        Outputs: Array.Empty<ExportJobOutput>(),
+        Outputs: [],
         Error: null);
 
     private sealed class InMemorySessions : IDialysisSessionRepository
@@ -127,7 +127,8 @@ public sealed class PdmsDialysisSessionProcedureFeederTests
                 if (since is { } cutoff)
                 {
                     var latestUtc = session.ActualStartUtc ?? session.ScheduledStartUtc;
-                    if (latestUtc < cutoff.UtcDateTime) continue;
+                    if (latestUtc < cutoff.UtcDateTime)
+                        continue;
                 }
                 yield return session;
                 await Task.Yield();

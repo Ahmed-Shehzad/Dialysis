@@ -92,6 +92,7 @@ export const DocumentsPage = () => {
             <option value="PdmsReporting">PDMS Reporting</option>
             <option value="HieInbound">HIE Inbound</option>
             <option value="AdminUpload">Admin upload</option>
+            <option value="Billing">Billing</option>
           </select>
           <input
             type="text"

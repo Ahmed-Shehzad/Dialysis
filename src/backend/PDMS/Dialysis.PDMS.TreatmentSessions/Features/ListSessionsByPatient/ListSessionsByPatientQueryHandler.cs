@@ -36,6 +36,8 @@ public sealed class ListSessionsByPatientQueryHandler : IQueryHandler<ListSessio
                 s.ScheduledStartUtc,
                 s.ActualStartUtc,
                 s.ActualEndUtc,
-                s.MachineId))];
+                s.MachineId,
+                s.PausedAtUtc,
+                (int)s.AccumulatedPausedDuration.TotalSeconds))];
     }
 }

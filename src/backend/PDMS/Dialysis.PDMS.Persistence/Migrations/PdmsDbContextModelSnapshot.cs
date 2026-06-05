@@ -983,6 +983,9 @@ namespace Dialysis.PDMS.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<TimeSpan>("AccumulatedPausedDuration")
+                        .HasColumnType("interval");
+
                     b.Property<decimal?>("AchievedUfVolumeLiters")
                         .HasPrecision(8, 3)
                         .HasColumnType("numeric(8,3)");
@@ -1020,6 +1023,9 @@ namespace Dialysis.PDMS.Persistence.Migrations
 
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PausedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ScheduledStartUtc")
                         .HasColumnType("timestamp with time zone");

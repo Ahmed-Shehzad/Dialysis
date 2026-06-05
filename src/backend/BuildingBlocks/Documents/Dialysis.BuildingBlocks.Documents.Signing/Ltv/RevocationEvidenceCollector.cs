@@ -75,8 +75,8 @@ public sealed class RevocationEvidenceCollector
         // (System.Net.Http) so the DSS carries the responses inline (PAdES-B-LT proper).
         return new CollectedRevocationEvidence(
             chainCerts.AsReadOnly(),
-            Crls: Array.Empty<byte[]>(),
-            Ocsps: Array.Empty<byte[]>());
+            Crls: [],
+            Ocsps: []);
     }
 }
 

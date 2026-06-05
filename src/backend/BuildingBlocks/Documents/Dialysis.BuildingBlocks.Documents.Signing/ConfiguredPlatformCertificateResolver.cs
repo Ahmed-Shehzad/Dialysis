@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Options;
 
@@ -11,6 +12,15 @@ public sealed class PlatformSigningCertificateOptions
 
     /// <summary>Password protecting <see cref="PfxPath"/>.</summary>
     public string? PfxPassword { get; set; }
+
+    /// <summary>
+    /// Development-only escape hatch: when <see cref="PfxPath"/> is unset and this is
+    /// <c>true</c>, the resolver mints an in-memory self-signed signing certificate so the
+    /// document-signing flow is exercisable in local / demo environments without
+    /// provisioning a real SMC-B / organisational certificate. Never enable in production —
+    /// the resulting signatures chain to an untrusted, ephemeral key.
+    /// </summary>
+    public bool DevelopmentSelfSigned { get; set; }
 }
 
 /// <summary>
@@ -30,6 +40,10 @@ public sealed class ConfiguredPlatformCertificateResolver : ISigningCertificateR
             var opts = options.Value;
             if (string.IsNullOrWhiteSpace(opts.PfxPath))
             {
+                if (opts.DevelopmentSelfSigned)
+                {
+                    return CreateDevelopmentSelfSignedCertificate();
+                }
                 throw new InvalidOperationException(
                     "Documents:Signing:PlatformCertificate:PfxPath is not configured.");
             }
@@ -41,4 +55,27 @@ public sealed class ConfiguredPlatformCertificateResolver : ISigningCertificateR
 
     public Task<X509Certificate2> ResolveAsync(PdfSigningRequest request, CancellationToken cancellationToken) =>
         Task.FromResult(_certificate.Value);
+
+    /// <summary>
+    /// Mints a throwaway self-signed RSA-3072 signing certificate for local / demo use. The
+    /// private key is round-tripped through a PFX export so it is usable for PAdES signing on
+    /// every platform. Gated behind <see cref="PlatformSigningCertificateOptions.DevelopmentSelfSigned"/>;
+    /// the certificate is untrusted by design and must never reach production.
+    /// </summary>
+    private static X509Certificate2 CreateDevelopmentSelfSignedCertificate()
+    {
+        using var rsa = RSA.Create(3072);
+        var request = new CertificateRequest(
+            "CN=Dialysis Demo Platform Signer (DEVELOPMENT - DO NOT TRUST), O=Dialysis",
+            rsa,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+        request.CertificateExtensions.Add(
+            new X509KeyUsageExtension(
+                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation,
+                critical: true));
+        var now = DateTimeOffset.UtcNow;
+        using var ephemeral = request.CreateSelfSigned(now.AddMinutes(-5), now.AddYears(2));
+        return X509CertificateLoader.LoadPkcs12(ephemeral.Export(X509ContentType.Pfx), password: null);
+    }
 }

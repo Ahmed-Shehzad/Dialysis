@@ -80,6 +80,8 @@ public sealed class PdmsDbContext : ModuleDbContextBase
             b.Property(s => s.Status).HasConversion<int>().IsRequired();
             b.Property(s => s.AbortReasonCode).HasMaxLength(64);
             b.Property(s => s.AchievedUfVolumeLiters).HasPrecision(8, 3);
+            b.Property(s => s.AccumulatedPausedDuration);
+            b.Property(s => s.PausedAtUtc);
 
             b.OwnsOne(s => s.Prescription, p =>
             {

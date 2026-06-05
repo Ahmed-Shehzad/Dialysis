@@ -33,7 +33,7 @@ public sealed class DefaultInboundMessageFactory : IInboundMessageFactory
             Payload = payload,
             PayloadFormat = payloadFormat,
             Metadata = metadata is null
-                ? ImmutableDictionary<string, string>.Empty
+                ? []
                 : metadata.ToImmutableDictionary(StringComparer.Ordinal),
             ReceivedAtUtc = received,
         };

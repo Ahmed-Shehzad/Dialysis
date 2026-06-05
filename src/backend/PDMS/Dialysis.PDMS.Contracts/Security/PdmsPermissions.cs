@@ -9,6 +9,8 @@ public static class PdmsPermissions
 {
     public const string SessionSchedule = "pdms.session.schedule";
     public const string SessionStart = "pdms.session.start";
+    public const string SessionPause = "pdms.session.pause";
+    public const string SessionResume = "pdms.session.resume";
     public const string SessionComplete = "pdms.session.complete";
     public const string SessionAbort = "pdms.session.abort";
     public const string SessionRead = "pdms.session.read";
@@ -26,7 +28,7 @@ public static class PdmsPermissions
 
     public static IReadOnlyList<string> All { get; } =
     [
-        SessionSchedule, SessionStart, SessionComplete, SessionAbort, SessionRead,
+        SessionSchedule, SessionStart, SessionPause, SessionResume, SessionComplete, SessionAbort, SessionRead,
         ReadingRecord, ReadingRead,
         PrescriptionWrite,
         DryWeightAssess,

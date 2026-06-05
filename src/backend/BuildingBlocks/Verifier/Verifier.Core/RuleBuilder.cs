@@ -317,7 +317,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
 
             var childResult = await childValidator.ValidateAsync(value, ct).ConfigureAwait(false);
             if (childResult.IsSuccess)
-                return Array.Empty<ValidationFailure>();
+                return [];
 
             var list = new List<ValidationFailure>();
             foreach (var f in childResult.Error)
@@ -338,7 +338,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
             _evaluators[i] = async (ctx, val, path, ct) =>
             {
                 if (!predicate(ctx.InstanceToValidate!))
-                    return Array.Empty<ValidationFailure>();
+                    return [];
 
                 return await inner(ctx, val, path, ct).ConfigureAwait(false);
             };

@@ -53,9 +53,9 @@ public sealed class EfMessageLedger : IMessageLedger
     internal static ImmutableDictionary<string, string> DeserializeMetadata(string? metadataJson)
     {
         if (string.IsNullOrEmpty(metadataJson))
-            return ImmutableDictionary<string, string>.Empty;
+            return [];
         var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(metadataJson);
-        return dict is null ? ImmutableDictionary<string, string>.Empty : dict.ToImmutableDictionary();
+        return dict is null ? [] : dict.ToImmutableDictionary();
     }
 
     /// <summary>

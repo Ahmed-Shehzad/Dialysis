@@ -29,4 +29,10 @@ public interface ITreatmentAlarmRepository
     /// The chairside strip is the primary consumer.
     /// </summary>
     Task<IReadOnlyList<TreatmentAlarm>> ListActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns every alarm raised during a session, ordered by first observation. Used by the
+    /// post-session reporting context to populate the discharge letter's alarm log.
+    /// </summary>
+    Task<IReadOnlyList<TreatmentAlarm>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken = default);
 }

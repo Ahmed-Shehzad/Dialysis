@@ -3,6 +3,44 @@ import { fetchSessionSummary, type SessionSummary } from "../api/sessionsApi";
 
 const formatDateTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "—");
 
+// Colour the UF-achievement bar by how close it is to target: on-target (95–105%) is good,
+// far off (<80% or >120%) is bad, in-between is a warning.
+const ufAchievementColor = (ufPct: number | null): string => {
+  if (ufPct === null) return "bg-slate-700";
+  if (ufPct >= 95 && ufPct <= 105) return "bg-emerald-600";
+  if (ufPct < 80 || ufPct > 120) return "bg-rose-600";
+  return "bg-amber-500";
+};
+
+// The fill width is data-driven, so it can't be a single static utility class.
+// Rather than an inline `style`, snap to the nearest 5 % and look up a literal
+// Tailwind class — the strings must be spelled out so the JIT compiler emits them.
+const UF_BAR_WIDTH: Record<number, string> = {
+  0: "w-0",
+  5: "w-[5%]",
+  10: "w-[10%]",
+  15: "w-[15%]",
+  20: "w-[20%]",
+  25: "w-[25%]",
+  30: "w-[30%]",
+  35: "w-[35%]",
+  40: "w-[40%]",
+  45: "w-[45%]",
+  50: "w-[50%]",
+  55: "w-[55%]",
+  60: "w-[60%]",
+  65: "w-[65%]",
+  70: "w-[70%]",
+  75: "w-[75%]",
+  80: "w-[80%]",
+  85: "w-[85%]",
+  90: "w-[90%]",
+  95: "w-[95%]",
+  100: "w-full",
+};
+
+const ufBarWidthClass = (ufBar: number): string => UF_BAR_WIDTH[Math.round(ufBar / 5) * 5] ?? "w-0";
+
 const statusBadge = (status: SessionSummary["status"]) => {
   const map: Record<SessionSummary["status"], string> = {
     Scheduled: "bg-slate-700 text-slate-200",
@@ -60,14 +98,7 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
   const s = data;
   const ufPct = s.ufAchievementPercent;
   const ufBar = ufPct === null ? null : Math.min(100, Math.max(0, ufPct));
-  const ufColor =
-    ufPct === null
-      ? "bg-slate-700"
-      : ufPct >= 95 && ufPct <= 105
-        ? "bg-emerald-600"
-        : ufPct < 80 || ufPct > 120
-          ? "bg-rose-600"
-          : "bg-amber-500";
+  const ufColor = ufAchievementColor(ufPct);
 
   return (
     <section className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
@@ -86,9 +117,9 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
         <Stat
           label="Duration"
           value={
-            s.actualDurationMinutes != null
-              ? `${s.actualDurationMinutes} / ${s.prescription.prescribedDurationMinutes} min`
-              : `— / ${s.prescription.prescribedDurationMinutes} min`
+            s.actualDurationMinutes == null
+              ? `— / ${s.prescription.prescribedDurationMinutes} min`
+              : `${s.actualDurationMinutes} / ${s.prescription.prescribedDurationMinutes} min`
           }
           accent
         />
@@ -111,7 +142,7 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
         </div>
         {ufBar !== null && (
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
-            <div className={`h-full ${ufColor}`} style={{ width: `${ufBar}%` }} />
+            <div className={`h-full ${ufColor} ${ufBarWidthClass(ufBar)}`} />
           </div>
         )}
       </div>
@@ -158,9 +189,9 @@ export const TreatmentSummary = ({ sessionId }: TreatmentSummaryProps) => {
               <Stat
                 label="Last UF rate"
                 value={
-                  s.readings.lastUltrafiltrationRateMlPerHour != null
-                    ? `${s.readings.lastUltrafiltrationRateMlPerHour.toFixed(0)} mL/h`
-                    : "—"
+                  s.readings.lastUltrafiltrationRateMlPerHour == null
+                    ? "—"
+                    : `${s.readings.lastUltrafiltrationRateMlPerHour.toFixed(0)} mL/h`
                 }
               />
             </div>

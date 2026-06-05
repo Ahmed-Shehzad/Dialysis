@@ -97,7 +97,7 @@ public static class SmartConnectInboundEndpointExtensions
 
         var payload = ms.ToArray();
 
-        ImmutableDictionary<string, string> metadata = ImmutableDictionary<string, string>.Empty;
+        ImmutableDictionary<string, string> metadata = [];
         foreach (var header in http.Request.Headers)
         {
             if (header.Key.StartsWith("X-SmartConnect-", StringComparison.OrdinalIgnoreCase) &&
@@ -187,7 +187,8 @@ public static class SmartConnectInboundEndpointExtensions
         while (true)
         {
             var read = await http.Request.Body.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
-            if (read == 0) break;
+            if (read == 0)
+                break;
             total += read;
             if (total > opts.MaxRequestBodyBytes)
             {
@@ -202,8 +203,10 @@ public static class SmartConnectInboundEndpointExtensions
         var senderId = string.IsNullOrWhiteSpace(senderHeader.ToString()) ? null : senderHeader.ToString();
 
         var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (messageType is not null) metadata["smartconnect.messageType"] = messageType;
-        if (senderId is not null) metadata["smartconnect.senderId"] = senderId;
+        if (messageType is not null)
+            metadata["smartconnect.messageType"] = messageType;
+        if (senderId is not null)
+            metadata["smartconnect.senderId"] = senderId;
 
         var candidate = new MessageRoutingCandidate(
             SourceKind: RouterSourceKind,

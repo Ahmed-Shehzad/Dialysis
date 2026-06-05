@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins;
@@ -126,7 +125,7 @@ public sealed class IteratorRouteFilterTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 }

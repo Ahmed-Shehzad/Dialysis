@@ -69,9 +69,10 @@ public sealed class GeneratorTests
     {
         var generator = new BillingDocumentGenerator(new QuestPdfDocumentRenderer());
 
-        var (_, chargeEvent) = await generator.GenerateAsync(SampleContext(), evaluationCount: 1, CancellationToken.None);
+        var (_, chargeEvent) = await generator.GenerateAsync(SampleContext(), evaluationCount: 1, achievedUfVolumeLiters: 2.4m, CancellationToken.None);
 
         chargeEvent.CptCode.ShouldBe("90935");
+        chargeEvent.AchievedUfVolumeLiters.ShouldBe(2.4m);
     }
 
     [Fact]
@@ -79,7 +80,7 @@ public sealed class GeneratorTests
     {
         var generator = new BillingDocumentGenerator(new QuestPdfDocumentRenderer());
 
-        var (_, chargeEvent) = await generator.GenerateAsync(SampleContext(), evaluationCount: 2, CancellationToken.None);
+        var (_, chargeEvent) = await generator.GenerateAsync(SampleContext(), evaluationCount: 2, achievedUfVolumeLiters: 0m, CancellationToken.None);
 
         chargeEvent.CptCode.ShouldBe("90937");
     }

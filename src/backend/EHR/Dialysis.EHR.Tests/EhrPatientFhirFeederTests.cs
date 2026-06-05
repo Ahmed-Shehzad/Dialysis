@@ -56,7 +56,7 @@ public sealed class EhrPatientFhirFeederTests
         Status: ExportJobStatus.InProgress,
         CreatedAt: DateTimeOffset.UtcNow,
         CompletedAt: null,
-        Outputs: Array.Empty<ExportJobOutput>(),
+        Outputs: [],
         Error: null);
 
     private sealed class InMemoryPatients : IPatientRepository

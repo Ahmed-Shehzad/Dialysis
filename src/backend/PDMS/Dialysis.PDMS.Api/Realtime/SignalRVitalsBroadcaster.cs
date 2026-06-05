@@ -11,4 +11,9 @@ public sealed class SignalRVitalsBroadcaster : IVitalsBroadcaster
         => _hub.Clients
             .Group(VitalsHub.GroupName(reading.SessionId))
             .SendAsync("reading", reading, cancellationToken);
+
+    public Task BroadcastCostAsync(SessionCostSnapshot cost, CancellationToken cancellationToken)
+        => _hub.Clients
+            .Group(VitalsHub.GroupName(cost.SessionId))
+            .SendAsync("cost", cost, cancellationToken);
 }

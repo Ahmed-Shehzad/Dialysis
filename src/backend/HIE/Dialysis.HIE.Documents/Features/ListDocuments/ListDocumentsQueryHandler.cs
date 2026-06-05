@@ -26,6 +26,7 @@ public sealed class ListDocumentsQueryHandler : IQueryHandler<ListDocumentsQuery
             r.CreatedAtUtc,
             r.Signatures.Count,
             r.HasAcroForms,
-            r.HasJavascript))];
+            r.HasJavascript,
+            r.Category))];
     }
 }

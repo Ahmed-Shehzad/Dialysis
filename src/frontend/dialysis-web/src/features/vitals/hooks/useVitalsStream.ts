@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { type HubConnection, HubConnectionState } from "@microsoft/signalr";
 import { buildHubConnection } from "@/lib/realtime/signalrConnection";
 import { useAuth } from "@/features/auth/components/AuthProvider";
-import { VITALS_HUB_URL, type VitalsReading } from "../api/vitalsApi";
+import { VITALS_HUB_URL, type SessionCost, type VitalsReading } from "../api/vitalsApi";
 
 type ConnectionStatus = "idle" | "connecting" | "connected" | "reconnecting" | "disconnected";
 
 export type UseVitalsStreamResult = {
   readings: VitalsReading[];
+  /** Latest server-computed running cost estimate for the session, or null until first tick. */
+  cost: SessionCost | null;
   status: ConnectionStatus;
   reset: () => void;
 };
@@ -18,6 +20,7 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
   const { getAccessToken } = useAuth();
   const connectionRef = useRef<HubConnection | null>(null);
   const [readings, setReadings] = useState<VitalsReading[]>([]);
+  const [cost, setCost] = useState<SessionCost | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("idle");
 
   useEffect(() => {
@@ -39,13 +42,23 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
       });
     };
 
+    const handleCost = (incoming: SessionCost) => {
+      if (cancelled) return;
+      setCost(incoming);
+    };
+
     connection.on("reading", handleReading);
+    connection.on("cost", handleCost);
     connection.onreconnecting(() => setStatus("reconnecting"));
     connection.onreconnected(() => setStatus("connected"));
     connection.onclose(() => setStatus("disconnected"));
 
     setStatus("connecting");
-    connection
+    // Keep the start promise so cleanup can await it before stopping. Calling stop() while the
+    // negotiate request is still in flight throws "The connection was stopped during negotiation"
+    // — which React 18 StrictMode triggers on every mount via its immediate mount→unmount→mount.
+    // Awaiting start() first lets the connection settle, then we tear it down cleanly.
+    const startPromise = connection
       .start()
       .then(async () => {
         if (cancelled) return;
@@ -56,20 +69,29 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
         if (!cancelled) setStatus("disconnected");
       });
 
+    const teardown = async () => {
+      if (connection.state === HubConnectionState.Connected) {
+        await connection.invoke("LeaveSessionAsync", sessionId).catch(() => undefined);
+      }
+      await connection.stop().catch(() => undefined);
+    };
+
     return () => {
       cancelled = true;
       connection.off("reading", handleReading);
-      if (connection.state === HubConnectionState.Connected) {
-        void connection.invoke("LeaveSessionAsync", sessionId).catch(() => undefined);
-      }
-      void connection.stop();
+      connection.off("cost", handleCost);
       connectionRef.current = null;
+      void startPromise.finally(teardown);
     };
   }, [sessionId, getAccessToken]);
 
   return {
     readings,
+    cost,
     status,
-    reset: () => setReadings([]),
+    reset: () => {
+      setReadings([]);
+      setCost(null);
+    },
   };
 };

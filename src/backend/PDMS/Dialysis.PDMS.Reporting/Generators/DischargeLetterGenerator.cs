@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
+using Dialysis.Module.Contracts.Billing;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Templating;
 
@@ -69,7 +70,9 @@ public sealed class DischargeLetterGenerator
                 new KeyValuePair<string, string>("Modality", context.Modality),
                 new KeyValuePair<string, string>("Started", context.StartedAtUtc.ToString("u")),
                 new KeyValuePair<string, string>("Completed", context.CompletedAtUtc.ToString("u")),
-                new KeyValuePair<string, string>("Duration", $"{context.DurationMinutes} min"),
+                new KeyValuePair<string, string>(
+                    "Treatment usage time",
+                    $"{TreatmentUsageTime.Format(context.DurationMinutes)} ({context.DurationMinutes} min)"),
             ])]));
         sections.Add(new DocumentSection("Clinical summary", [new ParagraphBlock(summary)]));
 
@@ -211,6 +214,7 @@ public sealed class DischargeLetterGenerator
             started = context.StartedAtUtc.ToString("u"),
             completed = context.CompletedAtUtc.ToString("u"),
             duration = context.DurationMinutes,
+            usageTime = TreatmentUsageTime.Format(context.DurationMinutes),
         },
         ["counts"] = new
         {

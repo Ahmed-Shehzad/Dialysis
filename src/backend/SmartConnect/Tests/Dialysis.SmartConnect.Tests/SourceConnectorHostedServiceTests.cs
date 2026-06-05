@@ -43,7 +43,7 @@ public sealed class SourceConnectorHostedServiceTests
                 Payload = payload,
                 PayloadFormat = format,
                 Metadata = metadata is null
-                    ? ImmutableDictionary<string, string>.Empty
+                    ? []
                     : metadata.ToImmutableDictionary(StringComparer.Ordinal),
                 ReceivedAtUtc = receivedAtUtc ?? DateTimeOffset.UtcNow,
             };

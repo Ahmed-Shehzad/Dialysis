@@ -24,7 +24,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
     public async Task Blob_Upload_Then_Reference_On_Channel_Then_Download_Round_Trips_Async()
     {
         using var client = _factory.CreateClient();
-        var flowId = await CreateFlow_Async(client, "blob-host", attachments: Array.Empty<object>());
+        var flowId = await CreateFlow_Async(client, "blob-host", attachments: []);
 
         // 1. Upload a 2 MiB payload (above the inline cap on purpose).
         var bytes = new byte[2 * 1024 * 1024];
@@ -68,7 +68,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
     public async Task Blob_Download_For_Unreferenced_Id_Returns_404_Async()
     {
         using var client = _factory.CreateClient();
-        var flowId = await CreateFlow_Async(client, "blob-unref-host", attachments: Array.Empty<object>());
+        var flowId = await CreateFlow_Async(client, "blob-unref-host", attachments: []);
 
         var randomBlobId = Guid.NewGuid();
         var response = await client.GetAsync(
@@ -80,7 +80,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
     public async Task Channel_Update_Rejects_StorageRef_Missing_Id_Async()
     {
         using var client = _factory.CreateClient();
-        var flowId = await CreateFlow_Async(client, "blob-bad-ref", attachments: Array.Empty<object>());
+        var flowId = await CreateFlow_Async(client, "blob-bad-ref", attachments: []);
 
         var response = await client.PutAsJsonAsync(
             $"/smartconnect/v1/admin/flows/{flowId}",

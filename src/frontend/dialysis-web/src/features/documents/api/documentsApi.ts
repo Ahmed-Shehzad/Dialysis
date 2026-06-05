@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api/apiClient";
 
 export type DocumentStatus = "Current" | "Superseded" | "EnteredInError";
-export type DocumentSource = "PdmsReporting" | "HieInbound" | "AdminUpload";
+export type DocumentSource = "PdmsReporting" | "HieInbound" | "AdminUpload" | "Billing";
 export type SignerKind = "Platform" | "User" | "RemoteQes";
 
 /** PAdES conformance level — drives whether a TSA timestamp + DSS is embedded. */
@@ -27,6 +27,8 @@ export type DocumentRow = {
   signatureCount: number;
   hasAcroForms: boolean;
   hasJavascript: boolean;
+  /** Free-form correlation key (e.g. the originating session id for invoices). */
+  category?: string | null;
 };
 
 export type DocumentSignatureRow = {
@@ -94,6 +96,26 @@ export const fetchDocumentDetail = async (id: string): Promise<DocumentDetail | 
 };
 
 export const documentBinaryUrl = (id: string): string => `/api/hie/api/v1.0/documents/${id}/binary`;
+
+/**
+ * Downloads the raw document bytes through the authenticated apiClient (so the Bearer token +
+ * credentials are attached) and saves them via a transient object URL. Plain `<a href>` links to
+ * the `/binary` endpoint can't carry the Authorization header and 401 against the module API.
+ */
+export const downloadDocumentBinary = async (id: string, filename: string): Promise<void> => {
+  const response = await apiClient.get<Blob>(documentBinaryUrl(id), { responseType: "blob" });
+  const url = URL.createObjectURL(response.data);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
 
 export type UploadDocumentInput = {
   patientId: string;

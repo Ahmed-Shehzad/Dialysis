@@ -80,20 +80,70 @@ public sealed class DialysisSessionMachineBindingTests
     {
         var session = New_Scheduled_Session();
         session.BindMachine(Guid.NewGuid());
-        session.Start(DateTime.UtcNow);
+        var start = DateTime.UtcNow;
+        session.Start(start);
 
-        session.Pause();
+        session.Pause(start.AddMinutes(10));
         session.Status.ShouldBe(DialysisSessionStatus.Paused);
+        session.PausedAtUtc.ShouldBe(start.AddMinutes(10));
 
-        session.Resume();
+        session.Resume(start.AddMinutes(15));
         session.Status.ShouldBe(DialysisSessionStatus.InProgress);
+        session.PausedAtUtc.ShouldBeNull();
+        session.AccumulatedPausedDuration.ShouldBe(TimeSpan.FromMinutes(5));
     }
 
     [Fact]
     public void Pause_Rejects_Non_In_Progress()
     {
         var session = New_Scheduled_Session();
-        Should.Throw<InvalidOperationException>(() => session.Pause());
+        Should.Throw<InvalidOperationException>(() => session.Pause(DateTime.UtcNow));
+    }
+
+    [Fact]
+    public void Usage_Time_Excludes_Paused_Spans()
+    {
+        var session = New_Scheduled_Session();
+        session.BindMachine(Guid.NewGuid());
+        var start = DateTime.UtcNow;
+        session.Start(start);
+
+        // Run 60, pause 20, run 60 → 120 min on, 20 min paused.
+        session.Pause(start.AddMinutes(60));
+        session.Resume(start.AddMinutes(80));
+        var completedAt = start.AddMinutes(140);
+        session.Complete(completedAt, achievedUfVolumeLiters: 2.5m);
+
+        session.UsageMinutesAsOf(completedAt).ShouldBe(120);
+    }
+
+    [Fact]
+    public void Usage_Time_Freezes_While_Paused()
+    {
+        var session = New_Scheduled_Session();
+        session.BindMachine(Guid.NewGuid());
+        var start = DateTime.UtcNow;
+        session.Start(start);
+        session.Pause(start.AddMinutes(45));
+
+        // Reference instant is well past the pause, but usage freezes at the pause start.
+        session.UsageMinutesAsOf(start.AddMinutes(90)).ShouldBe(45);
+    }
+
+    [Fact]
+    public void Abort_While_Paused_Excludes_The_Open_Pause()
+    {
+        var session = New_Scheduled_Session();
+        session.BindMachine(Guid.NewGuid());
+        var start = DateTime.UtcNow;
+        session.Start(start);
+        session.Pause(start.AddMinutes(30));
+
+        var abortedAt = start.AddMinutes(50);
+        session.Abort(abortedAt, "MACHINE");
+
+        session.AccumulatedPausedDuration.ShouldBe(TimeSpan.FromMinutes(20));
+        session.UsageMinutesAsOf(abortedAt).ShouldBe(30);
     }
 
     [Fact]

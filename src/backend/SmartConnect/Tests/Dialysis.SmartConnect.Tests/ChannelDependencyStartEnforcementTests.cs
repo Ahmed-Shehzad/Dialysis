@@ -77,7 +77,7 @@ public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<WebAp
             description = (string?)null,
             tags = Array.Empty<string>(),
             dataTypes = new[] { "HL7v2" },
-            dependencies = dependencies ?? Array.Empty<Guid>(),
+            dependencies = dependencies ?? [],
             attachments = Array.Empty<object>(),
             pipeline = new
             {

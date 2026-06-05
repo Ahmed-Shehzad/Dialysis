@@ -104,7 +104,7 @@ public static class FhirBulkDataServiceCollectionExtensions
             : (DateTimeOffset?)null;
         var resourceTypes = context.Request.Query.TryGetValue("_type", out var tv) && tv.Count > 0
             ? tv.ToString().Split(',')
-            : Array.Empty<string>();
+            : [];
         var deid = context.Request.Query.TryGetValue("_deIdentify", out var dv) ? dv.ToString() : null;
 
         var job = await orchestrator.EnqueueAsync(

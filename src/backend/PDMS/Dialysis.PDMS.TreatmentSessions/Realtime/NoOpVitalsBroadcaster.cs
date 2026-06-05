@@ -4,4 +4,6 @@ namespace Dialysis.PDMS.TreatmentSessions.Realtime;
 public sealed class NoOpVitalsBroadcaster : IVitalsBroadcaster
 {
     public Task BroadcastAsync(VitalsReadingSnapshot reading, CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task BroadcastCostAsync(SessionCostSnapshot cost, CancellationToken cancellationToken) => Task.CompletedTask;
 }

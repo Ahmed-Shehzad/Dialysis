@@ -6,9 +6,9 @@ namespace Dialysis.BuildingBlocks.DistributedCache.Valkey;
 public sealed class ValkeyDistributedCacheOptions
 {
     /// <summary>
-    /// StackExchange.Redis connection string, e.g. <c>valkey:6379,abortConnect=false</c> for in-cluster
-    /// access or a managed-service endpoint (AWS MemoryDB / ElastiCache, Azure Cache for Redis,
-    /// Aiven Valkey, etc.). Required.
+    /// Valkey connection string in the StackExchange.Redis format the GLIDE client accepts, e.g.
+    /// <c>valkey:6379,abortConnect=false</c> for in-cluster access or a managed-service endpoint
+    /// (AWS MemoryDB / ElastiCache, Azure Cache for Redis, Aiven Valkey, etc.). Required.
     /// </summary>
     public required string ConnectionString { get; set; }
 

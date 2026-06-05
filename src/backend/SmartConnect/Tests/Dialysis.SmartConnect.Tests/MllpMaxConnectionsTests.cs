@@ -100,7 +100,8 @@ public sealed class MllpMaxConnectionsTests
 
     private static async Task<bool> Is_Remote_Closed_Async(TcpClient client)
     {
-        if (!client.Connected) return true;
+        if (!client.Connected)
+            return true;
         var buffer = new byte[1];
         try
         {
@@ -152,7 +153,7 @@ public sealed class MllpMaxConnectionsTests
         {
         }
 
-        public IReadOnlyList<ClockSkewStatus> List() => Array.Empty<ClockSkewStatus>();
+        public IReadOnlyList<ClockSkewStatus> List() => [];
     }
 
     private sealed class NoOpClockSkewCorrectionEventSink : IClockSkewCorrectionEventSink

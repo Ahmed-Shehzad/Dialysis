@@ -37,7 +37,8 @@ public sealed class TcpOutboundAdapterTests
         while (read < expectedBytes)
         {
             var n = await stream.ReadAsync(buf.AsMemory(read), ct);
-            if (n == 0) break;
+            if (n == 0)
+                break;
             read += n;
         }
 
@@ -116,7 +117,7 @@ public sealed class TcpOutboundAdapterTests
             CorrelationId = "c",
             Payload = ReadOnlyMemory<byte>.Empty,
             PayloadFormat = PayloadFormat.Binary,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 

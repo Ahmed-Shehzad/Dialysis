@@ -30,6 +30,8 @@ public sealed class ListSessionsQueryHandler : IQueryHandler<ListSessionsQuery, 
                 s.ScheduledStartUtc,
                 s.ActualStartUtc,
                 s.ActualEndUtc,
-                s.MachineId))];
+                s.MachineId,
+                s.PausedAtUtc,
+                (int)s.AccumulatedPausedDuration.TotalSeconds))];
     }
 }

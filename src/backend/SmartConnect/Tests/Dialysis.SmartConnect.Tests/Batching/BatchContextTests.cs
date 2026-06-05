@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
 using Microsoft.Extensions.DependencyInjection;
@@ -126,7 +125,7 @@ public sealed class BatchContextTests
         CorrelationId = "C",
         Payload = "payload"u8.ToArray(),
         PayloadFormat = PayloadFormat.Utf8Text,
-        Metadata = ImmutableDictionary<string, string>.Empty,
+        Metadata = [],
         ReceivedAtUtc = DateTimeOffset.UtcNow,
     };
 

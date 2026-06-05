@@ -38,6 +38,7 @@ builder.AddModuleHost<PdmsPermissionCatalog>(new ModuleHostingOptions
 var enablePdmsDemoSeed = builder.Configuration.GetValue("Pdms:Demo:Enabled", false);
 var enablePdmsVitalsTicker = builder.Configuration.GetValue("Pdms:Demo:VitalsTicker", false);
 var enablePdmsMachineSim = builder.Configuration.GetValue("Pdms:Demo:MachineTelemetrySimulator", false);
+var enablePdmsLifecycleSim = builder.Configuration.GetValue("Pdms:Demo:LifecycleSimulator", false);
 var enablePdmsBulkDataExport = builder.Configuration.GetValue("Pdms:Fhir:BulkData:Enabled", false);
 var enablePdmsSmartOnFhir = builder.Configuration.GetValue("Pdms:Fhir:Smart:Enabled", false);
 var enablePdmsSubscriptions = builder.Configuration.GetValue("Pdms:Fhir:Subscriptions:Enabled", false);
@@ -66,6 +67,7 @@ builder.Services.AddPatientDataManagementSystem(
     enableDemoSeed: enablePdmsDemoSeed,
     enableVitalsTicker: enablePdmsVitalsTicker,
     enableMachineTelemetrySimulator: enablePdmsMachineSim,
+    enableLifecycleSimulator: enablePdmsLifecycleSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>
@@ -97,6 +99,12 @@ var signalRBuilder = builder.Services.AddSignalR(o =>
 var valkeyConnectionString = builder.Configuration["Pdms:DistributedCache:Valkey:ConnectionString"];
 if (!string.IsNullOrWhiteSpace(valkeyConnectionString))
 {
+    // This is the ONLY remaining StackExchange.Redis use in the codebase. The rest of the Valkey
+    // data plane (distributed cache, Data Protection key ring, health check, document blob store)
+    // runs on Valkey GLIDE. The SignalR backplane stays on StackExchange.Redis deliberately: there
+    // is no first-class GLIDE HubLifetimeManager, and a conformant port would mean vendoring a fork
+    // of internal .NET SignalR types (ClientResultsManager, MemoryBufferWriter, …) on top of GLIDE's
+    // preview pub/sub — a large, fragile surface for the single hub that uses the backplane.
     signalRBuilder.AddStackExchangeRedis(valkeyConnectionString, o =>
     {
         // Channel prefix isolates PDMS pub/sub traffic from other modules that may share Valkey.
@@ -106,6 +114,8 @@ if (!string.IsNullOrWhiteSpace(valkeyConnectionString))
 
 // Replace the default no-op broadcaster with the SignalR-backed implementation hosted alongside the hub.
 builder.Services.AddSingleton<IVitalsBroadcaster, SignalRVitalsBroadcaster>();
+// Stream a running, itemised cost estimate to in-progress sessions over the same vitals hub.
+builder.Services.AddHostedService<SessionCostBroadcastHostedService>();
 
 // HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
 builder.Services.AddFhirAudit();

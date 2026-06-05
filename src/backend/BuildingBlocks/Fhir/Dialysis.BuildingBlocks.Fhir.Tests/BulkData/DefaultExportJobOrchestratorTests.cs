@@ -22,7 +22,9 @@ public sealed class DefaultExportJobOrchestratorTests : IAsyncLifetime
 
     public Task DisposeAsync()
     {
-        try { Directory.Delete(_storageRoot, recursive: true); } catch { /* best-effort */ }
+        try
+        { Directory.Delete(_storageRoot, recursive: true); }
+        catch { /* best-effort */ }
         return Task.CompletedTask;
     }
 
@@ -75,7 +77,7 @@ public sealed class DefaultExportJobOrchestratorTests : IAsyncLifetime
 
         var job = await orchestrator.EnqueueAsync(
             ExportScope.System,
-            resourceTypes: Array.Empty<string>(),
+            resourceTypes: [],
             since: null, groupId: null, requestorId: null, deIdentificationProfile: null,
             CancellationToken.None);
 
@@ -100,14 +102,14 @@ public sealed class DefaultExportJobOrchestratorTests : IAsyncLifetime
             Id: "abc",
             Scope: ExportScope.System,
             GroupId: null,
-            ResourceTypes: Array.Empty<string>(),
+            ResourceTypes: [],
             Since: null,
             DeIdentificationProfile: null,
             RequestorId: null,
             Status: ExportJobStatus.Completed,
             CreatedAt: time.GetUtcNow(),
             CompletedAt: time.GetUtcNow(),
-            Outputs: Array.Empty<ExportJobOutput>(),
+            Outputs: [],
             Error: null);
         await store.CreateAsync(completed, CancellationToken.None);
 

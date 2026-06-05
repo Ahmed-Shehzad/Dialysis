@@ -2,6 +2,8 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
+using Dialysis.EHR.Contracts.Integration;
+using Dialysis.Module.Contracts.Billing;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.Extensions.Logging;
 
@@ -27,7 +29,8 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
 {
     private readonly IChargeRepository _charges;
     private readonly IChargeIdempotencyStore _idempotency;
-    private readonly ICptFeeSchedule _feeSchedule;
+    private readonly ITransponderBus _bus;
+    private readonly TimeProvider _clock;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DialysisSessionChargeReadyConsumer> _logger;
     /// <summary>
@@ -36,10 +39,11 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
     /// <c>(SessionId, CptCode)</c> via <see cref="IChargeIdempotencyStore"/>: re-delivery of
     /// the same event finds the existing row and exits without creating a duplicate.
     ///
-    /// The CPT-coded amount comes from <see cref="ICptFeeSchedule"/> — production
-    /// deployments wire in their negotiated payer-specific fee schedule; the default
-    /// implementation reads from configuration so deployments without a real schedule still
-    /// get a deterministic billed amount.
+    /// The amount is priced from the shared <see cref="DialysisTariff"/> (setup + per-minute +
+    /// per-litre UF) — the same calculation PDMS streams as the live chairside estimate, so the
+    /// invoice total matches what the clinician watched accrue. The priced lines are then handed
+    /// to HIE Documents via <see cref="DialysisInvoiceReadyIntegrationEvent"/>, which renders the
+    /// AcroForm invoice PDF.
     ///
     /// Diagnosis pointers default to the dialysis ICD-10 codes the rest of EHR.Billing
     /// expects (N18.6 — ESRD requiring chronic dialysis). The encounter id reuses the PDMS
@@ -48,13 +52,15 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
     /// </summary>
     public DialysisSessionChargeReadyConsumer(IChargeRepository charges,
         IChargeIdempotencyStore idempotency,
-        ICptFeeSchedule feeSchedule,
+        ITransponderBus bus,
+        TimeProvider clock,
         IUnitOfWork unitOfWork,
         ILogger<DialysisSessionChargeReadyConsumer> logger)
     {
         _charges = charges;
         _idempotency = idempotency;
-        _feeSchedule = feeSchedule;
+        _bus = bus;
+        _clock = clock;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -72,7 +78,12 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
             return;
         }
 
-        var billed = await _feeSchedule.LookupAsync(message.CptCode, ct).ConfigureAwait(false);
+        // Price the session into itemised lines using the shared tariff — the same calculation
+        // PDMS uses for the live chairside estimate, so the invoice total matches what the
+        // clinician watched accrue during treatment.
+        var breakdown = DialysisTariff.Compute(
+            message.Modality, message.DurationMinutes, message.AchievedUfVolumeLiters);
+        var billed = new Money(breakdown.Total, breakdown.CurrencyCode);
         var diagnosisPointers = DialysisDiagnosisDefaults.PointersFor(message.Modality);
 
         var chargeId = Guid.CreateVersion7();
@@ -84,13 +95,37 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
             diagnosisPointerIcd10Codes: diagnosisPointers,
             billedAmount: billed);
         _charges.Add(charge);
-
         await _idempotency.RegisterAsync(message.SessionId, message.CptCode, chargeId, ct).ConfigureAwait(false);
+
+        // Hand the priced lines to HIE Documents, which renders the AcroForm invoice PDF.
+        var issuedAt = _clock.GetUtcNow().UtcDateTime;
+        var invoiceNumber =
+            $"INV-{message.CompletedAtUtc:yyyyMMdd}-{message.SessionId.ToString("N")[..6].ToUpperInvariant()}";
+        await _bus.PublishAsync(
+            new DialysisInvoiceReadyIntegrationEvent(
+                EventId: Guid.CreateVersion7(),
+                OccurredOn: issuedAt,
+                SchemaVersion: 1,
+                ChargeId: chargeId,
+                PatientId: message.PatientId,
+                SessionId: message.SessionId,
+                InvoiceNumber: invoiceNumber,
+                IssueDateUtc: issuedAt,
+                Modality: message.Modality,
+                CptCode: message.CptCode,
+                DurationMinutes: message.DurationMinutes,
+                Total: breakdown.Total,
+                CurrencyCode: breakdown.CurrencyCode,
+                Lines: breakdown.Lines
+                    .Select(l => new InvoiceLineDto(l.Label, l.Quantity, l.Unit, l.UnitPrice, l.Amount))
+                    .ToList()),
+            ct).ConfigureAwait(false);
+
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
         _logger.LogInformation(
-            "Captured Charge {ChargeId} for session {SessionId} CPT {CptCode} amount {Amount} {Currency}.",
-            chargeId, message.SessionId, message.CptCode, billed.Amount, billed.CurrencyCode);
+            "Captured Charge {ChargeId} ({Amount} {Currency}) and queued invoice {InvoiceNumber} for session {SessionId}.",
+            chargeId, billed.Amount, billed.CurrencyCode, invoiceNumber, message.SessionId);
     }
 }
 

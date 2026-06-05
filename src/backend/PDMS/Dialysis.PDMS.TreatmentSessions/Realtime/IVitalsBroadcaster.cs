@@ -53,7 +53,80 @@ public sealed record VitalsReadingSnapshot
     }
 }
 
+/// <summary>One itemised line of a live cost snapshot (decoupled from EHR billing types).</summary>
+public sealed record SessionCostLineSnapshot
+{
+    /// <summary>One itemised line of a live cost snapshot (decoupled from EHR billing types).</summary>
+    public SessionCostLineSnapshot(string Label, decimal Quantity, string Unit, decimal UnitPrice, decimal Amount)
+    {
+        this.Label = Label;
+        this.Quantity = Quantity;
+        this.Unit = Unit;
+        this.UnitPrice = UnitPrice;
+        this.Amount = Amount;
+    }
+    public string Label { get; init; }
+    public decimal Quantity { get; init; }
+    public string Unit { get; init; }
+    public decimal UnitPrice { get; init; }
+    public decimal Amount { get; init; }
+    public void Deconstruct(out string Label, out decimal Quantity, out string Unit, out decimal UnitPrice, out decimal Amount)
+    {
+        Label = this.Label;
+        Quantity = this.Quantity;
+        Unit = this.Unit;
+        UnitPrice = this.UnitPrice;
+        Amount = this.Amount;
+    }
+}
+
+/// <summary>
+/// Running cost estimate for an in-progress session, pushed to the chairside over the same
+/// SignalR hub as vitals (message name <c>"cost"</c>). It is an <em>estimate</em>: UF volume
+/// is prorated from the prescription until the session completes and EHR captures the
+/// authoritative charge.
+/// </summary>
+public sealed record SessionCostSnapshot
+{
+    /// <summary>
+    /// Running cost estimate for an in-progress session, pushed to the chairside over the same
+    /// SignalR hub as vitals (message name <c>"cost"</c>).
+    /// </summary>
+    public SessionCostSnapshot(Guid SessionId,
+        string CurrencyCode,
+        decimal Total,
+        int ElapsedMinutes,
+        DateTime AsOfUtc,
+        IReadOnlyList<SessionCostLineSnapshot> Lines)
+    {
+        this.SessionId = SessionId;
+        this.CurrencyCode = CurrencyCode;
+        this.Total = Total;
+        this.ElapsedMinutes = ElapsedMinutes;
+        this.AsOfUtc = AsOfUtc;
+        this.Lines = Lines;
+    }
+    public Guid SessionId { get; init; }
+    public string CurrencyCode { get; init; }
+    public decimal Total { get; init; }
+    public int ElapsedMinutes { get; init; }
+    public DateTime AsOfUtc { get; init; }
+    public IReadOnlyList<SessionCostLineSnapshot> Lines { get; init; }
+    public void Deconstruct(out Guid SessionId, out string CurrencyCode, out decimal Total, out int ElapsedMinutes, out DateTime AsOfUtc, out IReadOnlyList<SessionCostLineSnapshot> Lines)
+    {
+        SessionId = this.SessionId;
+        CurrencyCode = this.CurrencyCode;
+        Total = this.Total;
+        ElapsedMinutes = this.ElapsedMinutes;
+        AsOfUtc = this.AsOfUtc;
+        Lines = this.Lines;
+    }
+}
+
 public interface IVitalsBroadcaster
 {
     Task BroadcastAsync(VitalsReadingSnapshot reading, CancellationToken cancellationToken);
+
+    /// <summary>Pushes a running cost estimate to the session's subscribers (message <c>"cost"</c>).</summary>
+    Task BroadcastCostAsync(SessionCostSnapshot cost, CancellationToken cancellationToken);
 }

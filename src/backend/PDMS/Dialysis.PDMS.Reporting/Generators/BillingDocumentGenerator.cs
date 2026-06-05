@@ -1,4 +1,5 @@
 using Dialysis.BuildingBlocks.Documents.Pdf;
+using Dialysis.Module.Contracts.Billing;
 using Dialysis.PDMS.Contracts.Integration;
 
 namespace Dialysis.PDMS.Reporting.Generators;
@@ -30,6 +31,7 @@ public sealed class BillingDocumentGenerator
     public async Task<(byte[] Pdf, DialysisSessionChargeReadyIntegrationEvent ChargeEvent)> GenerateAsync(
         SessionReportContext context,
         int evaluationCount,
+        decimal achievedUfVolumeLiters,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -51,7 +53,9 @@ public sealed class BillingDocumentGenerator
                 [
                     new KeyValuePair<string, string>("CPT", cptCode),
                     new KeyValuePair<string, string>("Modality", context.Modality),
-                    new KeyValuePair<string, string>("Duration", $"{context.DurationMinutes} min"),
+                    new KeyValuePair<string, string>(
+                        "Treatment usage time",
+                        $"{TreatmentUsageTime.Format(context.DurationMinutes)} ({context.DurationMinutes} min)"),
                     new KeyValuePair<string, string>("Completed", context.CompletedAtUtc.ToString("u")),
                 ])]),
         };
@@ -73,7 +77,8 @@ public sealed class BillingDocumentGenerator
             Modality: context.Modality,
             DurationMinutes: context.DurationMinutes,
             CompletedAtUtc: context.CompletedAtUtc,
-            CptCode: cptCode);
+            CptCode: cptCode,
+            AchievedUfVolumeLiters: Math.Max(0m, achievedUfVolumeLiters));
         return (bytes, chargeEvent);
     }
 

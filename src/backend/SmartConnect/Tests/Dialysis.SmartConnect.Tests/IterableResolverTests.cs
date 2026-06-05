@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using Dialysis.SmartConnect.Iteration;
 using Xunit;
@@ -81,7 +80,7 @@ public sealed class IterableResolverTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
@@ -93,7 +92,7 @@ public sealed class IterableResolverTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Json,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 
@@ -105,7 +104,7 @@ public sealed class IterableResolverTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.PlainText,
-            Metadata = ImmutableDictionary<string, string>.Empty,
+            Metadata = [],
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };
 }

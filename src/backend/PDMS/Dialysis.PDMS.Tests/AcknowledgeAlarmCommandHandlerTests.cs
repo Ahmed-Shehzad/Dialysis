@@ -71,6 +71,9 @@ public sealed class AcknowledgeAlarmCommandHandlerTests
 
         public Task<IReadOnlyList<TreatmentAlarm>> ListActiveAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<TreatmentAlarm>>([.. _alarms.Where(a => a.State != TreatmentAlarmState.Resolved)]);
+
+        public Task<IReadOnlyList<TreatmentAlarm>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<TreatmentAlarm>>([.. _alarms.Where(a => a.SessionId == sessionId)]);
     }
 
     private sealed class RecordingUnitOfWork : IUnitOfWork

@@ -1,6 +1,8 @@
 using Dialysis.BuildingBlocks.DataProtection;
 using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.BuildingBlocks.Documents.Pdf;
+using Dialysis.BuildingBlocks.Documents.Storage;
+using Dialysis.BuildingBlocks.Documents.Storage.Valkey;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
@@ -19,6 +21,7 @@ using Dialysis.PDMS.Medications.Contracts;
 using Dialysis.PDMS.OnCall.Consumers;
 using Dialysis.PDMS.OnCall.Dispatch;
 using Dialysis.PDMS.OnCall.Domain;
+using Dialysis.PDMS.Reporting.Consumers;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
 using Dialysis.PDMS.Reporting.Templating;
@@ -75,6 +78,7 @@ public static class PdmsCompositionExtensions
         bool enableDemoSeed = false,
         bool enableVitalsTicker = false,
         bool enableMachineTelemetrySimulator = false,
+        bool enableLifecycleSimulator = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
         {
@@ -164,17 +168,29 @@ public static class PdmsCompositionExtensions
             services.AddSingleton<IIvPumpDriver, Pcd04NormalisedDriver>();
 
             // Reporting infrastructure: PDF renderer + Markdown/Mustache binder + the three
-            // generators + an in-memory blob store. Production hosts replace the blob store
-            // with S3 / Azure Blob via a host-specific override.
+            // generators + a document blob store. The blob store is shared with HIE so reports
+            // PDMS renders are resolvable from HIE's Documents board: in-memory by default, but
+            // swapped to the shared Valkey-backed store when Valkey is configured (in Aspire /
+            // containers each module is a separate process, so an in-process store would be
+            // invisible cross-module). IReportBlobStore is a thin adapter over the resolved
+            // IDocumentBlobStore. Production hosts replace it with S3 / Azure Blob.
             services.AddPdfDocumentRendering();
             services.AddSingleton<MustacheMarkdownBinder>();
             services.AddSingleton<DischargeLetterGenerator>();
             services.AddSingleton<ShiftReportGenerator>();
             services.AddSingleton<BillingDocumentGenerator>();
-            services.TryAddSingleton<IReportBlobStore, InMemoryReportBlobStore>();
+            services.AddInMemoryDocumentBlobStore();
+            services.AddValkeyDocumentBlobStore(configuration.GetSection("Pdms:DistributedCache:Valkey"));
+            services.TryAddSingleton<IReportBlobStore>(sp =>
+                new InMemoryReportBlobStore(sp.GetRequiredService<IDocumentBlobStore>()));
             // Language-aware template resolution over the shared PDMS repository (in-memory or
             // EF, per the provider switch above). Scoped because the underlying repository is.
             services.AddScoped<IReportTemplateRepository, PdmsReportTemplateRepository>();
+
+            // Post-session reporting: build the report context from the session aggregate and
+            // persist generated reports through the same SessionReport repository the read API uses.
+            services.AddScoped<ISessionReportContextBuilder, SessionReportContextBuilder>();
+            services.AddScoped<ISessionReportRepository, SessionReportRepository>();
 
             // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
             services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
@@ -184,6 +200,10 @@ public static class PdmsCompositionExtensions
                 t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
                 t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
                 t.AddConsumer<PatientPlacedInChairIntegrationEvent, PatientPlacedInChairConsumer>();
+
+                // Completed session → post-session reports (discharge letter + billing summary)
+                // and the billing charge that drives the itemised invoice (EHR → HIE).
+                t.AddConsumer<DialysisSessionCompletedIntegrationEvent, OnDialysisSessionCompleted>();
 
                 // Medications → inventory deduction loop.
                 t.AddConsumer<MedicationAdministeredIntegrationEvent, OnMedicationAdministered>();
@@ -272,6 +292,9 @@ public static class PdmsCompositionExtensions
 
             if (enableMachineTelemetrySimulator)
                 services.AddHostedService<Demo.MachineTelemetrySimulatorService>();
+
+            if (enableLifecycleSimulator)
+                services.AddHostedService<Demo.SessionLifecycleSimulator>();
 
             return services;
         }

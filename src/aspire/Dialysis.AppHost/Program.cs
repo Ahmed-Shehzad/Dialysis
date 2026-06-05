@@ -327,7 +327,8 @@ var hisApi = builder.AddProject<Projects.Dialysis_HIS_Api>("his-api")
     .WithEnvironment("His__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("His__Authentication__Authority", keycloakRealmUri)
     .WithEnvironment("His__Authentication__Audience", "account")
-    .WithEnvironment("His__Fhir__Enabled", "true");
+    .WithEnvironment("His__Fhir__Enabled", "true")
+    .WithEnvironment("His__Demo__Enabled", "true");
 
 var ehrApi = builder.AddProject<Projects.Dialysis_EHR_Api>("ehr-api")
     .WithReference(ehrDb).WaitFor(ehrDb)
@@ -354,7 +355,8 @@ var pdmsApi = builder.AddProject<Projects.Dialysis_PDMS_Api>("pdms-api")
     .WithEnvironment("Pdms__Authentication__Audience", "account")
     .WithEnvironment("Pdms__Demo__Enabled", "true")
     .WithEnvironment("Pdms__Demo__VitalsTicker", "true")
-    .WithEnvironment("Pdms__Demo__MachineTelemetrySimulator", "true");
+    .WithEnvironment("Pdms__Demo__MachineTelemetrySimulator", "true")
+    .WithEnvironment("Pdms__Demo__LifecycleSimulator", "true");
 
 var smartConnectApi = builder.AddProject<Projects.Dialysis_SmartConnect_Api>("smartconnect-api")
     .WithReference(smartconnectDb).WaitFor(smartconnectDb)
