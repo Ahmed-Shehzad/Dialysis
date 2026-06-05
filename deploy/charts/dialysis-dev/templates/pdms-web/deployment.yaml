@@ -1,0 +1,40 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "pdms-web-deployment"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "pdms-web"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ .Chart.Name }}"
+        app.kubernetes.io/component: "pdms-web"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+    spec:
+      containers:
+        - image: "{{ .Values.parameters.pdms_web.pdms_web_image }}"
+          name: "pdms-web"
+          envFrom:
+            - configMapRef:
+                name: "pdms-web-config"
+          ports:
+            - name: "http"
+              protocol: "TCP"
+              containerPort: 5333
+          imagePullPolicy: "IfNotPresent"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ .Chart.Name }}"
+      app.kubernetes.io/component: "pdms-web"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: "RollingUpdate"

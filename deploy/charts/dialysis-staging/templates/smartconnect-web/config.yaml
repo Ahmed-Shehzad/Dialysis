@@ -1,0 +1,18 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "smartconnect-web-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "smartconnect-web"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  NODE_ENV: "{{ .Values.config.smartconnect_web.NODE_ENV }}"
+  GATEWAY_HTTP: "{{ .Values.config.smartconnect_web.GATEWAY_HTTP }}"
+  services__gateway__http__0: "{{ .Values.config.smartconnect_web.services__gateway__http__0 }}"
+  GATEWAY_HTTPS: "{{ .Values.config.smartconnect_web.GATEWAY_HTTPS }}"
+  BROWSER: "{{ .Values.config.smartconnect_web.BROWSER }}"
+  VITE_GATEWAY_URL: "{{ .Values.config.smartconnect_web.VITE_GATEWAY_URL }}"
+  VITE_API_BASE_URL: "{{ .Values.config.smartconnect_web.VITE_API_BASE_URL }}"
+  PORT: "{{ .Values.config.smartconnect_web.PORT }}"

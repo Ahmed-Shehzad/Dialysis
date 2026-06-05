@@ -1,0 +1,20 @@
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "ehr-api-service"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "ehr-api"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+spec:
+  type: "ClusterIP"
+  selector:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "ehr-api"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+  ports:
+    - name: "http"
+      protocol: "TCP"
+      port: {{ .Values.parameters.ehr_api.port_http | int }}
+      targetPort: {{ .Values.parameters.ehr_api.port_http | int }}

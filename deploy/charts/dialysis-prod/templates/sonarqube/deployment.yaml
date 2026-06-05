@@ -1,0 +1,56 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "sonarqube-deployment"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "sonarqube"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ .Chart.Name }}"
+        app.kubernetes.io/component: "sonarqube"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+    spec:
+      containers:
+        - image: "sonarqube:26.5.0.122743-community"
+          name: "sonarqube"
+          envFrom:
+            - configMapRef:
+                name: "sonarqube-config"
+            - secretRef:
+                name: "sonarqube-secrets"
+          ports:
+            - name: "http"
+              protocol: "TCP"
+              containerPort: 9000
+          volumeMounts:
+            - name: "dialysis-sonarqube-data"
+              mountPath: "/opt/sonarqube/data"
+            - name: "dialysis-sonarqube-logs"
+              mountPath: "/opt/sonarqube/logs"
+            - name: "dialysis-sonarqube-extensions"
+              mountPath: "/opt/sonarqube/extensions"
+          imagePullPolicy: "IfNotPresent"
+      volumes:
+        - name: "dialysis-sonarqube-data"
+          emptyDir: {}
+        - name: "dialysis-sonarqube-logs"
+          emptyDir: {}
+        - name: "dialysis-sonarqube-extensions"
+          emptyDir: {}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ .Chart.Name }}"
+      app.kubernetes.io/component: "sonarqube"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: "RollingUpdate"

@@ -1,0 +1,20 @@
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "smartconnect-bff-service"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "smartconnect-bff"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+spec:
+  type: "ClusterIP"
+  selector:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "smartconnect-bff"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+  ports:
+    - name: "http"
+      protocol: "TCP"
+      port: 5304
+      targetPort: 5304

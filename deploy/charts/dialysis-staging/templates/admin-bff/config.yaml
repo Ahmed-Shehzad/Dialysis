@@ -1,0 +1,24 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "admin-bff-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "admin-bff"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "{{ .Values.config.admin_bff.OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY }}"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "{{ .Values.config.admin_bff.ASPNETCORE_FORWARDEDHEADERS_ENABLED }}"
+  ASPNETCORE_URLS: "{{ .Values.config.admin_bff.ASPNETCORE_URLS }}"
+  Bff__Keycloak__Authority: "{{ .Values.config.admin_bff.Bff__Keycloak__Authority }}"
+  Bff__Module__ModuleApiAddress: "http://hie-api-service:{{ .Values.parameters.hie_api.port_http }}"
+  RABBITMQ_HOST: "{{ .Values.config.admin_bff.RABBITMQ_HOST }}"
+  RABBITMQ_PORT: "{{ .Values.config.admin_bff.RABBITMQ_PORT }}"
+  RABBITMQ_USERNAME: "{{ .Values.config.admin_bff.RABBITMQ_USERNAME }}"
+  VALKEY_HOST: "{{ .Values.config.admin_bff.VALKEY_HOST }}"
+  VALKEY_PORT: "{{ .Values.config.admin_bff.VALKEY_PORT }}"
+  Bff__Module__Aggregations__0__Address: "http://his-api-service:{{ .Values.parameters.his_api.port_http }}"
+  Bff__Module__Aggregations__1__Address: "http://ehr-api-service:{{ .Values.parameters.ehr_api.port_http }}"
+  Bff__Module__Aggregations__2__Address: "http://pdms-api-service:{{ .Values.parameters.pdms_api.port_http }}"
+  Bff__Module__Aggregations__3__Address: "http://smartconnect-api-service:{{ .Values.parameters.smartconnect_api.port_http }}"

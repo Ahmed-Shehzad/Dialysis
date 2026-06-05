@@ -1,0 +1,18 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "identity-web-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "identity-web"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  NODE_ENV: "{{ .Values.config.identity_web.NODE_ENV }}"
+  GATEWAY_HTTP: "{{ .Values.config.identity_web.GATEWAY_HTTP }}"
+  services__gateway__http__0: "{{ .Values.config.identity_web.services__gateway__http__0 }}"
+  GATEWAY_HTTPS: "{{ .Values.config.identity_web.GATEWAY_HTTPS }}"
+  BROWSER: "{{ .Values.config.identity_web.BROWSER }}"
+  VITE_GATEWAY_URL: "{{ .Values.config.identity_web.VITE_GATEWAY_URL }}"
+  VITE_API_BASE_URL: "{{ .Values.config.identity_web.VITE_API_BASE_URL }}"
+  PORT: "{{ .Values.config.identity_web.PORT }}"
