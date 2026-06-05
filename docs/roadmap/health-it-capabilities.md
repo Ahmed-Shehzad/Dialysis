@@ -14,7 +14,7 @@ health information exchange) and turns the **gaps** into a prioritized, scoped r
 | **Electronic Health Records** | ✅ Strong | `EHR` module — chart, orders, notes, allergies/vitals/problems |
 | **Patient Portals** | ✅ Strong | `patient-portal-web` + aggregating `PatientPortal.Bff` — appointments, meds, labs, recent treatments |
 | **Health Information Exchange** | ✅ Strong | `HIE` — FHIR R4, IHE XDS (ITI‑18/41/42/43), TEFCA, consent, `DocumentReference` |
-| **Master Patient Index** | ✅ Good | `HIE` `PatientIndexEntry` / `EfPatientIndex` (deterministic linking) |
+| **Master Patient Index** | ✅ Strong | `HIE` `PatientIndexEntry` + **probabilistic linkage** (Jaro-Winkler + weighted `PatientMatchScorer`, blocking candidate pass), FHIR `$match` with score + match-grade, and a **steward review queue** (`PatientLinkReview`, queued on probable cross-source duplicates at ingest, adjudicated via `MpiAdminController` + the hie-web console) |
 | **Remote Patient Monitoring** | ✅ Good | `HIS.Integration` device **registry** (`Device` aggregate, config‑driven `IDeviceTypeCatalog`, register/bind/status API + **his‑web steward console**) governs ingestion (status + patient‑binding enforced, last‑seen stamped, strict mode opt‑in) on top of `IngestDeviceReading` + PDMS intradialytic telemetry (TimescaleDB). *Remaining: load test.* |
 | **Medical Imaging** | ✅ Ordering + AI loop closed | DICOMweb WADO/STOW/QIDO + DIMSE, EHR imaging‑ordering slice (chart **Imaging panel**), the closed order→study loop (accession capture → bridge → link consumer), **and** the AI loop: gated `ImagingAiAnalyzer` (provider‑port + sample model, audited, human‑in‑the‑loop) runs on ingest → `ImagingAiFindingProducedIntegrationEvent` → EHR attaches an advisory finding (pending review) + projects a FHIR `Observation` → clinician **Accept/Reject sign‑off** on the chart. *Remaining: de‑id pixels before a real model hop; real‑model governance (FDA/CE, bias).* |
 | **Laboratory Information Systems** | ✅ Good | Dedicated `Lab` context (order domain + API) → `SmartConnect` ORM/FHIR transforms → ORU bridge → typed result event → Lab records it → EHR chart Labs panel. Closed order→result loop, both transports. *Remaining: live loopback‑LIS e2e (needs infra).* |
@@ -73,18 +73,11 @@ DICOMweb store existed but there was **no radiology ordering**.
 - **Remaining:** de‑identify pixel data before a real provider hop; real‑model governance (FDA/CE posture,
   bias/audit, model registry) before swapping the sample for a production model.
 
-### P2 — AI‑assisted imaging hook · **L (~4 sprints + governance)**
-The headline gain (faster, more‑accurate reads). DICOMweb + de‑id + terminology are the rails; the
-missing piece is inference orchestration.
-- **Slots into:** STOW‑RS ingest event → `Fhir.DeIdentification` → async inference behind an
-  `IImagingInferenceProvider` port (edge model or vendor API) → FHIR `Observation`/finding coded via
-  `Fhir.Terminology`, gated by a feature flag and audited.
-- **Watch‑outs:** model governance, FDA/CE posture, bias/audit, human‑in‑the‑loop. Ship a
-  **provider‑port + one sample model**, never a hard‑wired vendor. Depends on the P2 `ImagingStudy` plumbing.
-- **DoD:** a STOW'd study yields a de‑identified, coded finding attached to the study, gated + audited.
-
 ### P3 — Enabler upgrades · **S–M each**
-- **MPI**: probabilistic/fuzzy matching + steward review queue on `HIE` `PatientIndexEntry`.
+- ✅ **MPI** — **delivered**: probabilistic Jaro-Winkler + weighted `PatientMatchScorer` with a blocking
+  candidate pass, FHIR `$match` carrying score + match-grade, and a steward review queue
+  (`PatientLinkReview` queued on probable cross-source duplicates at ingest, `MpiAdminController` +
+  hie-web console to adjudicate). *Remaining: optional auto-link on cross-source Certain.*
 - **Terminology service**: promote `Fhir.Terminology` to `$validate-code` / `$translate` with value‑set
   governance (underpins both LIS and AI coding).
 - **Public‑health / analytics export**: PHI‑safe de‑identified warehouse export on `Fhir.DeIdentification`
@@ -94,9 +87,10 @@ missing piece is inference orchestration.
 1. ~~**LIS e2e** + **RPM registry**~~ — ✅ both delivered (backend + EHR Labs panel + his‑web device console; registry + governed ingestion).
 2. ~~**Imaging ordering**~~ — ✅ closed end to end (EHR order slice + DICOM accession capture + producer bridge + study‑link consumer + chart panel).
 3. ~~**AI imaging**~~ — ✅ closed end to end (ingestion‑gated analyzer → advisory finding → FHIR `Observation` → chart sign‑off).
-4. **Enablers** — **next**: MPI fuzzy matching, terminology `$validate-code`/`$translate`, PHI‑safe analytics export.
+4. **Enablers** — 🟡 MPI probabilistic matching + steward queue **delivered**; **next**: terminology
+   `$validate-code`/`$translate`, PHI‑safe analytics export.
    Loose ends: imaging study preview, AI pixel de‑id + real‑model governance, LIS live e2e, RPM load test,
-   and consolidating the parallel EHR/Lab order paths.
+   MPI auto-link on Certain, and consolidating the parallel EHR/Lab order paths.
 
 ## Cross‑cutting constraints (apply to every item)
 - New cross‑context flows go through **integration events in `<Module>.Contracts`** + an `IConsumer<>` —
