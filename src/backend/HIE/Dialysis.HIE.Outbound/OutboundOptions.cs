@@ -26,4 +26,11 @@ public sealed class OutboundOptions
 
     /// <summary>When true, dispatcher writes a domain delivery event via the outbox; false skips publish (useful in tests).</summary>
     public bool EmitDeliveryEvents { get; set; } = true;
+
+    /// <summary>
+    /// When true, closing an encounter additionally assembles a CCD care summary and pushes it to the
+    /// patient's care-network partner(s) — transition-of-care sharing without a manual referral. Opt-in
+    /// (default off). Bound from <c>Hie:Outbound:AutoDischargeSummary</c>.
+    /// </summary>
+    public bool AutoDischargeSummary { get; set; }
 }
