@@ -16,6 +16,7 @@ public static class QueryServiceCollectionExtensions
             services.Configure<PartnerFhirQueryOptions>(configuration.GetSection(PartnerFhirQueryOptions.SectionName));
             services.AddHttpClient(PartnerFhirQueryClient.HttpClientName);
             services.AddScoped<IPartnerFhirQuery, PartnerFhirQueryClient>();
+            services.AddScoped<IPartnerPatientDiscovery, PartnerPatientDiscoveryClient>();
             return services;
         }
     }
