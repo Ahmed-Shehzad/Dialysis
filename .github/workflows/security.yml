@@ -126,14 +126,16 @@ jobs:
           dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
           # Readiness probe: wait for the gateway on :9090 to accept a connection. The stack is
-          # heavy (per-module Postgres + RabbitMQ + Valkey + Keycloak + every API + BFF, and the
-          # gateway WaitFor's all of them), so allow up to ~10 min on a cold DinD runner. Use a
-          # connection check (curl -s, not -sf) so a non-2xx launchpad response still counts as
-          # "listening" — ZAP only needs the port up. Fail loudly (with the AppHost log) if it
-          # never comes up, instead of letting ZAP run against a dead port (Connection refused).
+          # heavy (per-module Postgres + RabbitMQ + Valkey + Keycloak + SonarQube + every API + BFF,
+          # and the gateway WaitFor's all of them), and on a cold DinD runner the image pulls +
+          # concurrent container startup can starve CPU/IO, so allow up to ~15 min (was ~10 — the
+          # gateway occasionally crossed that on cold runners and the scan flaked). Use a connection
+          # check (curl -s, not -sf) so a non-2xx launchpad response still counts as "listening" —
+          # ZAP only needs the port up. Fail loudly (with the AppHost log) if it never comes up,
+          # instead of letting ZAP run against a dead port (Connection refused).
           echo "Waiting for gateway on :9090 …"
           ready=0
-          for i in $(seq 1 150); do
+          for i in $(seq 1 225); do
             if curl -s -o /dev/null --max-time 5 http://localhost:9090/; then
               echo "Gateway reachable after ~$((i * 4))s."
               ready=1
@@ -142,7 +144,7 @@ jobs:
             sleep 4
           done
           if [ "$ready" -ne 1 ]; then
-            echo "::error::Aspire gateway never became reachable on :9090 within ~10 min."
+            echo "::error::Aspire gateway never became reachable on :9090 within ~15 min."
             echo '----- AppHost log (tail) -----'
             tail -n 250 /tmp/aspire.log || true
             exit 1
