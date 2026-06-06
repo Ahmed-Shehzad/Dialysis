@@ -281,6 +281,35 @@ var smartconnectDb = smartconnectPgServer.AddDatabase("SmartConnect", databaseNa
 var hieDb = hiePgServer.AddDatabase("Hie", databaseName: "dialysis_hie");
 var labDb = labPgServer.AddDatabase("Lab", databaseName: "dialysis_lab");
 
+// --- Dev data dashboards (Postgres / Valkey / RabbitMQ) --------------------
+//
+// Browser UIs to inspect the backing stores while the stack runs. Gated to RUN mode (never published
+// into the compose/k8s artifacts) and behind Dialysis:EnableDevDashboards (default on) so the
+// security-scan ZAP job — which only needs the gateway and is sensitive to stack weight — can opt out
+// with Dialysis__EnableDevDashboards=false. RabbitMQ's management UI is already enabled via
+// .WithManagementPlugin() on the broker above (port 15672).
+var enableDevDashboards =
+    !publishing && !string.Equals(builder.Configuration["Dialysis:EnableDevDashboards"], "false", StringComparison.OrdinalIgnoreCase);
+if (enableDevDashboards)
+{
+    // PostgreSQL: a single shared pgAdmin that browses every module database. Calling WithPgAdmin on
+    // each server registers it with the one pgAdmin container (Aspire de-dupes the admin resource).
+    hisPgServer.WithPgAdmin();
+    ehrPgServer.WithPgAdmin();
+    pdmsPgServer.WithPgAdmin();
+    smartconnectPgServer.WithPgAdmin();
+    hiePgServer.WithPgAdmin();
+    labPgServer.WithPgAdmin();
+
+    // Valkey: Redis Commander web UI (Valkey speaks the Redis wire protocol). The Valkey hosting
+    // package ships no Redis-UI helper, so add the container directly and point it at the broker by
+    // its DCP network hostname (the resource name). Aspire assigns the host port; the dashboard links it.
+    builder.AddContainer("valkey-commander", "rediscommander/redis-commander", "latest")
+        .WithEnvironment("REDIS_HOSTS", "local:valkey:6379")
+        .WithHttpEndpoint(targetPort: 8081, name: "http")
+        .WaitFor(valkey);
+}
+
 // --- SonarQube (auto-start with the AppHost) ------------------------------
 //
 // SonarQube Community 2025.1 static-analysis server. Starts in parallel with the
