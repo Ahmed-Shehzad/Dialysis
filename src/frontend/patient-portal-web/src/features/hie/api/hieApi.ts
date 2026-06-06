@@ -140,3 +140,52 @@ export const fetchPartners = async (): Promise<PartnerStatusDto[]> => {
   );
   return unwrap(response.data);
 };
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Patient self-access — my Community Health Record (Phase 5d, IndividualAccessServices)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type InsightsCounts = {
+  encounters: number;
+  observations: number;
+  documents: number;
+  procedures: number;
+  medications: number;
+  allergies: number;
+  problems: number;
+  other: number;
+  total: number;
+};
+
+export type InsightsItem = {
+  resourceType: string;
+  date?: string | null;
+  sourceOrganization: string;
+  display?: string | null;
+};
+
+export type AllergyConflictAlert = {
+  medicationDisplay: string;
+  allergyDisplay: string;
+  sources: string[];
+};
+
+export type PatientInsightsSummary = {
+  patientReference: string;
+  sourceOrganizations: string[];
+  lastUpdatedUtc?: string | null;
+  counts: InsightsCounts;
+  recent: InsightsItem[];
+  medications: InsightsItem[];
+  allergies: InsightsItem[];
+  problems: InsightsItem[];
+  allergyConflictAlerts: AllergyConflictAlert[];
+};
+
+/** The caller's own outside records — patient self-access, gated by the patient's identity claim. */
+export const fetchMyInsights = async (patientId: string): Promise<PatientInsightsSummary> => {
+  const response = await apiClient.get<HateoasEnvelope<PatientInsightsSummary>>(
+    `/portal/api/_x/hie/api/v1.0/hie/patient-access/insights/patient/${encodeURIComponent(patientId)}`,
+  );
+  return unwrap(response.data);
+};
