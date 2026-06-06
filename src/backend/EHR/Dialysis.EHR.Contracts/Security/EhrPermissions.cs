@@ -92,6 +92,11 @@ public static class EhrPermissions
     // Population / cohort quality (read across a panel of patients)
     public const string QualityPopulationRead = "ehr.quality.population.read";
 
+    // Population outreach (notify at-risk patients) + safety surveillance + coding assist
+    public const string PopulationOutreach = "ehr.population.outreach";
+    public const string SafetySurveillanceRead = "ehr.safety.surveillance.read";
+    public const string BillingCodingAssist = "ehr.billing.coding.assist";
+
     public static IReadOnlyList<string> All { get; } =
     [
         PatientRegister, PatientUpdate, PatientMerge, PatientRead,
@@ -107,7 +112,7 @@ public static class EhrPermissions
         ImagingOrder, ImagingStudyRead, ImagingAiReview,
         ChargeCapture, ClaimSubmit, PaymentPost, StatementRead,
         IntegrationOutboundManage, IntegrationInboundIngest,
-        QualityPopulationRead,
+        QualityPopulationRead, PopulationOutreach, SafetySurveillanceRead, BillingCodingAssist,
     ];
 }
 

@@ -42,3 +42,53 @@ export const fetchCohortQuality = async (take = 100): Promise<CohortQualityResul
     }
   );
 };
+
+export type PatientControlBreakdown = {
+  patientId: string;
+  medicalRecordNumber: string;
+  name: string;
+  outcome: string;
+  value?: number | null;
+};
+
+export type PopulationControlResult = {
+  measureId: string;
+  title: string;
+  inCohort: number;
+  controlled: number;
+  uncontrolled: number;
+  noData: number;
+  controlRatePercent: number;
+  breakdown: PatientControlBreakdown[];
+};
+
+export type OutreachTarget = {
+  patientId: string;
+  medicalRecordNumber: string;
+  name: string;
+  contactResolved: boolean;
+};
+
+export type OutreachResult = {
+  measureId: string;
+  targeted: number;
+  dispatched: boolean;
+  targets: OutreachTarget[];
+};
+
+/** Condition-control rate for a configured measure (e.g. % of hypertensives with BP controlled). */
+export const fetchPopulationControl = async (
+  measureId: string,
+  take = 100,
+): Promise<PopulationControlResult> => {
+  const response = await apiClient.get<PopulationControlResult>(`${prefix}/control`, {
+    params: { measureId, take },
+  });
+  return response.data;
+};
+
+/** Reaches out to the uncontrolled patients for a measure; returns the audited target list. */
+export const triggerOutreach = async (measureId: string, take = 100): Promise<OutreachResult> => {
+  const response = await apiClient.post<OutreachResult>(`${prefix}/outreach`, { measureId, take });
+  return response.data;
+};

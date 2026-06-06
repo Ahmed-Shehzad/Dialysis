@@ -6,6 +6,7 @@ import {
   fetchCohortQuality,
 } from "@/features/population/api/populationApi";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { ConditionControlPanel } from "@/modules/ehr/admin/ConditionControlPanel";
 
 /**
  * Population / cohort quality — open care gaps across the active panel, rolled up per measure with a
@@ -34,6 +35,8 @@ export const PopulationQualityPage = () => {
           Open quality-measure gaps for active patients — pick a measure to see who needs outreach.
         </p>
       </header>
+
+      <ConditionControlPanel />
 
       {quality.isLoading && <p className="text-sm text-slate-400">Evaluating the cohort…</p>}
       {quality.error && (

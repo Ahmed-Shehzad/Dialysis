@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.ClinicianNotification;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
@@ -85,6 +86,17 @@ public static class EhrCompositionExtensions
                 configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions.SectionName));
             services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.IClinicalDecisionSupportEvaluator,
                 Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.ClinicalDecisionSupportEvaluator>();
+
+            // Population condition-control measures + at-risk outreach — config-driven, dispatch off by default.
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ControlMeasureOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ControlMeasureOptions.SectionName));
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.OutreachOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.OutreachOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IConditionControlEvaluator,
+                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ConditionControlEvaluator>();
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IOutreachContactResolver,
+                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ConfiguredFallbackOutreachContactResolver>();
+            services.AddClinicianNotification();
 
             // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
             services.Configure<EncounterChargeAutomationOptions>(
