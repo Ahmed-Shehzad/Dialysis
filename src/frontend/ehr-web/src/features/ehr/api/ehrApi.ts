@@ -210,13 +210,18 @@ export type SignNoteRequest = {
 
 /** A point-of-care safety signal returned by an order endpoint (mirrors the EHR SafetyAdvisory). */
 export type SafetyAdvisory = {
-  category: "MedicationAllergyConflict" | "DuplicateActiveMedication" | "DuplicateLabOrder";
+  category:
+    | "MedicationAllergyConflict"
+    | "DuplicateActiveMedication"
+    | "DuplicateLabOrder"
+    | "DrugInteraction";
   severity: "Warning" | "Blocking";
   matchedCode: string;
   matchedDisplay: string;
   orderedConcept: string;
   sourceRowId: string;
   sourceKind: string;
+  detail?: string | null;
 };
 
 export type OrderResult = { id: string; advisories: SafetyAdvisory[] };
@@ -240,6 +245,8 @@ export const advisoryCategoryLabel = (category: SafetyAdvisory["category"]): str
       return "Duplicate medication";
     case "DuplicateLabOrder":
       return "Duplicate lab order";
+    case "DrugInteraction":
+      return "Drug interaction";
   }
 };
 

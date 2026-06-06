@@ -202,6 +202,7 @@ public static class EhrCompositionExtensions
                 services.AddFhirBulkDataFeeder<EhrAllergyIntoleranceFeeder, Hl7.Fhir.Model.AllergyIntolerance>();
                 services.AddFhirBulkDataFeeder<EhrImmunizationFeeder, Hl7.Fhir.Model.Immunization>();
                 services.AddFhirBulkDataFeeder<EhrMedicationStatementFeeder, Hl7.Fhir.Model.MedicationStatement>();
+                services.AddFhirBulkDataFeeder<EhrCarePlanFeeder, Hl7.Fhir.Model.CarePlan>();
             }
 
             if (enableFhirSmartOnFhir)

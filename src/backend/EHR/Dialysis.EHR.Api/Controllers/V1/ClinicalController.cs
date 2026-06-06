@@ -200,6 +200,7 @@ public sealed class ClinicalController : ControllerBase
         orderedConcept = a.OrderedConcept,
         sourceRowId = a.SourceRowId,
         sourceKind = a.SourceKind,
+        detail = a.Detail,
     };
 
     /// <summary>Orders an imaging study; the modality fulfils it and STOWs the study back via DICOM.</summary>
