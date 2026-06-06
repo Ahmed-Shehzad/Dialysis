@@ -66,6 +66,19 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   return <>{children}</>;
 };
 
+// Single source of truth for the PDMS child routes. AppRouter.nav.test.tsx asserts every nav link
+// (PDMS_NAV in AppShell) has a registered route, so a nav item can never dead-end at the catch-all.
+export const PDMS_ROUTES: ReadonlyArray<{ path: string; element: ReactNode }> = [
+  { path: "sessions", element: <SessionsPage /> },
+  { path: "sessions/:sessionId", element: <SessionLivePage /> },
+  { path: "chairs", element: <ChairBoardPage /> },
+  { path: "admin/inventory", element: <InventoryPage /> },
+  { path: "admin/reporting/templates", element: <ReportingTemplatesPage /> },
+  { path: "admin/oncall/rotation", element: <OnCallRotationPage /> },
+  { path: "admin/oncall/policies", element: <OnCallPoliciesPage /> },
+  { path: "admin/oncall/audit", element: <OnCallAuditPage /> },
+];
+
 export const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<LoginPage />} />
@@ -78,14 +91,9 @@ export const AppRouter = () => (
       }
     >
       <Route index element={<Navigate to="/sessions" replace />} />
-      <Route path="sessions" element={<SessionsPage />} />
-      <Route path="sessions/:sessionId" element={<SessionLivePage />} />
-      <Route path="chairs" element={<ChairBoardPage />} />
-      <Route path="admin/inventory" element={<InventoryPage />} />
-      <Route path="admin/reporting/templates" element={<ReportingTemplatesPage />} />
-      <Route path="admin/oncall/rotation" element={<OnCallRotationPage />} />
-      <Route path="admin/oncall/policies" element={<OnCallPoliciesPage />} />
-      <Route path="admin/oncall/audit" element={<OnCallAuditPage />} />
+      {PDMS_ROUTES.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element} />
+      ))}
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
