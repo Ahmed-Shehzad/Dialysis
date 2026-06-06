@@ -7,6 +7,7 @@ using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
 using Dialysis.HIE.Outbound.Features.ListPartners;
 using Dialysis.HIE.Outbound.Features.RetryOutboundBundle;
+using Dialysis.HIE.Query.Features.PullOutsideRecords;
 using Dialysis.HIE.Query.Features.PullPartnerDocuments;
 using Dialysis.HIE.Query.Features.PullPartnerRecords;
 using Microsoft.AspNetCore.Authorization;
@@ -124,6 +125,30 @@ public sealed class HieOpsAdminController : ControllerBase
     {
         var result = await _cqrs.SendCommandAsync<PullPartnerDocumentsCommand, PartnerPullResult>(
             new PullPartnerDocumentsCommand(partnerId, patient, purpose), cancellationToken).ConfigureAwait(false);
+        return OkResource(result);
+    }
+
+    /// <summary>
+    /// On-demand "pull this patient's outside records": resolves the patient at the partner
+    /// (discovery, unless <c>partnerPatientId</c> is supplied), pulls records (<c>$everything</c>) and
+    /// documents (XCA), and lands everything through inbound ingestion. Returns the candidate count,
+    /// the resolved partner-side id, and how many records/documents were fetched.
+    /// </summary>
+    [HttpPost("query/partner/{partnerId:guid}/outside-records")]
+    [ProducesResponseType(typeof(ResourceEnvelope<OutsideRecordsResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PullOutsideRecordsAsync(
+        Guid partnerId,
+        [FromQuery] string? partnerPatientId = null,
+        [FromQuery] string? mrn = null,
+        [FromQuery] string? family = null,
+        [FromQuery] string? given = null,
+        [FromQuery] DateOnly? birthDate = null,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<PullOutsideRecordsCommand, OutsideRecordsResult>(
+            new PullOutsideRecordsCommand(partnerId, partnerPatientId, mrn, family, given, birthDate, purpose),
+            cancellationToken).ConfigureAwait(false);
         return OkResource(result);
     }
 
