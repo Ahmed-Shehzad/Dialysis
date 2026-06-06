@@ -1,3 +1,4 @@
+using Dialysis.EHR.ClinicalNotes.Domain;
 using Dialysis.EHR.ClinicalNotes.Ports;
 using Dialysis.EHR.PatientChart.Domain;
 using Dialysis.EHR.PatientChart.Ports;
@@ -96,7 +97,54 @@ public sealed class ClinicalSafetyChecker : IClinicalSafetyChecker
                 "Prescription"));
         }
 
+        DetectInteractions(ordered, activeMeds, activePrescriptions, advisories);
+
         return new SafetyAdvisoryResult(advisories);
+    }
+
+    /// <summary>
+    /// Raises a <see cref="AdvisoryCategory.DrugInteraction"/> advisory for each current medication that
+    /// interacts with the ordered drug per a configured <see cref="DrugInteractionRule"/>. No-op when no
+    /// rules are configured.
+    /// </summary>
+    private void DetectInteractions(
+        (string Code, string Display) ordered,
+        IReadOnlyList<MedicationStatement> activeMeds,
+        IReadOnlyList<Prescription> activePrescriptions,
+        List<SafetyAdvisory> advisories)
+    {
+        if (_options.DrugInteractions.Count == 0)
+            return;
+
+        var current = new List<(string Code, string? Display, Guid Id, string Kind)>();
+        current.AddRange(activeMeds.Select(m => (m.Medication.Code, m.Medication.Display, m.Id, "MedicationStatement")));
+        current.AddRange(activePrescriptions.Select(rx => (rx.MedicationRxnormCode, (string?)rx.MedicationDisplay, rx.Id, "Prescription")));
+
+        var seen = new HashSet<Guid>();
+        foreach (var rule in _options.DrugInteractions)
+        {
+            var orderedFirst = ConceptsMatch(ordered.Code, ordered.Display, rule.FirstCode, rule.FirstDisplay);
+            var orderedSecond = ConceptsMatch(ordered.Code, ordered.Display, rule.SecondCode, rule.SecondDisplay);
+            if (!orderedFirst && !orderedSecond)
+                continue;
+
+            foreach (var cur in current)
+            {
+                var hit = (orderedFirst && ConceptsMatch(cur.Code, cur.Display, rule.SecondCode, rule.SecondDisplay))
+                    || (orderedSecond && ConceptsMatch(cur.Code, cur.Display, rule.FirstCode, rule.FirstDisplay));
+                if (!hit || !seen.Add(cur.Id))
+                    continue;
+                advisories.Add(new SafetyAdvisory(
+                    AdvisoryCategory.DrugInteraction,
+                    rule.Blocking ? AdvisorySeverity.Blocking : AdvisorySeverity.Warning,
+                    cur.Code,
+                    cur.Display ?? cur.Code,
+                    ordered.Display.Length > 0 ? ordered.Display : ordered.Code,
+                    cur.Id,
+                    cur.Kind,
+                    rule.Description));
+            }
+        }
     }
 
     public async Task<SafetyAdvisoryResult> CheckLabOrderAsync(

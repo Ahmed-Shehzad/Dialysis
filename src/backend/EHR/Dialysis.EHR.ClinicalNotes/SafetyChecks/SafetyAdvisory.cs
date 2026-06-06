@@ -21,6 +21,9 @@ public enum AdvisoryCategory
 
     /// <summary>The ordered lab panel duplicates a recent, non-cancelled lab order.</summary>
     DuplicateLabOrder = 3,
+
+    /// <summary>The ordered medication interacts with a current medication per a configured rule.</summary>
+    DrugInteraction = 4,
 }
 
 /// <summary>
@@ -35,6 +38,7 @@ public enum AdvisoryCategory
 /// <param name="OrderedConcept">What the clinician is ordering.</param>
 /// <param name="SourceRowId">Id of the matched chart row (allergy / med statement / prescription / lab order).</param>
 /// <param name="SourceKind">Which chart aggregate the match came from.</param>
+/// <param name="Detail">Optional extra context (e.g. the drug-interaction rule's description).</param>
 public sealed record SafetyAdvisory(
     AdvisoryCategory Category,
     AdvisorySeverity Severity,
@@ -42,7 +46,8 @@ public sealed record SafetyAdvisory(
     string MatchedDisplay,
     string OrderedConcept,
     Guid SourceRowId,
-    string SourceKind);
+    string SourceKind,
+    string? Detail = null);
 
 /// <summary>The advisories raised for one order, plus a convenience flag for any blocking signal.</summary>
 public sealed record SafetyAdvisoryResult(IReadOnlyList<SafetyAdvisory> Advisories)

@@ -131,6 +131,78 @@ public sealed class ClinicalSafetyCheckerTests
         advisory.MatchedCode.ShouldBe("2160-0");
     }
 
+    private static ClinicalSafetyOptions WithInteraction(bool blocking) => new()
+    {
+        DrugInteractions =
+        {
+            new DrugInteractionRule
+            {
+                FirstCode = "11289", FirstDisplay = "Warfarin",
+                SecondCode = "1191", SecondDisplay = "Aspirin",
+                Description = "Increased bleeding risk", Blocking = blocking,
+            },
+        },
+    };
+
+    [Fact]
+    public async Task Flags_Configured_Drug_Interaction_As_Warning_By_Default_Async()
+    {
+        var patient = Guid.NewGuid();
+        var checker = Checker(
+            new FakeAllergyRepository(),
+            new FakeMedicationStatementRepository(SafetyTestData.Medication(patient, "1191", "Aspirin 81mg")),
+            new FakePrescriptionRepository(),
+            new FakeLabOrderRepository(),
+            DateTime.UtcNow,
+            WithInteraction(blocking: false));
+
+        // Order warfarin while aspirin is active → interaction.
+        var result = await checker.CheckPrescriptionAsync(patient, "11289", "Warfarin 5mg", CancellationToken.None);
+
+        var advisory = result.Advisories.ShouldHaveSingleItem();
+        advisory.Category.ShouldBe(AdvisoryCategory.DrugInteraction);
+        advisory.Severity.ShouldBe(AdvisorySeverity.Warning);
+        advisory.Detail.ShouldBe("Increased bleeding risk");
+        advisory.SourceKind.ShouldBe("MedicationStatement");
+        result.HasBlocking.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Drug_Interaction_Can_Be_Configured_Blocking_Async()
+    {
+        var patient = Guid.NewGuid();
+        var checker = Checker(
+            new FakeAllergyRepository(),
+            new FakeMedicationStatementRepository(SafetyTestData.Medication(patient, "1191", "Aspirin 81mg")),
+            new FakePrescriptionRepository(),
+            new FakeLabOrderRepository(),
+            DateTime.UtcNow,
+            WithInteraction(blocking: true));
+
+        var result = await checker.CheckPrescriptionAsync(patient, "11289", "Warfarin 5mg", CancellationToken.None);
+
+        result.Advisories.ShouldHaveSingleItem().Severity.ShouldBe(AdvisorySeverity.Blocking);
+        result.HasBlocking.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task No_Interaction_When_The_Other_Drug_Is_Not_On_The_Chart_Async()
+    {
+        var patient = Guid.NewGuid();
+        var checker = Checker(
+            new FakeAllergyRepository(),
+            new FakeMedicationStatementRepository(SafetyTestData.Medication(patient, "RX-100", "Lisinopril 10mg")),
+            new FakePrescriptionRepository(),
+            new FakeLabOrderRepository(),
+            DateTime.UtcNow,
+            WithInteraction(blocking: false));
+
+        // Order warfarin, but no aspirin on the chart → no interaction.
+        var result = await checker.CheckPrescriptionAsync(patient, "11289", "Warfarin 5mg", CancellationToken.None);
+
+        result.Advisories.ShouldBeEmpty();
+    }
+
     [Fact]
     public async Task No_Advisory_For_An_Unrelated_Order_Async()
     {

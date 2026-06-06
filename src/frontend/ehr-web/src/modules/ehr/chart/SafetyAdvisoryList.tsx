@@ -21,6 +21,7 @@ export const SafetyAdvisoryList = ({ advisories }: { advisories: readonly Safety
         — <span className="text-slate-100">{a.orderedConcept}</span> matches{" "}
         <span title={a.matchedCode}>{a.matchedDisplay}</span>{" "}
         <span className="text-slate-400">({a.sourceKind})</span>
+        {a.detail && <span className="mt-0.5 block text-slate-300">{a.detail}</span>}
       </li>
     ))}
   </ul>
