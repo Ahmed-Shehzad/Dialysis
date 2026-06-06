@@ -208,12 +208,80 @@ export type SignNoteRequest = {
   signingProviderId: string;
 };
 
+/** A point-of-care safety signal returned by an order endpoint (mirrors the EHR SafetyAdvisory). */
+export type SafetyAdvisory = {
+  category: "MedicationAllergyConflict" | "DuplicateActiveMedication" | "DuplicateLabOrder";
+  severity: "Warning" | "Blocking";
+  matchedCode: string;
+  matchedDisplay: string;
+  orderedConcept: string;
+  sourceRowId: string;
+  sourceKind: string;
+};
+
+export type OrderResult = { id: string; advisories: SafetyAdvisory[] };
+
+/** Thrown when an order is blocked (HTTP 422) by one or more blocking safety advisories. */
+export class SafetyBlockedError extends Error {
+  readonly advisories: SafetyAdvisory[];
+  constructor(advisories: SafetyAdvisory[]) {
+    super("Order blocked by a clinical safety advisory.");
+    this.name = "SafetyBlockedError";
+    this.advisories = advisories;
+  }
+}
+
+/** Human-readable label for an advisory category. */
+export const advisoryCategoryLabel = (category: SafetyAdvisory["category"]): string => {
+  switch (category) {
+    case "MedicationAllergyConflict":
+      return "Allergy conflict";
+    case "DuplicateActiveMedication":
+      return "Duplicate medication";
+    case "DuplicateLabOrder":
+      return "Duplicate lab order";
+  }
+};
+
+/** POSTs an order, returning the new id + advisories, translating a 422 into a SafetyBlockedError. */
+const placeOrder = async (url: string, body: unknown): Promise<OrderResult> => {
+  try {
+    const response = await apiClient.post<OrderResult>(url, body);
+    return { id: response.data.id, advisories: response.data.advisories ?? [] };
+  } catch (error) {
+    const res = (
+      error as { response?: { status?: number; data?: { advisories?: SafetyAdvisory[] } } }
+    ).response;
+    if (res?.status === 422) {
+      throw new SafetyBlockedError(res.data?.advisories ?? []);
+    }
+    throw error;
+  }
+};
+
 export type OrderLabTestRequest = {
   patientId: string;
   encounterId: string;
   orderingProviderId: string;
   labFacilityCode: string;
   loincPanelCodes: string[];
+  acknowledgeAdvisories?: boolean;
+  overrideReason?: string;
+};
+
+export type OrderPrescriptionRequest = {
+  patientId: string;
+  encounterId: string;
+  prescribingProviderId: string;
+  medicationRxnormCode: string;
+  medicationDisplay: string;
+  doseText: string;
+  frequencyText: string;
+  quantityDispensed: number;
+  refillsAuthorized: number;
+  pharmacyNcpdpId: string;
+  acknowledgeAdvisories?: boolean;
+  overrideReason?: string;
 };
 
 export const registerPatient = async (body: RegisterPatientRequest): Promise<string> => {
@@ -232,10 +300,11 @@ export const signClinicalNote = async (body: SignNoteRequest): Promise<void> => 
   });
 };
 
-export const orderLabTest = async (body: OrderLabTestRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/lab-orders", body);
-  return response.data.id;
-};
+export const orderLabTest = (body: OrderLabTestRequest): Promise<OrderResult> =>
+  placeOrder("/ehr/api/v1.0/clinical/lab-orders", body);
+
+export const orderPrescription = (body: OrderPrescriptionRequest): Promise<OrderResult> =>
+  placeOrder("/ehr/api/v1.0/clinical/prescriptions", body);
 
 export type DraftClinicalNoteRequest = {
   encounterId: string;
@@ -264,6 +333,22 @@ export const DEMO_PROVIDER_ID = "00000000-0000-0000-0000-000000000001";
  * directory endpoint (`/clinical/lab-facilities`) exists.
  */
 export const DEMO_LAB_FACILITY = "DEMO-LAB-01";
+
+/** Demo pharmacy NCPDP id passed to `orderPrescription`. Placeholder until a real pharmacy directory exists. */
+export const DEMO_PHARMACY_NCPDP = "DEMO-PHARM-01";
+
+/**
+ * Common dialysis-relevant medications surfaced in the Prescribe dialog (RxNorm). Hardcoded until
+ * the FHIR Terminology service is wired through to the SPA — at that point this moves behind a search.
+ */
+export const COMMON_MEDICATIONS: ReadonlyArray<{ rxnorm: string; display: string }> = [
+  { rxnorm: "29046", display: "Lisinopril 10 mg oral tablet" },
+  { rxnorm: "200801", display: "Calcium acetate 667 mg oral capsule" },
+  { rxnorm: "1736854", display: "Sevelamer carbonate 800 mg oral tablet" },
+  { rxnorm: "905225", display: "Cinacalcet 30 mg oral tablet" },
+  { rxnorm: "311036", display: "Epoetin alfa injection" },
+  { rxnorm: "7980", display: "Penicillin V Potassium 500 mg oral tablet" },
+];
 
 /**
  * Common dialysis-relevant LOINC panels surfaced in the Order Labs dialog. Hardcoded

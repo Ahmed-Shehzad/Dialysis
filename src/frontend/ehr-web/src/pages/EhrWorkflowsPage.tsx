@@ -162,7 +162,7 @@ const OrderLabCard = () => {
           .map((p) => p.trim())
           .filter(Boolean),
       }),
-    onSuccess: setLastId,
+    onSuccess: (result) => setLastId(result.id),
   });
 
   return (

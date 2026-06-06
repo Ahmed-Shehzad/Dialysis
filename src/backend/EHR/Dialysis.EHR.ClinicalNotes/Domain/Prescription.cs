@@ -52,6 +52,12 @@ public sealed class Prescription : AggregateRoot<Guid>
 
     public string? CancellationReasonCode { get; private set; }
 
+    /// <summary>Clinician's reason for overriding a blocking safety advisory at order time; else null.</summary>
+    public string? OverrideReason { get; private set; }
+
+    /// <summary>Identity that overrode the blocking advisory; else null.</summary>
+    public string? OverriddenBy { get; private set; }
+
     public static Prescription Order(
         Guid id,
         Guid patientId,
@@ -64,7 +70,9 @@ public sealed class Prescription : AggregateRoot<Guid>
         int quantityDispensed,
         int refillsAuthorized,
         string pharmacyNcpdpId,
-        string transmissionFormat)
+        string transmissionFormat,
+        string? overrideReason = null,
+        string? overriddenBy = null)
     {
         if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
         if (encounterId == Guid.Empty) throw new ArgumentException("Encounter required.", nameof(encounterId));
@@ -92,12 +100,14 @@ public sealed class Prescription : AggregateRoot<Guid>
             PharmacyNcpdpId = pharmacyNcpdpId.Trim(),
             TransmissionFormat = transmissionFormat.Trim(),
             Status = PrescriptionStatus.Active,
+            OverrideReason = string.IsNullOrWhiteSpace(overrideReason) ? null : overrideReason.Trim(),
+            OverriddenBy = string.IsNullOrWhiteSpace(overriddenBy) ? null : overriddenBy.Trim(),
         };
 
         rx.RaiseIntegrationEvent(new PrescriptionOrderedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
-            SchemaVersion: 1,
+            SchemaVersion: 2,
             PrescriptionId: id,
             PatientId: patientId,
             EncounterId: encounterId,
@@ -109,7 +119,9 @@ public sealed class Prescription : AggregateRoot<Guid>
             QuantityDispensed: quantityDispensed,
             RefillsAuthorized: refillsAuthorized,
             PharmacyNcpdpId: rx.PharmacyNcpdpId,
-            TransmissionFormat: rx.TransmissionFormat));
+            TransmissionFormat: rx.TransmissionFormat,
+            OverrideReason: rx.OverrideReason,
+            OverriddenBy: rx.OverriddenBy));
 
         return rx;
     }

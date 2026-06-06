@@ -9,6 +9,7 @@ import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
+import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
 import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
@@ -62,6 +63,7 @@ export const EhrChartPage = () => {
   const { patient, select } = usePatientContext();
   const [noteOpen, setNoteOpen] = useState(false);
   const [labsOpen, setLabsOpen] = useState(false);
+  const [rxOpen, setRxOpen] = useState(false);
 
   const chart = useQuery({
     queryKey: ["ehr", "chart", patientId],
@@ -158,9 +160,16 @@ export const EhrChartPage = () => {
           <button
             type="button"
             onClick={() => setLabsOpen(true)}
-            className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500"
+            className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
           >
             + Order labs
+          </button>
+          <button
+            type="button"
+            onClick={() => setRxOpen(true)}
+            className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500"
+          >
+            + Prescribe
           </button>
         </div>
       </header>
@@ -168,6 +177,8 @@ export const EhrChartPage = () => {
       {noteOpen && <AddNoteDialog patientId={patientId} onClose={() => setNoteOpen(false)} />}
 
       {labsOpen && <OrderLabsDialog patientId={patientId} onClose={() => setLabsOpen(false)} />}
+
+      {rxOpen && <OrderPrescriptionDialog patientId={patientId} onClose={() => setRxOpen(false)} />}
 
       {chart.isLoading && <div className="text-sm text-slate-400">Loading chart…</div>}
       {chart.error && (

@@ -82,6 +82,8 @@ internal static class ClinicalNotesConfiguration
             b.Property(p => p.TransmissionFormat).HasMaxLength(64).IsRequired();
             b.Property(p => p.Status).HasConversion<int>().IsRequired();
             b.Property(p => p.CancellationReasonCode).HasMaxLength(64);
+            b.Property(p => p.OverrideReason).HasMaxLength(1000);
+            b.Property(p => p.OverriddenBy).HasMaxLength(128);
             ModuleDbContextBase.MapAuditShadow(b);
         });
 
@@ -96,6 +98,8 @@ internal static class ClinicalNotesConfiguration
             b.Property(l => l.TransmissionFormat).HasMaxLength(64).IsRequired();
             b.Property(l => l.Status).HasConversion<int>().IsRequired();
             b.Property(l => l.CancellationReasonCode).HasMaxLength(64);
+            b.Property(l => l.OverrideReason).HasMaxLength(1000);
+            b.Property(l => l.OverriddenBy).HasMaxLength(128);
             b.Property<List<string>>("_loincPanelCodes")
                 .HasColumnName("LoincPanelCodes")
                 .HasConversion(

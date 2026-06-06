@@ -2,10 +2,10 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  COMMON_LAB_PANELS,
-  DEMO_LAB_FACILITY,
+  COMMON_MEDICATIONS,
+  DEMO_PHARMACY_NCPDP,
   DEMO_PROVIDER_ID,
-  orderLabTest,
+  orderPrescription,
   type OrderResult,
   SafetyBlockedError,
   startEncounter,
@@ -13,64 +13,72 @@ import {
 import { humanizeError } from "@/lib/api/humanizeError";
 import { SafetyAdvisoryList } from "@/modules/ehr/chart/SafetyAdvisoryList";
 
-interface OrderLabsDialogProps {
+interface OrderPrescriptionDialogProps {
   patientId: string;
   onClose(): void;
 }
 
-interface OrderLabsPayload {
+interface PrescribePayload {
   patientId: string;
-  loincPanelCodes: readonly string[];
+  rxnorm: string;
+  display: string;
+  doseText: string;
+  frequencyText: string;
+  quantityDispensed: number;
+  refillsAuthorized: number;
   acknowledgeAdvisories?: boolean;
   overrideReason?: string;
 }
 
-/**
- * Two-step server orchestration matching `AddNoteDialog`: a lab order requires an
- * Encounter, so the dialog starts an ambulatory encounter for the patient on submit
- * and then files the lab order inside it. Provider + lab facility are demo constants
- * until real auth-claim → provider mapping and a real lab directory exist.
- */
-const submitOrder = async ({
-  patientId,
-  loincPanelCodes,
-  acknowledgeAdvisories,
-  overrideReason,
-}: OrderLabsPayload): Promise<OrderResult> => {
+/** Chains StartEncounter → OrderPrescription, like the labs dialog. */
+const submitPrescription = async (p: PrescribePayload): Promise<OrderResult> => {
   const encounterId = await startEncounter({
-    patientId,
+    patientId: p.patientId,
     providerId: DEMO_PROVIDER_ID,
     encounterClassCode: "AMB",
   });
-  return orderLabTest({
-    patientId,
+  return orderPrescription({
+    patientId: p.patientId,
     encounterId,
-    orderingProviderId: DEMO_PROVIDER_ID,
-    labFacilityCode: DEMO_LAB_FACILITY,
-    loincPanelCodes: [...loincPanelCodes],
-    acknowledgeAdvisories,
-    overrideReason,
+    prescribingProviderId: DEMO_PROVIDER_ID,
+    medicationRxnormCode: p.rxnorm,
+    medicationDisplay: p.display,
+    doseText: p.doseText,
+    frequencyText: p.frequencyText,
+    quantityDispensed: p.quantityDispensed,
+    refillsAuthorized: p.refillsAuthorized,
+    pharmacyNcpdpId: DEMO_PHARMACY_NCPDP,
+    acknowledgeAdvisories: p.acknowledgeAdvisories,
+    overrideReason: p.overrideReason,
   });
 };
 
 /**
- * Focused dialog for ordering one or more lab panels from the EHR chart. Surfaces a
- * short list of dialysis-relevant LOINC panels as toggleable chips; submit chains
- * StartEncounter → OrderLabTest. Duplicate-order advisories (non-blocking) are shown after
- * ordering; a blocking advisory (if ever configured) presents an audited override step.
+ * Prescribe dialog. Submit runs point-of-care safety checks server-side: a medication↔allergy
+ * conflict returns a blocking advisory (HTTP 422) and the dialog requires an audited override
+ * reason before re-submitting; duplicate-medication advisories are shown but non-blocking.
  */
-export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) => {
+export const OrderPrescriptionDialog = ({ patientId, onClose }: OrderPrescriptionDialogProps) => {
   const titleId = useId();
   const queryClient = useQueryClient();
-  const [selected, setSelected] = useState<readonly string[]>([]);
+  const [rxnorm, setRxnorm] = useState(COMMON_MEDICATIONS[0]?.rxnorm ?? "");
+  const [doseText, setDoseText] = useState("1 tablet");
+  const [frequencyText, setFrequencyText] = useState("once daily");
+  const [quantity, setQuantity] = useState(30);
+  const [refills, setRefills] = useState(3);
   const [overrideReason, setOverrideReason] = useState("");
 
+  const medication = useMemo(
+    () =>
+      COMMON_MEDICATIONS.find((m) => m.rxnorm === rxnorm) ??
+      COMMON_MEDICATIONS[0] ?? { rxnorm, display: rxnorm },
+    [rxnorm],
+  );
+
   const mutation = useMutation({
-    mutationFn: submitOrder,
+    mutationFn: submitPrescription,
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["ehr", "chart", patientId] });
-      // Close immediately when nothing needs the clinician's attention; otherwise keep the
-      // dialog open to surface the advisory before they move on.
       if (result.advisories.length === 0) onClose();
     },
   });
@@ -83,34 +91,42 @@ export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) =>
     return () => globalThis.removeEventListener("keydown", handler);
   }, [mutation.isPending, onClose]);
 
-  const toggle = (loinc: string) =>
-    setSelected((prev) =>
-      prev.includes(loinc) ? prev.filter((c) => c !== loinc) : [...prev, loinc],
-    );
-
   const blocked = mutation.error instanceof SafetyBlockedError ? mutation.error.advisories : null;
   const placed = mutation.data && mutation.data.advisories.length > 0 ? mutation.data : null;
 
-  const canSubmit = !mutation.isPending && selected.length > 0;
+  const basePayload = (): PrescribePayload => ({
+    patientId,
+    rxnorm: medication.rxnorm,
+    display: medication.display,
+    doseText: doseText.trim(),
+    frequencyText: frequencyText.trim(),
+    quantityDispensed: quantity,
+    refillsAuthorized: refills,
+  });
+
+  const canSubmit =
+    !mutation.isPending &&
+    doseText.trim().length > 0 &&
+    frequencyText.trim().length > 0 &&
+    quantity > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    mutation.mutate({ patientId, loincPanelCodes: selected });
+    mutation.mutate(basePayload());
   };
 
   const handleOverride = () => {
     if (mutation.isPending || overrideReason.trim().length === 0) return;
     mutation.mutate({
-      patientId,
-      loincPanelCodes: selected,
+      ...basePayload(),
       acknowledgeAdvisories: true,
       overrideReason: overrideReason.trim(),
     });
   };
 
-  // Pre-computed so re-renders during typing / selection don't re-allocate.
-  const panels = useMemo(() => COMMON_LAB_PANELS, []);
+  const fieldClass =
+    "mt-1 w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-100";
 
   return createPortal(
     <div
@@ -127,18 +143,18 @@ export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) =>
         onClick={(e) => e.stopPropagation()}
       >
         <header className="mb-4">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Order labs</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Prescribe</p>
           <h2 id={titleId} className="text-lg font-semibold text-clinic-50">
-            Pick one or more panels
+            New prescription
           </h2>
           <p className="text-xs text-slate-400">
-            Files into a fresh ambulatory encounter at {DEMO_LAB_FACILITY}.
+            Checked against the chart for allergy conflicts and duplicates before it&apos;s filed.
           </p>
         </header>
 
         {placed ? (
           <div className="space-y-4">
-            <p className="text-sm text-emerald-300">Order placed. Please note:</p>
+            <p className="text-sm text-emerald-300">Prescription filed. Please note:</p>
             <SafetyAdvisoryList advisories={placed.advisories} />
             <div className="flex justify-end pt-2">
               <button
@@ -151,35 +167,61 @@ export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) =>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <fieldset className="space-y-2" disabled={mutation.isPending}>
-              <legend className="sr-only">Lab panels</legend>
-              <div className="flex flex-wrap gap-2">
-                {panels.map((p) => {
-                  const active = selected.includes(p.loinc);
-                  return (
-                    <button
-                      key={p.loinc}
-                      type="button"
-                      onClick={() => toggle(p.loinc)}
-                      aria-pressed={active}
-                      title={p.loinc}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                        active
-                          ? "border-clinic-500 bg-clinic-900/60 text-clinic-50"
-                          : "border-slate-700 text-slate-300 hover:border-slate-500"
-                      }`}
-                    >
-                      {p.display}
-                    </button>
-                  );
-                })}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <fieldset className="space-y-3" disabled={mutation.isPending}>
+              <legend className="sr-only">Prescription</legend>
+              <label className="block text-xs text-slate-300">
+                Medication
+                <select
+                  value={rxnorm}
+                  onChange={(e) => setRxnorm(e.target.value)}
+                  className={fieldClass}
+                >
+                  {COMMON_MEDICATIONS.map((m) => (
+                    <option key={m.rxnorm} value={m.rxnorm}>
+                      {m.display}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-xs text-slate-300">
+                  Dose
+                  <input
+                    value={doseText}
+                    onChange={(e) => setDoseText(e.target.value)}
+                    className={fieldClass}
+                  />
+                </label>
+                <label className="block text-xs text-slate-300">
+                  Frequency
+                  <input
+                    value={frequencyText}
+                    onChange={(e) => setFrequencyText(e.target.value)}
+                    className={fieldClass}
+                  />
+                </label>
+                <label className="block text-xs text-slate-300">
+                  Quantity
+                  <input
+                    type="number"
+                    min={1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className={fieldClass}
+                  />
+                </label>
+                <label className="block text-xs text-slate-300">
+                  Refills
+                  <input
+                    type="number"
+                    min={0}
+                    value={refills}
+                    onChange={(e) => setRefills(Number(e.target.value))}
+                    className={fieldClass}
+                  />
+                </label>
               </div>
-              <p className="text-xs text-slate-500">
-                {selected.length === 0
-                  ? "Select at least one panel."
-                  : `${selected.length} selected.`}
-              </p>
             </fieldset>
 
             {blocked && (
@@ -194,8 +236,8 @@ export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) =>
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
                     rows={2}
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-100"
-                    placeholder="Why this order is clinically appropriate despite the advisory…"
+                    className={fieldClass}
+                    placeholder="Why this medication is clinically appropriate despite the allergy…"
                   />
                 </label>
               </div>
@@ -223,7 +265,7 @@ export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) =>
                   disabled={mutation.isPending || overrideReason.trim().length === 0}
                   className="rounded-md bg-rose-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {mutation.isPending ? "Overriding…" : "Override & order"}
+                  {mutation.isPending ? "Overriding…" : "Override & prescribe"}
                 </button>
               ) : (
                 <button
@@ -231,7 +273,7 @@ export const OrderLabsDialog = ({ patientId, onClose }: OrderLabsDialogProps) =>
                   disabled={!canSubmit}
                   className="rounded-md bg-clinic-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {mutation.isPending ? "Sending order…" : "Send order"}
+                  {mutation.isPending ? "Prescribing…" : "Prescribe"}
                 </button>
               )}
             </div>

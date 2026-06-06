@@ -18,7 +18,9 @@ public sealed record PrescriptionOrderedIntegrationEvent : IIntegrationEvent
         int QuantityDispensed,
         int RefillsAuthorized,
         string PharmacyNcpdpId,
-        string TransmissionFormat)
+        string TransmissionFormat,
+        string? OverrideReason = null,
+        string? OverriddenBy = null)
     {
         this.EventId = EventId;
         this.OccurredOn = OccurredOn;
@@ -35,6 +37,8 @@ public sealed record PrescriptionOrderedIntegrationEvent : IIntegrationEvent
         this.RefillsAuthorized = RefillsAuthorized;
         this.PharmacyNcpdpId = PharmacyNcpdpId;
         this.TransmissionFormat = TransmissionFormat;
+        this.OverrideReason = OverrideReason;
+        this.OverriddenBy = OverriddenBy;
     }
     public Guid EventId { get; init; }
     public DateTime OccurredOn { get; init; }
@@ -51,7 +55,13 @@ public sealed record PrescriptionOrderedIntegrationEvent : IIntegrationEvent
     public int RefillsAuthorized { get; init; }
     public string PharmacyNcpdpId { get; init; }
     public string TransmissionFormat { get; init; }
-    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid PrescriptionId, out Guid PatientId, out Guid EncounterId, out Guid PrescribingProviderId, out string MedicationRxnormCode, out string MedicationDisplay, out string DoseText, out string FrequencyText, out int QuantityDispensed, out int RefillsAuthorized, out string PharmacyNcpdpId, out string TransmissionFormat)
+
+    /// <summary>Set when the prescriber overrode a blocking safety advisory (v2+); else null.</summary>
+    public string? OverrideReason { get; init; }
+
+    /// <summary>Identity that overrode the blocking advisory (v2+); else null.</summary>
+    public string? OverriddenBy { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid PrescriptionId, out Guid PatientId, out Guid EncounterId, out Guid PrescribingProviderId, out string MedicationRxnormCode, out string MedicationDisplay, out string DoseText, out string FrequencyText, out int QuantityDispensed, out int RefillsAuthorized, out string PharmacyNcpdpId, out string TransmissionFormat, out string? OverrideReason, out string? OverriddenBy)
     {
         EventId = this.EventId;
         OccurredOn = this.OccurredOn;
@@ -68,6 +78,8 @@ public sealed record PrescriptionOrderedIntegrationEvent : IIntegrationEvent
         RefillsAuthorized = this.RefillsAuthorized;
         PharmacyNcpdpId = this.PharmacyNcpdpId;
         TransmissionFormat = this.TransmissionFormat;
+        OverrideReason = this.OverrideReason;
+        OverriddenBy = this.OverriddenBy;
     }
 }
 

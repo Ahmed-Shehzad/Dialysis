@@ -13,6 +13,7 @@ using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
+using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
@@ -75,8 +76,8 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<CloseEncounterCommand, Unit, AuthorizationPipelineBehavior<CloseEncounterCommand, Unit>>();
         c.AddCommandBehavior<DraftClinicalNoteCommand, Guid, AuthorizationPipelineBehavior<DraftClinicalNoteCommand, Guid>>();
         c.AddCommandBehavior<SignClinicalNoteCommand, Unit, AuthorizationPipelineBehavior<SignClinicalNoteCommand, Unit>>();
-        c.AddCommandBehavior<OrderPrescriptionCommand, Guid, AuthorizationPipelineBehavior<OrderPrescriptionCommand, Guid>>();
-        c.AddCommandBehavior<OrderLabTestCommand, Guid, AuthorizationPipelineBehavior<OrderLabTestCommand, Guid>>();
+        c.AddCommandBehavior<OrderPrescriptionCommand, OrderPlacementResult, AuthorizationPipelineBehavior<OrderPrescriptionCommand, OrderPlacementResult>>();
+        c.AddCommandBehavior<OrderLabTestCommand, OrderPlacementResult, AuthorizationPipelineBehavior<OrderLabTestCommand, OrderPlacementResult>>();
         c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
         c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
 

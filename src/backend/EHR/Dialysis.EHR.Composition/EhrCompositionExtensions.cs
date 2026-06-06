@@ -12,6 +12,8 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes;
+using Dialysis.EHR.ClinicalNotes.Ports;
+using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.PDMS.Contracts.Integration;
@@ -66,6 +68,11 @@ public static class EhrCompositionExtensions
         {
             services.AddEhrCore();
             services.AddEhrPersistence(configurePersistence);
+
+            // Point-of-care clinical safety checks (medication↔allergy, duplicate medication / lab) run
+            // against the patient's own chart at order entry. Deterministic and in-context.
+            services.Configure<ClinicalSafetyOptions>(configuration.GetSection(ClinicalSafetyOptions.SectionName));
+            services.AddScoped<IClinicalSafetyChecker, ClinicalSafetyChecker>();
 
             services.AddEuDataProtection("ehr", registry =>
             {
