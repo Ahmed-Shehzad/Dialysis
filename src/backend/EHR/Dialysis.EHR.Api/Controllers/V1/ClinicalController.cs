@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
@@ -183,6 +184,19 @@ public sealed class ClinicalController : ControllerBase
         var gaps = await _gateway.SendQueryAsync<GetQualityGapsQuery, IReadOnlyList<QualityGap>>(
             new GetQualityGapsQuery(patientId), cancellationToken).ConfigureAwait(false);
         return Ok(gaps);
+    }
+
+    /// <summary>
+    /// Lists the patient's currently-firing clinical decision-support recommendations for the chart.
+    /// Empty unless rules are configured (<c>Ehr:Cds</c>).
+    /// </summary>
+    [HttpGet("patients/{patientId:guid}/clinical-recommendations")]
+    [ProducesResponseType(typeof(IReadOnlyList<CdsRecommendation>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListClinicalRecommendationsAsync(Guid patientId, CancellationToken cancellationToken)
+    {
+        var recommendations = await _gateway.SendQueryAsync<GetClinicalRecommendationsQuery, IReadOnlyList<CdsRecommendation>>(
+            new GetClinicalRecommendationsQuery(patientId), cancellationToken).ConfigureAwait(false);
+        return Ok(recommendations);
     }
 
     /// <summary>Lists a patient's referrals (most-recent first) for the chart's referral history.</summary>

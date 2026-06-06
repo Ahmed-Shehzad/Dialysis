@@ -80,6 +80,12 @@ public static class EhrCompositionExtensions
             services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IQualityMeasureEvaluator,
                 Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureEvaluator>();
 
+            // Point-of-care clinical decision support — condition-specific prompts, config-driven, empty by default.
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.IClinicalDecisionSupportEvaluator,
+                Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.ClinicalDecisionSupportEvaluator>();
+
             // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
             services.Configure<EncounterChargeAutomationOptions>(
                 configuration.GetSection(EncounterChargeAutomationOptions.SectionName));

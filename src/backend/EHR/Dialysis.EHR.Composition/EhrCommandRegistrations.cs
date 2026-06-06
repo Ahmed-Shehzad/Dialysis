@@ -4,6 +4,7 @@ using Dialysis.EHR.Billing.Features.PostPayment;
 using Dialysis.EHR.Billing.Features.RecordRemittance;
 using Dialysis.EHR.Billing.Features.SubmitClaim;
 using Dialysis.EHR.ClinicalNotes.Features.AttachDiagnosis;
+using Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport;
 using Dialysis.EHR.ClinicalNotes.Features.CloseEncounter;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.GetPatientReminders;
@@ -137,6 +138,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>, AuthorizationPipelineBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>>();
         c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
         c.AddQueryBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>, AuthorizationPipelineBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>>>();
+        c.AddQueryBehavior<GetClinicalRecommendationsQuery, IReadOnlyList<CdsRecommendation>, AuthorizationPipelineBehavior<GetClinicalRecommendationsQuery, IReadOnlyList<CdsRecommendation>>>();
         c.AddQueryBehavior<EvaluateCohortQualityQuery, CohortQualityResult, AuthorizationPipelineBehavior<EvaluateCohortQualityQuery, CohortQualityResult>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
