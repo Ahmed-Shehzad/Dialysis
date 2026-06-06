@@ -54,6 +54,10 @@ public static class EhrPermissions
     public const string CareTeamRead = "ehr.careteam.read";
     public const string CareTeamManage = "ehr.careteam.manage";
 
+    // Order sets (standardized, reusable order bundles)
+    public const string OrderSetManage = "ehr.orderset.manage";
+    public const string OrderSetApply = "ehr.orderset.apply";
+
     // Prescriptions
     public const string PrescriptionOrder = "ehr.prescription.order";
     public const string PrescriptionCancel = "ehr.prescription.cancel";
@@ -87,6 +91,7 @@ public static class EhrPermissions
         PortalRead, PortalAppointmentRequest, PortalMessageSend,
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach, ReferralRequest,
         CareCoordinationRead, CareCoordinationFollowUp, CareTeamRead, CareTeamManage,
+        OrderSetManage, OrderSetApply,
         PrescriptionOrder, PrescriptionCancel,
         LabOrder, LabResultRead,
         ImagingOrder, ImagingStudyRead, ImagingAiReview,

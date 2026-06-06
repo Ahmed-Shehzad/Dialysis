@@ -15,6 +15,7 @@ using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
+using Dialysis.EHR.ClinicalNotes.Features.OrderSets;
 using Dialysis.EHR.ClinicalNotes.Features.QualityMeasures;
 using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.SafetyChecks;
@@ -95,6 +96,9 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<AddCareTeamMemberCommand, Guid, AuthorizationPipelineBehavior<AddCareTeamMemberCommand, Guid>>();
         c.AddCommandBehavior<RemoveCareTeamMemberCommand, Unit, AuthorizationPipelineBehavior<RemoveCareTeamMemberCommand, Unit>>();
         c.AddCommandBehavior<SetPrimaryCareTeamMemberCommand, Unit, AuthorizationPipelineBehavior<SetPrimaryCareTeamMemberCommand, Unit>>();
+        c.AddCommandBehavior<CreateOrderSetCommand, Guid, AuthorizationPipelineBehavior<CreateOrderSetCommand, Guid>>();
+        c.AddCommandBehavior<DeactivateOrderSetCommand, Unit, AuthorizationPipelineBehavior<DeactivateOrderSetCommand, Unit>>();
+        c.AddCommandBehavior<ApplyOrderSetCommand, ApplyOrderSetResult, AuthorizationPipelineBehavior<ApplyOrderSetCommand, ApplyOrderSetResult>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();
@@ -116,5 +120,6 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
         c.AddQueryBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>, AuthorizationPipelineBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
+        c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
     }
 }

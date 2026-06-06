@@ -110,6 +110,29 @@ public sealed class LabResultRepository : ILabResultRepository
     public void Add(LabResult result) => _db.LabResults.Add(result);
 }
 
+public sealed class OrderSetRepository : IOrderSetRepository
+{
+    private readonly EhrDbContext _db;
+    public OrderSetRepository(EhrDbContext db) => _db = db;
+
+    public Task<OrderSet?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.OrderSets.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<OrderSet>> ListActiveAsync(int take, CancellationToken cancellationToken = default)
+    {
+        var bounded = Math.Clamp(take, 1, 200);
+        return await _db.OrderSets
+            .AsNoTracking()
+            .Where(s => s.IsActive && !s.IsDeleted)
+            .OrderBy(s => s.Name)
+            .Take(bounded)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public void Add(OrderSet orderSet) => _db.OrderSets.Add(orderSet);
+}
+
 public sealed class ReferralRepository : IReferralRepository
 {
     private readonly EhrDbContext _db;

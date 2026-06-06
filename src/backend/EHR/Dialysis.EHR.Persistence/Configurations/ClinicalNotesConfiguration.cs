@@ -134,6 +134,43 @@ internal static class ClinicalNotesConfiguration
             ModuleDbContextBase.MapAuditShadow(b);
         });
 
+        modelBuilder.Entity<OrderSet>(b =>
+        {
+            b.ToTable("OrderSets", Schema);
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Name).HasMaxLength(128).IsRequired();
+            b.Property(s => s.Description).HasMaxLength(512);
+            b.Property(s => s.IsActive).IsRequired();
+            b.Property(s => s.CreatedAtUtc).IsRequired();
+            b.HasIndex(s => s.IsActive);
+            b.HasMany(s => s.Lines).WithOne().HasForeignKey(l => l.OrderSetId).OnDelete(DeleteBehavior.Cascade);
+            b.Navigation(s => s.Lines).AutoInclude();
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
+        modelBuilder.Entity<OrderSetLine>(b =>
+        {
+            b.ToTable("OrderSetLines", Schema);
+            b.HasKey(l => l.Id);
+            b.Property(l => l.OrderSetId).IsRequired();
+            b.Property(l => l.Kind).HasConversion<int>().IsRequired();
+            b.Property(l => l.LabFacilityCode).HasMaxLength(64);
+            b.Property<List<string>>("_loincPanelCodes")
+                .HasColumnName("LoincPanelCodes")
+                .HasConversion(
+                    v => string.Join(',', v ?? new List<string>()),
+                    v => v.Length == 0 ? new List<string>() : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+            b.Property(l => l.MedicationRxnormCode).HasMaxLength(64);
+            b.Property(l => l.MedicationDisplay).HasMaxLength(512);
+            b.Property(l => l.DoseText).HasMaxLength(256);
+            b.Property(l => l.FrequencyText).HasMaxLength(256);
+            b.Property(l => l.PharmacyNcpdpId).HasMaxLength(32);
+            b.Property(l => l.ModalityCode).HasMaxLength(16);
+            b.Property(l => l.BodySiteCode).HasMaxLength(64);
+            b.Property(l => l.ReasonText).HasMaxLength(1000);
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
         modelBuilder.Entity<Referral>(b =>
         {
             b.ToTable("Referrals", Schema);
