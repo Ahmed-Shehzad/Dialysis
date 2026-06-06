@@ -7,12 +7,15 @@ import { useTheme } from "@/features/theme/ThemeProvider";
 import { PatientContextBar } from "@/shell/PatientContextBar";
 
 // Single-context (PDMS) navigation. Paths are absolute within the app's `/pdms` router basename.
-const PDMS_NAV: ReadonlyArray<{ to: string; label: string }> = [
+// Exported so AppRouter.nav.test.tsx can assert every nav target has a registered route.
+export const PDMS_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/sessions", label: "Sessions" },
   { to: "/chairs", label: "Chairs" },
   { to: "/admin/inventory", label: "Inventory" },
   { to: "/admin/reporting/templates", label: "Reporting" },
   { to: "/admin/oncall/rotation", label: "On-call" },
+  { to: "/admin/oncall/policies", label: "Escalation" },
+  { to: "/admin/oncall/audit", label: "On-call audit" },
 ];
 
 const ThemeToggle = () => {

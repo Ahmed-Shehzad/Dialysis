@@ -7,7 +7,8 @@ import { useTheme } from "@/features/theme/ThemeProvider";
 import { PatientContextBar } from "@/shell/PatientContextBar";
 
 // Single-context (EHR) navigation. Paths are absolute within the app's `/ehr` router basename.
-const EHR_NAV: ReadonlyArray<{ to: string; label: string }> = [
+// Exported so AppRouter.nav.test.tsx can assert every nav target has a registered route.
+export const EHR_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/patients", label: "Patients" },
   { to: "/workflows", label: "Workflows" },
   { to: "/admin/billing/dialysis-charges", label: "Charges" },

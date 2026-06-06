@@ -17,6 +17,22 @@ const FeeSchedulePage = lazyPage(
   () => import("@/modules/ehr/admin/FeeSchedulePage"),
   "FeeSchedulePage",
 );
+const CareCoordinationWorklistPage = lazyPage(
+  () => import("@/modules/ehr/admin/CareCoordinationWorklistPage"),
+  "CareCoordinationWorklistPage",
+);
+const AppointmentRequestsWorklist = lazyPage(
+  () => import("@/modules/ehr/admin/AppointmentRequestsWorklist"),
+  "AppointmentRequestsWorklist",
+);
+const PopulationQualityPage = lazyPage(
+  () => import("@/modules/ehr/admin/PopulationQualityPage"),
+  "PopulationQualityPage",
+);
+const SafetySurveillancePage = lazyPage(
+  () => import("@/modules/ehr/admin/SafetySurveillancePage"),
+  "SafetySurveillancePage",
+);
 
 const LOADING_FALLBACK_AFTER_MS = 2000;
 
@@ -54,6 +70,21 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   return <>{children}</>;
 };
 
+// Single source of truth for the EHR child routes. The nav (EHR_NAV in AppShell) and the router are
+// kept in lockstep by AppRouter.nav.test.tsx, which asserts every nav target has a registered route —
+// so a nav link can never silently fall through to the catch-all redirect again.
+export const EHR_ROUTES: ReadonlyArray<{ path: string; element: ReactNode }> = [
+  { path: "patients", element: <PatientsPage /> },
+  { path: "patients/:patientId", element: <EhrChartPage /> },
+  { path: "workflows", element: <EhrWorkflowsPage /> },
+  { path: "admin/billing/dialysis-charges", element: <BillingChargesPage /> },
+  { path: "admin/billing/fee-schedule", element: <FeeSchedulePage /> },
+  { path: "care-coordination/worklist", element: <CareCoordinationWorklistPage /> },
+  { path: "appointment-requests", element: <AppointmentRequestsWorklist /> },
+  { path: "population/quality", element: <PopulationQualityPage /> },
+  { path: "safety/surveillance", element: <SafetySurveillancePage /> },
+];
+
 export const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<LoginPage />} />
@@ -66,11 +97,9 @@ export const AppRouter = () => (
       }
     >
       <Route index element={<Navigate to="/patients" replace />} />
-      <Route path="patients" element={<PatientsPage />} />
-      <Route path="patients/:patientId" element={<EhrChartPage />} />
-      <Route path="workflows" element={<EhrWorkflowsPage />} />
-      <Route path="admin/billing/dialysis-charges" element={<BillingChargesPage />} />
-      <Route path="admin/billing/fee-schedule" element={<FeeSchedulePage />} />
+      {EHR_ROUTES.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element} />
+      ))}
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>

@@ -275,13 +275,8 @@
     <Project Path="src/backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj" />
     <Project Path="src/backend/Lab/Dialysis.Lab.Tests/Dialysis.Lab.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/backend/Simulation/">
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Contracts/Dialysis.Simulation.Contracts.csproj" />
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Drivers/Dialysis.Simulation.Drivers.csproj" />
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Engine/Dialysis.Simulation.Engine.csproj" />
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Persistence/Dialysis.Simulation.Persistence.csproj" />
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Composition/Dialysis.Simulation.Composition.csproj" />
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Api/Dialysis.Simulation.Api.csproj" />
-    <Project Path="src/backend/Simulation/Dialysis.Simulation.Tests/Dialysis.Simulation.Tests.csproj" />
+  <Folder Name="/tools/">
+    <Project Path="tools/Dialysis.DataSimulator/Dialysis.DataSimulator.csproj" />
+    <Project Path="tools/Dialysis.DataSimulator.Tests/Dialysis.DataSimulator.Tests.csproj" />
   </Folder>
 </Solution>

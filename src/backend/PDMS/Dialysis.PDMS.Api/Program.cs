@@ -35,10 +35,6 @@ builder.AddModuleHost<PdmsPermissionCatalog>(new ModuleHostingOptions
     HandlerAssemblies = [typeof(PdmsTreatmentSessionsMarker).Assembly],
 });
 
-var enablePdmsDemoSeed = builder.Configuration.GetValue("Pdms:Demo:Enabled", false);
-var enablePdmsVitalsTicker = builder.Configuration.GetValue("Pdms:Demo:VitalsTicker", false);
-var enablePdmsMachineSim = builder.Configuration.GetValue("Pdms:Demo:MachineTelemetrySimulator", false);
-var enablePdmsLifecycleSim = builder.Configuration.GetValue("Pdms:Demo:LifecycleSimulator", false);
 var enablePdmsBulkDataExport = builder.Configuration.GetValue("Pdms:Fhir:BulkData:Enabled", false);
 var enablePdmsSmartOnFhir = builder.Configuration.GetValue("Pdms:Fhir:Smart:Enabled", false);
 var enablePdmsSubscriptions = builder.Configuration.GetValue("Pdms:Fhir:Subscriptions:Enabled", false);
@@ -64,10 +60,6 @@ builder.Services.AddPatientDataManagementSystem(
     enableFhirSmartOnFhir: enablePdmsSmartOnFhir,
     enableFhirSubscriptions: enablePdmsSubscriptions,
     enableFhirSubscriptionsPersistence: enablePdmsSubscriptionsPersistence,
-    enableDemoSeed: enablePdmsDemoSeed,
-    enableVitalsTicker: enablePdmsVitalsTicker,
-    enableMachineTelemetrySimulator: enablePdmsMachineSim,
-    enableLifecycleSimulator: enablePdmsLifecycleSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>

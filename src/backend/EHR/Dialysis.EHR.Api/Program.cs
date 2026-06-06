@@ -50,8 +50,6 @@ builder.AddModuleHost<EhrPermissionCatalog>(new ModuleHostingOptions
     ],
 });
 
-var enableEhrDemoSeed = builder.Configuration.GetValue("Ehr:Demo:Enabled", false);
-var enableEhrRegistrationSim = builder.Configuration.GetValue("Ehr:Demo:RegistrationSimulator", false);
 var enableEhrBulkDataExport = builder.Configuration.GetValue("Ehr:Fhir:BulkData:Enabled", false);
 var enableEhrSmartOnFhir = builder.Configuration.GetValue("Ehr:Fhir:Smart:Enabled", false);
 var enableEhrSubscriptions = builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Enabled", false);
@@ -77,8 +75,6 @@ builder.Services.AddElectronicHealthRecord(
     enableFhirSmartOnFhir: enableEhrSmartOnFhir,
     enableFhirSubscriptions: enableEhrSubscriptions,
     enableFhirSubscriptionsPersistence: enableEhrSubscriptionsPersistence,
-    enableDemoSeed: enableEhrDemoSeed,
-    enableRegistrationSimulator: enableEhrRegistrationSim,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>

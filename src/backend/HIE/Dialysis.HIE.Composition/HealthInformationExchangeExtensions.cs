@@ -45,7 +45,6 @@ public static class HealthInformationExchangeExtensions
         public IServiceCollection AddHealthInformationExchange(IConfiguration configuration,
             Action<DbContextOptionsBuilder>? configurePersistence = null,
             bool enableOutboxRelay = false,
-            bool enableDemoSeed = false,
             Action<IServiceCollection>? configureTransponderTransport = null)
         {
             services.AddHiePersistence(configurePersistence);
@@ -182,15 +181,6 @@ public static class HealthInformationExchangeExtensions
 
             if (enableOutboxRelay)
                 services.AddTransponderOutboxRelay<HieDbContext>();
-
-            if (enableDemoSeed)
-            {
-                services.AddHostedService<Demo.HieDemoSeeder>();
-                // Synthetic TEFCA QHIN partner the operator can use to walk the activation
-                // flow against /hie/admin/tefca/partners — gated alongside the consent
-                // demo so a single Hie:Demo:Enabled flag covers both.
-                services.AddHostedService<Demo.HieTefcaSandboxSeeder>();
-            }
 
             return services;
         }
