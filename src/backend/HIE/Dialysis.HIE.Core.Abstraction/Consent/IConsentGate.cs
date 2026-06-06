@@ -28,4 +28,7 @@ public static class ConsentScopes
     public const string Labs = "clinical.lab";
     public const string DialysisSessions = "clinical.dialysis";
     public const string ClinicalNotes = "clinical.note";
+    public const string Medications = "clinical.medication";
+    public const string Allergies = "clinical.allergy";
+    public const string Problems = "clinical.problem";
 }

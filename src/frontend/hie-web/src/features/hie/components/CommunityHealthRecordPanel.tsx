@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchPatientInsights,
+  type AllergyConflictAlert,
+  type DuplicateMedicationAlert,
   type DuplicateTestAlert,
   type InsightsItem,
   type PatientInsightsSummary,
@@ -92,13 +94,32 @@ export const SummaryView = ({ summary }: { summary: PatientInsightsSummary }) =>
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         <CountTile label="Encounters" value={summary.counts.encounters} />
         <CountTile label="Labs" value={summary.counts.observations} />
+        <CountTile label="Meds" value={summary.counts.medications} />
+        <CountTile label="Allergies" value={summary.counts.allergies} />
+        <CountTile label="Problems" value={summary.counts.problems} />
         <CountTile label="Documents" value={summary.counts.documents} />
         <CountTile label="Procedures" value={summary.counts.procedures} />
         <CountTile label="Other" value={summary.counts.other} />
       </div>
+
+      {summary.allergyConflictAlerts.length > 0 && (
+        <ul className="space-y-1">
+          {summary.allergyConflictAlerts.map((a, i) => (
+            <AllergyConflictRow key={`${a.medicationDisplay}-${i}`} alert={a} />
+          ))}
+        </ul>
+      )}
+
+      {summary.duplicateMedicationAlerts.length > 0 && (
+        <ul className="space-y-1">
+          {summary.duplicateMedicationAlerts.map((a) => (
+            <DuplicateMedicationRow key={a.code} alert={a} />
+          ))}
+        </ul>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
         <span>
@@ -120,6 +141,10 @@ export const SummaryView = ({ summary }: { summary: PatientInsightsSummary }) =>
         </ul>
       )}
 
+      <ClinicalList title="Medications" items={summary.medications} />
+      <ClinicalList title="Allergies" items={summary.allergies} />
+      <ClinicalList title="Problems" items={summary.problems} />
+
       {summary.recent.length > 0 && (
         <ul className="divide-y divide-slate-800 text-sm">
           {summary.recent.map((item, index) => (
@@ -130,6 +155,41 @@ export const SummaryView = ({ summary }: { summary: PatientInsightsSummary }) =>
     </div>
   );
 };
+
+const ClinicalList = ({ title, items }: { title: string; items: InsightsItem[] }) => {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <h4 className="text-[11px] uppercase tracking-wide text-slate-500">{title}</h4>
+      <ul className="flex flex-wrap gap-1 pt-1">
+        {items.map((item, index) => (
+          <li
+            key={`${title}-${index}`}
+            className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-xs text-slate-300"
+            title={item.sourceOrganization}
+          >
+            {item.display ?? item.resourceType}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const AllergyConflictRow = ({ alert }: { alert: AllergyConflictAlert }) => (
+  <li className="rounded-md border border-rose-700/70 bg-rose-950/40 px-2 py-1 text-xs text-rose-100">
+    Allergy conflict: active <span className="font-mono">{alert.medicationDisplay}</span> vs
+    recorded allergy <span className="font-mono">{alert.allergyDisplay}</span> (
+    {alert.sources.join(", ")}) — reconcile before continuing.
+  </li>
+);
+
+const DuplicateMedicationRow = ({ alert }: { alert: DuplicateMedicationAlert }) => (
+  <li className="rounded-md border border-amber-700/60 bg-amber-950/30 px-2 py-1 text-xs text-amber-100">
+    Duplicate medication <span className="font-mono">{alert.display ?? alert.code}</span> from{" "}
+    {alert.sourceCount} sources ({alert.sources.join(", ")}) — reconcile.
+  </li>
+);
 
 const CountTile = ({ label, value }: { label: string; value: number }) => (
   <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2 text-center">

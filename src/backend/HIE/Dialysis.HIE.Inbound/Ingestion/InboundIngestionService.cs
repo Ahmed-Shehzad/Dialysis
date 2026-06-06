@@ -304,6 +304,9 @@ public sealed class InboundIngestionService
         "DocumentReference" => ConsentScopes.ClinicalNotes,
         "Observation" or "DiagnosticReport" or "ServiceRequest" => ConsentScopes.Labs,
         "Procedure" or "AdverseEvent" => ConsentScopes.DialysisSessions,
+        "MedicationStatement" or "MedicationRequest" => ConsentScopes.Medications,
+        "AllergyIntolerance" => ConsentScopes.Allergies,
+        "Condition" => ConsentScopes.Problems,
         _ => "general",
     };
 

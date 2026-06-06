@@ -150,6 +150,9 @@ export type InsightsCounts = {
   observations: number;
   documents: number;
   procedures: number;
+  medications: number;
+  allergies: number;
+  problems: number;
   other: number;
   total: number;
 };
@@ -168,13 +171,31 @@ export type DuplicateTestAlert = {
   sources: string[];
 };
 
+export type DuplicateMedicationAlert = {
+  code: string;
+  display?: string | null;
+  sourceCount: number;
+  sources: string[];
+};
+
+export type AllergyConflictAlert = {
+  medicationDisplay: string;
+  allergyDisplay: string;
+  sources: string[];
+};
+
 export type PatientInsightsSummary = {
   patientReference: string;
   sourceOrganizations: string[];
   lastUpdatedUtc?: string | null;
   counts: InsightsCounts;
   recent: InsightsItem[];
+  medications: InsightsItem[];
+  allergies: InsightsItem[];
+  problems: InsightsItem[];
   duplicateTestAlerts: DuplicateTestAlert[];
+  duplicateMedicationAlerts: DuplicateMedicationAlert[];
+  allergyConflictAlerts: AllergyConflictAlert[];
 };
 
 export const fetchPatientInsights = async (

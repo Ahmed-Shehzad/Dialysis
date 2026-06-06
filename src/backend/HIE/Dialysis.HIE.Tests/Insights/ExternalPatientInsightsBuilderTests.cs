@@ -55,6 +55,38 @@ public sealed class ExternalPatientInsightsBuilderTests
         summary.DuplicateTestAlerts.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task Surfaces_Medications_Allergies_Problems_And_Safety_Alerts_Async()
+    {
+        var rows = new List<ReceivedResource>
+        {
+            Row("partner-a", new Patient { Id = "ext-1" }),
+            Row("partner-a", Med("ext-1", "7980", "Penicillin V")), // same med code from two sources
+            Row("partner-b", Med("ext-1", "7980", "Penicillin V")),
+            Row("partner-b", Allergy("ext-1", "Penicillin")), // matches the medication → conflict
+            Row("partner-a", Problem("ext-1", "E11.9", "Type 2 diabetes")),
+        };
+        var builder = new ExternalPatientInsightsBuilder(new StubStore(rows));
+
+        var summary = await builder.BuildAsync("ext-1", scan: 500, recentTake: 20);
+
+        summary.Counts.Medications.ShouldBe(2);
+        summary.Counts.Allergies.ShouldBe(1);
+        summary.Counts.Problems.ShouldBe(1);
+        summary.Counts.Other.ShouldBe(0);
+        summary.Medications.Count.ShouldBe(2);
+        summary.Allergies.ShouldHaveSingleItem().Display.ShouldBe("Penicillin");
+        summary.Problems.ShouldHaveSingleItem().Display.ShouldBe("Type 2 diabetes");
+
+        var dupMed = summary.DuplicateMedicationAlerts.ShouldHaveSingleItem();
+        dupMed.Code.ShouldBe("7980");
+        dupMed.Sources.ShouldBe(["partner-a", "partner-b"]);
+
+        var conflict = summary.AllergyConflictAlerts.ShouldHaveSingleItem();
+        conflict.AllergyDisplay.ShouldBe("Penicillin");
+        conflict.MedicationDisplay.ShouldBe("Penicillin V");
+    }
+
     private static Observation Obs(string patientId, string loinc, string display) => new()
     {
         Id = Guid.NewGuid().ToString("N"),
@@ -62,6 +94,28 @@ public sealed class ExternalPatientInsightsBuilderTests
         Code = new CodeableConcept("http://loinc.org", loinc, display),
         Subject = new ResourceReference($"Patient/{patientId}"),
         Effective = new FhirDateTime(2026, 6, 1),
+    };
+
+    private static MedicationStatement Med(string patientId, string rxnorm, string display) => new()
+    {
+        Id = Guid.NewGuid().ToString("N"),
+        Status = MedicationStatement.MedicationStatusCodes.Active,
+        Medication = new CodeableConcept("http://www.nlm.nih.gov/research/umls/rxnorm", rxnorm, display),
+        Subject = new ResourceReference($"Patient/{patientId}"),
+    };
+
+    private static AllergyIntolerance Allergy(string patientId, string display) => new()
+    {
+        Id = Guid.NewGuid().ToString("N"),
+        Code = new CodeableConcept { Text = display },
+        Patient = new ResourceReference($"Patient/{patientId}"),
+    };
+
+    private static Condition Problem(string patientId, string icd10, string display) => new()
+    {
+        Id = Guid.NewGuid().ToString("N"),
+        Code = new CodeableConcept("http://hl7.org/fhir/sid/icd-10-cm", icd10, display),
+        Subject = new ResourceReference($"Patient/{patientId}"),
     };
 
     private static ReceivedResource Row(string partnerId, Resource resource) => new(

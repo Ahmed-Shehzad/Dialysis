@@ -11,12 +11,26 @@ public sealed record PatientInsightsSummary(
     DateTime? LastUpdatedUtc,
     InsightsCounts Counts,
     IReadOnlyList<InsightsItem> Recent,
-    IReadOnlyList<DuplicateTestAlert> DuplicateTestAlerts);
+    IReadOnlyList<InsightsItem> Medications,
+    IReadOnlyList<InsightsItem> Allergies,
+    IReadOnlyList<InsightsItem> Problems,
+    IReadOnlyList<DuplicateTestAlert> DuplicateTestAlerts,
+    IReadOnlyList<DuplicateMedicationAlert> DuplicateMedicationAlerts,
+    IReadOnlyList<AllergyConflictAlert> AllergyConflictAlerts);
 
 /// <summary>Counts of external items by clinical category.</summary>
-public sealed record InsightsCounts(int Encounters, int Observations, int Documents, int Procedures, int Other, int Total);
+public sealed record InsightsCounts(
+    int Encounters,
+    int Observations,
+    int Documents,
+    int Procedures,
+    int Medications,
+    int Allergies,
+    int Problems,
+    int Other,
+    int Total);
 
-/// <summary>One external item for the recent-activity strip.</summary>
+/// <summary>One external item for the recent-activity strip / a clinical list.</summary>
 public sealed record InsightsItem(string ResourceType, DateTime? Date, string SourceOrganization, string? Display);
 
 /// <summary>
@@ -24,3 +38,12 @@ public sealed record InsightsItem(string ResourceType, DateTime? Date, string So
 /// (avoid re-ordering, reconcile values).
 /// </summary>
 public sealed record DuplicateTestAlert(string Code, string? Display, int SourceCount, IReadOnlyList<string> Sources);
+
+/// <summary>Same medication reported by more than one source — a reconciliation signal.</summary>
+public sealed record DuplicateMedicationAlert(string Code, string? Display, int SourceCount, IReadOnlyList<string> Sources);
+
+/// <summary>
+/// An active external medication that matches a recorded allergy for the patient — a safety signal to
+/// reconcile before continuing the medication.
+/// </summary>
+public sealed record AllergyConflictAlert(string MedicationDisplay, string AllergyDisplay, IReadOnlyList<string> Sources);
