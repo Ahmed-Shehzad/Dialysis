@@ -21,6 +21,9 @@ public enum ChargeAdvisoryCategory
 
     /// <summary>A Medicare non-covered service that needs an Advance Beneficiary Notice before billing.</summary>
     AbnRequired = 3,
+
+    /// <summary>The captured E/M level is below the level the documentation supports (under-coding).</summary>
+    UnderCodingOpportunity = 4,
 }
 
 /// <summary>

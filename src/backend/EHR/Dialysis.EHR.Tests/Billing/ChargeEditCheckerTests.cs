@@ -1,4 +1,5 @@
 using Dialysis.EHR.Billing.ChargeEdits;
+using Dialysis.EHR.Billing.Coding;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
 using Microsoft.Extensions.Options;
@@ -12,7 +13,8 @@ public sealed class ChargeEditCheckerTests
     private static readonly DateTime _nowUtc = new(2026, 6, 6, 12, 0, 0, DateTimeKind.Utc);
 
     private static ChargeEditChecker Checker(ChargeEditOptions options, params Charge[] existing) =>
-        new(new StubCharges(existing), new FixedClock(_nowUtc), Options.Create(options));
+        new(new StubCharges(existing), new FixedClock(_nowUtc), Options.Create(options),
+            new EvaluationManagementCoder(Options.Create(new EmCodingOptions())));
 
     private static Charge ChargeFor(Guid patientId, string cpt) =>
         Charge.Capture(Guid.NewGuid(), patientId, Guid.NewGuid(), cpt, ["N18.6"], new Money(100m, "USD"));

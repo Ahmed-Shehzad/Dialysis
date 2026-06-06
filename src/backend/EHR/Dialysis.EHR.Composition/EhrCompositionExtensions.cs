@@ -102,7 +102,13 @@ public static class EhrCompositionExtensions
             services.Configure<EncounterChargeAutomationOptions>(
                 configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
 
-            // Charge-review edits (frequency / coverage / ABN) — config-driven, empty by default.
+            // E/M coding assist — suggests the visit level + flags under-coding. Config-driven, empty → no suggestion.
+            services.Configure<Dialysis.EHR.Billing.Coding.EmCodingOptions>(
+                configuration.GetSection(Dialysis.EHR.Billing.Coding.EmCodingOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.Billing.Coding.IEvaluationManagementCoder,
+                Dialysis.EHR.Billing.Coding.EvaluationManagementCoder>();
+
+            // Charge-review edits (frequency / coverage / ABN / under-coding) — config-driven, empty by default.
             services.Configure<Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions>(
                 configuration.GetSection(Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions.SectionName));
             services.AddScoped<Dialysis.EHR.Billing.ChargeEdits.IChargeEditChecker,

@@ -1,6 +1,8 @@
 using Dialysis.CQRS;
 using Dialysis.EHR.Billing.Features.CaptureCharge;
 using Dialysis.EHR.Billing.Features.PostPayment;
+using Dialysis.EHR.Billing.Coding;
+using Dialysis.EHR.Billing.Features.CodingAssist;
 using Dialysis.EHR.Billing.Features.RecordRemittance;
 using Dialysis.EHR.Billing.Features.SubmitClaim;
 using Dialysis.EHR.ClinicalNotes.Features.AttachDiagnosis;
@@ -144,6 +146,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<EvaluatePopulationControlQuery, PopulationControlResult, AuthorizationPipelineBehavior<EvaluatePopulationControlQuery, PopulationControlResult>>();
         c.AddCommandBehavior<NotifyAtRiskCohortCommand, OutreachResult, AuthorizationPipelineBehavior<NotifyAtRiskCohortCommand, OutreachResult>>();
         c.AddQueryBehavior<GetAdverseEventSurveillanceQuery, SurveillanceResult, AuthorizationPipelineBehavior<GetAdverseEventSurveillanceQuery, SurveillanceResult>>();
+        c.AddQueryBehavior<SuggestEmLevelQuery, EmSuggestion?, AuthorizationPipelineBehavior<SuggestEmLevelQuery, EmSuggestion?>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
         c.AddQueryBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>, AuthorizationPipelineBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>>>();
