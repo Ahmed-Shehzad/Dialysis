@@ -13,6 +13,7 @@ import { MyAppointmentRequestsPanel } from "./MyAppointmentRequestsPanel";
 import { MyCarePlanPanel } from "./MyCarePlanPanel";
 import { PatientConsentsPanel } from "./PatientConsentsPanel";
 import { RecentTreatmentsPanel } from "./RecentTreatmentsPanel";
+import { RemindersPanel } from "./RemindersPanel";
 import { fetchPortalSummary, type PatientPortalSummary } from "./api";
 
 const FALLBACK_DEMO_PATIENT_ID = "";
@@ -147,6 +148,7 @@ export const PatientPortalPage = () => {
 
       {summary.data && <PortalTiles summary={summary.data} />}
 
+      {patientId && <RemindersPanel patientId={patientId} />}
       {patientId && <RecentTreatmentsPanel patientId={patientId} />}
       {patientId && <AfterVisitSummaryPanel patientId={patientId} />}
       {patientId && <MyAppointmentRequestsPanel patientId={patientId} />}

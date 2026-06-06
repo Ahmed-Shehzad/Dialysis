@@ -6,6 +6,7 @@ using Dialysis.EHR.Billing.Features.SubmitClaim;
 using Dialysis.EHR.ClinicalNotes.Features.AttachDiagnosis;
 using Dialysis.EHR.ClinicalNotes.Features.CloseEncounter;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
+using Dialysis.EHR.ClinicalNotes.Features.GetPatientReminders;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
@@ -145,5 +146,6 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListPendingAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>, AuthorizationPipelineBehavior<ListPendingAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>>>();
         c.AddQueryBehavior<ListMyAfterVisitSummariesQuery, IReadOnlyList<AfterVisitSummaryView>, AuthorizationPipelineBehavior<ListMyAfterVisitSummariesQuery, IReadOnlyList<AfterVisitSummaryView>>>();
         c.AddQueryBehavior<GetAfterVisitSummaryByIdQuery, AfterVisitSummaryView?, AuthorizationPipelineBehavior<GetAfterVisitSummaryByIdQuery, AfterVisitSummaryView?>>();
+        c.AddQueryBehavior<GetPatientRemindersQuery, IReadOnlyList<PatientReminderDto>, AuthorizationPipelineBehavior<GetPatientRemindersQuery, IReadOnlyList<PatientReminderDto>>>();
     }
 }
