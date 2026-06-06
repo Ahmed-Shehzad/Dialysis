@@ -161,6 +161,8 @@ public static class HealthInformationExchangeExtensions
             // new archetype is a one-file change — no recompile of the hard-coded projections.
             services.AddArchetypeMappingCatalog();
             services.AddScoped<InboundIngestionService>();
+            // Actionable insights: the cross-source "Community Health Record" projection.
+            services.AddScoped<Dialysis.HIE.Inbound.Insights.ExternalPatientInsightsBuilder>();
 
             // Query-based exchange (pull): outbound FHIR query client → inbound ingestion pipeline.
             services.AddHiePartnerQuery(configuration);

@@ -2,6 +2,8 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.HIE.Api.Hateoas;
 using Dialysis.HIE.Inbound.Features.ListInboundResources;
+using Dialysis.HIE.Inbound.Insights;
+using Dialysis.HIE.Inbound.Insights.Features;
 using Dialysis.HIE.Outbound.CareSummary;
 using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
@@ -179,6 +181,25 @@ public sealed class HieOpsAdminController : ControllerBase
         var rows = await _cqrs.SendQueryAsync<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>(
             new ListPartnersQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(rows);
+    }
+
+    /// <summary>
+    /// Actionable insights: the cross-source "Community Health Record" summary for a patient —
+    /// what HIE has received about them from outside organisations (counts by category, recent
+    /// activity, source orgs, freshness, and duplicate-test alerts). <paramref name="patientReference"/>
+    /// is the patient id as referenced by the received resources.
+    /// </summary>
+    [HttpGet("insights/patient/{patientReference}")]
+    [ProducesResponseType(typeof(ResourceEnvelope<PatientInsightsSummary>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPatientInsightsAsync(
+        string patientReference,
+        [FromQuery] int scan = 500,
+        [FromQuery] int recentTake = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var summary = await _cqrs.SendQueryAsync<GetPatientInsightsQuery, PatientInsightsSummary>(
+            new GetPatientInsightsQuery(patientReference, scan, recentTake), cancellationToken).ConfigureAwait(false);
+        return OkResource(summary);
     }
 
     private OkObjectResult OkResource<T>(T data) =>
