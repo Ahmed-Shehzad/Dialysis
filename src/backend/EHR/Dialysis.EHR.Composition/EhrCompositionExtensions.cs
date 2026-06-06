@@ -170,6 +170,9 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedHospitalEventProjector>();
                 t.AddConsumer<PatientDischargedIntegrationEvent, PatientDischargedHospitalEventProjector>();
                 t.AddConsumer<Dialysis.HIE.Contracts.Integration.ExternalEncounterIngestedIntegrationEvent, ExternalEncounterHospitalEventProjector>();
+                // Patient safety: project PDMS intradialytic adverse events into the cross-patient
+                // surveillance read model that drives the safety-signal dashboard.
+                t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, Dialysis.EHR.Integration.Consumers.AdverseEventProjector>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();

@@ -15,6 +15,7 @@ const EHR_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/care-coordination/worklist", label: "Follow-up" },
   { to: "/appointment-requests", label: "Requests" },
   { to: "/population/quality", label: "Population" },
+  { to: "/safety/surveillance", label: "Safety" },
 ];
 
 const ThemeToggle = () => {

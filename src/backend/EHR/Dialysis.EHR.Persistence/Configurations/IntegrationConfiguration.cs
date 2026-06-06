@@ -27,6 +27,22 @@ internal static class IntegrationConfiguration
             b.HasIndex(e => new { e.Kind, e.SourceEventKey }).IsUnique();
         });
 
+        modelBuilder.Entity<AdverseEventRecord>(b =>
+        {
+            b.ToTable("AdverseEvents", Schema);
+            b.HasKey(e => e.Id);
+            b.Property(e => e.PatientId).IsRequired();
+            b.Property(e => e.SessionId).IsRequired();
+            b.Property(e => e.Kind).HasMaxLength(64).IsRequired();
+            b.Property(e => e.Severity).HasMaxLength(32).IsRequired();
+            b.Property(e => e.Detail).HasMaxLength(1024);
+            b.Property(e => e.OccurredAtUtc).IsRequired();
+            b.Property(e => e.SourceEventKey).HasMaxLength(64).IsRequired();
+            b.HasIndex(e => e.OccurredAtUtc);
+            b.HasIndex(e => e.PatientId);
+            b.HasIndex(e => e.SourceEventKey).IsUnique();
+        });
+
         modelBuilder.Entity<PharmacyTransmission>(b =>
         {
             b.ToTable("PharmacyTransmissions", Schema);

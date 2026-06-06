@@ -25,6 +25,7 @@ using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
 using Dialysis.EHR.Integration.Features.MarkHospitalEventFollowedUp;
+using Dialysis.EHR.Integration.Features.Surveillance;
 using Dialysis.EHR.Registration.Features.CareTeam;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.PatientChart.Features.RecordAllergy;
@@ -142,6 +143,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<EvaluateCohortQualityQuery, CohortQualityResult, AuthorizationPipelineBehavior<EvaluateCohortQualityQuery, CohortQualityResult>>();
         c.AddQueryBehavior<EvaluatePopulationControlQuery, PopulationControlResult, AuthorizationPipelineBehavior<EvaluatePopulationControlQuery, PopulationControlResult>>();
         c.AddCommandBehavior<NotifyAtRiskCohortCommand, OutreachResult, AuthorizationPipelineBehavior<NotifyAtRiskCohortCommand, OutreachResult>>();
+        c.AddQueryBehavior<GetAdverseEventSurveillanceQuery, SurveillanceResult, AuthorizationPipelineBehavior<GetAdverseEventSurveillanceQuery, SurveillanceResult>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
         c.AddQueryBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>, AuthorizationPipelineBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>>>();

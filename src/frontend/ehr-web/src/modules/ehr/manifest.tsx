@@ -29,6 +29,10 @@ const AppointmentRequestsWorklist = lazyPage(
   () => import("@/modules/ehr/admin/AppointmentRequestsWorklist"),
   "AppointmentRequestsWorklist",
 );
+const SafetySurveillancePage = lazyPage(
+  () => import("@/modules/ehr/admin/SafetySurveillancePage"),
+  "SafetySurveillancePage",
+);
 
 export const ehrModule: ModuleManifest = {
   slug: "ehr",
@@ -49,6 +53,7 @@ export const ehrModule: ModuleManifest = {
       <Route path="admin/billing/worklist" element={<BillingWorklistPage />} />
       <Route path="care-coordination/worklist" element={<CareCoordinationWorklistPage />} />
       <Route path="population/quality" element={<PopulationQualityPage />} />
+      <Route path="safety/surveillance" element={<SafetySurveillancePage />} />
       <Route path="appointment-requests" element={<AppointmentRequestsWorklist />} />
     </>
   ),
