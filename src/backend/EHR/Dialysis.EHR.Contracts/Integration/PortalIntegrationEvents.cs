@@ -79,3 +79,45 @@ public sealed record PatientPortalSecureMessageSentIntegrationEvent : IIntegrati
         Subject = this.Subject;
     }
 }
+
+/// <summary>
+/// Raised when a provider replies to a patient on a secure-message thread. Drives the patient-facing
+/// portal toast ("your care team replied"). Metadata only — the SPA refetches the thread through the
+/// synchronous, permission-checked API.
+/// </summary>
+public sealed record PatientPortalSecureMessageReceivedIntegrationEvent : IIntegrationEvent
+{
+    public PatientPortalSecureMessageReceivedIntegrationEvent(Guid EventId,
+        DateTime OccurredOn,
+        int SchemaVersion,
+        Guid MessageId,
+        Guid PatientId,
+        Guid ThreadId,
+        string Subject)
+    {
+        this.EventId = EventId;
+        this.OccurredOn = OccurredOn;
+        this.SchemaVersion = SchemaVersion;
+        this.MessageId = MessageId;
+        this.PatientId = PatientId;
+        this.ThreadId = ThreadId;
+        this.Subject = Subject;
+    }
+    public Guid EventId { get; init; }
+    public DateTime OccurredOn { get; init; }
+    public int SchemaVersion { get; init; }
+    public Guid MessageId { get; init; }
+    public Guid PatientId { get; init; }
+    public Guid ThreadId { get; init; }
+    public string Subject { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid MessageId, out Guid PatientId, out Guid ThreadId, out string Subject)
+    {
+        EventId = this.EventId;
+        OccurredOn = this.OccurredOn;
+        SchemaVersion = this.SchemaVersion;
+        MessageId = this.MessageId;
+        PatientId = this.PatientId;
+        ThreadId = this.ThreadId;
+        Subject = this.Subject;
+    }
+}

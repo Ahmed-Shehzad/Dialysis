@@ -18,6 +18,8 @@ builder.AddModuleBffEvents(transponder =>
     // Care coordination: hospital admit/discharge → live "patient in hospital" toast.
     transponder.AddConsumer<PatientAdmittedIntegrationEvent, HospitalAdmitNotificationConsumer>();
     transponder.AddConsumer<PatientDischargedIntegrationEvent, HospitalDischargeNotificationConsumer>();
+    // Patient participation: a patient's inbound secure message → "new patient message" toast on the chart.
+    transponder.AddConsumer<Dialysis.EHR.Contracts.Integration.PatientPortalSecureMessageSentIntegrationEvent, SecureMessageSentNotificationConsumer>();
 });
 
 var app = builder.Build();

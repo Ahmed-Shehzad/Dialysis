@@ -16,6 +16,7 @@ import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
 import { CareTeamCard } from "@/modules/ehr/chart/CareTeamCard";
 import { HospitalEventsCard } from "@/modules/ehr/chart/HospitalEventsCard";
+import { MessagingCard } from "@/modules/ehr/chart/MessagingCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
 import { OrderSetDialog } from "@/modules/ehr/chart/OrderSetDialog";
@@ -363,6 +364,8 @@ export const EhrChartPage = () => {
           <PatientTimeline patientId={patientId} />
 
           <HospitalEventsCard patientId={patientId} />
+
+          <MessagingCard patientId={patientId} />
 
           <CareTeamCard patientId={patientId} />
 

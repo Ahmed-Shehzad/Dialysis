@@ -36,6 +36,8 @@ public static class EhrPermissions
     public const string PortalRead = "ehr.portal.read";
     public const string PortalAppointmentRequest = "ehr.portal.appointment.request";
     public const string PortalMessageSend = "ehr.portal.message.send";
+    public const string PortalMessageRead = "ehr.portal.message.read";
+    public const string PortalMessageReply = "ehr.portal.message.reply";
 
     // Clinical notes / encounters
     public const string EncounterStart = "ehr.clinical.encounter.start";
@@ -91,7 +93,7 @@ public static class EhrPermissions
         PatientRegister, PatientUpdate, PatientMerge, PatientRead,
         ChartRead, AllergyRecord, ProblemRecord, VitalsRecord, ImmunizationRecord, MedicationRecord, CarePlanRead, CarePlanWrite,
         AppointmentBook, AppointmentCancel, AppointmentReschedule, AppointmentCheckIn, ScheduleRead,
-        PortalRead, PortalAppointmentRequest, PortalMessageSend,
+        PortalRead, PortalAppointmentRequest, PortalMessageSend, PortalMessageRead, PortalMessageReply,
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach, ReferralRequest,
         CareCoordinationRead, CareCoordinationFollowUp, CareTeamRead, CareTeamManage,
         OrderSetManage, OrderSetApply,

@@ -33,5 +33,11 @@ public sealed class SecureMessageRepository : ISecureMessageRepository
             .OrderBy(m => m.SentAtUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<SecureMessage>> ListByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+        await _db.SecureMessages
+            .Where(m => m.PatientId == patientId)
+            .OrderBy(m => m.SentAtUtc)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public void Add(SecureMessage message) => _db.SecureMessages.Add(message);
 }

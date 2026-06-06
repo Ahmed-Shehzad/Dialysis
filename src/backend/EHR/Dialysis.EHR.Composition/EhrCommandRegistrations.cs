@@ -30,6 +30,10 @@ using Dialysis.EHR.PatientChart.Features.RecordImmunization;
 using Dialysis.EHR.PatientChart.Features.RecordMedicationStatement;
 using Dialysis.EHR.PatientChart.Features.RecordProblem;
 using Dialysis.EHR.PatientChart.Features.RecordVitalSign;
+using Dialysis.EHR.PatientPortal.Features.ListMessageThreads;
+using Dialysis.EHR.PatientPortal.Features.ListThreadMessages;
+using Dialysis.EHR.PatientPortal.Features.MarkMessageRead;
+using Dialysis.EHR.PatientPortal.Features.ReplySecureMessage;
 using Dialysis.EHR.PatientPortal.Features.RequestAppointment;
 using Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
 using Dialysis.EHR.Registration.Features.GetPatientById;
@@ -80,6 +84,8 @@ internal static class EhrCommandRegistrations
         // Portal
         c.AddCommandBehavior<RequestAppointmentCommand, Guid, AuthorizationPipelineBehavior<RequestAppointmentCommand, Guid>>();
         c.AddCommandBehavior<SendSecureMessageCommand, Guid, AuthorizationPipelineBehavior<SendSecureMessageCommand, Guid>>();
+        c.AddCommandBehavior<ProviderReplyToMessageCommand, Guid, AuthorizationPipelineBehavior<ProviderReplyToMessageCommand, Guid>>();
+        c.AddCommandBehavior<MarkMessageReadCommand, Unit, AuthorizationPipelineBehavior<MarkMessageReadCommand, Unit>>();
 
         // ClinicalNotes
         c.AddCommandBehavior<StartEncounterCommand, Guid, AuthorizationPipelineBehavior<StartEncounterCommand, Guid>>();
@@ -122,5 +128,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<EvaluateCohortQualityQuery, CohortQualityResult, AuthorizationPipelineBehavior<EvaluateCohortQualityQuery, CohortQualityResult>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
+        c.AddQueryBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>, AuthorizationPipelineBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>>>();
+        c.AddQueryBehavior<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>, AuthorizationPipelineBehavior<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>>>();
     }
 }
