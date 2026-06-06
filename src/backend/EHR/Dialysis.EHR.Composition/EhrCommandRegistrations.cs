@@ -22,6 +22,7 @@ using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
 using Dialysis.EHR.Integration.Features.MarkHospitalEventFollowedUp;
+using Dialysis.EHR.Registration.Features.CareTeam;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.PatientChart.Features.RecordAllergy;
 using Dialysis.EHR.PatientChart.Features.RecordImmunization;
@@ -91,6 +92,9 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
         c.AddCommandBehavior<RequestReferralCommand, Guid, AuthorizationPipelineBehavior<RequestReferralCommand, Guid>>();
         c.AddCommandBehavior<MarkHospitalEventFollowedUpCommand, Unit, AuthorizationPipelineBehavior<MarkHospitalEventFollowedUpCommand, Unit>>();
+        c.AddCommandBehavior<AddCareTeamMemberCommand, Guid, AuthorizationPipelineBehavior<AddCareTeamMemberCommand, Guid>>();
+        c.AddCommandBehavior<RemoveCareTeamMemberCommand, Unit, AuthorizationPipelineBehavior<RemoveCareTeamMemberCommand, Unit>>();
+        c.AddCommandBehavior<SetPrimaryCareTeamMemberCommand, Unit, AuthorizationPipelineBehavior<SetPrimaryCareTeamMemberCommand, Unit>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();
@@ -111,5 +115,6 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>, AuthorizationPipelineBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>>();
         c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
         c.AddQueryBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>, AuthorizationPipelineBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>>>();
+        c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
     }
 }

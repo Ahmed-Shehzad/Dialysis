@@ -72,5 +72,29 @@ internal static class RegistrationConfiguration
             });
             ModuleDbContextBase.MapAuditShadow(b);
         });
+
+        modelBuilder.Entity<CareTeam>(b =>
+        {
+            b.ToTable("CareTeams", Schema);
+            b.HasKey(t => t.Id);
+            b.Property(t => t.PatientId).IsRequired();
+            b.HasIndex(t => t.PatientId).IsUnique();
+            b.Property(t => t.CreatedAtUtc).IsRequired();
+            b.HasMany(t => t.Members).WithOne().HasForeignKey(m => m.CareTeamId).OnDelete(DeleteBehavior.Cascade);
+            b.Navigation(t => t.Members).AutoInclude();
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
+        modelBuilder.Entity<CareTeamMember>(b =>
+        {
+            b.ToTable("CareTeamMembers", Schema);
+            b.HasKey(m => m.Id);
+            b.Property(m => m.CareTeamId).IsRequired();
+            b.Property(m => m.ProviderId).IsRequired();
+            b.Property(m => m.Role).HasConversion<int>().IsRequired();
+            b.Property(m => m.IsPrimary).IsRequired();
+            b.HasIndex(m => new { m.CareTeamId, m.ProviderId }).IsUnique();
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
     }
 }

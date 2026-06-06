@@ -52,6 +52,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             // Registration
             services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<IProviderRepository, ProviderRepository>();
+            services.AddScoped<ICareTeamRepository, CareTeamRepository>();
 
             // PatientChart
             services.AddScoped<IAllergyRepository, AllergyRepository>();

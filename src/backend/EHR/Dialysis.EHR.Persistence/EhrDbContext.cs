@@ -27,6 +27,8 @@ public sealed class EhrDbContext : ModuleDbContextBase
     // Registration
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Provider> Providers => Set<Provider>();
+    public DbSet<CareTeam> CareTeams => Set<CareTeam>();
+    public DbSet<CareTeamMember> CareTeamMembers => Set<CareTeamMember>();
 
     // PatientChart
     public DbSet<Allergy> Allergies => Set<Allergy>();
