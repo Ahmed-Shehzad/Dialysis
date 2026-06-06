@@ -119,6 +119,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>, AuthorizationPipelineBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>>();
         c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
         c.AddQueryBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>, AuthorizationPipelineBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>>>();
+        c.AddQueryBehavior<EvaluateCohortQualityQuery, CohortQualityResult, AuthorizationPipelineBehavior<EvaluateCohortQualityQuery, CohortQualityResult>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
     }

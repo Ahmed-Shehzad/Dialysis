@@ -83,6 +83,9 @@ public static class EhrPermissions
     public const string IntegrationOutboundManage = "ehr.integration.outbound.manage";
     public const string IntegrationInboundIngest = "ehr.integration.inbound.ingest";
 
+    // Population / cohort quality (read across a panel of patients)
+    public const string QualityPopulationRead = "ehr.quality.population.read";
+
     public static IReadOnlyList<string> All { get; } =
     [
         PatientRegister, PatientUpdate, PatientMerge, PatientRead,
@@ -97,6 +100,7 @@ public static class EhrPermissions
         ImagingOrder, ImagingStudyRead, ImagingAiReview,
         ChargeCapture, ClaimSubmit, PaymentPost, StatementRead,
         IntegrationOutboundManage, IntegrationInboundIngest,
+        QualityPopulationRead,
     ];
 }
 
