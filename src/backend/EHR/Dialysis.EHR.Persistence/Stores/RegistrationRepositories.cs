@@ -4,6 +4,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Stores;
 
+public sealed class CareTeamRepository : ICareTeamRepository
+{
+    private readonly EhrDbContext _db;
+    public CareTeamRepository(EhrDbContext db) => _db = db;
+
+    public Task<CareTeam?> GetByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+        _db.CareTeams.FirstOrDefaultAsync(t => t.PatientId == patientId, cancellationToken);
+
+    public void Add(CareTeam careTeam) => _db.CareTeams.Add(careTeam);
+}
+
 public sealed class PatientRepository : IPatientRepository
 {
     private readonly EhrDbContext _db;

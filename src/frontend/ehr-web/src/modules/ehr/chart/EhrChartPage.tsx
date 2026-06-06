@@ -14,8 +14,12 @@ import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
+import { CareTeamCard } from "@/modules/ehr/chart/CareTeamCard";
+import { HospitalEventsCard } from "@/modules/ehr/chart/HospitalEventsCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
+import { OrderSetDialog } from "@/modules/ehr/chart/OrderSetDialog";
+import { PatientTimeline } from "@/modules/ehr/chart/PatientTimeline";
 import { QualityGapsCard } from "@/modules/ehr/chart/QualityGapsCard";
 import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
 import { ReferralDialog } from "@/modules/ehr/chart/ReferralDialog";
@@ -73,6 +77,7 @@ export const EhrChartPage = () => {
   const [labsOpen, setLabsOpen] = useState(false);
   const [rxOpen, setRxOpen] = useState(false);
   const [referOpen, setReferOpen] = useState(false);
+  const [orderSetOpen, setOrderSetOpen] = useState(false);
 
   const chart = useQuery({
     queryKey: ["ehr", "chart", patientId],
@@ -187,6 +192,13 @@ export const EhrChartPage = () => {
           </button>
           <button
             type="button"
+            onClick={() => setOrderSetOpen(true)}
+            className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
+          >
+            + Order set
+          </button>
+          <button
+            type="button"
             onClick={() => setReferOpen(true)}
             className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500"
           >
@@ -202,6 +214,10 @@ export const EhrChartPage = () => {
       {rxOpen && <OrderPrescriptionDialog patientId={patientId} onClose={() => setRxOpen(false)} />}
 
       {referOpen && <ReferralDialog patientId={patientId} onClose={() => setReferOpen(false)} />}
+
+      {orderSetOpen && (
+        <OrderSetDialog patientId={patientId} onClose={() => setOrderSetOpen(false)} />
+      )}
 
       {chart.isLoading && <div className="text-sm text-slate-400">Loading chart…</div>}
       {chart.error && (
@@ -343,6 +359,12 @@ export const EhrChartPage = () => {
           )}
 
           <QualityGapsCard patientId={patientId} />
+
+          <PatientTimeline patientId={patientId} />
+
+          <HospitalEventsCard patientId={patientId} />
+
+          <CareTeamCard patientId={patientId} />
 
           <CarePlanCard patientId={patientId} />
 

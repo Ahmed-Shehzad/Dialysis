@@ -4,6 +4,7 @@ using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 using Dialysis.HIS.PatientFlow.Features.AssignChair;
 using Dialysis.HIS.PatientFlow.Features.CheckInPatient;
+using Dialysis.HIS.PatientFlow.Features.DischargePatient;
 using Dialysis.HIS.PatientFlow.Features.GetTodaysQueue;
 using Dialysis.HIS.PatientFlow.Features.RegisterWalkIn;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,18 @@ public sealed class PatientFlowController : HisHateoasControllerBase
         return CreatedResource(
             $"/api/v{ApiVersionSegment}/patient-flow/admissions/{id}",
             new AdmitPatientResponse(id));
+    }
+
+    /// <summary>Discharges an admitted patient — fires the care-coordination follow-up signal.</summary>
+    [HttpPost("admissions/{admissionId:guid}/discharge")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DischargePatientAsync(
+        Guid admissionId,
+        CancellationToken cancellationToken)
+    {
+        await _gateway.SendCommandAsync<DischargePatientCommand, Unit>(
+            new DischargePatientCommand(admissionId), cancellationToken).ConfigureAwait(false);
+        return NoContent();
     }
 
     [HttpGet("todays-queue")]

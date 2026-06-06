@@ -15,12 +15,15 @@ using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
+using Dialysis.EHR.ClinicalNotes.Features.OrderSets;
 using Dialysis.EHR.ClinicalNotes.Features.QualityMeasures;
 using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
+using Dialysis.EHR.Integration.Features.MarkHospitalEventFollowedUp;
+using Dialysis.EHR.Registration.Features.CareTeam;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.PatientChart.Features.RecordAllergy;
 using Dialysis.EHR.PatientChart.Features.RecordImmunization;
@@ -89,6 +92,13 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
         c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
         c.AddCommandBehavior<RequestReferralCommand, Guid, AuthorizationPipelineBehavior<RequestReferralCommand, Guid>>();
+        c.AddCommandBehavior<MarkHospitalEventFollowedUpCommand, Unit, AuthorizationPipelineBehavior<MarkHospitalEventFollowedUpCommand, Unit>>();
+        c.AddCommandBehavior<AddCareTeamMemberCommand, Guid, AuthorizationPipelineBehavior<AddCareTeamMemberCommand, Guid>>();
+        c.AddCommandBehavior<RemoveCareTeamMemberCommand, Unit, AuthorizationPipelineBehavior<RemoveCareTeamMemberCommand, Unit>>();
+        c.AddCommandBehavior<SetPrimaryCareTeamMemberCommand, Unit, AuthorizationPipelineBehavior<SetPrimaryCareTeamMemberCommand, Unit>>();
+        c.AddCommandBehavior<CreateOrderSetCommand, Guid, AuthorizationPipelineBehavior<CreateOrderSetCommand, Guid>>();
+        c.AddCommandBehavior<DeactivateOrderSetCommand, Unit, AuthorizationPipelineBehavior<DeactivateOrderSetCommand, Unit>>();
+        c.AddCommandBehavior<ApplyOrderSetCommand, ApplyOrderSetResult, AuthorizationPipelineBehavior<ApplyOrderSetCommand, ApplyOrderSetResult>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();
@@ -109,5 +119,8 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>, AuthorizationPipelineBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>>();
         c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
         c.AddQueryBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>, AuthorizationPipelineBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>>>();
+        c.AddQueryBehavior<EvaluateCohortQualityQuery, CohortQualityResult, AuthorizationPipelineBehavior<EvaluateCohortQualityQuery, CohortQualityResult>>();
+        c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
+        c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
     }
 }

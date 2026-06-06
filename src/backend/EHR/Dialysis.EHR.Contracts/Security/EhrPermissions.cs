@@ -48,6 +48,16 @@ public static class EhrPermissions
     /// <summary>Refer / transfer a patient to an external organisation (fires the HIE CCD push).</summary>
     public const string ReferralRequest = "ehr.clinical.referral.request";
 
+    // Care coordination (hospital-event follow-up worklist + care team)
+    public const string CareCoordinationRead = "ehr.carecoordination.read";
+    public const string CareCoordinationFollowUp = "ehr.carecoordination.followup";
+    public const string CareTeamRead = "ehr.careteam.read";
+    public const string CareTeamManage = "ehr.careteam.manage";
+
+    // Order sets (standardized, reusable order bundles)
+    public const string OrderSetManage = "ehr.orderset.manage";
+    public const string OrderSetApply = "ehr.orderset.apply";
+
     // Prescriptions
     public const string PrescriptionOrder = "ehr.prescription.order";
     public const string PrescriptionCancel = "ehr.prescription.cancel";
@@ -73,6 +83,9 @@ public static class EhrPermissions
     public const string IntegrationOutboundManage = "ehr.integration.outbound.manage";
     public const string IntegrationInboundIngest = "ehr.integration.inbound.ingest";
 
+    // Population / cohort quality (read across a panel of patients)
+    public const string QualityPopulationRead = "ehr.quality.population.read";
+
     public static IReadOnlyList<string> All { get; } =
     [
         PatientRegister, PatientUpdate, PatientMerge, PatientRead,
@@ -80,11 +93,14 @@ public static class EhrPermissions
         AppointmentBook, AppointmentCancel, AppointmentReschedule, AppointmentCheckIn, ScheduleRead,
         PortalRead, PortalAppointmentRequest, PortalMessageSend,
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach, ReferralRequest,
+        CareCoordinationRead, CareCoordinationFollowUp, CareTeamRead, CareTeamManage,
+        OrderSetManage, OrderSetApply,
         PrescriptionOrder, PrescriptionCancel,
         LabOrder, LabResultRead,
         ImagingOrder, ImagingStudyRead, ImagingAiReview,
         ChargeCapture, ClaimSubmit, PaymentPost, StatementRead,
         IntegrationOutboundManage, IntegrationInboundIngest,
+        QualityPopulationRead,
     ];
 }
 

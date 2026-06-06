@@ -52,6 +52,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             // Registration
             services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<IProviderRepository, ProviderRepository>();
+            services.AddScoped<ICareTeamRepository, CareTeamRepository>();
 
             // PatientChart
             services.AddScoped<IAllergyRepository, AllergyRepository>();
@@ -77,6 +78,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddScoped<ILabResultRepository, LabResultRepository>();
             services.AddScoped<IImagingOrderRepository, ImagingOrderRepository>();
             services.AddScoped<IReferralRepository, ReferralRepository>();
+            services.AddScoped<IOrderSetRepository, OrderSetRepository>();
 
             // Billing
             services.AddScoped<IPayerRepository, PayerRepository>();
@@ -87,6 +89,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             // Integration
+            services.AddScoped<IHospitalEventRepository, HospitalEventRepository>();
             services.AddScoped<IPharmacyTransmissionRepository, PharmacyTransmissionRepository>();
             services.AddScoped<ILabTransmissionRepository, LabTransmissionRepository>();
             services.AddScoped<IInsurerTransmissionRepository, InsurerTransmissionRepository>();

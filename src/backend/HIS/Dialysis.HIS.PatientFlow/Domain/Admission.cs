@@ -43,5 +43,14 @@ public sealed class Admission : AggregateRoot<Guid>
     {
         if (DischargedAtUtc is not null) throw new DomainException("Admission already discharged.");
         DischargedAtUtc = nowUtc;
+
+        RaiseIntegrationEvent(new PatientDischargedIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: nowUtc,
+            SchemaVersion: 1,
+            AdmissionId: Id,
+            PatientId: PatientId,
+            WardCode: Ward.Value,
+            DischargedAtUtc: nowUtc));
     }
 }

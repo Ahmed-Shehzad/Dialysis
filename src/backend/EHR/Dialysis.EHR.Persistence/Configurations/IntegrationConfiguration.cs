@@ -1,5 +1,6 @@
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Integration.Domain;
+using Dialysis.EHR.Integration.ReadModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Configurations;
@@ -10,6 +11,22 @@ internal static class IntegrationConfiguration
 
     public static void Configure(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<HospitalEvent>(b =>
+        {
+            b.ToTable("HospitalEvents", Schema);
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Kind).HasConversion<int>().IsRequired();
+            b.Property(e => e.Source).HasMaxLength(128).IsRequired();
+            b.Property(e => e.OccurredAtUtc).IsRequired();
+            b.Property(e => e.Detail).HasMaxLength(512);
+            b.Property(e => e.ExternalPatientRef).HasMaxLength(128);
+            b.Property(e => e.SourceEventKey).HasMaxLength(160).IsRequired();
+            b.Property(e => e.FollowedUp).IsRequired();
+            b.HasIndex(e => new { e.FollowedUp, e.OccurredAtUtc });
+            b.HasIndex(e => e.PatientId);
+            b.HasIndex(e => new { e.Kind, e.SourceEventKey }).IsUnique();
+        });
+
         modelBuilder.Entity<PharmacyTransmission>(b =>
         {
             b.ToTable("PharmacyTransmissions", Schema);

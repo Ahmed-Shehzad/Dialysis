@@ -12,6 +12,7 @@
     <ProjectReference Include="../../Shared/Dialysis.Module.Bff/Dialysis.Module.Bff.csproj" />
     <ProjectReference Include="../../Shared/Dialysis.Module.Bff.Events/Dialysis.Module.Bff.Events.csproj" />
     <ProjectReference Include="../../Lab/Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
+    <ProjectReference Include="../../HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
   </ItemGroup>
 

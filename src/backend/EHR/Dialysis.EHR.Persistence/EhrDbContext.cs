@@ -27,6 +27,8 @@ public sealed class EhrDbContext : ModuleDbContextBase
     // Registration
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Provider> Providers => Set<Provider>();
+    public DbSet<CareTeam> CareTeams => Set<CareTeam>();
+    public DbSet<CareTeamMember> CareTeamMembers => Set<CareTeamMember>();
 
     // PatientChart
     public DbSet<Allergy> Allergies => Set<Allergy>();
@@ -54,6 +56,8 @@ public sealed class EhrDbContext : ModuleDbContextBase
     public DbSet<LabResult> LabResults => Set<LabResult>();
     public DbSet<ImagingOrder> ImagingOrders => Set<ImagingOrder>();
     public DbSet<Referral> Referrals => Set<Referral>();
+    public DbSet<OrderSet> OrderSets => Set<OrderSet>();
+    public DbSet<OrderSetLine> OrderSetLines => Set<OrderSetLine>();
 
     // Billing
     public DbSet<Payer> Payers => Set<Payer>();
@@ -65,6 +69,8 @@ public sealed class EhrDbContext : ModuleDbContextBase
     public DbSet<ChargeIdempotencyMarker> ChargeIdempotencyMarkers => Set<ChargeIdempotencyMarker>();
     public DbSet<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter> BillableEncounters =>
         Set<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter>();
+    public DbSet<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent> HospitalEvents =>
+        Set<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent>();
 
     // Integration
     public DbSet<PharmacyTransmission> PharmacyTransmissions => Set<PharmacyTransmission>();

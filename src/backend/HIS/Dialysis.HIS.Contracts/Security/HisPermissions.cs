@@ -38,6 +38,9 @@ public static class HisPermissions
     public const string SchedulingBook = "his.scheduling.book";
     public const string PatientFlowAdmit = "his.patientflow.admit";
 
+    /// <summary>Discharge an admitted patient (fires the care-coordination follow-up signal).</summary>
+    public const string PatientFlowDischarge = "his.patientflow.discharge";
+
     /// <summary>Read today's patient queue (receptionist's Front Desk view).</summary>
     public const string PatientFlowQueueRead = "his.patientflow.queue.read";
 
@@ -64,6 +67,7 @@ public static class HisPermissions
         SecurityManage,
         SchedulingBook,
         PatientFlowAdmit,
+        PatientFlowDischarge,
         PatientFlowQueueRead,
         PatientFlowQueueManage,
         PatientPortalRead,

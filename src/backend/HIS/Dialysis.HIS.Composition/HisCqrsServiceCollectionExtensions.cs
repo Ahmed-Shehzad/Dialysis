@@ -21,6 +21,7 @@ using Dialysis.HIS.PatientFlow;
 using Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 using Dialysis.HIS.PatientFlow.Features.AssignChair;
 using Dialysis.HIS.PatientFlow.Features.CheckInPatient;
+using Dialysis.HIS.PatientFlow.Features.DischargePatient;
 using Dialysis.HIS.PatientFlow.Features.GetTodaysQueue;
 using Dialysis.HIS.PatientFlow.Features.RegisterWalkIn;
 using Dialysis.HIS.RaCapabilities;
@@ -116,6 +117,7 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<RegisterLocalUserCommand, Guid, AuthorizationPipelineBehavior<RegisterLocalUserCommand, Guid>>();
             cqrs.AddCommandBehavior<BookAppointmentCommand, Guid, AuthorizationPipelineBehavior<BookAppointmentCommand, Guid>>();
             cqrs.AddCommandBehavior<AdmitPatientCommand, Guid, AuthorizationPipelineBehavior<AdmitPatientCommand, Guid>>();
+            cqrs.AddCommandBehavior<DischargePatientCommand, Unit, AuthorizationPipelineBehavior<DischargePatientCommand, Unit>>();
             cqrs.AddQueryBehavior<GetTodaysQueueQuery, IReadOnlyList<PatientQueueEntryDto>, AuthorizationPipelineBehavior<GetTodaysQueueQuery, IReadOnlyList<PatientQueueEntryDto>>>();
             cqrs.AddCommandBehavior<CheckInPatientCommand, Guid, AuthorizationPipelineBehavior<CheckInPatientCommand, Guid>>();
             cqrs.AddCommandBehavior<AssignChairCommand, Guid, AuthorizationPipelineBehavior<AssignChairCommand, Guid>>();
