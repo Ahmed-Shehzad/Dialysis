@@ -43,6 +43,9 @@ public static class EhrPermissions
     public const string ClinicalNoteRead = "ehr.clinical.note.read";
     public const string DiagnosisAttach = "ehr.clinical.diagnosis.attach";
 
+    /// <summary>Refer / transfer a patient to an external organisation (fires the HIE CCD push).</summary>
+    public const string ReferralRequest = "ehr.clinical.referral.request";
+
     // Prescriptions
     public const string PrescriptionOrder = "ehr.prescription.order";
     public const string PrescriptionCancel = "ehr.prescription.cancel";
@@ -74,7 +77,7 @@ public static class EhrPermissions
         ChartRead, AllergyRecord, ProblemRecord, VitalsRecord, ImmunizationRecord, MedicationRecord,
         AppointmentBook, AppointmentCancel, AppointmentReschedule, AppointmentCheckIn, ScheduleRead,
         PortalRead, PortalAppointmentRequest, PortalMessageSend,
-        EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach,
+        EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach, ReferralRequest,
         PrescriptionOrder, PrescriptionCancel,
         LabOrder, LabResultRead,
         ImagingOrder, ImagingStudyRead, ImagingAiReview,

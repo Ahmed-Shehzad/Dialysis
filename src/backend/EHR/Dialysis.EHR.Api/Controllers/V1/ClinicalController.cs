@@ -2,7 +2,9 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
+using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
@@ -150,6 +152,42 @@ public sealed class ClinicalController : ControllerBase
             return UnprocessableEntity(new { advisories = ex.Advisories.Select(ToAdvisoryDto) });
         }
     }
+
+    /// <summary>
+    /// Refers / transfers a patient to an external organisation. Fires the HIE CCD push by raising
+    /// <c>ReferralRequestedIntegrationEvent</c>.
+    /// </summary>
+    [HttpPost("referrals")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> RequestReferralAsync(
+        [FromBody] RequestReferralRequest body,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var id = await _gateway.SendCommandAsync<RequestReferralCommand, Guid>(
+            new RequestReferralCommand(
+                body.PatientId, body.DestinationPartnerId, body.ReferringProviderId, body.ReferralReason),
+            cancellationToken).ConfigureAwait(false);
+        return Created($"/api/v1.0/clinical/referrals/{id}", new { id });
+    }
+
+    /// <summary>Lists a patient's referrals (most-recent first) for the chart's referral history.</summary>
+    [HttpGet("patients/{patientId:guid}/referrals")]
+    [ProducesResponseType(typeof(IReadOnlyList<ReferralDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListReferralsAsync(
+        Guid patientId, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
+    {
+        var rows = await _gateway.SendQueryAsync<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>(
+            new ListReferralsForPatientQuery(patientId, take), cancellationToken).ConfigureAwait(false);
+        return Ok(rows);
+    }
+
+    /// <summary>Referral request body.</summary>
+    public sealed record RequestReferralRequest(
+        Guid PatientId,
+        string DestinationPartnerId,
+        Guid ReferringProviderId,
+        string? ReferralReason);
 
     private static string OverriderOf(ICurrentUser currentUser) => currentUser.UserId ?? "clinician";
 

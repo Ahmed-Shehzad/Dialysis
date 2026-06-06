@@ -75,6 +75,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddScoped<ILabOrderRepository, LabOrderRepository>();
             services.AddScoped<ILabResultRepository, LabResultRepository>();
             services.AddScoped<IImagingOrderRepository, ImagingOrderRepository>();
+            services.AddScoped<IReferralRepository, ReferralRepository>();
 
             // Billing
             services.AddScoped<IPayerRepository, PayerRepository>();

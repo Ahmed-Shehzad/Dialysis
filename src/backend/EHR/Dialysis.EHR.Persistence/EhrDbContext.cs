@@ -52,6 +52,7 @@ public sealed class EhrDbContext : ModuleDbContextBase
     public DbSet<LabOrder> LabOrders => Set<LabOrder>();
     public DbSet<LabResult> LabResults => Set<LabResult>();
     public DbSet<ImagingOrder> ImagingOrders => Set<ImagingOrder>();
+    public DbSet<Referral> Referrals => Set<Referral>();
 
     // Billing
     public DbSet<Payer> Payers => Set<Payer>();

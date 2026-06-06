@@ -134,6 +134,19 @@ internal static class ClinicalNotesConfiguration
             ModuleDbContextBase.MapAuditShadow(b);
         });
 
+        modelBuilder.Entity<Referral>(b =>
+        {
+            b.ToTable("Referrals", Schema);
+            b.HasKey(r => r.Id);
+            b.Property(r => r.PatientId).IsRequired();
+            b.HasIndex(r => r.PatientId);
+            b.Property(r => r.DestinationPartnerId).HasMaxLength(128).IsRequired();
+            b.Property(r => r.ReferringProviderId).IsRequired();
+            b.Property(r => r.ReferralReason).HasMaxLength(2000);
+            b.Property(r => r.RequestedAtUtc).IsRequired();
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
         modelBuilder.Entity<LabResult>(b =>
         {
             b.ToTable("LabResults", Schema);

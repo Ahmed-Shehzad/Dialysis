@@ -63,3 +63,10 @@ public interface ILabResultRepository
     Task<IReadOnlyList<LabResult>> ListByPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default);
     void Add(LabResult result);
 }
+
+public interface IReferralRepository
+{
+    /// <summary>Lists a patient's referrals, most-recent first.</summary>
+    Task<IReadOnlyList<Referral>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default);
+    void Add(Referral referral);
+}

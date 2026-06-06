@@ -109,3 +109,20 @@ public sealed class LabResultRepository : ILabResultRepository
 
     public void Add(LabResult result) => _db.LabResults.Add(result);
 }
+
+public sealed class ReferralRepository : IReferralRepository
+{
+    private readonly EhrDbContext _db;
+    public ReferralRepository(EhrDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<Referral>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default) =>
+        await _db.Referrals
+            .AsNoTracking()
+            .Where(r => r.PatientId == patientId && !r.IsDeleted)
+            .OrderByDescending(r => r.RequestedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public void Add(Referral referral) => _db.Referrals.Add(referral);
+}

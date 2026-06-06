@@ -306,6 +306,46 @@ export const orderLabTest = (body: OrderLabTestRequest): Promise<OrderResult> =>
 export const orderPrescription = (body: OrderPrescriptionRequest): Promise<OrderResult> =>
   placeOrder("/ehr/api/v1.0/clinical/prescriptions", body);
 
+export type RequestReferralBody = {
+  patientId: string;
+  destinationPartnerId: string;
+  referringProviderId: string;
+  referralReason?: string;
+};
+
+/** Refers a patient to an external organisation — fires the HIE CCD push. Returns the referral id. */
+export const requestReferral = async (body: RequestReferralBody): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/referrals", body);
+  return response.data.id;
+};
+
+export type ReferralListItem = {
+  id: string;
+  patientId: string;
+  destinationPartnerId: string;
+  referringProviderId: string;
+  referralReason?: string | null;
+  requestedAtUtc: string;
+};
+
+export const fetchReferrals = async (patientId: string, take = 20): Promise<ReferralListItem[]> => {
+  const response = await apiClient.get<ReferralListItem[]>(
+    `/ehr/api/v1.0/patients/${patientId}/referrals`,
+    { params: { take } },
+  );
+  return response.data ?? [];
+};
+
+/**
+ * Demo HIE partner organisations a clinician can refer to. Placeholder until a partner-directory
+ * endpoint exists; the ids must match configured HIE Outbound partners to actually dispatch a CCD.
+ */
+export const REFERRAL_PARTNERS: ReadonlyArray<{ id: string; display: string }> = [
+  { id: "partner-nephrology", display: "Regional Nephrology Associates" },
+  { id: "partner-transplant", display: "University Transplant Center" },
+  { id: "partner-vascular", display: "Vascular Access Surgery Clinic" },
+];
+
 export type DraftClinicalNoteRequest = {
   encounterId: string;
   patientId: string;
