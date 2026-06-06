@@ -16,6 +16,7 @@ import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
+import { QualityGapsCard } from "@/modules/ehr/chart/QualityGapsCard";
 import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
 import { ReferralDialog } from "@/modules/ehr/chart/ReferralDialog";
 import { usePatientContext } from "@/shell/PatientContextProvider";
@@ -340,6 +341,8 @@ export const EhrChartPage = () => {
               </ul>
             </section>
           )}
+
+          <QualityGapsCard patientId={patientId} />
 
           <CarePlanCard patientId={patientId} />
 

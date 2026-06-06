@@ -11,7 +11,10 @@ public sealed record CaptureChargeCommand : ICommand<Guid>, IPermissionedCommand
         string CptCode,
         IReadOnlyList<string> DiagnosisPointerIcd10Codes,
         decimal BilledAmount,
-        string CurrencyCode)
+        string CurrencyCode,
+        bool AcknowledgeAdvisories = false,
+        string? OverrideReason = null,
+        string? OverriddenBy = null)
     {
         this.PatientId = PatientId;
         this.EncounterId = EncounterId;
@@ -19,6 +22,9 @@ public sealed record CaptureChargeCommand : ICommand<Guid>, IPermissionedCommand
         this.DiagnosisPointerIcd10Codes = DiagnosisPointerIcd10Codes;
         this.BilledAmount = BilledAmount;
         this.CurrencyCode = CurrencyCode;
+        this.AcknowledgeAdvisories = AcknowledgeAdvisories;
+        this.OverrideReason = OverrideReason;
+        this.OverriddenBy = OverriddenBy;
     }
     public string RequiredPermission => EhrPermissions.ChargeCapture;
     public Guid PatientId { get; init; }
@@ -27,6 +33,15 @@ public sealed record CaptureChargeCommand : ICommand<Guid>, IPermissionedCommand
     public IReadOnlyList<string> DiagnosisPointerIcd10Codes { get; init; }
     public decimal BilledAmount { get; init; }
     public string CurrencyCode { get; init; }
+
+    /// <summary>When true, blocking charge-review edits are overridden (requires <see cref="OverrideReason"/>).</summary>
+    public bool AcknowledgeAdvisories { get; init; }
+
+    /// <summary>The biller's reason for overriding a blocking edit; audited on the charge.</summary>
+    public string? OverrideReason { get; init; }
+
+    /// <summary>Server-populated identity of the overriding biller.</summary>
+    public string? OverriddenBy { get; init; }
     public void Deconstruct(out Guid PatientId, out Guid EncounterId, out string CptCode, out IReadOnlyList<string> DiagnosisPointerIcd10Codes, out decimal BilledAmount, out string CurrencyCode)
     {
         PatientId = this.PatientId;

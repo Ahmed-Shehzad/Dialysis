@@ -1,5 +1,6 @@
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
+using Dialysis.EHR.Billing.ReadModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Stores;
@@ -15,6 +16,23 @@ public sealed class ChargeRepository : IChargeRepository
         await _db.Charges
             .Where(c => c.PatientId == patientId && c.Status == ChargeStatus.Captured)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Charge>> ListRecentForPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default) =>
+        await _db.Charges
+            .AsNoTracking()
+            .Where(c => c.PatientId == patientId && c.CreatedAt >= sinceUtc)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Charge>> ListAgedCapturedAsync(DateTime capturedBeforeUtc, int take, CancellationToken cancellationToken = default)
+    {
+        var bounded = Math.Clamp(take, 1, 500);
+        return await _db.Charges
+            .AsNoTracking()
+            .Where(c => c.Status == ChargeStatus.Captured && c.CreatedAt < capturedBeforeUtc)
+            .OrderBy(c => c.CreatedAt)
+            .Take(bounded)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
 
     public async Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default)
     {
@@ -90,4 +108,48 @@ public sealed class PayerRepository : IPayerRepository
         _db.Payers.FirstOrDefaultAsync(p => p.PayerCode == payerCode.ToUpperInvariant(), cancellationToken);
 
     public void Add(Payer payer) => _db.Payers.Add(payer);
+}
+
+public sealed class EfBillableEncounterRepository : IBillableEncounterRepository
+{
+    private readonly EhrDbContext _db;
+    public EfBillableEncounterRepository(EhrDbContext db) => _db = db;
+
+    public async Task UpsertAsync(Guid encounterId, Guid patientId, Guid providerId, DateTime closedAtUtc, CancellationToken cancellationToken = default)
+    {
+        var existing = await _db.BillableEncounters.FirstOrDefaultAsync(b => b.EncounterId == encounterId, cancellationToken).ConfigureAwait(false);
+        if (existing is null)
+        {
+            _db.BillableEncounters.Add(new BillableEncounter
+            {
+                EncounterId = encounterId,
+                PatientId = patientId,
+                ProviderId = providerId,
+                ClosedAtUtc = closedAtUtc,
+                HasCharge = false,
+            });
+        }
+        else
+        {
+            existing.PatientId = patientId;
+            existing.ProviderId = providerId;
+            existing.ClosedAtUtc = closedAtUtc;
+        }
+    }
+
+    public Task MarkHasChargeAsync(Guid encounterId, CancellationToken cancellationToken = default) =>
+        _db.BillableEncounters
+            .Where(b => b.EncounterId == encounterId)
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.HasCharge, true), cancellationToken);
+
+    public async Task<IReadOnlyList<BillableEncounter>> ListMissingChargesAsync(DateTime closedBeforeUtc, int take, CancellationToken cancellationToken = default)
+    {
+        var bounded = Math.Clamp(take, 1, 500);
+        return await _db.BillableEncounters
+            .AsNoTracking()
+            .Where(b => !b.HasCharge && b.ClosedAtUtc < closedBeforeUtc)
+            .OrderBy(b => b.ClosedAtUtc)
+            .Take(bounded)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

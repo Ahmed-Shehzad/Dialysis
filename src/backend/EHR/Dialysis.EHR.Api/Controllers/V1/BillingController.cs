@@ -18,6 +18,7 @@ public sealed class BillingController : ControllerBase
 {
     private readonly IClaimRepository _claims;
     private readonly IChargeRepository _charges;
+    private readonly IBillableEncounterRepository _billableEncounters;
     /// <summary>
     /// HTTP surface for the EHR Billing slice — read-only views the SPA needs on top of
     /// the Charge / Claim / acknowledgement aggregates that EHR.Billing owns. Write
@@ -25,10 +26,12 @@ public sealed class BillingController : ControllerBase
     /// dashboard's query side.
     /// </summary>
     public BillingController(IClaimRepository claims,
-        IChargeRepository charges)
+        IChargeRepository charges,
+        IBillableEncounterRepository billableEncounters)
     {
         _claims = claims;
         _charges = charges;
+        _billableEncounters = billableEncounters;
     }
     /// <summary>
     /// Lists recent charges, optionally narrowed to a single <see cref="ChargeStatus"/> and
@@ -142,7 +145,85 @@ public sealed class BillingController : ControllerBase
             AcknowledgedAtUtc: claim.AcknowledgedAtUtc,
             Acknowledgements: rows));
     }
+
+    /// <summary>
+    /// Lost-charge worklist: clinical encounters closed more than <paramref name="olderThanDays"/> days
+    /// ago that still have no captured charge.
+    /// </summary>
+    [HttpGet("worklist/lost-charges")]
+    [ProducesResponseType(typeof(IReadOnlyList<LostChargeRow>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListLostChargesAsync(
+        [FromQuery] int olderThanDays = 2,
+        [FromQuery] int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-Math.Abs(olderThanDays));
+        var rows = await _billableEncounters.ListMissingChargesAsync(cutoff, take, cancellationToken).ConfigureAwait(false);
+        var dto = rows
+            .Select(e => new LostChargeRow(e.EncounterId, e.PatientId, e.ProviderId, e.ClosedAtUtc))
+            .ToArray();
+        return Ok(dto);
+    }
+
+    /// <summary>
+    /// Charge-lag worklist: <c>Captured</c> charges created more than <paramref name="olderThanDays"/>
+    /// days ago that haven't been assembled onto a claim yet (late-filing risk).
+    /// </summary>
+    [HttpGet("worklist/charge-lag")]
+    [ProducesResponseType(typeof(IReadOnlyList<ChargeRow>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListChargeLagAsync(
+        [FromQuery] int olderThanDays = 7,
+        [FromQuery] int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-Math.Abs(olderThanDays));
+        var rows = await _charges.ListAgedCapturedAsync(cutoff, take, cancellationToken).ConfigureAwait(false);
+        var dto = rows
+            .Select(c => new ChargeRow(
+                ChargeId: c.Id,
+                PatientId: c.PatientId,
+                EncounterId: c.EncounterId,
+                CptCode: c.CptCode,
+                BilledAmount: c.BilledAmount.Amount,
+                CurrencyCode: c.BilledAmount.CurrencyCode,
+                Status: c.Status.ToString(),
+                AssignedClaimId: c.AssignedClaimId,
+                DiagnosisPointerIcd10Codes: [.. c.DiagnosisPointerIcd10Codes]))
+            .ToArray();
+        return Ok(dto);
+    }
+
+    /// <summary>Denials worklist: claims a payer rejected (999 / 277CA verdict), for appeal/resubmit.</summary>
+    [HttpGet("worklist/denials")]
+    [ProducesResponseType(typeof(IReadOnlyList<ClaimRow>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListDenialsAsync(
+        [FromQuery] int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _claims.ListAsync(ClaimStatus.Denied, take, cancellationToken).ConfigureAwait(false);
+        var dto = rows
+            .Select(c => new ClaimRow(
+                ClaimId: c.Id,
+                PatientId: c.PatientId,
+                PayerId: c.PayerId,
+                PayerCode: c.PayerCode,
+                ClaimFormatCode: c.ClaimFormatCode,
+                BilledTotal: c.BilledTotal.Amount,
+                CurrencyCode: c.BilledTotal.CurrencyCode,
+                Status: c.Status.ToString(),
+                ExternalControlNumber: c.ExternalControlNumber,
+                PayerClaimControlNumber: c.PayerClaimControlNumber,
+                SubmittedAtUtc: c.SubmittedAtUtc,
+                AcknowledgedAtUtc: c.AcknowledgedAtUtc,
+                ChargeCount: c.ChargeIds.Count,
+                AcknowledgementCount: c.Acknowledgements.Count))
+            .ToArray();
+        return Ok(dto);
+    }
 }
+
+/// <summary>A closed encounter with no captured charge — a lost-charge worklist row.</summary>
+public sealed record LostChargeRow(Guid EncounterId, Guid PatientId, Guid ProviderId, DateTime ClosedAtUtc);
 
 public sealed record ChargeRow
 {

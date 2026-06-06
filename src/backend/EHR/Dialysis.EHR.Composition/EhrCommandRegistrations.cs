@@ -15,6 +15,7 @@ using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
+using Dialysis.EHR.ClinicalNotes.Features.QualityMeasures;
 using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
@@ -107,5 +108,6 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>, AuthorizationPipelineBehavior<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>>>();
         c.AddQueryBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>, AuthorizationPipelineBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>>();
         c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
+        c.AddQueryBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>, AuthorizationPipelineBehavior<GetQualityGapsQuery, IReadOnlyList<QualityGap>>>();
     }
 }

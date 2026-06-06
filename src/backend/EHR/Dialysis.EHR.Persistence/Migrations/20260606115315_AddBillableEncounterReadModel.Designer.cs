@@ -3,6 +3,7 @@ using System;
 using Dialysis.EHR.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Dialysis.EHR.Persistence.Migrations
 {
     [DbContext(typeof(EhrDbContext))]
-    partial class EhrDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260606115315_AddBillableEncounterReadModel")]
+    partial class AddBillableEncounterReadModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -413,14 +416,6 @@ namespace Dialysis.EHR.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("IsDeleted");
-
-                    b.Property<string>("OverriddenBy")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("OverrideReason")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
 
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uuid");

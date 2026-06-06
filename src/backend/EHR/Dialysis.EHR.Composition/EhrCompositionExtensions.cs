@@ -74,6 +74,22 @@ public static class EhrCompositionExtensions
             services.Configure<ClinicalSafetyOptions>(configuration.GetSection(ClinicalSafetyOptions.SectionName));
             services.AddScoped<IClinicalSafetyChecker, ClinicalSafetyChecker>();
 
+            // Quality / MIPS care-gap prompts — config-driven, empty by default.
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IQualityMeasureEvaluator,
+                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureEvaluator>();
+
+            // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
+            services.Configure<EncounterChargeAutomationOptions>(
+                configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
+
+            // Charge-review edits (frequency / coverage / ABN) — config-driven, empty by default.
+            services.Configure<Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions>(
+                configuration.GetSection(Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.Billing.ChargeEdits.IChargeEditChecker,
+                Dialysis.EHR.Billing.ChargeEdits.ChargeEditChecker>();
+
             services.AddEuDataProtection("ehr", registry =>
             {
                 registry.RegisterActivity(
@@ -124,6 +140,13 @@ public static class EhrCompositionExtensions
                 // Cross-module: PDMS completes a session → capture the itemised dialysis charge
                 // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
                 t.AddConsumer<DialysisSessionChargeReadyIntegrationEvent, DialysisSessionChargeReadyConsumer>();
+                // ClinicalNotes closes an encounter → auto-capture one Charge per procedure CPT
+                // (gated by Ehr:Billing:EncounterChargeAutomation:Enabled, default off).
+                t.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedChargeConsumer>();
+                // Revenue-cycle worklist read model: record every closed encounter, and flip its
+                // HasCharge flag when a charge for it is captured (always on).
+                t.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedBillableProjector>();
+                t.AddConsumer<ChargeCapturedIntegrationEvent, ChargeCapturedBillableProjector>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();
