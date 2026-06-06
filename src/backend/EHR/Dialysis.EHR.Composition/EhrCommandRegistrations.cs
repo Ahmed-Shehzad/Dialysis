@@ -30,11 +30,14 @@ using Dialysis.EHR.PatientChart.Features.RecordImmunization;
 using Dialysis.EHR.PatientChart.Features.RecordMedicationStatement;
 using Dialysis.EHR.PatientChart.Features.RecordProblem;
 using Dialysis.EHR.PatientChart.Features.RecordVitalSign;
+using Dialysis.EHR.PatientPortal.Features.CancelAppointmentRequest;
+using Dialysis.EHR.PatientPortal.Features.ListAppointmentRequests;
 using Dialysis.EHR.PatientPortal.Features.ListMessageThreads;
 using Dialysis.EHR.PatientPortal.Features.ListThreadMessages;
 using Dialysis.EHR.PatientPortal.Features.MarkMessageRead;
 using Dialysis.EHR.PatientPortal.Features.ReplySecureMessage;
 using Dialysis.EHR.PatientPortal.Features.RequestAppointment;
+using Dialysis.EHR.PatientPortal.Features.ResolveAppointmentRequest;
 using Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
 using Dialysis.EHR.Registration.Features.GetPatientById;
 using Dialysis.EHR.Registration.Features.MergePatients;
@@ -86,6 +89,9 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<SendSecureMessageCommand, Guid, AuthorizationPipelineBehavior<SendSecureMessageCommand, Guid>>();
         c.AddCommandBehavior<ProviderReplyToMessageCommand, Guid, AuthorizationPipelineBehavior<ProviderReplyToMessageCommand, Guid>>();
         c.AddCommandBehavior<MarkMessageReadCommand, Unit, AuthorizationPipelineBehavior<MarkMessageReadCommand, Unit>>();
+        c.AddCommandBehavior<ApproveAppointmentRequestCommand, Unit, AuthorizationPipelineBehavior<ApproveAppointmentRequestCommand, Unit>>();
+        c.AddCommandBehavior<DeclineAppointmentRequestCommand, Unit, AuthorizationPipelineBehavior<DeclineAppointmentRequestCommand, Unit>>();
+        c.AddCommandBehavior<CancelAppointmentRequestCommand, Unit, AuthorizationPipelineBehavior<CancelAppointmentRequestCommand, Unit>>();
 
         // ClinicalNotes
         c.AddCommandBehavior<StartEncounterCommand, Guid, AuthorizationPipelineBehavior<StartEncounterCommand, Guid>>();
@@ -130,5 +136,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
         c.AddQueryBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>, AuthorizationPipelineBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>>>();
         c.AddQueryBehavior<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>, AuthorizationPipelineBehavior<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>>>();
+        c.AddQueryBehavior<ListMyAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>, AuthorizationPipelineBehavior<ListMyAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>>>();
+        c.AddQueryBehavior<ListPendingAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>, AuthorizationPipelineBehavior<ListPendingAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>>>();
     }
 }

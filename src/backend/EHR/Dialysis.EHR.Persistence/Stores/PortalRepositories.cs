@@ -17,6 +17,13 @@ public sealed class PortalAppointmentRequestRepository : IPortalAppointmentReque
             .OrderByDescending(r => r.EarliestPreferredUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<PortalAppointmentRequest>> ListByStatusAsync(PortalAppointmentRequestStatus status, int take, CancellationToken cancellationToken = default) =>
+        await _db.PortalAppointmentRequests
+            .Where(r => r.Status == status)
+            .OrderBy(r => r.EarliestPreferredUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public void Add(PortalAppointmentRequest request) => _db.PortalAppointmentRequests.Add(request);
 }
 

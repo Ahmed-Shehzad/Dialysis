@@ -20,6 +20,8 @@ builder.AddModuleBffEvents(transponder =>
     transponder.AddConsumer<PatientDischargedIntegrationEvent, HospitalDischargeNotificationConsumer>();
     // Patient participation: a patient's inbound secure message → "new patient message" toast on the chart.
     transponder.AddConsumer<Dialysis.EHR.Contracts.Integration.PatientPortalSecureMessageSentIntegrationEvent, SecureMessageSentNotificationConsumer>();
+    // A patient's appointment request → "new appointment request" toast for staff.
+    transponder.AddConsumer<Dialysis.EHR.Contracts.Integration.PatientPortalAppointmentRequestedIntegrationEvent, AppointmentRequestedNotificationConsumer>();
 });
 
 var app = builder.Build();

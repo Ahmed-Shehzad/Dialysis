@@ -13,6 +13,7 @@ const EHR_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/admin/billing/dialysis-charges", label: "Charges" },
   { to: "/admin/billing/fee-schedule", label: "Fee schedule" },
   { to: "/care-coordination/worklist", label: "Follow-up" },
+  { to: "/appointment-requests", label: "Requests" },
   { to: "/population/quality", label: "Population" },
 ];
 

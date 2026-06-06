@@ -8,6 +8,7 @@ import { humanizeError } from "@/lib/api/humanizeError";
 import { BookAppointmentDialog } from "./BookAppointmentDialog";
 import { LabResultsPanel } from "./LabResultsPanel";
 import { MessagesPanel } from "./MessagesPanel";
+import { MyAppointmentRequestsPanel } from "./MyAppointmentRequestsPanel";
 import { MyCarePlanPanel } from "./MyCarePlanPanel";
 import { PatientConsentsPanel } from "./PatientConsentsPanel";
 import { RecentTreatmentsPanel } from "./RecentTreatmentsPanel";
@@ -146,6 +147,7 @@ export const PatientPortalPage = () => {
       {summary.data && <PortalTiles summary={summary.data} />}
 
       {patientId && <RecentTreatmentsPanel patientId={patientId} />}
+      {patientId && <MyAppointmentRequestsPanel patientId={patientId} />}
       {patientId && <MessagesPanel patientId={patientId} />}
       {patientId && <MyCarePlanPanel patientId={patientId} />}
       {patientId && <LabResultsPanel patientId={patientId} />}

@@ -38,6 +38,10 @@ export const usePatientPortalNotifications = (patientId: string | null): void =>
       notify({ kind: kindFor(message.type), message: text });
       if (message.type === "secure-message") {
         void queryClient.invalidateQueries({ queryKey: ["patient-portal", "messages", patientId] });
+      } else if (message.type === "appointment-request") {
+        void queryClient.invalidateQueries({
+          queryKey: ["patient-portal", "appointment-requests", patientId],
+        });
       }
     });
 

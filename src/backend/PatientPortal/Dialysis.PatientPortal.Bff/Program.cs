@@ -13,6 +13,7 @@ builder.AddModuleBff();
 builder.AddModuleBffEvents(transponder =>
 {
     transponder.AddConsumer<PatientPortalSecureMessageReceivedIntegrationEvent, SecureMessageReceivedNotificationConsumer>();
+    transponder.AddConsumer<PatientPortalAppointmentResolvedIntegrationEvent, AppointmentResolvedNotificationConsumer>();
 });
 
 var app = builder.Build();
