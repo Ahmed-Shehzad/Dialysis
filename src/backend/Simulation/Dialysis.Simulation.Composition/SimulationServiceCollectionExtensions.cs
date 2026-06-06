@@ -1,6 +1,7 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.Simulation.Drivers;
+using Dialysis.Simulation.Drivers.Http;
 using Dialysis.Simulation.Engine.Engine;
 using Dialysis.Simulation.Engine.Generation;
 using Dialysis.Simulation.Engine.Scenarios;
@@ -28,8 +29,6 @@ public static class SimulationServiceCollectionExtensions
         bool enableOutboxRelay = false,
         Action<IServiceCollection>? configureTransponderTransport = null)
     {
-        _ = configuration;
-
         services.AddSimulationPersistence(configurePersistence);
 
         services.AddTransponder(_ => { });
@@ -38,7 +37,13 @@ public static class SimulationServiceCollectionExtensions
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IJourneyGenerator, BogusJourneyGenerator>();
 
-        services.AddSimulationInMemoryDrivers();
+        // Default to the deterministic in-memory drivers; opt into the live HTTP drivers (which call the
+        // real module APIs and need the Aspire stack) via Simulation:Drivers:Mode=Http.
+        var driverMode = configuration[$"{SimulationDriverOptions.SectionName}:Mode"];
+        if (string.Equals(driverMode, nameof(SimulationDriverMode.Http), StringComparison.OrdinalIgnoreCase))
+            services.AddSimulationHttpDrivers(configuration);
+        else
+            services.AddSimulationInMemoryDrivers();
 
         services.AddSingleton<IScenario, OutpatientLabScenario>();
         services.AddSingleton<IScenario, InpatientSurgeryScenario>();
