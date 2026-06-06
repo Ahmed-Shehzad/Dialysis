@@ -301,12 +301,16 @@ if (enableDevDashboards)
     hiePgServer.WithPgAdmin();
     labPgServer.WithPgAdmin();
 
-    // Valkey: Redis Commander web UI (Valkey speaks the Redis wire protocol). The Valkey hosting
-    // package ships no Redis-UI helper, so add the container directly and point it at the broker by
-    // its DCP network hostname (the resource name). Aspire assigns the host port; the dashboard links it.
-    builder.AddContainer("valkey-commander", "rediscommander/redis-commander", "latest")
-        .WithEnvironment("REDIS_HOSTS", "local:valkey:6379")
-        .WithHttpEndpoint(targetPort: 8081, name: "http")
+    // Valkey: the official Valkey Admin web UI (https://valkey-admin.valkey.io). The Valkey hosting
+    // package ships no UI helper, so add the container directly and point it at the broker by its DCP
+    // network hostname (the resource name). The dev broker has no auth/TLS. Aspire assigns the host
+    // port; the dashboard links it. Web UI listens on 8080.
+    builder.AddContainer("valkey-admin", "valkey/valkey-admin", "latest")
+        .WithEnvironment("DEPLOYMENT_MODE", "Web")
+        .WithEnvironment("VALKEY_HOST", "valkey")
+        .WithEnvironment("VALKEY_PORT", "6379")
+        .WithEnvironment("VALKEY_TLS", "false")
+        .WithHttpEndpoint(targetPort: 8080, name: "http")
         .WaitFor(valkey);
 }
 
