@@ -7,6 +7,7 @@ using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
+using Dialysis.EHR.ClinicalNotes.Features.QualityMeasures;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
@@ -169,6 +170,19 @@ public sealed class ClinicalController : ControllerBase
                 body.PatientId, body.DestinationPartnerId, body.ReferringProviderId, body.ReferralReason),
             cancellationToken).ConfigureAwait(false);
         return Created($"/api/v1.0/clinical/referrals/{id}", new { id });
+    }
+
+    /// <summary>
+    /// Lists the patient's open quality / MIPS care gaps for the chart's quality card. Empty unless
+    /// measures are configured (<c>Ehr:QualityMeasures</c>).
+    /// </summary>
+    [HttpGet("patients/{patientId:guid}/quality-gaps")]
+    [ProducesResponseType(typeof(IReadOnlyList<QualityGap>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListQualityGapsAsync(Guid patientId, CancellationToken cancellationToken)
+    {
+        var gaps = await _gateway.SendQueryAsync<GetQualityGapsQuery, IReadOnlyList<QualityGap>>(
+            new GetQualityGapsQuery(patientId), cancellationToken).ConfigureAwait(false);
+        return Ok(gaps);
     }
 
     /// <summary>Lists a patient's referrals (most-recent first) for the chart's referral history.</summary>

@@ -335,6 +335,20 @@ export type ReferralListItem = {
   requestedAtUtc: string;
 };
 
+export type QualityGap = {
+  measureId: string;
+  title: string;
+  detail: string;
+};
+
+/** Open quality / MIPS care gaps for the patient (empty unless measures are configured). */
+export const fetchQualityGaps = async (patientId: string): Promise<QualityGap[]> => {
+  const response = await apiClient.get<QualityGap[]>(
+    `/ehr/api/v1.0/clinical/patients/${patientId}/quality-gaps`,
+  );
+  return response.data ?? [];
+};
+
 export const fetchReferrals = async (patientId: string, take = 20): Promise<ReferralListItem[]> => {
   const response = await apiClient.get<ReferralListItem[]>(
     `/ehr/api/v1.0/patients/${patientId}/referrals`,

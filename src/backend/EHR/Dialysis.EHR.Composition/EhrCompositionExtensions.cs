@@ -74,6 +74,12 @@ public static class EhrCompositionExtensions
             services.Configure<ClinicalSafetyOptions>(configuration.GetSection(ClinicalSafetyOptions.SectionName));
             services.AddScoped<IClinicalSafetyChecker, ClinicalSafetyChecker>();
 
+            // Quality / MIPS care-gap prompts — config-driven, empty by default.
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IQualityMeasureEvaluator,
+                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureEvaluator>();
+
             // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
             services.Configure<EncounterChargeAutomationOptions>(
                 configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
