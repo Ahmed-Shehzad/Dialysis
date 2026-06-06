@@ -87,6 +87,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             // Integration
+            services.AddScoped<IHospitalEventRepository, HospitalEventRepository>();
             services.AddScoped<IPharmacyTransmissionRepository, PharmacyTransmissionRepository>();
             services.AddScoped<ILabTransmissionRepository, LabTransmissionRepository>();
             services.AddScoped<IInsurerTransmissionRepository, InsurerTransmissionRepository>();

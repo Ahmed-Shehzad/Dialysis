@@ -65,6 +65,8 @@ public sealed class EhrDbContext : ModuleDbContextBase
     public DbSet<ChargeIdempotencyMarker> ChargeIdempotencyMarkers => Set<ChargeIdempotencyMarker>();
     public DbSet<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter> BillableEncounters =>
         Set<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter>();
+    public DbSet<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent> HospitalEvents =>
+        Set<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent>();
 
     // Integration
     public DbSet<PharmacyTransmission> PharmacyTransmissions => Set<PharmacyTransmission>();

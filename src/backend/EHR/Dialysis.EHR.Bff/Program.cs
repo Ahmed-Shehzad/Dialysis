@@ -1,4 +1,5 @@
 using Dialysis.EHR.Bff.Notifications;
+using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.Lab.Contracts.IntegrationEvents;
 using Dialysis.Module.Bff;
 using Dialysis.Module.Bff.Events;
@@ -12,7 +13,12 @@ builder.AddModuleBff();
 // the SPA over SignalR. Lab results arrive cross-context (Lab module → RabbitMQ → this BFF's
 // bff-ehr queue → consumer → patient group → toast). Reads still go through the synchronous proxy.
 builder.AddModuleBffEvents(transponder =>
-    transponder.AddConsumer<LabResultReceivedIntegrationEvent, LabResultNotificationConsumer>());
+{
+    transponder.AddConsumer<LabResultReceivedIntegrationEvent, LabResultNotificationConsumer>();
+    // Care coordination: hospital admit/discharge → live "patient in hospital" toast.
+    transponder.AddConsumer<PatientAdmittedIntegrationEvent, HospitalAdmitNotificationConsumer>();
+    transponder.AddConsumer<PatientDischargedIntegrationEvent, HospitalDischargeNotificationConsumer>();
+});
 
 var app = builder.Build();
 app.MapDefaultEndpoints();

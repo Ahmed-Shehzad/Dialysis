@@ -48,6 +48,12 @@ public static class EhrPermissions
     /// <summary>Refer / transfer a patient to an external organisation (fires the HIE CCD push).</summary>
     public const string ReferralRequest = "ehr.clinical.referral.request";
 
+    // Care coordination (hospital-event follow-up worklist + care team)
+    public const string CareCoordinationRead = "ehr.carecoordination.read";
+    public const string CareCoordinationFollowUp = "ehr.carecoordination.followup";
+    public const string CareTeamRead = "ehr.careteam.read";
+    public const string CareTeamManage = "ehr.careteam.manage";
+
     // Prescriptions
     public const string PrescriptionOrder = "ehr.prescription.order";
     public const string PrescriptionCancel = "ehr.prescription.cancel";
@@ -80,6 +86,7 @@ public static class EhrPermissions
         AppointmentBook, AppointmentCancel, AppointmentReschedule, AppointmentCheckIn, ScheduleRead,
         PortalRead, PortalAppointmentRequest, PortalMessageSend,
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach, ReferralRequest,
+        CareCoordinationRead, CareCoordinationFollowUp, CareTeamRead, CareTeamManage,
         PrescriptionOrder, PrescriptionCancel,
         LabOrder, LabResultRead,
         ImagingOrder, ImagingStudyRead, ImagingAiReview,

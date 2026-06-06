@@ -21,6 +21,7 @@ using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
+using Dialysis.EHR.Integration.Features.MarkHospitalEventFollowedUp;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.PatientChart.Features.RecordAllergy;
 using Dialysis.EHR.PatientChart.Features.RecordImmunization;
@@ -89,6 +90,7 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
         c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
         c.AddCommandBehavior<RequestReferralCommand, Guid, AuthorizationPipelineBehavior<RequestReferralCommand, Guid>>();
+        c.AddCommandBehavior<MarkHospitalEventFollowedUpCommand, Unit, AuthorizationPipelineBehavior<MarkHospitalEventFollowedUpCommand, Unit>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();

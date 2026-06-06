@@ -147,6 +147,11 @@ public static class EhrCompositionExtensions
                 // HasCharge flag when a charge for it is captured (always on).
                 t.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedBillableProjector>();
                 t.AddConsumer<ChargeCapturedIntegrationEvent, ChargeCapturedBillableProjector>();
+                // Care coordination: project HIS admit/discharge + HIE external encounters into the
+                // hospital-event read model that drives the proactive follow-up worklist.
+                t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedHospitalEventProjector>();
+                t.AddConsumer<PatientDischargedIntegrationEvent, PatientDischargedHospitalEventProjector>();
+                t.AddConsumer<Dialysis.HIE.Contracts.Integration.ExternalEncounterIngestedIntegrationEvent, ExternalEncounterHospitalEventProjector>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();

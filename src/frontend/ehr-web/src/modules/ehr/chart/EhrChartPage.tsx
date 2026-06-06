@@ -14,6 +14,7 @@ import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
+import { HospitalEventsCard } from "@/modules/ehr/chart/HospitalEventsCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
 import { QualityGapsCard } from "@/modules/ehr/chart/QualityGapsCard";
@@ -343,6 +344,8 @@ export const EhrChartPage = () => {
           )}
 
           <QualityGapsCard patientId={patientId} />
+
+          <HospitalEventsCard patientId={patientId} />
 
           <CarePlanCard patientId={patientId} />
 
