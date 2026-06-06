@@ -7,6 +7,7 @@ using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
 using Dialysis.HIE.Outbound.Features.ListPartners;
 using Dialysis.HIE.Outbound.Features.RetryOutboundBundle;
+using Dialysis.HIE.Query.Features.PullPartnerRecords;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -85,6 +86,26 @@ public sealed class HieOpsAdminController : ControllerBase
             result,
             [new LinkDto("self", $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}", "POST")]);
         return result.Generated ? Ok(envelope) : UnprocessableEntity(envelope);
+    }
+
+    /// <summary>
+    /// Query-based exchange (pull): fetches records for a patient from a partner QHIN and feeds them
+    /// into the inbound ingestion pipeline. <paramref name="query"/> is a relative FHIR query
+    /// (e.g. <c>Patient/123/$everything</c>); <paramref name="subject"/> is the partner-side patient id
+    /// (the IAS JWT subject); optional <c>?purpose=</c> sets the TEFCA permitted purpose.
+    /// </summary>
+    [HttpPost("query/partner/{partnerId:guid}")]
+    [ProducesResponseType(typeof(ResourceEnvelope<PartnerPullResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PullPartnerRecordsAsync(
+        Guid partnerId,
+        [FromQuery] string query,
+        [FromQuery] string subject,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<PullPartnerRecordsCommand, PartnerPullResult>(
+            new PullPartnerRecordsCommand(partnerId, query, subject, purpose), cancellationToken).ConfigureAwait(false);
+        return OkResource(result);
     }
 
     /// <summary>

@@ -27,6 +27,7 @@ builder.AddModuleHost<HiePermissionCatalog>(new ModuleHostingOptions
     [
         typeof(Dialysis.HIE.Outbound.HieOutboundMarker).Assembly,
         typeof(Dialysis.HIE.Inbound.HieInboundMarker).Assembly,
+        typeof(Dialysis.HIE.Query.HieQueryMarker).Assembly,
         typeof(Dialysis.HIE.Consent.HieConsentMarker).Assembly,
         typeof(Dialysis.HIE.OpenEhr.HieOpenEhrMarker).Assembly,
         typeof(Dialysis.HIE.Documents.HieDocumentsMarker).Assembly,

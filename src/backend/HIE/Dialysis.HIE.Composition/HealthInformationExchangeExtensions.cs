@@ -24,6 +24,7 @@ using Dialysis.HIE.OpenEhr;
 using Dialysis.HIE.OpenEhr.Archetypes.Declarative;
 using Dialysis.HIE.OpenEhr.Consumers;
 using Dialysis.HIE.Persistence;
+using Dialysis.HIE.Query;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -160,6 +161,9 @@ public static class HealthInformationExchangeExtensions
             // new archetype is a one-file change — no recompile of the hard-coded projections.
             services.AddArchetypeMappingCatalog();
             services.AddScoped<InboundIngestionService>();
+
+            // Query-based exchange (pull): outbound FHIR query client → inbound ingestion pipeline.
+            services.AddHiePartnerQuery(configuration);
 
             // Probabilistic MPI: scorer (weights/thresholds from Hie:Mpi) + the candidate match service.
             services.AddOptions<MpiMatchOptions>().Bind(configuration.GetSection(MpiMatchOptions.SectionName));

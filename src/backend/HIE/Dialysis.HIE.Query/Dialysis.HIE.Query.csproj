@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.HIE.Query</RootNamespace>
+    <Description>HIE query-based exchange (pull): outbound FHIR query client against partner QHINs, feeding the inbound ingestion pipeline.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Core.Abstraction/Dialysis.HIE.Core.Abstraction.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Tefca/Dialysis.HIE.Tefca.csproj" />
+    <ProjectReference Include="../Dialysis.HIE.Inbound/Dialysis.HIE.Inbound.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Tefca/Dialysis.BuildingBlocks.Fhir.Tefca.csproj" />
+    <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Contracts/Dialysis.Module.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hl7.Fhir.R4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Polly" />
+    <PackageReference Include="Polly.Extensions" />
+  </ItemGroup>
+
+</Project>
