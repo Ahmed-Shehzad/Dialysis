@@ -1,6 +1,7 @@
-using System.Text;
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.Simulation.Contracts;
 using Dialysis.Simulation.Drivers;
+using Dialysis.Simulation.Engine.Documents;
 
 namespace Dialysis.Simulation.Engine.Scenarios;
 
@@ -11,11 +12,12 @@ namespace Dialysis.Simulation.Engine.Scenarios;
 /// </summary>
 public sealed class ReferralExchangeScenario : IScenario
 {
-    /// <summary>Creates the scenario over the module drivers.</summary>
-    public ReferralExchangeScenario(IEhrDriver ehr, IHieDriver hie)
+    /// <summary>Creates the scenario over the module drivers and the PDF renderer.</summary>
+    public ReferralExchangeScenario(IEhrDriver ehr, IHieDriver hie, IPdfDocumentRenderer renderer)
     {
         ArgumentNullException.ThrowIfNull(ehr);
         ArgumentNullException.ThrowIfNull(hie);
+        ArgumentNullException.ThrowIfNull(renderer);
 
         Steps =
         [
@@ -51,9 +53,10 @@ public sealed class ReferralExchangeScenario : IScenario
             new ScenarioStep("Share referral packet", WorkflowState.DocumentsReady, 2, async (ctx, ct) =>
             {
                 var patientId = ScenarioGuards.RequireId(ctx.RealPatientId, "patient");
+                var bytes = await SimulationDocumentFactory.RenderAsync(renderer, ctx, "Referral", "Referral Packet",
+                    [new("Patient", patientId.ToString("N")), new("Destination", "partner-hospital")], ct).ConfigureAwait(false);
                 var doc = await hie.UploadDocumentAsync(
-                    new UploadDocumentCommand(patientId, "Referral", "Referral Packet", "text/plain",
-                        Encoding.UTF8.GetBytes($"Referral packet for patient {patientId:N}")),
+                    new UploadDocumentCommand(patientId, "Referral", "Referral Packet", "application/pdf", bytes),
                     ctx.Driver, ct).ConfigureAwait(false);
                 return StepResult.ForRecord("DocumentShared", "Document", doc.DocumentId, "hie", "hie.document");
             }),

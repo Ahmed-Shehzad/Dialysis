@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../Dialysis.Simulation.Contracts/Dialysis.Simulation.Contracts.csproj" />
     <ProjectReference Include="../Dialysis.Simulation.Drivers/Dialysis.Simulation.Drivers.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Pdf/Dialysis.BuildingBlocks.Documents.Pdf.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />

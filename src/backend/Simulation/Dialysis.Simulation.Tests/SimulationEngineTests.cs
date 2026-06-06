@@ -20,7 +20,7 @@ public sealed class SimulationEngineTests
         var backplane = new InMemoryBackplane();
         var outbox = new RecordingOutbox();
         var tp = new FixedTimeProvider(_clock);
-        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         var engine = NewEngine(scenario, backplane, outbox, tp);
@@ -39,7 +39,7 @@ public sealed class SimulationEngineTests
     {
         var backplane = new InMemoryBackplane();
         var tp = new FixedTimeProvider(_clock);
-        var scenario = new InpatientSurgeryScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryHieDriver());
+        var scenario = new InpatientSurgeryScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         await NewEngine(scenario, backplane, new RecordingOutbox(), tp).RunAsync(session.Id, CancellationToken.None);
@@ -54,7 +54,7 @@ public sealed class SimulationEngineTests
     {
         var backplane = new InMemoryBackplane();
         var tp = new FixedTimeProvider(_clock);
-        var scenario = new ReferralExchangeScenario(new InMemoryEhrDriver(), new InMemoryHieDriver());
+        var scenario = new ReferralExchangeScenario(new InMemoryEhrDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         await NewEngine(scenario, backplane, new RecordingOutbox(), tp).RunAsync(session.Id, CancellationToken.None);
@@ -69,7 +69,7 @@ public sealed class SimulationEngineTests
         var backplane = new InMemoryBackplane();
         var outbox = new RecordingOutbox();
         var tp = new FixedTimeProvider(_clock);
-        var scenario = new OutpatientLabScenario(new ThrowingEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(new ThrowingEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         await NewEngine(scenario, backplane, outbox, tp).RunAsync(session.Id, CancellationToken.None);
@@ -87,7 +87,7 @@ public sealed class SimulationEngineTests
         var backplane = new InMemoryBackplane();
         var tp = new FixedTimeProvider(_clock);
         var flaky = new FlakyEhrDriver();
-        var scenario = new OutpatientLabScenario(flaky, new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(flaky, new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         await NewEngine(scenario, backplane, new RecordingOutbox(), tp).RunAsync(session.Id, CancellationToken.None);
@@ -101,7 +101,7 @@ public sealed class SimulationEngineTests
     {
         var backplane = new InMemoryBackplane();
         var tp = new FixedTimeProvider(_clock);
-        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         await NewEngine(scenario, backplane, new RecordingOutbox(), tp).RunAsync(session.Id, CancellationToken.None);
@@ -126,7 +126,7 @@ public sealed class SimulationEngineTests
     {
         var backplane = new InMemoryBackplane();
         var tp = new FixedTimeProvider(_clock);
-        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var session = StartSession(scenario.Id, backplane, tp);
 
         await NewEngine(scenario, backplane, new RecordingOutbox(), tp).RunAsync(session.Id, CancellationToken.None);

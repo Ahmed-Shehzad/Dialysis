@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.Simulation.Drivers;
@@ -36,6 +37,7 @@ public static class SimulationServiceCollectionExtensions
 
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IJourneyGenerator, BogusJourneyGenerator>();
+        services.AddPdfDocumentRendering();
 
         // Default to the deterministic in-memory drivers; opt into the live HTTP drivers (which call the
         // real module APIs and need the Aspire stack) via Simulation:Drivers:Mode=Http.

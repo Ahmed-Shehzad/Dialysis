@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.Simulation.Drivers;
 using Dialysis.Simulation.Drivers.InMemory;
@@ -41,6 +42,19 @@ internal sealed class InMemoryBackplane
             [.. Audits.Where(a => a.SimulationSessionId == sessionId).OrderByDescending(a => a.OccurredAtUtc).Take(take)]);
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+}
+
+/// <summary>A no-op PDF renderer for engine tests (returns deterministic placeholder bytes).</summary>
+internal sealed class StubPdfRenderer : IPdfDocumentRenderer
+{
+    public Task<byte[]> RenderAsync(DocumentModel document, CancellationToken cancellationToken) =>
+        Task.FromResult(new byte[] { 0x25, 0x50, 0x44, 0x46 });
+
+    public Task<byte[]> RenderWithFormsAsync(
+        DocumentModel document,
+        IReadOnlyList<Dialysis.BuildingBlocks.Documents.Pdf.AcroForms.AcroFormPlacement> formPlacements,
+        CancellationToken cancellationToken) =>
+        Task.FromResult(new byte[] { 0x25, 0x50, 0x44, 0x46 });
 }
 
 /// <summary>Records the integration events the engine enqueues on failure.</summary>

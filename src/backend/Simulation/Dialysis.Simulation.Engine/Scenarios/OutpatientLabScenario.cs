@@ -1,6 +1,7 @@
-using System.Text;
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.Simulation.Contracts;
 using Dialysis.Simulation.Drivers;
+using Dialysis.Simulation.Engine.Documents;
 
 namespace Dialysis.Simulation.Engine.Scenarios;
 
@@ -13,13 +14,14 @@ public sealed class OutpatientLabScenario : IScenario
 {
     private static readonly DateTime _slotStart = new(2026, 1, 5, 9, 0, 0, DateTimeKind.Utc);
 
-    /// <summary>Creates the scenario over the module drivers.</summary>
-    public OutpatientLabScenario(IEhrDriver ehr, IHisDriver his, ILabDriver lab, IHieDriver hie)
+    /// <summary>Creates the scenario over the module drivers and the PDF renderer.</summary>
+    public OutpatientLabScenario(IEhrDriver ehr, IHisDriver his, ILabDriver lab, IHieDriver hie, IPdfDocumentRenderer renderer)
     {
         ArgumentNullException.ThrowIfNull(ehr);
         ArgumentNullException.ThrowIfNull(his);
         ArgumentNullException.ThrowIfNull(lab);
         ArgumentNullException.ThrowIfNull(hie);
+        ArgumentNullException.ThrowIfNull(renderer);
 
         Steps =
         [
@@ -93,15 +95,20 @@ public sealed class OutpatientLabScenario : IScenario
             new ScenarioStep("Generate invoice & receipt", WorkflowState.DocumentsReady, 2, async (ctx, ct) =>
             {
                 var patientId = ScenarioGuards.RequireId(ctx.RealPatientId, "patient");
-                var total = ctx.Charges.Sum(c => c.Amount);
+                var total = ctx.Charges.Sum(c => c.Amount).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+                var invoiceBytes = await SimulationDocumentFactory.RenderAsync(renderer, ctx, "Invoice", "Outpatient Invoice",
+                    [new("Patient", patientId.ToString("N")), new("Total", total)], ct).ConfigureAwait(false);
                 var invoice = await hie.UploadDocumentAsync(
-                    new UploadDocumentCommand(patientId, "Invoice", "Outpatient Invoice", "text/plain",
-                        Encoding.UTF8.GetBytes($"Invoice for patient {patientId:N} — total {total:0.00}")),
+                    new UploadDocumentCommand(patientId, "Invoice", "Outpatient Invoice", "application/pdf", invoiceBytes),
                     ctx.Driver, ct).ConfigureAwait(false);
+
+                var receiptBytes = await SimulationDocumentFactory.RenderAsync(renderer, ctx, "Receipt", "Payment Receipt",
+                    [new("Patient", patientId.ToString("N")), new("Paid", total)], ct).ConfigureAwait(false);
                 await hie.UploadDocumentAsync(
-                    new UploadDocumentCommand(patientId, "Receipt", "Payment Receipt", "text/plain",
-                        Encoding.UTF8.GetBytes($"Receipt for patient {patientId:N} — paid {total:0.00}")),
+                    new UploadDocumentCommand(patientId, "Receipt", "Payment Receipt", "application/pdf", receiptBytes),
                     ctx.Driver, ct).ConfigureAwait(false);
+
                 return StepResult.ForRecord("DocumentGenerated", "Document", invoice.DocumentId, "hie", "hie.document");
             }),
 

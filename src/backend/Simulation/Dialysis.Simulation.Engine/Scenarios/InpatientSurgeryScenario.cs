@@ -1,6 +1,7 @@
-using System.Text;
+using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.Simulation.Contracts;
 using Dialysis.Simulation.Drivers;
+using Dialysis.Simulation.Engine.Documents;
 
 namespace Dialysis.Simulation.Engine.Scenarios;
 
@@ -11,12 +12,13 @@ namespace Dialysis.Simulation.Engine.Scenarios;
 /// </summary>
 public sealed class InpatientSurgeryScenario : IScenario
 {
-    /// <summary>Creates the scenario over the module drivers.</summary>
-    public InpatientSurgeryScenario(IEhrDriver ehr, IHisDriver his, IHieDriver hie)
+    /// <summary>Creates the scenario over the module drivers and the PDF renderer.</summary>
+    public InpatientSurgeryScenario(IEhrDriver ehr, IHisDriver his, IHieDriver hie, IPdfDocumentRenderer renderer)
     {
         ArgumentNullException.ThrowIfNull(ehr);
         ArgumentNullException.ThrowIfNull(his);
         ArgumentNullException.ThrowIfNull(hie);
+        ArgumentNullException.ThrowIfNull(renderer);
 
         Steps =
         [
@@ -71,9 +73,10 @@ public sealed class InpatientSurgeryScenario : IScenario
             new ScenarioStep("Generate discharge summary", WorkflowState.DocumentsReady, 2, async (ctx, ct) =>
             {
                 var patientId = ScenarioGuards.RequireId(ctx.RealPatientId, "patient");
+                var bytes = await SimulationDocumentFactory.RenderAsync(renderer, ctx, "DischargeSummary", "Discharge Summary",
+                    [new("Patient", patientId.ToString("N")), new("Diagnosis", "K80.20"), new("Procedure", "47562")], ct).ConfigureAwait(false);
                 var doc = await hie.UploadDocumentAsync(
-                    new UploadDocumentCommand(patientId, "DischargeSummary", "Discharge Summary", "text/plain",
-                        Encoding.UTF8.GetBytes($"Discharge summary for patient {patientId:N}")),
+                    new UploadDocumentCommand(patientId, "DischargeSummary", "Discharge Summary", "application/pdf", bytes),
                     ctx.Driver, ct).ConfigureAwait(false);
                 return StepResult.ForRecord("DocumentGenerated", "Document", doc.DocumentId, "hie", "hie.document");
             }),

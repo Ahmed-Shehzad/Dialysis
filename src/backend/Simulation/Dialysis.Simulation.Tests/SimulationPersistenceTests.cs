@@ -31,7 +31,7 @@ public sealed class SimulationPersistenceTests
         var session = SeedSession(ctx, sessions, "outpatient-lab");
         await ctx.SaveChangesAsync(CancellationToken.None);
 
-        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(new InMemoryEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var engine = new SimulationEngine(
             new ScenarioRegistry([scenario]), sessions, writeStore, ctx, new RecordingOutbox(), tp, NullLogger<SimulationEngine>.Instance);
 
@@ -60,7 +60,7 @@ public sealed class SimulationPersistenceTests
         var session = SeedSession(ctx, sessions, "outpatient-lab");
         await ctx.SaveChangesAsync(CancellationToken.None);
 
-        var scenario = new OutpatientLabScenario(new ThrowingEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver());
+        var scenario = new OutpatientLabScenario(new ThrowingEhrDriver(), new InMemoryHisDriver(), new InMemoryLabDriver(), new InMemoryHieDriver(), new StubPdfRenderer());
         var engine = new SimulationEngine(
             new ScenarioRegistry([scenario]), sessions, writeStore, ctx, new RecordingOutbox(), tp, NullLogger<SimulationEngine>.Instance);
 
