@@ -15,13 +15,16 @@ using Dialysis.HIE.Outbound.Consumers;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.HIE.Outbound.Partners;
+using Dialysis.HIE.Outbound.Partners.Direct;
 using Dialysis.HIE.Outbound.Partners.Http;
+using Dialysis.BuildingBlocks.Fhir.CdaBridge;
 using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.HIE.Core.Coding;
 using Dialysis.HIE.OpenEhr;
 using Dialysis.HIE.OpenEhr.Archetypes.Declarative;
 using Dialysis.HIE.OpenEhr.Consumers;
 using Dialysis.HIE.Persistence;
+using Dialysis.HIE.Query;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -66,6 +69,8 @@ public static class HealthInformationExchangeExtensions
                 bus.AddConsumer<EncounterOpenedIntegrationEvent, EncounterOpenedConsumer>();
                 bus.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedConsumer>();
                 bus.AddConsumer<ClinicalNoteSignedIntegrationEvent, ClinicalNoteSignedConsumer>();
+                // Transfer-of-care: a referral assembles + pushes a CCD to the receiving org.
+                bus.AddConsumer<ReferralRequestedIntegrationEvent, ReferralRequestedConsumer>();
                 bus.AddConsumer<LabOrderPlacedIntegrationEvent, LabOrderPlacedConsumer>();
                 bus.AddConsumer<LabResultReceivedIntegrationEvent, LabResultReceivedConsumer>();
                 bus.AddConsumer<DialysisSessionStartedIntegrationEvent, DialysisSessionStartedConsumer>();
@@ -135,8 +140,23 @@ public static class HealthInformationExchangeExtensions
             services.AddScoped<DialysisSessionMapper>();
             services.AddScoped<AdverseEventMapper>();
 
+            // Per-partner routing — replaces the old single hard-coded DefaultPartnerId.
+            services.AddSingleton<IPartnerRouter, ConfiguredPartnerRouter>();
+            // Public-health electronic case reporting (mandated-reporting path; no-op until configured).
+            services.Configure<Dialysis.HIE.Outbound.PublicHealth.PublicHealthReportingOptions>(
+                configuration.GetSection(Dialysis.HIE.Outbound.PublicHealth.PublicHealthReportingOptions.SectionName));
+            services.AddSingleton<Dialysis.HIE.Outbound.PublicHealth.IReportabilityClassifier,
+                Dialysis.HIE.Outbound.PublicHealth.ConfiguredReportabilityClassifier>();
+            services.AddScoped<Dialysis.HIE.Outbound.PublicHealth.PublicHealthReporter>();
             services.AddScoped<OutboundQueueWriter>();
+            // C-CDA CCD generation for Directed Exchange: the FHIR→CDA mapper + the assembler that
+            // folds a patient's already-mapped resources into a CCD and queues it as a DocumentReference.
+            services.AddFhirCdaBridge();
+            services.AddScoped<Dialysis.HIE.Outbound.CareSummary.CareSummaryAssembler>();
             services.AddFhirHttpPartnerEndpoints(configuration);
+            // Direct secure messaging (S/MIME) as an alternative outbound transport — wired when
+            // Hie:Direct is configured; partners opt in per-partner via Transport=Direct.
+            services.AddHieDirectMessaging(configuration);
             services.AddSingleton<IPartnerEndpointResolver, PartnerEndpointResolver>();
             services.AddScoped<IOutboundDispatcher, OutboundDispatcher>();
             services.AddHostedService<OutboundDispatcherHostedService>();
@@ -147,6 +167,11 @@ public static class HealthInformationExchangeExtensions
             // new archetype is a one-file change — no recompile of the hard-coded projections.
             services.AddArchetypeMappingCatalog();
             services.AddScoped<InboundIngestionService>();
+            // Actionable insights: the cross-source "Community Health Record" projection.
+            services.AddScoped<Dialysis.HIE.Inbound.Insights.ExternalPatientInsightsBuilder>();
+
+            // Query-based exchange (pull): outbound FHIR query client → inbound ingestion pipeline.
+            services.AddHiePartnerQuery(configuration);
 
             // Probabilistic MPI: scorer (weights/thresholds from Hie:Mpi) + the candidate match service.
             services.AddOptions<MpiMatchOptions>().Bind(configuration.GetSection(MpiMatchOptions.SectionName));

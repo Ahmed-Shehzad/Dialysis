@@ -140,3 +140,69 @@ export const fetchPartners = async (): Promise<PartnerStatusDto[]> => {
   );
   return unwrap(response.data);
 };
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Actionable insights — Community Health Record (Phase 4)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type InsightsCounts = {
+  encounters: number;
+  observations: number;
+  documents: number;
+  procedures: number;
+  medications: number;
+  allergies: number;
+  problems: number;
+  other: number;
+  total: number;
+};
+
+export type InsightsItem = {
+  resourceType: string;
+  date?: string | null;
+  sourceOrganization: string;
+  display?: string | null;
+};
+
+export type DuplicateTestAlert = {
+  code: string;
+  display?: string | null;
+  sourceCount: number;
+  sources: string[];
+};
+
+export type DuplicateMedicationAlert = {
+  code: string;
+  display?: string | null;
+  sourceCount: number;
+  sources: string[];
+};
+
+export type AllergyConflictAlert = {
+  medicationDisplay: string;
+  allergyDisplay: string;
+  sources: string[];
+};
+
+export type PatientInsightsSummary = {
+  patientReference: string;
+  sourceOrganizations: string[];
+  lastUpdatedUtc?: string | null;
+  counts: InsightsCounts;
+  recent: InsightsItem[];
+  medications: InsightsItem[];
+  allergies: InsightsItem[];
+  problems: InsightsItem[];
+  duplicateTestAlerts: DuplicateTestAlert[];
+  duplicateMedicationAlerts: DuplicateMedicationAlert[];
+  allergyConflictAlerts: AllergyConflictAlert[];
+};
+
+export const fetchPatientInsights = async (
+  patientReference: string,
+): Promise<PatientInsightsSummary> => {
+  const response = await apiClient.get<HateoasEnvelope<PatientInsightsSummary>>(
+    `/hie/api/v1.0/hie/ops/insights/patient/${encodeURIComponent(patientReference)}`,
+  );
+  return unwrap(response.data);
+};

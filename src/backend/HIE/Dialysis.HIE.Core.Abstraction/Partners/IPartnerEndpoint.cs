@@ -13,10 +13,20 @@ public interface IPartnerEndpoint
 
     /// <summary>
     /// Push a single resource to the partner. Returns success when the partner ACKs (2xx for HTTP).
-    /// On transport failure throws so the caller can mark the bundle for retry.
+    /// On transport failure throws so the caller can mark the bundle for retry. The
+    /// <paramref name="context"/> carries the patient + TEFCA purpose so the endpoint can mint a
+    /// patient- and purpose-scoped IAS JWT for the call.
     /// </summary>
-    Task<PartnerDeliveryResult> DeliverAsync(Resource resource, CancellationToken cancellationToken = default);
+    Task<PartnerDeliveryResult> DeliverAsync(Resource resource, PartnerDeliveryContext context, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Per-delivery context the dispatcher hands an endpoint so it can authenticate the call against
+/// the destination partner — specifically, mint a patient- and purpose-scoped TEFCA IAS JWT.
+/// </summary>
+/// <param name="PatientId">Patient the disclosure is about — the IAS JWT subject.</param>
+/// <param name="PurposeOfUse">TEFCA permitted purpose the disclosure is made under.</param>
+public readonly record struct PartnerDeliveryContext(Guid PatientId, string PurposeOfUse);
 
 public readonly record struct PartnerDeliveryResult
 {

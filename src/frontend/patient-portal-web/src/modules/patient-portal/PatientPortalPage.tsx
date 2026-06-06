@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/components/AuthProvider";
+import { MyOutsideRecordsCard } from "@/features/hie/components/MyOutsideRecordsCard";
 import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { BookAppointmentDialog } from "./BookAppointmentDialog";
@@ -140,6 +141,7 @@ export const PatientPortalPage = () => {
 
       {patientId && <RecentTreatmentsPanel patientId={patientId} />}
       {patientId && <LabResultsPanel patientId={patientId} />}
+      {patientId && <MyOutsideRecordsCard patientId={patientId} />}
       {patientId && <PatientConsentsPanel patientId={patientId} />}
 
       {bookOpen && patientId && (

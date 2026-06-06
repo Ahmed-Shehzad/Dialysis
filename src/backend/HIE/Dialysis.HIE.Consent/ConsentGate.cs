@@ -21,30 +21,30 @@ public sealed class ConsentGate : IConsentGate
         _repository = repository;
         _timeProvider = timeProvider;
     }
-    public async Task<bool> CheckOutboundAsync(Guid patientId, string partnerId, string scope, CancellationToken cancellationToken = default)
+    public async Task<bool> CheckOutboundAsync(Guid patientId, string partnerId, string scope, string? purpose = null, CancellationToken cancellationToken = default)
     {
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var consent = await _repository
-            .FindActiveAsync(patientId, partnerId, scope, ConsentDirection.Outbound, now, cancellationToken)
+            .FindActiveAsync(patientId, partnerId, scope, ConsentDirection.Outbound, now, purpose, cancellationToken)
             .ConfigureAwait(false);
         if (consent is not null) return true;
 
         var bidirectional = await _repository
-            .FindActiveAsync(patientId, partnerId, scope, ConsentDirection.Bidirectional, now, cancellationToken)
+            .FindActiveAsync(patientId, partnerId, scope, ConsentDirection.Bidirectional, now, purpose, cancellationToken)
             .ConfigureAwait(false);
         return bidirectional is not null;
     }
 
-    public async Task<bool> CheckInboundAsync(string externalPatientReference, string partnerId, string scope, CancellationToken cancellationToken = default)
+    public async Task<bool> CheckInboundAsync(string externalPatientReference, string partnerId, string scope, string? purpose = null, CancellationToken cancellationToken = default)
     {
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var consent = await _repository
-            .FindActiveByExternalReferenceAsync(externalPatientReference, partnerId, scope, ConsentDirection.Inbound, now, cancellationToken)
+            .FindActiveByExternalReferenceAsync(externalPatientReference, partnerId, scope, ConsentDirection.Inbound, now, purpose, cancellationToken)
             .ConfigureAwait(false);
         if (consent is not null) return true;
 
         var bidirectional = await _repository
-            .FindActiveByExternalReferenceAsync(externalPatientReference, partnerId, scope, ConsentDirection.Bidirectional, now, cancellationToken)
+            .FindActiveByExternalReferenceAsync(externalPatientReference, partnerId, scope, ConsentDirection.Bidirectional, now, purpose, cancellationToken)
             .ConfigureAwait(false);
         return bidirectional is not null;
     }

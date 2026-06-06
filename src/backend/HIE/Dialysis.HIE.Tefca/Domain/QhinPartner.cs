@@ -14,6 +14,11 @@ namespace Dialysis.HIE.Tefca.Domain;
 public sealed class QhinPartner
 {
     private readonly List<QhinTrustAnchor> _trustAnchors = [];
+    // Not readonly: EF rehydrates this via a value-converted scalar column (whole-list assignment),
+    // which the analyzer can't see — so IDE0044 is suppressed here, not a missed readonly.
+#pragma warning disable IDE0044 // Add readonly modifier
+    private List<string> _allowedPurposes = [];
+#pragma warning restore IDE0044
 
     public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -27,6 +32,22 @@ public sealed class QhinPartner
     public string UpdatedBy { get; private set; } = string.Empty;
 
     public IReadOnlyList<QhinTrustAnchor> TrustAnchors => _trustAnchors;
+
+    /// <summary>
+    /// TEFCA permitted purposes this partner is allowed to assert on a request. An <b>empty</b> list
+    /// means "all permitted purposes" (the permissive default, so partners onboarded before purpose
+    /// governance keep exchanging); narrowing it is an explicit operator action. Enforcement maps this
+    /// to a <c>TefcaPartnerPolicy.AllowedPurposes</c> at the gateway boundary.
+    /// </summary>
+    public IReadOnlyList<string> AllowedPurposes => _allowedPurposes;
+
+    /// <summary>
+    /// True when <paramref name="purpose"/> is one this partner may assert. An empty allow-list is
+    /// permissive (any recognised purpose passes); otherwise the match is case-insensitive.
+    /// </summary>
+    public bool IsPurposePermitted(string purpose) =>
+        _allowedPurposes.Count == 0
+        || _allowedPurposes.Contains(purpose, StringComparer.OrdinalIgnoreCase);
 
     private QhinPartner() { }
 
@@ -102,6 +123,26 @@ public sealed class QhinPartner
         ArgumentException.ThrowIfNullOrWhiteSpace(updatedBy);
         MtlsCertStorageRef = storageRef;
         MtlsCertThumbprint = thumbprint;
+        UpdatedAtUtc = now;
+        UpdatedBy = updatedBy;
+    }
+
+    /// <summary>
+    /// Replaces the partner's permitted-purpose allow-list. Pass an empty set to restore the
+    /// permissive "all purposes" default. Unrecognised tokens are rejected so the admin UI can't
+    /// store typos that would silently never match.
+    /// </summary>
+    public void SetAllowedPurposes(IEnumerable<string> purposes, DateTime now, string updatedBy)
+    {
+        ArgumentNullException.ThrowIfNull(purposes);
+        ArgumentException.ThrowIfNullOrWhiteSpace(updatedBy);
+        var normalized = purposes
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        _allowedPurposes.Clear();
+        _allowedPurposes.AddRange(normalized);
         UpdatedAtUtc = now;
         UpdatedBy = updatedBy;
     }

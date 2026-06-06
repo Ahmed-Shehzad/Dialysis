@@ -2,8 +2,15 @@ namespace Dialysis.HIE.Outbound;
 
 public sealed class OutboundOptions
 {
-    /// <summary>Default partner id used when an event-to-partner routing strategy is not yet configured.</summary>
+    /// <summary>Default partner id used when no routing partners are configured.</summary>
     public string DefaultPartnerId { get; set; } = "default";
+
+    /// <summary>
+    /// Partners an event-driven disclosure is routed to (broadcast). Empty falls back to
+    /// <see cref="DefaultPartnerId"/>, preserving single-partner behaviour. Bound from
+    /// <c>Hie:Outbound:RoutingPartners</c>.
+    /// </summary>
+    public List<string> RoutingPartners { get; init; } = [];
 
     /// <summary>Maximum delivery attempts before the bundle is marked Failed.</summary>
     public int MaxAttempts { get; set; } = 5;
@@ -19,4 +26,11 @@ public sealed class OutboundOptions
 
     /// <summary>When true, dispatcher writes a domain delivery event via the outbox; false skips publish (useful in tests).</summary>
     public bool EmitDeliveryEvents { get; set; } = true;
+
+    /// <summary>
+    /// When true, closing an encounter additionally assembles a CCD care summary and pushes it to the
+    /// patient's care-network partner(s) — transition-of-care sharing without a manual referral. Opt-in
+    /// (default off). Bound from <c>Hie:Outbound:AutoDischargeSummary</c>.
+    /// </summary>
+    public bool AutoDischargeSummary { get; set; }
 }

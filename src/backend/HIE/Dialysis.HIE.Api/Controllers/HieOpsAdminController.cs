@@ -2,9 +2,16 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.HIE.Api.Hateoas;
 using Dialysis.HIE.Inbound.Features.ListInboundResources;
+using Dialysis.HIE.Inbound.Insights;
+using Dialysis.HIE.Inbound.Insights.Features;
+using Dialysis.HIE.Outbound.CareSummary;
+using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
 using Dialysis.HIE.Outbound.Features.ListPartners;
 using Dialysis.HIE.Outbound.Features.RetryOutboundBundle;
+using Dialysis.HIE.Query.Features.PullOutsideRecords;
+using Dialysis.HIE.Query.Features.PullPartnerDocuments;
+using Dialysis.HIE.Query.Features.PullPartnerRecords;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -64,6 +71,90 @@ public sealed class HieOpsAdminController : ControllerBase
     }
 
     /// <summary>
+    /// Assembles a Continuity of Care Document (CCD) for the patient from the FHIR resources HIE
+    /// has already mapped and queues it for Directed Exchange. Returns <c>200</c> with the queued
+    /// bundle id when generated, or <c>422</c> when there's nothing to summarise / consent denied.
+    /// Optional <c>?purpose=</c> sets the TEFCA permitted purpose (defaults to Treatment).
+    /// </summary>
+    [HttpPost("outbound/care-summary/{patientId:guid}")]
+    [ProducesResponseType(typeof(ResourceEnvelope<CareSummaryResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResourceEnvelope<CareSummaryResult>), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> GenerateCareSummaryAsync(
+        Guid patientId,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<GenerateCareSummaryCommand, CareSummaryResult>(
+            new GenerateCareSummaryCommand(patientId, purpose), cancellationToken).ConfigureAwait(false);
+        var envelope = new ResourceEnvelope<CareSummaryResult>(
+            result,
+            [new LinkDto("self", $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}", "POST")]);
+        return result.Generated ? Ok(envelope) : UnprocessableEntity(envelope);
+    }
+
+    /// <summary>
+    /// Query-based exchange (pull): fetches records for a patient from a partner QHIN and feeds them
+    /// into the inbound ingestion pipeline. <paramref name="query"/> is a relative FHIR query
+    /// (e.g. <c>Patient/123/$everything</c>); <paramref name="subject"/> is the partner-side patient id
+    /// (the IAS JWT subject); optional <c>?purpose=</c> sets the TEFCA permitted purpose.
+    /// </summary>
+    [HttpPost("query/partner/{partnerId:guid}")]
+    [ProducesResponseType(typeof(ResourceEnvelope<PartnerPullResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PullPartnerRecordsAsync(
+        Guid partnerId,
+        [FromQuery] string query,
+        [FromQuery] string subject,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<PullPartnerRecordsCommand, PartnerPullResult>(
+            new PullPartnerRecordsCommand(partnerId, query, subject, purpose), cancellationToken).ConfigureAwait(false);
+        return OkResource(result);
+    }
+
+    /// <summary>
+    /// Cross-gateway document pull (XCA): queries a partner registry for the patient's documents,
+    /// retrieves their content, and lands them through inbound ingestion. <paramref name="patient"/>
+    /// is the partner-side patient id; optional <c>?purpose=</c> sets the TEFCA permitted purpose.
+    /// </summary>
+    [HttpPost("query/partner/{partnerId:guid}/documents")]
+    [ProducesResponseType(typeof(ResourceEnvelope<PartnerPullResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PullPartnerDocumentsAsync(
+        Guid partnerId,
+        [FromQuery] string patient,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<PullPartnerDocumentsCommand, PartnerPullResult>(
+            new PullPartnerDocumentsCommand(partnerId, patient, purpose), cancellationToken).ConfigureAwait(false);
+        return OkResource(result);
+    }
+
+    /// <summary>
+    /// On-demand "pull this patient's outside records": resolves the patient at the partner
+    /// (discovery, unless <c>partnerPatientId</c> is supplied), pulls records (<c>$everything</c>) and
+    /// documents (XCA), and lands everything through inbound ingestion. Returns the candidate count,
+    /// the resolved partner-side id, and how many records/documents were fetched.
+    /// </summary>
+    [HttpPost("query/partner/{partnerId:guid}/outside-records")]
+    [ProducesResponseType(typeof(ResourceEnvelope<OutsideRecordsResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PullOutsideRecordsAsync(
+        Guid partnerId,
+        [FromQuery] string? partnerPatientId = null,
+        [FromQuery] string? mrn = null,
+        [FromQuery] string? family = null,
+        [FromQuery] string? given = null,
+        [FromQuery] DateOnly? birthDate = null,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<PullOutsideRecordsCommand, OutsideRecordsResult>(
+            new PullOutsideRecordsCommand(partnerId, partnerPatientId, mrn, family, given, birthDate, purpose),
+            cancellationToken).ConfigureAwait(false);
+        return OkResource(result);
+    }
+
+    /// <summary>
     /// Lists recently received inbound resources, optionally filtered to one partner.
     /// </summary>
     [HttpGet("inbound")]
@@ -90,6 +181,25 @@ public sealed class HieOpsAdminController : ControllerBase
         var rows = await _cqrs.SendQueryAsync<ListPartnersQuery, IReadOnlyList<PartnerStatusDto>>(
             new ListPartnersQuery(), cancellationToken).ConfigureAwait(false);
         return OkResource(rows);
+    }
+
+    /// <summary>
+    /// Actionable insights: the cross-source "Community Health Record" summary for a patient —
+    /// what HIE has received about them from outside organisations (counts by category, recent
+    /// activity, source orgs, freshness, and duplicate-test alerts). <paramref name="patientReference"/>
+    /// is the patient id as referenced by the received resources.
+    /// </summary>
+    [HttpGet("insights/patient/{patientReference}")]
+    [ProducesResponseType(typeof(ResourceEnvelope<PatientInsightsSummary>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPatientInsightsAsync(
+        string patientReference,
+        [FromQuery] int scan = 500,
+        [FromQuery] int recentTake = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var summary = await _cqrs.SendQueryAsync<GetPatientInsightsQuery, PatientInsightsSummary>(
+            new GetPatientInsightsQuery(patientReference, scan, recentTake), cancellationToken).ConfigureAwait(false);
+        return OkResource(summary);
     }
 
     private OkObjectResult OkResource<T>(T data) =>

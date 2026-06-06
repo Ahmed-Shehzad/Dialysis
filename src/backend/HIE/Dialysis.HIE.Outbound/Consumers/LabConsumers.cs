@@ -4,7 +4,9 @@ using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
+using Dialysis.HIE.Outbound.PublicHealth;
 using Hl7.Fhir.Model;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Outbound.Consumers;
 
@@ -23,23 +25,34 @@ public sealed class LabOrderPlacedConsumer : IConsumer<LabOrderPlacedIntegration
             context.Message.PatientId,
             (IFhirResourceMapper<LabOrderPlacedIntegrationEvent, ServiceRequest>)_mapper,
             ConsentScopes.Labs,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class LabResultReceivedConsumer : IConsumer<LabResultReceivedIntegrationEvent>
 {
     private readonly OutboundQueueWriter _writer;
     private readonly LabResultMapper _mapper;
-    public LabResultReceivedConsumer(OutboundQueueWriter writer, LabResultMapper mapper)
+    private readonly PublicHealthReporter _publicHealth;
+    public LabResultReceivedConsumer(OutboundQueueWriter writer, LabResultMapper mapper, PublicHealthReporter publicHealth)
     {
         _writer = writer;
         _mapper = mapper;
+        _publicHealth = publicHealth;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<LabResultReceivedIntegrationEvent> context) =>
-        _writer.EnqueueAsync(
-            context.Message,
-            context.Message.PatientId,
+    public async Task HandleAsync(ConsumeContext<LabResultReceivedIntegrationEvent> context)
+    {
+        var message = context.Message;
+        await _writer.EnqueueAsync(
+            message,
+            message.PatientId,
             (IFhirResourceMapper<LabResultReceivedIntegrationEvent, Observation>)_mapper,
             ConsentScopes.Labs,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken).ConfigureAwait(false);
+
+        // Electronic case reporting: a reportable LOINC finding is reported to the public-health
+        // authority (mandated; consent-bypassed inside the reporter). No-op until configured.
+        await _publicHealth
+            .ReportAsync(message.PatientId, _mapper.Map(message), message.LoincCode, context.CancellationToken)
+            .ConfigureAwait(false);
+    }
 }

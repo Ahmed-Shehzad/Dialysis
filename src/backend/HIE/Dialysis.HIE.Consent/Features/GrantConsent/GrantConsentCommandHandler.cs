@@ -25,7 +25,8 @@ public sealed class GrantConsentCommandHandler : ICommandHandler<GrantConsentCom
             request.Scope,
             request.Direction,
             request.EffectiveFromUtc,
-            request.EffectiveToUtc);
+            request.EffectiveToUtc,
+            request.Purpose);
         await _repository.AddAsync(consent, cancellationToken).ConfigureAwait(false);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return consent.Id;

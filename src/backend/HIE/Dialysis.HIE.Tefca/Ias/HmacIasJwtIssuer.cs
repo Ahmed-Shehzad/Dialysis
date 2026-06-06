@@ -54,17 +54,24 @@ public sealed class HmacIasJwtIssuer : IIasJwtIssuer
         var now = _clock.GetUtcNow();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, request.Subject),
+            new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString("N")),
+            new("scope", request.Scope),
+            new("tefca_role", "qhin"),
+            new("originator", IssuerName),
+        };
+        // TEFCA permitted purpose travels as the standard purpose_of_use claim so the partner can
+        // enforce it. Omitted on the purpose-agnostic admin preview/verification path.
+        if (!string.IsNullOrWhiteSpace(request.PurposeOfUse))
+        {
+            claims.Add(new Claim("purpose_of_use", request.PurposeOfUse));
+        }
         var jwt = new JwtSecurityToken(
             issuer: request.Issuer,
             audience: request.Audience,
-            claims:
-            [
-                new Claim(JwtRegisteredClaimNames.Sub, request.Subject),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString("N")),
-                new Claim("scope", request.Scope),
-                new Claim("tefca_role", "qhin"),
-                new Claim("originator", IssuerName),
-            ],
+            claims: claims,
             notBefore: now.UtcDateTime,
             expires: now.Add(request.Lifetime).UtcDateTime,
             signingCredentials: credentials);

@@ -23,7 +23,8 @@ public static class HttpPartnerServiceCollectionExtensions
             {
                 var partnerId = child.Key;
                 var options = child.Get<PartnerHttpOptions>();
-                if (options is null || string.IsNullOrWhiteSpace(options.BaseUrl))
+                // Direct-transport partners are wired by AddHieDirectMessaging, not here.
+                if (options is null || options.Transport == PartnerTransport.Direct || string.IsNullOrWhiteSpace(options.BaseUrl))
                     continue;
                 partners[partnerId] = options;
             }
@@ -40,7 +41,10 @@ public static class HttpPartnerServiceCollectionExtensions
                     var factory = sp.GetRequiredService<IHttpClientFactory>();
                     var client = factory.CreateClient($"hie-partner:{capturedId}");
                     var logger = sp.GetRequiredService<ILogger<FhirHttpPartnerEndpoint>>();
-                    return new FhirHttpPartnerEndpoint(capturedId, client, capturedOptions, logger);
+                    // Optional: when the host wires an IAS issuer, IAS-enabled partners mint a
+                    // per-call JWT; otherwise the static bearer token stands.
+                    var iasIssuer = sp.GetService<Dialysis.HIE.Tefca.Ias.IIasJwtIssuer>();
+                    return new FhirHttpPartnerEndpoint(capturedId, client, capturedOptions, logger, iasIssuer);
                 });
             }
 

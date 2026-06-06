@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Dialysis.BuildingBlocks.Fhir.Tefca;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
@@ -63,10 +64,13 @@ public sealed class InboundIngestionService
     // ToJson is CPU-only; calling it from a non-Async method keeps VSTHRD103 quiet.
     private static string SerializeFhirJson(Resource resource) => resource.ToJson();
 
-    public async Task<OperationOutcome> IngestAsync(string partnerId, Resource resource, CancellationToken cancellationToken = default)
+    public async Task<OperationOutcome> IngestAsync(string partnerId, Resource resource, string? purposeOfUse = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(partnerId);
         ArgumentNullException.ThrowIfNull(resource);
+
+        // Inbound writes are consumed for care delivery unless the partner asserts another purpose.
+        var purpose = string.IsNullOrWhiteSpace(purposeOfUse) ? TefcaPermittedPurposes.Treatment : purposeOfUse;
 
         var outcome = new OperationOutcome();
         if (resource is Bundle bundle)
@@ -74,12 +78,12 @@ public sealed class InboundIngestionService
             foreach (var entry in bundle.Entry)
             {
                 if (entry.Resource is null) continue;
-                await IngestSingleAsync(partnerId, entry.Resource, outcome, cancellationToken).ConfigureAwait(false);
+                await IngestSingleAsync(partnerId, entry.Resource, purpose, outcome, cancellationToken).ConfigureAwait(false);
             }
         }
         else
         {
-            await IngestSingleAsync(partnerId, resource, outcome, cancellationToken).ConfigureAwait(false);
+            await IngestSingleAsync(partnerId, resource, purpose, outcome, cancellationToken).ConfigureAwait(false);
         }
 
         await _resourceStore.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -88,12 +92,12 @@ public sealed class InboundIngestionService
         return outcome;
     }
 
-    private async Task IngestSingleAsync(string partnerId, Resource resource, OperationOutcome outcome, CancellationToken cancellationToken)
+    private async Task IngestSingleAsync(string partnerId, Resource resource, string purpose, OperationOutcome outcome, CancellationToken cancellationToken)
     {
         var logicalId = resource.Id ?? Guid.NewGuid().ToString();
         var scope = ScopeFor(resource);
 
-        var consented = await _consentGate.CheckInboundAsync(logicalId, partnerId, scope, cancellationToken).ConfigureAwait(false);
+        var consented = await _consentGate.CheckInboundAsync(logicalId, partnerId, scope, purpose, cancellationToken).ConfigureAwait(false);
         if (!consented)
         {
             outcome.Issue.Add(new OperationOutcome.IssueComponent
@@ -300,6 +304,9 @@ public sealed class InboundIngestionService
         "DocumentReference" => ConsentScopes.ClinicalNotes,
         "Observation" or "DiagnosticReport" or "ServiceRequest" => ConsentScopes.Labs,
         "Procedure" or "AdverseEvent" => ConsentScopes.DialysisSessions,
+        "MedicationStatement" or "MedicationRequest" => ConsentScopes.Medications,
+        "AllergyIntolerance" => ConsentScopes.Allergies,
+        "Condition" => ConsentScopes.Problems,
         _ => "general",
     };
 

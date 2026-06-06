@@ -40,6 +40,24 @@ public sealed class HmacIasJwtIssuerTests
         jwt.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "patient.read");
         jwt.Claims.ShouldContain(c => c.Type == "tefca_role" && c.Value == "qhin");
         jwt.Claims.ShouldContain(c => c.Type == "originator" && c.Value == "DialysisPlatform.Tefca");
+        // No purpose asserted on this request → no purpose_of_use claim minted.
+        jwt.Claims.ShouldNotContain(c => c.Type == "purpose_of_use");
+    }
+
+    [Fact]
+    public void Purpose_Of_Use_Is_Minted_As_A_Claim()
+    {
+        var sut = Make_Issuer();
+        var token = sut.Issue(new IasJwtRequest(
+            Issuer: "DialysisPlatform.Tefca",
+            Audience: "https://qhin.example/ias",
+            Subject: Guid.NewGuid().ToString("N"),
+            Scope: "patient.read",
+            Lifetime: TimeSpan.FromMinutes(5),
+            PurposeOfUse: "Treatment"));
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        jwt.Claims.ShouldContain(c => c.Type == "purpose_of_use" && c.Value == "Treatment");
     }
 
     [Fact]

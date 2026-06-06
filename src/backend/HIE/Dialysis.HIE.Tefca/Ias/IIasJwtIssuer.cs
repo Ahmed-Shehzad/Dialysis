@@ -35,25 +35,36 @@ public sealed record IasJwtRequest
         string Audience,
         string Subject,
         string Scope,
-        TimeSpan Lifetime)
+        TimeSpan Lifetime,
+        string? PurposeOfUse = null)
     {
         this.Issuer = Issuer;
         this.Audience = Audience;
         this.Subject = Subject;
         this.Scope = Scope;
         this.Lifetime = Lifetime;
+        this.PurposeOfUse = PurposeOfUse;
     }
     public string Issuer { get; init; }
     public string Audience { get; init; }
     public string Subject { get; init; }
     public string Scope { get; init; }
     public TimeSpan Lifetime { get; init; }
-    public void Deconstruct(out string Issuer, out string Audience, out string Subject, out string Scope, out TimeSpan Lifetime)
+
+    /// <summary>
+    /// The TEFCA permitted purpose the call is made under (one of
+    /// <see cref="Dialysis.BuildingBlocks.Fhir.Tefca.TefcaPermittedPurposes"/>). When set it is minted
+    /// as the <c>purpose_of_use</c> claim so the partner can enforce it. Null on the admin
+    /// preview/verification path, which is purpose-agnostic.
+    /// </summary>
+    public string? PurposeOfUse { get; init; }
+    public void Deconstruct(out string Issuer, out string Audience, out string Subject, out string Scope, out TimeSpan Lifetime, out string? PurposeOfUse)
     {
         Issuer = this.Issuer;
         Audience = this.Audience;
         Subject = this.Subject;
         Scope = this.Scope;
         Lifetime = this.Lifetime;
+        PurposeOfUse = this.PurposeOfUse;
     }
 }

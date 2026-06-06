@@ -74,6 +74,38 @@ public sealed class QhinPartnerTests
         partner.UpdatedBy.ShouldBe("dpo-2");
     }
 
+    [Fact]
+    public void Empty_Allowed_Purposes_Is_Permissive()
+    {
+        var partner = Make_Partner();
+        partner.AllowedPurposes.ShouldBeEmpty();
+        // An empty allow-list means "any purpose passes".
+        partner.IsPurposePermitted("Treatment").ShouldBeTrue();
+        partner.IsPurposePermitted("PublicHealth").ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Set_Allowed_Purposes_Narrows_And_Is_Case_Insensitive()
+    {
+        var partner = Make_Partner();
+        var now = new DateTime(2026, 6, 4, 12, 0, 0, DateTimeKind.Utc);
+        partner.SetAllowedPurposes(["Treatment", "Payment"], now, "dpo");
+
+        partner.AllowedPurposes.ShouldBe(["Treatment", "Payment"]);
+        partner.IsPurposePermitted("treatment").ShouldBeTrue();
+        partner.IsPurposePermitted("PublicHealth").ShouldBeFalse();
+        partner.UpdatedAtUtc.ShouldBe(now);
+        partner.UpdatedBy.ShouldBe("dpo");
+    }
+
+    [Fact]
+    public void Set_Allowed_Purposes_Dedupes()
+    {
+        var partner = Make_Partner();
+        partner.SetAllowedPurposes(["Treatment", "treatment", "  ", "Payment"], DateTime.UtcNow, "dpo");
+        partner.AllowedPurposes.Count.ShouldBe(2);
+    }
+
     private static QhinPartner Make_Partner() => new(
         Guid.CreateVersion7(), "Acme QHIN", "https://qhin.example/fhir", "https://qhin.example/ias",
         new DateTime(2026, 6, 3, 12, 0, 0, DateTimeKind.Utc), "dpo");

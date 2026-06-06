@@ -23,7 +23,7 @@ public sealed class DialysisSessionStartedConsumer : IConsumer<DialysisSessionSt
             context.Message.PatientId,
             (IFhirResourceMapper<DialysisSessionStartedIntegrationEvent, Procedure>)_mapper,
             ConsentScopes.DialysisSessions,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class DialysisSessionCompletedConsumer : IConsumer<DialysisSessionCompletedIntegrationEvent>
@@ -41,7 +41,7 @@ public sealed class DialysisSessionCompletedConsumer : IConsumer<DialysisSession
             context.Message.PatientId,
             (IFhirResourceMapper<DialysisSessionCompletedIntegrationEvent, Procedure>)_mapper,
             ConsentScopes.DialysisSessions,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class DialysisSessionAbortedConsumer : IConsumer<DialysisSessionAbortedIntegrationEvent>
@@ -59,7 +59,7 @@ public sealed class DialysisSessionAbortedConsumer : IConsumer<DialysisSessionAb
             context.Message.PatientId,
             (IFhirResourceMapper<DialysisSessionAbortedIntegrationEvent, Procedure>)_mapper,
             ConsentScopes.DialysisSessions,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }
 
 public sealed class IntradialyticAdverseEventConsumer : IConsumer<IntradialyticAdverseEventIntegrationEvent>
@@ -77,5 +77,5 @@ public sealed class IntradialyticAdverseEventConsumer : IConsumer<IntradialyticA
             context.Message.PatientId,
             (IFhirResourceMapper<IntradialyticAdverseEventIntegrationEvent, AdverseEvent>)_mapper,
             ConsentScopes.DialysisSessions,
-            context.CancellationToken);
+            cancellationToken: context.CancellationToken);
 }

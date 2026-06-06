@@ -81,10 +81,12 @@ internal sealed class StubPartnerEndpoint : IPartnerEndpoint
 {
     public string PartnerId => "default";
     public List<Resource> Delivered { get; } = [];
+    public List<PartnerDeliveryContext> Contexts { get; } = [];
 
-    public Task<PartnerDeliveryResult> DeliverAsync(Resource resource, CancellationToken cancellationToken = default)
+    public Task<PartnerDeliveryResult> DeliverAsync(Resource resource, PartnerDeliveryContext context, CancellationToken cancellationToken = default)
     {
         Delivered.Add(resource);
+        Contexts.Add(context);
         return Task.FromResult(new PartnerDeliveryResult(true, 200, null));
     }
 }

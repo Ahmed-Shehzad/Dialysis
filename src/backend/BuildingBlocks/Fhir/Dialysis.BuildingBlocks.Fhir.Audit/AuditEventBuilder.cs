@@ -8,18 +8,25 @@ namespace Dialysis.BuildingBlocks.Fhir.Audit;
 /// </summary>
 public static class AuditEventBuilder
 {
-    public static AuditEvent Read(string resourceType, string resourceId, string? agentId, string moduleSlug)
-        => Build("rest", "read", AuditEvent.AuditEventAction.R, resourceType, resourceId, agentId, moduleSlug);
+    /// <summary>
+    /// CodeSystem the TEFCA permitted-purpose token is recorded under in <c>AuditEvent.purposeOfEvent</c>.
+    /// TEFCA's permitted purposes are a distinct vocabulary from v3 PurposeOfUse, so we keep the token
+    /// verbatim under a TEFCA system rather than lossily mapping it.
+    /// </summary>
+    public const string TefcaPurposeOfUseSystem = "https://rce.sequoiaproject.org/tefca/CodeSystem/permitted-purpose";
 
-    public static AuditEvent Search(string resourceType, string? agentId, string moduleSlug)
-        => Build("rest", "search-type", AuditEvent.AuditEventAction.R, resourceType, resourceId: null, agentId, moduleSlug);
+    public static AuditEvent Read(string resourceType, string resourceId, string? agentId, string moduleSlug, string? purposeOfUse = null)
+        => Build("rest", "read", AuditEvent.AuditEventAction.R, resourceType, resourceId, agentId, moduleSlug, purposeOfUse);
 
-    public static AuditEvent Export(string jobId, string? agentId, string moduleSlug)
-        => Build("rest", "$export", AuditEvent.AuditEventAction.E, "Bundle", jobId, agentId, moduleSlug);
+    public static AuditEvent Search(string resourceType, string? agentId, string moduleSlug, string? purposeOfUse = null)
+        => Build("rest", "search-type", AuditEvent.AuditEventAction.R, resourceType, resourceId: null, agentId, moduleSlug, purposeOfUse);
 
-    public static AuditEvent ConsentDenied(string resourceType, string? resourceId, string? agentId, string moduleSlug)
+    public static AuditEvent Export(string jobId, string? agentId, string moduleSlug, string? purposeOfUse = null)
+        => Build("rest", "$export", AuditEvent.AuditEventAction.E, "Bundle", jobId, agentId, moduleSlug, purposeOfUse);
+
+    public static AuditEvent ConsentDenied(string resourceType, string? resourceId, string? agentId, string moduleSlug, string? purposeOfUse = null)
     {
-        var auditEvent = Build("rest", "read", AuditEvent.AuditEventAction.R, resourceType, resourceId, agentId, moduleSlug);
+        var auditEvent = Build("rest", "read", AuditEvent.AuditEventAction.R, resourceType, resourceId, agentId, moduleSlug, purposeOfUse);
         auditEvent.Outcome = AuditEvent.AuditEventOutcome.N4; // minor failure
         auditEvent.OutcomeDesc = "consent denied";
         return auditEvent;
@@ -32,7 +39,8 @@ public static class AuditEventBuilder
         string resourceType,
         string? resourceId,
         string? agentId,
-        string moduleSlug)
+        string moduleSlug,
+        string? purposeOfUse = null)
     {
         var auditEvent = new AuditEvent
         {
@@ -48,10 +56,23 @@ public static class AuditEventBuilder
             },
         };
 
+        // The TEFCA permitted purpose under which the access was made (Art. 5(1)(a)/§630f-style
+        // accountability — the audit log answers "why was this disclosed").
+        if (!string.IsNullOrWhiteSpace(purposeOfUse))
+        {
+            auditEvent.PurposeOfEvent =
+            [
+                new CodeableConcept(TefcaPurposeOfUseSystem, purposeOfUse),
+            ];
+        }
+
         auditEvent.Agent.Add(new AuditEvent.AgentComponent
         {
             Requestor = true,
             Who = string.IsNullOrEmpty(agentId) ? null : new ResourceReference($"Practitioner/{agentId}"),
+            PurposeOfUse = string.IsNullOrWhiteSpace(purposeOfUse)
+                ? null
+                : [new CodeableConcept(TefcaPurposeOfUseSystem, purposeOfUse)],
         });
 
         if (!string.IsNullOrEmpty(resourceId))

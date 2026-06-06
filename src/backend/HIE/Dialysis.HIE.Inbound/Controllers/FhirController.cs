@@ -46,6 +46,9 @@ public sealed class FhirController : ControllerBase
         if (string.IsNullOrWhiteSpace(partnerId))
             return FhirResult(BadRequest(), MissingPartnerOutcome());
 
+        // TEFCA permitted purpose the partner asserts for this push; absent → ingestion defaults to Treatment.
+        var purposeOfUse = Request.Headers["X-HIE-Purpose"].FirstOrDefault();
+
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         Resource resource;
@@ -59,7 +62,7 @@ public sealed class FhirController : ControllerBase
             return FhirResult(UnprocessableEntity(), ParseErrorOutcome(ex.Message));
         }
 
-        var outcome = await _ingestion.IngestAsync(partnerId, resource, cancellationToken).ConfigureAwait(false);
+        var outcome = await _ingestion.IngestAsync(partnerId, resource, purposeOfUse, cancellationToken).ConfigureAwait(false);
         var status = outcome.Issue.Any(i => i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal)
             ? StatusCodes.Status422UnprocessableEntity
             : StatusCodes.Status200OK;
