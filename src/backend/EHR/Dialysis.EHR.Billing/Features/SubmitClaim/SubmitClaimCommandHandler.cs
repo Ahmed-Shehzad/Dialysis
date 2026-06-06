@@ -1,7 +1,9 @@
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.EHR.Billing.ChargeEdits;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
+using Microsoft.Extensions.Logging;
 
 namespace Dialysis.EHR.Billing.Features.SubmitClaim;
 
@@ -10,19 +12,25 @@ public sealed class SubmitClaimCommandHandler : ICommandHandler<SubmitClaimComma
     private readonly IChargeRepository _charges;
     private readonly IClaimRepository _claims;
     private readonly IPayerRepository _payers;
+    private readonly IChargeEditChecker _editChecker;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger<SubmitClaimCommandHandler> _logger;
     public SubmitClaimCommandHandler(IChargeRepository charges,
         IClaimRepository claims,
         IPayerRepository payers,
+        IChargeEditChecker editChecker,
         IUnitOfWork unitOfWork,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ILogger<SubmitClaimCommandHandler> logger)
     {
         _charges = charges;
         _claims = claims;
         _payers = payers;
+        _editChecker = editChecker;
         _unitOfWork = unitOfWork;
         _timeProvider = timeProvider;
+        _logger = logger;
     }
     public async Task<Guid> HandleAsync(SubmitClaimCommand request, CancellationToken cancellationToken)
     {
@@ -39,6 +47,26 @@ public sealed class SubmitClaimCommandHandler : ICommandHandler<SubmitClaimComma
             if (charge.PatientId != request.PatientId)
                 throw new InvalidOperationException("Charges must all belong to the same patient.");
             resolved.Add(charge);
+        }
+
+        // Charge-review edits before the claim goes out — frequency / coverage / ABN, gated by the payer.
+        var advisories = new List<ChargeAdvisory>();
+        foreach (var charge in resolved)
+        {
+            var result = await _editChecker.CheckChargeAsync(
+                charge.PatientId, charge.CptCode, [.. charge.DiagnosisPointerIcd10Codes], payer.PayerCode, cancellationToken)
+                .ConfigureAwait(false);
+            advisories.AddRange(result.Advisories);
+        }
+        var hasBlocking = advisories.Any(a => a.Severity == ChargeAdvisorySeverity.Blocking);
+        if (hasBlocking && !(request.AcknowledgeAdvisories && !string.IsNullOrWhiteSpace(request.OverrideReason)))
+            throw new ChargeEditBlockedException(advisories);
+        if (hasBlocking && request.AcknowledgeAdvisories)
+        {
+            _logger.LogInformation(
+                "Claim submitted over {Count} blocking charge edit(s) by {OverriddenBy}: {Reason} (patient {PatientId}, payer {PayerCode}).",
+                advisories.Count(a => a.Severity == ChargeAdvisorySeverity.Blocking),
+                request.OverriddenBy ?? "biller", request.OverrideReason, request.PatientId, payer.PayerCode);
         }
 
         var claimId = Guid.CreateVersion7();

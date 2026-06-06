@@ -39,13 +39,21 @@ public sealed class Charge : AggregateRoot<Guid>
 
     public Guid? AssignedClaimId { get; private set; }
 
+    /// <summary>Reason a biller overrode a blocking charge-review edit when capturing this charge; else null.</summary>
+    public string? OverrideReason { get; private set; }
+
+    /// <summary>Identity that overrode the blocking edit; else null.</summary>
+    public string? OverriddenBy { get; private set; }
+
     public static Charge Capture(
         Guid id,
         Guid patientId,
         Guid encounterId,
         string cptCode,
         IReadOnlyList<string> diagnosisPointerIcd10Codes,
-        Money billedAmount)
+        Money billedAmount,
+        string? overrideReason = null,
+        string? overriddenBy = null)
     {
         if (patientId == Guid.Empty)
             throw new ArgumentException("Patient required.", nameof(patientId));
@@ -65,6 +73,8 @@ public sealed class Charge : AggregateRoot<Guid>
             CptCode = cptCode.Trim(),
             BilledAmount = billedAmount,
             Status = ChargeStatus.Captured,
+            OverrideReason = string.IsNullOrWhiteSpace(overrideReason) ? null : overrideReason.Trim(),
+            OverriddenBy = string.IsNullOrWhiteSpace(overriddenBy) ? null : overriddenBy.Trim(),
         };
         charge._diagnosisPointers.AddRange(diagnosisPointerIcd10Codes.Select(c => c.Trim()).Where(static c => !string.IsNullOrEmpty(c)));
 

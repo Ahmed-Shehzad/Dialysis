@@ -45,6 +45,8 @@ internal static class BillingConfiguration
             b.HasIndex(c => c.EncounterId);
             b.Property(c => c.CptCode).HasMaxLength(16).IsRequired();
             b.Property(c => c.Status).HasConversion<int>().IsRequired();
+            b.Property(c => c.OverrideReason).HasMaxLength(1000);
+            b.Property(c => c.OverriddenBy).HasMaxLength(128);
             b.Property<List<string>>("_diagnosisPointers")
                 .HasColumnName("DiagnosisPointerIcd10Codes")
                 .HasConversion(

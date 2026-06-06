@@ -78,6 +78,12 @@ public static class EhrCompositionExtensions
             services.Configure<EncounterChargeAutomationOptions>(
                 configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
 
+            // Charge-review edits (frequency / coverage / ABN) — config-driven, empty by default.
+            services.Configure<Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions>(
+                configuration.GetSection(Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.Billing.ChargeEdits.IChargeEditChecker,
+                Dialysis.EHR.Billing.ChargeEdits.ChargeEditChecker>();
+
             services.AddEuDataProtection("ehr", registry =>
             {
                 registry.RegisterActivity(
