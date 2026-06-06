@@ -48,3 +48,20 @@ public sealed class SecureMessageRepository : ISecureMessageRepository
 
     public void Add(SecureMessage message) => _db.SecureMessages.Add(message);
 }
+
+public sealed class AfterVisitSummaryRepository : IAfterVisitSummaryRepository
+{
+    private readonly EhrDbContext _db;
+    public AfterVisitSummaryRepository(EhrDbContext db) => _db = db;
+
+    public Task<AfterVisitSummary?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.AfterVisitSummaries.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<AfterVisitSummary>> ListByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+        await _db.AfterVisitSummaries
+            .Where(s => s.PatientId == patientId)
+            .OrderByDescending(s => s.VisitDateUtc)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public void Add(AfterVisitSummary summary) => _db.AfterVisitSummaries.Add(summary);
+}

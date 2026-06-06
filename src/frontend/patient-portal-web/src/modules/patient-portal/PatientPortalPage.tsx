@@ -5,6 +5,7 @@ import { MyOutsideRecordsCard } from "@/features/hie/components/MyOutsideRecords
 import { usePatientPortalNotifications } from "@/features/notifications/usePatientPortalNotifications";
 import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { AfterVisitSummaryPanel } from "./AfterVisitSummaryPanel";
 import { BookAppointmentDialog } from "./BookAppointmentDialog";
 import { LabResultsPanel } from "./LabResultsPanel";
 import { MessagesPanel } from "./MessagesPanel";
@@ -147,6 +148,7 @@ export const PatientPortalPage = () => {
       {summary.data && <PortalTiles summary={summary.data} />}
 
       {patientId && <RecentTreatmentsPanel patientId={patientId} />}
+      {patientId && <AfterVisitSummaryPanel patientId={patientId} />}
       {patientId && <MyAppointmentRequestsPanel patientId={patientId} />}
       {patientId && <MessagesPanel patientId={patientId} />}
       {patientId && <MyCarePlanPanel patientId={patientId} />}

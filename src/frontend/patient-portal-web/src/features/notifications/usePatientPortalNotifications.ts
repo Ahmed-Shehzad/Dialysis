@@ -42,6 +42,10 @@ export const usePatientPortalNotifications = (patientId: string | null): void =>
         void queryClient.invalidateQueries({
           queryKey: ["patient-portal", "appointment-requests", patientId],
         });
+      } else if (message.type === "after-visit-summary") {
+        void queryClient.invalidateQueries({
+          queryKey: ["patient-portal", "after-visit-summaries", patientId],
+        });
       }
     });
 

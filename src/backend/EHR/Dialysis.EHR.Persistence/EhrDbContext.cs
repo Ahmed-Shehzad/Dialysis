@@ -45,6 +45,7 @@ public sealed class EhrDbContext : ModuleDbContextBase
     // Portal
     public DbSet<PortalAppointmentRequest> PortalAppointmentRequests => Set<PortalAppointmentRequest>();
     public DbSet<SecureMessage> SecureMessages => Set<SecureMessage>();
+    public DbSet<AfterVisitSummary> AfterVisitSummaries => Set<AfterVisitSummary>();
 
     // ClinicalNotes
     public DbSet<Encounter> Encounters => Set<Encounter>();

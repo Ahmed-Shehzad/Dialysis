@@ -15,6 +15,7 @@ import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
 import { CareTeamCard } from "@/modules/ehr/chart/CareTeamCard";
+import { AfterVisitSummaryAuthoringCard } from "@/modules/ehr/chart/AfterVisitSummaryAuthoringCard";
 import { HospitalEventsCard } from "@/modules/ehr/chart/HospitalEventsCard";
 import { MessagingCard } from "@/modules/ehr/chart/MessagingCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
@@ -366,6 +367,8 @@ export const EhrChartPage = () => {
           <HospitalEventsCard patientId={patientId} />
 
           <MessagingCard patientId={patientId} />
+
+          <AfterVisitSummaryAuthoringCard patientId={patientId} />
 
           <CareTeamCard patientId={patientId} />
 

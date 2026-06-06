@@ -81,6 +81,43 @@ public sealed record PatientPortalSecureMessageSentIntegrationEvent : IIntegrati
 }
 
 /// <summary>
+/// Raised when a clinician publishes an after-visit summary to the patient portal. Drives the
+/// patient-facing toast. Metadata only — the SPA refetches the summary through the synchronous API.
+/// </summary>
+public sealed record AfterVisitSummaryPublishedIntegrationEvent : IIntegrationEvent
+{
+    public AfterVisitSummaryPublishedIntegrationEvent(Guid EventId,
+        DateTime OccurredOn,
+        int SchemaVersion,
+        Guid SummaryId,
+        Guid PatientId,
+        DateTime VisitDateUtc)
+    {
+        this.EventId = EventId;
+        this.OccurredOn = OccurredOn;
+        this.SchemaVersion = SchemaVersion;
+        this.SummaryId = SummaryId;
+        this.PatientId = PatientId;
+        this.VisitDateUtc = VisitDateUtc;
+    }
+    public Guid EventId { get; init; }
+    public DateTime OccurredOn { get; init; }
+    public int SchemaVersion { get; init; }
+    public Guid SummaryId { get; init; }
+    public Guid PatientId { get; init; }
+    public DateTime VisitDateUtc { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid SummaryId, out Guid PatientId, out DateTime VisitDateUtc)
+    {
+        EventId = this.EventId;
+        OccurredOn = this.OccurredOn;
+        SchemaVersion = this.SchemaVersion;
+        SummaryId = this.SummaryId;
+        PatientId = this.PatientId;
+        VisitDateUtc = this.VisitDateUtc;
+    }
+}
+
+/// <summary>
 /// Raised when staff resolve a patient's appointment request (approve → an appointment was booked, or
 /// decline). Drives the patient-facing portal toast. Metadata only — the SPA refetches via the API.
 /// </summary>
