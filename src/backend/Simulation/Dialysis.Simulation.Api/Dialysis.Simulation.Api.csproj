@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.Simulation.Api</RootNamespace>
+    <Description>Simulation module HTTP host — start/run scenario sessions, inspect their generated event-store lineage and audit trail.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Dialysis.Simulation.Contracts/Dialysis.Simulation.Contracts.csproj" />
+    <ProjectReference Include="../Dialysis.Simulation.Engine/Dialysis.Simulation.Engine.csproj" />
+    <ProjectReference Include="../Dialysis.Simulation.Persistence/Dialysis.Simulation.Persistence.csproj" />
+    <ProjectReference Include="../Dialysis.Simulation.Composition/Dialysis.Simulation.Composition.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting/Dialysis.Module.Hosting.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
+    <ProjectReference Include="../../../aspire/Dialysis.ServiceDefaults/Dialysis.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>
