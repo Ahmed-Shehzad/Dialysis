@@ -16,6 +16,8 @@ import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
 import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
 import { CareTeamCard } from "@/modules/ehr/chart/CareTeamCard";
 import { AfterVisitSummaryAuthoringCard } from "@/modules/ehr/chart/AfterVisitSummaryAuthoringCard";
+import { ClinicalRecommendationsCard } from "@/modules/ehr/chart/ClinicalRecommendationsCard";
+import { EmCodingHint } from "@/modules/ehr/chart/EmCodingHint";
 import { HospitalEventsCard } from "@/modules/ehr/chart/HospitalEventsCard";
 import { MessagingCard } from "@/modules/ehr/chart/MessagingCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
@@ -359,6 +361,10 @@ export const EhrChartPage = () => {
               </ul>
             </section>
           )}
+
+          <ClinicalRecommendationsCard patientId={patientId} />
+
+          <EmCodingHint patientId={patientId} diagnosisCodes={problems.map((p) => p.code)} />
 
           <QualityGapsCard patientId={patientId} />
 

@@ -1,3 +1,4 @@
+using Dialysis.EHR.Billing.Coding;
 using Dialysis.EHR.Billing.Ports;
 using Microsoft.Extensions.Options;
 
@@ -5,20 +6,23 @@ namespace Dialysis.EHR.Billing.ChargeEdits;
 
 /// <summary>
 /// Deterministic charge-review edit checker. Evaluates a charge against configured CPT frequency limits
-/// and required-diagnosis coverage rules, and escalates a firing edit to an ABN-required block when the
-/// payer is Medicare. Empty options → no-op.
+/// and required-diagnosis coverage rules, escalates a firing edit to an ABN-required block when the payer
+/// is Medicare, and flags an under-coding opportunity when a captured E/M charge is below the level the
+/// documentation supports. Empty options → no-op.
 /// </summary>
 public sealed class ChargeEditChecker : IChargeEditChecker
 {
     private readonly IChargeRepository _charges;
     private readonly TimeProvider _timeProvider;
     private readonly ChargeEditOptions _options;
+    private readonly IEvaluationManagementCoder _coder;
 
-    public ChargeEditChecker(IChargeRepository charges, TimeProvider timeProvider, IOptions<ChargeEditOptions> options)
+    public ChargeEditChecker(IChargeRepository charges, TimeProvider timeProvider, IOptions<ChargeEditOptions> options, IEvaluationManagementCoder coder)
     {
         _charges = charges;
         _timeProvider = timeProvider;
         _options = options.Value;
+        _coder = coder;
     }
 
     public async Task<ChargeAdvisoryResult> CheckChargeAsync(
@@ -70,7 +74,8 @@ public sealed class ChargeEditChecker : IChargeEditChecker
         }
 
         // ABN escalation: a non-covered/over-frequency service for a Medicare payer needs an Advance
-        // Beneficiary Notice before billing. Surfaced as a distinct blocking advisory.
+        // Beneficiary Notice before billing. Surfaced as a distinct blocking advisory. (Evaluated on the
+        // coverage/frequency edits only — before the advisory under-coding opportunity is added below.)
         if (advisories.Count > 0 && !string.IsNullOrWhiteSpace(payerCode)
             && _options.MedicarePayerCodes.Any(p => p.Trim().Equals(payerCode!.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
@@ -80,6 +85,24 @@ public sealed class ChargeEditChecker : IChargeEditChecker
                 cpt,
                 payerCode,
                 "Medicare may not cover this — obtain an Advance Beneficiary Notice (ABN) before billing."));
+        }
+
+        // E/M under-coding: when the captured charge is an E/M code below the level the documented
+        // diagnoses support, surface a non-blocking opportunity (the "~50% of visits under-coded" gap).
+        if (_coder.IsEmCode(cpt))
+        {
+            var pointers = (diagnosisPointerIcd10Codes ?? []).Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+            var suggestion = _coder.Suggest(pointers, [], pointers.Count);
+            var capturedLevel = _coder.LevelOf(cpt);
+            if (suggestion is not null && capturedLevel is { } captured && suggestion.Level > captured)
+            {
+                advisories.Add(new ChargeAdvisory(
+                    ChargeAdvisoryCategory.UnderCodingOpportunity,
+                    ChargeAdvisorySeverity.Warning,
+                    cpt,
+                    suggestion.SuggestedCptCode,
+                    $"Documentation supports {suggestion.SuggestedCptCode} — {suggestion.Rationale}"));
+            }
         }
 
         return new ChargeAdvisoryResult(advisories);

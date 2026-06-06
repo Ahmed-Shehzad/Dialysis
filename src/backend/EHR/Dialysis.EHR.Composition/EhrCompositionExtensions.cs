@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.ClinicianNotification;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
@@ -80,11 +81,34 @@ public static class EhrCompositionExtensions
             services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IQualityMeasureEvaluator,
                 Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureEvaluator>();
 
+            // Point-of-care clinical decision support — condition-specific prompts, config-driven, empty by default.
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.IClinicalDecisionSupportEvaluator,
+                Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.ClinicalDecisionSupportEvaluator>();
+
+            // Population condition-control measures + at-risk outreach — config-driven, dispatch off by default.
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ControlMeasureOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ControlMeasureOptions.SectionName));
+            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.OutreachOptions>(
+                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.OutreachOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IConditionControlEvaluator,
+                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ConditionControlEvaluator>();
+            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IOutreachContactResolver,
+                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ConfiguredFallbackOutreachContactResolver>();
+            services.AddClinicianNotification();
+
             // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
             services.Configure<EncounterChargeAutomationOptions>(
                 configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
 
-            // Charge-review edits (frequency / coverage / ABN) — config-driven, empty by default.
+            // E/M coding assist — suggests the visit level + flags under-coding. Config-driven, empty → no suggestion.
+            services.Configure<Dialysis.EHR.Billing.Coding.EmCodingOptions>(
+                configuration.GetSection(Dialysis.EHR.Billing.Coding.EmCodingOptions.SectionName));
+            services.AddScoped<Dialysis.EHR.Billing.Coding.IEvaluationManagementCoder,
+                Dialysis.EHR.Billing.Coding.EvaluationManagementCoder>();
+
+            // Charge-review edits (frequency / coverage / ABN / under-coding) — config-driven, empty by default.
             services.Configure<Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions>(
                 configuration.GetSection(Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions.SectionName));
             services.AddScoped<Dialysis.EHR.Billing.ChargeEdits.IChargeEditChecker,
@@ -152,6 +176,9 @@ public static class EhrCompositionExtensions
                 t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedHospitalEventProjector>();
                 t.AddConsumer<PatientDischargedIntegrationEvent, PatientDischargedHospitalEventProjector>();
                 t.AddConsumer<Dialysis.HIE.Contracts.Integration.ExternalEncounterIngestedIntegrationEvent, ExternalEncounterHospitalEventProjector>();
+                // Patient safety: project PDMS intradialytic adverse events into the cross-patient
+                // surveillance read model that drives the safety-signal dashboard.
+                t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, Dialysis.EHR.Integration.Consumers.AdverseEventProjector>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();

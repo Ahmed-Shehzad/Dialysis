@@ -14,6 +14,7 @@
     <ProjectReference Include="../Dialysis.EHR.Registration/Dialysis.EHR.Registration.csproj" />
     <ProjectReference Include="../../HIS/Dialysis.HIS.Contracts/Dialysis.HIS.Contracts.csproj" />
     <ProjectReference Include="../../HIE/Dialysis.HIE.Contracts/Dialysis.HIE.Contracts.csproj" />
+    <ProjectReference Include="../../PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core.Abstraction/Dialysis.CQRS.Core.Abstraction.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Verifier/Verifier.Core/Verifier.Core.csproj" />

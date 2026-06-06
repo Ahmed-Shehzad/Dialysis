@@ -349,6 +349,44 @@ export const fetchQualityGaps = async (patientId: string): Promise<QualityGap[]>
   return response.data ?? [];
 };
 
+export type CdsRecommendation = {
+  ruleId: string;
+  severity: "Info" | "Warning";
+  title: string;
+  detail: string;
+  suggestedActionKind?: string | null;
+  suggestedActionCode?: string | null;
+};
+
+/** Point-of-care clinical decision-support recommendations (empty unless Ehr:Cds rules are configured). */
+export const fetchClinicalRecommendations = async (
+  patientId: string,
+): Promise<CdsRecommendation[]> => {
+  const response = await apiClient.get<CdsRecommendation[]>(
+    `/ehr/api/v1.0/clinical/patients/${patientId}/clinical-recommendations`,
+  );
+  return response.data ?? [];
+};
+
+export type EmSuggestion = {
+  suggestedCptCode: string;
+  level: number;
+  rationale: string;
+};
+
+/** Suggests an E/M visit level from documented diagnoses (null unless Ehr:Billing:EmCoding is configured). */
+export const fetchEmSuggestion = async (
+  diagnosisIcd10: string[],
+  procedureCpt: string[] = [],
+): Promise<EmSuggestion | null> => {
+  const response = await apiClient.post<EmSuggestion | "">("/ehr/api/v1.0/billing/em-suggestion", {
+    diagnosisIcd10,
+    procedureCpt,
+    dataReviewedCount: diagnosisIcd10.length,
+  });
+  return response.data ? (response.data as EmSuggestion) : null;
+};
+
 export const fetchReferrals = async (patientId: string, take = 20): Promise<ReferralListItem[]> => {
   const response = await apiClient.get<ReferralListItem[]>(
     `/ehr/api/v1.0/patients/${patientId}/referrals`,

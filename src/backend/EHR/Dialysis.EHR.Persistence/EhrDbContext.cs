@@ -72,6 +72,8 @@ public sealed class EhrDbContext : ModuleDbContextBase
         Set<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter>();
     public DbSet<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent> HospitalEvents =>
         Set<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent>();
+    public DbSet<global::Dialysis.EHR.Integration.ReadModels.AdverseEventRecord> AdverseEvents =>
+        Set<global::Dialysis.EHR.Integration.ReadModels.AdverseEventRecord>();
 
     // Integration
     public DbSet<PharmacyTransmission> PharmacyTransmissions => Set<PharmacyTransmission>();

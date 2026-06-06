@@ -19,6 +19,7 @@ public sealed class BillingController : ControllerBase
     private readonly IClaimRepository _claims;
     private readonly IChargeRepository _charges;
     private readonly IBillableEncounterRepository _billableEncounters;
+    private readonly Dialysis.CQRS.ICqrsGateway _gateway;
     /// <summary>
     /// HTTP surface for the EHR Billing slice — read-only views the SPA needs on top of
     /// the Charge / Claim / acknowledgement aggregates that EHR.Billing owns. Write
@@ -27,12 +28,36 @@ public sealed class BillingController : ControllerBase
     /// </summary>
     public BillingController(IClaimRepository claims,
         IChargeRepository charges,
-        IBillableEncounterRepository billableEncounters)
+        IBillableEncounterRepository billableEncounters,
+        Dialysis.CQRS.ICqrsGateway gateway)
     {
         _claims = claims;
         _charges = charges;
         _billableEncounters = billableEncounters;
+        _gateway = gateway;
     }
+
+    /// <summary>
+    /// Suggests an E/M visit level from the encounter's documented diagnoses + orders (advisory). Empty
+    /// unless <c>Ehr:Billing:EmCoding</c> levels are configured.
+    /// </summary>
+    [HttpPost("em-suggestion")]
+    [ProducesResponseType(typeof(Dialysis.EHR.Billing.Coding.EmSuggestion), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SuggestEmLevelAsync(
+        [FromBody] EmSuggestionRequest body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var suggestion = await _gateway.SendQueryAsync<Dialysis.EHR.Billing.Features.CodingAssist.SuggestEmLevelQuery, Dialysis.EHR.Billing.Coding.EmSuggestion?>(
+            new Dialysis.EHR.Billing.Features.CodingAssist.SuggestEmLevelQuery(
+                body.DiagnosisIcd10 ?? [], body.ProcedureCpt ?? [], body.DataReviewedCount),
+            cancellationToken).ConfigureAwait(false);
+        return suggestion is null ? NoContent() : Ok(suggestion);
+    }
+
+    /// <summary>E/M suggestion request body.</summary>
+    public sealed record EmSuggestionRequest(
+        IReadOnlyList<string>? DiagnosisIcd10, IReadOnlyList<string>? ProcedureCpt, int DataReviewedCount);
     /// <summary>
     /// Lists recent charges, optionally narrowed to a single <see cref="ChargeStatus"/> and
     /// bounded by <paramref name="take"/> (1–500, default 100). Drives the
