@@ -69,6 +69,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             // Portal
             services.AddScoped<IPortalAppointmentRequestRepository, PortalAppointmentRequestRepository>();
             services.AddScoped<ISecureMessageRepository, SecureMessageRepository>();
+            services.AddScoped<IAfterVisitSummaryRepository, AfterVisitSummaryRepository>();
 
             // ClinicalNotes
             services.AddScoped<IEncounterRepository, EncounterRepository>();

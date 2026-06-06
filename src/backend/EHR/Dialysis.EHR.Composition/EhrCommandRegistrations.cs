@@ -6,6 +6,7 @@ using Dialysis.EHR.Billing.Features.SubmitClaim;
 using Dialysis.EHR.ClinicalNotes.Features.AttachDiagnosis;
 using Dialysis.EHR.ClinicalNotes.Features.CloseEncounter;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
+using Dialysis.EHR.ClinicalNotes.Features.GetPatientReminders;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
@@ -30,7 +31,16 @@ using Dialysis.EHR.PatientChart.Features.RecordImmunization;
 using Dialysis.EHR.PatientChart.Features.RecordMedicationStatement;
 using Dialysis.EHR.PatientChart.Features.RecordProblem;
 using Dialysis.EHR.PatientChart.Features.RecordVitalSign;
+using Dialysis.EHR.PatientPortal.Features.AuthorAfterVisitSummary;
+using Dialysis.EHR.PatientPortal.Features.CancelAppointmentRequest;
+using Dialysis.EHR.PatientPortal.Features.ListAfterVisitSummaries;
+using Dialysis.EHR.PatientPortal.Features.ListAppointmentRequests;
+using Dialysis.EHR.PatientPortal.Features.ListMessageThreads;
+using Dialysis.EHR.PatientPortal.Features.ListThreadMessages;
+using Dialysis.EHR.PatientPortal.Features.MarkMessageRead;
+using Dialysis.EHR.PatientPortal.Features.ReplySecureMessage;
 using Dialysis.EHR.PatientPortal.Features.RequestAppointment;
+using Dialysis.EHR.PatientPortal.Features.ResolveAppointmentRequest;
 using Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
 using Dialysis.EHR.Registration.Features.GetPatientById;
 using Dialysis.EHR.Registration.Features.MergePatients;
@@ -80,6 +90,14 @@ internal static class EhrCommandRegistrations
         // Portal
         c.AddCommandBehavior<RequestAppointmentCommand, Guid, AuthorizationPipelineBehavior<RequestAppointmentCommand, Guid>>();
         c.AddCommandBehavior<SendSecureMessageCommand, Guid, AuthorizationPipelineBehavior<SendSecureMessageCommand, Guid>>();
+        c.AddCommandBehavior<ProviderReplyToMessageCommand, Guid, AuthorizationPipelineBehavior<ProviderReplyToMessageCommand, Guid>>();
+        c.AddCommandBehavior<MarkMessageReadCommand, Unit, AuthorizationPipelineBehavior<MarkMessageReadCommand, Unit>>();
+        c.AddCommandBehavior<ApproveAppointmentRequestCommand, Unit, AuthorizationPipelineBehavior<ApproveAppointmentRequestCommand, Unit>>();
+        c.AddCommandBehavior<DeclineAppointmentRequestCommand, Unit, AuthorizationPipelineBehavior<DeclineAppointmentRequestCommand, Unit>>();
+        c.AddCommandBehavior<CancelAppointmentRequestCommand, Unit, AuthorizationPipelineBehavior<CancelAppointmentRequestCommand, Unit>>();
+        c.AddCommandBehavior<CreateAfterVisitSummaryCommand, Guid, AuthorizationPipelineBehavior<CreateAfterVisitSummaryCommand, Guid>>();
+        c.AddCommandBehavior<AddAfterVisitSummaryLineCommand, Guid, AuthorizationPipelineBehavior<AddAfterVisitSummaryLineCommand, Guid>>();
+        c.AddCommandBehavior<PublishAfterVisitSummaryCommand, Unit, AuthorizationPipelineBehavior<PublishAfterVisitSummaryCommand, Unit>>();
 
         // ClinicalNotes
         c.AddCommandBehavior<StartEncounterCommand, Guid, AuthorizationPipelineBehavior<StartEncounterCommand, Guid>>();
@@ -122,5 +140,12 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<EvaluateCohortQualityQuery, CohortQualityResult, AuthorizationPipelineBehavior<EvaluateCohortQualityQuery, CohortQualityResult>>();
         c.AddQueryBehavior<GetCareTeamQuery, CareTeamView?, AuthorizationPipelineBehavior<GetCareTeamQuery, CareTeamView?>>();
         c.AddQueryBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>, AuthorizationPipelineBehavior<ListOrderSetsQuery, IReadOnlyList<OrderSetView>>>();
+        c.AddQueryBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>, AuthorizationPipelineBehavior<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>>>();
+        c.AddQueryBehavior<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>, AuthorizationPipelineBehavior<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>>>();
+        c.AddQueryBehavior<ListMyAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>, AuthorizationPipelineBehavior<ListMyAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>>>();
+        c.AddQueryBehavior<ListPendingAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>, AuthorizationPipelineBehavior<ListPendingAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>>>();
+        c.AddQueryBehavior<ListMyAfterVisitSummariesQuery, IReadOnlyList<AfterVisitSummaryView>, AuthorizationPipelineBehavior<ListMyAfterVisitSummariesQuery, IReadOnlyList<AfterVisitSummaryView>>>();
+        c.AddQueryBehavior<GetAfterVisitSummaryByIdQuery, AfterVisitSummaryView?, AuthorizationPipelineBehavior<GetAfterVisitSummaryByIdQuery, AfterVisitSummaryView?>>();
+        c.AddQueryBehavior<GetPatientRemindersQuery, IReadOnlyList<PatientReminderDto>, AuthorizationPipelineBehavior<GetPatientRemindersQuery, IReadOnlyList<PatientReminderDto>>>();
     }
 }

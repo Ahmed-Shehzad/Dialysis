@@ -78,6 +78,7 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
         Status = PortalAppointmentRequestStatus.Approved;
         CreatedAppointmentId = createdAppointmentId;
         StaffNote = string.IsNullOrWhiteSpace(staffNote) ? null : staffNote.Trim();
+        RaiseResolved(approved: true);
     }
 
     public void Decline(string staffNote)
@@ -87,7 +88,19 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
         ArgumentException.ThrowIfNullOrWhiteSpace(staffNote);
         Status = PortalAppointmentRequestStatus.Declined;
         StaffNote = staffNote.Trim();
+        RaiseResolved(approved: false);
     }
+
+    private void RaiseResolved(bool approved) =>
+        RaiseIntegrationEvent(new PatientPortalAppointmentResolvedIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            RequestId: Id,
+            PatientId: PatientId,
+            Approved: approved,
+            CreatedAppointmentId: CreatedAppointmentId,
+            StaffNote: StaffNote));
 
     public void Cancel()
     {

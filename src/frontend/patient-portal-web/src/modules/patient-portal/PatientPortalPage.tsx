@@ -2,13 +2,18 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { MyOutsideRecordsCard } from "@/features/hie/components/MyOutsideRecordsCard";
+import { usePatientPortalNotifications } from "@/features/notifications/usePatientPortalNotifications";
 import { usePatientName } from "@/features/patients/usePatientName";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { AfterVisitSummaryPanel } from "./AfterVisitSummaryPanel";
 import { BookAppointmentDialog } from "./BookAppointmentDialog";
 import { LabResultsPanel } from "./LabResultsPanel";
+import { MessagesPanel } from "./MessagesPanel";
+import { MyAppointmentRequestsPanel } from "./MyAppointmentRequestsPanel";
 import { MyCarePlanPanel } from "./MyCarePlanPanel";
 import { PatientConsentsPanel } from "./PatientConsentsPanel";
 import { RecentTreatmentsPanel } from "./RecentTreatmentsPanel";
+import { RemindersPanel } from "./RemindersPanel";
 import { fetchPortalSummary, type PatientPortalSummary } from "./api";
 
 const FALLBACK_DEMO_PATIENT_ID = "";
@@ -73,6 +78,9 @@ export const PatientPortalPage = () => {
   });
   const { name: patientName } = usePatientName(patientId);
   const [bookOpen, setBookOpen] = useState(false);
+
+  // Real-time care-team replies → toast + refetch.
+  usePatientPortalNotifications(patientId);
 
   if (status === "loading") {
     return <div className="text-sm text-slate-400">Loading…</div>;
@@ -140,7 +148,11 @@ export const PatientPortalPage = () => {
 
       {summary.data && <PortalTiles summary={summary.data} />}
 
+      {patientId && <RemindersPanel patientId={patientId} />}
       {patientId && <RecentTreatmentsPanel patientId={patientId} />}
+      {patientId && <AfterVisitSummaryPanel patientId={patientId} />}
+      {patientId && <MyAppointmentRequestsPanel patientId={patientId} />}
+      {patientId && <MessagesPanel patientId={patientId} />}
       {patientId && <MyCarePlanPanel patientId={patientId} />}
       {patientId && <LabResultsPanel patientId={patientId} />}
       {patientId && <MyOutsideRecordsCard patientId={patientId} />}

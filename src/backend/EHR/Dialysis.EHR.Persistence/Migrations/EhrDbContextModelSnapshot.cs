@@ -2469,6 +2469,234 @@ namespace Dialysis.EHR.Persistence.Migrations
                     b.ToTable("VitalSignReadings", "ehr_chart");
                 });
 
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitFollowUp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("DeletedBy");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<Guid>("SummaryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("UpdatedBy");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SummaryId");
+
+                    b.ToTable("AfterVisitFollowUps", "ehr_portal");
+                });
+
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitInstruction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("DeletedBy");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<Guid>("SummaryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("UpdatedBy");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SummaryId");
+
+                    b.ToTable("AfterVisitInstructions", "ehr_portal");
+                });
+
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitResourceLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("DeletedBy");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("SummaryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("UpdatedBy");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SummaryId");
+
+                    b.ToTable("AfterVisitResourceLinks", "ehr_portal");
+                });
+
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitSummary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthoringProviderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("DeletedBy");
+
+                    b.Property<Guid>("EncounterRef")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<string>("Narrative")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("UpdatedBy");
+
+                    b.Property<DateTime>("VisitDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("AfterVisitSummaries", "ehr_portal");
+                });
+
             modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.PortalAppointmentRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3397,6 +3625,33 @@ namespace Dialysis.EHR.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitFollowUp", b =>
+                {
+                    b.HasOne("Dialysis.EHR.PatientPortal.Domain.AfterVisitSummary", null)
+                        .WithMany("FollowUps")
+                        .HasForeignKey("SummaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitInstruction", b =>
+                {
+                    b.HasOne("Dialysis.EHR.PatientPortal.Domain.AfterVisitSummary", null)
+                        .WithMany("Instructions")
+                        .HasForeignKey("SummaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitResourceLink", b =>
+                {
+                    b.HasOne("Dialysis.EHR.PatientPortal.Domain.AfterVisitSummary", null)
+                        .WithMany("ResourceLinks")
+                        .HasForeignKey("SummaryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Dialysis.EHR.Registration.Domain.CareTeamMember", b =>
                 {
                     b.HasOne("Dialysis.EHR.Registration.Domain.CareTeam", null)
@@ -3600,6 +3855,15 @@ namespace Dialysis.EHR.Persistence.Migrations
             modelBuilder.Entity("Dialysis.EHR.PatientChart.Domain.CarePlan", b =>
                 {
                     b.Navigation("Goals");
+                });
+
+            modelBuilder.Entity("Dialysis.EHR.PatientPortal.Domain.AfterVisitSummary", b =>
+                {
+                    b.Navigation("FollowUps");
+
+                    b.Navigation("Instructions");
+
+                    b.Navigation("ResourceLinks");
                 });
 
             modelBuilder.Entity("Dialysis.EHR.Registration.Domain.CareTeam", b =>
