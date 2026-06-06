@@ -110,6 +110,14 @@ export const EhrChartPage = () => {
     [chart.data?.medications],
   );
   const vitals = chart.data?.vitals ?? [];
+  // Immunizations are captured (and FHIR-fed) but were never surfaced. Newest administration first.
+  const immunizations = useMemo(
+    () =>
+      [...(chart.data?.immunizations ?? [])].sort((a, b) =>
+        b.recordedAtUtc.localeCompare(a.recordedAtUtc),
+      ),
+    [chart.data?.immunizations],
+  );
 
   const bp = findVital(vitals, /blood pressure|systolic|8480|8867/iu);
   const weight = findVital(vitals, /weight|29463|3141/iu);
@@ -251,6 +259,33 @@ export const EhrChartPage = () => {
               )}
             </section>
           </div>
+
+          <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+            <h3 className="mb-2 text-sm font-medium text-slate-200">
+              Immunizations <span className="text-slate-500">({immunizations.length})</span>
+            </h3>
+            {immunizations.length === 0 ? (
+              <p className="text-xs text-slate-500">No immunizations on the chart.</p>
+            ) : (
+              <ul className="divide-y divide-slate-800 text-sm">
+                {immunizations.map((i) => (
+                  <li key={i.id} className="grid grid-cols-12 items-center gap-2 py-2">
+                    <span className="col-span-6 text-slate-200" title={i.code}>
+                      {i.display}
+                    </span>
+                    <span className="col-span-4 text-xs text-slate-400">
+                      {new Date(i.recordedAtUtc).toLocaleDateString()}
+                    </span>
+                    {i.status && (
+                      <span className="col-span-2 text-right text-xs uppercase tracking-wide text-slate-500">
+                        {i.status}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <RecentNotesPanel patientId={patientId} />
 
