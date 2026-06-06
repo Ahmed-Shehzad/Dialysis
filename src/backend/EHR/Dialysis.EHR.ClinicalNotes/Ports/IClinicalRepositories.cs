@@ -26,12 +26,26 @@ public interface IClinicalNoteRepository
 public interface IPrescriptionRepository
 {
     Task<Prescription?> GetAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists a patient's <see cref="PrescriptionStatus.Active"/> prescriptions. Drives the
+    /// point-of-care duplicate-medication safety check at prescribe time.
+    /// </summary>
+    Task<IReadOnlyList<Prescription>> ListActiveByPatientAsync(Guid patientId, CancellationToken cancellationToken = default);
+
     void Add(Prescription prescription);
 }
 
 public interface ILabOrderRepository
 {
     Task<LabOrder?> GetAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists a patient's non-cancelled lab orders created on or after <paramref name="sinceUtc"/>.
+    /// Drives the point-of-care duplicate-lab-order safety check at order time.
+    /// </summary>
+    Task<IReadOnlyList<LabOrder>> ListRecentByPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default);
+
     void Add(LabOrder labOrder);
 }
 
@@ -48,4 +62,11 @@ public interface ILabResultRepository
     Task<IReadOnlyList<LabResult>> ListByOrderAsync(Guid labOrderId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<LabResult>> ListByPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default);
     void Add(LabResult result);
+}
+
+public interface IReferralRepository
+{
+    /// <summary>Lists a patient's referrals, most-recent first.</summary>
+    Task<IReadOnlyList<Referral>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default);
+    void Add(Referral referral);
 }

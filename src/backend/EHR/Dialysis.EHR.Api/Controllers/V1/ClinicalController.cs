@@ -2,12 +2,17 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
+using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
+using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
+using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.Registration.Features.RegisterPatient;
+using Dialysis.Module.Contracts.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.EHR.Api.Controllers.V1;
@@ -76,20 +81,126 @@ public sealed class ClinicalController : ControllerBase
 
     [HttpPost("lab-orders")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> OrderLabTestAsync(
         [FromBody] OrderLabTestRequest body,
+        [FromServices] ICurrentUser currentUser,
         CancellationToken cancellationToken)
     {
-        var id = await _gateway.SendCommandAsync<OrderLabTestCommand, Guid>(
-            new OrderLabTestCommand(
-                body.PatientId,
-                body.EncounterId,
-                body.OrderingProviderId,
-                body.LabFacilityCode,
-                body.LoincPanelCodes),
-            cancellationToken).ConfigureAwait(false);
-        return Created($"/api/v1.0/clinical/lab-orders/{id}", new { id });
+        ArgumentNullException.ThrowIfNull(body);
+        try
+        {
+            var result = await _gateway.SendCommandAsync<OrderLabTestCommand, OrderPlacementResult>(
+                new OrderLabTestCommand(
+                    body.PatientId,
+                    body.EncounterId,
+                    body.OrderingProviderId,
+                    body.LabFacilityCode,
+                    body.LoincPanelCodes,
+                    AcknowledgeAdvisories: body.AcknowledgeAdvisories,
+                    OverrideReason: body.OverrideReason,
+                    OverriddenBy: OverriderOf(currentUser)),
+                cancellationToken).ConfigureAwait(false);
+            return Created(
+                $"/api/v1.0/clinical/lab-orders/{result.Id}",
+                new { id = result.Id, advisories = result.Advisories.Select(ToAdvisoryDto) });
+        }
+        catch (ClinicalSafetyBlockedException ex)
+        {
+            return UnprocessableEntity(new { advisories = ex.Advisories.Select(ToAdvisoryDto) });
+        }
     }
+
+    /// <summary>
+    /// Issues a prescription. Runs point-of-care safety checks (medication↔allergy, duplicate medication);
+    /// a blocking advisory returns <c>422</c> with the advisory list until the prescriber re-submits with
+    /// <c>acknowledgeAdvisories=true</c> and an <c>overrideReason</c> (audited on the prescription).
+    /// </summary>
+    [HttpPost("prescriptions")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> OrderPrescriptionAsync(
+        [FromBody] OrderPrescriptionRequest body,
+        [FromServices] ICurrentUser currentUser,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        try
+        {
+            var result = await _gateway.SendCommandAsync<OrderPrescriptionCommand, OrderPlacementResult>(
+                new OrderPrescriptionCommand(
+                    body.PatientId,
+                    body.EncounterId,
+                    body.PrescribingProviderId,
+                    body.MedicationRxnormCode,
+                    body.MedicationDisplay,
+                    body.DoseText,
+                    body.FrequencyText,
+                    body.QuantityDispensed,
+                    body.RefillsAuthorized,
+                    body.PharmacyNcpdpId,
+                    AcknowledgeAdvisories: body.AcknowledgeAdvisories,
+                    OverrideReason: body.OverrideReason,
+                    OverriddenBy: OverriderOf(currentUser)),
+                cancellationToken).ConfigureAwait(false);
+            return Created(
+                $"/api/v1.0/clinical/prescriptions/{result.Id}",
+                new { id = result.Id, advisories = result.Advisories.Select(ToAdvisoryDto) });
+        }
+        catch (ClinicalSafetyBlockedException ex)
+        {
+            return UnprocessableEntity(new { advisories = ex.Advisories.Select(ToAdvisoryDto) });
+        }
+    }
+
+    /// <summary>
+    /// Refers / transfers a patient to an external organisation. Fires the HIE CCD push by raising
+    /// <c>ReferralRequestedIntegrationEvent</c>.
+    /// </summary>
+    [HttpPost("referrals")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> RequestReferralAsync(
+        [FromBody] RequestReferralRequest body,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var id = await _gateway.SendCommandAsync<RequestReferralCommand, Guid>(
+            new RequestReferralCommand(
+                body.PatientId, body.DestinationPartnerId, body.ReferringProviderId, body.ReferralReason),
+            cancellationToken).ConfigureAwait(false);
+        return Created($"/api/v1.0/clinical/referrals/{id}", new { id });
+    }
+
+    /// <summary>Lists a patient's referrals (most-recent first) for the chart's referral history.</summary>
+    [HttpGet("patients/{patientId:guid}/referrals")]
+    [ProducesResponseType(typeof(IReadOnlyList<ReferralDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListReferralsAsync(
+        Guid patientId, [FromQuery] int take = 20, CancellationToken cancellationToken = default)
+    {
+        var rows = await _gateway.SendQueryAsync<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>(
+            new ListReferralsForPatientQuery(patientId, take), cancellationToken).ConfigureAwait(false);
+        return Ok(rows);
+    }
+
+    /// <summary>Referral request body.</summary>
+    public sealed record RequestReferralRequest(
+        Guid PatientId,
+        string DestinationPartnerId,
+        Guid ReferringProviderId,
+        string? ReferralReason);
+
+    private static string OverriderOf(ICurrentUser currentUser) => currentUser.UserId ?? "clinician";
+
+    private static object ToAdvisoryDto(SafetyAdvisory a) => new
+    {
+        category = a.Category.ToString(),
+        severity = a.Severity.ToString(),
+        matchedCode = a.MatchedCode,
+        matchedDisplay = a.MatchedDisplay,
+        orderedConcept = a.OrderedConcept,
+        sourceRowId = a.SourceRowId,
+        sourceKind = a.SourceKind,
+    };
 
     /// <summary>Orders an imaging study; the modality fulfils it and STOWs the study back via DICOM.</summary>
     [HttpPost("imaging-orders")]
@@ -247,6 +358,12 @@ public sealed class ClinicalController : ControllerBase
         public Guid OrderingProviderId { get; init; }
         public string LabFacilityCode { get; init; }
         public IReadOnlyList<string> LoincPanelCodes { get; init; }
+
+        /// <summary>When true, blocking safety advisories are overridden (requires <see cref="OverrideReason"/>).</summary>
+        public bool AcknowledgeAdvisories { get; init; }
+
+        /// <summary>The ordering provider's reason for overriding a blocking advisory.</summary>
+        public string? OverrideReason { get; init; }
         public void Deconstruct(out Guid PatientId, out Guid EncounterId, out Guid OrderingProviderId, out string LabFacilityCode, out IReadOnlyList<string> LoincPanelCodes)
         {
             PatientId = this.PatientId;
@@ -256,4 +373,19 @@ public sealed class ClinicalController : ControllerBase
             LoincPanelCodes = this.LoincPanelCodes;
         }
     }
+
+    /// <summary>Prescription request body. The override fields are honoured only when a blocking advisory is raised.</summary>
+    public sealed record OrderPrescriptionRequest(
+        Guid PatientId,
+        Guid EncounterId,
+        Guid PrescribingProviderId,
+        string MedicationRxnormCode,
+        string MedicationDisplay,
+        string DoseText,
+        string FrequencyText,
+        int QuantityDispensed,
+        int RefillsAuthorized,
+        string PharmacyNcpdpId,
+        bool AcknowledgeAdvisories = false,
+        string? OverrideReason = null);
 }

@@ -162,6 +162,32 @@ export const fetchPatientLabResults = async (
   return response.data ?? [];
 };
 
+// Care plan (read-only for the patient portal). Enum strings mirror the EHR enums.
+export type CarePlanGoalView = {
+  id: string;
+  description: string;
+  targetMeasure?: string | null;
+  status: "Proposed" | "InProgress" | "Achieved" | "NotAchieved";
+};
+
+export type CarePlanView = {
+  id: string;
+  patientId: string;
+  title: string;
+  status: "Active" | "Completed" | "Revoked";
+  createdAtUtc: string;
+  goals: CarePlanGoalView[];
+};
+
+/** Returns the patient's active care plan, or null (204) when there isn't one. */
+export const fetchActiveCarePlan = async (patientId: string): Promise<CarePlanView | null> => {
+  const response = await apiClient.get<CarePlanView | "">(
+    `/portal/api/_x/ehr/api/v1.0/care-plans/patients/${patientId}/active`,
+    { validateStatus: (s) => s === 200 || s === 204 },
+  );
+  return response.status === 204 || !response.data ? null : (response.data as CarePlanView);
+};
+
 export type EhrPatientDetail = {
   id: string;
   medicalRecordNumber: string;

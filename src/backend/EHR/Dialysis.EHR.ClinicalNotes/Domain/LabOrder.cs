@@ -39,6 +39,12 @@ public sealed class LabOrder : AggregateRoot<Guid>
 
     public string? CancellationReasonCode { get; private set; }
 
+    /// <summary>Clinician's reason for overriding a blocking safety advisory at order time; else null.</summary>
+    public string? OverrideReason { get; private set; }
+
+    /// <summary>Identity that overrode the blocking advisory; else null.</summary>
+    public string? OverriddenBy { get; private set; }
+
     public static LabOrder Order(
         Guid id,
         Guid patientId,
@@ -46,7 +52,9 @@ public sealed class LabOrder : AggregateRoot<Guid>
         Guid orderingProviderId,
         string labFacilityCode,
         IReadOnlyList<string> loincPanelCodes,
-        string transmissionFormat)
+        string transmissionFormat,
+        string? overrideReason = null,
+        string? overriddenBy = null)
     {
         if (patientId == Guid.Empty)
             throw new ArgumentException("Patient required.", nameof(patientId));
@@ -67,20 +75,24 @@ public sealed class LabOrder : AggregateRoot<Guid>
             LabFacilityCode = labFacilityCode.Trim(),
             TransmissionFormat = transmissionFormat.Trim(),
             Status = LabOrderStatus.Active,
+            OverrideReason = string.IsNullOrWhiteSpace(overrideReason) ? null : overrideReason.Trim(),
+            OverriddenBy = string.IsNullOrWhiteSpace(overriddenBy) ? null : overriddenBy.Trim(),
         };
         order._loincPanelCodes.AddRange(loincPanelCodes.Select(c => c.Trim()).Where(static c => !string.IsNullOrEmpty(c)));
 
         order.RaiseIntegrationEvent(new LabOrderPlacedIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: DateTime.UtcNow,
-            SchemaVersion: 1,
+            SchemaVersion: 2,
             LabOrderId: id,
             PatientId: patientId,
             EncounterId: encounterId,
             OrderingProviderId: orderingProviderId,
             LabFacilityCode: order.LabFacilityCode,
             LoincPanelCodes: [.. order._loincPanelCodes],
-            TransmissionFormat: order.TransmissionFormat));
+            TransmissionFormat: order.TransmissionFormat,
+            OverrideReason: order.OverrideReason,
+            OverriddenBy: order.OverriddenBy));
 
         return order;
     }

@@ -8,11 +8,15 @@ using Dialysis.EHR.ClinicalNotes.Features.CloseEncounter;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
+using Dialysis.EHR.PatientChart.Features.CarePlanning;
 using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
+using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
+using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.Integration.Features.IngestLabResult;
@@ -58,6 +62,10 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<RecordVitalSignCommand, Guid, AuthorizationPipelineBehavior<RecordVitalSignCommand, Guid>>();
         c.AddCommandBehavior<RecordImmunizationCommand, Guid, AuthorizationPipelineBehavior<RecordImmunizationCommand, Guid>>();
         c.AddCommandBehavior<RecordMedicationStatementCommand, Guid, AuthorizationPipelineBehavior<RecordMedicationStatementCommand, Guid>>();
+        c.AddCommandBehavior<CreateCarePlanCommand, Guid, AuthorizationPipelineBehavior<CreateCarePlanCommand, Guid>>();
+        c.AddCommandBehavior<AddCarePlanGoalCommand, Guid, AuthorizationPipelineBehavior<AddCarePlanGoalCommand, Guid>>();
+        c.AddCommandBehavior<UpdateCarePlanGoalStatusCommand, Guid, AuthorizationPipelineBehavior<UpdateCarePlanGoalStatusCommand, Guid>>();
+        c.AddCommandBehavior<CloseCarePlanCommand, Guid, AuthorizationPipelineBehavior<CloseCarePlanCommand, Guid>>();
 
         // Scheduling
         c.AddCommandBehavior<BookAppointmentCommand, Guid, AuthorizationPipelineBehavior<BookAppointmentCommand, Guid>>();
@@ -75,10 +83,11 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<CloseEncounterCommand, Unit, AuthorizationPipelineBehavior<CloseEncounterCommand, Unit>>();
         c.AddCommandBehavior<DraftClinicalNoteCommand, Guid, AuthorizationPipelineBehavior<DraftClinicalNoteCommand, Guid>>();
         c.AddCommandBehavior<SignClinicalNoteCommand, Unit, AuthorizationPipelineBehavior<SignClinicalNoteCommand, Unit>>();
-        c.AddCommandBehavior<OrderPrescriptionCommand, Guid, AuthorizationPipelineBehavior<OrderPrescriptionCommand, Guid>>();
-        c.AddCommandBehavior<OrderLabTestCommand, Guid, AuthorizationPipelineBehavior<OrderLabTestCommand, Guid>>();
+        c.AddCommandBehavior<OrderPrescriptionCommand, OrderPlacementResult, AuthorizationPipelineBehavior<OrderPrescriptionCommand, OrderPlacementResult>>();
+        c.AddCommandBehavior<OrderLabTestCommand, OrderPlacementResult, AuthorizationPipelineBehavior<OrderLabTestCommand, OrderPlacementResult>>();
         c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
         c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
+        c.AddCommandBehavior<RequestReferralCommand, Guid, AuthorizationPipelineBehavior<RequestReferralCommand, Guid>>();
 
         // Billing
         c.AddCommandBehavior<CaptureChargeCommand, Guid, AuthorizationPipelineBehavior<CaptureChargeCommand, Guid>>();
@@ -96,5 +105,7 @@ internal static class EhrCommandRegistrations
         c.AddQueryBehavior<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>, AuthorizationPipelineBehavior<ListNotesForPatientQuery, IReadOnlyList<ClinicalNoteListItem>>>();
         c.AddQueryBehavior<ListLabResultsForPatientQuery, IReadOnlyList<LabResultListItem>, AuthorizationPipelineBehavior<ListLabResultsForPatientQuery, IReadOnlyList<LabResultListItem>>>();
         c.AddQueryBehavior<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>, AuthorizationPipelineBehavior<ListImagingOrdersForPatientQuery, IReadOnlyList<ImagingOrderDto>>>();
+        c.AddQueryBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>, AuthorizationPipelineBehavior<ListReferralsForPatientQuery, IReadOnlyList<ReferralDto>>>();
+        c.AddQueryBehavior<GetActiveCarePlanQuery, CarePlanView?, AuthorizationPipelineBehavior<GetActiveCarePlanQuery, CarePlanView?>>();
     }
 }

@@ -208,12 +208,80 @@ export type SignNoteRequest = {
   signingProviderId: string;
 };
 
+/** A point-of-care safety signal returned by an order endpoint (mirrors the EHR SafetyAdvisory). */
+export type SafetyAdvisory = {
+  category: "MedicationAllergyConflict" | "DuplicateActiveMedication" | "DuplicateLabOrder";
+  severity: "Warning" | "Blocking";
+  matchedCode: string;
+  matchedDisplay: string;
+  orderedConcept: string;
+  sourceRowId: string;
+  sourceKind: string;
+};
+
+export type OrderResult = { id: string; advisories: SafetyAdvisory[] };
+
+/** Thrown when an order is blocked (HTTP 422) by one or more blocking safety advisories. */
+export class SafetyBlockedError extends Error {
+  readonly advisories: SafetyAdvisory[];
+  constructor(advisories: SafetyAdvisory[]) {
+    super("Order blocked by a clinical safety advisory.");
+    this.name = "SafetyBlockedError";
+    this.advisories = advisories;
+  }
+}
+
+/** Human-readable label for an advisory category. */
+export const advisoryCategoryLabel = (category: SafetyAdvisory["category"]): string => {
+  switch (category) {
+    case "MedicationAllergyConflict":
+      return "Allergy conflict";
+    case "DuplicateActiveMedication":
+      return "Duplicate medication";
+    case "DuplicateLabOrder":
+      return "Duplicate lab order";
+  }
+};
+
+/** POSTs an order, returning the new id + advisories, translating a 422 into a SafetyBlockedError. */
+const placeOrder = async (url: string, body: unknown): Promise<OrderResult> => {
+  try {
+    const response = await apiClient.post<OrderResult>(url, body);
+    return { id: response.data.id, advisories: response.data.advisories ?? [] };
+  } catch (error) {
+    const res = (
+      error as { response?: { status?: number; data?: { advisories?: SafetyAdvisory[] } } }
+    ).response;
+    if (res?.status === 422) {
+      throw new SafetyBlockedError(res.data?.advisories ?? []);
+    }
+    throw error;
+  }
+};
+
 export type OrderLabTestRequest = {
   patientId: string;
   encounterId: string;
   orderingProviderId: string;
   labFacilityCode: string;
   loincPanelCodes: string[];
+  acknowledgeAdvisories?: boolean;
+  overrideReason?: string;
+};
+
+export type OrderPrescriptionRequest = {
+  patientId: string;
+  encounterId: string;
+  prescribingProviderId: string;
+  medicationRxnormCode: string;
+  medicationDisplay: string;
+  doseText: string;
+  frequencyText: string;
+  quantityDispensed: number;
+  refillsAuthorized: number;
+  pharmacyNcpdpId: string;
+  acknowledgeAdvisories?: boolean;
+  overrideReason?: string;
 };
 
 export const registerPatient = async (body: RegisterPatientRequest): Promise<string> => {
@@ -232,9 +300,114 @@ export const signClinicalNote = async (body: SignNoteRequest): Promise<void> => 
   });
 };
 
-export const orderLabTest = async (body: OrderLabTestRequest): Promise<string> => {
-  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/lab-orders", body);
+export const orderLabTest = (body: OrderLabTestRequest): Promise<OrderResult> =>
+  placeOrder("/ehr/api/v1.0/clinical/lab-orders", body);
+
+export const orderPrescription = (body: OrderPrescriptionRequest): Promise<OrderResult> =>
+  placeOrder("/ehr/api/v1.0/clinical/prescriptions", body);
+
+export type RequestReferralBody = {
+  patientId: string;
+  destinationPartnerId: string;
+  referringProviderId: string;
+  referralReason?: string;
+};
+
+/** Refers a patient to an external organisation — fires the HIE CCD push. Returns the referral id. */
+export const requestReferral = async (body: RequestReferralBody): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/clinical/referrals", body);
   return response.data.id;
+};
+
+export type ReferralListItem = {
+  id: string;
+  patientId: string;
+  destinationPartnerId: string;
+  referringProviderId: string;
+  referralReason?: string | null;
+  requestedAtUtc: string;
+};
+
+export const fetchReferrals = async (patientId: string, take = 20): Promise<ReferralListItem[]> => {
+  const response = await apiClient.get<ReferralListItem[]>(
+    `/ehr/api/v1.0/patients/${patientId}/referrals`,
+    { params: { take } },
+  );
+  return response.data ?? [];
+};
+
+/**
+ * Demo HIE partner organisations a clinician can refer to. Placeholder until a partner-directory
+ * endpoint exists; the ids must match configured HIE Outbound partners to actually dispatch a CCD.
+ */
+export const REFERRAL_PARTNERS: ReadonlyArray<{ id: string; display: string }> = [
+  { id: "partner-nephrology", display: "Regional Nephrology Associates" },
+  { id: "partner-transplant", display: "University Transplant Center" },
+  { id: "partner-vascular", display: "Vascular Access Surgery Clinic" },
+];
+
+// Care plan — enum strings mirror the EHR CarePlanGoalStatus / CarePlanStatus enums (JSON string enums).
+export type CarePlanGoalStatus = "Proposed" | "InProgress" | "Achieved" | "NotAchieved";
+export type CarePlanStatus = "Active" | "Completed" | "Revoked";
+
+export type CarePlanGoalView = {
+  id: string;
+  description: string;
+  targetMeasure?: string | null;
+  status: CarePlanGoalStatus;
+};
+
+export type CarePlanView = {
+  id: string;
+  patientId: string;
+  title: string;
+  status: CarePlanStatus;
+  createdAtUtc: string;
+  goals: CarePlanGoalView[];
+};
+
+/** Returns the patient's active care plan, or null (204) when there isn't one. */
+export const fetchActiveCarePlan = async (patientId: string): Promise<CarePlanView | null> => {
+  const response = await apiClient.get<CarePlanView | "">(
+    `/ehr/api/v1.0/care-plans/patients/${patientId}/active`,
+    { validateStatus: (s) => s === 200 || s === 204 },
+  );
+  return response.status === 204 || !response.data ? null : (response.data as CarePlanView);
+};
+
+export const createCarePlan = async (body: {
+  patientId: string;
+  title: string;
+  authoredByProviderId: string;
+}): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/care-plans", body);
+  return response.data.id;
+};
+
+export const addCarePlanGoal = async (
+  carePlanId: string,
+  body: { description: string; targetMeasure?: string },
+): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>(
+    `/ehr/api/v1.0/care-plans/${carePlanId}/goals`,
+    body,
+  );
+  return response.data.id;
+};
+
+export const updateCarePlanGoalStatus = async (
+  carePlanId: string,
+  goalId: string,
+  status: CarePlanGoalStatus,
+): Promise<void> => {
+  await apiClient.post(`/ehr/api/v1.0/care-plans/${carePlanId}/goals/${goalId}/status`, { status });
+};
+
+export const closeCarePlan = async (
+  carePlanId: string,
+  status: Extract<CarePlanStatus, "Completed" | "Revoked">,
+): Promise<void> => {
+  await apiClient.post(`/ehr/api/v1.0/care-plans/${carePlanId}/close`, { status });
 };
 
 export type DraftClinicalNoteRequest = {
@@ -264,6 +437,22 @@ export const DEMO_PROVIDER_ID = "00000000-0000-0000-0000-000000000001";
  * directory endpoint (`/clinical/lab-facilities`) exists.
  */
 export const DEMO_LAB_FACILITY = "DEMO-LAB-01";
+
+/** Demo pharmacy NCPDP id passed to `orderPrescription`. Placeholder until a real pharmacy directory exists. */
+export const DEMO_PHARMACY_NCPDP = "DEMO-PHARM-01";
+
+/**
+ * Common dialysis-relevant medications surfaced in the Prescribe dialog (RxNorm). Hardcoded until
+ * the FHIR Terminology service is wired through to the SPA — at that point this moves behind a search.
+ */
+export const COMMON_MEDICATIONS: ReadonlyArray<{ rxnorm: string; display: string }> = [
+  { rxnorm: "29046", display: "Lisinopril 10 mg oral tablet" },
+  { rxnorm: "200801", display: "Calcium acetate 667 mg oral capsule" },
+  { rxnorm: "1736854", display: "Sevelamer carbonate 800 mg oral tablet" },
+  { rxnorm: "905225", display: "Cinacalcet 30 mg oral tablet" },
+  { rxnorm: "311036", display: "Epoetin alfa injection" },
+  { rxnorm: "7980", display: "Penicillin V Potassium 500 mg oral tablet" },
+];
 
 /**
  * Common dialysis-relevant LOINC panels surfaced in the Order Labs dialog. Hardcoded

@@ -4,6 +4,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Persistence.Stores;
 
+public sealed class CarePlanRepository : ICarePlanRepository
+{
+    private readonly EhrDbContext _db;
+    public CarePlanRepository(EhrDbContext db) => _db = db;
+
+    public Task<CarePlan?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.CarePlans.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+    public Task<CarePlan?> GetActiveByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+        _db.CarePlans
+            .AsNoTracking()
+            .Where(c => c.PatientId == patientId && !c.IsDeleted && c.Status == CarePlanStatus.Active)
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public void Add(CarePlan carePlan) => _db.CarePlans.Add(carePlan);
+}
+
 public sealed class AllergyRepository : IAllergyRepository
 {
     private readonly EhrDbContext _db;

@@ -1,11 +1,12 @@
 using Dialysis.CQRS.Commands;
+using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.Contracts.CodeSets;
 using Dialysis.EHR.Contracts.Security;
 using Dialysis.Module.Contracts.Authorization;
 
 namespace Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 
-public sealed record OrderPrescriptionCommand : ICommand<Guid>, IPermissionedCommand
+public sealed record OrderPrescriptionCommand : ICommand<OrderPlacementResult>, IPermissionedCommand
 {
     public OrderPrescriptionCommand(Guid PatientId,
         Guid EncounterId,
@@ -17,7 +18,10 @@ public sealed record OrderPrescriptionCommand : ICommand<Guid>, IPermissionedCom
         int QuantityDispensed,
         int RefillsAuthorized,
         string PharmacyNcpdpId,
-        string TransmissionFormat = EhrPrescriptionFormats.NcpdpScriptNewRx)
+        string TransmissionFormat = EhrPrescriptionFormats.NcpdpScriptNewRx,
+        bool AcknowledgeAdvisories = false,
+        string? OverrideReason = null,
+        string? OverriddenBy = null)
     {
         this.PatientId = PatientId;
         this.EncounterId = EncounterId;
@@ -30,6 +34,9 @@ public sealed record OrderPrescriptionCommand : ICommand<Guid>, IPermissionedCom
         this.RefillsAuthorized = RefillsAuthorized;
         this.PharmacyNcpdpId = PharmacyNcpdpId;
         this.TransmissionFormat = TransmissionFormat;
+        this.AcknowledgeAdvisories = AcknowledgeAdvisories;
+        this.OverrideReason = OverrideReason;
+        this.OverriddenBy = OverriddenBy;
     }
     public string RequiredPermission => EhrPermissions.PrescriptionOrder;
     public Guid PatientId { get; init; }
@@ -43,18 +50,13 @@ public sealed record OrderPrescriptionCommand : ICommand<Guid>, IPermissionedCom
     public int RefillsAuthorized { get; init; }
     public string PharmacyNcpdpId { get; init; }
     public string TransmissionFormat { get; init; }
-    public void Deconstruct(out Guid PatientId, out Guid EncounterId, out Guid PrescribingProviderId, out string MedicationRxnormCode, out string MedicationDisplay, out string DoseText, out string FrequencyText, out int QuantityDispensed, out int RefillsAuthorized, out string PharmacyNcpdpId, out string TransmissionFormat)
-    {
-        PatientId = this.PatientId;
-        EncounterId = this.EncounterId;
-        PrescribingProviderId = this.PrescribingProviderId;
-        MedicationRxnormCode = this.MedicationRxnormCode;
-        MedicationDisplay = this.MedicationDisplay;
-        DoseText = this.DoseText;
-        FrequencyText = this.FrequencyText;
-        QuantityDispensed = this.QuantityDispensed;
-        RefillsAuthorized = this.RefillsAuthorized;
-        PharmacyNcpdpId = this.PharmacyNcpdpId;
-        TransmissionFormat = this.TransmissionFormat;
-    }
+
+    /// <summary>When true, blocking safety advisories are overridden (requires <see cref="OverrideReason"/>).</summary>
+    public bool AcknowledgeAdvisories { get; init; }
+
+    /// <summary>The clinician's reason for overriding a blocking advisory; audited on the prescription.</summary>
+    public string? OverrideReason { get; init; }
+
+    /// <summary>Server-populated identity of the overriding clinician (from the authenticated principal).</summary>
+    public string? OverriddenBy { get; init; }
 }

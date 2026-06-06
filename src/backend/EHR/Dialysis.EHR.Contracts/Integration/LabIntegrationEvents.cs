@@ -13,7 +13,9 @@ public sealed record LabOrderPlacedIntegrationEvent : IIntegrationEvent
         Guid OrderingProviderId,
         string LabFacilityCode,
         IReadOnlyList<string> LoincPanelCodes,
-        string TransmissionFormat)
+        string TransmissionFormat,
+        string? OverrideReason = null,
+        string? OverriddenBy = null)
     {
         this.EventId = EventId;
         this.OccurredOn = OccurredOn;
@@ -25,6 +27,8 @@ public sealed record LabOrderPlacedIntegrationEvent : IIntegrationEvent
         this.LabFacilityCode = LabFacilityCode;
         this.LoincPanelCodes = LoincPanelCodes;
         this.TransmissionFormat = TransmissionFormat;
+        this.OverrideReason = OverrideReason;
+        this.OverriddenBy = OverriddenBy;
     }
     public Guid EventId { get; init; }
     public DateTime OccurredOn { get; init; }
@@ -36,7 +40,13 @@ public sealed record LabOrderPlacedIntegrationEvent : IIntegrationEvent
     public string LabFacilityCode { get; init; }
     public IReadOnlyList<string> LoincPanelCodes { get; init; }
     public string TransmissionFormat { get; init; }
-    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid LabOrderId, out Guid PatientId, out Guid EncounterId, out Guid OrderingProviderId, out string LabFacilityCode, out IReadOnlyList<string> LoincPanelCodes, out string TransmissionFormat)
+
+    /// <summary>Set when the ordering provider overrode a blocking safety advisory (v2+); else null.</summary>
+    public string? OverrideReason { get; init; }
+
+    /// <summary>Identity that overrode the blocking advisory (v2+); else null.</summary>
+    public string? OverriddenBy { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid LabOrderId, out Guid PatientId, out Guid EncounterId, out Guid OrderingProviderId, out string LabFacilityCode, out IReadOnlyList<string> LoincPanelCodes, out string TransmissionFormat, out string? OverrideReason, out string? OverriddenBy)
     {
         EventId = this.EventId;
         OccurredOn = this.OccurredOn;
@@ -48,6 +58,8 @@ public sealed record LabOrderPlacedIntegrationEvent : IIntegrationEvent
         LabFacilityCode = this.LabFacilityCode;
         LoincPanelCodes = this.LoincPanelCodes;
         TransmissionFormat = this.TransmissionFormat;
+        OverrideReason = this.OverrideReason;
+        OverriddenBy = this.OverriddenBy;
     }
 }
 

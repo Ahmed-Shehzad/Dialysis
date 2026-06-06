@@ -1,15 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchEhrPatient, fetchPatientChart, type ChartItem } from "@/features/ehr/api/ehrApi";
+import {
+  fetchEhrPatient,
+  fetchPatientChart,
+  fetchReferrals,
+  type ChartItem,
+} from "@/features/ehr/api/ehrApi";
 import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
 import { CommunityHealthRecordCard } from "@/features/hie/components/CommunityHealthRecordCard";
 import { ImagingPanel } from "@/features/imaging/components/ImagingPanel";
 import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
+import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
+import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
 import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
+import { ReferralDialog } from "@/modules/ehr/chart/ReferralDialog";
 import { usePatientContext } from "@/shell/PatientContextProvider";
 
 const isActive = (item: ChartItem): boolean => {
@@ -62,6 +70,8 @@ export const EhrChartPage = () => {
   const { patient, select } = usePatientContext();
   const [noteOpen, setNoteOpen] = useState(false);
   const [labsOpen, setLabsOpen] = useState(false);
+  const [rxOpen, setRxOpen] = useState(false);
+  const [referOpen, setReferOpen] = useState(false);
 
   const chart = useQuery({
     queryKey: ["ehr", "chart", patientId],
@@ -76,6 +86,11 @@ export const EhrChartPage = () => {
   const consents = useQuery({
     queryKey: ["hie", "consents", patientId],
     queryFn: () => fetchConsentsForPatient(patientId as string),
+    enabled: Boolean(patientId),
+  });
+  const referrals = useQuery({
+    queryKey: ["ehr", "referrals", patientId],
+    queryFn: () => fetchReferrals(patientId as string),
     enabled: Boolean(patientId),
   });
 
@@ -110,6 +125,14 @@ export const EhrChartPage = () => {
     [chart.data?.medications],
   );
   const vitals = chart.data?.vitals ?? [];
+  // Immunizations are captured (and FHIR-fed) but were never surfaced. Newest administration first.
+  const immunizations = useMemo(
+    () =>
+      [...(chart.data?.immunizations ?? [])].sort((a, b) =>
+        b.recordedAtUtc.localeCompare(a.recordedAtUtc),
+      ),
+    [chart.data?.immunizations],
+  );
 
   const bp = findVital(vitals, /blood pressure|systolic|8480|8867/iu);
   const weight = findVital(vitals, /weight|29463|3141/iu);
@@ -150,9 +173,23 @@ export const EhrChartPage = () => {
           <button
             type="button"
             onClick={() => setLabsOpen(true)}
-            className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500"
+            className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
           >
             + Order labs
+          </button>
+          <button
+            type="button"
+            onClick={() => setRxOpen(true)}
+            className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
+          >
+            + Prescribe
+          </button>
+          <button
+            type="button"
+            onClick={() => setReferOpen(true)}
+            className="rounded-md bg-clinic-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-clinic-500"
+          >
+            Refer
           </button>
         </div>
       </header>
@@ -160,6 +197,10 @@ export const EhrChartPage = () => {
       {noteOpen && <AddNoteDialog patientId={patientId} onClose={() => setNoteOpen(false)} />}
 
       {labsOpen && <OrderLabsDialog patientId={patientId} onClose={() => setLabsOpen(false)} />}
+
+      {rxOpen && <OrderPrescriptionDialog patientId={patientId} onClose={() => setRxOpen(false)} />}
+
+      {referOpen && <ReferralDialog patientId={patientId} onClose={() => setReferOpen(false)} />}
 
       {chart.isLoading && <div className="text-sm text-slate-400">Loading chart…</div>}
       {chart.error && (
@@ -251,6 +292,56 @@ export const EhrChartPage = () => {
               )}
             </section>
           </div>
+
+          <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+            <h3 className="mb-2 text-sm font-medium text-slate-200">
+              Immunizations <span className="text-slate-500">({immunizations.length})</span>
+            </h3>
+            {immunizations.length === 0 ? (
+              <p className="text-xs text-slate-500">No immunizations on the chart.</p>
+            ) : (
+              <ul className="divide-y divide-slate-800 text-sm">
+                {immunizations.map((i) => (
+                  <li key={i.id} className="grid grid-cols-12 items-center gap-2 py-2">
+                    <span className="col-span-6 text-slate-200" title={i.code}>
+                      {i.display}
+                    </span>
+                    <span className="col-span-4 text-xs text-slate-400">
+                      {new Date(i.recordedAtUtc).toLocaleDateString()}
+                    </span>
+                    {i.status && (
+                      <span className="col-span-2 text-right text-xs uppercase tracking-wide text-slate-500">
+                        {i.status}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {referrals.data && referrals.data.length > 0 && (
+            <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+              <h3 className="mb-2 text-sm font-medium text-slate-200">
+                Referrals <span className="text-slate-500">({referrals.data.length})</span>
+              </h3>
+              <ul className="divide-y divide-slate-800 text-sm">
+                {referrals.data.map((r) => (
+                  <li key={r.id} className="grid grid-cols-12 items-center gap-2 py-2">
+                    <span className="col-span-5 text-slate-200">{r.destinationPartnerId}</span>
+                    <span className="col-span-4 text-xs text-slate-400">
+                      {r.referralReason ?? "—"}
+                    </span>
+                    <span className="col-span-3 text-right text-xs text-slate-400">
+                      {new Date(r.requestedAtUtc).toLocaleDateString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <CarePlanCard patientId={patientId} />
 
           <RecentNotesPanel patientId={patientId} />
 

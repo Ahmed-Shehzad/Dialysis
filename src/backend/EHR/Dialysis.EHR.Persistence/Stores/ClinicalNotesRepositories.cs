@@ -43,6 +43,13 @@ public sealed class PrescriptionRepository : IPrescriptionRepository
     public Task<Prescription?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Prescriptions.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Prescription>> ListActiveByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+        await _db.Prescriptions
+            .AsNoTracking()
+            .Where(p => p.PatientId == patientId && !p.IsDeleted && p.Status == PrescriptionStatus.Active)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public void Add(Prescription prescription) => _db.Prescriptions.Add(prescription);
 }
 
@@ -52,6 +59,14 @@ public sealed class LabOrderRepository : ILabOrderRepository
     public LabOrderRepository(EhrDbContext db) => _db = db;
     public Task<LabOrder?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.LabOrders.FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<LabOrder>> ListRecentByPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default) =>
+        await _db.LabOrders
+            .AsNoTracking()
+            .Where(l => l.PatientId == patientId && !l.IsDeleted
+                && l.Status != LabOrderStatus.Cancelled && l.CreatedAt >= sinceUtc)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 
     public void Add(LabOrder labOrder) => _db.LabOrders.Add(labOrder);
 }
@@ -93,4 +108,21 @@ public sealed class LabResultRepository : ILabResultRepository
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
     public void Add(LabResult result) => _db.LabResults.Add(result);
+}
+
+public sealed class ReferralRepository : IReferralRepository
+{
+    private readonly EhrDbContext _db;
+    public ReferralRepository(EhrDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<Referral>> ListByPatientAsync(Guid patientId, int take, CancellationToken cancellationToken = default) =>
+        await _db.Referrals
+            .AsNoTracking()
+            .Where(r => r.PatientId == patientId && !r.IsDeleted)
+            .OrderByDescending(r => r.RequestedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public void Add(Referral referral) => _db.Referrals.Add(referral);
 }
