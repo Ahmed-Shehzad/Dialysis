@@ -142,6 +142,12 @@ public static class HealthInformationExchangeExtensions
 
             // Per-partner routing — replaces the old single hard-coded DefaultPartnerId.
             services.AddSingleton<IPartnerRouter, ConfiguredPartnerRouter>();
+            // Public-health electronic case reporting (mandated-reporting path; no-op until configured).
+            services.Configure<Dialysis.HIE.Outbound.PublicHealth.PublicHealthReportingOptions>(
+                configuration.GetSection(Dialysis.HIE.Outbound.PublicHealth.PublicHealthReportingOptions.SectionName));
+            services.AddSingleton<Dialysis.HIE.Outbound.PublicHealth.IReportabilityClassifier,
+                Dialysis.HIE.Outbound.PublicHealth.ConfiguredReportabilityClassifier>();
+            services.AddScoped<Dialysis.HIE.Outbound.PublicHealth.PublicHealthReporter>();
             services.AddScoped<OutboundQueueWriter>();
             // C-CDA CCD generation for Directed Exchange: the FHIR→CDA mapper + the assembler that
             // folds a patient's already-mapped resources into a CCD and queues it as a DocumentReference.
