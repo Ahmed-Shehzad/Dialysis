@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEhrPatient, fetchPatientChart, type ChartItem } from "@/features/ehr/api/ehrApi";
 import { fetchConsentsForPatient } from "@/features/hie/api/hieApi";
+import { CommunityHealthRecordCard } from "@/features/hie/components/CommunityHealthRecordCard";
 import { ImagingPanel } from "@/features/imaging/components/ImagingPanel";
 import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
@@ -290,6 +291,8 @@ export const EhrChartPage = () => {
               </ul>
             )}
           </section>
+
+          <CommunityHealthRecordCard patientId={patientId} />
         </>
       )}
     </div>

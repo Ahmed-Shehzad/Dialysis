@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { patientMatch, submitFhirBundle } from "@/features/hie/api/hieApi";
+import { CommunityHealthRecordPanel } from "@/features/hie/components/CommunityHealthRecordPanel";
 import { ConsentAdminPanel } from "@/features/hie/components/ConsentAdminPanel";
 import { InboundFeedPanel } from "@/features/hie/components/InboundFeedPanel";
 import { OutboundQueuePanel } from "@/features/hie/components/OutboundQueuePanel";
@@ -173,6 +174,8 @@ export const FhirExchangePage = () => (
       <BundleIngestPanel />
       <PatientMatchPanel />
     </div>
+
+    <CommunityHealthRecordPanel />
 
     <OutboundQueuePanel />
     <InboundFeedPanel />
