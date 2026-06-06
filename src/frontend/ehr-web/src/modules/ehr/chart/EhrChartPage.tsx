@@ -19,6 +19,7 @@ import { HospitalEventsCard } from "@/modules/ehr/chart/HospitalEventsCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
 import { OrderSetDialog } from "@/modules/ehr/chart/OrderSetDialog";
+import { PatientTimeline } from "@/modules/ehr/chart/PatientTimeline";
 import { QualityGapsCard } from "@/modules/ehr/chart/QualityGapsCard";
 import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
 import { ReferralDialog } from "@/modules/ehr/chart/ReferralDialog";
@@ -358,6 +359,8 @@ export const EhrChartPage = () => {
           )}
 
           <QualityGapsCard patientId={patientId} />
+
+          <PatientTimeline patientId={patientId} />
 
           <HospitalEventsCard patientId={patientId} />
 
