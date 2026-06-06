@@ -21,7 +21,7 @@ public sealed class PermissionedRequestTests
     // definitions themselves, durable-bus envelopes) are out of scope for permission gating.
     private static readonly string[] _moduleSegments =
     [
-        ".HIS.", ".EHR.", ".PDMS.", ".HIE.", ".Identity.", ".SmartConnect.", ".Lab.",
+        ".HIS.", ".EHR.", ".PDMS.", ".HIE.", ".Identity.", ".SmartConnect.", ".Lab.", ".Simulation.",
     ];
 
     private const string CommandInterface = "Dialysis.CQRS.Commands.ICommand`1";
