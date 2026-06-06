@@ -11,6 +11,32 @@ internal static class PatientChartConfiguration
 
     public static void Configure(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<CarePlan>(b =>
+        {
+            b.ToTable("CarePlans", Schema);
+            b.HasKey(c => c.Id);
+            b.Property(c => c.PatientId).IsRequired();
+            b.HasIndex(c => c.PatientId);
+            b.Property(c => c.Title).HasMaxLength(256).IsRequired();
+            b.Property(c => c.Status).HasConversion<int>().IsRequired();
+            b.Property(c => c.AuthoredByProviderId).IsRequired();
+            b.Property(c => c.CreatedAtUtc).IsRequired();
+            b.HasMany(c => c.Goals).WithOne().HasForeignKey(g => g.CarePlanId).OnDelete(DeleteBehavior.Cascade);
+            b.Navigation(c => c.Goals).AutoInclude();
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
+        modelBuilder.Entity<CarePlanGoal>(b =>
+        {
+            b.ToTable("CarePlanGoals", Schema);
+            b.HasKey(g => g.Id);
+            b.Property(g => g.CarePlanId).IsRequired();
+            b.Property(g => g.Description).HasMaxLength(1000).IsRequired();
+            b.Property(g => g.TargetMeasure).HasMaxLength(512);
+            b.Property(g => g.Status).HasConversion<int>().IsRequired();
+            ModuleDbContextBase.MapAuditShadow(b);
+        });
+
         modelBuilder.Entity<Allergy>(b =>
         {
             b.ToTable("Allergies", Schema);

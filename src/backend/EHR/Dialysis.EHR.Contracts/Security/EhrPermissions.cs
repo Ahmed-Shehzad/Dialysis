@@ -22,6 +22,8 @@ public static class EhrPermissions
     public const string VitalsRecord = "ehr.patientchart.vitals.record";
     public const string ImmunizationRecord = "ehr.patientchart.immunization.record";
     public const string MedicationRecord = "ehr.patientchart.medication.record";
+    public const string CarePlanRead = "ehr.patientchart.careplan.read";
+    public const string CarePlanWrite = "ehr.patientchart.careplan.write";
 
     // Scheduling
     public const string AppointmentBook = "ehr.scheduling.appointment.book";
@@ -74,7 +76,7 @@ public static class EhrPermissions
     public static IReadOnlyList<string> All { get; } =
     [
         PatientRegister, PatientUpdate, PatientMerge, PatientRead,
-        ChartRead, AllergyRecord, ProblemRecord, VitalsRecord, ImmunizationRecord, MedicationRecord,
+        ChartRead, AllergyRecord, ProblemRecord, VitalsRecord, ImmunizationRecord, MedicationRecord, CarePlanRead, CarePlanWrite,
         AppointmentBook, AppointmentCancel, AppointmentReschedule, AppointmentCheckIn, ScheduleRead,
         PortalRead, PortalAppointmentRequest, PortalMessageSend,
         EncounterStart, EncounterClose, ClinicalNoteWrite, ClinicalNoteSign, ClinicalNoteRead, DiagnosisAttach, ReferralRequest,

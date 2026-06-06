@@ -34,6 +34,7 @@ public sealed class EhrDbContext : ModuleDbContextBase
     public DbSet<VitalSignReading> VitalSignReadings => Set<VitalSignReading>();
     public DbSet<Immunization> Immunizations => Set<Immunization>();
     public DbSet<MedicationStatement> MedicationStatements => Set<MedicationStatement>();
+    public DbSet<CarePlan> CarePlans => Set<CarePlan>();
 
     // Scheduling
     public DbSet<Appointment> Appointments => Set<Appointment>();

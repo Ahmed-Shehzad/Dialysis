@@ -13,6 +13,7 @@ import { ImagingPanel } from "@/features/imaging/components/ImagingPanel";
 import { LabResultsPanel } from "@/features/lab/components/LabResultsPanel";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AddNoteDialog } from "@/modules/ehr/chart/AddNoteDialog";
+import { CarePlanCard } from "@/modules/ehr/chart/CarePlanCard";
 import { OrderLabsDialog } from "@/modules/ehr/chart/OrderLabsDialog";
 import { OrderPrescriptionDialog } from "@/modules/ehr/chart/OrderPrescriptionDialog";
 import { RecentNotesPanel } from "@/modules/ehr/chart/RecentNotesPanel";
@@ -339,6 +340,8 @@ export const EhrChartPage = () => {
               </ul>
             </section>
           )}
+
+          <CarePlanCard patientId={patientId} />
 
           <RecentNotesPanel patientId={patientId} />
 

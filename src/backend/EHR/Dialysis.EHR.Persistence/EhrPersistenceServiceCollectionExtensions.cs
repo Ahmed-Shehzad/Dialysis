@@ -59,6 +59,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddScoped<IVitalSignRepository, VitalSignRepository>();
             services.AddScoped<IImmunizationRepository, ImmunizationRepository>();
             services.AddScoped<IMedicationStatementRepository, MedicationStatementRepository>();
+            services.AddScoped<ICarePlanRepository, CarePlanRepository>();
 
             // Scheduling
             services.AddScoped<IAppointmentRepository, AppointmentRepository>();

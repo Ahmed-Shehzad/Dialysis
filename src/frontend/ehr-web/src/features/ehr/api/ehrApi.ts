@@ -346,6 +346,70 @@ export const REFERRAL_PARTNERS: ReadonlyArray<{ id: string; display: string }> =
   { id: "partner-vascular", display: "Vascular Access Surgery Clinic" },
 ];
 
+// Care plan — enum strings mirror the EHR CarePlanGoalStatus / CarePlanStatus enums (JSON string enums).
+export type CarePlanGoalStatus = "Proposed" | "InProgress" | "Achieved" | "NotAchieved";
+export type CarePlanStatus = "Active" | "Completed" | "Revoked";
+
+export type CarePlanGoalView = {
+  id: string;
+  description: string;
+  targetMeasure?: string | null;
+  status: CarePlanGoalStatus;
+};
+
+export type CarePlanView = {
+  id: string;
+  patientId: string;
+  title: string;
+  status: CarePlanStatus;
+  createdAtUtc: string;
+  goals: CarePlanGoalView[];
+};
+
+/** Returns the patient's active care plan, or null (204) when there isn't one. */
+export const fetchActiveCarePlan = async (patientId: string): Promise<CarePlanView | null> => {
+  const response = await apiClient.get<CarePlanView | "">(
+    `/ehr/api/v1.0/care-plans/patients/${patientId}/active`,
+    { validateStatus: (s) => s === 200 || s === 204 },
+  );
+  return response.status === 204 || !response.data ? null : (response.data as CarePlanView);
+};
+
+export const createCarePlan = async (body: {
+  patientId: string;
+  title: string;
+  authoredByProviderId: string;
+}): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>("/ehr/api/v1.0/care-plans", body);
+  return response.data.id;
+};
+
+export const addCarePlanGoal = async (
+  carePlanId: string,
+  body: { description: string; targetMeasure?: string },
+): Promise<string> => {
+  const response = await apiClient.post<{ id: string }>(
+    `/ehr/api/v1.0/care-plans/${carePlanId}/goals`,
+    body,
+  );
+  return response.data.id;
+};
+
+export const updateCarePlanGoalStatus = async (
+  carePlanId: string,
+  goalId: string,
+  status: CarePlanGoalStatus,
+): Promise<void> => {
+  await apiClient.post(`/ehr/api/v1.0/care-plans/${carePlanId}/goals/${goalId}/status`, { status });
+};
+
+export const closeCarePlan = async (
+  carePlanId: string,
+  status: Extract<CarePlanStatus, "Completed" | "Revoked">,
+): Promise<void> => {
+  await apiClient.post(`/ehr/api/v1.0/care-plans/${carePlanId}/close`, { status });
+};
+
 export type DraftClinicalNoteRequest = {
   encounterId: string;
   patientId: string;
