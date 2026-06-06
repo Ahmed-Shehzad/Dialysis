@@ -275,4 +275,8 @@
     <Project Path="src/backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj" />
     <Project Path="src/backend/Lab/Dialysis.Lab.Tests/Dialysis.Lab.Tests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Dialysis.DataSimulator/Dialysis.DataSimulator.csproj" />
+    <Project Path="tools/Dialysis.DataSimulator.Tests/Dialysis.DataSimulator.Tests.csproj" />
+  </Folder>
 </Solution>
