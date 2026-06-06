@@ -81,6 +81,7 @@ public static class EhrPersistenceServiceCollectionExtensions
             // Billing
             services.AddScoped<IPayerRepository, PayerRepository>();
             services.AddScoped<IChargeRepository, ChargeRepository>();
+            services.AddScoped<IBillableEncounterRepository, EfBillableEncounterRepository>();
             services.AddScoped<IClaimRepository, ClaimRepository>();
             services.AddScoped<IRemittanceRepository, RemittanceRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();

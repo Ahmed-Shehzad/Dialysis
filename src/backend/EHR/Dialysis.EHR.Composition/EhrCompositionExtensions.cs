@@ -131,6 +131,10 @@ public static class EhrCompositionExtensions
                 // ClinicalNotes closes an encounter → auto-capture one Charge per procedure CPT
                 // (gated by Ehr:Billing:EncounterChargeAutomation:Enabled, default off).
                 t.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedChargeConsumer>();
+                // Revenue-cycle worklist read model: record every closed encounter, and flip its
+                // HasCharge flag when a charge for it is captured (always on).
+                t.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedBillableProjector>();
+                t.AddConsumer<ChargeCapturedIntegrationEvent, ChargeCapturedBillableProjector>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();

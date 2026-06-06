@@ -1,5 +1,6 @@
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Billing.Domain;
+using Dialysis.EHR.Billing.ReadModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,6 +12,17 @@ internal static class BillingConfiguration
 
     public static void Configure(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<BillableEncounter>(b =>
+        {
+            b.ToTable("BillableEncounters", Schema);
+            b.HasKey(e => e.EncounterId);
+            b.Property(e => e.PatientId).IsRequired();
+            b.Property(e => e.ProviderId).IsRequired();
+            b.Property(e => e.ClosedAtUtc).IsRequired();
+            b.Property(e => e.HasCharge).IsRequired();
+            b.HasIndex(e => new { e.HasCharge, e.ClosedAtUtc });
+        });
+
         modelBuilder.Entity<Payer>(b =>
         {
             b.ToTable("Payers", Schema);

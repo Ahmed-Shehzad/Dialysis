@@ -80,6 +80,37 @@ export const fetchClaimAcks = async (claimId: string): Promise<ClaimAcks> => {
   return response.data;
 };
 
+export type LostCharge = {
+  encounterId: string;
+  patientId: string;
+  providerId: string;
+  closedAtUtc: string;
+};
+
+/** Closed encounters with no captured charge (lost-charge worklist). */
+export const fetchLostCharges = async (
+  params: { olderThanDays?: number; take?: number } = {},
+): Promise<LostCharge[]> => {
+  const response = await apiClient.get<LostCharge[]>(`${ehrPrefix}/worklist/lost-charges`, {
+    params,
+  });
+  return response.data ?? [];
+};
+
+/** Captured charges aging without a claim (charge-lag / late-filing worklist). */
+export const fetchChargeLag = async (
+  params: { olderThanDays?: number; take?: number } = {},
+): Promise<Charge[]> => {
+  const response = await apiClient.get<Charge[]>(`${ehrPrefix}/worklist/charge-lag`, { params });
+  return response.data ?? [];
+};
+
+/** Denied claims (appeal / resubmit worklist). */
+export const fetchDenials = async (params: { take?: number } = {}): Promise<Claim[]> => {
+  const response = await apiClient.get<Claim[]>(`${ehrPrefix}/worklist/denials`, { params });
+  return response.data ?? [];
+};
+
 export const fetchBillingExportJobs = async (
   params: { status?: string; take?: number } = {},
 ): Promise<BillingExportJob[]> => {

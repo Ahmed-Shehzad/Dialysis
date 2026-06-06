@@ -127,6 +127,10 @@ public sealed class DialysisSessionChargeReadyConsumerTests
         public Task<IReadOnlyList<Charge>> ListAsync(ChargeStatus? status, int take, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<Charge>>(
                 [.. Added.Where(c => status is null || c.Status == status.Value).Take(take)]);
+        public Task<IReadOnlyList<Charge>> ListRecentForPatientAsync(Guid patientId, DateTime sinceUtc, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<Charge>>([.. Added.Where(c => c.PatientId == patientId)]);
+        public Task<IReadOnlyList<Charge>> ListAgedCapturedAsync(DateTime capturedBeforeUtc, int take, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<Charge>>([.. Added.Where(c => c.Status == ChargeStatus.Captured).Take(take)]);
     }
 
     private sealed class StubIdempotency : IChargeIdempotencyStore
