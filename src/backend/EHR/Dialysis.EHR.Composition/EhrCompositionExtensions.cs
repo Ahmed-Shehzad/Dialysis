@@ -74,6 +74,10 @@ public static class EhrCompositionExtensions
             services.Configure<ClinicalSafetyOptions>(configuration.GetSection(ClinicalSafetyOptions.SectionName));
             services.AddScoped<IClinicalSafetyChecker, ClinicalSafetyChecker>();
 
+            // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
+            services.Configure<EncounterChargeAutomationOptions>(
+                configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
+
             services.AddEuDataProtection("ehr", registry =>
             {
                 registry.RegisterActivity(
@@ -124,6 +128,9 @@ public static class EhrCompositionExtensions
                 // Cross-module: PDMS completes a session → capture the itemised dialysis charge
                 // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
                 t.AddConsumer<DialysisSessionChargeReadyIntegrationEvent, DialysisSessionChargeReadyConsumer>();
+                // ClinicalNotes closes an encounter → auto-capture one Charge per procedure CPT
+                // (gated by Ehr:Billing:EncounterChargeAutomation:Enabled, default off).
+                t.AddConsumer<EncounterClosedIntegrationEvent, EncounterClosedChargeConsumer>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();
