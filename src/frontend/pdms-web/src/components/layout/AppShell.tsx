@@ -13,6 +13,8 @@ const PDMS_NAV: ReadonlyArray<{ to: string; label: string }> = [
   { to: "/admin/inventory", label: "Inventory" },
   { to: "/admin/reporting/templates", label: "Reporting" },
   { to: "/admin/oncall/rotation", label: "On-call" },
+  { to: "/admin/oncall/policies", label: "Escalation" },
+  { to: "/admin/oncall/audit", label: "On-call audit" },
 ];
 
 const ThemeToggle = () => {

@@ -17,6 +17,22 @@ const FeeSchedulePage = lazyPage(
   () => import("@/modules/ehr/admin/FeeSchedulePage"),
   "FeeSchedulePage",
 );
+const CareCoordinationWorklistPage = lazyPage(
+  () => import("@/modules/ehr/admin/CareCoordinationWorklistPage"),
+  "CareCoordinationWorklistPage",
+);
+const AppointmentRequestsWorklist = lazyPage(
+  () => import("@/modules/ehr/admin/AppointmentRequestsWorklist"),
+  "AppointmentRequestsWorklist",
+);
+const PopulationQualityPage = lazyPage(
+  () => import("@/modules/ehr/admin/PopulationQualityPage"),
+  "PopulationQualityPage",
+);
+const SafetySurveillancePage = lazyPage(
+  () => import("@/modules/ehr/admin/SafetySurveillancePage"),
+  "SafetySurveillancePage",
+);
 
 const LOADING_FALLBACK_AFTER_MS = 2000;
 
@@ -71,6 +87,10 @@ export const AppRouter = () => (
       <Route path="workflows" element={<EhrWorkflowsPage />} />
       <Route path="admin/billing/dialysis-charges" element={<BillingChargesPage />} />
       <Route path="admin/billing/fee-schedule" element={<FeeSchedulePage />} />
+      <Route path="care-coordination/worklist" element={<CareCoordinationWorklistPage />} />
+      <Route path="appointment-requests" element={<AppointmentRequestsWorklist />} />
+      <Route path="population/quality" element={<PopulationQualityPage />} />
+      <Route path="safety/surveillance" element={<SafetySurveillancePage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
