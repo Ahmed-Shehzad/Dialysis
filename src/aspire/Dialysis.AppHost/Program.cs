@@ -244,10 +244,6 @@ var hieBffSecret = builder.AddParameter("hie-bff-client-secret", "hie-bff-dev-se
 var adminBffSecret = builder.AddParameter("admin-bff-client-secret", "admin-bff-dev-secret-change-me", secret: true);
 var portalBffSecret = builder.AddParameter("portal-bff-client-secret", "portal-bff-dev-secret-change-me", secret: true);
 var identityBffSecret = builder.AddParameter("identity-bff-client-secret", "bff-dev-secret-change-me", secret: true);
-// Client-credentials secret for the Simulation module's service account (dialysis-simulation), used in
-// HTTP driver mode to mint a bearer that drives the real module APIs. Matches the dev secret in
-// src/backend/Identity/keycloak/dialysis-realm.json.
-var simulationClientSecret = builder.AddParameter("simulation-client-secret", "simulation-dev-secret-change-me", secret: true);
 
 // --- Per-module Postgres ---------------------------------------------------
 
@@ -277,7 +273,6 @@ var pdmsPgServer = PgTimescale(builder, "postgres-pdms");
 var smartconnectPgServer = Pg(builder, "postgres-smartconnect");
 var hiePgServer = Pg(builder, "postgres-hie");
 var labPgServer = Pg(builder, "postgres-lab");
-var simulationPgServer = Pg(builder, "postgres-simulation");
 
 var hisDb = hisPgServer.AddDatabase("His", databaseName: "dialysis_his");
 var ehrDb = ehrPgServer.AddDatabase("Ehr", databaseName: "dialysis_ehr");
@@ -285,7 +280,6 @@ var pdmsDb = pdmsPgServer.AddDatabase("Pdms", databaseName: "dialysis_pdms");
 var smartconnectDb = smartconnectPgServer.AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
 var hieDb = hiePgServer.AddDatabase("Hie", databaseName: "dialysis_hie");
 var labDb = labPgServer.AddDatabase("Lab", databaseName: "dialysis_lab");
-var simulationDb = simulationPgServer.AddDatabase("Simulation", databaseName: "dialysis_simulation");
 
 // --- SonarQube (auto-start with the AppHost) ------------------------------
 //
@@ -397,8 +391,7 @@ var hisApi = builder.AddProject<Projects.Dialysis_HIS_Api>("his-api")
     .WithEnvironment("His__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("His__Authentication__Authority", keycloakRealmUri)
     .WithEnvironment("His__Authentication__Audience", "account")
-    .WithEnvironment("His__Fhir__Enabled", "true")
-    .WithEnvironment("His__Demo__Enabled", "true");
+    .WithEnvironment("His__Fhir__Enabled", "true");
 
 var ehrApi = builder.AddProject<Projects.Dialysis_EHR_Api>("ehr-api")
     .WithReference(ehrDb).WaitFor(ehrDb)
@@ -409,9 +402,7 @@ var ehrApi = builder.AddProject<Projects.Dialysis_EHR_Api>("ehr-api")
     .WithEnvironment("Ehr__Transponder__RabbitMq__ConnectionUri", rabbit)
     .WithEnvironment("Ehr__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("Ehr__Authentication__Authority", keycloakRealmUri)
-    .WithEnvironment("Ehr__Authentication__Audience", "account")
-    .WithEnvironment("Ehr__Demo__Enabled", "true")
-    .WithEnvironment("Ehr__Demo__RegistrationSimulator", "true");
+    .WithEnvironment("Ehr__Authentication__Audience", "account");
 
 var pdmsApi = builder.AddProject<Projects.Dialysis_PDMS_Api>("pdms-api")
     .WithReference(pdmsDb).WaitFor(pdmsDb)
@@ -422,11 +413,7 @@ var pdmsApi = builder.AddProject<Projects.Dialysis_PDMS_Api>("pdms-api")
     .WithEnvironment("Pdms__Transponder__RabbitMq__ConnectionUri", rabbit)
     .WithEnvironment("Pdms__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("Pdms__Authentication__Authority", keycloakRealmUri)
-    .WithEnvironment("Pdms__Authentication__Audience", "account")
-    .WithEnvironment("Pdms__Demo__Enabled", "true")
-    .WithEnvironment("Pdms__Demo__VitalsTicker", "true")
-    .WithEnvironment("Pdms__Demo__MachineTelemetrySimulator", "true")
-    .WithEnvironment("Pdms__Demo__LifecycleSimulator", "true");
+    .WithEnvironment("Pdms__Authentication__Audience", "account");
 
 var smartConnectApi = builder.AddProject<Projects.Dialysis_SmartConnect_Api>("smartconnect-api")
     .WithReference(smartconnectDb).WaitFor(smartconnectDb)
@@ -438,8 +425,6 @@ var smartConnectApi = builder.AddProject<Projects.Dialysis_SmartConnect_Api>("sm
     .WithEnvironment("SmartConnect__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("SmartConnect__Authentication__Authority", keycloakRealmUri)
     .WithEnvironment("SmartConnect__Authentication__Audience", "account")
-    .WithEnvironment("SmartConnect__Demo__Enabled", "true")
-    .WithEnvironment("SmartConnect__Demo__Hl7Simulator", "true")
     // Bi-directional routing demo: declare two source-connector instances so a dev sees
     // SourceConnectorHostedService start an MLLP listener + a file-drop watcher concurrently,
     // both dispatching into the same demo flow. The always-on HTTP source provides the third
@@ -462,8 +447,7 @@ var hieApi = builder.AddProject<Projects.Dialysis_HIE_Api>("hie-api")
     .WithEnvironment("Hie__Transponder__RabbitMq__ConnectionUri", rabbit)
     .WithEnvironment("Hie__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("Hie__Authentication__Authority", keycloakRealmUri)
-    .WithEnvironment("Hie__Authentication__Audience", "account")
-    .WithEnvironment("Hie__Demo__Enabled", "true");
+    .WithEnvironment("Hie__Authentication__Audience", "account");
 
 // Lab is a headless bounded context: no BFF/SPA of its own — order-entry stays in EHR and the
 // chart's Labs panel reaches it through the EHR BFF's _x/lab aggregation. It still needs its own
@@ -479,28 +463,6 @@ var labApi = builder.AddProject<Projects.Dialysis_Lab_Api>("lab-api")
     .WithEnvironment("Lab__DistributedCache__Valkey__ConnectionString", valkey)
     .WithEnvironment("Lab__Authentication__Authority", keycloakRealmUri)
     .WithEnvironment("Lab__Authentication__Audience", "account");
-
-// Simulation testbed: drives the real EHR/HIS/Lab/HIE APIs over HTTP (service discovery via the
-// WithReference edges below) with a client-credentials bearer, and publishes the encounter-closed /
-// lab-result events for the hops with no write endpoint. Runs in Http driver mode under Aspire.
-var simulationApi = builder.AddProject<Projects.Dialysis_Simulation_Api>("simulation-api")
-    .WithReference(simulationDb).WaitFor(simulationDb)
-    .WithReference(rabbit).WaitFor(rabbit)
-    .WithReference(valkey).WaitFor(valkey)
-    .WaitFor(keycloak)
-    .WithReference(ehrApi).WaitFor(ehrApi)
-    .WithReference(hisApi).WaitFor(hisApi)
-    .WithReference(labApi).WaitFor(labApi)
-    .WithReference(hieApi).WaitFor(hieApi)
-    .WithEnvironment("Simulation__Transponder__EnableOutboxRelay", "true")
-    .WithEnvironment("Simulation__Transponder__RabbitMq__ConnectionUri", rabbit)
-    .WithEnvironment("Simulation__DistributedCache__Valkey__ConnectionString", valkey)
-    .WithEnvironment("Simulation__Authentication__Authority", keycloakRealmUri)
-    .WithEnvironment("Simulation__Authentication__Audience", "account")
-    .WithEnvironment("Simulation__Drivers__Mode", "Http")
-    .WithEnvironment("Simulation__Drivers__Authority", keycloakRealmUri)
-    .WithEnvironment("Simulation__Drivers__ClientId", "dialysis-simulation")
-    .WithEnvironment("Simulation__Drivers__ClientSecret", simulationClientSecret);
 
 var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-bff")
     // Pin the BFF to a deterministic host port. The dialysis-bff Keycloak client only
@@ -712,12 +674,6 @@ if (isComposePublish)
         assemblyDllName: "Dialysis.Lab.Api.dll",
         moduleConfigPrefix: "Lab",
         hostPort: 5293,
-        environment: deployEnv);
-    simulationApi.WithModuleDeployment(
-        projectRelativePath: "src/backend/Simulation/Dialysis.Simulation.Api/Dialysis.Simulation.Api.csproj",
-        assemblyDllName: "Dialysis.Simulation.Api.dll",
-        moduleConfigPrefix: "Simulation",
-        hostPort: 5294,
         environment: deployEnv);
     identityBff.WithBffDeployment(
         "src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj",

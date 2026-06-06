@@ -65,7 +65,6 @@ var fhirBulkDataExportScope = builder.Configuration["His:Fhir:BulkData:RequireSc
     ?? (enableFhirSmartOnFhir ? "system/*.read" : null);
 var fhirSubscriptionsScope = builder.Configuration["His:Fhir:Subscriptions:RequireScope"]
     ?? (enableFhirSmartOnFhir ? "user/*.write" : null);
-var enableHisDemo = builder.Configuration.GetValue("His:Demo:Enabled", false);
 
 builder.Services.AddHospitalInformationSystem(
     builder.Configuration,
@@ -81,7 +80,6 @@ builder.Services.AddHospitalInformationSystem(
     enableFhirSmartOnFhir: enableFhirSmartOnFhir,
     enableFhirSubscriptions: enableFhirSubscriptions,
     enableFhirSubscriptionsPersistence: enableFhirSubscriptionsPersistence,
-    enableDemoChairBroadcast: enableHisDemo,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>

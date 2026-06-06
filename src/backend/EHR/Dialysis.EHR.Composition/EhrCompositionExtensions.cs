@@ -62,8 +62,6 @@ public static class EhrCompositionExtensions
             bool enableFhirSmartOnFhir = false,
             bool enableFhirSubscriptionsPersistence = false,
             bool enableFhirSubscriptions = false,
-            bool enableDemoSeed = false,
-            bool enableRegistrationSimulator = false,
             Action<FhirBuilder>? configureFhir = null,
             Action<IServiceCollection>? configureTransponderTransport = null)
         {
@@ -273,12 +271,6 @@ public static class EhrCompositionExtensions
                     Description: "Fires when a lab result is received for an EHR patient. Filter by patient, LOINC code, or abnormal flag.",
                     FilterParameterNames: ["patient", "code", "abnormal"])));
             }
-
-            if (enableDemoSeed)
-                services.AddHostedService<Demo.EhrDemoSeeder>();
-
-            if (enableRegistrationSimulator)
-                services.AddHostedService<Demo.EhrPatientRegistrationSimulator>();
 
             return services;
         }

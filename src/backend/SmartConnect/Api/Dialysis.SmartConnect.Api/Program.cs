@@ -55,12 +55,6 @@ builder.Services.AddTransponder(t =>
     t.AddConsumer<Dialysis.SmartConnect.Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent,
         Dialysis.SmartConnect.Api.Lab.LabResultBridgeConsumer>());
 
-if (builder.Configuration.GetValue("SmartConnect:Demo:Enabled", false))
-    builder.Services.AddHostedService<Dialysis.SmartConnect.Api.Demo.SmartConnectDemoSeeder>();
-
-if (builder.Configuration.GetValue("SmartConnect:Demo:Hl7Simulator", false))
-    builder.Services.AddHostedService<Dialysis.SmartConnect.Api.Demo.Hl7V2SimulatorService>();
-
 // HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
 builder.Services.AddFhirAudit();
 builder.Services.AddHipaaCompliance("smartconnect");

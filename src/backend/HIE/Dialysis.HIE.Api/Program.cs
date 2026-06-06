@@ -35,8 +35,6 @@ builder.AddModuleHost<HiePermissionCatalog>(new ModuleHostingOptions
     ],
 });
 
-var enableHieDemoSeed = builder.Configuration.GetValue("Hie:Demo:Enabled", false);
-
 builder.Services.AddHealthInformationExchange(
     builder.Configuration,
     configurePersistence: string.IsNullOrWhiteSpace(connectionString)
@@ -45,7 +43,6 @@ builder.Services.AddHealthInformationExchange(
             connectionString,
             pg => pg.MigrationsHistoryTable("__ef_migrations", "hie")),
     enableOutboxRelay: enableOutbox,
-    enableDemoSeed: enableHieDemoSeed,
     configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
         ? null
         : s => s.AddTransponderRabbitMq(o =>

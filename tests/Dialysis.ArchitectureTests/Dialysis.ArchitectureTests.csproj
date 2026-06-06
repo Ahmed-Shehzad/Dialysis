@@ -55,10 +55,6 @@
     <ProjectReference Include="../../src/backend/HIE/Dialysis.HIE.Composition/Dialysis.HIE.Composition.csproj" />
     <ProjectReference Include="../../src/backend/Lab/Dialysis.Lab.Contracts/Dialysis.Lab.Contracts.csproj" />
     <ProjectReference Include="../../src/backend/Lab/Dialysis.Lab.Orders/Dialysis.Lab.Orders.csproj" />
-    <ProjectReference Include="../../src/backend/Simulation/Dialysis.Simulation.Api/Dialysis.Simulation.Api.csproj" />
-    <ProjectReference Include="../../src/backend/Simulation/Dialysis.Simulation.Contracts/Dialysis.Simulation.Contracts.csproj" />
-    <ProjectReference Include="../../src/backend/Simulation/Dialysis.Simulation.Engine/Dialysis.Simulation.Engine.csproj" />
-    <ProjectReference Include="../../src/backend/Simulation/Dialysis.Simulation.Composition/Dialysis.Simulation.Composition.csproj" />
   </ItemGroup>
 
   <ItemGroup>

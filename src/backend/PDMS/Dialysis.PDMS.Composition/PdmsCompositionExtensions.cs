@@ -76,10 +76,6 @@ public static class PdmsCompositionExtensions
         bool enableFhirSmartOnFhir = false,
         bool enableFhirSubscriptionsPersistence = false,
         bool enableFhirSubscriptions = false,
-        bool enableDemoSeed = false,
-        bool enableVitalsTicker = false,
-        bool enableMachineTelemetrySimulator = false,
-        bool enableLifecycleSimulator = false,
         Action<FhirBuilder>? configureFhir = null,
         Action<IServiceCollection>? configureTransponderTransport = null)
         {
@@ -287,18 +283,6 @@ public static class PdmsCompositionExtensions
                     Description: "Fires when an intradialytic adverse event is recorded. Filter by patient, adverse-event kind, or severity.",
                     FilterParameterNames: ["patient", "kind", "severity"])));
             }
-
-            if (enableDemoSeed)
-                services.AddHostedService<Demo.PdmsDemoSeeder>();
-
-            if (enableVitalsTicker)
-                services.AddHostedService<Demo.VitalsTickerService>();
-
-            if (enableMachineTelemetrySimulator)
-                services.AddHostedService<Demo.MachineTelemetrySimulatorService>();
-
-            if (enableLifecycleSimulator)
-                services.AddHostedService<Demo.SessionLifecycleSimulator>();
 
             return services;
         }
