@@ -17,6 +17,10 @@ public static class QueryServiceCollectionExtensions
             services.AddHttpClient(PartnerFhirQueryClient.HttpClientName);
             services.AddScoped<IPartnerFhirQuery, PartnerFhirQueryClient>();
             services.AddScoped<IPartnerPatientDiscovery, PartnerPatientDiscoveryClient>();
+            // XCA document query/retrieve — one instance serves both ports.
+            services.AddScoped<Xca.XcaDocumentClient>();
+            services.AddScoped<Xca.IXcaQueryClient>(sp => sp.GetRequiredService<Xca.XcaDocumentClient>());
+            services.AddScoped<Xca.IXcaRetrieveClient>(sp => sp.GetRequiredService<Xca.XcaDocumentClient>());
             return services;
         }
     }

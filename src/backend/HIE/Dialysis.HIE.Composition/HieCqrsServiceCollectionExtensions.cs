@@ -9,6 +9,7 @@ using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
 using Dialysis.HIE.Outbound.Features.ListPartners;
 using Dialysis.HIE.Outbound.Features.RetryOutboundBundle;
+using Dialysis.HIE.Query.Features.PullPartnerDocuments;
 using Dialysis.HIE.Query.Features.PullPartnerRecords;
 using Dialysis.Module.Hosting.Pipeline;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,7 @@ internal static class HieCqrsServiceCollectionExtensions
                 cqrs.AddCommandBehavior<RetryOutboundBundleCommand, Unit, AuthorizationPipelineBehavior<RetryOutboundBundleCommand, Unit>>();
                 cqrs.AddCommandBehavior<GenerateCareSummaryCommand, CareSummaryResult, AuthorizationPipelineBehavior<GenerateCareSummaryCommand, CareSummaryResult>>();
                 cqrs.AddCommandBehavior<PullPartnerRecordsCommand, PartnerPullResult, AuthorizationPipelineBehavior<PullPartnerRecordsCommand, PartnerPullResult>>();
+                cqrs.AddCommandBehavior<PullPartnerDocumentsCommand, PartnerPullResult, AuthorizationPipelineBehavior<PullPartnerDocumentsCommand, PartnerPullResult>>();
                 cqrs.AddQueryBehavior<ListConsentsForPatientQuery, IReadOnlyList<ConsentDto>, AuthorizationPipelineBehavior<ListConsentsForPatientQuery, IReadOnlyList<ConsentDto>>>();
                 cqrs.AddQueryBehavior<ListOutboundBundlesQuery, IReadOnlyList<OutboundBundleDto>, AuthorizationPipelineBehavior<ListOutboundBundlesQuery, IReadOnlyList<OutboundBundleDto>>>();
                 cqrs.AddQueryBehavior<ListInboundResourcesQuery, IReadOnlyList<InboundResourceDto>, AuthorizationPipelineBehavior<ListInboundResourcesQuery, IReadOnlyList<InboundResourceDto>>>();

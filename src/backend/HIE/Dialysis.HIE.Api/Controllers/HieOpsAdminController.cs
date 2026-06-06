@@ -7,6 +7,7 @@ using Dialysis.HIE.Outbound.Features.GenerateCareSummary;
 using Dialysis.HIE.Outbound.Features.ListOutboundBundles;
 using Dialysis.HIE.Outbound.Features.ListPartners;
 using Dialysis.HIE.Outbound.Features.RetryOutboundBundle;
+using Dialysis.HIE.Query.Features.PullPartnerDocuments;
 using Dialysis.HIE.Query.Features.PullPartnerRecords;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -105,6 +106,24 @@ public sealed class HieOpsAdminController : ControllerBase
     {
         var result = await _cqrs.SendCommandAsync<PullPartnerRecordsCommand, PartnerPullResult>(
             new PullPartnerRecordsCommand(partnerId, query, subject, purpose), cancellationToken).ConfigureAwait(false);
+        return OkResource(result);
+    }
+
+    /// <summary>
+    /// Cross-gateway document pull (XCA): queries a partner registry for the patient's documents,
+    /// retrieves their content, and lands them through inbound ingestion. <paramref name="patient"/>
+    /// is the partner-side patient id; optional <c>?purpose=</c> sets the TEFCA permitted purpose.
+    /// </summary>
+    [HttpPost("query/partner/{partnerId:guid}/documents")]
+    [ProducesResponseType(typeof(ResourceEnvelope<PartnerPullResult>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PullPartnerDocumentsAsync(
+        Guid partnerId,
+        [FromQuery] string patient,
+        [FromQuery] string? purpose = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _cqrs.SendCommandAsync<PullPartnerDocumentsCommand, PartnerPullResult>(
+            new PullPartnerDocumentsCommand(partnerId, patient, purpose), cancellationToken).ConfigureAwait(false);
         return OkResource(result);
     }
 
