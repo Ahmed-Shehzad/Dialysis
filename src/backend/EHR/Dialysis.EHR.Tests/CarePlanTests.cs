@@ -66,6 +66,14 @@ public sealed class CarePlanTests
         public Task<CarePlan?> GetActiveByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
             Task.FromResult<CarePlan?>(_plan.PatientId == patientId ? _plan : null);
         public void Add(CarePlan carePlan) { }
+        public async IAsyncEnumerable<CarePlan> StreamAllAsync(
+            DateTimeOffset? since,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            _ = since;
+            yield return _plan;
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
     }
 
     private sealed class NoopUnitOfWork : IUnitOfWork

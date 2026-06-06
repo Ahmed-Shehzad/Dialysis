@@ -20,6 +20,17 @@ public sealed class CarePlanRepository : ICarePlanRepository
             .FirstOrDefaultAsync(cancellationToken);
 
     public void Add(CarePlan carePlan) => _db.CarePlans.Add(carePlan);
+
+    public IAsyncEnumerable<CarePlan> StreamAllAsync(DateTimeOffset? since, CancellationToken cancellationToken = default)
+    {
+        // `since` filters on plan creation. Goal-status changes to an already-created plan don't move
+        // the cursor; a full re-export (drop `_since`) picks those up. CarePlans change slowly, so this
+        // is an acceptable trade-off — the same incremental-export shape the other chart feeders use.
+        var query = _db.CarePlans.AsNoTracking().OrderBy(c => c.CreatedAtUtc).ThenBy(c => c.Id).AsQueryable();
+        if (since is { } cutoff)
+            query = query.Where(c => c.CreatedAtUtc >= cutoff.UtcDateTime);
+        return query.AsAsyncEnumerable();
+    }
 }
 
 public sealed class AllergyRepository : IAllergyRepository
