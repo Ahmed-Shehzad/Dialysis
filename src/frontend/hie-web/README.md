@@ -2,13 +2,13 @@
 
 The HIE browser app: **FHIR partners, consent, subscriptions, documents and TEFCA/QHIN administration**. Backed by the **`Dialysis.HIE.Bff`** per-context BFF.
 
-| | |
-|---|---|
-| Context base / router basename | `/hie` |
-| Standalone dev port (Vite) | `5335` |
-| Backing BFF | `Dialysis.HIE.Bff` (`hie-bff`, port `5305`) |
-| BFF aggregations | SmartConnect (DICOM), HIS, EHR, PDMS (subscription/authoring catalogs) |
-| Real-time push | No |
+|                                |                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| Context base / router basename | `/hie`                                                                 |
+| Standalone dev port (Vite)     | `5335`                                                                 |
+| Backing BFF                    | `Dialysis.HIE.Bff` (`hie-bff`, port `5305`)                            |
+| BFF aggregations               | SmartConnect (DICOM), HIS, EHR, PDMS (subscription/authoring catalogs) |
+| Real-time push                 | No                                                                     |
 
 ## What it does
 

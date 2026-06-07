@@ -2,14 +2,14 @@
 
 > **Naming note:** the folder is `identity-web` but the app is the cross-cutting **Admin console** (router base `/admin`) — identity/role administration plus HIPAA & GDPR surfaces. It is **not** the login service; sign-in is handled by the BFFs + Keycloak (see [Identity ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md)).
 
-| | |
-|---|---|
-| Context base / router basename | `/admin` |
-| Standalone dev port (Vite) | `5336` |
-| Backing BFF | `Dialysis.Admin.Bff` (`admin-bff`, port `5306`) |
-| BFF primary API | HIE host (data-protection / HIPAA live there) |
-| BFF aggregations | HIS, EHR, PDMS, SmartConnect (DICOM) |
-| Real-time push | No |
+|                                |                                                 |
+| ------------------------------ | ----------------------------------------------- |
+| Context base / router basename | `/admin`                                        |
+| Standalone dev port (Vite)     | `5336`                                          |
+| Backing BFF                    | `Dialysis.Admin.Bff` (`admin-bff`, port `5306`) |
+| BFF primary API                | HIE host (data-protection / HIPAA live there)   |
+| BFF aggregations               | HIS, EHR, PDMS, SmartConnect (DICOM)            |
+| Real-time push                 | No                                              |
 
 ## What it does
 

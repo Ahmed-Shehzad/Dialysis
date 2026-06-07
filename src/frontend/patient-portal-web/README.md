@@ -2,14 +2,14 @@
 
 The patient-facing browser app: **appointments, messages, medications, results and admissions** for the patient themselves. Backed by the **`Dialysis.PatientPortal.Bff`** per-context BFF.
 
-| | |
-|---|---|
-| Context base / router basename | `/portal` |
-| Standalone dev port (Vite) | `5337` |
-| Backing BFF | `Dialysis.PatientPortal.Bff` (`portal-bff`, port `5307`) |
-| BFF primary API | HIS (appointments / admissions) |
-| BFF aggregations | EHR, PDMS, HIE, SmartConnect (DICOM) |
-| Real-time push | **Yes** — `PatientPortalSecureMessageReceived`, `PatientPortalAppointmentResolved`, `AfterVisitSummaryPublished` via `/portal/events` |
+|                                |                                                                                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Context base / router basename | `/portal`                                                                                                                             |
+| Standalone dev port (Vite)     | `5337`                                                                                                                                |
+| Backing BFF                    | `Dialysis.PatientPortal.Bff` (`portal-bff`, port `5307`)                                                                              |
+| BFF primary API                | HIS (appointments / admissions)                                                                                                       |
+| BFF aggregations               | EHR, PDMS, HIE, SmartConnect (DICOM)                                                                                                  |
+| Real-time push                 | **Yes** — `PatientPortalSecureMessageReceived`, `PatientPortalAppointmentResolved`, `AfterVisitSummaryPublished` via `/portal/events` |
 
 ## What it does
 

@@ -2,13 +2,13 @@
 
 The SmartConnect browser app: a **Mirth-Connect-style operator console** for HL7 v2 inbound feeds, channels, and vendor adapters. Backed by the **`Dialysis.SmartConnect.Bff`** per-context BFF.
 
-| | |
-|---|---|
-| Context base / router basename | `/smartconnect` |
-| Standalone dev port (Vite) | `5334` |
-| Backing BFF | `Dialysis.SmartConnect.Bff` (`smartconnect-bff`, port `5304`) |
-| BFF aggregations | none |
-| Real-time push | No (`AddModuleBff` only) |
+|                                |                                                               |
+| ------------------------------ | ------------------------------------------------------------- |
+| Context base / router basename | `/smartconnect`                                               |
+| Standalone dev port (Vite)     | `5334`                                                        |
+| Backing BFF                    | `Dialysis.SmartConnect.Bff` (`smartconnect-bff`, port `5304`) |
+| BFF aggregations               | none                                                          |
+| Real-time push                 | No (`AddModuleBff` only)                                      |
 
 ## What it does
 

@@ -2,13 +2,13 @@
 
 The HIS (Hospital Information System) browser app: **patient access, scheduling, and the receptionist "today" queue**. Backed by the **`Dialysis.HIS.Bff`** per-context BFF.
 
-| | |
-|---|---|
-| Context base / router basename | `/his` |
-| Standalone dev port (Vite) | `5331` |
-| Backing BFF | `Dialysis.HIS.Bff` (`his-bff`, port `5301`) |
-| BFF aggregations | SmartConnect DICOMweb |
-| Real-time push | **Yes** — consumes `PatientAdmittedIntegrationEvent` → live today-board toasts via `/his/events` |
+|                                |                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Context base / router basename | `/his`                                                                                           |
+| Standalone dev port (Vite)     | `5331`                                                                                           |
+| Backing BFF                    | `Dialysis.HIS.Bff` (`his-bff`, port `5301`)                                                      |
+| BFF aggregations               | SmartConnect DICOMweb                                                                            |
+| Real-time push                 | **Yes** — consumes `PatientAdmittedIntegrationEvent` → live today-board toasts via `/his/events` |
 
 ## What it does
 
