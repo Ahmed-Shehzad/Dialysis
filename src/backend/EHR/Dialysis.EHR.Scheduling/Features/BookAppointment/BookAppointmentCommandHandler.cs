@@ -1,4 +1,5 @@
 using Dialysis.CQRS.Commands;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Scheduling.Domain;
 using Dialysis.EHR.Scheduling.Ports;
@@ -18,7 +19,7 @@ public sealed class BookAppointmentCommandHandler : ICommandHandler<BookAppointm
     public async Task<Guid> HandleAsync(BookAppointmentCommand request, CancellationToken cancellationToken)
     {
         if (await _appointments.HasOverlapAsync(request.ProviderId, request.StartUtc, request.EndUtc, cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("Provider has an overlapping appointment in this window.");
+            throw new DomainException("Provider has an overlapping appointment in this window.");
 
         var id = Guid.CreateVersion7();
         var appointment = Appointment.Book(

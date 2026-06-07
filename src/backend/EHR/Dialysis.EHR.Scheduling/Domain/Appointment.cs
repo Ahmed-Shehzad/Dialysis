@@ -1,3 +1,4 @@
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Primitives;
 using Dialysis.EHR.Contracts.Integration;
 
@@ -42,11 +43,11 @@ public sealed class Appointment : AggregateRoot<Guid>
         string encounterClassCode,
         string? visitReason)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (providerId == Guid.Empty) throw new ArgumentException("Provider required.", nameof(providerId));
-        if (endUtc <= startUtc) throw new ArgumentException("End must follow start.", nameof(endUtc));
-        if (startUtc < DateTime.UtcNow.AddMinutes(-5)) throw new ArgumentException("Cannot book an appointment in the past.", nameof(startUtc));
-        ArgumentException.ThrowIfNullOrWhiteSpace(encounterClassCode);
+        if (patientId == Guid.Empty) throw new DomainException("Patient required.");
+        if (providerId == Guid.Empty) throw new DomainException("Provider required.");
+        if (endUtc <= startUtc) throw new DomainException("End must follow start.");
+        if (startUtc < DateTime.UtcNow.AddMinutes(-5)) throw new DomainException("Cannot book an appointment in the past.");
+        if (string.IsNullOrWhiteSpace(encounterClassCode)) throw new DomainException("Encounter class code required.");
 
         var appointment = new Appointment(id)
         {
@@ -77,8 +78,8 @@ public sealed class Appointment : AggregateRoot<Guid>
     public void Reschedule(DateTime newStartUtc, DateTime newEndUtc)
     {
         if (Status != AppointmentStatus.Scheduled)
-            throw new InvalidOperationException($"Cannot reschedule appointment in status {Status}.");
-        if (newEndUtc <= newStartUtc) throw new ArgumentException("End must follow start.", nameof(newEndUtc));
+            throw new DomainException($"Cannot reschedule appointment in status {Status}.");
+        if (newEndUtc <= newStartUtc) throw new DomainException("End must follow start.");
 
         StartUtc = newStartUtc;
         EndUtc = newEndUtc;
@@ -96,8 +97,8 @@ public sealed class Appointment : AggregateRoot<Guid>
     public void Cancel(string reasonCode)
     {
         if (Status is AppointmentStatus.Cancelled or AppointmentStatus.Completed)
-            throw new InvalidOperationException($"Cannot cancel appointment in status {Status}.");
-        ArgumentException.ThrowIfNullOrWhiteSpace(reasonCode);
+            throw new DomainException($"Cannot cancel appointment in status {Status}.");
+        if (string.IsNullOrWhiteSpace(reasonCode)) throw new DomainException("Cancellation reason required.");
 
         Status = AppointmentStatus.Cancelled;
         CancellationReasonCode = reasonCode.Trim();
@@ -114,7 +115,7 @@ public sealed class Appointment : AggregateRoot<Guid>
     public void CheckIn(DateTime checkedInAtUtc)
     {
         if (Status != AppointmentStatus.Scheduled)
-            throw new InvalidOperationException($"Cannot check in appointment in status {Status}.");
+            throw new DomainException($"Cannot check in appointment in status {Status}.");
 
         Status = AppointmentStatus.CheckedIn;
         CheckedInAtUtc = checkedInAtUtc;
@@ -131,14 +132,14 @@ public sealed class Appointment : AggregateRoot<Guid>
     public void Start()
     {
         if (Status != AppointmentStatus.CheckedIn)
-            throw new InvalidOperationException("Patient must be checked in first.");
+            throw new DomainException("Patient must be checked in first.");
         Status = AppointmentStatus.InProgress;
     }
 
     public void Complete(DateTime completedAtUtc)
     {
         if (Status != AppointmentStatus.InProgress)
-            throw new InvalidOperationException("Appointment must be in progress to complete.");
+            throw new DomainException("Appointment must be in progress to complete.");
         Status = AppointmentStatus.Completed;
         CompletedAtUtc = completedAtUtc;
     }
@@ -146,7 +147,7 @@ public sealed class Appointment : AggregateRoot<Guid>
     public void MarkNoShow()
     {
         if (Status != AppointmentStatus.Scheduled)
-            throw new InvalidOperationException($"Cannot mark no-show in status {Status}.");
+            throw new DomainException($"Cannot mark no-show in status {Status}.");
         Status = AppointmentStatus.NoShow;
     }
 }

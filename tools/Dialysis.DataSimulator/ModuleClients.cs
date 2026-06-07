@@ -354,7 +354,12 @@ public sealed class EhrClient : IEhrClient
     /// <inheritdoc />
     public Task RequestPortalAppointmentAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        var earliest = DateTime.UtcNow.Date.AddDays(3).AddHours(9);
+        // Stagger the preferred slot deterministically per patient across 5 business days x 8 hourly
+        // slots. Staff approve a request by booking the *demo* provider at this preferred time, so if
+        // every request shared one slot the second approval would always collide (overlap -> 409).
+        var bytes = patientId.ToByteArray();
+        var slot = (bytes[0] | (bytes[1] << 8)) % 40;
+        var earliest = DateTime.UtcNow.Date.AddDays(3 + (slot / 8)).AddHours(9 + (slot % 8));
         return HttpJson.PostAsync(_client, $"api/v1.0/portal/appointment-requests/patients/{patientId}",
             new
             {

@@ -1,3 +1,4 @@
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Primitives;
 using Dialysis.EHR.Contracts.Integration;
 
@@ -42,12 +43,12 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
         DateTime earliestPreferredUtc,
         DateTime latestPreferredUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        ArgumentException.ThrowIfNullOrWhiteSpace(reasonText);
+        if (patientId == Guid.Empty) throw new DomainException("Patient required.");
+        if (string.IsNullOrWhiteSpace(reasonText)) throw new DomainException("Reason required.");
         if (latestPreferredUtc <= earliestPreferredUtc)
-            throw new ArgumentException("Latest preferred must be after earliest preferred.", nameof(latestPreferredUtc));
+            throw new DomainException("Latest preferred must be after earliest preferred.");
         if (earliestPreferredUtc < DateTime.UtcNow.AddDays(-1))
-            throw new ArgumentException("Cannot request an appointment in the past.", nameof(earliestPreferredUtc));
+            throw new DomainException("Cannot request an appointment in the past.");
 
         var request = new PortalAppointmentRequest(id)
         {
@@ -74,7 +75,7 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
     public void Approve(Guid createdAppointmentId, string? staffNote = null)
     {
         if (Status != PortalAppointmentRequestStatus.Pending)
-            throw new InvalidOperationException($"Cannot approve a request in status {Status}.");
+            throw new DomainException($"Cannot approve a request in status {Status}.");
         Status = PortalAppointmentRequestStatus.Approved;
         CreatedAppointmentId = createdAppointmentId;
         StaffNote = string.IsNullOrWhiteSpace(staffNote) ? null : staffNote.Trim();
@@ -84,8 +85,8 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
     public void Decline(string staffNote)
     {
         if (Status != PortalAppointmentRequestStatus.Pending)
-            throw new InvalidOperationException($"Cannot decline a request in status {Status}.");
-        ArgumentException.ThrowIfNullOrWhiteSpace(staffNote);
+            throw new DomainException($"Cannot decline a request in status {Status}.");
+        if (string.IsNullOrWhiteSpace(staffNote)) throw new DomainException("Staff note required.");
         Status = PortalAppointmentRequestStatus.Declined;
         StaffNote = staffNote.Trim();
         RaiseResolved(approved: false);
@@ -105,7 +106,7 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
     public void Cancel()
     {
         if (Status != PortalAppointmentRequestStatus.Pending)
-            throw new InvalidOperationException($"Cannot cancel a request in status {Status}.");
+            throw new DomainException($"Cannot cancel a request in status {Status}.");
         Status = PortalAppointmentRequestStatus.Cancelled;
     }
 }
