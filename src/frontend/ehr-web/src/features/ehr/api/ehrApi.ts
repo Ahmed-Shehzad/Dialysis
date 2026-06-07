@@ -389,7 +389,7 @@ export const fetchEmSuggestion = async (
 
 export const fetchReferrals = async (patientId: string, take = 20): Promise<ReferralListItem[]> => {
   const response = await apiClient.get<ReferralListItem[]>(
-    `/ehr/api/v1.0/patients/${patientId}/referrals`,
+    `/ehr/api/v1.0/clinical/patients/${patientId}/referrals`,
     { params: { take } },
   );
   return response.data ?? [];

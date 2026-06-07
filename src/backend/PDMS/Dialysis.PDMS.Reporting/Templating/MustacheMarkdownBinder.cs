@@ -21,7 +21,7 @@ public sealed class MustacheMarkdownBinder
         .Build();
 
     /// <summary>Binds the Mustache placeholders and returns the rendered Markdown body (still Markdown).</summary>
-    public string BindMarkdown(string templateBody, IReadOnlyDictionary<string, object?> values)
+    public static string BindMarkdown(string templateBody, IReadOnlyDictionary<string, object?> values)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateBody);
         return _stubble.Render(templateBody, values);

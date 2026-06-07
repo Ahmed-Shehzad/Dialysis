@@ -68,6 +68,71 @@ public sealed class InventoryController : ControllerBase
         _inventory.Update(item);
         return Ok(InventoryItemDto.From(item));
     }
+
+    /// <summary>
+    /// Registers a new inventory row (one per <c>(medication, lot)</c>). Stock then flows through
+    /// <c>receive</c> / <c>adjust</c> and is deducted by the OnMedicationAdministered consumer.
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(InventoryItemDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateAsync(
+        [FromBody] CreateInventoryItemRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        MedicationInventoryItem item;
+        try
+        {
+            item = new MedicationInventoryItem(
+                Guid.CreateVersion7(),
+                new MedicationCoding(request.MedicationCodeSystem, request.MedicationCode, request.MedicationDisplay),
+                request.LotNumber,
+                request.ExpiryUtc,
+                request.InitialOnHandUnits,
+                request.Threshold);
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        await _inventory.AddAsync(item, cancellationToken).ConfigureAwait(false);
+        return CreatedAtAction(nameof(ListAsync), null, InventoryItemDto.From(item));
+    }
+}
+
+public sealed record CreateInventoryItemRequest
+{
+    public CreateInventoryItemRequest(string MedicationCodeSystem,
+        string MedicationCode,
+        string MedicationDisplay,
+        string LotNumber,
+        DateTime ExpiryUtc,
+        int InitialOnHandUnits,
+        int Threshold)
+    {
+        this.MedicationCodeSystem = MedicationCodeSystem;
+        this.MedicationCode = MedicationCode;
+        this.MedicationDisplay = MedicationDisplay;
+        this.LotNumber = LotNumber;
+        this.ExpiryUtc = ExpiryUtc;
+        this.InitialOnHandUnits = InitialOnHandUnits;
+        this.Threshold = Threshold;
+    }
+    public string MedicationCodeSystem { get; init; }
+    public string MedicationCode { get; init; }
+    public string MedicationDisplay { get; init; }
+    public string LotNumber { get; init; }
+    public DateTime ExpiryUtc { get; init; }
+    public int InitialOnHandUnits { get; init; }
+    public int Threshold { get; init; }
+    public void Deconstruct(out string medicationCodeSystem, out string medicationCode, out string medicationDisplay, out string lotNumber, out DateTime expiryUtc, out int initialOnHandUnits, out int threshold)
+    {
+        medicationCodeSystem = this.MedicationCodeSystem;
+        medicationCode = this.MedicationCode;
+        medicationDisplay = this.MedicationDisplay;
+        lotNumber = this.LotNumber;
+        expiryUtc = this.ExpiryUtc;
+        initialOnHandUnits = this.InitialOnHandUnits;
+        threshold = this.Threshold;
+    }
 }
 
 public sealed record ReceiveStockRequest

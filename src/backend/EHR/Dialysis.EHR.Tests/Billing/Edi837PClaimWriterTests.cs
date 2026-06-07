@@ -17,10 +17,10 @@ public sealed class Edi837PClaimWriterTests
     [Fact]
     public void Output_Starts_With_The_Isa_Header_And_Ends_With_Iea()
     {
-        var writer = new Edi837PClaimWriter();
+        _ = new Edi837PClaimWriter();
         var ctx = SampleContext();
 
-        var bytes = writer.Write(ctx);
+        var bytes = Edi837PClaimWriter.Write(ctx);
         var text = Encoding.ASCII.GetString(bytes);
 
         text.ShouldStartWith("ISA*");
@@ -30,10 +30,10 @@ public sealed class Edi837PClaimWriterTests
     [Fact]
     public void Each_Charge_Produces_One_Lx_And_One_Sv1_Segment()
     {
-        var writer = new Edi837PClaimWriter();
+        _ = new Edi837PClaimWriter();
         var ctx = SampleContext();
 
-        var text = Encoding.ASCII.GetString(writer.Write(ctx));
+        var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));
 
         CountSegments(text, "LX").ShouldBe(ctx.Charges.Count);
         CountSegments(text, "SV1").ShouldBe(ctx.Charges.Count);
@@ -45,7 +45,7 @@ public sealed class Edi837PClaimWriterTests
         var writer = new Edi837PClaimWriter();
         var ctx = SampleContext();
 
-        var text = Encoding.ASCII.GetString(writer.Write(ctx));
+        var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));
 
         // Pick the SE segment and parse its declared count.
         var seSegment = text.Split('~').First(s => s.StartsWith("SE*", StringComparison.Ordinal));
@@ -63,7 +63,7 @@ public sealed class Edi837PClaimWriterTests
         var writer = new Edi837PClaimWriter();
         var ctx = SampleContext();
 
-        var text = Encoding.ASCII.GetString(writer.Write(ctx));
+        var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));
         var clmSegment = text.Split('~').First(s => s.StartsWith("CLM*", StringComparison.Ordinal));
 
         clmSegment.ShouldContain("*500.00*");
@@ -75,7 +75,7 @@ public sealed class Edi837PClaimWriterTests
         var writer = new Edi837PClaimWriter();
         var ctx = SampleContext() with { DiagnosisCodes = ["N18.6", "I12.9"] };
 
-        var text = Encoding.ASCII.GetString(writer.Write(ctx));
+        var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));
         var hiSegment = text.Split('~').First(s => s.StartsWith("HI*", StringComparison.Ordinal));
 
         hiSegment.ShouldContain("ABK:N18.6");

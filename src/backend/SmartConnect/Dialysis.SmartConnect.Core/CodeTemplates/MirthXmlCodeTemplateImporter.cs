@@ -127,7 +127,7 @@ public sealed class MirthXmlCodeTemplateImporter
         };
     }
 
-    private CodeTemplate ImportTemplate(XElement node, Guid libraryId, int position)
+    private static CodeTemplate ImportTemplate(XElement node, Guid libraryId, int position)
     {
         var id = ParseGuid(node.Element("id")?.Value) ?? Guid.CreateVersion7();
         var name = node.Element("name")?.Value ?? "Imported template";
@@ -156,7 +156,8 @@ public sealed class MirthXmlCodeTemplateImporter
             foreach (var child in contextsNode.Elements())
             {
                 var value = child.Value?.Trim();
-                if (string.IsNullOrWhiteSpace(value)) continue;
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
                 if (_mirthContextNameMap.TryGetValue(value, out var mappedByName))
                 {
                     contexts.Add(mappedByName);
@@ -187,19 +188,22 @@ public sealed class MirthXmlCodeTemplateImporter
 
     private static Guid? ParseGuid(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
         return Guid.TryParse(value, out var g) ? g : null;
     }
 
     private static int? ParseInt(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
         return int.TryParse(value, out var i) ? i : null;
     }
 
     private static DateTimeOffset ParseTimestamp(XElement? node)
     {
-        if (node is null) return DateTimeOffset.UtcNow;
+        if (node is null)
+            return DateTimeOffset.UtcNow;
         // Mirth's typical shape: <lastModified><time>1234567890</time><timezone>UTC</timezone></lastModified>
         var timeStr = node.Element("time")?.Value ?? node.Value?.Trim();
         if (long.TryParse(timeStr, out var millis) && millis > 0)
@@ -215,11 +219,14 @@ public sealed class MirthXmlCodeTemplateImporter
 
     private static string? ExtractLeadingJsDoc(string code)
     {
-        if (string.IsNullOrWhiteSpace(code)) return null;
+        if (string.IsNullOrWhiteSpace(code))
+            return null;
         var trimmed = code.TrimStart();
-        if (!trimmed.StartsWith("/**", StringComparison.Ordinal)) return null;
+        if (!trimmed.StartsWith("/**", StringComparison.Ordinal))
+            return null;
         var end = trimmed.IndexOf("*/", StringComparison.Ordinal);
-        if (end <= 0) return null;
+        if (end <= 0)
+            return null;
         return trimmed[..(end + 2)];
     }
 }

@@ -8,8 +8,6 @@ namespace Dialysis.EHR.Tests.PatientChart;
 
 public sealed class VitalSignOpenEhrProjectorTests
 {
-    private static readonly VitalSignOpenEhrProjector _sut = new();
-
     [Fact]
     public void Bodyweight_Loinc_Projects_To_Body_Weight_Archetype()
     {
@@ -21,7 +19,7 @@ public sealed class VitalSignOpenEhrProjectorTests
             unitCode: "kg",
             observedAtUtc: DateTime.UtcNow);
 
-        var projection = _sut.Project(reading);
+        var projection = VitalSignOpenEhrProjector.Project(reading);
 
         projection.ShouldNotBeNull();
         projection.ArchetypeId.ShouldBe(OpenEhrArchetypes.BodyWeight);
@@ -40,6 +38,6 @@ public sealed class VitalSignOpenEhrProjectorTests
             unitCode: "1",
             observedAtUtc: DateTime.UtcNow);
 
-        _sut.Project(reading).ShouldBeNull();
+        VitalSignOpenEhrProjector.Project(reading).ShouldBeNull();
     }
 }

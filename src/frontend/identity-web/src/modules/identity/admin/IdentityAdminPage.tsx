@@ -61,7 +61,7 @@ export const IdentityAdminPage = () => {
         quickActions={[
           {
             label: "HIPAA safeguards",
-            to: "/admin/hipaa",
+            to: "/hipaa",
             hint: "Federated safeguard health-check across every module",
           },
         ]}

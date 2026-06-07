@@ -2,9 +2,10 @@ import { apiClient } from "@/lib/api/apiClient";
 
 /**
  * FHIR R4 Subscription Backport endpoints are mapped by the building block on each module
- * host at `/fhir/...` and exposed through the gateway under `/fhir/{module}/...`
- * (YARP routes `fhir-his`, `fhir-ehr`, `fhir-pdms`). Each module publishes its own
- * SubscriptionTopic catalog and broadcasts matching integration events.
+ * host at `/fhir/...`. hie-web reaches them through the hie-bff cross-context aggregation
+ * (`/hie/api/_x/{module}/{rest}` → `{module}-api/{rest}`, bearer-forwarded), so
+ * `/hie/api/_x/ehr/fhir/SubscriptionTopic` hits the EHR host's `/fhir/SubscriptionTopic`.
+ * Each module publishes its own SubscriptionTopic catalog and broadcasts matching events.
  */
 export const SUBSCRIPTION_MODULES = ["his", "ehr", "pdms"] as const;
 export type SubscriptionModule = (typeof SUBSCRIPTION_MODULES)[number];
@@ -15,7 +16,7 @@ export const MODULE_LABELS: Record<SubscriptionModule, string> = {
   pdms: "PDMS — adverse events",
 };
 
-const fhirBase = (module: SubscriptionModule) => `/fhir/${module}`;
+const fhirBase = (module: SubscriptionModule) => `/hie/api/_x/${module}/fhir`;
 
 /** `GET /fhir/{module}/SubscriptionTopic` — the per-host topic catalog. */
 export type SubscriptionTopic = {

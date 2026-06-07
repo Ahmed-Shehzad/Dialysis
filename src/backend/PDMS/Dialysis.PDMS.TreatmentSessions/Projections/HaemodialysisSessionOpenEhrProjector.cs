@@ -10,7 +10,7 @@ namespace Dialysis.PDMS.TreatmentSessions.Projections;
 /// </summary>
 public sealed class HaemodialysisSessionOpenEhrProjector
 {
-    public OpenEhrProjection Project(DialysisSession session, HaemodialysisSessionPhase phase, DateTime phaseAtUtc)
+    public static OpenEhrProjection Project(DialysisSession session, HaemodialysisSessionPhase phase, DateTime phaseAtUtc)
     {
         ArgumentNullException.ThrowIfNull(session);
 

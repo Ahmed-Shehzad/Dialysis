@@ -497,6 +497,18 @@ var labApi = builder.AddProject<Projects.Dialysis_Lab_Api>("lab-api")
     .WithEnvironment("Lab__Authentication__Authority", keycloakRealmUri)
     .WithEnvironment("Lab__Authentication__Audience", "account");
 
+// --- Dev-only patient-portal staff impersonation --------------------------
+// The dev realm seeds only a staff/developer persona (no patient `his_patient_id` claim), so the EHR /
+// HIE portal patient-self checks would 403 every portal request. Enabling these flags lets a staff
+// caller (who holds a clinician/operator permission) act as any patient so the portal is exercisable.
+// Gated to RUN mode so the flags are NEVER emitted into the published compose / k8s artifacts — in any
+// deployed environment the patient's own `his_patient_id` claim is the only authorization.
+if (!publishing)
+{
+    ehrApi.WithEnvironment("Ehr__Portal__AllowStaffImpersonation", "true");
+    hieApi.WithEnvironment("Hie__Portal__AllowStaffImpersonation", "true");
+}
+
 var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-bff")
     // Pin the BFF to a deterministic host port. The dialysis-bff Keycloak client only
     // accepts redirect_uris under http://localhost:5275/* (and the gateway port). Letting
@@ -577,8 +589,9 @@ IResourceBuilder<ProjectResource> AddContextBff(
     IResourceBuilder<ProjectResource> bff,
     int port,
     IResourceBuilder<ProjectResource> moduleApi,
-    IResourceBuilder<ParameterResource> clientSecret) =>
-    bff.WithEndpoint("http", e =>
+    IResourceBuilder<ParameterResource> clientSecret)
+{
+    var configured = bff.WithEndpoint("http", e =>
         {
             e.Port = port;
             e.TargetPort = port;
@@ -599,6 +612,14 @@ IResourceBuilder<ProjectResource> AddContextBff(
         .WithReference(valkey).WaitFor(valkey)
         .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
         .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
+
+    // DEV-ONLY: let the data simulator's service-account bearer flow through the BFF to the module API,
+    // so it can drive writes via the full BFF routing path. Run-mode only — never published to artifacts.
+    if (!publishing)
+        configured.WithEnvironment("Bff__Module__AllowServiceBearerPassthrough", "true");
+
+    return configured;
+}
 
 var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret)
     .WaitFor(smartConnectApi)
@@ -622,8 +643,15 @@ var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms
 var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret);
 var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret)
     .WaitFor(smartConnectApi)
+    .WaitFor(hisApi).WaitFor(ehrApi).WaitFor(pdmsApi)
     // DICOMweb imaging viewer reachable from this context — /hie/api/_x/dicom/dicom-web/* → SmartConnect.
-    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
+    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"))
+    // FHIR R4 Subscription catalog + authoring: hie-web's Subscriptions / FHIR-authoring pages reach
+    // the per-host /fhir/* endpoints of HIS/EHR/PDMS through these aggregations (bearer-forwarded),
+    // e.g. /hie/api/_x/ehr/fhir/SubscriptionTopic → ehr-api /fhir/SubscriptionTopic.
+    .WithEnvironment("Bff__Module__Aggregations__1__Address", hisApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__2__Address", ehrApi.GetEndpoint("http"))
+    .WithEnvironment("Bff__Module__Aggregations__3__Address", pdmsApi.GetEndpoint("http"));
 // Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
 var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret)
     .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi)
@@ -640,6 +668,45 @@ var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal
     .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"))
     // DICOMweb imaging viewer for the patient portal — /portal/api/_x/dicom/dicom-web/* → SmartConnect.
     .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
+
+// --- Continuous data simulator (dev-only) ---------------------------------
+// Standalone worker that mints a Keycloak service-account bearer (client_credentials on the
+// dialysis-data-simulator client) and continuously drives consistent, related healthcare data
+// THROUGH the per-context BFFs (so the full BFF routing/aggregation path is exercised, not just the
+// module APIs) — replacing the per-module demo seeders. Declared after the BFFs because it now
+// targets them. Gated to RUN mode (never published into the compose / k8s artifacts) and behind
+// Dialysis:EnableDataSimulator (default on) so a lightweight run can opt out with
+// Dialysis__EnableDataSimulator=false. The worker also honours its own DataSimulator:Enabled /
+// IntervalSeconds / PatientsPerTick knobs. The BFFs forward the simulator's bearer only because
+// Bff__Module__AllowServiceBearerPassthrough is set (run-mode only, see AddContextBff).
+var enableDataSimulator =
+    !publishing && !string.Equals(builder.Configuration["Dialysis:EnableDataSimulator"], "false", StringComparison.OrdinalIgnoreCase);
+if (enableDataSimulator)
+{
+    // Service-account secret for the dialysis-data-simulator confidential client (client_credentials
+    // grant). Default matches src/backend/Identity/keycloak/dialysis-realm.json; override per env.
+    // Declared inside the run-mode gate so it never leaks into the compose / k8s publish artifacts.
+    var dataSimulatorSecret = builder.AddParameter("data-simulator-client-secret", "data-simulator-dev-secret-change-me", secret: true);
+
+    builder.AddProject<Projects.Dialysis_DataSimulator>("data-simulator")
+        .WaitFor(keycloak)
+        .WaitFor(ehrBff).WaitFor(hisBff).WaitFor(hieBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(labApi)
+        // Authority is the realm base; the worker appends /protocol/openid-connect/token itself.
+        .WithEnvironment("DataSimulator__Auth__Authority", keycloakRealmUri)
+        .WithEnvironment("DataSimulator__Auth__ClientSecret", dataSimulatorSecret)
+        // Route every write THROUGH the context BFF (base path + trailing slash so the worker's
+        // relative `api/v1.0/...` paths resolve under it). EHR/HIS/PDMS/HIE go through their own BFF;
+        // the headless Lab context is reached through the EHR BFF's _x/lab aggregation. The BFFs are
+        // pinned, non-proxied endpoints bound to localhost:<port> — interpolating their EndpointReference
+        // yields a `tcp://` URL, so use literal http URLs (same pattern as the gateway's identity cluster).
+        .WithEnvironment("DataSimulator__Modules__Ehr", "http://localhost:5302/ehr/")
+        .WithEnvironment("DataSimulator__Modules__His", "http://localhost:5301/his/")
+        .WithEnvironment("DataSimulator__Modules__Pdms", "http://localhost:5303/pdms/")
+        .WithEnvironment("DataSimulator__Modules__Hie", "http://localhost:5305/hie/")
+        // SmartConnect admin API (re-mounted under /api/v1/admin) reached via the SmartConnect BFF.
+        .WithEnvironment("DataSimulator__Modules__SmartConnect", "http://localhost:5304/smartconnect/")
+        .WithEnvironment("DataSimulator__Modules__Lab", "http://localhost:5302/ehr/api/_x/lab/");
+}
 
 IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
     builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")

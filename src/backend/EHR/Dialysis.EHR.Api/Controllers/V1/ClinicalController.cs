@@ -14,6 +14,7 @@ using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.Registration.Features.RegisterPatient;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.Module.Contracts.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,20 +29,30 @@ public sealed class ClinicalController : ControllerBase
     public ClinicalController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpPost("patients")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> RegisterPatientAsync(
         [FromBody] RegisterPatientRequest body,
         CancellationToken cancellationToken)
     {
-        var id = await _gateway.SendCommandAsync<RegisterPatientCommand, Guid>(
-            new RegisterPatientCommand(
-                body.MedicalRecordNumber,
-                body.FamilyName,
-                body.GivenName,
-                body.MiddleName,
-                body.DateOfBirth,
-                body.SexAtBirthCode,
-                body.PreferredLanguageCode),
-            cancellationToken).ConfigureAwait(false);
+        Guid id;
+        try
+        {
+            id = await _gateway.SendCommandAsync<RegisterPatientCommand, Guid>(
+                new RegisterPatientCommand(
+                    body.MedicalRecordNumber,
+                    body.FamilyName,
+                    body.GivenName,
+                    body.MiddleName,
+                    body.DateOfBirth,
+                    body.SexAtBirthCode,
+                    body.PreferredLanguageCode),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (DomainException ex)
+        {
+            // e.g. the MRN is already in use — a conflict with existing state, not a server fault.
+            return Conflict(new { error = ex.Message });
+        }
         return Created($"/api/v1.0/patients/{id}", new { id });
     }
 

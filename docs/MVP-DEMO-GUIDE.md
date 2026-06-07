@@ -387,10 +387,10 @@ The seeders are idempotent, so on a soft reset the demo patients / flows persist
 | PDMS | POST | `/api/pdms/api/v1.0/sessions/{id}/complete` | Live Vitals |
 | PDMS | POST | `/api/pdms/api/v1.0/sessions/{id}/abort` | Live Vitals |
 | PDMS | WS | `/hubs/vitals` (`JoinSessionAsync` → `reading` events) | Live Vitals |
-| SmartConnect | GET | `/api/smartconnect/smartconnect/v1/admin/flows` | Integrations |
-| SmartConnect | GET | `/api/smartconnect/smartconnect/v1/admin/messages` | Integrations |
-| SmartConnect | POST | `/api/smartconnect/smartconnect/v1/admin/flows/{id}/{start|pause|stop}` | Integrations |
-| SmartConnect | POST | `/api/smartconnect/smartconnect/v1/admin/messages/{id}/reprocess` | Integrations |
+| SmartConnect | GET | `/smartconnect/api/v1/admin/flows` | Integrations |
+| SmartConnect | GET | `/smartconnect/api/v1/admin/messages` | Integrations |
+| SmartConnect | POST | `/smartconnect/api/v1/admin/flows/{id}/{start|pause|stop}` | Integrations |
+| SmartConnect | POST | `/smartconnect/api/v1/admin/messages/{id}/reprocess` | Integrations |
 | HIE | GET | `/api/hie/api/v1.0/hie/consents/patient/{id}` | Patient Chart |
 | HIE | POST | `/api/hie/api/v1.0/fhir/Bundle` | FHIR Exchange |
 | HIE | GET | `/api/hie/api/v1.0/fhir/Patient/$match` | FHIR Exchange |

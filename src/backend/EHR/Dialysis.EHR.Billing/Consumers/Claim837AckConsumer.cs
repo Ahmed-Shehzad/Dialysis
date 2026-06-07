@@ -30,8 +30,6 @@ namespace Dialysis.EHR.Billing.Consumers;
 public sealed class Claim837AckConsumer : IConsumer<EdiAcknowledgementReceivedIntegrationEvent>
 {
     private readonly IClaimRepository _claims;
-    private readonly Edi999FunctionalAckParser _ack999Parser;
-    private readonly Edi277CaAckParser _ack277Parser;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _clock;
     private readonly ILogger<Claim837AckConsumer> _logger;
@@ -55,15 +53,11 @@ public sealed class Claim837AckConsumer : IConsumer<EdiAcknowledgementReceivedIn
     /// claim's <see cref="Claim.Acknowledgements"/> history before appending.
     /// </summary>
     public Claim837AckConsumer(IClaimRepository claims,
-        Edi999FunctionalAckParser ack999Parser,
-        Edi277CaAckParser ack277Parser,
         IUnitOfWork unitOfWork,
         TimeProvider clock,
         ILogger<Claim837AckConsumer> logger)
     {
         _claims = claims;
-        _ack999Parser = ack999Parser;
-        _ack277Parser = ack277Parser;
         _unitOfWork = unitOfWork;
         _clock = clock;
         _logger = logger;
@@ -89,7 +83,7 @@ public sealed class Claim837AckConsumer : IConsumer<EdiAcknowledgementReceivedIn
 
     private async Task Handle999Async(EdiAcknowledgementReceivedIntegrationEvent message, CancellationToken ct)
     {
-        var parsed = _ack999Parser.Parse(message.PayloadBytes);
+        var parsed = Edi999FunctionalAckParser.Parse(message.PayloadBytes);
         var controlNumber = parsed.OriginalGroupControlNumber ?? parsed.OriginalTransactionControlNumber;
         if (string.IsNullOrWhiteSpace(controlNumber))
         {
@@ -120,7 +114,7 @@ public sealed class Claim837AckConsumer : IConsumer<EdiAcknowledgementReceivedIn
 
     private async Task Handle277CaAsync(EdiAcknowledgementReceivedIntegrationEvent message, CancellationToken ct)
     {
-        var parsed = _ack277Parser.Parse(message.PayloadBytes);
+        var parsed = Edi277CaAckParser.Parse(message.PayloadBytes);
         var receivedAt = _clock.GetUtcNow().UtcDateTime;
         foreach (var status in parsed.ClaimStatuses)
         {

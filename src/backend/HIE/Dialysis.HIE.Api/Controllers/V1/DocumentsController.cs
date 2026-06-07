@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 using Dialysis.CQRS;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.HIE.Api.Hateoas;
 using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Documents.Features.DeleteDocument;
@@ -144,7 +145,16 @@ public sealed class DocumentsController : ControllerBase
             body.ContactInfo,
             body.Level ?? PadesConformance.B,
             body.TspCredentialId);
-        var signedId = await _cqrs.SendCommandAsync<SignDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        Guid signedId;
+        try
+        {
+            signedId = await _cqrs.SendCommandAsync<SignDocumentCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        }
+        catch (DomainException ex)
+        {
+            // e.g. attempting to sign a non-PDF document — a client error, not a server fault.
+            return BadRequest(new { error = ex.Message });
+        }
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/v1.0/documents/{signedId}";
         return Ok(new ResourceEnvelope<UploadedDocumentDto>(
             new UploadedDocumentDto(signedId),

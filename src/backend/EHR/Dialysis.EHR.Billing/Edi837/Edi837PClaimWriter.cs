@@ -36,7 +36,7 @@ public sealed class Edi837PClaimWriter
         Institutional = 1,
     }
 
-    public byte[] Write(Edi837ClaimContext context)
+    public static byte[] Write(Edi837ClaimContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         var sb = new StringBuilder(4096);

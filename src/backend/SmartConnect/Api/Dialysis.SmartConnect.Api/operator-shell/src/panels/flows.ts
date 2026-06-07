@@ -10,7 +10,7 @@ export async function renderFlows(ctx: RouteContext): Promise<void> {
   try {
     const flows = await listFlows();
     if (!Array.isArray(flows) || flows.length === 0) {
-      status.textContent = "No flows yet. POST a flow to /smartconnect/v1/admin/flows or use import.";
+      status.textContent = "No flows yet. POST a flow to /api/v1/admin/flows or use import.";
       return;
     }
     status.remove();
@@ -21,7 +21,7 @@ export async function renderFlows(ctx: RouteContext): Promise<void> {
         el("td", {}, el("code", {}, f.id)),
         el("td", {}, f.runtimeState ?? "—"),
         el("td", {}, el("a", {
-          href: `/smartconnect/v1/admin/flows/${encodeURIComponent(f.id)}/statistics`,
+          href: `/api/v1/admin/flows/${encodeURIComponent(f.id)}/statistics`,
           target: "_blank", rel: "noopener",
         }, "stats")),
       ]));

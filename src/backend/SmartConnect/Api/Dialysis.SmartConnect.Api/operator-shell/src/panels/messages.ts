@@ -46,7 +46,7 @@ export async function renderMessages(ctx: RouteContext): Promise<void> {
           el("td", {}, el("code", {}, m.correlationId ?? "")),
           el("td", {}, m.detail ?? "—"),
           el("td", {}, [
-            el("a", { href: `/smartconnect/v1/admin/messages/${encodeURIComponent(m.id)}`, target: "_blank", rel: "noopener" }, "raw"),
+            el("a", { href: `/api/v1/admin/messages/${encodeURIComponent(m.id)}`, target: "_blank", rel: "noopener" }, "raw"),
             " ",
             el("a", { href: `#attachments/${encodeURIComponent(m.id)}` }, "attachments"),
             " ",

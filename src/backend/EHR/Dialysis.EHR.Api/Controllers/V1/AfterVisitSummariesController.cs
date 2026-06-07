@@ -3,9 +3,7 @@ using Dialysis.CQRS;
 using Dialysis.EHR.Api.Security;
 using Dialysis.EHR.PatientPortal.Features.AuthorAfterVisitSummary;
 using Dialysis.EHR.PatientPortal.Features.ListAfterVisitSummaries;
-using Dialysis.Module.Hosting.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace Dialysis.EHR.Api.Controllers.V1;
 
@@ -20,15 +18,15 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 public sealed class AfterVisitSummariesController : ControllerBase
 {
     private readonly ICqrsGateway _gateway;
-    private readonly bool _authorityConfigured;
+    private readonly EhrPortalAccess _portalAccess;
 
-    public AfterVisitSummariesController(ICqrsGateway gateway, IOptions<ModuleAuthenticationOptions> authOptions)
+    public AfterVisitSummariesController(ICqrsGateway gateway, EhrPortalAccess portalAccess)
     {
         _gateway = gateway;
-        _authorityConfigured = !string.IsNullOrWhiteSpace(authOptions.Value.Authority);
+        _portalAccess = portalAccess;
     }
 
-    private bool IsSelf(Guid patientId) => EhrPatientAccess.IsSelf(User, patientId, _authorityConfigured);
+    private bool IsSelf(Guid patientId) => _portalAccess.CanActAs(User, patientId);
 
     /// <summary>Clinician starts a draft after-visit summary.</summary>
     [HttpPost]

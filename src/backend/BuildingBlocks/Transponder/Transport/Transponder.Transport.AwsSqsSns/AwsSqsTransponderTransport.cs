@@ -54,7 +54,8 @@ public sealed class AwsSqsTransponderTransport : ITransponderTransport
         var o = _options.Value;
 
         var correlation = message.CorrelationId ?? Guid.NewGuid().ToString("N");
-        var deduplicationId = string.IsNullOrEmpty(message.DeduplicationId) ? correlation : message.DeduplicationId;
+
+        _ = string.IsNullOrEmpty(message.DeduplicationId) ? correlation : message.DeduplicationId;
 
         var attrs = new Dictionary<string, MessageAttributeValue>(StringComparer.Ordinal)
         {

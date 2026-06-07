@@ -7,9 +7,7 @@ using Dialysis.EHR.PatientPortal.Features.ListThreadMessages;
 using Dialysis.EHR.PatientPortal.Features.MarkMessageRead;
 using Dialysis.EHR.PatientPortal.Features.ReplySecureMessage;
 using Dialysis.EHR.PatientPortal.Features.SendSecureMessage;
-using Dialysis.Module.Hosting.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace Dialysis.EHR.Api.Controllers.V1;
 
@@ -25,15 +23,15 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 public sealed class PortalMessagesController : ControllerBase
 {
     private readonly ICqrsGateway _gateway;
-    private readonly bool _authorityConfigured;
+    private readonly EhrPortalAccess _portalAccess;
 
-    public PortalMessagesController(ICqrsGateway gateway, IOptions<ModuleAuthenticationOptions> authOptions)
+    public PortalMessagesController(ICqrsGateway gateway, EhrPortalAccess portalAccess)
     {
         _gateway = gateway;
-        _authorityConfigured = !string.IsNullOrWhiteSpace(authOptions.Value.Authority);
+        _portalAccess = portalAccess;
     }
 
-    private bool IsSelf(Guid patientId) => EhrPatientAccess.IsSelf(User, patientId, _authorityConfigured);
+    private bool IsSelf(Guid patientId) => _portalAccess.CanActAs(User, patientId);
 
     /// <summary>Patient sends a secure message to their care team (starts or continues a thread).</summary>
     [HttpPost("patients/{patientId:guid}")]

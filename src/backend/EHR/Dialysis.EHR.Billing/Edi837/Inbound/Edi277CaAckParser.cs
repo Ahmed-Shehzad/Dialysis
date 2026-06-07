@@ -18,7 +18,7 @@ namespace Dialysis.EHR.Billing.Edi837.Inbound;
 /// </summary>
 public sealed class Edi277CaAckParser
 {
-    public Edi277CaAckResult Parse(ReadOnlyMemory<byte> ackBytes)
+    public static Edi277CaAckResult Parse(ReadOnlyMemory<byte> ackBytes)
     {
         if (ackBytes.Length == 0)
             throw new ArgumentException("Empty 277CA payload.", nameof(ackBytes));

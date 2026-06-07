@@ -9,7 +9,7 @@ using Xunit;
 namespace Dialysis.SmartConnect.Tests;
 
 /// <summary>
-/// Slice C2 endpoint binding: GET /smartconnect/v1/admin/messages must accept ?messageType= and
+/// Slice C2 endpoint binding: GET /api/v1/admin/messages must accept ?messageType= and
 /// ?senderId= query parameters and propagate them into MessageLedgerQueryCriteria. The EF filter
 /// logic itself is already covered by MessageLedgerSearchableColumnsTests; this fixture's job is
 /// to lock in the HTTP-to-criteria binding so the operator-dashboard filter UI works end-to-end.
@@ -33,7 +33,7 @@ public sealed class LedgerMessageTypeSenderIdFiltersTests : IClassFixture<WebApp
 
         using var client = _factory.CreateClient();
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&messageType=ADT%5EA01");
+            $"/api/v1/admin/messages?flowId={flowId}&messageType=ADT%5EA01");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (items, totalCount) = await ReadList_Async(response);
@@ -54,7 +54,7 @@ public sealed class LedgerMessageTypeSenderIdFiltersTests : IClassFixture<WebApp
 
         using var client = _factory.CreateClient();
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&senderId=MachineX%40FAC");
+            $"/api/v1/admin/messages?flowId={flowId}&senderId=MachineX%40FAC");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (items, totalCount) = await ReadList_Async(response);
@@ -77,7 +77,7 @@ public sealed class LedgerMessageTypeSenderIdFiltersTests : IClassFixture<WebApp
 
         using var client = _factory.CreateClient();
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&messageType=ADT%5EA01&senderId=MachineA%40FAC");
+            $"/api/v1/admin/messages?flowId={flowId}&messageType=ADT%5EA01&senderId=MachineA%40FAC");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (_, totalCount) = await ReadList_Async(response);
@@ -97,7 +97,7 @@ public sealed class LedgerMessageTypeSenderIdFiltersTests : IClassFixture<WebApp
         // the endpoint normalises blanks back to the unfiltered state so the dashboard's
         // "(any)" option works.
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&messageType=&senderId=");
+            $"/api/v1/admin/messages?flowId={flowId}&messageType=&senderId=");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (_, totalCount) = await ReadList_Async(response);

@@ -29,7 +29,7 @@ public sealed class DebugEvaluateScriptEndpointTests : IClassFixture<WebApplicat
                 "PID|||MRN-12345^^^HOSPITAL^MR",
         };
 
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/debug/evaluate-script", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/debug/evaluate-script", body);
         var debugBody = await response.Content.ReadAsStringAsync();
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected 200 OK, got {response.StatusCode}. Body: {debugBody}");
 
@@ -45,7 +45,7 @@ public sealed class DebugEvaluateScriptEndpointTests : IClassFixture<WebApplicat
         using var client = _factory.CreateClient();
         var body = new { script = "", payloadText = "any" };
 
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/debug/evaluate-script", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/debug/evaluate-script", body);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -60,7 +60,7 @@ public sealed class DebugEvaluateScriptEndpointTests : IClassFixture<WebApplicat
             payloadText = "MSH|^~\\&|TEST",
         };
 
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/debug/evaluate-script", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/debug/evaluate-script", body);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
     }

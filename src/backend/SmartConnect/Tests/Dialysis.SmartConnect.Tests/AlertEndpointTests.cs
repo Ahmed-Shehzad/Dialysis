@@ -32,10 +32,10 @@ public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Pro
             },
         };
 
-        var post = await client.PostAsJsonAsync("/smartconnect/v1/admin/alert-rules", payload);
+        var post = await client.PostAsJsonAsync("/api/v1/admin/alert-rules", payload);
         Assert.Equal(HttpStatusCode.Created, post.StatusCode);
 
-        var get = await client.GetAsync($"/smartconnect/v1/admin/alert-rules/{id}");
+        var get = await client.GetAsync($"/api/v1/admin/alert-rules/{id}");
         Assert.Equal(HttpStatusCode.OK, get.StatusCode);
         var body = await get.Content.ReadAsStringAsync();
         Assert.Contains("ApiTestRule", body);
@@ -46,17 +46,17 @@ public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Pro
     {
         using var client = _factory.CreateClient();
         var id = Guid.CreateVersion7();
-        await client.PostAsJsonAsync("/smartconnect/v1/admin/alert-rules", new
+        await client.PostAsJsonAsync("/api/v1/admin/alert-rules", new
         {
             id,
             name = "ToDelete",
             enabled = true,
         });
 
-        var del = await client.DeleteAsync($"/smartconnect/v1/admin/alert-rules/{id}");
+        var del = await client.DeleteAsync($"/api/v1/admin/alert-rules/{id}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
 
-        var get = await client.GetAsync($"/smartconnect/v1/admin/alert-rules/{id}");
+        var get = await client.GetAsync($"/api/v1/admin/alert-rules/{id}");
         Assert.Equal(HttpStatusCode.NotFound, get.StatusCode);
     }
 
@@ -64,7 +64,7 @@ public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Pro
     public async Task List_Events_Endpoint_Returns_Array_Async()
     {
         using var client = _factory.CreateClient();
-        var resp = await client.GetAsync("/smartconnect/v1/admin/alert-events?take=10");
+        var resp = await client.GetAsync("/api/v1/admin/alert-events?take=10");
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
         var body = await resp.Content.ReadAsStringAsync();
         Assert.StartsWith("[", body.TrimStart());

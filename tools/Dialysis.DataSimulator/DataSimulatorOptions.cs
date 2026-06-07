@@ -18,6 +18,15 @@ public sealed class DataSimulatorOptions
     /// <summary>Base deterministic seed; combined with a per-patient counter.</summary>
     public int Seed { get; set; } = 1;
 
+    /// <summary>
+    /// When true (default), the per-patient counter starts from a random offset chosen once per run, so
+    /// each process start generates a fresh population. The module databases persist across AppHost
+    /// restarts, and the patient generator is deterministic — without this, every restart replays the
+    /// same MRN sequence and collides with patients already registered (HTTP 409). Set false for fully
+    /// reproducible runs against a known-empty database.
+    /// </summary>
+    public bool RandomizeSequenceStart { get; set; } = true;
+
     /// <summary>Client-credentials auth settings.</summary>
     public AuthOptions Auth { get; set; } = new();
 

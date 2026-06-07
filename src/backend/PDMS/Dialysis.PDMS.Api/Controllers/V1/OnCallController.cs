@@ -131,6 +131,33 @@ public sealed class OnCallController : ControllerBase
         return Ok(all.Select(EscalationPolicyDto.From).ToArray());
     }
 
+    [HttpPost("policies")]
+    [PhiAccess("pdms.oncall.policies.create")]
+    [ProducesResponseType(typeof(EscalationPolicyDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreatePolicyAsync(
+        [FromBody] UpsertPolicyRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EscalationPolicy policy;
+        try
+        {
+            policy = new EscalationPolicy(
+                Guid.CreateVersion7(),
+                request.Name,
+                TimeSpan.FromSeconds(request.CriticalPrimaryWindowSeconds),
+                TimeSpan.FromSeconds(request.CriticalBackupWindowSeconds),
+                TimeSpan.FromSeconds(request.WarningPrimaryWindowSeconds),
+                TimeSpan.FromSeconds(request.WarningBackupWindowSeconds),
+                TimeSpan.FromSeconds(request.InformationalPrimaryWindowSeconds),
+                request.QuietHoursSuppressNonCritical);
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        await _policies.AddAsync(policy, cancellationToken).ConfigureAwait(false);
+        return CreatedAtAction(nameof(ListPoliciesAsync), null, EscalationPolicyDto.From(policy));
+    }
+
     [HttpPut("policies/{id:guid}")]
     [PhiAccess("pdms.oncall.policies.update")]
     [ProducesResponseType(typeof(EscalationPolicyDto), StatusCodes.Status200OK)]

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
 /// <summary>
-/// Maps <c>/smartconnect/v1/admin</c> routes for attachment metadata + byte retrieval. The byte endpoint
+/// Maps <c>/api/v1/admin</c> routes for attachment metadata + byte retrieval. The byte endpoint
 /// serves <c>Content-Type</c> from the stored MIME and is the SmartConnect equivalent of Mirth's
 /// Administrator-side viewers (UG pp 120-123, listed N/A in scope-vs-mirth).
 /// </summary>
@@ -16,7 +16,7 @@ public static class AttachmentEndpointExtensions
     {
         public IEndpointRouteBuilder MapSmartConnectAttachmentRoutes()
         {
-            var admin = endpoints.MapGroup("/smartconnect/v1/admin").WithTags("SmartConnect Admin");
+            var admin = endpoints.MapGroup("/api/v1/admin").WithTags("SmartConnect Admin");
 
             admin.MapGet(
                     "/messages/{messageId:guid}/attachments",

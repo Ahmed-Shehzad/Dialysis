@@ -44,6 +44,18 @@ public abstract class ModuleDbContextBase : TransponderPersistenceDbContextBase,
     }
 
     /// <summary>
+    /// Registers module-wide EF conventions. <see cref="GuidKeyClientGeneratedConvention"/> makes every
+    /// <see cref="System.Guid"/> primary key client-generated, matching the domain's
+    /// <c>Guid.CreateVersion7()</c> id assignment and preventing the UPDATE-not-INSERT failure when a
+    /// child is appended to an already-loaded aggregate.
+    /// </summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        configurationBuilder.Conventions.Add(_ => new GuidKeyClientGeneratedConvention());
+    }
+
+    /// <summary>
     /// Maps the <see cref="Audit"/> shadow columns onto a derived entity so the audit
     /// interceptor has stable column names across providers.
     /// </summary>

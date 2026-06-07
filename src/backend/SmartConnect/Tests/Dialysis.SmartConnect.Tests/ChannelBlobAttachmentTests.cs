@@ -32,7 +32,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
         using var uploadContent = new ByteArrayContent(bytes);
         uploadContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         var uploadResponse = await client.PostAsync(
-            $"/smartconnect/v1/admin/flows/{flowId}/attachments/blob",
+            $"/api/v1/admin/flows/{flowId}/attachments/blob",
             uploadContent);
         Assert.Equal(HttpStatusCode.OK, uploadResponse.StatusCode);
         using var uploadDoc = JsonDocument.Parse(await uploadResponse.Content.ReadAsStringAsync());
@@ -42,7 +42,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
 
         // 2. PUT the flow updated with this storageRef on an Attachments entry.
         var updateResponse = await client.PutAsJsonAsync(
-            $"/smartconnect/v1/admin/flows/{flowId}",
+            $"/api/v1/admin/flows/{flowId}",
             BuildFlowBody(flowId, "blob-host", attachments: new[]
             {
                 new
@@ -58,7 +58,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
 
         // 3. Download via the blob endpoint.
         var downloadResponse = await client.GetAsync(
-            $"/smartconnect/v1/admin/flows/{flowId}/attachments/blob/{blobId}");
+            $"/api/v1/admin/flows/{flowId}/attachments/blob/{blobId}");
         Assert.Equal(HttpStatusCode.OK, downloadResponse.StatusCode);
         var downloadedBytes = await downloadResponse.Content.ReadAsByteArrayAsync();
         Assert.Equal(bytes, downloadedBytes);
@@ -72,7 +72,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
 
         var randomBlobId = Guid.NewGuid();
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/flows/{flowId}/attachments/blob/{randomBlobId}");
+            $"/api/v1/admin/flows/{flowId}/attachments/blob/{randomBlobId}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -83,7 +83,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
         var flowId = await CreateFlow_Async(client, "blob-bad-ref", attachments: []);
 
         var response = await client.PutAsJsonAsync(
-            $"/smartconnect/v1/admin/flows/{flowId}",
+            $"/api/v1/admin/flows/{flowId}",
             BuildFlowBody(flowId, "blob-bad-ref", attachments: new[]
             {
                 new
@@ -102,7 +102,7 @@ public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFac
     {
         var id = Guid.NewGuid();
         var body = BuildFlowBody(id, name, attachments);
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/flows", body);
         var text = await response.Content.ReadAsStringAsync();
         Assert.True(response.IsSuccessStatusCode, $"Create '{name}' returned {response.StatusCode}: {text}");
         return id;

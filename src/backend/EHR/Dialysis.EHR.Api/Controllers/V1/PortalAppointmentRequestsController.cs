@@ -6,9 +6,7 @@ using Dialysis.EHR.PatientPortal.Features.ListAppointmentRequests;
 using Dialysis.EHR.PatientPortal.Features.RequestAppointment;
 using Dialysis.EHR.PatientPortal.Features.ResolveAppointmentRequest;
 using Dialysis.EHR.Scheduling.Features.BookAppointment;
-using Dialysis.Module.Hosting.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace Dialysis.EHR.Api.Controllers.V1;
 
@@ -23,15 +21,15 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 public sealed class PortalAppointmentRequestsController : ControllerBase
 {
     private readonly ICqrsGateway _gateway;
-    private readonly bool _authorityConfigured;
+    private readonly EhrPortalAccess _portalAccess;
 
-    public PortalAppointmentRequestsController(ICqrsGateway gateway, IOptions<ModuleAuthenticationOptions> authOptions)
+    public PortalAppointmentRequestsController(ICqrsGateway gateway, EhrPortalAccess portalAccess)
     {
         _gateway = gateway;
-        _authorityConfigured = !string.IsNullOrWhiteSpace(authOptions.Value.Authority);
+        _portalAccess = portalAccess;
     }
 
-    private bool IsSelf(Guid patientId) => EhrPatientAccess.IsSelf(User, patientId, _authorityConfigured);
+    private bool IsSelf(Guid patientId) => _portalAccess.CanActAs(User, patientId);
 
     /// <summary>Patient submits an appointment request.</summary>
     [HttpPost("patients/{patientId:guid}")]

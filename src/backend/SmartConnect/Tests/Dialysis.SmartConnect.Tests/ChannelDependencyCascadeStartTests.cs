@@ -27,7 +27,7 @@ public sealed class ChannelDependencyCascadeStartTests : IClassFixture<WebApplic
         var midId = await CreateFlow_Async(client, "cascade-mid", dependencies: [rootId]);
         var leafId = await CreateFlow_Async(client, "cascade-leaf", dependencies: [midId]);
 
-        var response = await client.PostAsync($"/smartconnect/v1/admin/flows/{leafId}/start?cascade=true", content: null);
+        var response = await client.PostAsync($"/api/v1/admin/flows/{leafId}/start?cascade=true", content: null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
@@ -49,10 +49,10 @@ public sealed class ChannelDependencyCascadeStartTests : IClassFixture<WebApplic
         var depId = await CreateFlow_Async(client, "already-up");
         var dependentId = await CreateFlow_Async(client, "needs-up", dependencies: [depId]);
 
-        var preStart = await client.PostAsync($"/smartconnect/v1/admin/flows/{depId}/start", content: null);
+        var preStart = await client.PostAsync($"/api/v1/admin/flows/{depId}/start", content: null);
         Assert.Equal(HttpStatusCode.NoContent, preStart.StatusCode);
 
-        var response = await client.PostAsync($"/smartconnect/v1/admin/flows/{dependentId}/start?cascade=true", content: null);
+        var response = await client.PostAsync($"/api/v1/admin/flows/{dependentId}/start?cascade=true", content: null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
@@ -70,7 +70,7 @@ public sealed class ChannelDependencyCascadeStartTests : IClassFixture<WebApplic
         var bId = await CreateFlow_Async(client, "cycle-b", dependencies: [aId]);
         await UpdateDependencies_Async(client, aId, "cycle-a", [bId]);
 
-        var response = await client.PostAsync($"/smartconnect/v1/admin/flows/{aId}/start?cascade=true", content: null);
+        var response = await client.PostAsync($"/api/v1/admin/flows/{aId}/start?cascade=true", content: null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
@@ -85,7 +85,7 @@ public sealed class ChannelDependencyCascadeStartTests : IClassFixture<WebApplic
     {
         var id = Guid.NewGuid();
         var body = BuildFlowBody(id, name, dependencies);
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/flows", body);
         var text = await response.Content.ReadAsStringAsync();
         Assert.True(response.IsSuccessStatusCode, $"Create '{name}' returned {response.StatusCode}: {text}");
         return id;
@@ -98,7 +98,7 @@ public sealed class ChannelDependencyCascadeStartTests : IClassFixture<WebApplic
         IReadOnlyList<Guid> dependencies)
     {
         var body = BuildFlowBody(id, name, dependencies);
-        var response = await client.PutAsJsonAsync($"/smartconnect/v1/admin/flows/{id}", body);
+        var response = await client.PutAsJsonAsync($"/api/v1/admin/flows/{id}", body);
         var text = await response.Content.ReadAsStringAsync();
         Assert.True(response.IsSuccessStatusCode, $"Update '{name}' returned {response.StatusCode}: {text}");
     }

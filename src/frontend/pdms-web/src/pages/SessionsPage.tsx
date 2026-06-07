@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchActiveSessions,
@@ -41,6 +41,23 @@ const formatDateTime = (iso: string | null | undefined) =>
 export const SessionsPage = () => {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The header "+ Schedule session" pill navigates to ?action=schedule (a shareable URL); open
+  // the dialog when that param is present rather than reaching into page state.
+  const scheduleRequested = searchParams.get("action") === "schedule";
+  useEffect(() => {
+    if (scheduleRequested) setDialogOpen(true);
+  }, [scheduleRequested]);
+
+  const closeScheduleDialog = () => {
+    setDialogOpen(false);
+    if (scheduleRequested) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("action");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const query = useQuery({
     queryKey: ["pdms", "sessions", "list", filter === "active" ? "active" : "recent"],
@@ -137,7 +154,7 @@ export const SessionsPage = () => {
         <SessionsTable title="Recently completed" rows={grouped.finished} />
       )}
 
-      <ScheduleSessionDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+      <ScheduleSessionDialog open={dialogOpen} onClose={closeScheduleDialog} />
     </div>
   );
 };

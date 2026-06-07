@@ -101,10 +101,10 @@ public static class FhirTerminologyEndpoints
 
     private static async Task WriteResourceAsync(HttpContext context, Resource resource, int status)
     {
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
+        _ = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         context.Response.StatusCode = status;
         context.Response.ContentType = FhirContentTypes.Json + "; charset=utf-8";
-        var bytes = Encoding.UTF8.GetBytes(serializer.Serialize(resource, pretty: true));
+        var bytes = Encoding.UTF8.GetBytes(FhirJsonSerializerProvider.Serialize(resource, pretty: true));
         await context.Response.Body.WriteAsync(bytes, context.RequestAborted).ConfigureAwait(false);
     }
 

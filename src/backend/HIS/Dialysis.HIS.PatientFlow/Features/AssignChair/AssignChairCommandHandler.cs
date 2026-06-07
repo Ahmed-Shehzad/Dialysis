@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.Contracts.Messaging;
 using Dialysis.HIS.PatientFlow.Ports;
@@ -22,10 +23,10 @@ public sealed class AssignChairCommandHandler : ICommandHandler<AssignChairComma
     public async Task<Guid> HandleAsync(AssignChairCommand request, CancellationToken cancellationToken)
     {
         var entry = _repository.Get(request.EntryId)
-            ?? throw new InvalidOperationException("Queue entry not found.");
+            ?? throw new DomainException("Queue entry not found.");
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (_repository.IsChairOccupied(today, request.Chair))
-            throw new InvalidOperationException($"{request.Chair} is already in use.");
+            throw new DomainException($"{request.Chair} is already in use.");
         entry.AssignChair(request.Chair, DateTime.UtcNow);
 
         foreach (var @event in entry.IntegrationEvents)

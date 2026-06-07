@@ -43,6 +43,8 @@
     <ProjectReference Include="../../backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj" />
     <ProjectReference Include="../../backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj" />
     <ProjectReference Include="../../backend/Shared/Dialysis.Module.Gateway/Dialysis.Module.Gateway.csproj" />
+    <!-- Dev-only continuous data generator (wired in run mode; never published into compose/k8s). -->
+    <ProjectReference Include="../../../tools/Dialysis.DataSimulator/Dialysis.DataSimulator.csproj" />
   </ItemGroup>
 
 </Project>

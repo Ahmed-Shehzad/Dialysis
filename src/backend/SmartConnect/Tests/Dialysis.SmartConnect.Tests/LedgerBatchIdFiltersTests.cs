@@ -9,7 +9,7 @@ using Xunit;
 namespace Dialysis.SmartConnect.Tests;
 
 /// <summary>
-/// Slice D2 endpoint binding: GET /smartconnect/v1/admin/messages must accept ?batchId= and
+/// Slice D2 endpoint binding: GET /api/v1/admin/messages must accept ?batchId= and
 /// propagate it into MessageLedgerQueryCriteria. The EF filter logic itself is covered by
 /// the searchable-columns tests; this fixture's job is to lock in the HTTP-to-criteria
 /// binding so the operator dashboard's batch-id filter works end-to-end.
@@ -36,7 +36,7 @@ public sealed class LedgerBatchIdFiltersTests : IClassFixture<WebApplicationFact
         using var client = _factory.CreateClient();
         var encoded = Uri.EscapeDataString(batchA);
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&batchId={encoded}");
+            $"/api/v1/admin/messages?flowId={flowId}&batchId={encoded}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (items, totalCount) = await ReadList_Async(response);
@@ -59,7 +59,7 @@ public sealed class LedgerBatchIdFiltersTests : IClassFixture<WebApplicationFact
         using var client = _factory.CreateClient();
         var encoded = Uri.EscapeDataString(batchA);
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&batchId={encoded}&messageType=ORU%5ER01");
+            $"/api/v1/admin/messages?flowId={flowId}&batchId={encoded}&messageType=ORU%5ER01");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (_, totalCount) = await ReadList_Async(response);
@@ -78,7 +78,7 @@ public sealed class LedgerBatchIdFiltersTests : IClassFixture<WebApplicationFact
         // The dashboard's "(any)" input renders as empty `batchId=` — blank must not collapse
         // to "match the literal empty string" (no rows would return).
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&batchId=");
+            $"/api/v1/admin/messages?flowId={flowId}&batchId=");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (_, totalCount) = await ReadList_Async(response);
@@ -95,7 +95,7 @@ public sealed class LedgerBatchIdFiltersTests : IClassFixture<WebApplicationFact
 
         using var client = _factory.CreateClient();
         var response = await client.GetAsync(
-            $"/smartconnect/v1/admin/messages?flowId={flowId}&batchId={Uri.EscapeDataString("file:/csv/missing.csv")}");
+            $"/api/v1/admin/messages?flowId={flowId}&batchId={Uri.EscapeDataString("file:/csv/missing.csv")}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var (_, totalCount) = await ReadList_Async(response);

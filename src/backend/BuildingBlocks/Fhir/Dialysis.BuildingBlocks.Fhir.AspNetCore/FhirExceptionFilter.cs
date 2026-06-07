@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Fhir.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Task = System.Threading.Tasks.Task;
@@ -11,12 +10,6 @@ namespace Dialysis.BuildingBlocks.Fhir.AspNetCore;
 /// </summary>
 public sealed class FhirExceptionFilter : IAsyncExceptionFilter
 {
-    private readonly FhirJsonSerializerProvider _serializer;
-    /// <summary>
-    /// Translates uncaught exceptions thrown inside FHIR endpoint handlers into
-    /// <c>OperationOutcome</c> responses with appropriate HTTP status codes.
-    /// </summary>
-    public FhirExceptionFilter(FhirJsonSerializerProvider serializer) => _serializer = serializer;
     public async Task OnExceptionAsync(ExceptionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -41,7 +34,7 @@ public sealed class FhirExceptionFilter : IAsyncExceptionFilter
         };
 
         context.ExceptionHandled = true;
-        context.Result = new FhirContentResult(outcome, statusCode, _serializer);
+        context.Result = new FhirContentResult(outcome, statusCode);
         await Task.CompletedTask.ConfigureAwait(false);
     }
 }

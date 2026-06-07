@@ -106,7 +106,7 @@ export const PatientsPage = () => {
         quickActions={[
           {
             label: "Workflow guide",
-            to: "/workflows/ehr",
+            to: "/workflows",
             hint: "Step-by-step walkthrough of the clinician's day",
           },
         ]}

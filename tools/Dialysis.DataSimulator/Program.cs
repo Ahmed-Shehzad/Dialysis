@@ -23,8 +23,14 @@ builder.Services.AddHttpClient<ILabClient, LabClient>((sp, c) => c.BaseAddress =
     .AddHttpMessageHandler<BearerTokenHandler>();
 builder.Services.AddHttpClient<IHieClient, HieClient>((sp, c) => c.BaseAddress = Base(sp, m => m.Hie))
     .AddHttpMessageHandler<BearerTokenHandler>();
+builder.Services.AddHttpClient<IPdmsClient, PdmsClient>((sp, c) => c.BaseAddress = Base(sp, m => m.Pdms))
+    .AddHttpMessageHandler<BearerTokenHandler>();
+builder.Services.AddHttpClient<ISmartConnectClient, SmartConnectClient>((sp, c) => c.BaseAddress = Base(sp, m => m.SmartConnect))
+    .AddHttpMessageHandler<BearerTokenHandler>();
 
 builder.Services.AddHostedService<ContinuousDataWorker>();
+// Live intradialytic vitals for in-progress sessions (chairside SignalR stream).
+builder.Services.AddHostedService<PdmsVitalsTickerService>();
 
 var host = builder.Build();
 await host.RunAsync().ConfigureAwait(false);

@@ -13,7 +13,6 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 public sealed class EmailNotificationDispatcher : ISubscriptionChannelDispatcher
 {
     private int _missingNotifierLogged;
-    private readonly FhirJsonSerializerProvider _serializer;
     private readonly IServiceProvider _services;
     private readonly ILogger<EmailNotificationDispatcher> _logger;
     /// <summary>
@@ -21,11 +20,9 @@ public sealed class EmailNotificationDispatcher : ISubscriptionChannelDispatcher
     /// is registered the channel is inert (logged once per process), per the plan's "interfaces only,
     /// modules supply their own" rule.
     /// </summary>
-    public EmailNotificationDispatcher(FhirJsonSerializerProvider serializer,
-        IServiceProvider services,
+    public EmailNotificationDispatcher(IServiceProvider services,
         ILogger<EmailNotificationDispatcher> logger)
     {
-        _serializer = serializer;
         _services = services;
         _logger = logger;
     }
@@ -50,7 +47,7 @@ public sealed class EmailNotificationDispatcher : ISubscriptionChannelDispatcher
         }
 
         var bundle = SubscriptionNotificationBundleFactory.Build(subscription, payloadResource);
-        var json = _serializer.Serialize(bundle);
+        var json = FhirJsonSerializerProvider.Serialize(bundle);
         await notifier.SendAsync(
             new SubscriptionEmailNotification(
                 ToAddress: subscription.ChannelEndpoint,

@@ -12,7 +12,7 @@ public static class PrunerEndpointExtensions
     {
         public IEndpointRouteBuilder MapSmartConnectPrunerRoutes()
         {
-            var group = endpoints.MapGroup("/smartconnect/v1/admin/pruner").WithTags("SmartConnect Admin");
+            var group = endpoints.MapGroup("/api/v1/admin/pruner").WithTags("SmartConnect Admin");
 
             group.MapGet(
                     "/options",

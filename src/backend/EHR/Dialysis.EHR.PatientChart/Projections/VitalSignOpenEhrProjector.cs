@@ -11,11 +11,12 @@ namespace Dialysis.EHR.PatientChart.Projections;
 /// </summary>
 public sealed class VitalSignOpenEhrProjector
 {
-    public OpenEhrProjection? Project(VitalSignReading reading)
+    public static OpenEhrProjection? Project(VitalSignReading reading)
     {
         ArgumentNullException.ThrowIfNull(reading);
         var archetypeId = ArchetypeFor(reading.ObservationType.Code);
-        if (archetypeId is null) return null;
+        if (archetypeId is null)
+            return null;
 
         var payload = JsonSerializer.Serialize(new
         {

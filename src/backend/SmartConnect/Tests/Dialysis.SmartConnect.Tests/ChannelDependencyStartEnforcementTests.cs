@@ -25,7 +25,7 @@ public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<WebAp
         var dependencyId = await CreateFlowAsync(client, name: "dep-stopped");
         var dependentId = await CreateFlowAsync(client, name: "dependent", dependencies: [dependencyId]);
 
-        var response = await client.PostAsync($"/smartconnect/v1/admin/flows/{dependentId}/start", content: null);
+        var response = await client.PostAsync($"/api/v1/admin/flows/{dependentId}/start", content: null);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
@@ -44,10 +44,10 @@ public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<WebAp
         var dependentId = await CreateFlowAsync(client, name: "online-dependent", dependencies: [dependencyId]);
 
         // Start the dep first; then the dependent should accept.
-        var depStart = await client.PostAsync($"/smartconnect/v1/admin/flows/{dependencyId}/start", content: null);
+        var depStart = await client.PostAsync($"/api/v1/admin/flows/{dependencyId}/start", content: null);
         Assert.Equal(HttpStatusCode.NoContent, depStart.StatusCode);
 
-        var dependentStart = await client.PostAsync($"/smartconnect/v1/admin/flows/{dependentId}/start", content: null);
+        var dependentStart = await client.PostAsync($"/api/v1/admin/flows/{dependentId}/start", content: null);
         Assert.Equal(HttpStatusCode.NoContent, dependentStart.StatusCode);
     }
 
@@ -58,7 +58,7 @@ public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<WebAp
         var dependencyId = await CreateFlowAsync(client, name: "still-stopped");
         var dependentId = await CreateFlowAsync(client, name: "forced", dependencies: [dependencyId]);
 
-        var response = await client.PostAsync($"/smartconnect/v1/admin/flows/{dependentId}/start?force=true", content: null);
+        var response = await client.PostAsync($"/api/v1/admin/flows/{dependentId}/start?force=true", content: null);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -95,7 +95,7 @@ public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<WebAp
                 linkedLibraryIds = Array.Empty<string>(),
             },
         };
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/flows", body);
         var responseBody = await response.Content.ReadAsStringAsync();
         Assert.True(response.IsSuccessStatusCode, $"Create flow '{name}' returned {response.StatusCode}: {responseBody}");
         return id;

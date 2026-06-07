@@ -30,9 +30,10 @@ public sealed class Edi999FunctionalAckParserTests
             "GE*1*1~" +
             "IEA*1*000000001~";
         var bytes = Encoding.ASCII.GetBytes(payload);
-        var parser = new Edi999FunctionalAckParser();
 
-        var result = parser.Parse(bytes);
+        _ = new Edi999FunctionalAckParser();
+
+        var result = Edi999FunctionalAckParser.Parse(bytes);
 
         result.Verdict.ShouldBe(Edi999Verdict.Accepted);
         result.OriginalGroupControlNumber.ShouldBe("1");
@@ -57,9 +58,10 @@ public sealed class Edi999FunctionalAckParserTests
             "GE*1*1~" +
             "IEA*1*000000001~";
         var bytes = Encoding.ASCII.GetBytes(payload);
-        var parser = new Edi999FunctionalAckParser();
 
-        var result = parser.Parse(bytes);
+        _ = new Edi999FunctionalAckParser();
+
+        var result = Edi999FunctionalAckParser.Parse(bytes);
 
         result.Verdict.ShouldBe(Edi999Verdict.Rejected);
         result.OriginalTransactionControlNumber.ShouldBe("7777");

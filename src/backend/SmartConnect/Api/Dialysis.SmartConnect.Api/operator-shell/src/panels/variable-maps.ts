@@ -8,7 +8,7 @@ export async function renderVariableMaps(ctx: RouteContext): Promise<void> {
   ctx.target.appendChild(el("h2", {}, "Variable maps"));
   ctx.target.appendChild(el("p", { class: "muted" }, [
     "Persists via ",
-    el("code", {}, "/smartconnect/v1/admin/config-map/{scope}"),
+    el("code", {}, "/api/v1/admin/config-map/{scope}"),
     ". GlobalChannel scope optionally takes a flowId query.",
   ]));
 

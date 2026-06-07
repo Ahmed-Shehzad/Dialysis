@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
 /// <summary>
-/// Maps <c>/smartconnect/v1/admin/alert-rules/*</c> and <c>/smartconnect/v1/admin/alert-events/*</c>
+/// Maps <c>/api/v1/admin/alert-rules/*</c> and <c>/api/v1/admin/alert-events/*</c>
 /// for rule CRUD, history retrieval, and a synthetic test endpoint.
 /// </summary>
 public static class AlertEndpointExtensions
@@ -15,7 +15,7 @@ public static class AlertEndpointExtensions
     {
         public IEndpointRouteBuilder MapSmartConnectAlertRoutes()
         {
-            var rules = endpoints.MapGroup("/smartconnect/v1/admin/alert-rules").WithTags("SmartConnect Admin");
+            var rules = endpoints.MapGroup("/api/v1/admin/alert-rules").WithTags("SmartConnect Admin");
 
             rules.MapGet(
                     "/",
@@ -44,7 +44,7 @@ public static class AlertEndpointExtensions
                         var id = body.Id == Guid.Empty ? Guid.CreateVersion7() : body.Id;
                         var rule = WithId(body, id);
                         await repo.UpsertAsync(rule, ct).ConfigureAwait(false);
-                        return Results.Created($"/smartconnect/v1/admin/alert-rules/{id}", rule);
+                        return Results.Created($"/api/v1/admin/alert-rules/{id}", rule);
                     })
                 .WithName("SmartConnect_CreateAlertRule");
 
@@ -92,7 +92,7 @@ public static class AlertEndpointExtensions
                     })
                 .WithName("SmartConnect_TestAlertRule");
 
-            var events = endpoints.MapGroup("/smartconnect/v1/admin/alert-events").WithTags("SmartConnect Admin");
+            var events = endpoints.MapGroup("/api/v1/admin/alert-events").WithTags("SmartConnect Admin");
 
             events.MapGet(
                     "/",

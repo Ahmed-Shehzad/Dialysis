@@ -50,7 +50,7 @@ public sealed class DefaultExternalScriptLoader : IExternalScriptLoader
         return body;
     }
 
-    private async Task<string> LoadFileAsync(Uri uri, ExternalScriptOptions opts, CancellationToken cancellationToken)
+    private static async Task<string> LoadFileAsync(Uri uri, ExternalScriptOptions opts, CancellationToken cancellationToken)
     {
         if (opts.AllowedFileRoots is null || opts.AllowedFileRoots.Count == 0)
         {

@@ -24,7 +24,7 @@ public sealed class ConnectorSchemaEndpointTests : IClassFixture<WebApplicationF
     {
         using var client = _factory.CreateClient();
 
-        var entries = await client.GetFromJsonAsync<List<Entry>>("/smartconnect/v1/admin/connectors/outbound");
+        var entries = await client.GetFromJsonAsync<List<Entry>>("/api/v1/admin/connectors/outbound");
 
         Assert.NotNull(entries);
         // Built-in kinds registered by AddSmartConnectCore.
@@ -39,7 +39,7 @@ public sealed class ConnectorSchemaEndpointTests : IClassFixture<WebApplicationF
     public async Task List_Endpoint_Flags_Adapters_With_Published_Schema_Async()
     {
         using var client = _factory.CreateClient();
-        var entries = await client.GetFromJsonAsync<List<Entry>>("/smartconnect/v1/admin/connectors/outbound");
+        var entries = await client.GetFromJsonAsync<List<Entry>>("/api/v1/admin/connectors/outbound");
 
         var http = Assert.Single(entries!, e => e.Kind == "http");
         Assert.True(http.HasSchema);
@@ -50,7 +50,7 @@ public sealed class ConnectorSchemaEndpointTests : IClassFixture<WebApplicationF
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/smartconnect/v1/admin/connectors/outbound/http/schema");
+        var response = await client.GetAsync("/api/v1/admin/connectors/outbound/http/schema");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("application/schema+json", response.Content.Headers.ContentType?.MediaType);
@@ -67,7 +67,7 @@ public sealed class ConnectorSchemaEndpointTests : IClassFixture<WebApplicationF
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/smartconnect/v1/admin/connectors/outbound/no-such-adapter/schema");
+        var response = await client.GetAsync("/api/v1/admin/connectors/outbound/no-such-adapter/schema");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -79,7 +79,7 @@ public sealed class ConnectorSchemaEndpointTests : IClassFixture<WebApplicationF
 
         // The TCP outbound adapter ships without a schema yet (slice B2 only published
         // HTTP). The endpoint distinguishes "no adapter" from "no schema" via 404 body.
-        var response = await client.GetAsync("/smartconnect/v1/admin/connectors/outbound/tcp/schema");
+        var response = await client.GetAsync("/api/v1/admin/connectors/outbound/tcp/schema");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

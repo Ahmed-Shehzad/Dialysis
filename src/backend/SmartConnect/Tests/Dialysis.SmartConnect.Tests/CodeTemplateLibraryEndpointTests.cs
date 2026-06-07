@@ -37,10 +37,10 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
             },
         };
 
-        var postResp = await client.PostAsJsonAsync("/smartconnect/v1/admin/code-template-libraries", payload);
+        var postResp = await client.PostAsJsonAsync("/api/v1/admin/code-template-libraries", payload);
         Assert.Equal(HttpStatusCode.Created, postResp.StatusCode);
 
-        var getResp = await client.GetAsync($"/smartconnect/v1/admin/code-template-libraries/{libraryId}");
+        var getResp = await client.GetAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
         Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
         var json = await getResp.Content.ReadAsStringAsync();
         Assert.Contains("addOne", json);
@@ -59,12 +59,12 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
             name = "ToDelete",
             templates = Array.Empty<object>(),
         };
-        await client.PostAsJsonAsync("/smartconnect/v1/admin/code-template-libraries", payload);
+        await client.PostAsJsonAsync("/api/v1/admin/code-template-libraries", payload);
 
-        var delResp = await client.DeleteAsync($"/smartconnect/v1/admin/code-template-libraries/{libraryId}");
+        var delResp = await client.DeleteAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
         Assert.Equal(HttpStatusCode.NoContent, delResp.StatusCode);
 
-        var getResp = await client.GetAsync($"/smartconnect/v1/admin/code-template-libraries/{libraryId}");
+        var getResp = await client.GetAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
         Assert.Equal(HttpStatusCode.NotFound, getResp.StatusCode);
     }
 
@@ -95,11 +95,11 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<WebApplicat
 
         using var importContent = new StringContent(xml, Encoding.UTF8, "application/Xml");
         var importResp = await client.PostAsync(
-            "/smartconnect/v1/admin/code-template-libraries/import-mirth-Xml",
+            "/api/v1/admin/code-template-libraries/import-mirth-Xml",
             importContent);
         Assert.Equal(HttpStatusCode.OK, importResp.StatusCode);
 
-        var getResp = await client.GetAsync("/smartconnect/v1/admin/code-template-libraries/77777777-7777-4777-8777-777777777777");
+        var getResp = await client.GetAsync("/api/v1/admin/code-template-libraries/77777777-7777-4777-8777-777777777777");
         Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
         var json = await getResp.Content.ReadAsStringAsync();
         Assert.Contains("ImportedFromMirth", json);

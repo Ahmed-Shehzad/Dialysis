@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
 /// <summary>
-/// Maps <c>/smartconnect/v1/admin/code-template-libraries/*</c> routes for library CRUD + JSON/Mirth-XML import.
+/// Maps <c>/api/v1/admin/code-template-libraries/*</c> routes for library CRUD + JSON/Mirth-XML import.
 /// </summary>
 public static class CodeTemplateLibraryEndpointExtensions
 {
@@ -14,7 +14,7 @@ public static class CodeTemplateLibraryEndpointExtensions
     {
         public IEndpointRouteBuilder MapSmartConnectCodeTemplateLibraryRoutes()
         {
-            var group = endpoints.MapGroup("/smartconnect/v1/admin/code-template-libraries")
+            var group = endpoints.MapGroup("/api/v1/admin/code-template-libraries")
                 .WithTags("SmartConnect Admin");
 
             group.MapGet("/", async (
@@ -46,7 +46,7 @@ public static class CodeTemplateLibraryEndpointExtensions
                     var library = WithGeneratedIds(body, id);
                     await repo.UpsertAsync(library, ct).ConfigureAwait(false);
                     await linkage.ReconcileLibraryWriteAsync(id, [], library.LinkedFlowIds, ct).ConfigureAwait(false);
-                    return Results.Created($"/smartconnect/v1/admin/code-template-libraries/{id}", library);
+                    return Results.Created($"/api/v1/admin/code-template-libraries/{id}", library);
                 })
                 .WithName("SmartConnect_CreateCodeTemplateLibrary");
 

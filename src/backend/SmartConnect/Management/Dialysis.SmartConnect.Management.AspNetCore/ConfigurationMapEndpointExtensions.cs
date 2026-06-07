@@ -4,14 +4,14 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
-/// <summary>Maps <c>/smartconnect/v1/admin/config-map/*</c> CRUD routes for variable/configuration maps.</summary>
+/// <summary>Maps <c>/api/v1/admin/config-map/*</c> CRUD routes for variable/configuration maps.</summary>
 public static class ConfigurationMapEndpointExtensions
 {
     extension(IEndpointRouteBuilder endpoints)
     {
         public IEndpointRouteBuilder MapSmartConnectConfigurationMapRoutes()
         {
-            var group = endpoints.MapGroup("/smartconnect/v1/admin/config-map").WithTags("SmartConnect Admin");
+            var group = endpoints.MapGroup("/api/v1/admin/config-map").WithTags("SmartConnect Admin");
 
             group.MapGet(
                     "/{scope}",

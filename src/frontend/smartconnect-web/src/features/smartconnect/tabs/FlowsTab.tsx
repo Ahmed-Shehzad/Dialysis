@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { NewChannelDialog } from "../components/NewChannelDialog";
 import {
   deleteFlow,
@@ -196,6 +196,23 @@ export const FlowsTab = () => {
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [stateFilter, setStateFilter] = useState<string>("");
   const [newChannelOpen, setNewChannelOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The Integrations page's "New channel" quick action lands here with ?action=new; open the
+  // dialog when that param is present (the ?tab=flows part is preserved).
+  const newChannelRequested = searchParams.get("action") === "new";
+  useEffect(() => {
+    if (newChannelRequested) setNewChannelOpen(true);
+  }, [newChannelRequested]);
+
+  const closeNewChannel = () => {
+    setNewChannelOpen(false);
+    if (newChannelRequested) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("action");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const filtered = useMemo(() => {
     let items = flows.data ?? [];
@@ -251,7 +268,7 @@ export const FlowsTab = () => {
         </div>
       </div>
 
-      {newChannelOpen && <NewChannelDialog onClose={() => setNewChannelOpen(false)} />}
+      {newChannelOpen && <NewChannelDialog onClose={closeNewChannel} />}
 
       {flows.isLoading && <div className="text-xs text-slate-400">Loading flows…</div>}
       {flows.error && <div className="text-xs text-rose-300">SmartConnect unavailable.</div>}

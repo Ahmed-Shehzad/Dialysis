@@ -168,6 +168,11 @@ public sealed class HieDbContext : ModuleDbContextBase, IUnitOfWork
         {
             e.ToTable("DocumentReferenceSignatures", "hie_documents");
             e.HasKey(s => s.Id);
+            // Id is assigned by the domain before persistence. Without ValueGeneratedNever the
+            // convention is ValueGeneratedOnAdd, so when a signature is added to an already-loaded
+            // DocumentReference aggregate, DetectChanges sees a set key and marks it Modified → EF
+            // emits an UPDATE that affects 0 rows → DbUpdateConcurrencyException (the sign 500).
+            e.Property(s => s.Id).ValueGeneratedNever();
             e.Property(s => s.SignerKind).HasConversion<int>();
             e.Property(s => s.SignerUserId).HasMaxLength(128);
             e.Property(s => s.CertThumbprint).HasMaxLength(128).IsRequired();

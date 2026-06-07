@@ -17,7 +17,7 @@ namespace Dialysis.EHR.Billing.Edi837.Inbound;
 /// </summary>
 public sealed class Edi999FunctionalAckParser
 {
-    public Edi999AckResult Parse(ReadOnlyMemory<byte> ackBytes)
+    public static Edi999AckResult Parse(ReadOnlyMemory<byte> ackBytes)
     {
         if (ackBytes.Length == 0)
             throw new ArgumentException("Empty 999 payload.", nameof(ackBytes));
@@ -34,7 +34,8 @@ public sealed class Edi999FunctionalAckParser
         foreach (var segment in segments)
         {
             var elements = segment.Split(delimiters.ElementSeparator);
-            if (elements.Length == 0) continue;
+            if (elements.Length == 0)
+                continue;
             switch (elements[0])
             {
                 case "AK1":

@@ -31,13 +31,13 @@ npm run typecheck
 
 All calls go through `api.ts`, which prepends the bearer token from `localStorage["smartconnect.token"]` when set. Endpoints used:
 
-- Flows: `GET /smartconnect/v1/admin/flows`
-- Messages: `GET /smartconnect/v1/admin/messages`, `POST .../{id}/reprocess`
-- Attachments: `GET /smartconnect/v1/admin/messages/{id}/attachments`, `GET /attachments/{id}`, `DELETE /attachments/{id}`
-- Alerts: `GET/POST /smartconnect/v1/admin/alert-rules`, `POST .../{id}/test`, `GET /alert-events`
-- Code Template Libraries: `GET /smartconnect/v1/admin/code-template-libraries`
-- Variable Maps: `GET/PUT/DELETE /smartconnect/v1/admin/config-map/{scope}/{key?}`
-- Pruner: `GET /smartconnect/v1/admin/pruner/options`
+- Flows: `GET /api/v1/admin/flows`
+- Messages: `GET /api/v1/admin/messages`, `POST .../{id}/reprocess`
+- Attachments: `GET /api/v1/admin/messages/{id}/attachments`, `GET /attachments/{id}`, `DELETE /attachments/{id}`
+- Alerts: `GET/POST /api/v1/admin/alert-rules`, `POST .../{id}/test`, `GET /alert-events`
+- Code Template Libraries: `GET /api/v1/admin/code-template-libraries`
+- Variable Maps: `GET/PUT/DELETE /api/v1/admin/config-map/{scope}/{key?}`
+- Pruner: `GET /api/v1/admin/pruner/options`
 - Health: `GET /health`
 
 ## Out of scope here

@@ -9,6 +9,7 @@ using Dialysis.PDMS.TreatmentSessions.Features.ListSessionReadings;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessions;
 using Dialysis.PDMS.TreatmentSessions.Features.ListSessionsByPatient;
 using Dialysis.PDMS.TreatmentSessions.Features.PauseSession;
+using Dialysis.PDMS.TreatmentSessions.Features.RecordAdverseEvent;
 using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Features.ResumeSession;
 using Dialysis.PDMS.TreatmentSessions.Features.ScheduleSession;
@@ -180,6 +181,25 @@ public sealed class SessionsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Records an intradialytic adverse event observed on the session. Fans out to the EHR
+    /// safety-surveillance read model via an integration event.
+    /// </summary>
+    [HttpPost("{sessionId:guid}/adverse-events")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    public async Task<IActionResult> RecordAdverseEventAsync(
+        Guid sessionId,
+        [FromBody] RecordAdverseEventRequest body,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        await _gateway
+            .SendCommandAsync<RecordAdverseEventCommand, Unit>(
+                new RecordAdverseEventCommand(sessionId, body.EventKindCode, body.Severity, body.Notes), cancellationToken)
+            .ConfigureAwait(false);
+        return Accepted();
+    }
+
     [HttpPost("{sessionId:guid}/readings")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
@@ -318,6 +338,25 @@ public sealed class SessionsController : ControllerBase
         public AbortSessionRequest(string ReasonCode) => this.ReasonCode = ReasonCode;
         public string ReasonCode { get; init; }
         public void Deconstruct(out string reasonCode) => reasonCode = this.ReasonCode;
+    }
+
+    public sealed record RecordAdverseEventRequest
+    {
+        public RecordAdverseEventRequest(string EventKindCode, string Severity, string? Notes)
+        {
+            this.EventKindCode = EventKindCode;
+            this.Severity = Severity;
+            this.Notes = Notes;
+        }
+        public string EventKindCode { get; init; }
+        public string Severity { get; init; }
+        public string? Notes { get; init; }
+        public void Deconstruct(out string eventKindCode, out string severity, out string? notes)
+        {
+            eventKindCode = this.EventKindCode;
+            severity = this.Severity;
+            notes = this.Notes;
+        }
     }
 
     public sealed record RecordReadingRequest

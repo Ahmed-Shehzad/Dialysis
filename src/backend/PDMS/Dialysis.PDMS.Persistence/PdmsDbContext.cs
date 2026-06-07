@@ -113,6 +113,12 @@ public sealed class PdmsDbContext : ModuleDbContextBase
         {
             b.ToTable("IntradialyticReadings", SessionsSchema);
             b.HasKey(r => r.Id);
+            // The domain assigns the id (Guid.CreateVersion7) before persistence. Without
+            // ValueGeneratedNever the key convention is ValueGeneratedOnAdd, so when a reading is
+            // added to an already-loaded session aggregate, DetectChanges sees a set key and marks
+            // it Modified → EF emits an UPDATE that affects 0 rows → DbUpdateConcurrencyException.
+            // Declaring the key app-generated makes EF track the new reading as Added (INSERT).
+            b.Property(r => r.Id).ValueGeneratedNever();
             b.Property(r => r.SessionId).IsRequired();
             b.HasIndex(r => new { r.SessionId, r.ObservedAtUtc });
             b.Property(r => r.ArterialPressureMmHg).HasPrecision(8, 2);

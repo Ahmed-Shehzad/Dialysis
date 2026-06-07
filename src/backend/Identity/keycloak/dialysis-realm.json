@@ -951,6 +951,21 @@
             "access.token.claim": "true",
             "userinfo.token.claim": "true"
           }
+        },
+        {
+          "id": "3d427d15-768f-49c3-989b-d7f2663e42fe",
+          "name": "his-patient-id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "his_patient_id",
+            "claim.name": "his_patient_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
         }
       ],
       "defaultClientScopes": [
@@ -999,7 +1014,7 @@
       },
       "protocolMappers": [
         {
-          "id": "30000000-0000-4000-8000-000000000001",
+          "id": "30000000-0000-4000-8000-000000000011",
           "name": "realm-roles",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-realm-role-mapper",
@@ -1014,7 +1029,7 @@
           }
         },
         {
-          "id": "30000000-0000-4000-8000-000000000002",
+          "id": "30000000-0000-4000-8000-000000000012",
           "name": "aud-account",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
@@ -1028,7 +1043,7 @@
           }
         },
         {
-          "id": "30000000-0000-4000-8000-000000000003",
+          "id": "30000000-0000-4000-8000-000000000013",
           "name": "dev-dialysis-permissions",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-hardcoded-claim-mapper",

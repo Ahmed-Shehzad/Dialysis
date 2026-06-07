@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -207,7 +206,22 @@ public static class ModuleBffExtensions
                     {
                         var token = await context.HttpContext.GetTokenAsync("access_token").ConfigureAwait(false);
                         if (!string.IsNullOrEmpty(token))
+                        {
                             context.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                            return;
+                        }
+
+                        // No cookie session. In dev only (AllowServiceBearerPassthrough), forward an inbound
+                        // service-account bearer so the data simulator can drive module writes through the BFF.
+                        if (module.AllowServiceBearerPassthrough
+                            && context.HttpContext.Request.Headers.TryGetValue("Authorization", out var inbound)
+                            && inbound.Count > 0
+                            && inbound[0] is { } raw
+                            && raw.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.ProxyRequest.Headers.Authorization =
+                                new AuthenticationHeaderValue("Bearer", raw["Bearer ".Length..].Trim());
+                        }
                     });
                 });
         }

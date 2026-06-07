@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 using Dialysis.HIS.PatientFlow.Features.AssignChair;
@@ -63,11 +64,21 @@ public sealed class PatientFlowController : HisHateoasControllerBase
 
     [HttpPost("queue/assign-chair")]
     [ProducesResponseType(typeof(ResourceEnvelope<QueueActionResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> AssignChairAsync(
         [FromBody] AssignChairCommand command,
         CancellationToken cancellationToken)
     {
-        var id = await _gateway.SendCommandAsync<AssignChairCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        Guid id;
+        try
+        {
+            id = await _gateway.SendCommandAsync<AssignChairCommand, Guid>(command, cancellationToken).ConfigureAwait(false);
+        }
+        catch (DomainException ex)
+        {
+            // e.g. the chair is already occupied — a conflict with current floor state, not a server fault.
+            return Conflict(new { error = ex.Message });
+        }
         return OkResource(new QueueActionResponse(id));
     }
 

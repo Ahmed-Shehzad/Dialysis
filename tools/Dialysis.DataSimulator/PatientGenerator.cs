@@ -21,7 +21,7 @@ public sealed class PatientGenerator
     private static readonly string[] _wards = ["MED", "ICU", "NEPH"];
 
     /// <summary>Generates the patient for a given absolute sequence number.</summary>
-    public GeneratedPatient Generate(int seed, long sequence)
+    public static GeneratedPatient Generate(int seed, long sequence)
     {
         var derived = unchecked((int)((seed * 2654435761L) + sequence));
         var faker = new Faker("en") { Random = new Randomizer(derived) };
@@ -31,7 +31,7 @@ public sealed class PatientGenerator
         var given = faker.Name.FirstName(gender);
         var dob = faker.Date.PastDateOnly(85, _dobReference);
         var sex = gender == Name.Gender.Male ? "M" : "F";
-        var mrn = "SIM-" + faker.Random.ReplaceNumbers("########");
+        var mrn = "MRN-" + faker.Random.ReplaceNumbers("########");
         var providerId = DeterministicGuid($"provider:{faker.Random.Int(1, 8)}");
         var inpatient = faker.Random.Bool(0.35f);
         var ward = faker.PickRandom(_wards);
