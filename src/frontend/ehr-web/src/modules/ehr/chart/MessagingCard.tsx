@@ -106,6 +106,7 @@ export const MessagingCard = ({ patientId }: { patientId: string }) => {
                         onChange={(e) => setReply(e.target.value)}
                         rows={2}
                         placeholder="Reply to the patient…"
+                        aria-label="Reply to the patient"
                         className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
                       />
                       <button

@@ -466,6 +466,7 @@ export const NewChannelDialog = ({ onClose }: Props) => {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500">#{i}</span>
                     <select
+                      aria-label={`Route filter #${i} kind`}
                       value={filter.kind}
                       onChange={(e) => onUpdateFilter(i, { kind: e.target.value })}
                       className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
@@ -522,6 +523,7 @@ export const NewChannelDialog = ({ onClose }: Props) => {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500">#{i}</span>
                     <select
+                      aria-label={`Source transform stage #${i} kind`}
                       value={stage.kind}
                       onChange={(e) => onUpdateStage(i, { kind: e.target.value })}
                       className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
@@ -586,6 +588,7 @@ export const NewChannelDialog = ({ onClose }: Props) => {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500">#{route.ordinal}</span>
                     <select
+                      aria-label={`Outbound route #${route.ordinal} kind`}
                       value={route.kind}
                       onChange={(e) => onUpdateRoute(route.ordinal, { kind: e.target.value })}
                       className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"

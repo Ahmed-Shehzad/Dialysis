@@ -62,6 +62,7 @@ export const AdapterParametersForm = ({
     // wire it up; the back-end's PipelineValidation surfaces shape errors at POST time.
     return (
       <textarea
+        aria-label="Adapter parameters JSON"
         value={propertiesJson ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
         rows={4}

@@ -236,6 +236,7 @@ export const FlowsTab = () => {
         </h3>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <select
+            aria-label="Filter by group"
             value={groupFilter}
             onChange={(e) => setGroupFilter(e.target.value)}
             className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
@@ -248,6 +249,7 @@ export const FlowsTab = () => {
             ))}
           </select>
           <select
+            aria-label="Filter by state"
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
             className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"

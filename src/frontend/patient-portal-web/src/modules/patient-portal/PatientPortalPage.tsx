@@ -121,6 +121,7 @@ export const PatientPortalPage = () => {
               value={manualId}
               onChange={(e) => setManualId(e.target.value)}
               placeholder="Patient Guid…"
+              aria-label="Patient id"
               className="flex-1 rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
             />
           </div>

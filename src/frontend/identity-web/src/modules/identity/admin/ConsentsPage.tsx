@@ -60,6 +60,7 @@ export const ConsentsPage = () => {
           value={patientId}
           onChange={(e) => setPatientId(e.target.value)}
           placeholder="Patient id (UUID)"
+          aria-label="Patient id"
           className="w-96 rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-sm font-mono text-slate-100"
         />
         <button

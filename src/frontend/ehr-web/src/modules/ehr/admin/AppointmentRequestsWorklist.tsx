@@ -102,6 +102,7 @@ export const AppointmentRequestsWorklist = () => {
                   value={note[r.id] ?? ""}
                   onChange={(e) => setNote((n) => ({ ...n, [r.id]: e.target.value }))}
                   placeholder="Staff note (optional for approve, used on decline)"
+                  aria-label="Staff note"
                   className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
                 />
                 <button

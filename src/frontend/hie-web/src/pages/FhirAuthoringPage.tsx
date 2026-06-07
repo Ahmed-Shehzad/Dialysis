@@ -97,12 +97,14 @@ const ConstraintEditor = ({
           className="grid grid-cols-12 items-center gap-2 rounded-md border border-slate-800 bg-slate-900/40 p-2"
         >
           <input
+            aria-label="Element path"
             placeholder="Element path (e.g. Patient.identifier)"
             value={c.path}
             onChange={(e) => update(i, { path: e.target.value })}
             className="col-span-5 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 placeholder-slate-500"
           />
           <input
+            aria-label="Minimum cardinality"
             placeholder="min"
             inputMode="numeric"
             value={c.min ?? ""}
@@ -112,6 +114,7 @@ const ConstraintEditor = ({
             className="col-span-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 placeholder-slate-500"
           />
           <input
+            aria-label="Maximum cardinality"
             placeholder="max"
             value={c.max ?? ""}
             onChange={(e) => update(i, { max: e.target.value || null })}
@@ -133,6 +136,7 @@ const ConstraintEditor = ({
             Remove
           </button>
           <input
+            aria-label="Binding value set"
             placeholder="Binding value set (optional)"
             value={c.bindingValueSet ?? ""}
             onChange={(e) => update(i, { bindingValueSet: e.target.value || null })}

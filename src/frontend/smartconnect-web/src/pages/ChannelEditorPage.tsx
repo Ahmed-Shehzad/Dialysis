@@ -250,6 +250,7 @@ export function ChannelEditorPage(): JSX.Element {
           Edits here update the graph live. The save button is disabled while the JSON is invalid.
         </p>
         <textarea
+          aria-label="Raw pipeline JSON"
           value={pipelineJsonDraft}
           onChange={(e) => {
             const value = e.target.value;

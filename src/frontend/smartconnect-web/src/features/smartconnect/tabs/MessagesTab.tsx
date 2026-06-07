@@ -242,6 +242,7 @@ export const MessagesTab = () => {
     <section className="space-y-4">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-8">
         <select
+          aria-label="Filter by flow"
           value={filters.flowId ?? ""}
           onChange={(e) => update({ flowId: e.target.value || undefined })}
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200"
@@ -254,6 +255,7 @@ export const MessagesTab = () => {
           ))}
         </select>
         <select
+          aria-label="Filter by status"
           value={filters.status === undefined ? "" : String(filters.status)}
           onChange={(e) =>
             update({
@@ -273,6 +275,7 @@ export const MessagesTab = () => {
           ))}
         </select>
         <input
+          aria-label="Correlation prefix"
           placeholder="Correlation prefix"
           value={filters.correlationIdPrefix ?? ""}
           onChange={(e) => update({ correlationIdPrefix: e.target.value || undefined })}
@@ -300,6 +303,7 @@ export const MessagesTab = () => {
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 placeholder-slate-500"
         />
         <input
+          aria-label="From date"
           type="datetime-local"
           value={filters.from?.slice(0, 16) ?? ""}
           onChange={(e) =>
@@ -308,6 +312,7 @@ export const MessagesTab = () => {
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200"
         />
         <input
+          aria-label="To date"
           type="datetime-local"
           value={filters.to?.slice(0, 16) ?? ""}
           onChange={(e) =>
