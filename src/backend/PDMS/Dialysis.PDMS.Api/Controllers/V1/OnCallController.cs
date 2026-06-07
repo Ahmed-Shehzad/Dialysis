@@ -99,7 +99,9 @@ public sealed class OnCallController : ControllerBase
         ArgumentNullException.ThrowIfNull(request);
         var rotation = BuildRotation(Guid.CreateVersion7(), request);
         await _rotations.AddAsync(rotation, cancellationToken).ConfigureAwait(false);
-        return CreatedAtAction(nameof(ListRotationsAsync), null, OnCallRotationDto.From(rotation));
+        // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
+        // {version} route value for action-link generation, which throws -> 500.
+        return Created($"/api/v1.0/oncall/rotations/{rotation.Id}", OnCallRotationDto.From(rotation));
     }
 
     [HttpPut("rotations/{id:guid}")]
@@ -155,7 +157,9 @@ public sealed class OnCallController : ControllerBase
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _policies.AddAsync(policy, cancellationToken).ConfigureAwait(false);
-        return CreatedAtAction(nameof(ListPoliciesAsync), null, EscalationPolicyDto.From(policy));
+        // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
+        // {version} route value for action-link generation, which throws -> 500.
+        return Created($"/api/v1.0/oncall/policies/{policy.Id}", EscalationPolicyDto.From(policy));
     }
 
     [HttpPut("policies/{id:guid}")]

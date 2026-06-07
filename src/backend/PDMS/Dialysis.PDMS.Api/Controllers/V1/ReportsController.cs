@@ -120,7 +120,9 @@ public sealed class ReportsController : ControllerBase
             await _templates.AddAsync(template, cancellationToken).ConfigureAwait(false);
         else
             _templates.Update(template);
-        return CreatedAtAction(nameof(ListTemplatesAsync), null, ReportTemplateDto.From(template));
+        // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
+        // {version} route value for action-link generation, which throws -> 500.
+        return Created($"/api/v1.0/reporting/templates/{template.Slug}", ReportTemplateDto.From(template));
     }
 
     [HttpPost("api/v{version:apiVersion}/reporting/templates/{slug}/publish")]

@@ -94,7 +94,9 @@ public sealed class InventoryController : ControllerBase
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _inventory.AddAsync(item, cancellationToken).ConfigureAwait(false);
-        return CreatedAtAction(nameof(ListAsync), null, InventoryItemDto.From(item));
+        // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
+        // {version} route value for action-link generation, which throws -> 500.
+        return Created($"/api/v1.0/inventory/{item.Id}", InventoryItemDto.From(item));
     }
 }
 
