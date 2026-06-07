@@ -85,7 +85,7 @@ public sealed class PdmsVitalsTickerService : BackgroundService
         {
             try
             {
-                await pdms.RecordReadingAsync(session.Id, NextReading(), cancellationToken).ConfigureAwait(false);
+                await pdms.RecordReadingAsync(session.Id, NextReading(session.Id), cancellationToken).ConfigureAwait(false);
                 return true;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -100,20 +100,26 @@ public sealed class PdmsVitalsTickerService : BackgroundService
             _logger.LogInformation("Recorded vitals for {Count} in-progress session(s).", recorded);
     }
 
-    private static object NextReading()
+    private static object NextReading(Guid sessionId)
     {
         // Random.Shared is thread-safe — required because a tick now records sessions concurrently.
         int Around(int mid, int spread) => mid + Random.Shared.Next(-spread, spread + 1);
         decimal AroundD(double mid, double spread) =>
             Math.Round((decimal)(mid + (((Random.Shared.NextDouble() * 2) - 1) * spread)), 1);
 
+        // ~1 in 4 chairs is a deterministically-"critical" patient: its readings sit in the alert
+        // band (hypertensive + tachycardic) so the chairside monitor demonstrates BOTH tones — the
+        // steady moderate beep on normal chairs and the continuous critical alarm on this one. Keying
+        // off the session id keeps a given chair in one mode instead of flapping every reading.
+        var critical = (sessionId.GetHashCode() & 3) == 0;
+
         return new
         {
-            systolicBloodPressure = Around(120, 15),
-            diastolicBloodPressure = Around(75, 10),
-            heartRateBpm = Around(76, 12),
+            systolicBloodPressure = critical ? Around(192, 8) : Around(120, 15),
+            diastolicBloodPressure = critical ? Around(104, 6) : Around(75, 10),
+            heartRateBpm = critical ? Around(132, 8) : Around(76, 12),
             arterialPressureMmHg = AroundD(-150, 20),
-            venousPressureMmHg = AroundD(150, 20),
+            venousPressureMmHg = critical ? AroundD(270, 15) : AroundD(150, 20),
             ultrafiltrationRateMlPerHour = AroundD(700, 120),
             conductivityMsPerCm = AroundD(13.8, 0.3),
             notes = (string?)null,
