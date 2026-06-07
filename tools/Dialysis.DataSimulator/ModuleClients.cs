@@ -184,6 +184,9 @@ public interface IPdmsClient
     /// <summary>Posts raw IV-pump telemetry for a session+chair (drives the alarm-dispatch audit when Kind=Alarm).</summary>
     Task IngestIvPumpTelemetryAsync(string vendor, Guid sessionId, Guid chairId, object payload, CancellationToken cancellationToken);
 
+    /// <summary>Raises (or transitions) a dialysis-machine treatment alarm so it surfaces on the active-alarms board.</summary>
+    Task RaiseMachineAlarmAsync(string machineSerial, long alarmCode, string alarmSource, string alarmPhase, string state, Guid? sessionId, CancellationToken cancellationToken);
+
     /// <summary>True if any on-call rotation exists — used as the idempotency probe for the one-time admin seed.</summary>
     Task<bool> HasOnCallRotationsAsync(CancellationToken cancellationToken);
 }
@@ -705,6 +708,21 @@ public sealed class PdmsClient : IPdmsClient
         HttpJson.PostAsync(_client,
             $"api/v1.0/iv-pumps/telemetry?vendor={vendor}&sessionId={sessionId}&chairId={chairId}",
             payload, cancellationToken);
+
+    /// <inheritdoc />
+    public Task RaiseMachineAlarmAsync(string machineSerial, long alarmCode, string alarmSource, string alarmPhase, string state, Guid? sessionId, CancellationToken cancellationToken) =>
+        HttpJson.PostAsync(_client, "api/v1.0/alarms/machine",
+            new
+            {
+                machineSerial,
+                alarmCode,
+                alarmSource,
+                alarmPhase,
+                state,
+                observedAtUtc = DateTime.UtcNow,
+                sessionId,
+            },
+            cancellationToken);
 
     /// <inheritdoc />
     public async Task<bool> HasOnCallRotationsAsync(CancellationToken cancellationToken)

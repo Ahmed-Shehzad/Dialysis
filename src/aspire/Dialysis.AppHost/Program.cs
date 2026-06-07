@@ -689,8 +689,15 @@ if (enableDataSimulator)
     var dataSimulatorSecret = builder.AddParameter("data-simulator-client-secret", "data-simulator-dev-secret-change-me", secret: true);
 
     builder.AddProject<Projects.Dialysis_DataSimulator>("data-simulator")
-        .WaitFor(keycloak)
-        .WaitFor(ehrBff).WaitFor(hisBff).WaitFor(hieBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(labApi)
+        // Start the simulator only after EVERY runtime service is up — all infra, all module APIs,
+        // all BFFs, and the gateway. (SonarQube is deliberately excluded: it's a dev-time analyzer,
+        // not part of the application runtime.) This prevents the connection-refused storm and the
+        // admin-seed-skipped behaviour seen when the simulator raced ahead of (e.g.) the PDMS host.
+        .WaitFor(keycloak).WaitFor(rabbit).WaitFor(valkey)
+        .WaitFor(hisApi).WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi).WaitFor(hieApi).WaitFor(labApi)
+        .WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff)
+        .WaitFor(adminBff).WaitFor(portalBff)
+        .WaitFor(gateway)
         // Authority is the realm base; the worker appends /protocol/openid-connect/token itself.
         .WithEnvironment("DataSimulator__Auth__Authority", keycloakRealmUri)
         .WithEnvironment("DataSimulator__Auth__ClientSecret", dataSimulatorSecret)

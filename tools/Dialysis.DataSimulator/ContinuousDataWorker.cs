@@ -209,13 +209,22 @@ public sealed class ContinuousDataWorker : BackgroundService
             var sessionId = await _pdms.ScheduleSessionAsync(patientId, cancellationToken).ConfigureAwait(false);
             await _pdms.StartSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
 
+            // Drive the active-alarms board: raise a machine alarm on a bounded pool, occasionally
+            // clearing one so the strip is dynamic instead of monotonically growing. Idempotent —
+            // resolve-or-refresh collapses repeats onto the same (machine, code) aggregate.
+            var hash = Math.Abs(patient.MedicalRecordNumber.GetHashCode(StringComparison.Ordinal));
+            var machine = MachineAlarms[hash % MachineAlarms.Length];
+            var clear = hash % 4 == 0; // ~1 in 4 resolves instead of (re)raising
+            await _pdms.RaiseMachineAlarmAsync(
+                machine.Serial, machine.Code, machine.Source, machine.Phase,
+                clear ? "Resolved" : "Present", sessionId, cancellationToken).ConfigureAwait(false);
+
             if (live.Count >= MaxLiveSessions)
             {
                 var finishing = live[0].Id;
-                if (Math.Abs(patient.MedicalRecordNumber.GetHashCode(StringComparison.Ordinal)) % 3 == 0)
+                if (hash % 3 == 0)
                 {
-                    var (kind, severity) = AdverseEvents[
-                        Math.Abs(patient.MedicalRecordNumber.GetHashCode(StringComparison.Ordinal)) % AdverseEvents.Length];
+                    var (kind, severity) = AdverseEvents[hash % AdverseEvents.Length];
                     await _pdms.RecordAdverseEventAsync(finishing, kind, severity, "Observed during treatment.", cancellationToken).ConfigureAwait(false);
                 }
                 await _pdms.CompleteSessionAsync(finishing, 2.4m, cancellationToken).ConfigureAwait(false);
@@ -342,23 +351,49 @@ public sealed class ContinuousDataWorker : BackgroundService
         ("Hypertension", "Moderate"),
     ];
 
+    // Fixed pool of dialysis-machine serials backing the active-alarms board. Each machine carries
+    // at most one live alarm (one code per machine), so the active set stays bounded (resolve-or-
+    // refresh collapses repeats onto the same aggregate) and tracks the live chairs rather than
+    // growing one-per-session forever.
+    private static readonly (string Serial, long Code, string Source, string Phase)[] MachineAlarms =
+    [
+        ("DM-5008-01", 1001, "Venous pressure", "Treatment"),
+        ("DM-5008-02", 1002, "Arterial pressure", "Treatment"),
+        ("DM-5008-03", 1003, "Transmembrane pressure", "Treatment"),
+        ("DM-5008-04", 1004, "Blood leak detector", "Treatment"),
+        ("DM-5008-05", 1005, "Air bubble detector", "Treatment"),
+        ("DM-5008-06", 1006, "Conductivity", "Treatment"),
+    ];
+
     /// <summary>
     /// Seeds the admin/operational consoles once per database. Gated on an on-call rotation already
     /// existing (the PDMS/EHR DBs persist across restarts), so it doesn't pile up on re-runs.
     /// </summary>
     private async Task SeedAdminRegistriesAsync(CancellationToken cancellationToken)
     {
-        bool alreadySeeded;
-        try
+        // Resilient probe: PDMS may still be warming up when the simulator starts. Retry for up to
+        // ~60s before giving up so a transient connection-refused doesn't skip the entire admin seed
+        // (which is what previously left the billing/inventory/reporting consoles empty).
+        bool? alreadySeeded = null;
+        for (var attempt = 1; attempt <= 20 && alreadySeeded is null; attempt++)
         {
-            alreadySeeded = await _pdms.HasOnCallRotationsAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                alreadySeeded = await _pdms.HasOnCallRotationsAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogInformation("Admin-seed probe not ready (attempt {Attempt}/20): {Message}; retrying.", attempt, ex.Message);
+                try { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false); }
+                catch (OperationCanceledException) { return; }
+            }
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        if (alreadySeeded is null)
         {
-            _logger.LogWarning("Admin-seed probe failed: {Message}; skipping admin seed this run.", ex.Message);
+            _logger.LogWarning("Admin-seed probe never became ready; skipping admin seed this run.");
             return;
         }
-        if (alreadySeeded)
+        if (alreadySeeded.Value)
         {
             _logger.LogInformation("Admin registries already seeded; skipping.");
             return;
@@ -522,6 +557,13 @@ public sealed class ContinuousDataWorker : BackgroundService
             ts = DateTime.UtcNow.AddSeconds(5).ToString("o", System.Globalization.CultureInfo.InvariantCulture),
             alarm = new { code = "OCCLUSION", text = "Downstream occlusion detected", severity = "WARNING" },
         }, cancellationToken).ConfigureAwait(false);
+
+        // Seed two live machine treatment alarms so the active-alarms board is non-empty the moment
+        // the stack comes up, before the per-patient journey has raised any of its own.
+        await _pdms.RaiseMachineAlarmAsync(MachineAlarms[0].Serial, MachineAlarms[0].Code,
+            MachineAlarms[0].Source, MachineAlarms[0].Phase, "Present", sessionId, cancellationToken).ConfigureAwait(false);
+        await _pdms.RaiseMachineAlarmAsync(MachineAlarms[2].Serial, MachineAlarms[2].Code,
+            MachineAlarms[2].Source, MachineAlarms[2].Phase, "Present", sessionId, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Runs one best-effort journey step; a failure is logged concisely and swallowed so the

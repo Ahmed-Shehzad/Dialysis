@@ -189,6 +189,10 @@ public static class PdmsCompositionExtensions
             services.AddScoped<ISessionReportContextBuilder, SessionReportContextBuilder>();
             services.AddScoped<ISessionReportRepository, SessionReportRepository>();
 
+            // Shared machine-alarm resolve-or-raise pipeline, used by both the SmartConnect boundary
+            // consumer and the direct HTTP ingest command so both arrival channels behave identically.
+            services.AddScoped<TreatmentAlarmIngestionService>();
+
             // Default no-op broadcaster — the API host overrides with the SignalR-backed implementation.
             services.TryAddSingleton<IVitalsBroadcaster, NoOpVitalsBroadcaster>();
 

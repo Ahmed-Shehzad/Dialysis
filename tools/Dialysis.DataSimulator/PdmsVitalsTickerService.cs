@@ -14,7 +14,10 @@ namespace Dialysis.DataSimulator;
 /// </summary>
 public sealed class PdmsVitalsTickerService : BackgroundService
 {
-    private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(5);
+    // 2-second cadence: the chairside vitals waveform should update in near-real-time. The
+    // RecordReading handler broadcasts each reading synchronously over the SignalR vitals hub,
+    // so the client sees a fresh point roughly every TickInterval.
+    private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(2);
 
     private readonly IServiceProvider _services;
     private readonly DataSimulatorOptions _options;
