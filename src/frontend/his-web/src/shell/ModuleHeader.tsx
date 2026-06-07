@@ -89,11 +89,21 @@ export const ModuleHeader = ({
             // A cross-context target (another /{context} app) must be a real anchor so the
             // browser loads that SPA — a React Router <Link> would resolve it inside /his.
             return action.href ? (
-              <a key={action.href + action.label} href={action.href} title={action.hint} className={className}>
+              <a
+                key={action.href + action.label}
+                href={action.href}
+                title={action.hint}
+                className={className}
+              >
                 {action.label}
               </a>
             ) : (
-              <Link key={(action.to ?? "") + action.label} to={action.to ?? ""} title={action.hint} className={className}>
+              <Link
+                key={(action.to ?? "") + action.label}
+                to={action.to ?? ""}
+                title={action.hint}
+                className={className}
+              >
                 {action.label}
               </Link>
             );

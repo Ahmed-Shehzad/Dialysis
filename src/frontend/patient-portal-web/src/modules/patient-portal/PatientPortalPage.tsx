@@ -66,10 +66,7 @@ export const PatientPortalPage = () => {
   // Patient identity is the `his_patient_id` claim only — `sub` is a *user* id, not a patient id, so it
   // must never be used to scope patient data. A real patient session carries `his_patient_id` and is
   // pinned to it; a staff/dev session (no such claim) falls through to the manual id box below.
-  const claimPatientId = useMemo(
-    () => claimAsString(user?.claims.his_patient_id),
-    [user?.claims],
-  );
+  const claimPatientId = useMemo(() => claimAsString(user?.claims.his_patient_id), [user?.claims]);
   const [manualId, setManualId] = useState(FALLBACK_DEMO_PATIENT_ID);
   const patientId = claimPatientId ?? (manualId.trim().length > 0 ? manualId.trim() : null);
 
