@@ -14,9 +14,12 @@ namespace Dialysis.DataSimulator;
 /// </summary>
 public sealed class ContinuousDataWorker : BackgroundService
 {
-    // Keep a small pool of live dialysis sessions so the chairside always has something to stream
-    // without sessions growing without bound (each one stays in-progress for the vitals ticker).
-    private const int MaxLiveSessions = 4;
+    // Keep a pool of live dialysis sessions so the chairside always has something to stream without
+    // sessions growing without bound. Sized so each session stays in-progress long enough to show a
+    // sustained 2s vitals waveform before it ages out: lifetime ≈ MaxLiveSessions / PatientsPerTick ×
+    // IntervalSeconds (with the defaults below, ≈ 12 / 2 × 5 = 30s per chair). The vitals ticker caps
+    // its per-tick fan-out, so this pool size never overwhelms the 2s cadence.
+    private const int MaxLiveSessions = 12;
 
     private readonly IEhrClient _ehr;
     private readonly IHisClient _his;
@@ -79,6 +82,10 @@ public sealed class ContinuousDataWorker : BackgroundService
         // in-memory (resets every restart), so this re-seeds each run rather than gating on the
         // persistent PDMS marker above.
         await TryAsync("seed.smartconnect-flows", () => SeedSmartConnectFlowsAsync(stoppingToken)).ConfigureAwait(false);
+        // Drain any backlog of in-progress sessions left by prior runs down to MaxLiveSessions. The
+        // PDMS DB persists across restarts, so without this the live pool grows unbounded and the
+        // vitals ticker fans out across dozens of sessions — starving the chairside 2s cadence.
+        await TryAsync("seed.drain-sessions", () => DrainExcessLiveSessionsAsync(stoppingToken)).ConfigureAwait(false);
 
         var interval = TimeSpan.FromSeconds(Math.Max(1, _options.IntervalSeconds));
         while (!stoppingToken.IsCancellationRequested)
@@ -97,6 +104,26 @@ public sealed class ContinuousDataWorker : BackgroundService
             {
                 break;
             }
+        }
+    }
+
+    /// <summary>
+    /// Completes the stalest in-progress sessions until the live pool is back down to
+    /// <see cref="MaxLiveSessions"/>. ListInProgressSessions is oldest-first, so the leading entries
+    /// are the longest-running — exactly the ones a clinic would have closed out long ago.
+    /// </summary>
+    private async Task DrainExcessLiveSessionsAsync(CancellationToken cancellationToken)
+    {
+        var live = await _pdms.ListInProgressSessionsAsync(cancellationToken).ConfigureAwait(false);
+        var excess = live.Count - MaxLiveSessions;
+        if (excess <= 0)
+            return;
+
+        _logger.LogInformation("Draining {Excess} backlogged in-progress session(s) down to {Max}.", excess, MaxLiveSessions);
+        for (var i = 0; i < excess; i++)
+        {
+            var id = live[i].Id;
+            await TryAsync($"drain.session", () => _pdms.CompleteSessionAsync(id, 2.4m, cancellationToken)).ConfigureAwait(false);
         }
     }
 
@@ -203,22 +230,18 @@ public sealed class ContinuousDataWorker : BackgroundService
         //     (EHR) + invoice documents (HIE) flow continuously, while keeping a live pool for the
         //     chairside vitals stream. Some completions log an intradialytic adverse event (→ EHR
         //     safety surveillance).
+        var hash = Math.Abs(patient.MedicalRecordNumber.GetHashCode(StringComparison.Ordinal));
+        Guid startedSession = Guid.Empty;
         await TryAsync("pdms.session", async () =>
         {
             var live = await _pdms.ListInProgressSessionsAsync(cancellationToken).ConfigureAwait(false);
             var sessionId = await _pdms.ScheduleSessionAsync(patientId, cancellationToken).ConfigureAwait(false);
             await _pdms.StartSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
+            startedSession = sessionId;
 
-            // Drive the active-alarms board: raise a machine alarm on a bounded pool, occasionally
-            // clearing one so the strip is dynamic instead of monotonically growing. Idempotent —
-            // resolve-or-refresh collapses repeats onto the same (machine, code) aggregate.
-            var hash = Math.Abs(patient.MedicalRecordNumber.GetHashCode(StringComparison.Ordinal));
-            var machine = MachineAlarms[hash % MachineAlarms.Length];
-            var clear = hash % 4 == 0; // ~1 in 4 resolves instead of (re)raising
-            await _pdms.RaiseMachineAlarmAsync(
-                machine.Serial, machine.Code, machine.Source, machine.Phase,
-                clear ? "Resolved" : "Present", sessionId, cancellationToken).ConfigureAwait(false);
-
+            // Complete the oldest once the pool is full so charges (EHR) + invoice documents (HIE) flow
+            // continuously. Keep the pool sized so each chair streams 2s vitals for a realistic stretch
+            // before it ages out (lifetime ≈ MaxLiveSessions / PatientsPerTick × IntervalSeconds).
             if (live.Count >= MaxLiveSessions)
             {
                 var finishing = live[0].Id;
@@ -230,6 +253,21 @@ public sealed class ContinuousDataWorker : BackgroundService
                 await _pdms.CompleteSessionAsync(finishing, 2.4m, cancellationToken).ConfigureAwait(false);
             }
         }).ConfigureAwait(false);
+
+        // Drive the active-alarms board in its OWN step so a transient alarm failure can never skip the
+        // session completion above (which would let the live pool grow unbounded). Idempotent —
+        // resolve-or-refresh collapses repeats onto the same (machine, code) aggregate.
+        if (startedSession != Guid.Empty)
+        {
+            await TryAsync("pdms.machine-alarm", () =>
+            {
+                var machine = MachineAlarms[hash % MachineAlarms.Length];
+                var clear = hash % 4 == 0; // ~1 in 4 resolves instead of (re)raising
+                return _pdms.RaiseMachineAlarmAsync(
+                    machine.Serial, machine.Code, machine.Source, machine.Phase,
+                    clear ? "Resolved" : "Present", startedSession, cancellationToken);
+            }).ConfigureAwait(false);
+        }
 
         _logger.LogInformation("Journey complete: patient {PatientId} ({Shape}).",
             patientId, patient.Inpatient ? "inpatient" : "outpatient");

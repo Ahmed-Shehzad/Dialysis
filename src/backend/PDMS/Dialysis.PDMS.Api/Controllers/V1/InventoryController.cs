@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Medications.Domain;
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +18,18 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 public sealed class InventoryController : ControllerBase
 {
     private readonly IPdmsRepository<MedicationInventoryItem, Guid> _inventory;
+    private readonly IUnitOfWork _unitOfWork;
     /// <summary>
     /// Pharmacy inventory dashboard backing the operator's <c>/admin/inventory</c> page.
     /// Read-only listing, plus receive / deduct / adjust operator actions. Stock changes
     /// are persisted through the aggregate so the low-stock integration event fires on
     /// the same code path that the OnMedicationAdministered consumer uses.
     /// </summary>
-    public InventoryController(IPdmsRepository<MedicationInventoryItem, Guid> inventory) => _inventory = inventory;
+    public InventoryController(IPdmsRepository<MedicationInventoryItem, Guid> inventory, IUnitOfWork unitOfWork)
+    {
+        _inventory = inventory;
+        _unitOfWork = unitOfWork;
+    }
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<InventoryItemDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAsync(
@@ -50,6 +56,7 @@ public sealed class InventoryController : ControllerBase
         if (item is null) return NotFound();
         item.Receive(request.Units, request.Reason);
         _inventory.Update(item);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(InventoryItemDto.From(item));
     }
 
@@ -66,6 +73,7 @@ public sealed class InventoryController : ControllerBase
         if (item is null) return NotFound();
         item.Adjust(request.NewOnHandUnits, request.Reason);
         _inventory.Update(item);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(InventoryItemDto.From(item));
     }
 
@@ -94,6 +102,7 @@ public sealed class InventoryController : ControllerBase
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _inventory.AddAsync(item, cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
         // {version} route value for action-link generation, which throws -> 500.
         return Created($"/api/v1.0/inventory/{item.Id}", InventoryItemDto.From(item));

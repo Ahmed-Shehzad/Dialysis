@@ -23,10 +23,6 @@ public sealed class PdmsVitalsTickerService : BackgroundService
     private readonly DataSimulatorOptions _options;
     private readonly ILogger<PdmsVitalsTickerService> _logger;
 
-    // Per-session deterministic jitter source keyed off the base seed; values wander around clinical
-    // baselines so the chairside trend looks alive rather than flat-lining at a constant.
-    private readonly Random _random;
-
     /// <summary>Creates the ticker.</summary>
     public PdmsVitalsTickerService(
         IServiceProvider services,
@@ -36,7 +32,6 @@ public sealed class PdmsVitalsTickerService : BackgroundService
         _services = services;
         _options = options.Value;
         _logger = logger;
-        _random = new Random(_options.Seed);
     }
 
     /// <inheritdoc />
@@ -63,6 +58,12 @@ public sealed class PdmsVitalsTickerService : BackgroundService
         }
     }
 
+    // Upper bound on how many sessions one tick fans out to. The journey keeps the live pool small,
+    // but if a backlog ever builds this caps the per-tick work to the most-recent chairs so a single
+    // round always completes well inside the 2s cadence (writes run concurrently, not serially —
+    // serial writes against a large pool were what previously starved the newest session).
+    private const int MaxSessionsPerTick = 24;
+
     private async Task TickAsync(CancellationToken cancellationToken)
     {
         using var scope = _services.CreateScope();
@@ -72,29 +73,39 @@ public sealed class PdmsVitalsTickerService : BackgroundService
         if (sessions.Count == 0)
             return;
 
-        var recorded = 0;
-        foreach (var session in sessions)
+        // ListInProgressSessions is oldest-first; the tail is the most-recently-started chairs — the
+        // ones a clinician is actually watching — so cap to those when a backlog exists.
+        var targets = sessions.Count <= MaxSessionsPerTick
+            ? sessions
+            : sessions.Skip(sessions.Count - MaxSessionsPerTick).ToList();
+
+        // Fan out concurrently so the whole round finishes in roughly one request's time, keeping the
+        // per-session cadence at ~TickInterval regardless of how many chairs are live.
+        var results = await Task.WhenAll(targets.Select(async session =>
         {
             try
             {
                 await pdms.RecordReadingAsync(session.Id, NextReading(), cancellationToken).ConfigureAwait(false);
-                recorded++;
+                return true;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Failed to record a reading for session {SessionId}.", session.Id);
+                return false;
             }
-        }
+        })).ConfigureAwait(false);
 
+        var recorded = results.Count(static ok => ok);
         if (recorded > 0)
             _logger.LogInformation("Recorded vitals for {Count} in-progress session(s).", recorded);
     }
 
-    private object NextReading()
+    private static object NextReading()
     {
-        int Around(int mid, int spread) => mid + _random.Next(-spread, spread + 1);
+        // Random.Shared is thread-safe — required because a tick now records sessions concurrently.
+        int Around(int mid, int spread) => mid + Random.Shared.Next(-spread, spread + 1);
         decimal AroundD(double mid, double spread) =>
-            Math.Round((decimal)(mid + ((_random.NextDouble() * 2 - 1) * spread)), 1);
+            Math.Round((decimal)(mid + (((Random.Shared.NextDouble() * 2) - 1) * spread)), 1);
 
         return new
         {

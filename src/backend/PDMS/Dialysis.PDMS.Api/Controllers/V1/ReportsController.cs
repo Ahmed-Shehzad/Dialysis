@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
@@ -24,6 +25,7 @@ public sealed class ReportsController : ControllerBase
     private readonly IPdmsRepository<SessionReport, Guid> _reports;
     private readonly IPdmsRepository<ReportTemplate, Guid> _templates;
     private readonly IReportBlobStore _blobs;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _clock;
     /// <summary>
     /// Read-only HTTP surface for the SessionReport + ReportTemplate aggregates.
@@ -39,11 +41,13 @@ public sealed class ReportsController : ControllerBase
     public ReportsController(IPdmsRepository<SessionReport, Guid> reports,
         IPdmsRepository<ReportTemplate, Guid> templates,
         IReportBlobStore blobs,
+        IUnitOfWork unitOfWork,
         TimeProvider clock)
     {
         _reports = reports;
         _templates = templates;
         _blobs = blobs;
+        _unitOfWork = unitOfWork;
         _clock = clock;
     }
     [HttpGet("api/v{version:apiVersion}/sessions/{sessionId:guid}/reports")]
@@ -120,6 +124,7 @@ public sealed class ReportsController : ControllerBase
             await _templates.AddAsync(template, cancellationToken).ConfigureAwait(false);
         else
             _templates.Update(template);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
         // {version} route value for action-link generation, which throws -> 500.
         return Created($"/api/v1.0/reporting/templates/{template.Slug}", ReportTemplateDto.From(template));
@@ -142,6 +147,7 @@ public sealed class ReportsController : ControllerBase
         { template.Publish(request.VersionNumber); }
         catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
         _templates.Update(template);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(ReportTemplateDto.From(template));
     }
 

@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
+using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.OnCall.Domain;
 using Microsoft.AspNetCore.Mvc;
@@ -37,6 +38,7 @@ public sealed class OnCallController : ControllerBase
     private readonly IPdmsRepository<OnCallRotation, Guid> _rotations;
     private readonly IPdmsRepository<EscalationPolicy, Guid> _policies;
     private readonly IPdmsRepository<AlarmDispatch, Guid> _dispatches;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _clock;
     /// <summary>
     /// On-call rotation + escalation-policy + alarm-dispatch audit surface. Drives the three
@@ -64,11 +66,13 @@ public sealed class OnCallController : ControllerBase
     public OnCallController(IPdmsRepository<OnCallRotation, Guid> rotations,
         IPdmsRepository<EscalationPolicy, Guid> policies,
         IPdmsRepository<AlarmDispatch, Guid> dispatches,
+        IUnitOfWork unitOfWork,
         TimeProvider clock)
     {
         _rotations = rotations;
         _policies = policies;
         _dispatches = dispatches;
+        _unitOfWork = unitOfWork;
         _clock = clock;
     }
     [HttpGet("rotations")]
@@ -99,6 +103,7 @@ public sealed class OnCallController : ControllerBase
         ArgumentNullException.ThrowIfNull(request);
         var rotation = BuildRotation(Guid.CreateVersion7(), request);
         await _rotations.AddAsync(rotation, cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
         // {version} route value for action-link generation, which throws -> 500.
         return Created($"/api/v1.0/oncall/rotations/{rotation.Id}", OnCallRotationDto.From(rotation));
@@ -121,6 +126,7 @@ public sealed class OnCallController : ControllerBase
         _rotations.Remove(existing);
         var replacement = BuildRotation(id, request);
         await _rotations.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(OnCallRotationDto.From(replacement));
     }
 
@@ -157,6 +163,7 @@ public sealed class OnCallController : ControllerBase
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _policies.AddAsync(policy, cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
         // {version} route value for action-link generation, which throws -> 500.
         return Created($"/api/v1.0/oncall/policies/{policy.Id}", EscalationPolicyDto.From(policy));
@@ -192,6 +199,7 @@ public sealed class OnCallController : ControllerBase
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _policies.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(EscalationPolicyDto.From(replacement));
     }
 
@@ -234,6 +242,7 @@ public sealed class OnCallController : ControllerBase
             return NotFound();
         open.Acknowledge(request.ClinicianSub, _clock.GetUtcNow().UtcDateTime);
         _dispatches.Update(open);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(AlarmDispatchDto.From(open));
     }
 
