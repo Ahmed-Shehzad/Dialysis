@@ -1,249 +1,268 @@
-# HIS — Architecture (low-level)
+# HIS — Hospital Information System
 
-Companion to [README.md](README.md) and [his_ddd_modular_plan.md](his_ddd_modular_plan.md). This file documents the **internal** anatomy of the Hospital Information System module: how the slices wire together, how a request flows through the host, and the state shape of the long-running aggregates.
+> **Bounded context:** dialysis-centre **facility operations**. HIS runs the front desk and the operational spine of a clinic: admissions, the receptionist "today" queue, appointment booking, a thin medication-order surface, staff & inventory, RPM device registry + telemetry ingest, data import, local user accounts, and the Tummers et al. (2021) reference-architecture sub-capabilities.
+>
+> **What HIS does _not_ own:** the patient master record, the clinical chart, prescribing, lab/imaging orders and billing-claim filing — those belong to **[EHR](../EHR/ARCHITECTURE.md)**. HIS only *queues a billing-export request*; EHR files the claim. Cross-context coordination is exclusively via integration events (Transponder) — never a direct project reference.
 
-> All diagrams are [Mermaid](https://mermaid.js.org/). GitHub, GitLab, JetBrains, and most modern Markdown previews render them inline; if a diagram does not render in your viewer, paste the fenced block into <https://mermaid.live>.
+This document is generated from the current code. See the root [README](../../../README.md) for the system-wide picture and [CLAUDE.md](../../../CLAUDE.md) for build/run conventions.
 
 ---
 
-## 1. System architecture (component view)
-
-The HIS host is a single ASP.NET process that composes one vertical slice per RA sub-context. Each slice owns its domain, its handlers, and its ports; persistence is unified in `HisDbContext` with **schema-per-context** table naming. Cross-slice references are forbidden — every cross-slice need traverses `Dialysis.HIS.Contracts`.
+## 1. Context
 
 ```mermaid
 flowchart LR
-    subgraph "Edge / Ingress"
-        Browser["SPA / Patient Portal"]
-        Mobile["Mobile / Device clients"]
-        Partner["Lab + Pharmacy partners (HTTP)"]
+    Reception([Reception / Operations SPA]):::ui --> BFF[HIS BFF]
+    Devices([RPM devices / gateways]):::ext -->|POST device-readings| API
+    BFF -->|cookie - bearer YARP| API[HIS API api/v1.0]
+    API --> Slices
+
+    subgraph Slices [HIS slices]
+        PF[PatientFlow]
+        SCH[Scheduling]
+        MED[Medication]
+        OPS[Operations]
+        SEC[Security]
+        INT[Integration]
+        DS[DataServices]
+        PA[PatientAccess]
+        RA[RaCapabilities]
     end
 
-    subgraph "Dialysis.HIS.Api (ASP.NET host, port 5288)"
-        APIv1["api/v1.0/* controllers<br/>HATEOAS ResourceEnvelope (T)"]
-        OpenAPI["/openapi/v1.json<br/>Asp.Versioning + ApiExplorer"]
-        Health["/health, /health/ready"]
-        Auth["JwtBearer + ICurrentUser<br/>(His:Authentication:*)"]
-        APIv1 --> Pipeline
-        Auth --> Pipeline
-        subgraph "Request pipeline (CQRS + Verifier + Authorization)"
-            Verifier["Verifier (validation)"]
-            AuthZ["AuthorizationPipelineBehavior<br/>(HisPermissions)"]
-            Handler["Slice command/query handler"]
-            Verifier --> AuthZ --> Handler
-        end
-    end
+    Slices --> DB[(Postgres - HisDbContext<br/>schema-per-slice)]
+    Slices -->|integration events| OB[(Transponder outbox)]
+    OB -->|RabbitMQ| Bus{{ITransponderBus}}
+    Bus --> EHR[EHR]
+    Bus --> PDMS[PDMS]
+    Bus --> HIE[HIE]
 
-    subgraph "Bounded sub-contexts (project per slice)"
-        Security["HIS.Security<br/>users, roles, audit"]
-        PatientFlow["HIS.PatientFlow<br/>Patient, ADT, Referral"]
-        Scheduling["HIS.Scheduling<br/>Appointment, Resource"]
-        Medication["HIS.Medication<br/>Order, Administration"]
-        Operations["HIS.Operations<br/>Staff, Inventory, BillingExportJob"]
-        DataSvc["HIS.DataServices<br/>Import, Search, Dashboard"]
-        Portal["HIS.PatientAccess<br/>Portal reads + consent gate"]
-        Integration["HIS.Integration<br/>Lab/Pharmacy gateways, Device ingest"]
-        RaCaps["HIS.RaCapabilities<br/>RA reference reads/writes (schema his_ra)"]
-        Handler --> Security
-        Handler --> PatientFlow
-        Handler --> Scheduling
-        Handler --> Medication
-        Handler --> Operations
-        Handler --> DataSvc
-        Handler --> Portal
-        Handler --> Integration
-        Handler --> RaCaps
-    end
-
-    subgraph "HIS.Persistence (HisDbContext, schema-per-slice)"
-        Schemas[("his_security, his_patientflow,<br/>his_scheduling, his_medication,<br/>his_operations, his_data, his_integration,<br/>his_patient_access, his_ra,<br/>transponder (outbox/inbox)")]
-        Audit[("AuditTrail")]
-    end
-
-    subgraph "Transponder (in-proc bus or RabbitMQ)"
-        Outbox["Transactional outbox<br/>(schema transponder, on HisDbContext)"]
-        Relay["OutboxRelay HostedService<br/>His:Transponder:EnableOutboxRelay"]
-        Bus["ITransponderBus"]
-        Consumers["AddHisIntegrationConsumers<br/>(EHR/PDMS/Pharmacy stubs)"]
-        Outbox --> Relay --> Bus --> Consumers
-    end
-
-    subgraph "External systems"
-        Keycloak["Keycloak (OIDC)<br/>via Identity.Bff"]
-        Lab["ILaboratoryGateway<br/>(stub or HTTP)"]
-        Pharmacy["IPharmacyGateway<br/>(stub or HTTP)"]
-        EHRsvc["EHR module"]
-        PDMSsvc["PDMS module"]
-    end
-
-    Browser --> APIv1
-    Mobile --> APIv1
-    Partner --> APIv1
-    Auth -. validates JWT .-> Keycloak
-
-    Handler --> Schemas
-    Handler -- enqueue events --> Outbox
-    Integration --> Lab
-    Integration --> Pharmacy
-    Bus -. integration events .-> EHRsvc
-    Bus -. integration events .-> PDMSsvc
-    EHRsvc -. consumed via ACL .-> PatientFlow
-    PDMSsvc -. consumed via ACL .-> Handler
+    classDef ui fill:#dbeafe,stroke:#3b82f6
+    classDef ext fill:#fef3c7,stroke:#d97706
 ```
 
-**Key invariants**
-
-- The only assembly other modules may reference from HIS is `Dialysis.HIS.Contracts` — enforced by [ModuleBoundaryTests](../../tests/Dialysis.ArchitectureTests/ModuleBoundaryTests.cs).
-- Cross-slice domain references are forbidden inside HIS — enforced by `BoundedContextReferenceTests`.
-- Aggregate roots have **no public setters** — enforced by `AggregateRootEncapsulationTests`.
-- Integration events all declare `int SchemaVersion` — enforced by event-versioning gate.
+HIS publishes operational facts (patient admitted, checked in, placed in chair, appointment booked, medication ordered, billing-export queued); EHR mirrors HIS-originated patients and files claims, PDMS reacts to chair placement.
 
 ---
 
-## 2. Workflow — Book Appointment (representative command path)
+## 2. Project layout
 
-This is the canonical write workflow. It exercises auth, validation, aggregate invariants, outbox enqueue, and downstream event delivery.
+| Project | Role |
+|---|---|
+| `Dialysis.HIS.Contracts` | Integration events, `HisPermissions` catalog, `IPermissionedCommand`, outbox envelope. **The only assembly other modules may reference.** |
+| `Dialysis.HIS.PatientFlow` | Admissions + receptionist "today" queue (`Admission`, `PatientQueueEntry`). |
+| `Dialysis.HIS.Scheduling` | Appointment booking (`Appointment`). |
+| `Dialysis.HIS.Medication` | Thin medication-order surface (`MedicationOrder`). |
+| `Dialysis.HIS.Operations` | Staff, inventory, billing-export queue (`StaffMember`, `InventoryItem`, `BillingExportJob`, `BillingExportJobAudit`). |
+| `Dialysis.HIS.Security` | HIS-local user accounts (`LocalUser`). |
+| `Dialysis.HIS.Integration` | RPM device registry + device-reading ingest (`Device`, `DeviceReadingRecord`). |
+| `Dialysis.HIS.DataServices` | Data-import jobs, patient search, manager dashboard, outbox-metadata read. |
+| `Dialysis.HIS.PatientAccess` | Patient-portal summary read model (query-only). |
+| `Dialysis.HIS.RaCapabilities` | Reference-architecture sub-capability rows (schema `his_ra`). |
+| `Dialysis.HIS.Persistence` | Single `HisDbContext`, schema-per-slice config, EF repositories, read models, `HisPatientEraser`. |
+| `Dialysis.HIS.Composition` | `AddHospitalInformationSystem(...)` registration. |
+| `Dialysis.HIS.Api` | ASP.NET host: versioned MVC `api/v1.0/...`, HATEOAS envelope, durable-command bus, health probes. |
+| `Dialysis.HIS.Bff` | Per-context BFF (OIDC cookie + YARP) with event-driven push. |
+| `Dialysis.HIS.Tests` | xUnit + `WebApplicationFactory`. |
+
+Slices follow Evans' **Responsibility Layers**; each owns its commands/queries/handlers/aggregates and a Postgres schema (`his_patientflow`, `his_scheduling`, `his_medication`, `his_operations`, `his_security`, `his_integration`, `his_data`, `his_ra`).
+
+---
+
+## 3. Domain model (ERD)
+
+Every aggregate root derives `AggregateRoot<Guid>` → `Audit`, so each row carries `CreatedAt/By`, `UpdatedAt/By`, `IsDeleted/DeletedAt/By` (soft-delete). **There are no database foreign keys between aggregates** — cross-entity links are bare `Guid` references (the model is a set of independent aggregate tables); `Patient` lives in EHR. The `PatientQueueEntry` is intentionally **in-memory** (`InMemoryPatientQueueRepository`, demo-seeded), not an EF table.
+
+```mermaid
+erDiagram
+    PATIENT_EHR ||..o{ ADMISSION : "PatientId (soft ref)"
+    PATIENT_EHR ||..o{ APPOINTMENT : "PatientId"
+    PATIENT_EHR ||..o{ MEDICATION_ORDER : "PatientId"
+    PATIENT_EHR ||..o{ DEVICE : "PatientId (binding)"
+    DEVICE ||..o{ DEVICE_READING : "DeviceId (string)"
+    BILLING_EXPORT_JOB ||..o{ BILLING_EXPORT_JOB_AUDIT : "JobId"
+
+    ADMISSION {
+        guid Id PK
+        guid PatientId "indexed"
+        string WardCode "VO, A-Z0-9-"
+        datetime AdmittedAtUtc
+        datetime DischargedAtUtc "nullable"
+    }
+    APPOINTMENT {
+        guid Id PK
+        guid PatientId
+        guid ProviderId
+        datetime SlotStartUtc "owned VO"
+        datetime SlotEndUtc
+        string StatusCode "Booked / Cancelled"
+    }
+    MEDICATION_ORDER {
+        guid Id PK
+        guid PatientId
+        string DrugCode "VO"
+        string Dosage "VO"
+        string StatusCode "Placed"
+    }
+    BILLING_EXPORT_JOB {
+        guid Id PK
+        string PayerCode "VO"
+        string StatusCode "Queued/Completed/Failed"
+        date PeriodStart "owned VO"
+        date PeriodEnd
+        datetime SubmittedAtUtc
+    }
+    BILLING_EXPORT_JOB_AUDIT {
+        guid Id PK
+        guid JobId "soft ref"
+        string PayerCode
+        datetime QueuedAtUtc
+    }
+    DEVICE {
+        guid Id PK
+        string DeviceId "unique external id"
+        string DeviceTypeCode
+        guid PatientId "nullable binding"
+        guid SessionId "nullable - PDMS"
+        int Status "Registered/Active/Suspended/Retired"
+    }
+    DEVICE_READING {
+        guid Id PK
+        string DeviceId "matches Device.DeviceId"
+        guid PatientId
+        string PayloadJson
+        string ExternalMessageId "unique filtered - idempotent"
+    }
+    STAFF_MEMBER {
+        guid Id PK
+        string DisplayName
+        string PrimaryRoleCode "nullable"
+    }
+    INVENTORY_ITEM {
+        guid Id PK
+        string Sku "VO"
+        int QuantityOnHand ">= 0"
+    }
+    LOCAL_USER {
+        guid Id PK
+        string LoginName "VO, unique"
+        string DisplayName
+        bool IsActive
+    }
+    DATA_IMPORT_JOB {
+        guid Id PK
+        string SourceDescription
+        string StatusCode "Queued"
+    }
+```
+
+**Additional schemas on the same `HisDbContext`:** `his_ra` (13 reference-architecture projection tables — waitlist, patient-alerts, CDS evaluations, medication-dispensing, specialist encounters, etc.; `RaWaitlistEntry.Notes` is PHI, encrypted at rest), `his_durablecommands.command_ledger` (durable-command idempotency/status, keyed on `CommandId`), and `transponder` (outbox/inbox/saga). Provider: stock PostgreSQL (`postgres:17-alpine`); migrations history `his.__ef_migrations`.
+
+---
+
+## 4. Integration events
+
+**Published** (each raised by an aggregate, copied to the Transponder outbox in the same transaction, relayed when the outbox relay is enabled):
+
+| Event | Trigger |
+|---|---|
+| `PatientAdmittedIntegrationEvent` | `Admission.Admit` — patient admitted to a ward |
+| `PatientDischargedIntegrationEvent` | `Admission.Discharge` |
+| `PatientCheckedInIntegrationEvent` | `PatientQueueEntry.CheckIn` — expected arrival → Waiting |
+| `PatientPlacedInChairIntegrationEvent` | `PatientQueueEntry.AssignChair` — Waiting → InTreatment (PDMS reacts) |
+| `WalkInRegisteredIntegrationEvent` | `PatientQueueEntry.WalkIn` |
+| `AppointmentBookedIntegrationEvent` | `Appointment.Book` |
+| `MedicationOrderPlacedIntegrationEvent` | `MedicationOrder.Place` |
+| `BillingExportJobQueuedIntegrationEvent` | `BillingExportJob.Queue` — consumed by `Dialysis.EHR.Billing` to file the claim |
+
+**Consumed:** HIS takes no external events into its own domain. Its only consumers fan out *its own* `PatientAdmittedIntegrationEvent` — `PatientAdmittedSubscriptionBroadcaster` (maps to a FHIR `Encounter`, broadcasts to FHIR Subscriptions) and the BFF's `PatientAdmittedNotificationConsumer` (SignalR toast). One **in-process domain event**, `BillingExportJobQueuedDomainEvent`, writes the `BillingExportJobAudit` row inside the same `SaveChanges`.
+
+---
+
+## 5. Key workflows
+
+### 5.1 Device-reading durable ingest
+
+`IngestDeviceReading` opts into the durable command bus (flag `His:DurableCommands:IngestDeviceReading:Enabled`). When on, the API returns `202 Accepted` with a status-poll URL the moment the command is in a publisher-confirmed RabbitMQ queue; a consumer applies it idempotently. When off, it dispatches synchronously and returns `201`.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Client as SPA / Caller
-    participant API as HIS.Api Controller
-    participant Auth as JwtBearer + ICurrentUser
-    participant Med as Intercessor
-    participant Val as Verifier (validator)
-    participant AZ as AuthorizationBehavior
-    participant H as BookAppointmentHandler
-    participant Repo as IAppointmentRepository
-    participant Ctx as HisDbContext
-    participant OBX as Transponder Outbox
-    participant Relay as Outbox Relay
-    participant Bus as ITransponderBus
-    participant Down as EHR / PDMS consumers
+    participant Dev as Device / gateway
+    participant Api as DeviceIntegrationController
+    participant Bus as IDurableCommandBus - RabbitMQ
+    participant Con as DurableCommandConsumer&lt;HisDbContext&gt;
+    participant H as IngestDeviceReadingCommandHandler
+    participant DB as HisDbContext
 
-    Client->>API: POST /api/v1.0/scheduling/appointments
-    API->>Auth: validate Bearer JWT
-    Auth-->>API: ClaimsPrincipal + HisPermissions
-    API->>Med: Send(BookAppointmentCommand)
-    Med->>Val: Validate(command)
-    alt invalid
-        Val-->>Med: ValidationProblem
-        Med-->>API: 400 ProblemDetails (HATEOAS-wrapped error)
-    else valid
-        Val-->>Med: ok
-        Med->>AZ: require his.scheduling.write
-        alt missing permission
-            AZ-->>Med: 403
-            Med-->>API: 403 ProblemDetails
-        else permitted
-            AZ-->>Med: ok
-            Med->>H: Handle
-            H->>Repo: load resource + overlap check
-            Repo->>Ctx: query his_scheduling
-            Ctx-->>Repo: candidate appointments
-            H->>H: enforce SingleResourceOverlap rule
-            H->>Repo: Add(Appointment)
-            H->>Ctx: enqueue AppointmentBookedIntegrationEvent<br/>(transponder.outbox)
-            H->>Ctx: SaveChangesAsync (single UoW)
-            Ctx-->>H: committed
-            H-->>Med: AppointmentDto
-            Med-->>API: result
-            API-->>Client: 201 { data, links } (HATEOAS)
-        end
+    Dev->>Api: POST /api/v1.0/integration/device-readings (X-Command-Id?)
+    Note over Api: ReadingId = X-Command-Id ?? new Guid
+    alt durable flag ON
+        Api->>Bus: EnqueueAsync(cmd, commandId = ReadingId)
+        Bus-->>Api: publisher confirm
+        Api-->>Dev: 202 Accepted + Location: command-status/{id}
+        Bus->>Con: deliver envelope
+        Con->>DB: BEGIN tx, claim command_ledger row (idempotent)
+        Con->>H: dispatch command
+        H->>H: rate-limit, registry governance, idempotency check
+        H->>DB: add DeviceReadingRecord
+        Con->>DB: mark ledger Applied, COMMIT
+    else durable flag OFF
+        Api->>H: SendCommandAsync (synchronous)
+        H->>DB: add DeviceReadingRecord, SaveChanges
+        Api-->>Dev: 201 Created
     end
-
-    Note over Relay,Bus: out-of-band, async
-    Relay->>OBX: poll unpublished rows
-    OBX-->>Relay: AppointmentBookedIntegrationEvent
-    Relay->>Bus: Publish
-    Bus-->>Down: deliver to EHR.Scheduling / PDMS consumers
-    Down-->>OBX: ack → mark row published
+    Dev->>Api: GET /api/v1.0/command-status/{correlationId}
+    Api-->>Dev: { Status: Applied, readingId } (403 if sub != requester)
 ```
 
-**Why this shape**
+Registry governance rejects readings from unknown devices (when registration is required), from `Suspended`/`Retired` devices, or on a patient-binding mismatch; domain rejections throw `DomainException` → mapped to `4xx`, never `500`.
 
-- The outbox row and the aggregate change commit in the **same** EF transaction, so a successful 201 implies the event will eventually publish.
-- The relay runs as an `IHostedService` only when `His:Transponder:EnableOutboxRelay = true` — dev hosts can drop the relay and still serve writes.
-- Consumers across the bus boundary never load HIS aggregates; they apply ACL translators (see `Dialysis.HIS.Integration`).
-
----
-
-## 3. Activity — Patient Flow lifecycle (Register → Admit → Discharge)
+### 5.2 Billing-export queue — integration event + in-process audit
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Registered: RegisterPatient (his.patientflow.write)
-    Registered --> Admitted: AdmitPatient<br/>publishes PatientAdmittedIntegrationEvent
-    Admitted --> UnderTreatment: scheduling + medication slices act
-    UnderTreatment --> Admitted: continue stay
-    Admitted --> Discharged: DischargePatient<br/>publishes PatientDischargedIntegrationEvent
-    Discharged --> [*]
+sequenceDiagram
+    autonumber
+    participant SPA as Operations SPA
+    participant Api as OperationsController
+    participant H as SubmitBillingExportJobCommandHandler
+    participant Agg as BillingExportJob
+    participant OB as Transponder outbox
+    participant DB as HisDbContext
+    participant EHR as EHR.Billing consumer
 
-    Registered --> PortalConsentBootstrapped: RuleBasedPatientConsentGate seeds PortalConsentPreference
-    PortalConsentBootstrapped --> Registered
-    Registered --> ReferralOpen: CreateReferral<br/>publishes ReferralCreatedIntegrationEvent
-    ReferralOpen --> Registered: lab ACK / completion
-
-    state UnderTreatment {
-        [*] --> Scheduled: BookAppointment
-        Scheduled --> Ordered: PlaceMedicationOrder<br/>(IMedicationOrderSafetyPolicy)
-        Ordered --> Administered: RecordAdministration
-        Administered --> Ordered: next dose
-        Ordered --> Discontinued: DiscontinueOrder<br/>publishes MedicationOrderDiscontinuedIntegrationEvent
-        Discontinued --> [*]
-    }
+    SPA->>Api: POST /api/v1.0/operations/billing/export-jobs
+    Api->>H: SubmitBillingExportJobCommand
+    H->>Agg: Queue(payer, period, notes)
+    Agg-->>H: raises BillingExportJobQueuedIntegrationEvent + BillingExportJobQueuedDomainEvent
+    H->>OB: enqueue integration event
+    H->>DB: SaveChanges (state + outbox + audit, one tx)
+    DB-->>H: domain event handler writes BillingExportJobAudit
+    OB-->>EHR: relay BillingExportJobQueuedIntegrationEvent (RabbitMQ)
+    EHR->>EHR: file the actual claim
 ```
-
-**Notes**
-
-- `RegisterPatient` bootstraps a `PortalConsentPreference` row when `His:PatientAccess:RequireExplicitConsentRowForPortal` is true; otherwise the rule-based gate evaluates implicit consent.
-- The medication sub-machine is guarded by `IMedicationOrderSafetyPolicy` (formulary check) at the `Ordered` transition.
-- Every transition writes an `IAuditTrail` entry (separate `SaveChanges` per the README's compromise — promote to single UoW when warranted).
 
 ---
 
-## 4. Composition root (how slices register)
+## 6. API surface
 
-```mermaid
-flowchart TB
-    Program["Program.cs (Dialysis.HIS.Api)"]
-    Program --> AddModuleHost["AddModuleHost of HisPermissionCatalog<br/>(ModuleSlug = 'his')"]
-    Program --> AddHIS["AddHospitalInformationSystem(configuration, …)"]
-    AddHIS --> Persistence["AddDbContext of HisDbContext<br/>EF in-memory by default<br/>or SqlServer when configurePersistence"]
-    AddHIS --> Bus["AddTransponder + module consumers"]
-    AddHIS --> Slices["per-slice AddX() extensions<br/>(handlers, ports, validators)"]
-    AddHIS --> Auth["AddAuthentication + AddAuthorization<br/>RolePermissionMap"]
-    AddHIS --> Hosted["IHostedService: HisDatabaseInitializer<br/>+ optional outbox relay"]
-    AddHIS --> RA["AddRaCapabilities (schema his_ra)"]
-```
+All controllers extend `HisHateoasControllerBase` and return the `ResourceEnvelope<T>` `{data, links}` HATEOAS envelope. Health: `/health/live`, `/health/ready`.
 
-**Configuration touch-points** are listed in [README.md §Configuration keys](README.md#composition-host-registration). The single rule: every flag is `His:*` scoped and bound by `IOptions<T>` inside the slice that owns it.
+| Route group | Highlights |
+|---|---|
+| `patient-flow` | admissions, discharge, today's-queue, check-in, assign-chair, walk-in |
+| `scheduling` | book appointment |
+| `medication` | place order |
+| `operations` | staff role, inventory movements, billing export-jobs (queue + read) |
+| `security` | register local user |
+| `data-management` | import-jobs, integration outbox-metadata, patient search, manager-dashboard |
+| `patient-access` | `patients/{id}/portal-summary` (patient-claim filtered) |
+| `integration` | `device-readings` (durable `IngestDeviceReading`), `devices` registry (register/bind/status/list) |
+| `reference-architecture` | `catalog`, `capabilities/*` (RA sub-capabilities), `help` |
 
----
-
-## 5. Data layout
-
-```mermaid
-erDiagram
-    HisDbContext ||--o{ his_security : "Users, Roles, Audit"
-    HisDbContext ||--o{ his_patientflow : "Patient, Referral, Admission, Discharge"
-    HisDbContext ||--o{ his_scheduling : "Appointment, SchedulingResource, Waitlist"
-    HisDbContext ||--o{ his_medication : "MedicationOrder, Administration"
-    HisDbContext ||--o{ his_operations : "StaffMember, InventoryItem, BillingExportJob"
-    HisDbContext ||--o{ his_data : "DataImportJob, Manager dashboard views"
-    HisDbContext ||--o{ his_integration : "DeviceReadingRecord, idempotency"
-    HisDbContext ||--o{ his_patient_access : "PortalConsentPreference"
-    HisDbContext ||--o{ his_ra : "Ra* reference rows (Tummers 2021)"
-    HisDbContext ||--o{ transponder : "Outbox, Inbox, Sagas"
-```
-
-Migrations history: `his_migrations` table (separate from `transponder.__ef_migrations`). The Transponder outbox/inbox lives on the **same** `DbContext` — there are no duplicate HIS-side outbox tables.
+Permissions are the closed `HisPermissions` set (20 strings, e.g. `his.operations.staff.assign`, `his.integration.device.ingest`, `his.patientflow.admit`), exposed generically via `HisPermissionCatalog`. See [Identity](../Identity/ARCHITECTURE.md) for how permission claims reach the API.
 
 ---
 
-## 6. Where to look next
+## 7. Compliance
 
-- Slice handlers → `Dialysis.HIS.<Slice>/Features/**`.
-- Aggregate roots → `Dialysis.HIS.<Slice>/Domain/**` (no public setters; mutation via behaviour methods).
-- Integration event contracts → `Dialysis.HIS.Contracts/IntegrationEvents/**`.
-- RA capability traceability → [his_ra_submodules.md](his_ra_submodules.md).
-- End-to-end outbox proof → [`.github/workflows/his-ci.yml`](../../../.github/workflows/his-ci.yml) + [his_transponder_e2e_runbook.md](his_transponder_e2e_runbook.md).
+`HisPatientEraser : IPatientEraser` implements GDPR Art. 17: it **soft-deletes** the Audit-tracked aggregates (`Appointment`, `Admission`, `MedicationOrder` via `ExecuteUpdateAsync`) and **hard-deletes** the plain telemetry/RA rows (`DeviceReadingRecord`, `RaPatientAlert`, `RaWaitlistEntry`, `RaSpecialistEncounterRecord`, `RaEhrDocumentExchangeRecord`, `RaClinicalDecisionSupportEvaluation` via `ExecuteDeleteAsync`), returning per-type counts. The Art. 17 pipeline is orchestrated centrally — see [HIE](../HIE/ARCHITECTURE.md) for the approve-and-execute flow and the `IErasureRequestStore`.

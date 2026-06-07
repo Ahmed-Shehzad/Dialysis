@@ -1,47 +1,40 @@
-# Dialysis Web
+# patient-portal-web — Patient Portal SPA
 
-React + TypeScript SPA for the Dialysis modular monolith. Talks to the per-module APIs
-through the YARP gateway at `http://localhost:5000` (configurable via `VITE_GATEWAY_URL`).
+The patient-facing browser app: **appointments, messages, medications, results and admissions** for the patient themselves. Backed by the **`Dialysis.PatientPortal.Bff`** per-context BFF.
 
-## Structure (Bulletproof React)
+| | |
+|---|---|
+| Context base / router basename | `/portal` |
+| Standalone dev port (Vite) | `5337` |
+| Backing BFF | `Dialysis.PatientPortal.Bff` (`portal-bff`, port `5307`) |
+| BFF primary API | HIS (appointments / admissions) |
+| BFF aggregations | EHR, PDMS, HIE, SmartConnect (DICOM) |
+| Real-time push | **Yes** — `PatientPortalSecureMessageReceived`, `PatientPortalAppointmentResolved`, `AfterVisitSummaryPublished` via `/portal/events` |
 
-```
-src/
-  app/            # provider composition (QueryClient, BrowserRouter, AuthProvider)
-  components/     # shared UI (layout, atoms)
-  features/
-    auth/         # session + identity (AuthProvider, useAuth, /identity/* calls)
-    sessions/     # dialysis session list + reading history
-    vitals/       # SignalR stream hook, latest-vitals panel, D3 chart
-  lib/
-    api/          # axios instance + interceptors
-    auth/         # JWT helpers
-    realtime/     # SignalR connection builder
-  pages/          # route targets (Login, Dashboard, SessionLive)
-  routes/         # router + ProtectedRoute
-  styles/         # tailwind entry
-```
+## What it does
 
-Design rules:
+A single page (`/portal` → `PatientPortalPage`) composing patient-facing panels: secure **messages**, **appointment requests** (with a book-appointment dialog), **after-visit summaries**, care plan, lab results, recent treatments, reminders, consents, and an outside-records (HIE) card.
 
-- **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
-  except through stable contracts under `lib/`.
-- **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.
-- **DIP** — `useVitalsStream` depends on `useAuth`'s `getAccessToken`, not on a concrete token store.
-- **ISP** — `AuthProvider` exposes only `{ user, status, signIn, signOut, getAccessToken }`.
-- **LSP** — `VitalsLatestPanel` accepts any object satisfying the `VitalsReading` contract.
+Its notification hook is distinctive: on each pushed `BffNotification` it not only toasts but **invalidates the matching TanStack query** (`secure-message` / `appointment-request` / `after-visit-summary`) so the panel refetches authoritative data through the synchronous API.
 
-## Dev
+> **Dev access:** the dev Keycloak realm seeds only a staff `demo` user (no patient persona). Patient-self routes return 403 unless the dev staff-impersonation flag is on. The patient claim is `his_patient_id` (supplied by the `dialysis-portal-bff` client mapper), falling back to `sub`.
+
+## Stack & scripts
+
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/portal"`.
 
 ```bash
-npm install
-npm run dev     # http://localhost:5173 — proxies /api,/fhir,/hubs,/identity,/auth → gateway
+npm run dev        # Vite :5337
 npm run build
+npm run lint
 npm run typecheck
+npm run test:e2e
 ```
 
-The gateway must be running for auth + APIs:
+## How it runs
 
-```bash
-dotnet run --project src/backend/Shared/Dialysis.Module.Gateway
-```
+Reached through the Gateway at `http://localhost:9090/portal/`; the portal BFF handles auth and proxies `/portal/api`, `/portal/hubs`, `/portal/events`. `enforceGatewayOrigin()` keeps the `/portal` cookie intact.
+
+> Cross-context navigation must be a full-page hop.
+
+See [src/backend/EHR/ARCHITECTURE.md](../../backend/EHR/ARCHITECTURE.md) (portal slice) and [src/backend/Identity/ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md) (auth + patient-claim scoping). Shared conventions: [root README](../../../README.md#frontend).

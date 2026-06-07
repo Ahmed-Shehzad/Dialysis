@@ -1,208 +1,259 @@
-# PDMS — Architecture (low-level)
+# PDMS — Patient Data Management System
 
-Companion to [README.md](README.md) and [pdms_subdomain_structure.md](pdms_subdomain_structure.md). PDMS is the **Patient Data Management System** that captures the dialysis machine cycle as it happens. Its Large-Scale Structure is the **System Metaphor** (Evans 2003, p. 313): *a `DialysisSession` is a treatment machine cycle observed through telemetry*. Two aggregate roots only — `DialysisSession` (with `IntradialyticReading` children) and `TreatmentAlarm` (independent).
+> **Bounded context:** the **machine room**. PDMS watches each dialysis treatment in real time — it records the prescription, binds the machine, streams intradialytic vitals and machine telemetry, raises and tracks treatment alarms, captures the medication administration record, drives IV-pump infusions, escalates alarms to on-call staff, and renders the post-session clinical documents.
+>
+> **System metaphor** (Evans 2003): *a `DialysisSession` is a treatment-machine cycle observed through telemetry.* PDMS began as a single slice; it has since grown sibling business slices — **TreatmentSessions** (core), **Medications** (MAR + IV pumps), **OnCall** (alarm escalation), **Reporting** (session documents) — all persisting through one `PdmsDbContext`.
 
-> Mermaid renders inline on GitHub/GitLab/JetBrains/VS Code; paste into <https://mermaid.live> if your viewer does not.
+Generated from current code. See the root [README](../../../README.md) for the system picture.
 
 ---
 
-## 1. System architecture (component view)
+## 1. Context
 
 ```mermaid
 flowchart LR
-    subgraph "Edge / Ingress"
-        Clin["Clinician SPA"]
-        Device["Dialysis machine (via SmartConnect channel)"]
-        SCsvc["SmartConnect module"]
-        EHRsvc["EHR module"]
-        HIEsvc["HIE module"]
+    Chair([Chairside SPA / kiosk]):::ui --> BFF[PDMS BFF]
+    BFF -->|cookie - bearer YARP| API[PDMS API api/v1.0 + /hubs/vitals]
+    SC([SmartConnect machine telemetry]):::ext -->|integration events| Bus
+    HIS([HIS chair placement]):::ext -->|integration events| Bus
+
+    API --> Slices
+    subgraph Slices [PDMS slices]
+        TS[TreatmentSessions]
+        MEDS[Medications - MAR + IV pumps]
+        ONCALL[OnCall escalation]
+        REP[Reporting]
     end
 
-    subgraph "Dialysis.PDMS.Api (ASP.NET host)"
-        APIv1["api/v1.0/* controllers<br/>HATEOAS ResourceEnvelope"]
-        Auth["JwtBearer + ICurrentUser"]
-        Pipeline["Verifier + AuthorizationBehavior<br/>+ Intercessor dispatch"]
-        APIv1 --> Pipeline
-        Auth --> Pipeline
-    end
+    Slices --> DB[(TimescaleDB - PdmsDbContext<br/>pdms_sessions / pdms_telemetry)]
+    Slices --> OB[(Transponder outbox)]
+    OB --> Bus{{ITransponderBus}}
+    Bus --> EHR[EHR - charges / adverse events]
+    Bus --> HIE[HIE - openEHR / documents]
+    API -->|SignalR vitals + cost| Chair
 
-    subgraph "Single bounded sub-context"
-        TS["PDMS.TreatmentSessions<br/>(the cycle + observations + alarms)"]
-        Acl["ACL adapters<br/>SmartConnectSnapshotTranslator<br/>SmartConnectAlarmTranslator"]
-        Pipeline --> TS
-        Acl --> TS
-    end
-
-    subgraph "PDMS.Persistence (PdmsDbContext)"
-        DB[("pdms_sessions, pdms_alarms,<br/>transponder (outbox/inbox),<br/>pdms_migrations")]
-    end
-
-    subgraph "Transponder"
-        Inbox["transponder.inbox<br/>(consumes SmartConnect events)"]
-        Outbox["transponder.outbox"]
-        Relay["OutboxRelay HostedService"]
-        ITB["ITransponderBus"]
-    end
-
-    subgraph "Externals"
-        IdP["Keycloak"]
-    end
-
-    Clin --> APIv1
-    Device --> SCsvc
-    SCsvc -. SnapshotReceived / AlarmRaised .-> Inbox
-    Inbox --> Acl
-    TS --> DB
-    TS -- enqueue --> Outbox
-    Outbox --> Relay --> ITB
-    ITB -. DialysisSessionStarted/Ended .-> EHRsvc
-    ITB -. IntradialyticAdverseEvent .-> HIEsvc
-    Auth -. JWT .-> IdP
+    classDef ui fill:#dbeafe,stroke:#3b82f6
+    classDef ext fill:#fef3c7,stroke:#d97706
 ```
-
-**Invariants**
-
-- The metaphor stops at the PDMS edge — the **ACL translators** (`SmartConnectSnapshotTranslator`, `SmartConnectAlarmTranslator`) are the only path by which external telemetry enters the cycle.
-- `DialysisSession` and `TreatmentAlarm` have **no public setters** — every change goes through behaviour methods (`BindMachine`, `ReceiveObservation`, `RaiseAlarm`, `EndSession`).
-- A `TreatmentAlarm` is keyed by `(Machine, AlarmCode, ActiveWindow)` — two raises of the same code on the same machine within the same active window de-duplicate to one aggregate.
 
 ---
 
-## 2. Workflow — Telemetry → Session observation → Adverse event
+## 2. Project layout
 
-This is the canonical inbound workflow: a SmartConnect channel publishes a normalized telemetry message; PDMS consumes it via the inbox, the ACL translates it into the cycle's vocabulary, the session aggregate applies the observation, and any abnormal state may raise a `TreatmentAlarm`.
+| Project | Role |
+|---|---|
+| `Dialysis.PDMS.Contracts` | Session/billing/openEHR integration events, `PdmsPermissions`, openEHR archetype ids. **Only assembly other modules reference.** |
+| `Dialysis.PDMS.Core[.Abstraction]` | `IPdmsClock`, `IPdmsUnitOfWork`, module constants. |
+| `Dialysis.PDMS.TreatmentSessions` | **Core slice.** `DialysisSession`, `TreatmentAlarm`, `DialysisMachine`, `TreatmentObservation`, `IntradialyticReading`, ACL translators (SmartConnect), projections, FHIR feeder. |
+| `Dialysis.PDMS.Medications` | MAR (`MedicationAdministrationRecord`), `IvPumpInfusion`, `MedicationInventoryItem`, vendor IV-pump drivers (Alaris/Baxter/Hospira). |
+| `Dialysis.PDMS.OnCall` | `OnCallRotation`, `EscalationPolicy`, `AlarmDispatch` — alarm paging/escalation. |
+| `Dialysis.PDMS.Reporting` | `SessionReport`, `ReportTemplate` — discharge letter / shift report / billing document generation. |
+| `Dialysis.PDMS.Persistence` | Single `PdmsDbContext`, EF configs, repositories, migrations (incl. the Timescale hypertable), `PdmsPatientEraser`. |
+| `Dialysis.PDMS.Core.Persistence.{Abstractions,InMemory,Postgresql}` | Generic repository provider split (chosen via `Pdms:Persistence:Provider`). |
+| `Dialysis.PDMS.Composition` | `AddPatientDataManagementSystem(...)`. |
+| `Dialysis.PDMS.Api` | ASP.NET host: 7 controllers, `VitalsHub`, cost-broadcast hosted service, durable-command bus. |
+| `Dialysis.PDMS.Bff` | Per-context BFF with chairside event push. |
+| `Dialysis.PDMS.Tests` | xUnit across all slices. |
+
+---
+
+## 3. Domain model (ERD)
+
+`DialysisSession` is the aggregate root; `IntradialyticReading` is its only EF child (real FK, cascade). Everything else is **session-keyed by a soft `SessionId`** (no enforced constraint). Session, MAR and SessionReport carry a **direct `PatientId`**. Telemetry entities live in schema `pdms_telemetry`; sessions and readings in `pdms_sessions`.
+
+```mermaid
+erDiagram
+    PATIENT ||..o{ DIALYSIS_SESSION : "PatientId"
+    DIALYSIS_SESSION ||--o{ INTRADIALYTIC_READING : "FK cascade (hypertable)"
+    DIALYSIS_SESSION ||..o{ TREATMENT_OBSERVATION : "SessionId"
+    DIALYSIS_SESSION ||..o{ TREATMENT_ALARM : "SessionId (nullable)"
+    DIALYSIS_MACHINE ||..o{ DIALYSIS_SESSION : "MachineId"
+    DIALYSIS_SESSION ||..o{ MAR : "SessionId"
+    MAR ||--o{ MAR_ENTRY : "owned"
+    DIALYSIS_SESSION ||..o{ IV_PUMP_INFUSION : "SessionId"
+    DIALYSIS_SESSION ||..o{ SESSION_REPORT : "SessionId"
+
+    DIALYSIS_SESSION {
+        guid Id PK
+        guid PatientId "indexed"
+        datetime ScheduledStartUtc
+        datetime ActualStartUtc "nullable"
+        datetime ActualEndUtc "nullable"
+        int Status "Scheduled/InProgress/Completed/Aborted/Cancelled/Paused"
+        guid MachineId "nullable"
+        decimal AchievedUfVolumeLiters
+        json Prescription "owned VO"
+        json Access "owned VO - vascular access"
+    }
+    INTRADIALYTIC_READING {
+        guid Id PK "ValueGeneratedNever"
+        guid SessionId FK
+        datetime ObservedAtUtc "hypertable partition"
+        int SystolicBloodPressure
+        int DiastolicBloodPressure
+        int HeartRateBpm
+        decimal VenousPressureMmHg
+        decimal UltrafiltrationRateMlPerHour
+    }
+    TREATMENT_ALARM {
+        guid Id PK
+        guid SessionId "nullable"
+        guid MachineId "MD5 of serial"
+        long AlarmCode
+        int State "Present/Inactivating/Resolved"
+        datetime AcknowledgedUtc "nullable"
+    }
+    TREATMENT_OBSERVATION {
+        guid Id PK
+        guid SessionId
+        guid MachineId
+        long MdcCode "ISO/IEEE 11073"
+        decimal ValueNumeric
+        string Units "UCUM"
+    }
+    DIALYSIS_MACHINE {
+        guid Id PK
+        string SerialNumber "unique"
+        string VendorCode
+        string ModelCode
+        guid CurrentSessionId "nullable"
+    }
+    MAR {
+        guid Id PK
+        guid SessionId
+        guid PatientId
+        int Status "Open/Closed"
+    }
+    MAR_ENTRY {
+        guid Id PK
+        json Medication "owned VO"
+        bool WasAdministered
+        string DeclineReason "nullable"
+    }
+    IV_PUMP_INFUSION {
+        guid Id PK
+        guid SessionId
+        guid ChairId
+        decimal InfusedVolumeMl
+        int Status "Running/Paused/Completed/Alarm"
+    }
+    SESSION_REPORT {
+        guid Id PK
+        guid SessionId
+        guid PatientId
+        int Kind "DischargeLetter/ShiftReport/BillingDocument"
+        int Status "Pending/Generated/Delivered/Archived/Failed"
+        string StorageRef "blob"
+    }
+```
+
+The **OnCall** slice adds `OnCallRotation`, `EscalationPolicy`, and `AlarmDispatch` (with owned `Attempts`); the durable-command ledger lives in `pdms_durablecommands.command_ledger`. `RawHl7Message` and `MdcCodeCatalogEntry` round out the telemetry schema.
+
+### 3.1 TimescaleDB hypertable
+
+`pdms_sessions.IntradialyticReadings` is a **TimescaleDB hypertable** partitioned by `ObservedAtUtc` (1-day chunks), `compress_segmentby = SessionId` with a **7-day compression policy** and a **365-day retention policy**. The PK is rewritten to the composite `(Id, ObservedAtUtc)` because Timescale requires the partition column in any unique index; the EF model key stays `Id`. PDMS therefore runs the `timescale/timescaledb:latest-pg17` image (every other module uses stock `postgres:17-alpine`). Startup uses `MigrateAsync` (not `EnsureCreated`) because the migration runs `create_hypertable`.
+
+---
+
+## 4. Durable command bus — `RecordReading`
+
+The highest-volume write (intradialytic readings) opts into the durable command bus (flag `Pdms:DurableCommands:RecordReading:Enabled`, default off). The reading id is derived from the command id, so a 202 caller knows the new row's id without polling and a redelivery is idempotent.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Dev as Dialysis machine
-    participant SC as SmartConnect channel
-    participant Bus as ITransponderBus
-    participant IBX as PDMS transponder.inbox
-    participant ACL as SmartConnectSnapshotTranslator
-    participant Sess as DialysisSession aggregate
-    participant Repo as ISessionRepository
-    participant Alm as TreatmentAlarm aggregate
-    participant Ctx as PdmsDbContext
-    participant OBX as transponder.outbox
-    participant EHRsvc as EHR consumers
-    participant HIEsvc as HIE Outbound
+    participant Src as Device / chairside SPA
+    participant Api as SessionsController
+    participant Bus as IDurableCommandBus - RabbitMQ
+    participant Con as DurableCommandConsumer&lt;PdmsDbContext&gt;
+    participant Led as command_ledger
+    participant H as RecordReadingCommandHandler
+    participant VB as IVitalsBroadcaster
 
-    Dev->>SC: HL7/serial frame
-    SC->>Bus: Publish(MachineSnapshotIntegrationEvent v1)
-    Bus->>IBX: deliver to PDMS inbox (idempotent by msg id)
-    IBX->>ACL: translate to IntradialyticReading
-    ACL->>Repo: load DialysisSession by (Machine, ActiveWindow)
-    Repo->>Ctx: query pdms_sessions
-    Ctx-->>Repo: session aggregate
-    ACL->>Sess: ReceiveObservation(reading)
-    Sess->>Sess: invariants (monotonic time, in-cycle window)
-
-    alt reading within bounds
-        Sess->>Ctx: append reading + SnapshotApplied event
-    else reading triggers alarm
-        Sess->>Alm: RaiseAlarm(code, severity, machine, window)
-        Alm->>Ctx: persist or merge with active TreatmentAlarm
-        Sess->>Ctx: enqueue IntradialyticAdverseEventIntegrationEvent v1
+    Src->>Api: POST /sessions/{id}/readings (X-Command-Id)
+    alt flag ON
+        Api->>Bus: EnqueueAsync(cmd, commandId = readingId)
+        Bus-->>Api: publisher confirm
+        Api-->>Src: 202 + Location command-status/{correlationId}
+        Bus->>Con: deliver envelope
+        Con->>Led: BEGIN tx, TryClaim (idempotent on CommandId)
+        Con->>H: dispatch
+        H->>H: session.RecordReading(explicitReadingId = CommandId)
+        H->>VB: broadcast "reading" to session:{id}
+        Con->>Led: MarkApplied, COMMIT
+    else flag OFF
+        Api->>H: SendCommandAsync (synchronous)
+        Api-->>Src: 201 Created
     end
+    Src->>Api: GET /api/v1.0/command-status/{correlationId}
+    Api-->>Src: { Status: Applied, readingId } (403 if sub != requester)
+```
 
-    Ctx->>Ctx: SaveChangesAsync (one UoW, inbox row marked processed)
-    Ctx-->>ACL: committed
+The bus emits a `Dialysis.DurableCommandBus` meter (`commands_enqueued/applied/failed` + latency histograms).
 
-    Note over OBX,Bus: relay (async)
-    OBX->>Bus: Publish(IntradialyticAdverseEventIntegrationEvent)
-    par EHR fan-out
-        Bus-->>EHRsvc: ClinicalNotes attaches as observation
-    and HIE fan-out
-        Bus-->>HIEsvc: build FHIR Observation/Bundle, dispatch
+---
+
+## 5. Key workflows
+
+### 5.1 Chairside vitals & live cost
+
+A clinician opens a session, joins the SignalR `VitalsHub` group `session:{id}`, and receives each recorded reading plus an itemised cost snapshot every **5 seconds** (`SessionCostBroadcastHostedService`). Valkey backs the SignalR backplane so multiple replicas fan out consistently.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SPA as Chairside SPA
+    participant Api as SessionsController
+    participant Hub as VitalsHub (/hubs/vitals)
+    participant Cost as SessionCostBroadcastHostedService
+
+    SPA->>Api: POST /sessions/{id}/start (raises DialysisSessionStarted + openEHR projection)
+    SPA->>Hub: connect + JoinSessionAsync(sessionId)
+    loop every recorded reading
+        Api-->>Hub: broadcast "reading"
+        Hub-->>SPA: "reading"
+    end
+    loop every 5s (in-progress sessions)
+        Cost-->>Hub: "cost" snapshot (tariff x pause-aware usage minutes)
+        Hub-->>SPA: "cost"
     end
 ```
 
-**Why inbox + ACL + single UoW?**
-
-- The **inbox** makes duplicate machine snapshots safe — the same message id never gets applied twice.
-- The **ACL** keeps SmartConnect's protocol shape out of the cycle vocabulary, so vendor adapters can change without touching `DialysisSession`.
-- A **single SaveChanges** commits the snapshot apply, the inbox row, the optional alarm, and the outbox enqueue atomically.
-
----
-
-## 3. Activity — DialysisSession lifecycle
+### 5.2 Machine alarm ingest (resolve-or-raise)
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Scheduled: ScheduleSession (cycle planned)
-    Scheduled --> Bound: BindMachine(machineId)<br/>publishes DialysisSessionBoundIntegrationEvent
-    Bound --> Active: StartSession<br/>publishes DialysisSessionStartedIntegrationEvent
-    Active --> Active: ReceiveObservation (telemetry stream)
-    Active --> AlarmRaised: observation crosses threshold<br/>publishes IntradialyticAdverseEventIntegrationEvent
-    AlarmRaised --> Active: clinician acknowledges, telemetry recovers
-    Active --> Paused: PauseSession (manual)
-    Paused --> Active: ResumeSession
-    Active --> Ended: EndSession (planned stop)<br/>publishes DialysisSessionEndedIntegrationEvent
-    AlarmRaised --> Aborted: EndSession (clinician)<br/>publishes DialysisSessionAbortedIntegrationEvent
-    Ended --> [*]
-    Aborted --> [*]
-```
+sequenceDiagram
+    autonumber
+    participant Mach as Dialysis machine
+    participant SC as SmartConnect
+    participant Con as TreatmentAlarmConsumer
+    participant Svc as TreatmentAlarmIngestionService
+    participant Repo as ITreatmentAlarmRepository
 
-```mermaid
-stateDiagram-v2
-    state "TreatmentAlarm (independent aggregate)" as A {
-        [*] --> Present: RaiseAlarm(code, severity)<br/>keyed by (Machine, Code, ActiveWindow)
-        Present --> Present: re-raise within window (idempotent merge)
-        Present --> Inactivating: AcknowledgeAlarm (clinician)
-        Inactivating --> Resolved: ConfirmResolution (telemetry returns to bounds)
-        Inactivating --> Present: still abnormal (re-latch)
-        Resolved --> [*]
-    }
-```
-
-**Why two state machines?** A session's lifecycle and an alarm's lifecycle are independent — an alarm can outlive the observation that triggered it (latched until acknowledged), and one session can spawn many alarms. Splitting them is the metaphor's natural seam.
-
----
-
-## 4. Composition root
-
-```mermaid
-flowchart TB
-    Program["Program.cs (Dialysis.PDMS.Api)"]
-    Program --> AddModuleHost["AddModuleHost of PdmsPermissionCatalog<br/>(ModuleSlug = 'pdms')"]
-    Program --> AddPDMS["AddPdms(configuration, …)"]
-    AddPDMS --> Persistence["AddDbContext of PdmsDbContext<br/>EF in-memory dev / Postgres prod"]
-    AddPDMS --> Bus["AddTransponder + AddPdmsIntegrationConsumers"]
-    AddPDMS --> TS["AddTreatmentSessions()<br/>handlers, ports, ACLs"]
-    AddPDMS --> Hosted["IHostedService: PdmsDatabaseInitializer<br/>+ optional outbox relay"]
+    Mach->>SC: ORU^R40 / PCD-04 alarm
+    SC-->>Con: DialysisMachineAlarmIntegrationEvent
+    Con->>Svc: translate -> IncomingAlarm (machineId = MD5(serial))
+    Svc->>Repo: FindLive(machineId, alarmCode)
+    alt no live alarm and state Present
+        Svc->>Repo: TreatmentAlarm.Raise (Add)
+    else existing alarm
+        Svc->>Repo: Refresh / MarkInactivating / MarkResolved
+    end
+    Note over Svc: clinician later POST /alarms/{id}/acknowledge
 ```
 
 ---
 
-## 5. Data layout
+## 6. API surface
 
-```mermaid
-erDiagram
-    PdmsDbContext ||--o{ pdms_sessions : "DialysisSession + IntradialyticReading"
-    PdmsDbContext ||--o{ pdms_alarms : "TreatmentAlarm"
-    PdmsDbContext ||--o{ transponder : "Outbox, Inbox, Sagas"
-```
-
-- Migrations history: `pdms.__ef_migrations` (per CLAUDE.md naming rule).
-- Inbox & outbox share `PdmsDbContext` so a single `SaveChanges` covers both directions.
+`sessions` (schedule/start/pause/resume/complete/abort, readings, adverse-events, summaries — `GET` uses `?activeOnly`), `alarms` (active board, acknowledge, raise machine alarm), `chairs` (occupancy board), `sessions/{id}/medications` (MAR), `iv-pumps` (telemetry, infusions), `inventory`, `oncall` (rotations/policies/dispatches), `reports`/templates. Realtime: `VitalsHub` at `/hubs/vitals` emitting `"reading"` and `"cost"`. Permissions: the closed `PdmsPermissions` set.
 
 ---
 
-## 6. Cross-context contracts (DDD context map)
+## 7. Integration events & compliance
 
-| Counterparty | Role | Vehicle |
-|---|---|---|
-| SmartConnect | **Customer** of SmartConnect; **ACL** isolates protocol drift. | `MachineSnapshotIntegrationEvent`, `MachineAlarmIntegrationEvent` consumed via inbox |
-| EHR | **Supplier**: publishes `DialysisSessionStarted/Ended/Aborted` + `IntradialyticAdverseEvent`. EHR ClinicalNotes attaches them to the patient record. | `Dialysis.PDMS.Contracts` |
-| HIE | **Supplier** for outbound FHIR fan-out (Observation, Procedure). | `Dialysis.PDMS.Contracts` consumed by `Dialysis.HIE.Outbound` mappers |
-| Identity | **Conformist**: OIDC claims. | JWT bearer; `Pdms:Authentication:RolePermissionMap` |
+**Published:** `DialysisSessionStarted/Completed/Aborted`, `IntradialyticAdverseEvent`, `DialysisSessionChargeReady` (→ EHR billing), `HaemodialysisSessionProjectedAsOpenEhr` (→ HIE), `ClinicalDocumentProduced` (→ HIE Documents), plus slice events (`MedicationAdministered/Declined`, `IvPumpInfusionStarted/Completed`, `IvPumpAlarmRaised`, `MedicationInventoryLow`, `SessionReportGenerated`).
 
----
+**Consumed:** `DialysisMachineTreatmentSnapshot` / `DialysisMachineAlarm` (SmartConnect telemetry), `PatientPlacedInChair` (HIS → chair-occupancy projection), and several self-consumed events that drive reporting, inventory deduction, and on-call escalation.
 
-## 7. Where to look next
-
-- Domain → `Dialysis.PDMS.TreatmentSessions/Domain/{DialysisSession,TreatmentAlarm,IntradialyticReading}.cs`.
-- ACL translators → `Dialysis.PDMS.TreatmentSessions/Adapters/SmartConnect*Translator.cs`.
-- Integration event contracts → `Dialysis.PDMS.Contracts/Integration/`.
-- Long-form structure rationale → [pdms_subdomain_structure.md](pdms_subdomain_structure.md).
+`PdmsPatientEraser : IPatientEraser` (GDPR Art. 17) projects the patient's session ids first, soft-deletes the session-keyed children (`IntradialyticReading`, `TreatmentObservation`, `TreatmentAlarm`, `IvPumpInfusion`, `AlarmDispatch`) and the sessions, then the direct patient-linked rows (`MedicationAdministrationRecord`, `SessionReport`) — all via `ExecuteUpdateAsync`. Bounded retention of telemetry is handled by the Timescale retention policy; the approve-and-execute orchestration lives in [HIE](../HIE/ARCHITECTURE.md).
