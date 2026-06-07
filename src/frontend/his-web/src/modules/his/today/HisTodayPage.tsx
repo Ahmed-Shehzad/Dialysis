@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AssignChairDialog } from "./AssignChairDialog";
 import { CheckInDialog } from "./CheckInDialog";
@@ -7,6 +7,7 @@ import { QueueCard } from "./QueueCard";
 import { WalkInDialog } from "./WalkInDialog";
 import { useTodaysQueue, type QueueEntry, type QueueStatus } from "./queueApi";
 import { ModuleHeader } from "@/shell/ModuleHeader";
+import { usePatientContext } from "@/shell/PatientContextProvider";
 
 const COLUMNS: ReadonlyArray<{ status: QueueStatus; title: string; emptyHint: string }> = [
   {
@@ -34,11 +35,28 @@ const todayLabel = (): string =>
   });
 
 export const HisTodayPage = () => {
-  const navigate = useNavigate();
   const queue = useTodaysQueue();
+  const { select } = usePatientContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [checkInTarget, setCheckInTarget] = useState<QueueEntry | null>(null);
   const [assignChairTarget, setAssignChairTarget] = useState<QueueEntry | null>(null);
   const [walkInOpen, setWalkInOpen] = useState(false);
+
+  // The header "+ Walk-in" pill navigates to ?action=walk-in (a shareable URL) rather than
+  // reaching into page state; open the dialog when that param is present.
+  const walkInRequested = searchParams.get("action") === "walk-in";
+  useEffect(() => {
+    if (walkInRequested) setWalkInOpen(true);
+  }, [walkInRequested]);
+
+  const closeWalkIn = () => {
+    setWalkInOpen(false);
+    if (walkInRequested) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("action");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const grouped = useMemo(() => {
     const groups: Record<QueueStatus, QueueEntry[]> = {
@@ -55,7 +73,7 @@ export const HisTodayPage = () => {
   const handleAction = (entry: QueueEntry) => {
     // Each column's primary action is a forward step in the queue.
     // Expected → check-in dialog. Waiting → assign-chair dialog.
-    // In treatment → cross into the EHR chart.
+    // In treatment → cross into the EHR chart (a separate /ehr app, so a full-page hop).
     if (entry.status === "expected") {
       setCheckInTarget(entry);
       return;
@@ -64,7 +82,9 @@ export const HisTodayPage = () => {
       setAssignChairTarget(entry);
       return;
     }
-    navigate(`/patients/${entry.patientId}`);
+    // Carry the patient across via the shared-origin patient context, then load the EHR chart.
+    select({ id: entry.patientId, displayName: entry.patientName, mrn: entry.mrn });
+    globalThis.location.assign(`/ehr/patients/${entry.patientId}`);
   };
 
   return (
@@ -74,18 +94,18 @@ export const HisTodayPage = () => {
         quickActions={[
           {
             label: "+ Walk-in",
-            to: "/his/today?action=walk-in",
+            to: "/today?action=walk-in",
             hint: "Register a patient who's arrived without an appointment",
             variant: "primary",
           },
           {
             label: "Patient search",
-            to: "/patients",
+            href: "/ehr/patients",
             hint: "Pull up an existing patient's record by name or MRN",
           },
           {
             label: "Workflow guide",
-            to: "/workflows/his",
+            to: "/workflows",
             hint: "Step-by-step walkthrough of the receptionist's day",
           },
         ]}
@@ -127,7 +147,7 @@ export const HisTodayPage = () => {
         <AssignChairDialog entry={assignChairTarget} onClose={() => setAssignChairTarget(null)} />
       )}
 
-      {walkInOpen && <WalkInDialog onClose={() => setWalkInOpen(false)} />}
+      {walkInOpen && <WalkInDialog onClose={closeWalkIn} />}
 
       {queue.data && (
         <div className="grid gap-4 md:grid-cols-3">

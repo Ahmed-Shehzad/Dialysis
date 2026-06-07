@@ -310,7 +310,7 @@ public sealed class NatsTransponderTransport : ITransponderTransport
             .ConfigureAwait(false);
     }
 
-    private async Task PublishPoisonJetStreamAsync(
+    private static async Task PublishPoisonJetStreamAsync(
         INatsJSContext js,
         TransponderNatsOptions o,
         TransportMessage failed,

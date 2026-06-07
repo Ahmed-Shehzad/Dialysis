@@ -117,60 +117,60 @@
     return res.json();
   }
   function listFlows() {
-    return apiJson("/smartconnect/v1/admin/flows");
+    return apiJson("/api/v1/admin/flows");
   }
   function listMessages(opts) {
     const params = new URLSearchParams();
     params.set("take", String(opts.take ?? 30));
     if (opts.flowId) params.set("flowId", opts.flowId);
     if (opts.status) params.set("status", opts.status);
-    return apiJson(`/smartconnect/v1/admin/messages?${params}`);
+    return apiJson(`/api/v1/admin/messages?${params}`);
   }
   async function reprocessMessage(id) {
-    await apiFetch(`/smartconnect/v1/admin/messages/${encodeURIComponent(id)}/reprocess`, { method: "POST" });
+    await apiFetch(`/api/v1/admin/messages/${encodeURIComponent(id)}/reprocess`, { method: "POST" });
   }
   function listAttachmentsForMessage(messageId) {
-    return apiJson(`/smartconnect/v1/admin/messages/${encodeURIComponent(messageId)}/attachments`);
+    return apiJson(`/api/v1/admin/messages/${encodeURIComponent(messageId)}/attachments`);
   }
   function downloadAttachmentUrl(id) {
-    return `/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`;
+    return `/api/v1/admin/attachments/${encodeURIComponent(id)}`;
   }
   async function fetchAttachmentBytes(id) {
-    const res = await apiFetch(`/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`);
+    const res = await apiFetch(`/api/v1/admin/attachments/${encodeURIComponent(id)}`);
     const buf = await res.arrayBuffer();
     return new Uint8Array(buf);
   }
   async function deleteAttachment(id) {
-    await apiFetch(`/smartconnect/v1/admin/attachments/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await apiFetch(`/api/v1/admin/attachments/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
   function listAlertRules() {
-    return apiJson("/smartconnect/v1/admin/alert-rules");
+    return apiJson("/api/v1/admin/alert-rules");
   }
   function getAlertRule(id) {
-    return apiJson(`/smartconnect/v1/admin/alert-rules/${encodeURIComponent(id)}`);
+    return apiJson(`/api/v1/admin/alert-rules/${encodeURIComponent(id)}`);
   }
   function listAlertEvents(opts = {}) {
     const params = new URLSearchParams();
     params.set("take", String(opts.take ?? 30));
     if (opts.ruleId) params.set("ruleId", opts.ruleId);
-    return apiJson(`/smartconnect/v1/admin/alert-events?${params}`);
+    return apiJson(`/api/v1/admin/alert-events?${params}`);
   }
   function testAlertRule(id) {
-    return apiJson(`/smartconnect/v1/admin/alert-rules/${encodeURIComponent(id)}/test`, { method: "POST" });
+    return apiJson(`/api/v1/admin/alert-rules/${encodeURIComponent(id)}/test`, { method: "POST" });
   }
   function listCodeTemplateLibraries() {
-    return apiJson("/smartconnect/v1/admin/code-template-libraries");
+    return apiJson("/api/v1/admin/code-template-libraries");
   }
   function getCodeTemplateLibrary(id) {
-    return apiJson(`/smartconnect/v1/admin/code-template-libraries/${encodeURIComponent(id)}`);
+    return apiJson(`/api/v1/admin/code-template-libraries/${encodeURIComponent(id)}`);
   }
   function getConfigMap(scope, flowId) {
-    const path = `/smartconnect/v1/admin/config-map/${encodeURIComponent(scope)}`;
+    const path = `/api/v1/admin/config-map/${encodeURIComponent(scope)}`;
     const url = flowId ? `${path}?flowId=${encodeURIComponent(flowId)}` : path;
     return apiJson(url);
   }
   async function setConfigMapValue(scope, key, value, flowId) {
-    const path = `/smartconnect/v1/admin/config-map/${encodeURIComponent(scope)}/${encodeURIComponent(key)}`;
+    const path = `/api/v1/admin/config-map/${encodeURIComponent(scope)}/${encodeURIComponent(key)}`;
     const url = flowId ? `${path}?flowId=${encodeURIComponent(flowId)}` : path;
     await apiFetch(url, {
       method: "PUT",
@@ -179,12 +179,12 @@
     });
   }
   async function deleteConfigMapValue(scope, key, flowId) {
-    const path = `/smartconnect/v1/admin/config-map/${encodeURIComponent(scope)}/${encodeURIComponent(key)}`;
+    const path = `/api/v1/admin/config-map/${encodeURIComponent(scope)}/${encodeURIComponent(key)}`;
     const url = flowId ? `${path}?flowId=${encodeURIComponent(flowId)}` : path;
     await apiFetch(url, { method: "DELETE" });
   }
   function getPrunerOptions() {
-    return apiJson("/smartconnect/v1/admin/pruner/options");
+    return apiJson("/api/v1/admin/pruner/options");
   }
   function checkHealth() {
     return apiFetch("/health");
@@ -544,7 +544,7 @@
     try {
       const flows = await listFlows();
       if (!Array.isArray(flows) || flows.length === 0) {
-        status.textContent = "No flows yet. POST a flow to /smartconnect/v1/admin/flows or use import.";
+        status.textContent = "No flows yet. POST a flow to /api/v1/admin/flows or use import.";
         return;
       }
       status.remove();
@@ -555,7 +555,7 @@
           el("td", {}, el("code", {}, f.id)),
           el("td", {}, f.runtimeState ?? "\u2014"),
           el("td", {}, el("a", {
-            href: `/smartconnect/v1/admin/flows/${encodeURIComponent(f.id)}/statistics`,
+            href: `/api/v1/admin/flows/${encodeURIComponent(f.id)}/statistics`,
             target: "_blank",
             rel: "noopener"
           }, "stats"))
@@ -624,7 +624,7 @@
             el("td", {}, el("code", {}, m.correlationId ?? "")),
             el("td", {}, m.detail ?? "\u2014"),
             el("td", {}, [
-              el("a", { href: `/smartconnect/v1/admin/messages/${encodeURIComponent(m.id)}`, target: "_blank", rel: "noopener" }, "raw"),
+              el("a", { href: `/api/v1/admin/messages/${encodeURIComponent(m.id)}`, target: "_blank", rel: "noopener" }, "raw"),
               " ",
               el("a", { href: `#attachments/${encodeURIComponent(m.id)}` }, "attachments"),
               " ",
@@ -798,7 +798,7 @@
     target.appendChild(el("h2", {}, "Alert rules"));
     target.appendChild(el("p", { class: "muted" }, [
       "Rules and actions are created via REST (",
-      el("code", {}, "POST /smartconnect/v1/admin/alert-rules"),
+      el("code", {}, "POST /api/v1/admin/alert-rules"),
       "). This view lists, drills in, and runs the test trigger."
     ]));
     const status = el("p", { class: "muted" }, "Loading\u2026");
@@ -939,7 +939,7 @@
     ctx.target.appendChild(el("h2", {}, "Variable maps"));
     ctx.target.appendChild(el("p", { class: "muted" }, [
       "Persists via ",
-      el("code", {}, "/smartconnect/v1/admin/config-map/{scope}"),
+      el("code", {}, "/api/v1/admin/config-map/{scope}"),
       ". GlobalChannel scope optionally takes a flowId query."
     ]));
     const scopeSelect = el("select", {});
@@ -1075,7 +1075,7 @@
     ctx.target.appendChild(el("h2", {}, "Data pruner"));
     ctx.target.appendChild(el("p", { class: "muted" }, [
       "Background sweep configuration. Source: ",
-      el("code", {}, "GET /smartconnect/v1/admin/pruner/options"),
+      el("code", {}, "GET /api/v1/admin/pruner/options"),
       "."
     ]));
     try {

@@ -91,6 +91,7 @@ export const MyAppointmentRequestsPanel = ({ patientId }: { patientId: string })
             onChange={(e) => setReason(e.target.value)}
             rows={2}
             placeholder="Reason for the visit"
+            aria-label="Reason for the visit"
             className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
           />
           <div className="flex flex-wrap gap-3 text-xs text-slate-300">

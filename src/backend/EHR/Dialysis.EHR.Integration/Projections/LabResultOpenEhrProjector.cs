@@ -9,7 +9,7 @@ namespace Dialysis.EHR.Integration.Projections;
 /// </summary>
 public sealed class LabResultOpenEhrProjector
 {
-    public LabResultOpenEhrProjection Project(IngestLabResultCommand request, Guid labResultId)
+    public static LabResultOpenEhrProjection Project(IngestLabResultCommand request, Guid labResultId)
     {
         ArgumentNullException.ThrowIfNull(request);
         var payload = JsonSerializer.Serialize(new

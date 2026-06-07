@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Ports;
@@ -23,7 +24,7 @@ public sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPati
     public async Task<Guid> HandleAsync(RegisterPatientCommand request, CancellationToken cancellationToken)
     {
         if (await _patients.FindByMedicalRecordNumberAsync(request.MedicalRecordNumber, cancellationToken).ConfigureAwait(false) is not null)
-            throw new InvalidOperationException($"MRN '{request.MedicalRecordNumber}' is already in use.");
+            throw new DomainException($"MRN '{request.MedicalRecordNumber}' is already in use.");
 
         var id = Guid.CreateVersion7();
         var name = new HumanName(request.FamilyName, request.GivenName, request.MiddleName);

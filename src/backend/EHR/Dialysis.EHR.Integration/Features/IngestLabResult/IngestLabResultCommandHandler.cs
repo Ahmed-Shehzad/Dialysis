@@ -10,16 +10,13 @@ public sealed class IngestLabResultCommandHandler : ICommandHandler<IngestLabRes
 {
     private readonly ITransponderBus _bus;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly LabResultOpenEhrProjector _openEhrProjector;
     private readonly TimeProvider _timeProvider;
     public IngestLabResultCommandHandler(ITransponderBus bus,
         IUnitOfWork unitOfWork,
-        LabResultOpenEhrProjector openEhrProjector,
         TimeProvider timeProvider)
     {
         _bus = bus;
         _unitOfWork = unitOfWork;
-        _openEhrProjector = openEhrProjector;
         _timeProvider = timeProvider;
     }
     public async Task<Guid> HandleAsync(IngestLabResultCommand request, CancellationToken cancellationToken)
@@ -43,7 +40,7 @@ public sealed class IngestLabResultCommandHandler : ICommandHandler<IngestLabRes
 
         await _bus.PublishAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
 
-        var projection = _openEhrProjector.Project(request, resultId);
+        var projection = LabResultOpenEhrProjector.Project(request, resultId);
         var openEhrEvent = new LabResultProjectedAsOpenEhrIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: occurredOn,

@@ -34,9 +34,10 @@ public sealed class Edi277CaAckParserTests
             "GE*1*1~" +
             "IEA*1*000000002~";
         var bytes = Encoding.ASCII.GetBytes(payload);
-        var parser = new Edi277CaAckParser();
 
-        var result = parser.Parse(bytes);
+        _ = new Edi277CaAckParser();
+
+        var result = Edi277CaAckParser.Parse(bytes);
 
         result.ClaimStatuses.Count.ShouldBe(1);
         result.ClaimStatuses[0].OriginalClaimControlNumber.ShouldBe("abcdefabcdef4abc8abcabcabcabcabcd");
@@ -57,9 +58,10 @@ public sealed class Edi277CaAckParserTests
             "GE*1*1~" +
             "IEA*1*000000002~";
         var bytes = Encoding.ASCII.GetBytes(payload);
-        var parser = new Edi277CaAckParser();
 
-        var result = parser.Parse(bytes);
+        _ = new Edi277CaAckParser();
+
+        var result = Edi277CaAckParser.Parse(bytes);
 
         result.ClaimStatuses.Single().Verdict.ShouldBe(Edi277Verdict.Rejected);
         result.ClaimStatuses.Single().ReasonCodes.ShouldContain("R0/21");
@@ -81,9 +83,10 @@ public sealed class Edi277CaAckParserTests
             "GE*1*1~" +
             "IEA*1*000000002~";
         var bytes = Encoding.ASCII.GetBytes(payload);
-        var parser = new Edi277CaAckParser();
 
-        var result = parser.Parse(bytes);
+        _ = new Edi277CaAckParser();
+
+        var result = Edi277CaAckParser.Parse(bytes);
 
         result.ClaimStatuses.Count.ShouldBe(2);
         result.ClaimStatuses[0].Verdict.ShouldBe(Edi277Verdict.Accepted);

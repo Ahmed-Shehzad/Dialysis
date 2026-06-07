@@ -39,6 +39,17 @@ public sealed class ModuleBffOptions
     /// </summary>
     public IList<ModuleBffAggregation> Aggregations { get; set; } = [];
 
+    /// <summary>
+    /// DEV-ONLY. When true, the proxy forwards an inbound <c>Authorization: Bearer</c> header straight to
+    /// the upstream module API if the request has no cookie session token. This lets a service-account
+    /// caller (the data simulator's <c>client_credentials</c> token) drive the module write endpoints
+    /// THROUGH the BFF — exercising the full BFF routing/aggregation path — instead of only via an
+    /// interactive cookie session. Defaults to <c>false</c> and is set <c>true</c> only by the Aspire
+    /// AppHost in dev run mode; it is never emitted into the published compose/k8s artifacts, so deployed
+    /// BFFs stay strictly cookie-session proxies.
+    /// </summary>
+    public bool AllowServiceBearerPassthrough { get; set; }
+
     /// <summary>Resolved base path: explicit <see cref="BasePath"/> or <c>/{Slug}</c>.</summary>
     public string ResolveBasePath()
     {

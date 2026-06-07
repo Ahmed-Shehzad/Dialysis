@@ -14,18 +14,15 @@ public sealed class RecordVitalSignCommandHandler : ICommandHandler<RecordVitalS
     private readonly IVitalSignRepository _vitals;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITransponderBus _bus;
-    private readonly VitalSignOpenEhrProjector _openEhrProjector;
     private readonly TimeProvider _timeProvider;
     public RecordVitalSignCommandHandler(IVitalSignRepository vitals,
         IUnitOfWork unitOfWork,
         ITransponderBus bus,
-        VitalSignOpenEhrProjector openEhrProjector,
         TimeProvider timeProvider)
     {
         _vitals = vitals;
         _unitOfWork = unitOfWork;
         _bus = bus;
-        _openEhrProjector = openEhrProjector;
         _timeProvider = timeProvider;
     }
     public async Task<Guid> HandleAsync(RecordVitalSignCommand request, CancellationToken cancellationToken)
@@ -44,7 +41,7 @@ public sealed class RecordVitalSignCommandHandler : ICommandHandler<RecordVitalS
         _vitals.Add(reading);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        if (_openEhrProjector.Project(reading) is { } projection)
+        if (VitalSignOpenEhrProjector.Project(reading) is { } projection)
         {
             var openEhrEvent = new ChartVitalSignProjectedAsOpenEhrIntegrationEvent(
                 EventId: Guid.CreateVersion7(),

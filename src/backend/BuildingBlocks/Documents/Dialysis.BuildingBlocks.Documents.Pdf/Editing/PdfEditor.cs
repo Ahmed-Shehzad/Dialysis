@@ -20,7 +20,7 @@ public sealed class PdfEditor
     /// assemble multi-document patient dossiers (e.g. one PDF per session report stitched
     /// into a referral packet).
     /// </summary>
-    public byte[] Merge(IReadOnlyList<ReadOnlyMemory<byte>> pdfDocuments)
+    public static byte[] Merge(IReadOnlyList<ReadOnlyMemory<byte>> pdfDocuments)
     {
         ArgumentNullException.ThrowIfNull(pdfDocuments);
         if (pdfDocuments.Count == 0)
@@ -43,7 +43,7 @@ public sealed class PdfEditor
     /// Splits the input PDF into one byte array per page. Lets a tool that ingests a
     /// multi-page lab report fan it into per-page records.
     /// </summary>
-    public IReadOnlyList<byte[]> SplitByPage(ReadOnlyMemory<byte> pdfDocument)
+    public static IReadOnlyList<byte[]> SplitByPage(ReadOnlyMemory<byte> pdfDocument)
     {
         using var stream = new MemoryStream(pdfDocument.ToArray(), writable: false);
         using var input = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
@@ -62,7 +62,7 @@ public sealed class PdfEditor
     /// the supplied order. Used to redact a longitudinal record down to the pages
     /// relevant to a single GDPR Art. 15 data-subject access request.
     /// </summary>
-    public byte[] ExtractPages(ReadOnlyMemory<byte> pdfDocument, IReadOnlyList<int> pageNumbers)
+    public static byte[] ExtractPages(ReadOnlyMemory<byte> pdfDocument, IReadOnlyList<int> pageNumbers)
     {
         ArgumentNullException.ThrowIfNull(pageNumbers);
         if (pageNumbers.Count == 0)
@@ -87,7 +87,7 @@ public sealed class PdfEditor
     /// pages a clinician has flagged as incorrect / out of scope before the document is
     /// shared.
     /// </summary>
-    public byte[] RemovePages(ReadOnlyMemory<byte> pdfDocument, IReadOnlyCollection<int> pageNumbers)
+    public static byte[] RemovePages(ReadOnlyMemory<byte> pdfDocument, IReadOnlyCollection<int> pageNumbers)
     {
         ArgumentNullException.ThrowIfNull(pageNumbers);
         var toRemove = new HashSet<int>(pageNumbers);
@@ -96,7 +96,8 @@ public sealed class PdfEditor
         using var output = new PdfDocument();
         for (var i = 0; i < input.PageCount; i++)
         {
-            if (toRemove.Contains(i + 1)) continue;
+            if (toRemove.Contains(i + 1))
+                continue;
             output.AddPage(input.Pages[i]);
         }
         if (output.PageCount == 0)
@@ -105,7 +106,7 @@ public sealed class PdfEditor
     }
 
     /// <summary>Returns the page count without copying the document.</summary>
-    public int CountPages(ReadOnlyMemory<byte> pdfDocument)
+    public static int CountPages(ReadOnlyMemory<byte> pdfDocument)
     {
         using var stream = new MemoryStream(pdfDocument.ToArray(), writable: false);
         using var input = PdfReader.Open(stream, PdfDocumentOpenMode.Import);

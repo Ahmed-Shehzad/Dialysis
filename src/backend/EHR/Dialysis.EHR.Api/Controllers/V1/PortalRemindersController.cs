@@ -2,9 +2,7 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.Api.Security;
 using Dialysis.EHR.ClinicalNotes.Features.GetPatientReminders;
-using Dialysis.Module.Hosting.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace Dialysis.EHR.Api.Controllers.V1;
 
@@ -18,12 +16,12 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 public sealed class PortalRemindersController : ControllerBase
 {
     private readonly ICqrsGateway _gateway;
-    private readonly bool _authorityConfigured;
+    private readonly EhrPortalAccess _portalAccess;
 
-    public PortalRemindersController(ICqrsGateway gateway, IOptions<ModuleAuthenticationOptions> authOptions)
+    public PortalRemindersController(ICqrsGateway gateway, EhrPortalAccess portalAccess)
     {
         _gateway = gateway;
-        _authorityConfigured = !string.IsNullOrWhiteSpace(authOptions.Value.Authority);
+        _portalAccess = portalAccess;
     }
 
     /// <summary>The signed-in patient's health reminders.</summary>
@@ -32,7 +30,7 @@ public sealed class PortalRemindersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMineAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        if (!EhrPatientAccess.IsSelf(User, patientId, _authorityConfigured)) return Forbid();
+        if (!_portalAccess.CanActAs(User, patientId)) return Forbid();
         var reminders = await _gateway.SendQueryAsync<GetPatientRemindersQuery, IReadOnlyList<PatientReminderDto>>(
             new GetPatientRemindersQuery(patientId), cancellationToken).ConfigureAwait(false);
         return Ok(reminders);

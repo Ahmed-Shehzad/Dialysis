@@ -186,6 +186,7 @@ const ApprovalRow = ({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reject reason (legal hold, duplicate, …)"
+          aria-label="Reject reason"
           className="flex-1 rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-xs text-slate-100"
         />
         <button

@@ -180,7 +180,7 @@ public sealed class FhirArtifactVerifier : IFhirArtifactVerifier
     {
         try
         {
-            var json = _serializer.Serialize(resource);
+            var json = FhirJsonSerializerProvider.Serialize(resource);
             _ = _serializer.Parse<Resource>(json);
         }
         catch (Exception ex)

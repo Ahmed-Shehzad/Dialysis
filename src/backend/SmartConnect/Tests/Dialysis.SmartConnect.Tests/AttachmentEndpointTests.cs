@@ -34,12 +34,12 @@ public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactor
 
         using var client = _factory.CreateClient();
 
-        var metaResp = await client.GetAsync($"/smartconnect/v1/admin/attachments/{added.Id}/metadata");
+        var metaResp = await client.GetAsync($"/api/v1/admin/attachments/{added.Id}/metadata");
         Assert.Equal(HttpStatusCode.OK, metaResp.StatusCode);
         var metaJson = await metaResp.Content.ReadAsStringAsync();
         Assert.Contains("text/plain", metaJson);
 
-        var bytesResp = await client.GetAsync($"/smartconnect/v1/admin/attachments/{added.Id}");
+        var bytesResp = await client.GetAsync($"/api/v1/admin/attachments/{added.Id}");
         Assert.Equal(HttpStatusCode.OK, bytesResp.StatusCode);
         Assert.Equal("text/plain", bytesResp.Content.Headers.ContentType?.MediaType);
         var bytes = await bytesResp.Content.ReadAsByteArrayAsync();
@@ -66,10 +66,10 @@ public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactor
         }
 
         using var client = _factory.CreateClient();
-        var del = await client.DeleteAsync($"/smartconnect/v1/admin/attachments/{added.Id}");
+        var del = await client.DeleteAsync($"/api/v1/admin/attachments/{added.Id}");
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
 
-        var meta = await client.GetAsync($"/smartconnect/v1/admin/attachments/{added.Id}/metadata");
+        var meta = await client.GetAsync($"/api/v1/admin/attachments/{added.Id}/metadata");
         Assert.Equal(HttpStatusCode.NotFound, meta.StatusCode);
     }
 
@@ -96,7 +96,7 @@ public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactor
         }
 
         using var client = _factory.CreateClient();
-        var resp = await client.GetAsync($"/smartconnect/v1/admin/messages/{messageId}/attachments");
+        var resp = await client.GetAsync($"/api/v1/admin/messages/{messageId}/attachments");
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
         var body = await resp.Content.ReadAsStringAsync();
         Assert.Contains("\"mimeType\"", body, StringComparison.OrdinalIgnoreCase);

@@ -82,7 +82,9 @@ public sealed class MedicationsController : ControllerBase
             administeredBySub: request.AdministeredBySub,
             relatedOrderId: request.RelatedOrderId);
         _records.Update(mar);
-        return CreatedAtAction(nameof(ListAsync), new { sessionId }, MedicationEntryDto.From(entry));
+        // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
+        // {version} route value for action-link generation, which throws -> 500.
+        return Created($"/api/v1.0/sessions/{sessionId}/medications/{entry.Id}", MedicationEntryDto.From(entry));
     }
 
     [HttpPost("{entryId:guid}/decline")]

@@ -22,7 +22,7 @@ namespace Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
 /// </summary>
 public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
 {
-    public Task<byte[]> ApplyFormsAsync(
+    public async Task<byte[]> ApplyFormsAsync(
         ReadOnlyMemory<byte> pdfBytes,
         IReadOnlyList<AcroFormPlacement> placements,
         CancellationToken cancellationToken)
@@ -30,7 +30,7 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
         ArgumentNullException.ThrowIfNull(placements);
         if (placements.Count == 0)
         {
-            return Task.FromResult(pdfBytes.ToArray());
+            return pdfBytes.ToArray();
         }
 
         EnsureUniqueNames(placements);
@@ -65,13 +65,10 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
         }
 
         using var output = new MemoryStream();
-        // PDFsharp 6.x only ships a synchronous Save(Stream); the target is an in-memory
-        // MemoryStream so the call doesn't block on I/O — only on serialization, which is
-        // CPU-bound and not async-friendly.
-#pragma warning disable VSTHRD103
-        document.Save(output);
-#pragma warning restore VSTHRD103
-        return Task.FromResult(output.ToArray());
+
+        await document.SaveAsync(output).ConfigureAwait(false);
+
+        return output.ToArray();
     }
 
     private static void EnsureUniqueNames(IReadOnlyList<AcroFormPlacement> placements)
@@ -243,7 +240,8 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
             // caller that round-trips the full field set doesn't accidentally overwrite the
             // signature dictionary. PDFsharp 6.x round-trips signature fields as either a
             // typed PdfSignatureField or a generic field with /FT=/Sig — check both.
-            if (field is PdfSignatureField || IsSignatureField(field)) continue;
+            if (field is PdfSignatureField || IsSignatureField(field))
+                continue;
             ApplyValue(field, raw);
             filled.Add(key);
         }

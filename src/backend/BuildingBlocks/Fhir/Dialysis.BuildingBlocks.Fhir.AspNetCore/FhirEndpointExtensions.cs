@@ -170,7 +170,7 @@ public static class FhirEndpointExtensions
     {
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = FhirContentTypes.Json + "; charset=utf-8";
-        var json = serializer.Serialize(resource);
+        var json = FhirJsonSerializerProvider.Serialize(resource);
         var bytes = Encoding.UTF8.GetBytes(json);
         await context.Response.Body.WriteAsync(bytes, context.RequestAborted).ConfigureAwait(false);
     }

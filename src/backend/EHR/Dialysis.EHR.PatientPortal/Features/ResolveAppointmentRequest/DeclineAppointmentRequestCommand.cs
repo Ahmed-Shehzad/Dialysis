@@ -1,5 +1,6 @@
 using Dialysis.CQRS;
 using Dialysis.CQRS.Commands;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Contracts.Security;
 using Dialysis.EHR.PatientPortal.Ports;
@@ -31,7 +32,7 @@ public sealed class DeclineAppointmentRequestCommandHandler
     public async Task<Unit> HandleAsync(DeclineAppointmentRequestCommand request, CancellationToken cancellationToken)
     {
         var entity = await _requests.GetAsync(request.RequestId, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Appointment request {request.RequestId} not found.");
+            ?? throw new DomainException($"Appointment request {request.RequestId} not found.");
         entity.Decline(request.StaffNote);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

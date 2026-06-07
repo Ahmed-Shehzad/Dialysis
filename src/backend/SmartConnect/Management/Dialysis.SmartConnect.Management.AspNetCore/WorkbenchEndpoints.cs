@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Routing;
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
 /// <summary>
-/// Maps <c>/smartconnect/v1/admin/workbench/*</c> — the HL7 Workbench is an operator tool
+/// Maps <c>/api/v1/admin/workbench/*</c> — the HL7 Workbench is an operator tool
 /// that lets a user paste a real HL7 v2 message, see the parsed structure, run the same
 /// <c>verify-hl7</c> validation pipeline used by route filters, and optionally dispatch the
 /// message through any existing HL7v2 flow. No canned data is hosted server-side; everything
@@ -25,7 +25,7 @@ public static class WorkbenchEndpoints
         /// <summary>Registers the workbench routes (parse / validate / dispatch).</summary>
         public IEndpointRouteBuilder MapSmartConnectWorkbenchRoutes()
         {
-            var group = endpoints.MapGroup("/smartconnect/v1/admin/workbench")
+            var group = endpoints.MapGroup("/api/v1/admin/workbench")
                 .WithTags("SmartConnect Workbench");
 
             group.MapPost(

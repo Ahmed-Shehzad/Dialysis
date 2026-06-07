@@ -31,7 +31,7 @@ public sealed class FeeScheduleControllerTests
         var (controller, _) = NewController();
 
         var created = await controller.CreateAsync(Request(), CancellationToken.None);
-        created.ShouldBeOfType<CreatedAtActionResult>();
+        created.ShouldBeOfType<CreatedResult>();
 
         var list = await controller.ListAsync(null, null, CancellationToken.None);
         var rows = ((OkObjectResult)list).Value.ShouldBeAssignableTo<IReadOnlyList<FeeScheduleRow>>()!;

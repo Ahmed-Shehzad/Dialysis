@@ -150,7 +150,7 @@ public sealed class ExportJobRunner
         await foreach (var resource in binding.StreamAsync(services, job, cancellationToken).ConfigureAwait(false))
         {
             var emitted = transform is null ? resource : transform(resource);
-            var json = serializer.Serialize(emitted);
+            var json = FhirJsonSerializerProvider.Serialize(emitted);
             await writer.WriteLineAsync(json.AsMemory(), cancellationToken).ConfigureAwait(false);
             count++;
         }

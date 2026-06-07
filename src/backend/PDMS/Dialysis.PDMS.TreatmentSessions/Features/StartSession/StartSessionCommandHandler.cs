@@ -14,18 +14,15 @@ public sealed class StartSessionCommandHandler : ICommandHandler<StartSessionCom
     private readonly IDialysisSessionRepository _sessions;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITransponderBus _bus;
-    private readonly HaemodialysisSessionOpenEhrProjector _openEhrProjector;
     private readonly TimeProvider _timeProvider;
     public StartSessionCommandHandler(IDialysisSessionRepository sessions,
         IUnitOfWork unitOfWork,
         ITransponderBus bus,
-        HaemodialysisSessionOpenEhrProjector openEhrProjector,
         TimeProvider timeProvider)
     {
         _sessions = sessions;
         _unitOfWork = unitOfWork;
         _bus = bus;
-        _openEhrProjector = openEhrProjector;
         _timeProvider = timeProvider;
     }
     public async Task<Unit> HandleAsync(StartSessionCommand request, CancellationToken cancellationToken)
@@ -36,7 +33,7 @@ public sealed class StartSessionCommandHandler : ICommandHandler<StartSessionCom
         session.Start(startedAt);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        var projection = _openEhrProjector.Project(session, HaemodialysisSessionPhase.Started, startedAt);
+        var projection = HaemodialysisSessionOpenEhrProjector.Project(session, HaemodialysisSessionPhase.Started, startedAt);
         await _bus.PublishAsync(new HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent(
             EventId: Guid.CreateVersion7(),
             OccurredOn: startedAt,

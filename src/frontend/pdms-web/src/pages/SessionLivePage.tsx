@@ -6,7 +6,10 @@ import { useSessionReadings } from "@/features/sessions/hooks/useSessionReadings
 import { SessionLifecycleControls } from "@/features/sessions/components/SessionLifecycleControls";
 import { TreatmentSummary } from "@/features/sessions/components/TreatmentSummary";
 import { useVitalsStream } from "@/features/vitals/hooks/useVitalsStream";
+import { useVitalsMonitorSound } from "@/features/vitals/hooks/useVitalsMonitorSound";
+import { classifyVitalsSeverity } from "@/features/vitals/lib/vitalsSeverity";
 import { VitalsChart } from "@/features/vitals/components/VitalsChart";
+import { VitalsSoundToggle } from "@/features/vitals/components/VitalsSoundToggle";
 import { MedicationsTab } from "@/features/medications/components/MedicationsTab";
 import { SessionReportsTab } from "@/features/reports/components/SessionReportsTab";
 import { ChairsideAlarmStrip } from "@/modules/pdms/chairside/ChairsideAlarmStrip";
@@ -45,6 +48,17 @@ export const SessionLivePage = () => {
   }, [history.data, stream.readings]);
 
   const latest = merged.at(-1);
+
+  // Chairside monitor sound: a steady beep per reading while vitals are moderate, switching to a
+  // continuous critical alarm when the latest reading is in a life-threatening band. Only sounds
+  // while the session is in progress; off until the clinician enables it (browser autoplay policy).
+  const severity = latest ? classifyVitalsSeverity(latest) : "moderate";
+  const sessionInProgress = session?.status === "InProgress";
+  const monitorSound = useVitalsMonitorSound({
+    severity,
+    readingKey: latest?.readingId,
+    active: sessionInProgress,
+  });
 
   // Keep the cross-module patient context in sync with the session being watched, so a
   // nurse who opened the chairside monitor from the HIS queue (or anywhere else) sees the
@@ -91,6 +105,16 @@ export const SessionLivePage = () => {
           <TabButton active={tab === "reports"} onClick={() => setTab("reports")}>
             Documents
           </TabButton>
+          {tab === "vitals" && (
+            <div className="ml-auto pb-1">
+              <VitalsSoundToggle
+                enabled={monitorSound.enabled}
+                severity={severity}
+                active={sessionInProgress}
+                onToggle={monitorSound.toggle}
+              />
+            </div>
+          )}
         </div>
         {tab === "vitals" && <VitalsChart readings={merged} />}
         {tab === "medications" && (

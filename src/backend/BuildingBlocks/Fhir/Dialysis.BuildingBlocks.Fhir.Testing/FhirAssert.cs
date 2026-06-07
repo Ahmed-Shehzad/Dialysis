@@ -7,15 +7,13 @@ namespace Dialysis.BuildingBlocks.Fhir.Testing;
 
 public static class FhirAssert
 {
-    private static readonly FhirJsonSerializerProvider _serializer = new();
-
     /// <summary>
     /// Assert two FHIR resources are equal by canonical JSON comparison.
     /// </summary>
     public static void ResourceEqual(Resource expected, Resource actual)
     {
-        var expectedJson = _serializer.Serialize(expected, pretty: true);
-        var actualJson = _serializer.Serialize(actual, pretty: true);
+        var expectedJson = FhirJsonSerializerProvider.Serialize(expected, pretty: true);
+        var actualJson = FhirJsonSerializerProvider.Serialize(actual, pretty: true);
         if (!string.Equals(expectedJson, actualJson, StringComparison.Ordinal))
         {
             throw new XunitException(

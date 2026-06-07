@@ -102,6 +102,7 @@ export const MessagesPanel = ({ patientId }: { patientId: string }) => {
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Subject"
+            aria-label="Subject"
             className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
           />
           <textarea
@@ -109,6 +110,7 @@ export const MessagesPanel = ({ patientId }: { patientId: string }) => {
             onChange={(e) => setBody(e.target.value)}
             rows={3}
             placeholder="How can we help?"
+            aria-label="Message"
             className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
           />
           {startThread.error && (
@@ -184,6 +186,7 @@ export const MessagesPanel = ({ patientId }: { patientId: string }) => {
                         onChange={(e) => setReply(e.target.value)}
                         rows={2}
                         placeholder="Reply…"
+                        aria-label="Reply"
                         className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
                       />
                       <button

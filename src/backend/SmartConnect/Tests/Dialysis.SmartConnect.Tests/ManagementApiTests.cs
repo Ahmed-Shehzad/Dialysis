@@ -34,23 +34,23 @@ public sealed class ManagementApiTests
             },
         };
 
-        var post = await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", flow);
+        var post = await client.PostAsJsonAsync("/api/v1/admin/flows", flow);
         post.EnsureSuccessStatusCode();
 
-        var list = await client.GetFromJsonAsync<List<IntegrationFlow>>("/smartconnect/v1/admin/flows");
+        var list = await client.GetFromJsonAsync<List<IntegrationFlow>>("/api/v1/admin/flows");
         Assert.NotNull(list);
         Assert.Contains(list, f => f.Id == flowId);
 
-        Assert.True((await client.PostAsync($"/smartconnect/v1/admin/flows/{flowId}/start", null)).IsSuccessStatusCode);
-        Assert.True((await client.PostAsync($"/smartconnect/v1/admin/flows/{flowId}/pause", null)).IsSuccessStatusCode);
-        var paused = await client.GetFromJsonAsync<IntegrationFlow>($"/smartconnect/v1/admin/flows/{flowId}");
+        Assert.True((await client.PostAsync($"/api/v1/admin/flows/{flowId}/start", null)).IsSuccessStatusCode);
+        Assert.True((await client.PostAsync($"/api/v1/admin/flows/{flowId}/pause", null)).IsSuccessStatusCode);
+        var paused = await client.GetFromJsonAsync<IntegrationFlow>($"/api/v1/admin/flows/{flowId}");
         Assert.Equal(FlowRuntimeState.Paused, paused!.RuntimeState);
 
-        Assert.True((await client.PostAsync($"/smartconnect/v1/admin/flows/{flowId}/start", null)).IsSuccessStatusCode);
-        var started = await client.GetFromJsonAsync<IntegrationFlow>($"/smartconnect/v1/admin/flows/{flowId}");
+        Assert.True((await client.PostAsync($"/api/v1/admin/flows/{flowId}/start", null)).IsSuccessStatusCode);
+        var started = await client.GetFromJsonAsync<IntegrationFlow>($"/api/v1/admin/flows/{flowId}");
         Assert.Equal(FlowRuntimeState.Started, started!.RuntimeState);
 
-        var export = await client.GetAsync($"/smartconnect/v1/admin/flows/{flowId}/export");
+        var export = await client.GetAsync($"/api/v1/admin/flows/{flowId}/export");
         export.EnsureSuccessStatusCode();
         var json = await export.Content.ReadAsStringAsync();
         Assert.Contains(flowId.ToString(), json, StringComparison.Ordinal);
@@ -58,7 +58,7 @@ public sealed class ManagementApiTests
         using var importClient = factory.CreateClient();
         using var importContent = new StringContent(json, Encoding.UTF8, "application/json");
         var import = await importClient.PostAsync(
-            "/smartconnect/v1/admin/flows/import",
+            "/api/v1/admin/flows/import",
             importContent);
         import.EnsureSuccessStatusCode();
     }
@@ -70,11 +70,11 @@ public sealed class ManagementApiTests
         var client = factory.CreateClient();
         var groupId = Guid.NewGuid();
         var create = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/groups",
+            "/api/v1/admin/groups",
             new FlowGroup { Id = groupId, Name = "g1", Description = "d1" });
         create.EnsureSuccessStatusCode();
 
-        var export = await client.GetAsync($"/smartconnect/v1/admin/groups/{groupId}/export");
+        var export = await client.GetAsync($"/api/v1/admin/groups/{groupId}/export");
         export.EnsureSuccessStatusCode();
         var json = await export.Content.ReadAsStringAsync();
         Assert.Contains(groupId.ToString("D"), json, StringComparison.Ordinal);
@@ -101,7 +101,7 @@ public sealed class ManagementApiTests
                 ],
             },
         };
-        (await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", flow)).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/v1/admin/flows", flow)).EnsureSuccessStatusCode();
 
         using var msg = new ByteArrayContent("hi"u8.ToArray());
         var inbound = await client.PostAsync(

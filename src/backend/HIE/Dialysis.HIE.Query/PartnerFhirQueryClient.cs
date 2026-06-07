@@ -117,7 +117,7 @@ public sealed class PartnerFhirQueryClient : IPartnerFhirQuery
     }
 
     // A search/$everything response is a Bundle; a read is a single resource. Return resources either way.
-    private List<Resource> Parse(string body)
+    private static List<Resource> Parse(string body)
     {
         if (string.IsNullOrWhiteSpace(body))
             return [];

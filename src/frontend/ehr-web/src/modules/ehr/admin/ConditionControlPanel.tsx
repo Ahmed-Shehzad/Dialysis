@@ -39,6 +39,7 @@ export const ConditionControlPanel = () => {
           value={measureId}
           onChange={(e) => setMeasureId(e.target.value)}
           placeholder="Measure id"
+          aria-label="Measure id"
           className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-sm text-slate-100"
         />
         <button

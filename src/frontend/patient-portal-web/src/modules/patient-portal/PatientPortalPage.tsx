@@ -20,7 +20,7 @@ const FALLBACK_DEMO_PATIENT_ID = "";
 
 const claimAsString = (raw: unknown): string | null => {
   if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  if (Array.isArray(raw) && typeof raw[0] === "string") return (raw[0] as string).trim();
+  if (Array.isArray(raw) && typeof raw[0] === "string") return raw[0].trim();
   return null;
 };
 
@@ -63,10 +63,10 @@ const Tile = ({
 export const PatientPortalPage = () => {
   const { user, status } = useAuth();
 
-  const claimPatientId = useMemo(
-    () => claimAsString(user?.claims.his_patient_id) ?? claimAsString(user?.claims.sub),
-    [user?.claims],
-  );
+  // Patient identity is the `his_patient_id` claim only — `sub` is a *user* id, not a patient id, so it
+  // must never be used to scope patient data. A real patient session carries `his_patient_id` and is
+  // pinned to it; a staff/dev session (no such claim) falls through to the manual id box below.
+  const claimPatientId = useMemo(() => claimAsString(user?.claims.his_patient_id), [user?.claims]);
   const [manualId, setManualId] = useState(FALLBACK_DEMO_PATIENT_ID);
   const patientId = claimPatientId ?? (manualId.trim().length > 0 ? manualId.trim() : null);
 
@@ -121,6 +121,7 @@ export const PatientPortalPage = () => {
               value={manualId}
               onChange={(e) => setManualId(e.target.value)}
               placeholder="Patient Guid…"
+              aria-label="Patient id"
               className="flex-1 rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
             />
           </div>

@@ -123,9 +123,11 @@ jobs:
         with: { dotnet-version: '10.0.x' }
       - name: Start Aspire stack
         run: |
-          # Skip the dev data dashboards (pgAdmin / Redis Commander) — ZAP only needs the gateway,
-          # and a leaner stack comes up faster/more reliably on a cold runner.
+          # Skip the dev data dashboards (pgAdmin / valkey-admin) and the continuous data simulator
+          # — ZAP only needs the gateway, and a leaner stack comes up faster/more reliably on a
+          # cold runner.
           Dialysis__EnableDevDashboards=false \
+          Dialysis__EnableDataSimulator=false \
             dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
           # Readiness probe: wait for the gateway on :9090 to accept a connection. The stack is

@@ -14,9 +14,9 @@ public sealed class MustacheMarkdownBinderTests
     [Fact]
     public void Simple_Placeholder_Is_Substituted()
     {
-        var binder = new MustacheMarkdownBinder();
+        _ = new MustacheMarkdownBinder();
 
-        var rendered = binder.BindMarkdown("Hello {{name}}.", new Dictionary<string, object?> { ["name"] = "Ada" });
+        var rendered = MustacheMarkdownBinder.BindMarkdown("Hello {{name}}.", new Dictionary<string, object?> { ["name"] = "Ada" });
 
         rendered.ShouldBe("Hello Ada.");
     }
@@ -24,13 +24,13 @@ public sealed class MustacheMarkdownBinderTests
     [Fact]
     public void Nested_Property_Path_Resolves()
     {
-        var binder = new MustacheMarkdownBinder();
+        _ = new MustacheMarkdownBinder();
         var values = new Dictionary<string, object?>
         {
             ["patient"] = new { name = "Ada Lovelace", mrn = "MRN-1" },
         };
 
-        var rendered = binder.BindMarkdown("{{patient.name}} ({{patient.mrn}})", values);
+        var rendered = MustacheMarkdownBinder.BindMarkdown("{{patient.name}} ({{patient.mrn}})", values);
 
         rendered.ShouldBe("Ada Lovelace (MRN-1)");
     }
@@ -53,9 +53,9 @@ public sealed class MustacheMarkdownBinderTests
     [Fact]
     public void Missing_Binding_Renders_Empty_String()
     {
-        var binder = new MustacheMarkdownBinder();
+        _ = new MustacheMarkdownBinder();
 
-        var rendered = binder.BindMarkdown("Hello {{name}}!", new Dictionary<string, object?>());
+        var rendered = MustacheMarkdownBinder.BindMarkdown("Hello {{name}}!", new Dictionary<string, object?>());
 
         rendered.ShouldBe("Hello !");
     }

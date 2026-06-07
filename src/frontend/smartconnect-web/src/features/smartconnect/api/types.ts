@@ -2,7 +2,11 @@
 // (System.Text.Json default serialization on the backend is numeric).
 // Mapping helpers live alongside each tab's API module.
 
-export const SMARTCONNECT_PREFIX = "/smartconnect/smartconnect/v1";
+// The SmartConnect module serves its operator/admin API under /api/v1/admin (aligned with the
+// other modules' /api convention), reached through the gateway's /smartconnect/api/* → BFF route
+// (the BFF strips the /smartconnect base, forwarding /api/v1/admin/* to the module). Inbound HL7
+// (/smartconnect/v1/messages, /flows/{id}/messages) stays on its own external contract.
+export const SMARTCONNECT_PREFIX = "/smartconnect/api/v1";
 export const ADMIN_PREFIX = `${SMARTCONNECT_PREFIX}/admin`;
 
 // --- Flows ---------------------------------------------------------------

@@ -1,3 +1,4 @@
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.EHR.PatientPortal.Domain;
 using Shouldly;
@@ -53,6 +54,6 @@ public sealed class PortalAppointmentRequestTests
         var request = Pending();
         request.Cancel();
 
-        Should.Throw<InvalidOperationException>(() => request.Approve(Guid.NewGuid()));
+        Should.Throw<DomainException>(() => request.Approve(Guid.NewGuid()));
     }
 }

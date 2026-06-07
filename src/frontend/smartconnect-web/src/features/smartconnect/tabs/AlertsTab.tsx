@@ -124,6 +124,7 @@ const RuleEditor = ({ rule, onClose }: { rule: AlertRule; onClose: () => void })
           {draft.errorPatterns.map((p, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2">
               <select
+                aria-label="Error type"
                 value={p.errorType}
                 onChange={(e) => {
                   const next = [...draft.errorPatterns];
@@ -139,6 +140,7 @@ const RuleEditor = ({ rule, onClose }: { rule: AlertRule; onClose: () => void })
                 ))}
               </select>
               <input
+                aria-label="Error pattern regex"
                 placeholder="regex (optional)"
                 value={p.regex ?? ""}
                 onChange={(e) => {

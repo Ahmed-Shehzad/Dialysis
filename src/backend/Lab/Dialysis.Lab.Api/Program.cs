@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Lab.Composition;
 using Dialysis.Lab.Contracts.Security;
 using Dialysis.Lab.Orders;
+using Dialysis.Lab.Persistence;
 using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,17 @@ builder.Services
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
+
+// Apply EF migrations on startup so the Lab module is self-hosting against a fresh
+// Aspire-managed Postgres container. Gated on configuration (Lab:AutoMigrate, default
+// true in Development) — in production the DBA owns the migration step out-of-band.
+if (!string.IsNullOrWhiteSpace(connectionString)
+    && builder.Configuration.GetValue("Lab:AutoMigrate", app.Environment.IsDevelopment()))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<LabDbContext>();
+    await db.Database.MigrateAsync().ConfigureAwait(false);
+}
 
 app.UseModuleHost();
 app.MapOpenApi();

@@ -128,6 +128,20 @@ builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOpti
 
 var app = builder.Build();
 
+// Apply EF migrations on startup so the PDMS module is self-hosting against a fresh
+// Aspire-managed (TimescaleDB) Postgres container. Gated on configuration (Pdms:AutoMigrate,
+// default true in Development) — in production the DBA owns the migration step out-of-band.
+// MigrateAsync (not EnsureCreated) is required: the AddTimescaleHypertable migration runs
+// create_hypertable, which EnsureCreated can't express. (Previously the demo seeder applied
+// migrations as a side effect; that was removed in #167.)
+if (!string.IsNullOrWhiteSpace(connectionString)
+    && builder.Configuration.GetValue("Pdms:AutoMigrate", app.Environment.IsDevelopment()))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<PdmsDbContext>();
+    await db.Database.MigrateAsync().ConfigureAwait(false);
+}
+
 app.UseModuleHost();
 if (enablePdmsSubscriptions)
     app.UseWebSockets();

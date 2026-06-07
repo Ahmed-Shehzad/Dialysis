@@ -144,7 +144,8 @@ public sealed class DischargeLetterGenerator
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var baseBytes = await GenerateAsync(context, template, cancellationToken).ConfigureAwait(false);
+
+        _ = await GenerateAsync(context, template, cancellationToken).ConfigureAwait(false);
 
         // PDF coordinates: 1pt = 1/72". A4 short edge is ~595 pt; long edge ~842 pt. The
         // signature block sits at the bottom-left so it never overlaps the rendered body.

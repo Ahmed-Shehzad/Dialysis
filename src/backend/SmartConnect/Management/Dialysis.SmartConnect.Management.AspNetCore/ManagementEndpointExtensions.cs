@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
-/// <summary>Maps <c>/smartconnect/v1/admin/*</c> routes for flow lifecycle and import/export.</summary>
+/// <summary>Maps <c>/api/v1/admin/*</c> routes for flow lifecycle and import/export.</summary>
 public static class ManagementEndpointExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
@@ -23,7 +23,7 @@ public static class ManagementEndpointExtensions
         /// <summary>Registers management endpoints (optionally protected by JWT when configured).</summary>
         public IEndpointRouteBuilder MapSmartConnectManagementRoutes()
         {
-            var admin = endpoints.MapGroup("/smartconnect/v1/admin").WithTags("SmartConnect Admin");
+            var admin = endpoints.MapGroup("/api/v1/admin").WithTags("SmartConnect Admin");
 
             admin.MapGet(
                     "/flows",
@@ -83,7 +83,7 @@ public static class ManagementEndpointExtensions
                         }
 
                         await repo.AddAsync(body, ct).ConfigureAwait(false);
-                        return Results.Created($"/smartconnect/v1/admin/flows/{body.Id}", body);
+                        return Results.Created($"/api/v1/admin/flows/{body.Id}", body);
                     })
                 .WithName("SmartConnect_CreateFlow");
 
@@ -672,7 +672,7 @@ public static class ManagementEndpointExtensions
     }
 }
 
-/// <summary>Request body for <c>POST /smartconnect/v1/admin/debug/evaluate-script</c>.</summary>
+/// <summary>Request body for <c>POST /api/v1/admin/debug/evaluate-script</c>.</summary>
 public sealed class EvaluateScriptRequest
 {
     public string? Script { get; set; }

@@ -131,6 +131,7 @@ export const CodeTemplatesTab = () => {
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <input
+                aria-label="Library name"
                 value={selected.name}
                 onChange={(e) => updateName.mutate({ ...selected, name: e.target.value })}
                 className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
@@ -146,6 +147,7 @@ export const CodeTemplatesTab = () => {
               </button>
             </div>
             <textarea
+              aria-label="Library description"
               value={selected.description ?? ""}
               onChange={(e) => updateName.mutate({ ...selected, description: e.target.value })}
               placeholder="Library description"

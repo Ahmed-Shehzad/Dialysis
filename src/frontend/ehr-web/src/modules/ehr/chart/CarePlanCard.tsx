@@ -97,6 +97,7 @@ export const CarePlanCard = ({ patientId }: { patientId: string }) => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="New care-plan title…"
+            aria-label="New care-plan title"
             className="flex-1 rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-100"
           />
           <button
@@ -136,6 +137,7 @@ export const CarePlanCard = ({ patientId }: { patientId: string }) => {
                   <select
                     value={g.status}
                     disabled={setGoalStatus.isPending}
+                    aria-label="Goal status"
                     onChange={(e) =>
                       setGoalStatus.mutate({
                         goalId: g.id,
@@ -166,6 +168,7 @@ export const CarePlanCard = ({ patientId }: { patientId: string }) => {
               value={goalText}
               onChange={(e) => setGoalText(e.target.value)}
               placeholder="Add a goal…"
+              aria-label="Add a goal"
               className="flex-1 rounded-md border border-slate-700 bg-slate-950 p-2 text-sm text-slate-100"
             />
             <button

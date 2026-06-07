@@ -232,7 +232,7 @@ public static class FhirAuthoringEndpoints
     {
         context.Response.StatusCode = status;
         context.Response.ContentType = FhirContentTypes.Json + "; charset=utf-8";
-        var bytes = Encoding.UTF8.GetBytes(serializer.Serialize(resource, pretty: true));
+        var bytes = Encoding.UTF8.GetBytes(FhirJsonSerializerProvider.Serialize(resource, pretty: true));
         await context.Response.Body.WriteAsync(bytes, context.RequestAborted).ConfigureAwait(false);
     }
 

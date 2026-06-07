@@ -57,6 +57,9 @@ builder.Services.AddFhirAudit();
 builder.Services.AddHipaaCompliance("hie");
 builder.Services.AddHipaaAspNetCoreSafeguards();
 
+// Patient self-access gate (own-patient, plus dev-only staff impersonation). Scoped: depends on ICurrentUser.
+builder.Services.AddScoped<Dialysis.HIE.Api.Controllers.HiePortalAccess>();
+
 builder.Services
     .AddControllers()
     // The SPA posts enums by name (e.g. SignDocumentRequest.CertificateSource = "Platform").
@@ -66,6 +69,19 @@ builder.Services
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
+
+// Apply EF migrations on startup so the HIE module is self-hosting against a fresh
+// Aspire-managed Postgres container. Gated on configuration (Hie:AutoMigrate, default
+// true in Development) — in production the DBA owns the migration step out-of-band.
+// (Previously the demo seeder applied migrations as a side effect; that was removed in
+// #167, so the schema must be created here like HIS does.)
+if (!string.IsNullOrWhiteSpace(connectionString)
+    && builder.Configuration.GetValue("Hie:AutoMigrate", app.Environment.IsDevelopment()))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<HieDbContext>();
+    await db.Database.MigrateAsync().ConfigureAwait(false);
+}
 
 app.UseModuleHost();
 app.MapOpenApi();

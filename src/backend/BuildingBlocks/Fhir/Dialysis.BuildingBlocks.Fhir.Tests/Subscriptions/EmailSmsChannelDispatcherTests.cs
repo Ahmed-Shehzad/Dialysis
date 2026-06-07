@@ -1,4 +1,3 @@
-using Dialysis.BuildingBlocks.Fhir.Serialization;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Hl7.Fhir.Model;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +16,6 @@ public sealed class EmailSmsChannelDispatcherTests
         var notifier = new RecordingEmailNotifier();
         var services = new ServiceCollection().AddSingleton<IEmailNotifier>(notifier).BuildServiceProvider();
         var dispatcher = new EmailNotificationDispatcher(
-            new FhirJsonSerializerProvider(),
             services,
             NullLogger<EmailNotificationDispatcher>.Instance);
 
@@ -37,7 +35,6 @@ public sealed class EmailSmsChannelDispatcherTests
     {
         var services = new ServiceCollection().BuildServiceProvider();
         var dispatcher = new EmailNotificationDispatcher(
-            new FhirJsonSerializerProvider(),
             services,
             NullLogger<EmailNotificationDispatcher>.Instance);
 

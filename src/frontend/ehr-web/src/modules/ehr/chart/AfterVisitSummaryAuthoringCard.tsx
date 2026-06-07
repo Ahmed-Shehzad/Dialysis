@@ -87,6 +87,7 @@ export const AfterVisitSummaryAuthoringCard = ({ patientId }: { patientId: strin
             onChange={(e) => setNarrative(e.target.value)}
             rows={3}
             placeholder="What happened at this visit, in plain language…"
+            aria-label="Visit narrative"
             className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
           />
 
@@ -122,6 +123,7 @@ export const AfterVisitSummaryAuthoringCard = ({ patientId }: { patientId: strin
               onChange={(e) =>
                 setDraft((d) => ({ ...d, kind: Number(e.target.value) as AvsLineKind }))
               }
+              aria-label="Line kind"
               className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
             >
               <option value={1}>Instruction</option>
@@ -133,6 +135,7 @@ export const AfterVisitSummaryAuthoringCard = ({ patientId }: { patientId: strin
               value={draft.text}
               onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
               placeholder={draft.kind === 3 ? "Link label" : "Text"}
+              aria-label={draft.kind === 3 ? "Link label" : "Line text"}
               className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
             />
             {draft.kind === 3 && (
@@ -141,6 +144,7 @@ export const AfterVisitSummaryAuthoringCard = ({ patientId }: { patientId: strin
                 value={draft.url}
                 onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))}
                 placeholder="https://…"
+                aria-label="Resource link URL"
                 className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
               />
             )}

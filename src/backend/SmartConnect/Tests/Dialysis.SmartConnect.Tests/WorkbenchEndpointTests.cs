@@ -7,7 +7,7 @@ using Xunit;
 namespace Dialysis.SmartConnect.Tests;
 
 /// <summary>
-/// Covers POST /smartconnect/v1/admin/workbench/{parse-hl7,validate-hl7,dispatch}.
+/// Covers POST /api/v1/admin/workbench/{parse-hl7,validate-hl7,dispatch}.
 /// All payloads are operator-supplied per the production-readiness rule (no canned data).
 /// </summary>
 public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory<Program>>
@@ -26,7 +26,7 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
             + "OBX|1|NM|GLU^Glucose||95|mg/dL||N";
 
         var response = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/workbench/parse-hl7",
+            "/api/v1/admin/workbench/parse-hl7",
             new { payloadText = payload });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -47,7 +47,7 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
     {
         using var client = _factory.CreateClient();
         var response = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/workbench/parse-hl7",
+            "/api/v1/admin/workbench/parse-hl7",
             new { payloadText = "NOT-HL7" });
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
     }
@@ -58,7 +58,7 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
         using var client = _factory.CreateClient();
         var payload = "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|C|P|2.5\rPID|1||MRN";
         var response = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/workbench/validate-hl7",
+            "/api/v1/admin/workbench/validate-hl7",
             new { payloadText = payload, minVersion = "2.3", requiredSegments = new[] { "MSH", "PID" } });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -73,7 +73,7 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
         using var client = _factory.CreateClient();
         var payload = "MSH|^~\\&|S|F|D|FA|20260101010101||ADT^A01|C|P|2.5\rPID|1||MRN";
         var response = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/workbench/validate-hl7",
+            "/api/v1/admin/workbench/validate-hl7",
             new { payloadText = payload, requiredSegments = new[] { "MSH", "PID", "PV1" } });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -88,7 +88,7 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
     {
         using var client = _factory.CreateClient();
         var response = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/workbench/dispatch",
+            "/api/v1/admin/workbench/dispatch",
             new
             {
                 flowId = Guid.NewGuid(),
@@ -104,12 +104,12 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
         var flowId = await CreateFlow_Async(client, "workbench-target");
 
         // The flow must be Started before DispatchAsync will route through it.
-        var start = await client.PostAsync($"/smartconnect/v1/admin/flows/{flowId}/start", content: null);
+        var start = await client.PostAsync($"/api/v1/admin/flows/{flowId}/start", content: null);
         Assert.Equal(HttpStatusCode.NoContent, start.StatusCode);
 
         var payload = "MSH|^~\\&|SENDA|FACA|RECB|FACB|20260101010101||ADT^A01|CTRL2|P|2.5\rPID|1||MRN";
         var response = await client.PostAsJsonAsync(
-            "/smartconnect/v1/admin/workbench/dispatch",
+            "/api/v1/admin/workbench/dispatch",
             new { flowId, payloadText = payload });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -149,7 +149,7 @@ public sealed class WorkbenchEndpointTests : IClassFixture<WebApplicationFactory
                 linkedLibraryIds = Array.Empty<string>(),
             },
         };
-        var response = await client.PostAsJsonAsync("/smartconnect/v1/admin/flows", body);
+        var response = await client.PostAsJsonAsync("/api/v1/admin/flows", body);
         var text = await response.Content.ReadAsStringAsync();
         Assert.True(response.IsSuccessStatusCode, $"Create '{name}' returned {response.StatusCode}: {text}");
         return id;

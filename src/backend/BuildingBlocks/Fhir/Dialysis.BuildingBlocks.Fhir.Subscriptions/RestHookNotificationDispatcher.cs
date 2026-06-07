@@ -15,7 +15,6 @@ namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 public sealed class RestHookNotificationDispatcher : ISubscriptionChannelDispatcher
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly FhirJsonSerializerProvider _serializer;
     private readonly ISubscriptionRegistry _registry;
     private readonly ILogger<RestHookNotificationDispatcher> _logger;
     /// <summary>
@@ -23,12 +22,10 @@ public sealed class RestHookNotificationDispatcher : ISubscriptionChannelDispatc
     /// to the subscriber's URL with an HMAC signature header derived from the subscription secret.
     /// </summary>
     public RestHookNotificationDispatcher(IHttpClientFactory httpClientFactory,
-        FhirJsonSerializerProvider serializer,
         ISubscriptionRegistry registry,
         ILogger<RestHookNotificationDispatcher> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _serializer = serializer;
         _registry = registry;
         _logger = logger;
     }
@@ -46,7 +43,7 @@ public sealed class RestHookNotificationDispatcher : ISubscriptionChannelDispatc
             return;
 
         var bundle = SubscriptionNotificationBundleFactory.Build(subscription, payloadResource);
-        var json = _serializer.Serialize(bundle);
+        var json = FhirJsonSerializerProvider.Serialize(bundle);
         var body = Encoding.UTF8.GetBytes(json);
 
         using var client = _httpClientFactory.CreateClient(nameof(RestHookNotificationDispatcher));
@@ -83,7 +80,8 @@ public sealed class RestHookNotificationDispatcher : ISubscriptionChannelDispatc
 
     private Task RecordSuccessAsync(FhirSubscriptionRegistration subscription, CancellationToken cancellationToken)
     {
-        if (subscription.ConsecutiveFailures == 0) return Task.CompletedTask;
+        if (subscription.ConsecutiveFailures == 0)
+            return Task.CompletedTask;
         return _registry.UpdateStatusAsync(subscription.Id, SubscriptionStatus.Active, consecutiveFailures: 0, cancellationToken).AsTask();
     }
 

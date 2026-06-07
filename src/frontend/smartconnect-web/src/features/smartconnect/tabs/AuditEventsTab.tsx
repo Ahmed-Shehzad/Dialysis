@@ -42,6 +42,7 @@ export const AuditEventsTab = () => {
     <section className="space-y-4">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
         <select
+          aria-label="Filter by category"
           value={filters.category === undefined ? "" : String(filters.category)}
           onChange={(e) =>
             update({
@@ -61,6 +62,7 @@ export const AuditEventsTab = () => {
           ))}
         </select>
         <select
+          aria-label="Filter by level"
           value={filters.level === undefined ? "" : String(filters.level)}
           onChange={(e) =>
             update({
@@ -80,6 +82,7 @@ export const AuditEventsTab = () => {
           ))}
         </select>
         <select
+          aria-label="Filter by flow"
           value={filters.flowId ?? ""}
           onChange={(e) => update({ flowId: e.target.value || undefined })}
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200"
@@ -92,6 +95,7 @@ export const AuditEventsTab = () => {
           ))}
         </select>
         <input
+          aria-label="From date"
           type="datetime-local"
           value={filters.from?.slice(0, 16) ?? ""}
           onChange={(e) =>
@@ -100,6 +104,7 @@ export const AuditEventsTab = () => {
           className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200"
         />
         <input
+          aria-label="To date"
           type="datetime-local"
           value={filters.to?.slice(0, 16) ?? ""}
           onChange={(e) =>

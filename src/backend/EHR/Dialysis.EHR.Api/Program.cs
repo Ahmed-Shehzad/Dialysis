@@ -98,6 +98,10 @@ builder.Services.AddFhirAudit();
 builder.Services.AddHipaaCompliance("ehr");
 builder.Services.AddHipaaAspNetCoreSafeguards();
 
+// Patient-portal self-access gate (own-patient, plus dev-only staff impersonation). Scoped because it
+// depends on the per-request ICurrentUser.
+builder.Services.AddScoped<Dialysis.EHR.Api.Security.EhrPortalAccess>();
+
 // Durable command bus — third opt-in module (after PDMS PR #140, HIS PR #141).
 // RecordVitalSign and RecordAllergy are the EHR chart writes most worth durable
 // buffering: vitals are high-volume, allergies are clinically critical. Flag off
@@ -118,6 +122,19 @@ builder.Services
         o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 var app = builder.Build();
+
+// Apply EF migrations on startup so the EHR module is self-hosting against a fresh
+// Aspire-managed Postgres container. Gated on configuration (Ehr:AutoMigrate, default
+// true in Development) — in production the DBA owns the migration step out-of-band.
+// (Previously the demo seeder applied migrations as a side effect; that was removed in
+// #167, so the schema must be created here like HIS does.)
+if (!string.IsNullOrWhiteSpace(connectionString)
+    && builder.Configuration.GetValue("Ehr:AutoMigrate", app.Environment.IsDevelopment()))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<EhrDbContext>();
+    await db.Database.MigrateAsync().ConfigureAwait(false);
+}
 
 app.UseModuleHost();
 if (enableEhrSubscriptions)

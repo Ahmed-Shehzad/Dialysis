@@ -7,8 +7,13 @@ import type { ModuleSlug } from "./types";
 export type QuickAction = {
   /** Visible label on the chip. Keep terse — verb-first ("Walk-in", "Send Bundle"). */
   label: string;
-  /** Absolute or relative route the chip navigates to. */
-  to: string;
+  /** In-app route (React Router `<Link>`, resolved within this app's `/his` basename).
+   * Mutually exclusive with `href`. */
+  to?: string;
+  /** Full-page URL for a cross-context hop to another `/{context}` app (e.g. `/ehr/patients`).
+   * Rendered as a plain `<a>` so the browser loads the other SPA. Use instead of `to` when the
+   * target lives outside this app's router. */
+  href?: string;
   /** Optional sub-text rendered as a tooltip when hovered (use sparingly). */
   hint?: string;
   /** Optional visual variant. `primary` for the most common action; `secondary` (default)
@@ -75,21 +80,34 @@ export const ModuleHeader = ({
 
       {quickActions.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {quickActions.map((action) => (
-            <Link
-              key={action.to + action.label}
-              to={action.to}
-              title={action.hint}
-              className={
-                "rounded-full border px-3 py-1 text-xs transition " +
-                (action.variant === "primary"
-                  ? "border-clinic-500 bg-clinic-600/30 text-clinic-50 hover:bg-clinic-600/50"
-                  : "border-slate-700 bg-slate-800/40 text-slate-200 hover:bg-slate-800")
-              }
-            >
-              {action.label}
-            </Link>
-          ))}
+          {quickActions.map((action) => {
+            const className =
+              "rounded-full border px-3 py-1 text-xs transition " +
+              (action.variant === "primary"
+                ? "border-clinic-500 bg-clinic-600/30 text-clinic-50 hover:bg-clinic-600/50"
+                : "border-slate-700 bg-slate-800/40 text-slate-200 hover:bg-slate-800");
+            // A cross-context target (another /{context} app) must be a real anchor so the
+            // browser loads that SPA — a React Router <Link> would resolve it inside /his.
+            return action.href ? (
+              <a
+                key={action.href + action.label}
+                href={action.href}
+                title={action.hint}
+                className={className}
+              >
+                {action.label}
+              </a>
+            ) : (
+              <Link
+                key={(action.to ?? "") + action.label}
+                to={action.to ?? ""}
+                title={action.hint}
+                className={className}
+              >
+                {action.label}
+              </Link>
+            );
+          })}
         </div>
       )}
 

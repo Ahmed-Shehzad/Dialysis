@@ -72,7 +72,9 @@ public sealed class FeeScheduleController : ControllerBase
 
         _entries.Add(entry);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return CreatedAtAction(nameof(ListAsync), null, FeeScheduleRow.From(entry));
+        // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
+        // {version} route value for action-link generation, which throws -> 500 after the row is saved.
+        return Created($"/api/v1.0/billing/fee-schedule/{entry.Id}", FeeScheduleRow.From(entry));
     }
 
     /// <summary>Revises an existing row's rate and effective window. CPT + payer are immutable.</summary>

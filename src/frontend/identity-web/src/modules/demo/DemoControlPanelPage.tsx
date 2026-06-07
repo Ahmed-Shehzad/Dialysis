@@ -27,67 +27,72 @@ type WalkStep = {
   title: string;
   body: string;
   cta: string;
-  to: string;
+  /** Cross-context destination (another `/{context}` app) — a full-page hop. */
+  href?: string;
+  /** In-app destination within this (Identity, `/admin`) app's router. */
+  to?: string;
 };
 
 // The end-to-end patient journey, in the order a presenter should click through it. Each step
-// names the module that owns the screen so the audience can map UI → architecture.
+// names the module that owns the screen so the audience can map UI → architecture. Every screen
+// except the final Identity hub lives in another `/{context}` app, so those steps are full-page
+// hops (`href`); the Identity hub is in-app (`to`).
 const WALKTHROUGH: readonly WalkStep[] = [
   {
     module: "HIS",
     title: "1 · Front desk: admit, queue, assign a chair",
     body: "The receptionist's Today board shows scheduled arrivals, walk-ins, check-in, and chair assignment. The selected patient then follows you across every module.",
     cta: "Open HIS Today",
-    to: "/his/today",
+    href: "/his/today",
   },
   {
     module: "EHR",
     title: "2 · Clinical chart: problems, allergies, meds, vitals",
     body: "Open a patient's chart to show the longitudinal record — diagnoses, allergies, medications, and observations seeded for each demo patient.",
     cta: "Open patients",
-    to: "/patients",
+    href: "/ehr/patients",
   },
   {
     module: "PDMS",
     title: "3 · Chairside: live vitals + live treatment cost",
     body: "The chairside monitor streams vitals and a running, itemised treatment cost over SignalR while the machine usage timer ticks. Use the control panel above to jump into a live session.",
     cta: "Open sessions",
-    to: "/sessions",
+    href: "/pdms/sessions",
   },
   {
     module: "HIS · PDMS",
     title: "4 · Chair board + pause-aware accounting",
     body: "The chair board shows live occupancy (HIS placements broadcast cross-module to PDMS). Then use the control panel's Pause/Resume: the usage timer and live cost freeze while paused (machine off) and resume excludes the paused span, so billing reflects true machine on-time.",
     cta: "Open chair board",
-    to: "/chairs",
+    href: "/pdms/chairs",
   },
   {
     module: "EHR · HIE",
     title: "5 · Complete → charge → invoice → document",
     body: "Completing a session prices the charge (EHR), renders an AcroForm invoice PDF (HIE), and indexes it as a clinical document. The autopilot produces these continuously.",
     cta: "Open Admin · Documents",
-    to: "/admin/documents",
+    href: "/hie/admin/documents",
   },
   {
     module: "SmartConnect",
     title: "6 · Integration engine: live HL7 v2 feeds",
     body: "ADT and ORU messages flow through the channel flows on a timer, showing the interoperability layer that bridges legacy systems into FHIR.",
     cta: "Open integrations",
-    to: "/integrations",
+    href: "/smartconnect/integrations",
   },
   {
     module: "HIE",
     title: "7 · Exchange: FHIR partners + consent",
     body: "Send a FHIR Bundle to a partner organisation and review the consent policies that gate what's shared across organisations.",
     cta: "Open FHIR exchange",
-    to: "/fhir-exchange",
+    href: "/hie/fhir-exchange",
   },
   {
     module: "Identity",
     title: "8 · Admin & compliance: HIPAA, RoPA, DSR",
     body: "The administrator console: identity claims, the federated HIPAA safeguard dashboard, GDPR records-of-processing, and data-subject-rights workflows.",
     cta: "Open Admin hub",
-    to: "/admin",
+    to: "/",
   },
 ];
 
@@ -156,7 +161,9 @@ export const DemoControlPanelPage = () => {
       id: session.patientId,
       displayName: `Patient ${session.patientId.slice(0, 8)}…`,
     });
-    navigate(`/sessions/${session.id}`);
+    // The chairside session lives in the PDMS app — a full-page hop (the shared-origin patient
+    // context carries the selection across).
+    globalThis.location.assign(`/pdms/sessions/${session.id}`);
   };
 
   const viewLatestInvoice = () => {
@@ -167,7 +174,8 @@ export const DemoControlPanelPage = () => {
         kind: "info",
         message: "No invoice yet — autopilot makes one ~a minute after start.",
       });
-      navigate("/admin/documents");
+      // Documents live in the HIE app — a full-page hop.
+      globalThis.location.assign("/hie/admin/documents");
     }
   };
 
@@ -243,7 +251,7 @@ export const DemoControlPanelPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/admin/documents")}
+            onClick={() => globalThis.location.assign("/hie/admin/documents")}
             className={`${btn} bg-slate-700 text-slate-100 hover:bg-slate-600`}
           >
             Admin · Documents
@@ -279,7 +287,9 @@ export const DemoControlPanelPage = () => {
               </div>
               <button
                 type="button"
-                onClick={() => navigate(step.to)}
+                onClick={() =>
+                  step.href ? globalThis.location.assign(step.href) : navigate(step.to ?? "/")
+                }
                 className={`${btn} shrink-0 bg-clinic-600 text-white hover:bg-clinic-700`}
               >
                 {step.cta}

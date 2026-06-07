@@ -20,6 +20,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Bogus" />
+    <PackageReference Include="QuestPDF" />
   </ItemGroup>
 
 </Project>

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
-/// <summary>Maps <c>/smartconnect/v1/admin/groups/*</c> CRUD routes.</summary>
+/// <summary>Maps <c>/api/v1/admin/groups/*</c> CRUD routes.</summary>
 public static class GroupEndpointExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
@@ -17,7 +17,7 @@ public static class GroupEndpointExtensions
     {
         public IEndpointRouteBuilder MapSmartConnectGroupRoutes()
         {
-            var group = endpoints.MapGroup("/smartconnect/v1/admin/groups").WithTags("SmartConnect Admin");
+            var group = endpoints.MapGroup("/api/v1/admin/groups").WithTags("SmartConnect Admin");
 
             group.MapGet(
                     "/",
@@ -67,7 +67,7 @@ public static class GroupEndpointExtensions
                         };
                         db.FlowGroups.Add(entity);
                         await db.SaveChangesAsync(ct).ConfigureAwait(false);
-                        return Results.Created($"/smartconnect/v1/admin/groups/{entity.Id}",
+                        return Results.Created($"/api/v1/admin/groups/{entity.Id}",
                             new FlowGroup { Id = entity.Id, Name = entity.Name, Description = entity.Description });
                     })
                 .WithName("SmartConnect_CreateGroup");

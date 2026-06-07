@@ -1,6 +1,6 @@
 // Per-adapter parameter schemas the NewChannelDialog renders as structured form fields. Static
 // here (one source of truth alongside the dialog) — eventually the dialog could fetch live JSON
-// Schemas from /smartconnect/v1/admin/connectors/outbound/{kind}/schema, but only a handful of
+// Schemas from /api/v1/admin/connectors/outbound/{kind}/schema, but only a handful of
 // adapters publish a schema today (HTTP does; TCP/SMTP/etc. don't) and a fully schema-driven form
 // adds a layer of indirection that isn't worth the cost for this slice.
 

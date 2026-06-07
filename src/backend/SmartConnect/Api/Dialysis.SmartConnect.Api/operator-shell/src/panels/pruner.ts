@@ -6,7 +6,7 @@ export async function renderPruner(ctx: RouteContext): Promise<void> {
   ctx.target.appendChild(el("h2", {}, "Data pruner"));
   ctx.target.appendChild(el("p", { class: "muted" }, [
     "Background sweep configuration. Source: ",
-    el("code", {}, "GET /smartconnect/v1/admin/pruner/options"),
+    el("code", {}, "GET /api/v1/admin/pruner/options"),
     ".",
   ]));
   try {

@@ -57,7 +57,7 @@ async function renderRulesList(target: HTMLElement): Promise<void> {
   target.appendChild(el("h2", {}, "Alert rules"));
   target.appendChild(el("p", { class: "muted" }, [
     "Rules and actions are created via REST (",
-    el("code", {}, "POST /smartconnect/v1/admin/alert-rules"),
+    el("code", {}, "POST /api/v1/admin/alert-rules"),
     "). This view lists, drills in, and runs the test trigger.",
   ]));
   const status = el("p", { class: "muted" }, "Loading…");

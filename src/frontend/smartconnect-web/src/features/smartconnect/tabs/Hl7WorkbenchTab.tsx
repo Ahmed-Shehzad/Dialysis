@@ -152,6 +152,7 @@ export const Hl7WorkbenchTab = () => {
       <section className="space-y-2">
         <label className="block text-sm text-slate-300">1 · Paste</label>
         <textarea
+          aria-label="HL7 v2 message payload"
           value={payload}
           onChange={(e) => setPayload(e.target.value)}
           spellCheck={false}
@@ -197,6 +198,7 @@ export const Hl7WorkbenchTab = () => {
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <input
             type="text"
+            aria-label="Required segments"
             value={requiredSegments}
             onChange={(e) => setRequiredSegments(e.target.value)}
             className="rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100"
@@ -204,6 +206,7 @@ export const Hl7WorkbenchTab = () => {
           />
           <input
             type="text"
+            aria-label="Minimum version"
             value={minVersion}
             onChange={(e) => setMinVersion(e.target.value)}
             className="rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100"
@@ -229,6 +232,7 @@ export const Hl7WorkbenchTab = () => {
           </button>
         </div>
         <select
+          aria-label="Target HL7v2 channel"
           value={selectedFlowId}
           onChange={(e) => setSelectedFlowId(e.target.value)}
           className="block w-full rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100"

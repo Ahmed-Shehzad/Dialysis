@@ -61,6 +61,7 @@ export const ConfigurationMapTab = () => {
         <div>
           <label className="block text-slate-400">Scope</label>
           <select
+            aria-label="Scope"
             value={scope}
             onChange={(e) => setScope(e.target.value as VariableMapScopeValue)}
             className="mt-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
@@ -76,6 +77,7 @@ export const ConfigurationMapTab = () => {
           <div>
             <label className="block text-slate-400">Flow</label>
             <select
+              aria-label="Flow"
               value={flowId}
               onChange={(e) => setFlowId(e.target.value)}
               className="mt-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
@@ -133,6 +135,7 @@ export const ConfigurationMapTab = () => {
               <tr>
                 <td className="px-3 py-2">
                   <input
+                    aria-label="New entry key"
                     placeholder="new.key"
                     value={newKey}
                     onChange={(e) => setNewKey(e.target.value)}
@@ -141,6 +144,7 @@ export const ConfigurationMapTab = () => {
                 </td>
                 <td className="px-3 py-2">
                   <input
+                    aria-label="New entry value"
                     placeholder="value"
                     value={newValue}
                     onChange={(e) => setNewValue(e.target.value)}
@@ -190,6 +194,7 @@ const ConfigRow = ({
       <td className="px-3 py-2 font-mono text-xs text-slate-200">{entry.key}</td>
       <td className="px-3 py-2">
         <input
+          aria-label={`Value for ${entry.key}`}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200"

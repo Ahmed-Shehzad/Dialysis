@@ -22,7 +22,12 @@ namespace Dialysis.HIE.Api.Controllers;
 public sealed class HiePatientAccessController : ControllerBase
 {
     private readonly ExternalPatientInsightsBuilder _builder;
-    public HiePatientAccessController(ExternalPatientInsightsBuilder builder) => _builder = builder;
+    private readonly HiePortalAccess _portalAccess;
+    public HiePatientAccessController(ExternalPatientInsightsBuilder builder, HiePortalAccess portalAccess)
+    {
+        _builder = builder;
+        _portalAccess = portalAccess;
+    }
 
     /// <summary>
     /// The caller's own consolidated outside records. <paramref name="patientReference"/> must match
@@ -37,7 +42,7 @@ public sealed class HiePatientAccessController : ControllerBase
         [FromQuery] int recentTake = 20,
         CancellationToken cancellationToken = default)
     {
-        if (!HiePatientAccess.IsSelf(User, patientReference))
+        if (!_portalAccess.CanActAs(User, patientReference))
             return Forbid();
 
         var summary = await _builder.BuildAsync(patientReference, scan, recentTake, cancellationToken).ConfigureAwait(false);

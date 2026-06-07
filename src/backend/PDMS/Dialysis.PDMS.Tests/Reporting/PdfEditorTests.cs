@@ -24,11 +24,12 @@ public sealed class PdfEditorTests
         var renderer = new QuestPdfDocumentRenderer();
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
         var b = await renderer.RenderAsync(Doc("B"), CancellationToken.None);
-        var editor = new PdfEditor();
 
-        var merged = editor.Merge([a, b]);
+        _ = new PdfEditor();
 
-        editor.CountPages(merged).ShouldBe(editor.CountPages(a) + editor.CountPages(b));
+        var merged = PdfEditor.Merge([a, b]);
+
+        PdfEditor.CountPages(merged).ShouldBe(PdfEditor.CountPages(a) + PdfEditor.CountPages(b));
     }
 
     [Fact]
@@ -37,14 +38,15 @@ public sealed class PdfEditorTests
         var renderer = new QuestPdfDocumentRenderer();
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
         var b = await renderer.RenderAsync(Doc("B"), CancellationToken.None);
-        var editor = new PdfEditor();
-        var merged = editor.Merge([a, b]);
 
-        var parts = editor.SplitByPage(merged);
+        _ = new PdfEditor();
+        var merged = PdfEditor.Merge([a, b]);
 
-        parts.Count.ShouldBe(editor.CountPages(merged));
+        var parts = PdfEditor.SplitByPage(merged);
+
+        parts.Count.ShouldBe(PdfEditor.CountPages(merged));
         foreach (var part in parts)
-            editor.CountPages(part).ShouldBe(1);
+            PdfEditor.CountPages(part).ShouldBe(1);
     }
 
     [Fact]
@@ -54,12 +56,13 @@ public sealed class PdfEditorTests
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
         var b = await renderer.RenderAsync(Doc("B"), CancellationToken.None);
         var c = await renderer.RenderAsync(Doc("C"), CancellationToken.None);
-        var editor = new PdfEditor();
-        var merged = editor.Merge([a, b, c]);
 
-        var extracted = editor.ExtractPages(merged, [2, 1]);
+        _ = new PdfEditor();
+        var merged = PdfEditor.Merge([a, b, c]);
 
-        editor.CountPages(extracted).ShouldBe(2);
+        var extracted = PdfEditor.ExtractPages(merged, [2, 1]);
+
+        PdfEditor.CountPages(extracted).ShouldBe(2);
     }
 
     [Fact]
@@ -69,12 +72,13 @@ public sealed class PdfEditorTests
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
         var b = await renderer.RenderAsync(Doc("B"), CancellationToken.None);
         var c = await renderer.RenderAsync(Doc("C"), CancellationToken.None);
-        var editor = new PdfEditor();
-        var merged = editor.Merge([a, b, c]);
 
-        var trimmed = editor.RemovePages(merged, [2]);
+        _ = new PdfEditor();
+        var merged = PdfEditor.Merge([a, b, c]);
 
-        editor.CountPages(trimmed).ShouldBe(editor.CountPages(merged) - 1);
+        var trimmed = PdfEditor.RemovePages(merged, [2]);
+
+        PdfEditor.CountPages(trimmed).ShouldBe(PdfEditor.CountPages(merged) - 1);
     }
 
     [Fact]
@@ -83,9 +87,9 @@ public sealed class PdfEditorTests
         var renderer = new QuestPdfDocumentRenderer();
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
         var editor = new PdfEditor();
-        var totalPages = editor.CountPages(a);
+        var totalPages = PdfEditor.CountPages(a);
 
-        Should.Throw<InvalidOperationException>(() => editor.RemovePages(a, [.. Enumerable.Range(1, totalPages)]));
+        Should.Throw<InvalidOperationException>(() => PdfEditor.RemovePages(a, [.. Enumerable.Range(1, totalPages)]));
     }
 
     [Fact]
@@ -95,6 +99,6 @@ public sealed class PdfEditorTests
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
         var editor = new PdfEditor();
 
-        Should.Throw<ArgumentOutOfRangeException>(() => editor.ExtractPages(a, [99]));
+        Should.Throw<ArgumentOutOfRangeException>(() => PdfEditor.ExtractPages(a, [99]));
     }
 }

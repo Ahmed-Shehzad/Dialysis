@@ -80,7 +80,7 @@ public sealed class SftpSourceConnector : ISourceConnector
         }
     }
 
-    private async Task PollOnceAsync(SourceConnectorContext context, SftpSourceParameters p, CancellationToken cancellationToken)
+    private static async Task PollOnceAsync(SourceConnectorContext context, SftpSourceParameters p, CancellationToken cancellationToken)
     {
         using var client = BuildClient(p);
         client.OperationTimeout = TimeSpan.FromSeconds(p.TimeoutSeconds);
@@ -133,7 +133,9 @@ public sealed class SftpSourceConnector : ISourceConnector
         }
         finally
         {
-            try { client.Disconnect(); } catch { /* best-effort */ }
+            try
+            { client.Disconnect(); }
+            catch { /* best-effort */ }
         }
     }
 

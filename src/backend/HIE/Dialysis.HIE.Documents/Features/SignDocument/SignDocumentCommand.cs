@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.CQRS.Commands;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIE.Contracts.Security;
 using Dialysis.HIE.Documents.Domain;
@@ -101,7 +102,7 @@ public sealed class SignDocumentCommandHandler : ICommandHandler<SignDocumentCom
         var document = await _repository.FindAsync(request.DocumentId, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Document {request.DocumentId} not found.");
         if (!string.Equals(document.MimeType, "application/pdf", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Only PDF documents can be digitally signed.");
+            throw new DomainException("Only PDF documents can be digitally signed.");
 
         var bytes = await _blobs.ReadAsync(document.StorageRef, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Blob {document.StorageRef} is missing.");

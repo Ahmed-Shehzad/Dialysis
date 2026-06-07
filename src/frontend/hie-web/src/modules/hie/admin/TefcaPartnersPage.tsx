@@ -568,8 +568,17 @@ const DrawerShell = ({
     <dialog
       ref={ref}
       aria-label={title}
+      // Only user-initiated dismissals must bubble up to the parent (which unmounts the drawer).
+      // Do NOT wire the native `close` event to onClose: React StrictMode double-invokes the
+      // effect above (setup → cleanup → setup), and the cleanup's programmatic dialog.close()
+      // queues a `close` event that fires *after* the second setup has re-opened the dialog.
+      // Routing that through onClose would unmount the freshly-opened drawer, so it flashes and
+      // disappears — i.e. clicking the trigger button looks like "nothing happens". Escape fires
+      // `cancel` (handled here); clicking the backdrop is matched via e.target === the dialog.
       onCancel={onClose}
-      onClose={onClose}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
       className="fixed inset-0 z-40 m-0 flex h-full max-h-none w-full max-w-none items-center justify-end border-0 bg-transparent p-0 text-slate-100 backdrop:bg-slate-950/70"
     >
       <div

@@ -2,10 +2,11 @@ import { apiClient } from "@/lib/api/apiClient";
 
 /**
  * On-demand FHIR profile / Implementation Guide authoring. The HIS host maps
- * `MapFhirAuthoringEndpoints()` under `/fhir/_author`; the gateway exposes it through the
- * `fhir-his` route as `/fhir/his/_author/...`.
+ * `MapFhirAuthoringEndpoints()` under `/fhir/_author`; hie-web reaches it through the hie-bff
+ * cross-context aggregation (`/hie/api/_x/his/{rest}` → his-api/{rest}, bearer-forwarded), so
+ * this resolves to the HIS host's `/fhir/_author/...`.
  */
-const AUTHORING_BASE = "/fhir/his/_author";
+const AUTHORING_BASE = "/hie/api/_x/his/fhir/_author";
 
 export type FhirElementConstraint = {
   path: string;

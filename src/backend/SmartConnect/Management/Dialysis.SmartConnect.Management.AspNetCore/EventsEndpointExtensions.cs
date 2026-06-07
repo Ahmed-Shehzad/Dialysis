@@ -5,14 +5,14 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Dialysis.SmartConnect.Management.AspNetCore;
 
-/// <summary>Maps <c>/smartconnect/v1/admin/events/*</c> query routes for audit log.</summary>
+/// <summary>Maps <c>/api/v1/admin/events/*</c> query routes for audit log.</summary>
 public static class EventsEndpointExtensions
 {
     extension(IEndpointRouteBuilder endpoints)
     {
         public IEndpointRouteBuilder MapSmartConnectEventsRoutes()
         {
-            var group = endpoints.MapGroup("/smartconnect/v1/admin/events").WithTags("SmartConnect Admin");
+            var group = endpoints.MapGroup("/api/v1/admin/events").WithTags("SmartConnect Admin");
 
             group.MapGet(
                     "/",

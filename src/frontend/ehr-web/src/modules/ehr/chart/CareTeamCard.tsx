@@ -106,6 +106,7 @@ export const CareTeamCard = ({ patientId }: { patientId: string }) => {
         <select
           value={providerId}
           onChange={(e) => setProviderId(e.target.value)}
+          aria-label="Provider"
           className="flex-1 rounded-md border border-slate-700 bg-slate-950 p-2 text-xs text-slate-100"
         >
           {DEMO_PROVIDERS.map((p) => (
@@ -117,6 +118,7 @@ export const CareTeamCard = ({ patientId }: { patientId: string }) => {
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as CareTeamRole)}
+          aria-label="Care team role"
           className="rounded-md border border-slate-700 bg-slate-950 p-2 text-xs text-slate-100"
         >
           {CARE_TEAM_ROLES.map((r) => (
