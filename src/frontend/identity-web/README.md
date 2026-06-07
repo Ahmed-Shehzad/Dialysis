@@ -1,47 +1,39 @@
-# Dialysis Web
+# identity-web — Admin & Compliance Console
 
-React + TypeScript SPA for the Dialysis modular monolith. Talks to the per-module APIs
-through the YARP gateway at `http://localhost:5000` (configurable via `VITE_GATEWAY_URL`).
+> **Naming note:** the folder is `identity-web` but the app is the cross-cutting **Admin console** (router base `/admin`) — identity/role administration plus HIPAA & GDPR surfaces. It is **not** the login service; sign-in is handled by the BFFs + Keycloak (see [Identity ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md)).
 
-## Structure (Bulletproof React)
+|                                |                                                 |
+| ------------------------------ | ----------------------------------------------- |
+| Context base / router basename | `/admin`                                        |
+| Standalone dev port (Vite)     | `5336`                                          |
+| Backing BFF                    | `Dialysis.Admin.Bff` (`admin-bff`, port `5306`) |
+| BFF primary API                | HIE host (data-protection / HIPAA live there)   |
+| BFF aggregations               | HIS, EHR, PDMS, SmartConnect (DICOM)            |
+| Real-time push                 | No                                              |
 
-```
-src/
-  app/            # provider composition (QueryClient, BrowserRouter, AuthProvider)
-  components/     # shared UI (layout, atoms)
-  features/
-    auth/         # session + identity (AuthProvider, useAuth, /identity/* calls)
-    sessions/     # dialysis session list + reading history
-    vitals/       # SignalR stream hook, latest-vitals panel, D3 chart
-  lib/
-    api/          # axios instance + interceptors
-    auth/         # JWT helpers
-    realtime/     # SignalR connection builder
-  pages/          # route targets (Login, Dashboard, SessionLive)
-  routes/         # router + ProtectedRoute
-  styles/         # tailwind entry
-```
+## What it does
 
-Design rules:
+- **Admin hub** (`/admin`) and **identity admin** (`/admin/identity`) — users, roles.
+- **HIPAA dashboard** (`/admin/hipaa`).
+- **GDPR / data protection** — RoPA (`/admin/data-protection/ropa`), consents (`/admin/data-protection/consents`), and **data-subject-rights** (`/admin/data-protection/data-subject-rights`) where the DPO approves Art. 15/17 requests (the approve-and-execute erasure pipeline).
+- **Demo control panel** (`/admin/demo`) — drives the dev DataSimulator.
 
-- **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
-  except through stable contracts under `lib/`.
-- **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.
-- **DIP** — `useVitalsStream` depends on `useAuth`'s `getAccessToken`, not on a concrete token store.
-- **ISP** — `AuthProvider` exposes only `{ user, status, signIn, signOut, getAccessToken }`.
-- **LSP** — `VitalsLatestPanel` accepts any object satisfying the `VitalsReading` contract.
+## Stack & scripts
 
-## Dev
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/admin"`.
 
 ```bash
-npm install
-npm run dev     # http://localhost:5173 — proxies /api,/fhir,/hubs,/identity,/auth → gateway
+npm run dev        # Vite :5336
 npm run build
+npm run lint
 npm run typecheck
+npm run test:e2e
 ```
 
-The gateway must be running for auth + APIs:
+## How it runs
 
-```bash
-dotnet run --project src/backend/Shared/Dialysis.Module.Gateway
-```
+Reached through the Gateway at `http://localhost:9090/admin/`; the Admin BFF handles auth and proxies `/admin/api` to the HIE host (which hosts the data-protection & HIPAA endpoints) plus cross-context aggregations for embedded EHR/PDMS panels. `enforceGatewayOrigin()` keeps the cookie intact.
+
+> Cross-context navigation must be a full-page hop.
+
+See [src/backend/HIE/ARCHITECTURE.md](../../backend/HIE/ARCHITECTURE.md) (Art. 17 pipeline + `IErasureRequestStore`) and [src/backend/Identity/ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md) (auth). Shared conventions: [root README](../../../README.md#frontend).

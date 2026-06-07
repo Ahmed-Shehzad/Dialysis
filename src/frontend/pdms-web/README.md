@@ -1,47 +1,38 @@
-# Dialysis Web
+# pdms-web — Chairside SPA
 
-React + TypeScript SPA for the Dialysis modular monolith. Talks to the per-module APIs
-through the YARP gateway at `http://localhost:5000` (configurable via `VITE_GATEWAY_URL`).
+The PDMS (Patient Data Management System) browser app: **live treatment, real-time vitals, and machine alarms** at the dialysis chair. Backed by the **`Dialysis.PDMS.Bff`** per-context BFF.
 
-## Structure (Bulletproof React)
+|                                |                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Context base / router basename | `/pdms`                                                                                                     |
+| Standalone dev port (Vite)     | `5333`                                                                                                      |
+| Backing BFF                    | `Dialysis.PDMS.Bff` (`pdms-bff`, port `5303`)                                                               |
+| BFF aggregations               | EHR, HIE, SmartConnect (DICOM)                                                                              |
+| Real-time push                 | **Yes** — `IntradialyticAdverseEventIntegrationEvent` → chairside **alarm error** toasts via `/pdms/events` |
 
-```
-src/
-  app/            # provider composition (QueryClient, BrowserRouter, AuthProvider)
-  components/     # shared UI (layout, atoms)
-  features/
-    auth/         # session + identity (AuthProvider, useAuth, /identity/* calls)
-    sessions/     # dialysis session list + reading history
-    vitals/       # SignalR stream hook, latest-vitals panel, D3 chart
-  lib/
-    api/          # axios instance + interceptors
-    auth/         # JWT helpers
-    realtime/     # SignalR connection builder
-  pages/          # route targets (Login, Dashboard, SessionLive)
-  routes/         # router + ProtectedRoute
-  styles/         # tailwind entry
-```
+## What it does
 
-Design rules:
+- **Sessions** (`/pdms/sessions`) and the **live session view** (`/pdms/sessions/:sessionId`) — lifecycle controls (schedule/start/pause/resume/complete/abort), medications administration (MAR), session reports, documents/retention.
+- **Chairside vitals** (`src/features/vitals/`) — `useVitalsStream` subscribes to the SignalR `VitalsHub` (`/pdms/hubs/vitals`), rendering live vitals charts, the latest-values panel, an audible alarm, and a live cost tile. The cost snapshot ticks every 5 s; a Valkey backplane fans out across BFF replicas.
+- **Chair board** (`/pdms/chairs`) and admin surfaces — inventory, reporting templates, on-call rotation/policies/audit.
+- Durable `RecordReading` writes use the `useDurableCommand` hook (202 → poll → toast).
 
-- **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
-  except through stable contracts under `lib/`.
-- **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.
-- **DIP** — `useVitalsStream` depends on `useAuth`'s `getAccessToken`, not on a concrete token store.
-- **ISP** — `AuthProvider` exposes only `{ user, status, signIn, signOut, getAccessToken }`.
-- **LSP** — `VitalsLatestPanel` accepts any object satisfying the `VitalsReading` contract.
+## Stack & scripts
 
-## Dev
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/pdms"`. Realtime via `@microsoft/signalr`; charts via `echarts`/`d3`.
 
 ```bash
-npm install
-npm run dev     # http://localhost:5173 — proxies /api,/fhir,/hubs,/identity,/auth → gateway
+npm run dev        # Vite :5333
 npm run build
+npm run lint
 npm run typecheck
+npm run test:e2e
 ```
 
-The gateway must be running for auth + APIs:
+## How it runs
 
-```bash
-dotnet run --project src/backend/Shared/Dialysis.Module.Gateway
-```
+Reached through the Gateway at `http://localhost:9090/pdms/`; the PDMS BFF handles auth and proxies `/pdms/api`, `/pdms/hubs` (the vitals stream), and `/pdms/events`. `enforceGatewayOrigin()` keeps the `/pdms` cookie intact.
+
+> Cross-context navigation must be a full-page hop.
+
+See [src/backend/PDMS/ARCHITECTURE.md](../../backend/PDMS/ARCHITECTURE.md) for the telemetry domain, durable command bus and the vitals/cost broadcast, and [src/backend/Identity/ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md) for auth. Shared conventions: [root README](../../../README.md#frontend).

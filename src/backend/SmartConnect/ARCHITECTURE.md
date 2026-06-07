@@ -1,268 +1,219 @@
-# SmartConnect — Architecture (low-level)
+# SmartConnect — Legacy-Protocol Integration Engine
 
-Companion to [README.md](README.md) and [smartconnect_subdomain_structure.md](smartconnect_subdomain_structure.md). SmartConnect is the platform's **Central Interoperability Hub** — it speaks the legacy protocols (HL7 v2 over MLLP, file/SFTP, SMTP, vendor-EHR REST) and normalizes them into platform integration events. Its Large-Scale Structure is a **Pluggable Component Framework** (Evans 2003, p. 334): each pipeline stage (Source, Transformer, Filter, Destination) is a swappable connector implementing a runtime contract declared in `Dialysis.SmartConnect.Core`.
+> **Bounded context:** the **translator**. SmartConnect speaks the languages legacy equipment and older hospital systems still use — HL7 v2 over MLLP/TCP, files, SFTP, database polling, vendor EHR adapters, DICOM — and converts them into the platform's modern vocabulary (FHIR R4, integration events). It is a stateless message router with bounded retention: it owns **no patient master record**.
+>
+> The runtime is a **Mirth-Connect-style flow engine**: a *channel* is an `IntegrationFlow`; a message runs through *source connector → filters → transforms → outbound routes*, each stage logged to an append-only ledger.
 
-> Mermaid renders inline on GitHub/GitLab/JetBrains/VS Code; paste into <https://mermaid.live> if your viewer does not.
+Generated from current code. See the root [README](../../../README.md) for the system picture.
+
+> **Note on prior docs:** earlier documentation named an aspirational `ISource`/`TcpMllpSource`/`OutboxDestination` framework and a `Hl7V2MessageTransformedToFhir` event. The real types are `ISourceConnector` / `IRouteFilter` / `ITransformStage` / `IOutboundAdapter` driven by `FlowRuntimeEngine`, and the cross-module event is `SmartConnectRoutedPayloadIntegrationEvent`.
 
 ---
 
-## 1. System architecture (component view)
+## 1. Context
 
 ```mermaid
 flowchart LR
-    subgraph "External"
-        Lab["Lab analyzer (MLLP)"]
-        Vendor["EHR vendor REST<br/>(Epic / Cerner / Meditech / Allscripts / OpenEMR)"]
-        Sftp["Partner SFTP drop"]
-        Smtp["Inbound SMTP"]
-        Dev["Dialysis machine"]
+    Sender([Machines / hospital systems]):::ext -->|HL7v2 MLLP :2575| MLLP[MllpInboundHostedService]
+    Sender -->|files / SFTP / DB / HTTP| OtherSrc[Source connectors]
+    MLLP --> Engine
+    OtherSrc --> Engine
+
+    subgraph Engine [FlowRuntimeEngine - per channel]
+        direction TB
+        PRE[PreProcessor] --> FILT[Route filters] --> XF[Transform stages] --> RT[Outbound routes]
     end
 
-    subgraph "Dialysis.SmartConnect.Api"
-        APIv1["api/v1.0/* controllers<br/>(flow management, audit events, code templates)"]
-        Mgmt["Management endpoints<br/>(channels, flows, deployments)"]
-        Auth["JwtBearer + ICurrentUser"]
-        APIv1 --> Mgmt
-        Auth --> APIv1
-    end
+    XF -->|hl7-to-fhir-pipeline| FHIR[FHIR R4 Bundle]
+    RT -->|transponder-bus adapter| Bus{{ITransponderBus}}
+    RT -->|http / file / smtp / tcp / dicom| Dest([External destinations]):::ext
+    Engine --> Ledger[(MessageLedger - append-only)]
+    Bus --> PDMS[PDMS telemetry / alarms]
+    Bus --> Lab[Lab bridge]
 
-    subgraph "SmartConnect.Core (pluggable pipeline runtime)"
-        Src["SOURCE<br/>TcpMllpSource, HttpSource,<br/>FileSource, SmtpSource"]
-        Tx["TRANSFORMER<br/>Hl7Transformer (Hl7V2Parser),<br/>FhirTransformer, MdcNormalizer"]
-        Filt["FILTER<br/>JavaScriptFilter"]
-        Dst["DESTINATION<br/>OutboxDestination, HttpOutboundAdapter,<br/>FileOutboundAdapter"]
-        Src --> Tx --> Filt --> Dst
-    end
+    Op([Operator shell SPA]):::ui --> BFF[SmartConnect BFF] --> Admin[Operator API /api/v1/admin]
+    Admin --> Engine
 
-    subgraph "Vendor adapters (Adapters/*)"
-        Ep["Epic adapter (OAuth2 backend services)"]
-        Cer["Cerner adapter"]
-        Med["Meditech adapter"]
-        All["Allscripts adapter"]
-        OE["OpenEMR adapter"]
-    end
-
-    subgraph "HL7 v2 ↔ FHIR bridge (SmartConnect.Core/Fhir)"
-        V2Pipe["Hl7V2ToFhirPipeline<br/>(routes by MSH-9 trigger)"]
-        Maps["IFhirV2MessageMapper (per trigger)<br/>ADT, ORU, ORM, SIU, MDM, VXU"]
-        V2Pipe --> Maps
-    end
-
-    subgraph "SmartConnect.Persistence"
-        DB[("smartconnect_flows (Channel, Flow, Step),<br/>smartconnect_audit (AuditEvent),<br/>smartconnect_idempotency,<br/>transponder (outbox/inbox)")]
-    end
-
-    subgraph "Transponder bus"
-        OBX["transponder.outbox"]
-        ITB["ITransponderBus"]
-    end
-
-    subgraph "Downstream modules"
-        PDMSsvc["PDMS (telemetry consumer)"]
-        EHRsvc["EHR (ADT/ORU consumer)"]
-        HIEsvc["HIE Outbound (FHIR dispatch)"]
-    end
-
-    Lab --> Src
-    Vendor --> Ep
-    Ep --> Tx
-    Sftp --> Src
-    Smtp --> Src
-    Dev --> Src
-
-    Tx --> V2Pipe
-    Maps --> Dst
-    Dst --> OBX
-    OBX --> ITB
-    ITB -. MachineSnapshotIntegrationEvent .-> PDMSsvc
-    ITB -. Hl7V2MessageTransformedToFhirIntegrationEvent .-> EHRsvc
-    ITB -. Hl7V2MessageTransformedToFhirIntegrationEvent .-> HIEsvc
-
-    Dst --> DB
-    APIv1 --> DB
-```
-
-**Invariants**
-
-- Connectors are protocol-pure — **no clinical or billing rules live in a connector** (anti-pattern called out in the README). Downstream modules interpret.
-- Every pipeline stage implements a runtime interface from `Dialysis.SmartConnect.Core` (e.g. `ISource`, `ITransformer`, `IFilter`, `IDestination`). New protocols plug in without touching the channel runtime.
-- All inbound messages are recorded with an idempotency key (`smartconnect_idempotency`) so replays are safe.
-- Vendor adapters use **OAuth2 backend services** (JWT-signed client assertion) for token acquisition — see the recent commit `d36fc07`.
-
----
-
-## 2. Workflow — Inbound MLLP (HL7 v2 ADT^A01 → FHIR Patient/Encounter)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Lab as Lab / HIS sender
-    participant Src as TcpMllpSource
-    participant Idem as Idempotency store
-    participant Tx as Hl7Transformer
-    participant Pipe as Hl7V2ToFhirPipeline
-    participant Map as AdtA01ToPatientMapper +<br/>AdtA01ToEncounterMapper
-    participant Filt as JavaScriptFilter (optional)
-    participant Dst as OutboxDestination
-    participant Ctx as SmartConnectDbContext
-    participant Bus as ITransponderBus
-    participant EHRsvc as EHR consumers
-    participant HIEsvc as HIE Outbound
-
-    Lab->>Src: MLLP frame (ADT^A01)
-    Src->>Src: parse MLLP envelope, extract MSH-10 control id
-    Src->>Idem: HasSeen?(MSH-10)
-    alt duplicate
-        Idem-->>Src: yes
-        Src-->>Lab: MLLP ACK (AA) — drop
-    else new
-        Idem-->>Src: no
-        Src->>Tx: raw HL7 v2 string
-        Tx->>Tx: Hl7V2Parser → Hl7V2Message
-        Tx->>Pipe: route by MSH-9 (ADT^A01)
-        Pipe->>Map: build Patient + Encounter resources
-        Map-->>Pipe: List of Resource
-        Pipe-->>Tx: Bundle + OperationOutcome (partial-success aware)
-        Tx->>Filt: optional rule script
-        Filt-->>Tx: pass / drop
-        Tx->>Dst: deliver
-        Dst->>Ctx: persist AuditEvent + enqueue<br/>Hl7V2MessageTransformedToFhirIntegrationEvent v1<br/>(with msg hash + control id + Bundle payload)
-        Dst->>Idem: record MSH-10
-        Ctx->>Ctx: SaveChangesAsync (one UoW)
-        Ctx-->>Dst: committed
-        Dst-->>Src: ok
-        Src-->>Lab: MLLP ACK (AA)
-        Note over OBX,Bus: relay (async)
-        Bus-->>EHRsvc: deliver to EHR ClinicalNotes ACL
-        Bus-->>HIEsvc: deliver to HIE Outbound mappers
-    end
+    classDef ui fill:#dbeafe,stroke:#3b82f6
+    classDef ext fill:#fef3c7,stroke:#d97706
 ```
 
 ---
 
-## 3. Workflow — Outbound vendor pull (Epic FHIR Patient)
+## 2. Project layout
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Op as Operator / Schedule
-    participant Adp as Epic adapter (IExternalEhrAdapter)
-    participant Aut as IExternalEhrAuthProvider (Epic)
-    participant Cache as Token cache
-    participant Ep as Epic FHIR API
-    participant Pipe as Hl7V2ToFhirPipeline-equivalent<br/>(direct FHIR path)
-    participant Bus as ITransponderBus
-    participant Down as EHR / HIE consumers
-
-    Op->>Adp: ReadAsync of Patient (id, ctx)
-    Adp->>Cache: get cached access_token
-    alt expired
-        Cache-->>Adp: miss
-        Adp->>Aut: AcquireToken()<br/>(build signed JWT client assertion)
-        Aut->>Ep: POST /oauth2/token
-        Ep-->>Aut: access_token + expires_in
-        Aut-->>Adp: token
-        Adp->>Cache: store token
-    else hit
-        Cache-->>Adp: token
-    end
-    Adp->>Ep: GET /FHIR/R4/Patient/{id}<br/>Authorization: Bearer …
-    Ep-->>Adp: Patient resource (FHIR R4)
-    Adp->>Adp: vendor-specific extension normalization
-    Adp->>Pipe: emit Hl7V2MessageTransformedToFhirIntegrationEvent v1<br/>(synthetic — sourced from external adapter)
-    Pipe->>Bus: Publish via OutboxDestination
-    Bus-->>Down: deliver to EHR / HIE
-```
+| Project | Role |
+|---|---|
+| `Contracts/Dialysis.SmartConnect.Contracts` | Integration events + `SmartConnectPermissions`. **Only assembly other modules reference.** |
+| `Dialysis.SmartConnect.Core.Abstraction` | POCO runtime contracts: `IntegrationFlow`, `IntegrationMessage`, `MessageLedgerEntry`, `IFlowRuntime`, `ISourceConnector`, `IRouteFilter`, `ITransformStage`, `IOutboundAdapter`, `IFlowPluginRegistry`. |
+| `Dialysis.SmartConnect.Core` | `FlowRuntimeEngine`, plugin registry, the `Hl7V2ToFhirPipeline`, built-in plugins, JS script engine, code templates, time-sync, data pruner. |
+| `Persistence/...EntityFrameworkCore.{Abstractions,InMemory,Postgresql}` | `SmartConnectDbContext`, entities, repositories/stores; provider chosen at composition (InMemory at runtime today). |
+| `Persistence/...ObjectStorage.{AzureBlob,S3,ContentAddressable,Replication}` | Attachment / DICOM blob backends. |
+| `Inbound/...{Mllp,TcpListener,FileReader,Sftp,DatabaseReader,Transponder,AspNetCore,Hosting}` | Source connectors / listeners. |
+| `Management/...Management.AspNetCore` | Operator/admin API (`/api/v1/admin/*`). |
+| `Adapters/{Epic,Cerner,Meditech,Allscripts,OpenEMR,Common}` | Vendor EHR adapters. |
+| `Dicom/{Core,Dimse,Integration,Persistence,Web}` | DICOM DIMSE + DICOMweb (`/dicom-web`). |
+| `Api/Dialysis.SmartConnect.Api` | ASP.NET host + `operator-shell/` vanilla-TS SPA. |
+| `Dialysis.SmartConnect.Bff` / `Tests` | Per-context BFF, tests. |
 
 ---
 
-## 4. Activity — Channel + Flow lifecycle
+## 3. Pipeline model
 
-```mermaid
-stateDiagram-v2
-    state "Channel" as C {
-        [*] --> ChDraft: CreateChannel
-        ChDraft --> ChConfigured: AddSource / AddDestination
-        ChConfigured --> ChDeployed: DeployChannel<br/>publishes ChannelDeployedIntegrationEvent
-        ChDeployed --> ChRunning: StartChannel
-        ChRunning --> ChStopped: StopChannel
-        ChStopped --> ChRunning: StartChannel
-        ChStopped --> ChRetired: RetireChannel
-        ChRetired --> [*]
-    }
+`FlowRuntimeEngine.DispatchCoreAsync` executes a channel's pipeline in this exact order:
 
-    state "Flow (single message run-through)" as F {
-        [*] --> Received: source frame arrives
-        Received --> Deduplicated: idempotency check
-        Deduplicated --> Transformed: parser/mapper run
-        Transformed --> Filtered: rule script (optional)
-        Filtered --> Delivered: destination ack
-        Delivered --> [*]
-        Deduplicated --> DroppedDup: duplicate MSH-10 / payload hash
-        Transformed --> Quarantined: parse failure / mapping failure
-        Filtered --> DroppedFilter: rule rejected
-        Quarantined --> Replayed: operator replay
-        Quarantined --> [*]: ops discard
-    }
-```
+1. **PreProcessor script** — drop or rewrite the payload.
+2. **Attachment handler** — extract bulky inline content to the attachment store, rewrite payload with `${ATTACH:<id>}` tokens.
+3. **Route filters** (`IRouteFilter`) — Mirth source filter; a `Drop` disposition stops the message.
+4. **Source transform stages** (`ITransformStage`) — including the destination-set filter that computes per-message routing.
+5. **Outbound routes** (`IOutboundAdapter`) — Mirth destinations, run parallel or as a sequential chain. Each route: skip-check → per-route transforms → re-inflate attachments → retry with exponential backoff → response transforms → ledger write.
+6. **PostProcessor script**.
 
-**Notes**
+Registered plugin kinds include transforms (`hl7-to-fhir-pipeline`, `ncpdp-to-fhir`, `javascript`, `mapper-transform`, `xslt`, `verify-hl7`, `destinationSetFilter`, …), outbound adapters (`transponder-bus`, `http`, `file`, `smtp`, `tcp`, `dicom`, `channel-writer`, …), and route filters (`allow-all`, `javascript`, `rule-builder`).
 
-- The flow state per message is recorded as an `AuditEvent` row (see [`AuditEventsTab.tsx`](../../frontend/dialysis-web/src/features/smartconnect/tabs/AuditEventsTab.tsx) — the operator UI filters by category, level, flow, and time window).
-- Quarantine + replay are the substrate for dead-letter handling — they keep partner traffic recoverable without requiring partner re-sends.
+**`Hl7V2ToFhirPipeline`** (the `hl7-to-fhir-pipeline` transform) parses HL7 v2, reads the trigger from **`MSH-9.1^MSH-9.2`** (e.g. `ADT^A01`), and dispatches to every registered `IFhirV2MessageMapper` whose `TriggerEvent` matches, wrapping the results in a FHIR R4 `Bundle`. It is **fail-soft** — non-HL7 or unmatched input passes through unchanged. ~12 mappers cover ADT (Patient/Encounter), ORU (Observation), ORM (ServiceRequest), SIU (Appointment), MDM (DocumentReference), VXU (Immunization), DFT (ChargeItem).
+
+The **MLLP listener** (`MllpInboundHostedService`, dev port **2575**) decodes MLLP frames, shallow-parses MSH (sending app/facility, MSH-9 type, MSH-10 control id), runs a clock-skew probe (rewrites MSH-7 if drifted → `Hl7V2ClockSkewCorrectedIntegrationEvent`), and dispatches to the default flow.
 
 ---
 
-## 5. Composition root
+## 4. Domain model (ERD)
 
-```mermaid
-flowchart TB
-    Program["Program.cs (Dialysis.SmartConnect.Api)"]
-    Program --> AddModuleHost["AddModuleHost of SmartConnectPermissionCatalog<br/>(ModuleSlug = 'smartconnect')"]
-    Program --> AddSC["AddSmartConnect(configuration, …)"]
-    AddSC --> Persistence["AddDbContext of SmartConnectDbContext<br/>Postgres 5441"]
-    AddSC --> CoreReg["AddSmartConnectCore()<br/>(ISource / ITransformer / IFilter / IDestination registry)"]
-    AddSC --> Bridges["AddHl7V2ToFhirPipeline()<br/>(register mappers: ADT/ORU/ORM/SIU/MDM/VXU)"]
-    AddSC --> Adapters["AddVendorAdapters()<br/>(Epic, Cerner, Meditech, Allscripts, OpenEMR)"]
-    AddSC --> Bus["AddTransponder + outbox destination"]
-    AddSC --> Hosted["IHostedService:<br/>ChannelHost (boots deployed channels),<br/>SmartConnectDatabaseInitializer,<br/>optional outbox relay"]
-```
-
----
-
-## 6. Data layout
+Persistence is **EF Core** (relational model), but the running module is wired to the EF Core **InMemory** provider (`AddSmartConnectPersistenceInMemory`); the Postgres provider + migrations (schema `smartconnect`) are shippable. The channel pipeline is JSON-projected onto the flow row. **There is no outbox/inbox/saga** on this context (unlike other modules) and no dedicated idempotency table — de-dup rides the bus `DeduplicationId` plus the ledger's `CorrelationId` / `MessageControlId`.
 
 ```mermaid
 erDiagram
-    SmartConnectDbContext ||--o{ smartconnect_flows : "Channel, Flow, Step,<br/>ChannelDeployment"
-    SmartConnectDbContext ||--o{ smartconnect_audit : "AuditEvent (level, category,<br/>flowId, summary, attributes)"
-    SmartConnectDbContext ||--o{ smartconnect_idempotency : "InboundMessageKey<br/>(channel + control id + hash)"
-    SmartConnectDbContext ||--o{ smartconnect_code_templates : "CodeTemplate, library"
-    SmartConnectDbContext ||--o{ smartconnect_retention : "RetentionPolicy, PurgeRun"
-    SmartConnectDbContext ||--o{ transponder : "Outbox, Inbox, Sagas"
+    INTEGRATION_FLOW ||--o{ MESSAGE_LEDGER_ENTRY : "FlowId (logical)"
+    FLOW_GROUP ||--o{ INTEGRATION_FLOW : "GroupId"
+    CODE_TEMPLATE_LIBRARY ||--o{ CODE_TEMPLATE : "FK cascade"
+    INTEGRATION_FLOW ||--o{ ATTACHMENT : "FlowId"
+    ATTACHMENT ||--o| CAS_BLOB_REF : "AttachmentId"
+    ALERT_RULE ||--o{ ALERT_EVENT : "RuleId"
+
+    INTEGRATION_FLOW {
+        guid Id PK
+        string Name
+        int RuntimeState "Stopped/Started/Paused"
+        string PipelineJson "filters/transforms/routes"
+        guid GroupId "nullable"
+        string DependenciesJson "start ordering"
+    }
+    MESSAGE_LEDGER_ENTRY {
+        guid Id PK
+        guid FlowId
+        guid IntegrationMessageId
+        string CorrelationId
+        int Status "Received/Dropped/OutboundSent/OutboundFailed/Completed"
+        int OutboundRouteOrdinal "nullable"
+        bytes PayloadSnapshot
+        string MessageType
+        string SenderId
+        string BatchId
+    }
+    FLOW_GROUP {
+        guid Id PK
+        string Name
+    }
+    ENDPOINT {
+        guid Id PK
+        string Name "unique"
+        string Kind
+        string ParametersJson
+    }
+    CODE_TEMPLATE_LIBRARY {
+        guid Id PK
+        string Name
+        string LinkedFlowIdsJson
+    }
+    CODE_TEMPLATE {
+        guid Id PK
+        guid LibraryId FK
+        string Name
+        string Code
+    }
+    ATTACHMENT {
+        guid Id PK
+        guid MessageId
+        guid FlowId
+        string MimeType
+        bytes Data
+    }
+    CAS_BLOB_REF {
+        guid Id PK
+        string ContentHash "SHA-256"
+        guid AttachmentId "unique"
+    }
+    ALERT_RULE {
+        guid Id PK
+        string Name
+        bool Enabled
+        string ErrorPatternsJson
+    }
+    ALERT_EVENT {
+        guid Id PK
+        guid RuleId
+        guid FlowId "nullable"
+        int ErrorType
+        datetime OccurredAtUtc
+    }
+    DICOM_INSTANCE {
+        guid Id PK
+        string StudyInstanceUid
+        string SopInstanceUid "unique"
+        guid PatientId
+        string Modality
+    }
+    VARIABLE_MAP_ENTRY {
+        guid Id PK
+        string Scope
+        guid FlowId
+        string Key
+        string Value
+    }
 ```
 
 ---
 
-## 7. Cross-context contracts (DDD context map)
+## 5. Integration events
 
-| Counterparty | Role | Vehicle |
-|---|---|---|
-| External devices / labs / partner EHRs | **Open Host Service** (HL7 v2, FHIR, file, SMTP). Pluggable per protocol. | MLLP, HTTP, SFTP, SMTP |
-| PDMS | **Supplier**: `MachineSnapshotIntegrationEvent`, `MachineAlarmIntegrationEvent`. | `Dialysis.SmartConnect.Contracts` |
-| EHR / HIS | **Supplier**: `Hl7V2MessageTransformedToFhirIntegrationEvent` (with Bundle payload), ADT/ORU-derived events. ACL-consumed. | `Dialysis.SmartConnect.Contracts` |
-| HIE Outbound | **Supplier**: same transformed-FHIR events; HIE maps to partner-specific bundles and dispatches. | `Dialysis.SmartConnect.Contracts` |
-| Identity | **Conformist**. | JWT bearer + vendor adapter OAuth2 (separate IdPs per vendor) |
+**Published:**
+- **`SmartConnectRoutedPayloadIntegrationEvent`** — the actively-published cross-module edge event, emitted by the `transponder-bus` outbound adapter. Carries routed bytes + `RoutingHint` (e.g. `ORU^R01`) + format/headers; consumers fan out by hint.
+- `Hl7V2ClockSkewCorrectedIntegrationEvent` — MLLP TimeSync rewrote MSH-7.
+- `AttachmentRegisteredIntegrationEvent` — attachment persisted (HIE XDS registry consumes, ITI-41).
+- `DialysisMachineTreatmentSnapshotIntegrationEvent` / `DialysisMachineAlarmIntegrationEvent` — typed PCD-01/PCD-04 contracts **defined here and consumed by PDMS**, but currently the live machine-telemetry path travels as the generic `SmartConnectRoutedPayloadIntegrationEvent`; the typed events are a forward-declared contract surface.
 
-**Anti-pattern guard**: clinical/billing logic must not enter a connector. If a transformation needs domain semantics beyond protocol translation, emit the integration event and let the owning module decide.
+**Consumed:** `SmartConnectRoutedPayloadIntegrationEvent` is consumed in-process by `LabResultBridgeConsumer`, which re-emits the Lab context's `LabResultReceivedIntegrationEvent`.
 
 ---
 
-## 8. Where to look next
+## 6. Key workflow — HL7 v2 → FHIR → bus
 
-- Channel runtime → `Dialysis.SmartConnect.Core/{Channels, Sources, Transformers, Filters, Destinations}/`.
-- HL7 v2 parser → `Dialysis.SmartConnect.Core/DataTypes/Hl7V2Parser.cs`, `Hl7V2Message.cs`.
-- HL7 v2 → FHIR mappers → `Dialysis.SmartConnect.Core/Fhir/Mappers/` (planned per the cross-cutting FHIR plan).
-- Vendor adapters → `Adapters/Dialysis.SmartConnect.Adapters.{Epic,Cerner,Meditech,Allscripts,OpenEMR}/`.
-- Frontend operator UI → `src/frontend/dialysis-web/src/features/smartconnect/`.
-- Long-form structure rationale → [smartconnect_subdomain_structure.md](smartconnect_subdomain_structure.md).
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Snd as Sender (machine / LIS)
+    participant MLLP as MllpInboundHostedService
+    participant Eng as FlowRuntimeEngine
+    participant Led as MessageLedger
+    participant Pipe as hl7-to-fhir-pipeline + mappers
+    participant Adp as transponder-bus adapter
+    participant Sub as PDMS / Lab consumers
+
+    Snd->>MLLP: HL7v2 over MLLP (0x0B ... 0x1C 0x0D)
+    MLLP->>MLLP: decode frame, parse MSH-9 / MSH-10, clock-skew probe
+    MLLP->>Eng: dispatch IntegrationMessage (default flow)
+    Eng->>Led: status Received
+    Eng->>Eng: PreProcessor, AttachmentHandler, RouteFilters, SourceTransforms
+    Eng->>Pipe: route by MSH-9.1^MSH-9.2 -> FHIR R4 Bundle
+    Eng->>Adp: outbound route
+    Adp->>Sub: publish SmartConnectRoutedPayloadIntegrationEvent (dedup = msgId)
+    Eng->>Led: status OutboundSent, then Completed
+```
+
+Operators manage channels through the **operator shell** (`/api/v1/admin/*`): flows CRUD + lifecycle (`start`/`stop`/`pause`, dependency cascade), a message browser with **reprocess-from-ledger**, connector discovery, alert rules, the configuration map, code-template libraries, and the data pruner. The shell SPA is served at `/` and reached in dev via the SmartConnect BFF.
+
+---
+
+## 7. Why no patient eraser
+
+SmartConnect ships **no `IPatientEraser` and no `IModuleDataExtractor`** — it routes and transforms messages and owns no patient master record. Patient identifiers appear only transiently inside `IntegrationMessage.Payload`, ledger `PayloadSnapshot`, attachments, and DICOM index rows. That derived data-at-rest is governed by storage-limitation, not per-patient erasure: the `DataPrunerHostedService` (time-based, `SmartConnect:DataPruner:RetentionDays`, with `/api/v1/admin/pruner` controls) bounds retention, and right-to-erasure is delegated to the patient-owning modules (HIS / EHR / PDMS / HIE).

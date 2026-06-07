@@ -1,47 +1,39 @@
-# Dialysis Web
+# hie-web — Health-Information-Exchange SPA
 
-React + TypeScript SPA for the Dialysis modular monolith. Talks to the per-module APIs
-through the YARP gateway at `http://localhost:5000` (configurable via `VITE_GATEWAY_URL`).
+The HIE browser app: **FHIR partners, consent, subscriptions, documents and TEFCA/QHIN administration**. Backed by the **`Dialysis.HIE.Bff`** per-context BFF.
 
-## Structure (Bulletproof React)
+|                                |                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| Context base / router basename | `/hie`                                                                 |
+| Standalone dev port (Vite)     | `5335`                                                                 |
+| Backing BFF                    | `Dialysis.HIE.Bff` (`hie-bff`, port `5305`)                            |
+| BFF aggregations               | SmartConnect (DICOM), HIS, EHR, PDMS (subscription/authoring catalogs) |
+| Real-time push                 | No                                                                     |
 
-```
-src/
-  app/            # provider composition (QueryClient, BrowserRouter, AuthProvider)
-  components/     # shared UI (layout, atoms)
-  features/
-    auth/         # session + identity (AuthProvider, useAuth, /identity/* calls)
-    sessions/     # dialysis session list + reading history
-    vitals/       # SignalR stream hook, latest-vitals panel, D3 chart
-  lib/
-    api/          # axios instance + interceptors
-    auth/         # JWT helpers
-    realtime/     # SignalR connection builder
-  pages/          # route targets (Login, Dashboard, SessionLive)
-  routes/         # router + ProtectedRoute
-  styles/         # tailwind entry
-```
+## What it does
 
-Design rules:
+- **FHIR exchange** (`/hie/fhir-exchange`) — outbound queue, inbound feed, partner status, consent and community-record panels.
+- **FHIR authoring** (`/hie/fhir-authoring`) and **subscriptions** (`/hie/subscriptions`, with a live subscription stream).
+- **Documents admin** (`/hie/admin/documents`) — `DocumentReference` list + PDF viewer drawer; **retention** policies (`/hie/admin/documents/retention`).
+- **TEFCA partners** (`/hie/admin/tefca/partners`) — QHIN onboarding, trust anchors, mTLS, IAS-JWT minting.
+- **MPI steward** (`/hie/admin/mpi/reviews`) and **terminology authoring** (`/hie/admin/terminology`).
 
-- **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
-  except through stable contracts under `lib/`.
-- **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.
-- **DIP** — `useVitalsStream` depends on `useAuth`'s `getAccessToken`, not on a concrete token store.
-- **ISP** — `AuthProvider` exposes only `{ user, status, signIn, signOut, getAccessToken }`.
-- **LSP** — `VitalsLatestPanel` accepts any object satisfying the `VitalsReading` contract.
+## Stack & scripts
 
-## Dev
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/hie"`. PDF via `pdfjs-dist`/`react-pdf`.
 
 ```bash
-npm install
-npm run dev     # http://localhost:5173 — proxies /api,/fhir,/hubs,/identity,/auth → gateway
+npm run dev        # Vite :5335
 npm run build
+npm run lint
 npm run typecheck
+npm run test:e2e
 ```
 
-The gateway must be running for auth + APIs:
+## How it runs
 
-```bash
-dotnet run --project src/backend/Shared/Dialysis.Module.Gateway
-```
+Reached through the Gateway at `http://localhost:9090/hie/`; the HIE BFF handles auth and proxies `/hie/api` (including the FHIR + admin surfaces) and `/hie/hubs` (subscription stream). `enforceGatewayOrigin()` keeps the cookie intact.
+
+> Cross-context navigation must be a full-page hop.
+
+See [src/backend/HIE/ARCHITECTURE.md](../../backend/HIE/ARCHITECTURE.md) for the FHIR/IHE/TEFCA domain and [src/backend/Identity/ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md) for auth. Shared conventions: [root README](../../../README.md#frontend).

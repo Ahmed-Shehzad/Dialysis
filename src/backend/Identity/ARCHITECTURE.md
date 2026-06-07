@@ -1,254 +1,148 @@
-# Identity — Architecture (low-level)
+# Identity & Auth
 
-Companion to [README.md](README.md), [RUNBOOK.md](RUNBOOK.md), and [identity_subdomain_structure.md](identity_subdomain_structure.md). Identity is a **Generic Subdomain** (Evans 2003, p. 281) — the platform deliberately keeps it thin. The module stands on a standard OIDC broker (Keycloak in dev) and exposes:
+> **Bounded context + cross-cutting layer.** The Identity module provisions user accounts, roles and role assignments. The surrounding **auth layer** — the edge Gateway, the per-context BFFs, and Keycloak — is what every other module relies on for sign-in, session continuity, and permission claims.
+>
+> **Topology:** a single browser origin (the **Gateway**, `:9090`) fronts one **BFF per bounded context** (his, ehr, pdms, smartconnect, hie, admin, portal), each running its own OIDC + path-scoped cookie session against the shared **Keycloak** realm `dialysis`. Modules validate JWTs only when an Authority is configured; in dev with no Authority, all permissions are granted for local work.
 
-- `Dialysis.Identity.Bff` — browser entry, OIDC code-flow + secure cookie session, JWT proxy to module APIs.
-- `Dialysis.Identity.Api` — local user provisioning + role assignment.
-- `Dialysis.Identity.Provisioning` — outbox-driven sync to Keycloak.
-- `Dialysis.Identity.Contracts` — integration events + claim shape contract.
+Generated from current code. See the root [README](../../../README.md) for the system picture.
 
-The whole module is intentionally **replaceable**: any IdP that issues the same claim shape is a drop-in.
-
-> Mermaid renders inline on GitHub/GitLab/JetBrains/VS Code; paste into <https://mermaid.live> if your viewer does not.
+> **Note on prior docs:** earlier documentation described a single Identity BFF at `:5275` proxying to HIS and one unified SPA. The current model is **per-context BFFs** (`dialysis-<ctx>-bff` Keycloak clients, ports 5301–5307) behind the Gateway; the standalone `Dialysis.Identity.Bff` (`:5275`, legacy `dialysis-bff` client) still exists as the global `/identity/*` login path.
 
 ---
 
-## 1. System architecture (component view)
+## 1. Project layout
 
-```mermaid
-flowchart LR
-    subgraph "Browser"
-        SPA["SPA / Patient Portal"]
-    end
-
-    subgraph "Dialysis.Identity.Bff (port 5275)"
-        OIDCstart["GET /auth/login"]
-        Callback["GET /auth/callback"]
-        Proxy["Reverse proxy to module APIs<br/>(forwards Bearer)"]
-        Cookie["Secure HttpOnly cookie session"]
-        OIDCstart --> Callback --> Cookie
-        Cookie --> Proxy
-    end
-
-    subgraph "Dialysis.Identity.Api"
-        Prov["Provisioning controllers<br/>(local user CRUD, role assign)"]
-        Auth["JwtBearer (admin)"]
-    end
-
-    subgraph "Dialysis.Identity.Provisioning"
-        Out["Provisioning outbox consumer<br/>(IUserProvisioningGateway)"]
-        Kg["KeycloakAdminClient"]
-    end
-
-    subgraph "Keycloak (dev: localhost:8081, realm 'dialysis')"
-        Realm["Realm 'dialysis'<br/>clients: bff, smart-on-fhir<br/>users, roles, groups"]
-        Token["/realms/dialysis/protocol/openid-connect/token"]
-    end
-
-    subgraph "Module APIs (HIS / EHR / PDMS / HIE / SmartConnect)"
-        ModAuth["JwtBearer validation<br/>Authority + RolePermissionMap"]
-        Curr["ICurrentUser → IModulePermissionCatalog"]
-    end
-
-    subgraph "Dialysis.Identity.Persistence (IdentityDbContext)"
-        Schemas[("identity_users (local mirror),<br/>identity_provisioning (outbox state),<br/>transponder")]
-    end
-
-    subgraph "Keycloak Postgres (port 5444)"
-        KCSchema[("Keycloak realm tables")]
-    end
-
-    SPA --> BFF
-    BFF -- OIDC code+PKCE --> Realm
-    Realm --> Token
-    BFF --> Token
-    Proxy -- "Bearer JWT" --> Modules
-    Modules --> ModAuth
-    ModAuth --> Curr
-
-    SPA -. admin actions .-> IdAPI
-    IdAPI --> DB
-    DB -. provisioning outbox .-> Out
-    Out --> Kg --> Realm
-
-    Realm --> KCDB
-```
-
-**Claim contract (published language)**
-
-Every module-side JWT is expected to carry the following claims; this is the **invariant** that any IdP swap must preserve:
-
-| Claim | Meaning |
+| Project | Role |
 |---|---|
-| `sub` | Stable subject id (NameIdentifier). |
-| `email` / `email_verified` | Optional. |
-| `roles` (or `groups`) | IdP role/group names — mapped per-module via `<Module>:Authentication:RolePermissionMap` to `IModulePermissionCatalog` permission strings. |
-| `his_patient_id` | Optional. Used by HIS PatientAccess to scope portal endpoints. `sub` is accepted as a fallback when it equals route `patientId`. |
-| `patient`, `encounter`, `fhirUser` | SMART-on-FHIR launch context (when issued via the `smart-on-fhir` Keycloak client). |
-| `his_permission` / module-equivalent | Optional explicit permission claim (merged with `RolePermissionMap` output). Claim type is configurable per module. |
+| `Dialysis.Identity.Api` | Provisioning host: `POST /api/v1/users`, `/{id}/deactivate`, `GET /{id}/permissions`, role CRUD/assign. |
+| `Dialysis.Identity.Contracts` | `UserRegistered/Deactivated`, `RoleAssigned/Revoked` events + `IdentityPermissions`. |
+| `Dialysis.Identity.Provisioning` | Slices: ProvisionUser, DeactivateUser, DefineRole, Assign/RevokeRole. Aggregates `UserAccount`, `RoleDefinition`, `RoleAssignment`. |
+| `Dialysis.Identity.Persistence` | `IdentityDbContext` (schema `identity`) + Transponder outbox. |
+| `Dialysis.Identity.Bff` | **Legacy** global login BFF (`:5275`), mounted at the Gateway's `/identity/*`. |
+| `Dialysis.Admin.Bff` | Per-context BFF for the `/admin` workspace (shared building block). |
+| `keycloak/dialysis-realm.json` | Realm import (clients, roles, mappers, federation placeholders). |
+| **Shared building blocks** (`src/backend/Shared/`) | |
+| `Dialysis.Module.Bff` | `AddModuleBff()` / `MapModuleBff()` — the canonical per-context BFF. |
+| `Dialysis.Module.Bff.Events` | `AddModuleBffEvents()` — consume-only Transponder subscription + SignalR `NotificationsHub`. |
+| `Dialysis.Module.Gateway` | YARP edge gateway (`:9090`). |
+| `Dialysis.Module.Hosting` | Module host scaffolding incl. JWT auth + `ICurrentUser`. |
 
----
-
-## 2. Workflow — Browser login via BFF (OIDC code + PKCE)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User as User (browser)
-    participant SPA as SPA
-    participant BFF as Identity.Bff
-    participant KC as Keycloak (realm 'dialysis')
-    participant Mod as Module API (e.g. HIS)
-
-    User->>SPA: open app
-    SPA->>BFF: GET /auth/login?returnUrl=/
-    BFF->>BFF: generate state + PKCE code_verifier
-    BFF-->>User: 302 to KC /authorize<br/>(client_id=bff, code_challenge, scope=openid roles)
-    User->>KC: GET /authorize (with state)
-    KC-->>User: login page
-    User->>KC: credentials (+ MFA if enabled)
-    KC-->>User: 302 to BFF /auth/callback?code&state
-    User->>BFF: GET /auth/callback
-    BFF->>KC: POST /token<br/>(authorization_code + code_verifier)
-    KC-->>BFF: id_token + access_token + refresh_token
-    BFF->>BFF: write secure HttpOnly cookie session<br/>(tokens never reach the SPA)
-    BFF-->>User: 302 to returnUrl
-    User->>SPA: page loads
-    SPA->>BFF: GET /api/v1.0/... (cookie)
-    BFF->>BFF: attach Authorization: Bearer access_token
-    BFF->>Mod: forward request
-    Mod->>Mod: JwtBearer validate against Keycloak JWKS
-    Mod->>Mod: ICurrentUser merges RolePermissionMap + claims
-    Mod-->>BFF: 200 response
-    BFF-->>SPA: 200 response
-
-    Note over BFF: token rotation — when access_token expires,<br/>BFF silently refreshes using refresh_token<br/>before forwarding the next request
-```
-
----
-
-## 3. Workflow — Provisioning outbox sync
-
-The Provisioning slice writes local user mutations to its DbContext and to the Transponder outbox in **one** transaction. A background outbox relay then drives Keycloak admin calls — the local store is the source of truth for what was *requested*; Keycloak is the source of truth for what was *applied*.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Admin as Admin caller
-    participant API as Identity.Api
-    participant H as ProvisionUserHandler
-    participant Ctx as IdentityDbContext
-    participant OBX as transponder.outbox
-    participant Relay as Provisioning relay
-    participant Kg as KeycloakAdminClient
-    participant KC as Keycloak realm
-
-    Admin->>API: POST /provisioning/users
-    API->>H: ProvisionUserCommand
-    H->>Ctx: insert LocalUser
-    H->>Ctx: enqueue UserProvisionedIntegrationEvent v1
-    H->>Ctx: SaveChangesAsync (one UoW)
-    Ctx-->>H: committed
-    API-->>Admin: 202 Accepted
-
-    Note over Relay,Kg: out-of-band
-    Relay->>OBX: poll unprocessed
-    Relay->>Kg: createUser + assignRoles
-    Kg->>KC: HTTP admin API
-    alt success
-        KC-->>Kg: 201
-        Kg-->>Relay: ok
-        Relay->>OBX: mark published
-        Relay->>Ctx: write ProvisioningOutcome row<br/>(see IdentityProvisioningOutboxTests)
-    else conflict / error
-        KC-->>Kg: 409 / 5xx
-        Kg-->>Relay: error
-        Relay->>Relay: backoff + retry
-    end
-```
-
-Tests for the outbox path live in [Dialysis.Identity.Tests/IdentityProvisioningOutboxTests.cs](Dialysis.Identity.Tests/IdentityProvisioningOutboxTests.cs).
-
----
-
-## 4. Activity — User lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> Drafted: ProvisionUser (local)
-    Drafted --> Provisioning: outbox row enqueued
-    Provisioning --> Active: Keycloak create succeeded<br/>publishes UserProvisionedIntegrationEvent
-    Provisioning --> ProvisioningFailed: max attempts<br/>(ops attention required)
-    ProvisioningFailed --> Provisioning: manual retry
-    Active --> RolesUpdated: AssignRole / RevokeRole<br/>publishes UserRolesUpdatedIntegrationEvent
-    RolesUpdated --> Active
-    Active --> Disabled: DisableUser<br/>publishes UserDisabledIntegrationEvent
-    Disabled --> Active: ReEnableUser
-    Disabled --> [*]: PurgeUser (hard delete after retention window)
-```
-
----
-
-## 5. Composition root
-
-```mermaid
-flowchart TB
-    BFFprog["Program.cs (Identity.Bff)"]
-    BFFprog --> AddOidc["AddAuthentication(OIDC + Cookie)<br/>+ AddSession + AddYarp (reverse proxy)"]
-    BFFprog --> Proxy["Route /api/* → module APIs<br/>(forward Bearer access_token)"]
-
-    APIprog["Program.cs (Identity.Api)"]
-    APIprog --> AddModuleHost["AddModuleHost of IdentityPermissionCatalog<br/>(ModuleSlug = 'identity')"]
-    APIprog --> AddIdentity["AddIdentityModule(configuration)"]
-    AddIdentity --> Persist["AddDbContext of IdentityDbContext<br/>(Postgres 'postgres-identity')"]
-    AddIdentity --> Prov["AddProvisioning()<br/>(KeycloakAdminClient + outbox consumer)"]
-    AddIdentity --> Bus["AddTransponder + outbox relay"]
-```
-
-**Configuration keys (BFF)**
-
-- `Authentication:Oidc:Authority` — Keycloak realm URL.
-- `Authentication:Oidc:ClientId` / `ClientSecret` — confidential client `bff`.
-- `Authentication:Oidc:Scope` — space-delimited (`openid profile email roles offline_access`).
-- `Cookie:Name` / `Cookie:Domain` / `Cookie:SecurePolicy` — session cookie attributes.
-- `ReverseProxy:Routes:*` — YARP route map to module APIs.
-
----
-
-## 6. Data layout
+Provisioning aggregates:
 
 ```mermaid
 erDiagram
-    IdentityDbContext ||--o{ identity_users : "LocalUser (mirror)"
-    IdentityDbContext ||--o{ identity_provisioning : "ProvisioningOutcome,<br/>RoleAssignmentMirror"
-    IdentityDbContext ||--o{ transponder : "Outbox, Inbox"
-    KeycloakRealm ||--o{ KeycloakUsers : "users (authoritative)"
-    KeycloakRealm ||--o{ KeycloakRoles : "roles, groups (authoritative)"
+    USER_ACCOUNT ||--o{ ROLE_ASSIGNMENT : "UserId"
+    ROLE_DEFINITION ||--o{ ROLE_ASSIGNMENT : "RoleId"
+    USER_ACCOUNT {
+        guid Id PK
+        string Subject "Keycloak sub"
+        string DisplayName
+        bool IsActive
+    }
+    ROLE_DEFINITION {
+        guid Id PK
+        string Name
+        string PermissionsJson
+    }
+    ROLE_ASSIGNMENT {
+        guid Id PK
+        guid UserId FK
+        guid RoleId FK
+    }
 ```
 
 ---
 
-## 7. Cross-context contracts
+## 2. Keycloak realm
 
-| Counterparty | Role | Vehicle |
-|---|---|---|
-| HIS / EHR / PDMS / HIE / SmartConnect | **Supplier** of identity claims (Conformist on the consumer side). | OIDC JWT; module-side `RolePermissionMap` |
-| Keycloak | **Vendor** — opaque external IdP. | OIDC discovery + Admin REST |
-| FHIR SMART-on-FHIR clients | **Customer**: launch + standalone flows authorized via `smart-on-fhir` Keycloak client. | OIDC + PKCE, launch-context claims |
+Realm `dialysis` (access-token lifespan 300 s, SSO idle 1800 s). Clients:
 
----
+- **`dialysis-<ctx>-bff`** (his/ehr/pdms/smartconnect/hie/admin/portal) — confidential BFF clients, standard flow + token-exchange, redirect URIs scoped to `http://localhost:9090/<ctx>/*`.
+- **`dialysis-his-api`** — resource-server audience for module JWT validation.
+- **`smart-on-fhir`** — public PKCE client with SMART scopes.
+- **`dialysis-data-simulator`** — client-credentials service account driving dev writes through BFFs.
+- **`dialysis-bff`** — legacy confidential BFF (redirect URIs include both `:5275` and `:9090`).
 
-## 8. Operational notes
+**Protocol mappers** on every BFF client: `roles` (realm-role mapper, multivalued), and **`dialysis_permission`** — a JSON-typed claim emitted to access + userinfo tokens carrying the permission strings the SPA's `PermissionGate` checks. In dev this is a hardcoded "grant everything" mapper; production replaces it with a real per-user mapper. The `dialysis-portal-bff` client additionally maps `his_patient_id` for patient-self row scoping.
 
-- The Keycloak realm `dialysis` is **auto-imported from [keycloak/dialysis-realm.json](keycloak/dialysis-realm.json)** on container start. Update that JSON to add clients / roles; commit alongside code changes.
-- The Identity docker-compose lives at [docker-compose.yml](docker-compose.yml) (Keycloak + Postgres on port 5444); the root `docker-compose.modules.yml` runs the broader containerized stack, and the Aspire AppHost (`dotnet run --project src/aspire/Dialysis.AppHost`) is the local dev entrypoint.
-- BFF + JWT smoke test → [RUNBOOK.md](RUNBOOK.md).
+**Multi-IdP federation** is brokered through Keycloak, not the BFF: `identityProviders[]` holds disabled placeholders for `okta`, `auth0`, `entra`. The BFF forwards `kc_idp_hint=<alias>` when a caller hits `/<ctx>/identity/login?provider=<alias>`, gated by an `IIdentityProviderCatalog` allowlist.
 
 ---
 
-## 9. Where to look next
+## 3. BFF & gateway mechanics
 
-- BFF host → `Dialysis.Identity.Bff/Program.cs` and `appsettings.json`.
-- Provisioning slice → `Dialysis.Identity.Provisioning/` and `IdentityProvisioningOutboxTests`.
-- Realm definition → [keycloak/dialysis-realm.json](keycloak/dialysis-realm.json).
-- Long-form rationale → [identity_subdomain_structure.md](identity_subdomain_structure.md).
+`AddModuleBff()` wires a cookie scheme (default) + OIDC challenge:
+
+- A **server-side ticket store** (`DistributedCacheTicketStore`, Valkey-backed) keeps the token bundle off the browser — only a session key lives in the cookie, avoiding HTTP 431 from per-context cookie pile-up on the shared origin. Valkey also backs the Data Protection key ring for multi-replica cookie decryption.
+- The cookie is **path-scoped** to `/<ctx>` (`SameSite=Lax`), so contexts don't collide on `:9090`.
+- OIDC requests `openid profile email offline_access` (the `offline_access` scope forces Keycloak to issue a refresh token).
+- A **YARP module proxy** forwards `{base}/api/*` and `{base}/hubs/*` to the module API, attaching `Authorization: Bearer <access_token>` from the cookie ticket; `{base}/api/_x/{key}/...` aggregations reach sibling contexts.
+
+The **Gateway** is the only browser origin. Routes (all anonymous at the edge — auth is enforced downstream): `/identity/*` → legacy Identity BFF; `/auth/*` → Keycloak; per context `/<ctx>/identity`, `/<ctx>/api`, `/<ctx>/hubs`, `/<ctx>/events` → that context's BFF; `/<ctx>/*` → that context's SPA. The root `/` serves a static launchpad chooser.
+
+---
+
+## 4. Auth model across modules
+
+`AddModuleHost<TPermissionCatalog>` registers JWT Bearer **only when `{ModuleSlug}:Authentication:Authority` is set** (and fails startup outside Development if it's missing). With an Authority, a module computes `ICurrentUser.Permissions` as the union of `dialysis_permission` claim values and `RolePermissionMap[roles]`, both filtered against the module's closed `IModulePermissionCatalog`. Patient-facing routes additionally check the `his_patient_id` (fallback `sub`) claim against the route's `patientId`. In dev with no Authority, `ICurrentUser` exposes the entire catalog.
+
+---
+
+## 5. Key workflows
+
+### 5.1 Browser login (optional upstream IdP)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant GW as Gateway :9090
+    participant BFF as Context BFF
+    participant KC as Keycloak (realm dialysis)
+    participant IDP as Upstream IdP (optional)
+
+    B->>GW: load SPA, then GET /{ctx}/identity/user returns 401
+    B->>BFF: GET /{ctx}/identity/login (returnUrl, provider)
+    BFF->>BFF: validate returnUrl, if provider known stash kc_idp_hint
+    BFF-->>B: 302 Challenge to Keycloak /authorize (code, PKCE, offline_access)
+    opt provider hint present
+        KC->>IDP: redirect (first-broker-login imports user)
+    end
+    B->>KC: authenticate
+    KC-->>BFF: 302 {ctx}/identity/signin-oidc with code
+    BFF->>KC: exchange code for id, access and refresh tokens
+    BFF->>BFF: store tokens server-side, set path-scoped session cookie
+    BFF-->>B: 302 returnUrl, SPA re-fetches /{ctx}/identity/user for permissions
+```
+
+### 5.2 Authenticated API call & silent refresh
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SPA as SPA
+    participant BFF as Context BFF
+    participant TR as TokenRefreshService
+    participant KC as Keycloak /token
+    participant API as Module API
+
+    SPA->>BFF: fetch /{ctx}/api/v1.0/... (session cookie)
+    BFF->>TR: OnValidatePrincipal
+    alt token expires within 60s
+        TR->>KC: grant_type=refresh_token (Basic client creds)
+        alt refresh ok
+            KC-->>TR: new tokens, update ticket, ShouldRenew
+        else refresh fails / no refresh token
+            TR-->>BFF: RejectPrincipal, sign out, SPA bounces to login
+        end
+    end
+    BFF->>API: forward with Authorization: Bearer (PathRemovePrefix /{ctx})
+    API->>API: validate JWT (JWKS), compute permissions, CQRS authz + patient-claim check
+    API-->>SPA: response
+```
+
+---
+
+## 6. Event-driven BFF
+
+`AddModuleBffEvents()` layers real-time push on a BFF: a consume-only Transponder/RabbitMQ subscription (queue `bff-<slug>`, **no DbContext, no outbox**) and a `[Authorize]` SignalR `NotificationsHub` at `/<ctx>/events`. A consumer maps an integration event to a PHI-light `BffNotification` and pushes it via `IBffNotifier` to the `patient:{id}` or `user:{sub}` group; the SPA toasts it and **refetches through the synchronous, permission-checked API**. Reads stay synchronous — this is push-only signalling, not a BFF read model. Wired in the EHR, PDMS, HIS and patient-portal BFFs today.

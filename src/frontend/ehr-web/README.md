@@ -1,47 +1,40 @@
-# Dialysis Web
+# ehr-web — Clinical Chart SPA
 
-React + TypeScript SPA for the Dialysis modular monolith. Talks to the per-module APIs
-through the YARP gateway at `http://localhost:5000` (configurable via `VITE_GATEWAY_URL`).
+The EHR (Electronic Health Record) browser app: the **patient record, orders, notes and billing**. The richest feature surface in the platform. Backed by the **`Dialysis.EHR.Bff`** per-context BFF.
 
-## Structure (Bulletproof React)
+|                                |                                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context base / router basename | `/ehr`                                                                                                                                                              |
+| Standalone dev port (Vite)     | `5332`                                                                                                                                                              |
+| Backing BFF                    | `Dialysis.EHR.Bff` (`ehr-bff`, port `5302`)                                                                                                                         |
+| BFF aggregations               | HIE, Lab, SmartConnect (DICOM)                                                                                                                                      |
+| Real-time push                 | **Yes** — `LabResultReceived`, `PatientAdmitted/Discharged`, `PatientPortalSecureMessageSent`, `PatientPortalAppointmentRequested` → chart toasts via `/ehr/events` |
 
-```
-src/
-  app/            # provider composition (QueryClient, BrowserRouter, AuthProvider)
-  components/     # shared UI (layout, atoms)
-  features/
-    auth/         # session + identity (AuthProvider, useAuth, /identity/* calls)
-    sessions/     # dialysis session list + reading history
-    vitals/       # SignalR stream hook, latest-vitals panel, D3 chart
-  lib/
-    api/          # axios instance + interceptors
-    auth/         # JWT helpers
-    realtime/     # SignalR connection builder
-  pages/          # route targets (Login, Dashboard, SessionLive)
-  routes/         # router + ProtectedRoute
-  styles/         # tailwind entry
-```
+## What it does
 
-Design rules:
+- **Patients** (`/ehr/patients`) and the **chart** (`/ehr/patients/:patientId`) — notes, care plan, care team, timeline, lab results, imaging/DICOM viewer, order sets / labs / prescriptions / referrals, clinical recommendations, quality gaps, safety advisories, after-visit-summary authoring, secure messaging, plus embedded HIE community-record and consent panels.
+- **Workflows**, **care-coordination worklist**, **appointment requests**.
+- **Billing admin** — dialysis charges (`/ehr/admin/billing/dialysis-charges`), fee schedule.
+- **Population** quality (`/ehr/population/quality`) and **safety surveillance** (`/ehr/safety/surveillance`).
 
-- **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
-  except through stable contracts under `lib/`.
-- **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.
-- **DIP** — `useVitalsStream` depends on `useAuth`'s `getAccessToken`, not on a concrete token store.
-- **ISP** — `AuthProvider` exposes only `{ user, status, signIn, signOut, getAccessToken }`.
-- **LSP** — `VitalsLatestPanel` accepts any object satisfying the `VitalsReading` contract.
+Route definitions live in `EHR_ROUTES` and are kept in lockstep with the nav by a test (`AppRouter.nav.test.tsx`).
 
-## Dev
+## Stack & scripts
+
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/ehr"`. Imaging via `pdfjs-dist` + DICOM; charts via `echarts`.
 
 ```bash
-npm install
-npm run dev     # http://localhost:5173 — proxies /api,/fhir,/hubs,/identity,/auth → gateway
-npm run build
+npm run dev        # Vite :5332
+npm run build      # tsc -b && vite build
+npm run lint
 npm run typecheck
+npm run test:e2e
 ```
 
-The gateway must be running for auth + APIs:
+## How it runs
 
-```bash
-dotnet run --project src/backend/Shared/Dialysis.Module.Gateway
-```
+Reached through the Gateway at `http://localhost:9090/ehr/`; the EHR BFF handles OIDC/cookie auth and proxies `/ehr/api`, `/ehr/hubs`, `/ehr/events` to the EHR module API (attaching the bearer). `enforceGatewayOrigin()` keeps the path-scoped cookie intact. UI gated by `PermissionGate`.
+
+> Cross-context navigation (to `/his`, `/pdms`, …) must be a full-page hop, not a client-side route.
+
+See [src/backend/EHR/ARCHITECTURE.md](../../backend/EHR/ARCHITECTURE.md) for the API/domain and [src/backend/Identity/ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md) for the auth model. Shared frontend conventions are in the [root README](../../../README.md#frontend).

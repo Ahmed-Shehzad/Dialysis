@@ -1,47 +1,38 @@
-# Dialysis Web
+# smartconnect-web — Integration Operator Shell
 
-React + TypeScript SPA for the Dialysis modular monolith. Talks to the per-module APIs
-through the YARP gateway at `http://localhost:5000` (configurable via `VITE_GATEWAY_URL`).
+The SmartConnect browser app: a **Mirth-Connect-style operator console** for HL7 v2 inbound feeds, channels, and vendor adapters. Backed by the **`Dialysis.SmartConnect.Bff`** per-context BFF.
 
-## Structure (Bulletproof React)
+|                                |                                                               |
+| ------------------------------ | ------------------------------------------------------------- |
+| Context base / router basename | `/smartconnect`                                               |
+| Standalone dev port (Vite)     | `5334`                                                        |
+| Backing BFF                    | `Dialysis.SmartConnect.Bff` (`smartconnect-bff`, port `5304`) |
+| BFF aggregations               | none                                                          |
+| Real-time push                 | No (`AddModuleBff` only)                                      |
 
-```
-src/
-  app/            # provider composition (QueryClient, BrowserRouter, AuthProvider)
-  components/     # shared UI (layout, atoms)
-  features/
-    auth/         # session + identity (AuthProvider, useAuth, /identity/* calls)
-    sessions/     # dialysis session list + reading history
-    vitals/       # SignalR stream hook, latest-vitals panel, D3 chart
-  lib/
-    api/          # axios instance + interceptors
-    auth/         # JWT helpers
-    realtime/     # SignalR connection builder
-  pages/          # route targets (Login, Dashboard, SessionLive)
-  routes/         # router + ProtectedRoute
-  styles/         # tailwind entry
-```
+## What it does
 
-Design rules:
+- **Integrations console** (`/smartconnect/integrations`) — a tabbed operator shell: **Flows** (channels, lifecycle, statistics), **Dependency Graph** (`@xyflow/react`), **HL7 Workbench** (paste / parse / validate / dispatch HL7 v2), **Messages** (browse + reprocess-from-ledger), **Configuration Map**, **Code Templates**, **Alerts**, **Audit Events**, **Retention** (pruner).
+- **Channel editor** (`/smartconnect/integrations/editor/:flowId`) — multi-step channel build (`NewChannelDialog`, `AdapterParametersForm`, pipeline node drawer).
 
-- **SRP** — each feature folder owns its API, hooks, and components; no cross-feature imports
-  except through stable contracts under `lib/`.
-- **OCP** — the D3 chart's `SERIES` table lets you add a trace without touching render logic.
-- **DIP** — `useVitalsStream` depends on `useAuth`'s `getAccessToken`, not on a concrete token store.
-- **ISP** — `AuthProvider` exposes only `{ user, status, signIn, signOut, getAccessToken }`.
-- **LSP** — `VitalsLatestPanel` accepts any object satisfying the `VitalsReading` contract.
+The operator API it drives is `/smartconnect/api/v1/admin/*` (see the module's operator shell). The module also serves a vanilla-TS operator shell at its own `/`, but this React app is the primary console.
 
-## Dev
+## Stack & scripts
+
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/smartconnect"`. Pipeline graphs via `@xyflow/react`.
 
 ```bash
-npm install
-npm run dev     # http://localhost:5173 — proxies /api,/fhir,/hubs,/identity,/auth → gateway
+npm run dev        # Vite :5334
 npm run build
+npm run lint
 npm run typecheck
+npm run test:e2e
 ```
 
-The gateway must be running for auth + APIs:
+## How it runs
 
-```bash
-dotnet run --project src/backend/Shared/Dialysis.Module.Gateway
-```
+Reached through the Gateway at `http://localhost:9090/smartconnect/`; the SmartConnect BFF handles auth and proxies `/smartconnect/api` + `/smartconnect/hubs`. `enforceGatewayOrigin()` keeps the cookie intact.
+
+> Cross-context navigation must be a full-page hop.
+
+See [src/backend/SmartConnect/ARCHITECTURE.md](../../backend/SmartConnect/ARCHITECTURE.md) for the flow engine and operator API, and [src/backend/Identity/ARCHITECTURE.md](../../backend/Identity/ARCHITECTURE.md) for auth. Shared conventions: [root README](../../../README.md#frontend).
