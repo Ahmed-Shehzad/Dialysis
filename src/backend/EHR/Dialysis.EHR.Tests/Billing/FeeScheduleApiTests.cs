@@ -20,7 +20,7 @@ public sealed class FeeScheduleApiTests
     public FeeScheduleApiTests(EhrApiWebApplicationFactory factory) => _factory = factory;
 
     [Fact]
-    public async Task Create_FeeSchedule_Returns_201_Through_The_Http_Pipeline_Async()
+    public async Task Create_Fee_Schedule_Returns_201_Through_The_Http_Pipeline_Async()
     {
         var client = _factory.CreateClient();
 
