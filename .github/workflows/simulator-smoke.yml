@@ -65,9 +65,11 @@ jobs:
       - name: Let the simulator populate
         # The simulator only starts AFTER every API + BFF + the gateway is up (it WaitFor's them all),
         # so the gateway being reachable doesn't mean any journeys have run yet. The worker drives a
-        # small batch of full patient journeys per tick (~2 patients / 5s by default); 180s is plenty
-        # of headroom for several complete journeys (incl. the ~half that get lab/imaging results).
-        run: sleep 180
+        # small batch of full patient journeys per tick (~2 patients / 5s by default). This is a
+        # baseline head start; the assert step additionally *polls* for the slowest-to-populate signal
+        # (a completed session → HIE outbound) before the one-shot context checks, so a slow boot no
+        # longer flakes the eventually-consistent contexts.
+        run: sleep 60
       - name: Assert every BFF context has data
         env:
           # The dev-realm default for the dialysis-data-simulator confidential client (matches
@@ -94,6 +96,38 @@ jobs:
           fi
 
           failures=0
+
+          # fetch_count <url> <jq-filter> — GET with the bearer; on HTTP 2xx prints the jq count to
+          # stdout (else prints nothing). Shared by the warm-up poll, the per-context asserts, and the
+          # patient-iterating loops.
+          fetch_count() {
+            local url="$1" filter="$2" body code
+            body=$(curl -sS -w $'\n%{http_code}' -H "Authorization: Bearer ${TOKEN}" "$url")
+            code=$(printf '%s' "$body" | tail -n1)
+            body=$(printf '%s' "$body" | sed '$d')
+            [ "${code:0:1}" = "2" ] || { echo ""; return 1; }
+            printf '%s' "$body" | jq -r "$filter" 2>/dev/null
+          }
+
+          # Warm-up poll: wait for the slowest-to-populate signal — HIE outbound, which only appears
+          # once the simulator COMPLETES a dialysis session (the live pool must fill first, then the
+          # outbound dispatch row is written). Everything else (queues, patients, sessions, flows, the
+          # MPI inbound seed, ~half-resulted lab/imaging) is populated no later than this, so gating on
+          # it removes the eventually-consistent flake without a per-assert retry budget. Up to ~6 min.
+          echo "warm-up: waiting for a completed session to reach the HIE outbound dispatch queue …"
+          warm=0
+          for i in $(seq 1 60); do
+            wc=$(fetch_count "${BASE_URL}/hie/api/v1.0/hie/ops/outbound" '.data | length')
+            if [[ "$wc" =~ ^[0-9]+$ ]] && [ "$wc" -ge 1 ]; then
+              warm=1
+              echo "warm after ~$((60 + i * 6))s ($wc outbound dispatch item(s))."
+              break
+            fi
+            sleep 6
+          done
+          if [ "$warm" -ne 1 ]; then
+            echo "::warning::HIE outbound still empty after ~7 min; asserting anyway (will surface the real gap below)."
+          fi
 
           # assert_nonempty <label> <url> <jq-filter-yielding-a-count>
           #   Fetches <url> with the bearer, requires HTTP 2xx, parses the body with <jq-filter>
