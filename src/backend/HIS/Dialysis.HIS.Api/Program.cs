@@ -14,6 +14,7 @@ using Dialysis.HIS.Composition;
 using Dialysis.HIS.Contracts.Security;
 using Dialysis.HIS.DataServices;
 using Dialysis.HIS.Integration;
+using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
 using Dialysis.HIS.Operations;
 using Dialysis.HIS.Persistence;
@@ -22,6 +23,7 @@ using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -100,18 +102,36 @@ builder.Services.AddFhirAuditEntityFrameworkStore<HisDbContext>();
 builder.Services.AddHipaaCompliance("his");
 builder.Services.AddHipaaAspNetCoreSafeguards();
 
+// Coarse edge abuse-guard for the device-reading ingest endpoint. This is NOT a per-device cap:
+// the partition callback runs before model binding (no body `deviceId`) and before authentication
+// (no principal), and every reading arrives through the BFF + gateway so the connection IP is a
+// single upstream host. A per-device-sized cap here would throttle the whole fleet in aggregate —
+// per-device fairness is owned by the in-process SlidingWindowRateLimiter (keyed on DeviceId in
+// IngestDeviceReadingCommandHandler). Limits are configurable so ops can size the flood guard per
+// environment; the default is a fleet-sane ~200/s. Rejection is 429 + Retry-After (set globally by
+// the module-default RateLimiterOptions / ModuleRateLimitingExtensions.OnRejected).
+builder.Services.Configure<DeviceIngestRateLimitOptions>(
+    builder.Configuration.GetSection(DeviceIngestRateLimitOptions.SectionName));
+
 builder.Services.AddRateLimiter(o =>
 {
     o.AddPolicy("DeviceIngest", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
+    {
+        var limits = context.RequestServices
+            .GetRequiredService<IOptions<DeviceIngestRateLimitOptions>>().Value;
+        if (!limits.Enabled)
+            return RateLimitPartition.GetNoLimiter("device-ingest-disabled");
+
+        return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 120,
-                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = limits.PermitLimit,
+                Window = TimeSpan.FromSeconds(limits.WindowSeconds),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 0,
-            }));
+                QueueLimit = limits.QueueLimit,
+            });
+    });
 });
 
 // Durable command bus. Optional — flips on per-command via the feature flag; with the

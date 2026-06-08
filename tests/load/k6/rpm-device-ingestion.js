@@ -93,9 +93,10 @@ export default function rpmDeviceIngestion() {
   const start = Date.now();
   let res = http.post(url, body, { headers });
 
-  // Honor the durable bus 503 + Retry-After backpressure contract.
+  // Honor backpressure + Retry-After: 503 from the durable bus (broker pressure) and 429 from the
+  // HIS edge ingest rate limiter (coarse flood guard) are both transient — retry once per Retry-After.
   let retried = false;
-  while (res.status === 503 && retried === false) {
+  while ((res.status === 503 || res.status === 429) && retried === false) {
     retried = true;
     retriedRate.add(1);
     sleep(parseInt(res.headers['Retry-After'] || '5', 10));
