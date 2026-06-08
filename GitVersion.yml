@@ -1,0 +1,68 @@
+# GitVersion — derives a Semantic Version from git history, so nobody hand-edits a
+# version string. Read by the GitVersion CLI (gitversion.tool, pinned to 6.7.0 in
+# .config/dotnet-tools.json) and by the NUKE build, which downloads the same tool via
+# build/_build.csproj and stamps Pack output with the derived version.
+#
+# Schema: GitVersion v6 (config version v3). Run `dotnet gitversion /showconfig` to see
+# the fully-merged effective configuration, or `./build.sh ShowVersion` for the numbers.
+#
+# ── Branching model: GitHub Flow ─────────────────────────────────────────────────────
+#   main                       the trunk; always releasable
+#   feature/*, feat/*, claude/*  short-lived branches that merge into main via pull request
+#
+# Releases are cut by tagging a commit on main as `vX.Y.Z` (the leading `v` is optional).
+# Between tags, GitVersion produces continuous-delivery versions automatically, so every
+# build is uniquely and monotonically versioned:
+#
+#   main, just tagged v1.4.0      ->  1.4.0
+#   main, 3 commits after a tag   ->  1.4.1-ci.3            (+build metadata)
+#   feature/x or claude/x         ->  1.4.1-<branch>.5
+#   pull request #179             ->  1.4.1-PullRequest0179.5
+#
+# Until the first `vX.Y.Z` tag exists, `next-version` below seeds the base version.
+
+# Start from GitHub Flow's well-tested branch ruleset and override only what we need.
+workflow: GitHubFlow/v1
+
+# Base version used ONLY while the repo has no version tag. The first `vX.Y.Z` tag on
+# main supersedes this permanently — after that, the tag drives the version.
+next-version: '1.0.0'
+
+# Accept release tags written either `v1.4.0` or `1.4.0`.
+tag-prefix: '[vV]?'
+
+# AssemblyVersion / AssemblyFileVersion get Major.Minor.Patch.0 (a clean four-part
+# number that tooling is happy with); the full SemVer + commit sha ride in the
+# AssemblyInformationalVersion so a deployed binary is traceable back to a commit.
+assembly-versioning-scheme: MajorMinorPatch
+assembly-file-versioning-scheme: MajorMinorPatch
+assembly-informational-format: '{InformationalVersion}'
+
+# Explicit bump control from the commit message footer, e.g. `+semver: minor` (or
+# `+semver: none` to suppress a bump). These are GitVersion's defaults, restated here
+# so the contract is discoverable in-repo rather than implicit.
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+no-bump-message: '\+semver:\s?(none|skip)'
+
+branches:
+  main:
+    # Each merge to the trunk bumps the patch by default; a `+semver: minor|major`
+    # footer (or an explicit tag) bumps higher.
+    increment: Patch
+    # Untagged trunk commits are pre-releases labelled `ci` (e.g. 1.4.1-ci.3) so they read
+    # as CI builds and sort below the eventual clean release. Tagging `vX.Y.Z` on a commit
+    # makes that commit the clean release (1.4.0) — a tag always overrides this label.
+    label: 'ci'
+  feature:
+    # Broaden the stock feature regex so AI-authored `claude/*` branches version exactly
+    # like a normal `feature/*` / `feat/*` branch: a pre-release labelled with the branch
+    # name, inheriting its base version from main. The `(?<BranchName>...)` named capture
+    # group is REQUIRED — the `label: {BranchName}` template (from GitHubFlow/v1) binds to
+    # it; without the group the placeholder renders literally as `{BranchName}`.
+    regex: '^(?:features?|feat|claude)[/-](?<BranchName>.+)'
+
+# No commits are excluded from version calculation.
+ignore:
+  sha: []

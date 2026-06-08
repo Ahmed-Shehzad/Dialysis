@@ -11,8 +11,12 @@
     SmartConnect-tree defaults. Inherits and merges with the repository-root Directory.Build.props
     (warnings-as-errors, central package management, doc-comment generation).
 
-    Packaging metadata is set here once so a single <Version> bump cascades to every NuGet-shippable
-    SmartConnect project. Individual csproj files opt into packing with:
+    Static packaging metadata (authors / license / tags / URLs) is set here once for every
+    NuGet-shippable SmartConnect project. The package VERSION is deliberately NOT set here: it
+    is derived from git history by GitVersion (GitVersion.yml) and stamped at pack time by the
+    NUKE build's Pack target (`/p:Version`), exactly like every other packable project in the
+    repo — so SmartConnect follows the repo-wide version, not a separately-bumped number.
+    Individual csproj files opt into packing with:
 
         <PropertyGroup>
           <IsPackable>true</IsPackable>
@@ -25,7 +29,6 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
 
-    <Version>1.0.0</Version>
     <Authors>Dialysis Platform Team</Authors>
     <Company>Dialysis Platform</Company>
     <Copyright>Copyright (c) Dialysis Platform Team</Copyright>
