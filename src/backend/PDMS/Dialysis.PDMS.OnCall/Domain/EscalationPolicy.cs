@@ -50,6 +50,35 @@ public sealed class EscalationPolicy : AggregateRoot<Guid>
     public bool QuietHoursSuppressNonCritical { get; private set; }
 
     /// <summary>
+    /// Replaces the policy's name and per-severity windows in place. The admin "save" edits an
+    /// existing policy; mutating the tracked aggregate yields a single UPDATE rather than a
+    /// delete+insert of the same key.
+    /// </summary>
+    public void Reconfigure(
+        string name,
+        TimeSpan criticalPrimaryWindow,
+        TimeSpan criticalBackupWindow,
+        TimeSpan warningPrimaryWindow,
+        TimeSpan warningBackupWindow,
+        TimeSpan informationalPrimaryWindow,
+        bool quietHoursSuppressNonCritical)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        EnsurePositive(criticalPrimaryWindow);
+        EnsurePositive(criticalBackupWindow);
+        EnsurePositive(warningPrimaryWindow);
+        EnsurePositive(warningBackupWindow);
+        EnsurePositive(informationalPrimaryWindow);
+        Name = name;
+        CriticalPrimaryWindow = criticalPrimaryWindow;
+        CriticalBackupWindow = criticalBackupWindow;
+        WarningPrimaryWindow = warningPrimaryWindow;
+        WarningBackupWindow = warningBackupWindow;
+        InformationalPrimaryWindow = informationalPrimaryWindow;
+        QuietHoursSuppressNonCritical = quietHoursSuppressNonCritical;
+    }
+
+    /// <summary>
     /// Returns the delay before walking from <paramref name="currentAttemptIndex"/> to the next link.
     /// Returns <c>null</c> when the chain has been exhausted.
     /// </summary>
