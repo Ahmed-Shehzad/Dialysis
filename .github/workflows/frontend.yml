@@ -67,10 +67,12 @@ jobs:
         run: npm run build
 
   # UI end-to-end (Playwright). Runs against the Vite dev server with all BFF/identity calls mocked
-  # via page.route, so it needs no backend — it verifies the SPA renders consistent, *related*
-  # scenario data (e.g. portal S16: the discovered patient is the one whose summary renders). Starts
-  # with patient-portal-web (the richest patient-facing relatedness); the matrix extends to other
-  # apps as their specs land. The dev server is started by playwright.config.ts's `webServer`.
+  # via page.route, so it needs no backend. patient-portal-web verifies consistent, *related* scenario
+  # data (S16: the discovered patient is the one whose summary renders); the per-context coverage
+  # specs anchor on the authenticated module shell (the SPA gets past login, resolves the BFF identity
+  # probe, and routes to its landing context) — lazy page bodies are subject to Vite dev-server
+  # cold-start import races, so they stay out of the assertions. The dev server is started by each
+  # app's playwright.config.ts `webServer`.
   e2e:
     name: ${{ matrix.app }} e2e (Playwright)
     runs-on: ubuntu-latest
@@ -79,6 +81,12 @@ jobs:
       matrix:
         app:
           - patient-portal-web
+          - his-web
+          - ehr-web
+          - pdms-web
+          - smartconnect-web
+          - hie-web
+          - identity-web
     defaults:
       run:
         working-directory: src/frontend/${{ matrix.app }}

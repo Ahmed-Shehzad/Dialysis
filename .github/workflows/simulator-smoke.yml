@@ -77,9 +77,9 @@ jobs:
         # The simulator only starts AFTER every API + BFF + the gateway is up (it WaitFor's them all),
         # so the gateway being reachable doesn't mean any journeys have run yet. The worker drives a
         # small batch of full patient journeys per tick (~2 patients / 5s by default). This is a
-        # baseline head start; the assert step additionally *polls* for the slowest-to-populate signal
-        # (a completed session → HIE outbound) before the one-shot context checks, so a slow boot no
-        # longer flakes the eventually-consistent contexts.
+        # baseline head start; the assert step additionally warms up on EHR patient-cohort volume
+        # before the per-context checks, and drives HIE deterministically (active inbound seed), so a
+        # slow boot no longer flakes the eventually-consistent contexts.
         run: sleep 60
       - name: Assert every BFF context has data
         env:
