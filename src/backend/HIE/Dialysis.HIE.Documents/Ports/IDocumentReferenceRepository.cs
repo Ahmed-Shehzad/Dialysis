@@ -11,6 +11,14 @@ public interface IDocumentReferenceRepository
 {
     void Add(DocumentReference document);
 
+    /// <summary>
+    /// Inserts the document idempotently, returning <see langword="true"/> if it created the row and
+    /// <see langword="false"/> if an equal-primary-key row already existed (idempotent redelivery,
+    /// including the concurrent read-then-insert race). The document id is the source event id, so a
+    /// primary-key conflict means the document was already indexed — never an error to surface.
+    /// </summary>
+    Task<bool> TryAddIdempotentAsync(DocumentReference document, CancellationToken cancellationToken);
+
     Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>

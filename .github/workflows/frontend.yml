@@ -65,3 +65,46 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # UI end-to-end (Playwright). Runs against the Vite dev server with all BFF/identity calls mocked
+  # via page.route, so it needs no backend — it verifies the SPA renders consistent, *related*
+  # scenario data (e.g. portal S16: the discovered patient is the one whose summary renders). Starts
+  # with patient-portal-web (the richest patient-facing relatedness); the matrix extends to other
+  # apps as their specs land. The dev server is started by playwright.config.ts's `webServer`.
+  e2e:
+    name: ${{ matrix.app }} e2e (Playwright)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - patient-portal-web
+    defaults:
+      run:
+        working-directory: src/frontend/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: src/frontend/${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browser (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright e2e
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.app }}
+          path: src/frontend/${{ matrix.app }}/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7

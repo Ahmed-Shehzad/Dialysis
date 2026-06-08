@@ -25,7 +25,7 @@ public abstract class ModuleWebApplicationFactory<TEntryPoint, TDbContext>
 
     // Built lazily (not in the constructor) so the abstract ModuleSlug is only read once the
     // most-derived instance is fully constructed — avoids a virtual call from a base constructor.
-    private PostgreSqlContainer Postgres => _postgres ??= new PostgreSqlBuilder("postgres:17-alpine")
+    private PostgreSqlContainer Postgres => _postgres ??= new PostgreSqlBuilder(ContainerImage)
         .WithDatabase($"dialysis_{ModuleSlug}_test")
         .WithUsername("postgres")
         .WithPassword("postgres")
@@ -36,6 +36,13 @@ public abstract class ModuleWebApplicationFactory<TEntryPoint, TDbContext>
 
     /// <summary>Name of the <c>ConnectionStrings:{name}</c> entry the module reads (typically the module slug capitalized, e.g. <c>"Ehr"</c>, <c>"His"</c>).</summary>
     protected abstract string ConnectionStringName { get; }
+
+    /// <summary>
+    /// Postgres container image. Defaults to stock <c>postgres:17-alpine</c>; a module whose startup
+    /// migrations need an extension (e.g. PDMS's TimescaleDB hypertable) overrides this with the
+    /// matching image so <c>CREATE EXTENSION</c> succeeds.
+    /// </summary>
+    protected virtual string ContainerImage => "postgres:17-alpine";
 
     /// <summary>Hook for derived factories to apply additional <see cref="IWebHostBuilder"/> settings before the host is built.</summary>
     protected virtual void ConfigureModuleWebHost(IWebHostBuilder builder)

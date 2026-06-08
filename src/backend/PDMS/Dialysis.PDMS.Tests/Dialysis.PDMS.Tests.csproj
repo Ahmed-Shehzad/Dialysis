@@ -7,7 +7,7 @@
     <RootNamespace>Dialysis.PDMS.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <Description>Pure-domain unit tests for PDMS aggregates and slices.</Description>
+    <Description>PDMS unit tests for aggregates and slices, plus Testcontainer-backed integration tests for the API persistence paths.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +20,7 @@
     <PackageReference Include="Shouldly" />
     <PackageReference Include="PDFsharp" />
     <PackageReference Include="DocumentFormat.OpenXml" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,11 @@
     <ProjectReference Include="../../BuildingBlocks/ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification/Dialysis.BuildingBlocks.ClinicianNotification.csproj" />
     <ProjectReference Include="../Dialysis.PDMS.Core/Dialysis.PDMS.Core.csproj" />
     <ProjectReference Include="../../SmartConnect/Contracts/Dialysis.SmartConnect.Contracts/Dialysis.SmartConnect.Contracts.csproj" />
+    <!-- Integration tests: boot the PDMS API against a Postgres Testcontainer (the in-memory repo
+         masks the missing-save / unique-index races; only real EF reproduces them). -->
+    <ProjectReference Include="../Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj" />
+    <ProjectReference Include="../Dialysis.PDMS.Persistence/Dialysis.PDMS.Persistence.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
   </ItemGroup>
 
 </Project>

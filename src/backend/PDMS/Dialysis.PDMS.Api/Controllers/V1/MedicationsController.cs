@@ -2,7 +2,9 @@ using Asp.Versioning;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Medications.Domain;
+using Dialysis.PDMS.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.PDMS.Api.Controllers.V1;
 
@@ -25,6 +27,7 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 public sealed class MedicationsController : ControllerBase
 {
     private readonly IPdmsRepository<MedicationAdministrationRecord, Guid> _records;
+    private readonly PdmsDbContext _db;
     private readonly TimeProvider _clock;
     /// <summary>
     /// Chairside MAR (medication-administration-record) surface. The SPA's Medications tab
@@ -40,9 +43,11 @@ public sealed class MedicationsController : ControllerBase
     /// a MAR yet creates one with that session's open time.
     /// </summary>
     public MedicationsController(IPdmsRepository<MedicationAdministrationRecord, Guid> records,
+        PdmsDbContext db,
         TimeProvider clock)
     {
         _records = records;
+        _db = db;
         _clock = clock;
     }
     [HttpGet]
@@ -66,11 +71,13 @@ public sealed class MedicationsController : ControllerBase
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        // Validate before opening the MAR so an invalid request doesn't create an empty record.
+        if (!Enum.TryParse<MedicationRoute>(request.Route, ignoreCase: true, out var route))
+            return BadRequest($"Unknown medication route '{request.Route}'.");
+
         var mar = await GetOrCreateMarAsync(sessionId, request.PatientId, cancellationToken).ConfigureAwait(false);
         var coding = new MedicationCoding(request.CodeSystem, request.Code, request.Display);
         var dose = new Dose(request.DoseQuantity, request.DoseUnit);
-        if (!Enum.TryParse<MedicationRoute>(request.Route, ignoreCase: true, out var route))
-            return BadRequest($"Unknown medication route '{request.Route}'.");
 
         var entryId = Guid.CreateVersion7();
         var entry = mar.RecordAdministration(
@@ -82,6 +89,7 @@ public sealed class MedicationsController : ControllerBase
             administeredBySub: request.AdministeredBySub,
             relatedOrderId: request.RelatedOrderId);
         _records.Update(mar);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
         // {version} route value for action-link generation, which throws -> 500.
         return Created($"/api/v1.0/sessions/{sessionId}/medications/{entry.Id}", MedicationEntryDto.From(entry));
@@ -99,13 +107,15 @@ public sealed class MedicationsController : ControllerBase
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var mar = await GetOrCreateMarAsync(sessionId, request.PatientId, cancellationToken).ConfigureAwait(false);
-        var coding = new MedicationCoding(request.CodeSystem, request.Code, request.Display);
-        var dose = new Dose(request.DoseQuantity, request.DoseUnit);
+        // Validate before opening the MAR so an invalid request doesn't create an empty record.
         if (!Enum.TryParse<MedicationRoute>(request.Route, ignoreCase: true, out var route))
             return BadRequest($"Unknown medication route '{request.Route}'.");
         if (string.IsNullOrWhiteSpace(request.Reason))
             return BadRequest("Decline reason is required.");
+
+        var mar = await GetOrCreateMarAsync(sessionId, request.PatientId, cancellationToken).ConfigureAwait(false);
+        var coding = new MedicationCoding(request.CodeSystem, request.Code, request.Display);
+        var dose = new Dose(request.DoseQuantity, request.DoseUnit);
 
         var entry = mar.RecordDecline(
             entryId: entryId,
@@ -117,6 +127,7 @@ public sealed class MedicationsController : ControllerBase
             reason: request.Reason,
             relatedOrderId: request.RelatedOrderId);
         _records.Update(mar);
+        await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(MedicationEntryDto.From(entry));
     }
 
@@ -130,13 +141,31 @@ public sealed class MedicationsController : ControllerBase
     {
         var existing = await FindMarForSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
         if (existing is not null) return existing;
+
         var fresh = new MedicationAdministrationRecord(
             id: Guid.CreateVersion7(),
             sessionId: sessionId,
             patientId: patientId,
             openedAtUtc: _clock.GetUtcNow().UtcDateTime);
         await _records.AddAsync(fresh, cancellationToken).ConfigureAwait(false);
-        return fresh;
+        try
+        {
+            // Commit the new MAR on its own so the unique SessionId index arbitrates a concurrent
+            // first-write race (two chairside writes opening the same session's MAR at once). The
+            // caller then records its entry against the persisted MAR and saves again.
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return fresh;
+        }
+        catch (DbUpdateException)
+        {
+            // A concurrent writer opened the MAR for this session first. Detach our loser and use the
+            // committed winner so the caller records against it instead of surfacing the violation.
+            _db.Entry(fresh).State = EntityState.Detached;
+            var winner = await FindMarForSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
+            if (winner is null)
+                throw;
+            return winner;
+        }
     }
 }
 

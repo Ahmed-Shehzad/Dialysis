@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.BuildingBlocks.Transponder;
-using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Documents.Invoicing;
@@ -27,20 +26,17 @@ public sealed class OnDialysisInvoiceReady : IConsumer<DialysisInvoiceReadyInteg
     private readonly InvoicePdfBuilder _builder;
     private readonly IDocumentBlobStore _blobs;
     private readonly IDocumentReferenceRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<OnDialysisInvoiceReady> _logger;
 
     /// <summary>Creates the consumer.</summary>
     public OnDialysisInvoiceReady(InvoicePdfBuilder builder,
         IDocumentBlobStore blobs,
         IDocumentReferenceRepository repository,
-        IUnitOfWork unitOfWork,
         ILogger<OnDialysisInvoiceReady> logger)
     {
         _builder = builder;
         _blobs = blobs;
         _repository = repository;
-        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -79,8 +75,12 @@ public sealed class OnDialysisInvoiceReady : IConsumer<DialysisInvoiceReadyInteg
             languageCode: null,
             hasAcroForms: true,
             hasJavascript: false);
-        _repository.Add(document);
-        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+        var created = await _repository.TryAddIdempotentAsync(document, ct).ConfigureAwait(false);
+        if (!created)
+        {
+            _logger.LogDebug("Invoice document for charge {ChargeId} already exists (concurrent insert); skipping.", message.ChargeId);
+            return;
+        }
 
         _logger.LogInformation(
             "Rendered invoice {InvoiceNumber} ({DocumentId}) for patient {PatientId} session {SessionId}.",

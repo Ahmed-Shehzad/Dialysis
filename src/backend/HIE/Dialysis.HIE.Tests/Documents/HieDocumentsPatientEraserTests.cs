@@ -72,6 +72,7 @@ public sealed class HieDocumentsPatientEraserTests
         private readonly IReadOnlyList<DocumentReference> _docs;
         public StubRepository(IReadOnlyList<DocumentReference> docs) => _docs = docs;
         public void Add(DocumentReference document) { }
+        public Task<bool> TryAddIdempotentAsync(DocumentReference document, CancellationToken cancellationToken) => Task.FromResult(true);
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<DocumentReference?>(null);
         public Task<IReadOnlyList<DocumentReference>> ListAsync(Guid? patientId, string? kind, DocumentReferenceStatus? status, DocumentReferenceSource? source, int take, CancellationToken cancellationToken) =>
             Task.FromResult(_docs);

@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
+using Dialysis.EHR.Integration.Features.IngestLabResult;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Features.GetPatientById;
@@ -101,4 +102,48 @@ public sealed class PatientsController : ControllerBase
             .ConfigureAwait(false);
         return Ok(results);
     }
+
+    /// <summary>
+    /// Ingests a lab observation result for a patient and persists it to the chart's lab-results read
+    /// model. Normally driven by an inbound HL7v2 ORU / FHIR Observation (via SmartConnect → the Lab
+    /// module); exposed here so a result can be recorded directly (e.g. the data simulator) closing
+    /// the order → result loop the chart and the patient portal render.
+    /// </summary>
+    [HttpPost("{patientId:guid}/lab-results")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> IngestLabResultAsync(
+        Guid patientId,
+        [FromBody] IngestLabResultRequest body,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var id = await _gateway.SendCommandAsync<IngestLabResultCommand, Guid>(
+            new IngestLabResultCommand(
+                LabFacilityCode: string.IsNullOrWhiteSpace(body.LabFacilityCode) ? "SIM-LAB" : body.LabFacilityCode,
+                ExternalControlNumber: string.IsNullOrWhiteSpace(body.ExternalControlNumber)
+                    ? Guid.NewGuid().ToString("N")
+                    : body.ExternalControlNumber,
+                LabOrderId: body.LabOrderId,
+                PatientId: patientId,
+                LoincCode: body.LoincCode,
+                ValueText: body.ValueText,
+                UnitCode: body.UnitCode,
+                ReferenceRangeText: body.ReferenceRangeText,
+                AbnormalFlagCode: string.IsNullOrWhiteSpace(body.AbnormalFlagCode) ? "N" : body.AbnormalFlagCode,
+                ObservedAtUtc: body.ObservedAtUtc ?? DateTime.UtcNow),
+            cancellationToken).ConfigureAwait(false);
+        return Created($"/api/v1.0/patients/{patientId}/lab-results/{id}", new { id });
+    }
+
+    /// <summary>Inbound lab-result body (the lab observation to record against an order).</summary>
+    public sealed record IngestLabResultRequest(
+        Guid LabOrderId,
+        string LoincCode,
+        string ValueText,
+        string? UnitCode = null,
+        string? ReferenceRangeText = null,
+        string? AbnormalFlagCode = null,
+        DateTime? ObservedAtUtc = null,
+        string? LabFacilityCode = null,
+        string? ExternalControlNumber = null);
 }

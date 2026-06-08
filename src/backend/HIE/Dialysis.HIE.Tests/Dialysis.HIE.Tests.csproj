@@ -19,6 +19,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Shouldly" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +33,7 @@
     <ProjectReference Include="../Dialysis.HIE.Documents/Dialysis.HIE.Documents.csproj" />
     <ProjectReference Include="../Dialysis.HIE.Tefca/Dialysis.HIE.Tefca.csproj" />
     <ProjectReference Include="../Dialysis.HIE.Persistence/Dialysis.HIE.Persistence.csproj" />
+    <ProjectReference Include="../../Shared/Dialysis.Module.Hosting.Testing/Dialysis.Module.Hosting.Testing.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Storage/Dialysis.BuildingBlocks.Documents.Storage.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Documents/Dialysis.BuildingBlocks.Documents.Signing/Dialysis.BuildingBlocks.Documents.Signing.csproj" />
     <ProjectReference Include="../../PDMS/Dialysis.PDMS.Contracts/Dialysis.PDMS.Contracts.csproj" />

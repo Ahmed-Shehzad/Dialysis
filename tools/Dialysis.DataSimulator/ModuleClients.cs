@@ -33,8 +33,11 @@ public interface IEhrClient
     /// <summary>Orders an outpatient prescription.</summary>
     Task OrderPrescriptionAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken);
 
-    /// <summary>Orders an imaging study.</summary>
-    Task OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken);
+    /// <summary>Orders an imaging study; returns the imaging-order id.</summary>
+    Task<Guid> OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken);
+
+    /// <summary>Links a fulfilled study back to an imaging order (completes it — closes the result loop).</summary>
+    Task LinkImagingStudyAsync(Guid imagingOrderId, string studyInstanceUid, CancellationToken cancellationToken);
 
     /// <summary>Requests an outbound referral.</summary>
     Task RequestReferralAsync(Guid patientId, Guid providerId, CancellationToken cancellationToken);
@@ -50,6 +53,10 @@ public interface IEhrClient
 
     /// <summary>Upserts a CPT fee-schedule rate (admin master data for the billing console).</summary>
     Task CreateFeeScheduleAsync(string cptCode, string payerCode, decimal amount, string currencyCode, DateOnly effectiveFromUtc, CancellationToken cancellationToken);
+
+    /// <summary>Ingests a lab observation result against an order (closes the order→result loop on the chart).</summary>
+    Task IngestLabResultAsync(Guid patientId, Guid labOrderId, string loincCode, string valueText,
+        string? unitCode, string? referenceRangeText, string abnormalFlagCode, CancellationToken cancellationToken);
 }
 
 /// <summary>HIS scheduling + patient-flow + medication + device write surface (driven through the HIS BFF).</summary>
@@ -309,8 +316,8 @@ public sealed class EhrClient : IEhrClient
             cancellationToken);
 
     /// <inheritdoc />
-    public Task OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken) =>
-        HttpJson.PostAsync(_client, "api/v1.0/clinical/imaging-orders",
+    public Task<Guid> OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken) =>
+        HttpJson.PostReadIdAsync(_client, "api/v1.0/clinical/imaging-orders",
             new
             {
                 patientId,
@@ -321,6 +328,11 @@ public sealed class EhrClient : IEhrClient
                 reasonText = "Vascular access surveillance",
             },
             cancellationToken);
+
+    /// <inheritdoc />
+    public Task LinkImagingStudyAsync(Guid imagingOrderId, string studyInstanceUid, CancellationToken cancellationToken) =>
+        HttpJson.PostAsync(_client, $"api/v1.0/clinical/imaging-orders/{imagingOrderId}/link-study",
+            new { studyInstanceUid }, cancellationToken);
 
     /// <inheritdoc />
     public Task RequestReferralAsync(Guid patientId, Guid providerId, CancellationToken cancellationToken) =>
@@ -383,6 +395,22 @@ public sealed class EhrClient : IEhrClient
     public Task CreateFeeScheduleAsync(string cptCode, string payerCode, decimal amount, string currencyCode, DateOnly effectiveFromUtc, CancellationToken cancellationToken) =>
         HttpJson.PostAsync(_client, "api/v1.0/billing/fee-schedule",
             new { cptCode, payerCode, amount, currencyCode, effectiveFromUtc, effectiveUntilUtc = (DateOnly?)null },
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task IngestLabResultAsync(Guid patientId, Guid labOrderId, string loincCode, string valueText,
+        string? unitCode, string? referenceRangeText, string abnormalFlagCode, CancellationToken cancellationToken) =>
+        HttpJson.PostAsync(_client, $"api/v1.0/patients/{patientId}/lab-results",
+            new
+            {
+                labOrderId,
+                loincCode,
+                valueText,
+                unitCode,
+                referenceRangeText,
+                abnormalFlagCode,
+                observedAtUtc = DateTime.UtcNow,
+            },
             cancellationToken);
 }
 

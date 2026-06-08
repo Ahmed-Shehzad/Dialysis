@@ -95,6 +95,7 @@ public sealed class GetDocumentPreviewQueryTests
         private readonly DocumentReference _doc;
         public InMemoryDocumentReferenceRepository(DocumentReference doc) => _doc = doc;
         public void Add(DocumentReference document) => throw new NotSupportedException();
+        public Task<bool> TryAddIdempotentAsync(DocumentReference document, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult<DocumentReference?>(_doc.Id == id ? _doc : null);
         public Task<IReadOnlyList<DocumentReference>> ListAsync(

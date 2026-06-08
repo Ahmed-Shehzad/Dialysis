@@ -23,3 +23,15 @@ export const fetchPortalSummary = async (patientId: string): Promise<PatientPort
   );
   return response.data.data;
 };
+
+/**
+ * Lists patient ids that have portal-relevant HIS data (booked appointment / open order /
+ * open admission). Lets a staff/dev session (no `his_patient_id` claim) discover a patient to
+ * open instead of pasting a Guid. Gated by `his.patientaccess.portal.read`, same as the summary.
+ */
+export const fetchAccessiblePatients = async (take = 50): Promise<string[]> => {
+  const response = await apiClient.get<ResourceEnvelope<string[]>>(
+    `/portal/api/v1.0/patient-access/patients?take=${take}`,
+  );
+  return response.data.data ?? [];
+};

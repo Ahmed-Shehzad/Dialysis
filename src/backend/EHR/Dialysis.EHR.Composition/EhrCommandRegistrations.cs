@@ -12,6 +12,7 @@ using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.GetPatientReminders;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListLabResultsForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.LinkImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
 using Dialysis.EHR.PatientChart.Features.CarePlanning;
 using Dialysis.EHR.ClinicalNotes.Features.ListNotesForPatient;
@@ -113,6 +114,7 @@ internal static class EhrCommandRegistrations
         c.AddCommandBehavior<OrderLabTestCommand, OrderPlacementResult, AuthorizationPipelineBehavior<OrderLabTestCommand, OrderPlacementResult>>();
         c.AddCommandBehavior<OrderImagingStudyCommand, Guid, AuthorizationPipelineBehavior<OrderImagingStudyCommand, Guid>>();
         c.AddCommandBehavior<ReviewImagingAiFindingCommand, Unit, AuthorizationPipelineBehavior<ReviewImagingAiFindingCommand, Unit>>();
+        c.AddCommandBehavior<LinkImagingStudyCommand, Unit, AuthorizationPipelineBehavior<LinkImagingStudyCommand, Unit>>();
         c.AddCommandBehavior<RequestReferralCommand, Guid, AuthorizationPipelineBehavior<RequestReferralCommand, Guid>>();
         c.AddCommandBehavior<MarkHospitalEventFollowedUpCommand, Unit, AuthorizationPipelineBehavior<MarkHospitalEventFollowedUpCommand, Unit>>();
         c.AddCommandBehavior<AddCareTeamMemberCommand, Guid, AuthorizationPipelineBehavior<AddCareTeamMemberCommand, Guid>>();
