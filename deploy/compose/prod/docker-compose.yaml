@@ -312,7 +312,6 @@ services:
       His__Authentication__Authority: "http://keycloak:8080/realms/dialysis"
       His__Authentication__Audience: "account"
       His__Fhir__Enabled: "true"
-      His__Demo__Enabled: "true"
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
       His__UseHsts: "true"
@@ -372,8 +371,6 @@ services:
       Ehr__DistributedCache__Valkey__ConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Ehr__Authentication__Authority: "http://keycloak:8080/realms/dialysis"
       Ehr__Authentication__Audience: "account"
-      Ehr__Demo__Enabled: "true"
-      Ehr__Demo__RegistrationSimulator: "true"
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
       Ehr__UseHsts: "true"
@@ -433,10 +430,6 @@ services:
       Pdms__DistributedCache__Valkey__ConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Pdms__Authentication__Authority: "http://keycloak:8080/realms/dialysis"
       Pdms__Authentication__Audience: "account"
-      Pdms__Demo__Enabled: "true"
-      Pdms__Demo__VitalsTicker: "true"
-      Pdms__Demo__MachineTelemetrySimulator: "true"
-      Pdms__Demo__LifecycleSimulator: "true"
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
       Pdms__UseHsts: "true"
@@ -496,8 +489,6 @@ services:
       SmartConnect__DistributedCache__Valkey__ConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       SmartConnect__Authentication__Authority: "http://keycloak:8080/realms/dialysis"
       SmartConnect__Authentication__Audience: "account"
-      SmartConnect__Demo__Enabled: "true"
-      SmartConnect__Demo__Hl7Simulator: "true"
       SmartConnect__SourceConnectors__0__Name: "Hl7Mllp"
       SmartConnect__SourceConnectors__0__Kind: "mllp"
       SmartConnect__SourceConnectors__0__DefaultFlowId: "b1d10001-0001-4000-8000-000000000001"
@@ -565,7 +556,6 @@ services:
       Hie__DistributedCache__Valkey__ConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Hie__Authentication__Authority: "http://keycloak:8080/realms/dialysis"
       Hie__Authentication__Audience: "account"
-      Hie__Demo__Enabled: "true"
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:8080"
       Hie__UseHsts: "true"
@@ -989,6 +979,9 @@ services:
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://smartconnect-api:${SMARTCONNECT_API_PORT}"
+      Bff__Module__Aggregations__1__Address: "http://his-api:${HIS_API_PORT}"
+      Bff__Module__Aggregations__2__Address: "http://ehr-api:${EHR_API_PORT}"
+      Bff__Module__Aggregations__3__Address: "http://pdms-api:${PDMS_API_PORT}"
       ASPNETCORE_ENVIRONMENT: "Production"
     ports:
       - "5305:5305"
@@ -1004,6 +997,12 @@ services:
       valkey:
         condition: "service_started"
       smartconnect-api:
+        condition: "service_started"
+      his-api:
+        condition: "service_started"
+      ehr-api:
+        condition: "service_started"
+      pdms-api:
         condition: "service_started"
     networks:
       - "aspire"

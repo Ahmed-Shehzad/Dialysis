@@ -1,5 +1,11 @@
 import { apiClient } from "@/lib/api/apiClient";
 
+// Backend chairId binds to Guid?, so a non-Guid value (e.g. a chair label like "6") fails model
+// binding with 400. Only forward chairId when it actually is a UUID; drop anything else.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const asChairId = (chairId?: string): string | undefined =>
+  chairId && UUID_RE.test(chairId) ? chairId : undefined;
+
 export type ChannelTarget = { channel: string; address: string };
 export type ChainLink = {
   clinicianSub: string;
@@ -54,8 +60,9 @@ export type AlarmDispatch = {
 };
 
 export const fetchRotations = async (chairId?: string): Promise<OnCallRotation[]> => {
+  const valid = asChairId(chairId);
   const response = await apiClient.get<OnCallRotation[]>("/pdms/api/v1.0/oncall/rotations", {
-    params: chairId ? { chairId } : undefined,
+    params: valid ? { chairId: valid } : undefined,
   });
   return response.data ?? [];
 };
@@ -100,7 +107,11 @@ export const fetchDispatches = async (params?: {
   chairId?: string;
 }): Promise<AlarmDispatch[]> => {
   const response = await apiClient.get<AlarmDispatch[]>("/pdms/api/v1.0/oncall/dispatches", {
-    params,
+    params: {
+      from: params?.from || undefined,
+      to: params?.to || undefined,
+      chairId: asChairId(params?.chairId),
+    },
   });
   return response.data ?? [];
 };

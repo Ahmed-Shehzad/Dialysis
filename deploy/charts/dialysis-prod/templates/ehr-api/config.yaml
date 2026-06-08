@@ -24,5 +24,3 @@ data:
   Ehr__Transponder__EnableOutboxRelay: "{{ .Values.config.ehr_api.Ehr__Transponder__EnableOutboxRelay }}"
   Ehr__Authentication__Authority: "{{ .Values.config.ehr_api.Ehr__Authentication__Authority }}"
   Ehr__Authentication__Audience: "{{ .Values.config.ehr_api.Ehr__Authentication__Audience }}"
-  Ehr__Demo__Enabled: "{{ .Values.config.ehr_api.Ehr__Demo__Enabled }}"
-  Ehr__Demo__RegistrationSimulator: "{{ .Values.config.ehr_api.Ehr__Demo__RegistrationSimulator }}"

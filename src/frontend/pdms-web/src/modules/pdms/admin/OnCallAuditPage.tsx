@@ -13,17 +13,17 @@ export const OnCallAuditPage = () => {
   const [chairId, setChairId] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Chair is filtered client-side: chairId is a Guid the user can't type, so we offer a picker
+  // built from the chairs actually present in the date-windowed result set. Only from/to hit the
+  // server (the date window can be large); the chair filter never reaches the wire.
   const query = useQuery({
-    queryKey: ["pdms", "oncall", "dispatches", { from, to, chairId }],
-    queryFn: () =>
-      fetchDispatches({
-        from: from || undefined,
-        to: to || undefined,
-        chairId: chairId || undefined,
-      }),
+    queryKey: ["pdms", "oncall", "dispatches", { from, to }],
+    queryFn: () => fetchDispatches({ from: from || undefined, to: to || undefined }),
     refetchInterval: 30_000,
   });
-  const rows = query.data ?? [];
+  const allRows = query.data ?? [];
+  const chairIds = [...new Set(allRows.map((r) => r.chairId))].sort((a, b) => a.localeCompare(b));
+  const rows = chairId ? allRows.filter((r) => r.chairId === chairId) : allRows;
 
   return (
     <div className="space-y-4">
@@ -54,13 +54,19 @@ export const OnCallAuditPage = () => {
           />
         </label>
         <label className="block">
-          <span className="text-xs text-slate-400">Chair id</span>
-          <input
+          <span className="text-xs text-slate-400">Chair</span>
+          <select
             className="mt-1 rounded border border-slate-700 bg-slate-800/60 p-1.5 text-slate-100 font-mono text-xs"
             value={chairId}
             onChange={(e) => setChairId(e.target.value)}
-            placeholder="filter by chair"
-          />
+          >
+            <option value="">All chairs</option>
+            {chairIds.map((id) => (
+              <option key={id} value={id}>
+                {id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 

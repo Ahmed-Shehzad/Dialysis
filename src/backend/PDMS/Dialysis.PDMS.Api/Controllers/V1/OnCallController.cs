@@ -101,7 +101,9 @@ public sealed class OnCallController : ControllerBase
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var rotation = BuildRotation(Guid.CreateVersion7(), request);
+        OnCallRotation rotation;
+        try { rotation = BuildRotation(Guid.CreateVersion7(), request); }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _rotations.AddAsync(rotation, cancellationToken).ConfigureAwait(false);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
@@ -112,6 +114,7 @@ public sealed class OnCallController : ControllerBase
     [HttpPut("rotations/{id:guid}")]
     [PhiAccess("pdms.oncall.rotations.update")]
     [ProducesResponseType(typeof(OnCallRotationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ReplaceRotationAsync(
         Guid id,
@@ -122,12 +125,24 @@ public sealed class OnCallController : ControllerBase
         var existing = await _rotations.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
         if (existing is null)
             return NotFound();
-        // OnCallRotation is immutable post-create; replacement = remove + re-add with same id.
-        _rotations.Remove(existing);
-        var replacement = BuildRotation(id, request);
-        await _rotations.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
+        // Mutate the tracked aggregate in place: remove+re-add with the same key throws an
+        // EF identity conflict at SaveChanges (the deleted instance stays tracked by Id). The
+        // shift/chain are jsonb columns, so this is a single UPDATE on the existing row.
+        try
+        {
+            existing.Reassign(
+                request.ChairId,
+                BuildShift(request.ShiftCode),
+                request.EffectiveFromUtc,
+                request.EffectiveUntilUtc,
+                BuildLink(request.Primary),
+                BuildLink(request.Backup),
+                BuildLink(request.Supervisor));
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        _rotations.Update(existing);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return Ok(OnCallRotationDto.From(replacement));
+        return Ok(OnCallRotationDto.From(existing));
     }
 
     [HttpGet("policies")]
@@ -183,12 +198,11 @@ public sealed class OnCallController : ControllerBase
         var existing = await _policies.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
         if (existing is null)
             return NotFound();
-        _policies.Remove(existing);
-        EscalationPolicy replacement;
+        // Mutate the tracked aggregate in place: remove+re-add with the same key throws an
+        // EF identity conflict at SaveChanges (the deleted instance stays tracked by Id).
         try
         {
-            replacement = new EscalationPolicy(
-                id,
+            existing.Reconfigure(
                 request.Name,
                 TimeSpan.FromSeconds(request.CriticalPrimaryWindowSeconds),
                 TimeSpan.FromSeconds(request.CriticalBackupWindowSeconds),
@@ -198,9 +212,9 @@ public sealed class OnCallController : ControllerBase
                 request.QuietHoursSuppressNonCritical);
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
-        await _policies.AddAsync(replacement, cancellationToken).ConfigureAwait(false);
+        _policies.Update(existing);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return Ok(EscalationPolicyDto.From(replacement));
+        return Ok(EscalationPolicyDto.From(existing));
     }
 
     [HttpGet("dispatches")]
@@ -246,25 +260,24 @@ public sealed class OnCallController : ControllerBase
         return Ok(AlarmDispatchDto.From(open));
     }
 
-    private static OnCallRotation BuildRotation(Guid id, UpsertRotationRequest request)
-    {
-        var shift = request.ShiftCode switch
-        {
-            "morning" => OnCallShift.Morning,
-            "afternoon" => OnCallShift.Afternoon,
-            "night" => OnCallShift.Night,
-            _ => throw new ArgumentException($"Unknown shift code '{request.ShiftCode}'."),
-        };
-        return new OnCallRotation(
+    private static OnCallRotation BuildRotation(Guid id, UpsertRotationRequest request) =>
+        new(
             id,
             request.ChairId,
-            shift,
+            BuildShift(request.ShiftCode),
             request.EffectiveFromUtc,
             request.EffectiveUntilUtc,
             BuildLink(request.Primary),
             BuildLink(request.Backup),
             BuildLink(request.Supervisor));
-    }
+
+    private static OnCallShift BuildShift(string shiftCode) => shiftCode switch
+    {
+        "morning" => OnCallShift.Morning,
+        "afternoon" => OnCallShift.Afternoon,
+        "night" => OnCallShift.Night,
+        _ => throw new ArgumentException($"Unknown shift code '{shiftCode}'."),
+    };
 
     private static OnCallChainLink BuildLink(ChainLinkRequest req) =>
         new(req.ClinicianSub, req.DisplayName, [.. req.Channels.Select(c => new NotificationChannelTarget(ParseChannel(c.Channel), c.Address))]);

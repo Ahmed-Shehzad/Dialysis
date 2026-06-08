@@ -68,6 +68,17 @@ Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.Kubernetes.Kuber
 // prepare pass also overwrote the environment's internal ResourceMapping with that pass's service.
 // The step is idempotent (always reduces to ≤1), so it is safe under the double-run. Remove once
 // the upstream double-execution is fixed (reproduced on 13.4.0 and 13.4.2, compose and k8s).
+//
+// NOTE (k8s manifest): the k8s HelmDeploymentEngine re-runs target preparation in a LATER pipeline
+// phase, re-introducing the duplicate after this before-start collapse, so `publish-manifest` can
+// still throw "Sequence contains more than one matching element" and leave a truncated
+// aspire-manifest.json. We do NOT try to collapse again in those later phases: the readers run
+// concurrently with framework steps that enumerate resource.Annotations non-thread-safely, so a
+// late-phase mutation races them ("Collection was modified" / "Index out of range"). The blast
+// radius is contained instead — the Helm chart (Chart.yaml + values.yaml + templates/) is written
+// deterministically before the throw, aspire-manifest.json is an unused byproduct (gitignored), and
+// the NUKE publish targets treat a non-zero exit as a soft failure when Chart.yaml is on disk. The
+// real fix is upstream (make Aspire's PrepareDeploymentTargetsAsync idempotent).
 void DedupeDeploymentTargets(string environmentName)
 {
 #pragma warning disable ASPIREPIPELINES001

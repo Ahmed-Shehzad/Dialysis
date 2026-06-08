@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { HubConnectionState } from "@microsoft/signalr";
 import { notify, type ToastKind } from "@/features/durable-commands";
 import { buildHubConnection } from "@/lib/realtime/signalrConnection";
 import { usePatientContext } from "@/shell/PatientContextProvider";
@@ -38,7 +39,11 @@ export const useBffNotifications = (): void => {
       notify({ kind: kindFor(message.type), message: text });
     });
 
-    connection
+    // Keep the start promise so cleanup can await it before stopping. Calling stop() while the
+    // negotiate request is still in flight throws "The connection was stopped during negotiation"
+    // — which React 18 StrictMode triggers on every mount via its immediate mount→unmount→mount,
+    // snowballing into a negotiate flood that exhausts the browser's connection handles.
+    const startPromise = connection
       .start()
       .then(() =>
         active && patientId ? connection.invoke("WatchPatientAsync", patientId) : undefined,
@@ -47,7 +52,9 @@ export const useBffNotifications = (): void => {
 
     return () => {
       active = false;
-      void connection.stop();
+      void startPromise.finally(() => {
+        if (connection.state !== HubConnectionState.Disconnected) void connection.stop();
+      });
     };
   }, [patientId]);
 };

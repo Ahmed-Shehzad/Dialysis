@@ -44,6 +44,31 @@ public sealed class OnCallRotation : AggregateRoot<Guid>
     public OnCallChainLink Backup { get; private set; } = null!;
     public OnCallChainLink Supervisor { get; private set; } = null!;
 
+    /// <summary>
+    /// Replaces the rotation's chair, shift window and escalation chain in place. The admin "save"
+    /// edits an existing rotation; mutating the tracked aggregate yields a single UPDATE (the
+    /// shift/chain are <c>jsonb</c> columns on one row) rather than a delete+insert of the same key.
+    /// </summary>
+    public void Reassign(
+        Guid chairId,
+        OnCallShift shift,
+        DateOnly effectiveFromUtc,
+        DateOnly effectiveUntilUtc,
+        OnCallChainLink primary,
+        OnCallChainLink backup,
+        OnCallChainLink supervisor)
+    {
+        if (effectiveUntilUtc < effectiveFromUtc)
+            throw new ArgumentException("Rotation effective-until must be ≥ effective-from.", nameof(effectiveUntilUtc));
+        ChairId = chairId;
+        Shift = shift;
+        EffectiveFromUtc = effectiveFromUtc;
+        EffectiveUntilUtc = effectiveUntilUtc;
+        Primary = primary;
+        Backup = backup;
+        Supervisor = supervisor;
+    }
+
     /// <summary>True when the rotation covers <paramref name="atUtc"/>.</summary>
     public bool CoversInstant(DateTime atUtc)
     {

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Pre-commit guard: a fast, NON-BLOCKING heads-up when the Aspire AppHost changed but the
+# generated deployment artifacts under deploy/ weren't regenerated in the same commit.
+#
+# The authoritative enforcement is the "Deploy Artifacts" CI drift gate
+# (.github/workflows/deploy-artifacts.yml) — that job actually regenerates and diffs. This hook
+# only nudges you locally so you find out before the PR fails, without paying the ~minute it
+# takes to run the publishers on every commit. Regeneration itself: ./build.sh PublishDeployArtifacts
+#
+# Activate with:  ./build.sh InstallGitHooks   (sets core.hooksPath to .githooks)
+set -euo pipefail
+
+staged="$(git diff --cached --name-only)"
+
+apphost_changed="$(printf '%s\n' "$staged" | grep -E '^src/aspire/' || true)"
+deploy_staged="$(printf '%s\n' "$staged" | grep -E '^deploy/(compose|charts)/' || true)"
+
+if [[ -n "$apphost_changed" && -z "$deploy_staged" ]]; then
+  echo "⚠️  AppHost changed, but no deploy/ artifacts are staged in this commit."
+  echo "    If this edit affects the deployment topology, regenerate and stage them:"
+  echo ""
+  echo "        ./build.sh PublishDeployArtifacts"
+  echo "        git add deploy/"
+  echo ""
+  echo "    The 'Deploy Artifacts' CI job fails the PR if compose/charts drift from the AppHost."
+  echo "    (Not a topology change? Ignore this — the commit proceeds.)"
+fi
+
+# Non-blocking: never fail the commit. CI is the gate.
+exit 0

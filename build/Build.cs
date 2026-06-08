@@ -5,6 +5,7 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
+using static Nuke.Common.Tooling.ProcessTasks;
 
 /// <summary>
 /// NUKE build for the Dialysis platform. Drives the same <c>dotnet</c> steps the GitHub
@@ -150,6 +151,16 @@ class Build : NukeBuild
         });
 
     void PublishComposeForEnvironment(string environment)
+        => RunAspirePublisher("compose", environment, ComposeOutputDirectoryFor(environment),
+            sentinel: "docker-compose.yaml");
+
+    // Regenerates one environment's artifact, with retries (see below). Aspire 13.4(-preview) does
+    // not exit cleanly: --deploy false fails to suppress a post-publish step, so the k8s publisher
+    // crashes (duplicate DeploymentTargetAnnotation — see the AppHost workaround) and the
+    // production-hardened compose envs HANG. In the common case the artifact is fully written before
+    // that, so TryPublishOnce treats "sentinel on disk" as success; when the race crashes the
+    // pipeline before the chart is written, the retry loop runs it again.
+    void RunAspirePublisher(string publisher, string environment, AbsolutePath output, string sentinel)
     {
         if (Array.IndexOf(AllComposeEnvironments, environment) < 0)
         {
@@ -157,36 +168,114 @@ class Build : NukeBuild
                 $"Unsupported --environment '{environment}'. Expected one of: {string.Join(", ", AllComposeEnvironments)}.");
         }
 
-        var output = ComposeOutputDirectoryFor(environment);
-        output.CreateOrCleanDirectory();
-        Log.Information("Running Aspire compose publisher (environment={Environment}) → {Output}", environment, output);
+        // The Aspire 13.4-preview k8s publisher fails non-deterministically: concurrent pipeline
+        // steps (push-prereq / validate-build-only-container-references) race on the shared resource
+        // model ("Sequence contains more than one matching element" / "Collection was modified") and
+        // sometimes crash BEFORE the chart is written. The race is timing-dependent, so a fresh
+        // attempt usually succeeds. Retry a few times; compose takes the same path for uniformity.
+        const int maxAttempts = 4;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            if (TryPublishOnce(publisher, environment, output, sentinel, attempt, maxAttempts))
+            {
+                Log.Information("Generated {Files} file(s) under {Output}", output.GlobFiles("**/*").Count, output);
+                return;
+            }
+        }
 
-        // The DIALYSIS_DEPLOY_ENV env var drives the AppHost's per-environment shaping
-        // (HSTS, replicas, ASPNETCORE_ENVIRONMENT, OTEL wiring). --deploy false tells Aspire
-        // to skip the deploy step (which would otherwise require a running Docker daemon to
-        // `docker compose down` the previous topology and rebuild images).
+        throw new InvalidOperationException(
+            $"Aspire {publisher} publisher failed to write {sentinel} for environment '{environment}' after {maxAttempts} attempts.");
+    }
+
+    bool TryPublishOnce(string publisher, string environment, AbsolutePath output, string sentinel, int attempt, int maxAttempts)
+    {
+        output.CreateOrCleanDirectory();
+        var sentinelPath = output / sentinel;
+        Log.Information("Running Aspire {Publisher} publisher (environment={Environment}, attempt {Attempt}/{Max}) → {Output}",
+            publisher, environment, attempt, maxAttempts, output);
+
+        var startInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "dotnet",
+            WorkingDirectory = RootDirectory,
+            UseShellExecute = false,
+        };
+        foreach (var argument in new string[]
+                 {
+                     "run", "--project", AspireAppHost, "--no-launch-profile",
+                     "--configuration", Configuration.ToString(), "--",
+                     "--publisher", publisher, "--output-path", output, "--deploy", "false",
+                 })
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+        // ProcessStartInfo seeds Environment from the parent (complete PATH); just overlay the
+        // per-env switch that drives the AppHost's HSTS / replicas / OTEL shaping.
+        startInfo.Environment["DIALYSIS_DEPLOY_ENV"] = environment;
+
+        using var process = System.Diagnostics.Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start the Aspire publisher process.");
+
+        // Both publishers hang or crash AFTER fully writing their output, so we watch the output
+        // directory's aggregate signature (file count + total bytes) and stop the process once it
+        // has stopped growing — generation is done. This covers compose (one file) and the k8s
+        // chart tree (~hundreds of files) identically: stablePolls only reaches the threshold once
+        // no file has been added or grown for that many seconds. The 10-minute deadline is a
+        // backstop for the build + generate; the sentinel-exists check below is the success gate.
+        var deadline = System.DateTime.UtcNow.AddMinutes(10);
+        (int Count, long Bytes) lastSignature = (-1, -1);
+        var stablePolls = 0;
+        while (!process.HasExited)
+        {
+            if (sentinelPath.FileExists())
+            {
+                var files = output.GlobFiles("**/*");
+                (int Count, long Bytes) signature = (files.Count, files.Sum(file => new System.IO.FileInfo(file).Length));
+                stablePolls = signature == lastSignature ? stablePolls + 1 : 0;
+                lastSignature = signature;
+                if (stablePolls >= 4)
+                {
+                    Log.Information("{Output} settled at {Count} file(s); stopping the publisher (it would otherwise hang).",
+                        output, signature.Count);
+                    TryKill(process);
+                    break;
+                }
+            }
+            if (System.DateTime.UtcNow > deadline)
+            {
+                Log.Warning("Aspire {Publisher} publisher exceeded the 10-minute deadline; stopping it.", publisher);
+                TryKill(process);
+                break;
+            }
+            System.Threading.Thread.Sleep(1000);
+        }
+
+        // The artifact on disk — not the exit code — is the success criterion: the publisher
+        // routinely exits non-zero (k8s crash) or is killed (compose hang) after writing it. A
+        // missing sentinel means this attempt lost the pipeline race; the caller retries.
+        if (!sentinelPath.FileExists())
+        {
+            Log.Warning("Aspire {Publisher} publisher attempt {Attempt}/{Max} did not produce {Sentinel} (Aspire 13.4-preview pipeline race); retrying.",
+                publisher, attempt, maxAttempts, sentinel);
+            return false;
+        }
+
+        return true;
+    }
+
+    static void TryKill(System.Diagnostics.Process process)
+    {
         try
         {
-            DotNet(
-                $"run --project \"{AspireAppHost}\" --no-launch-profile --configuration {Configuration} -- " +
-                $"--publisher compose --output-path \"{output}\" --deploy false",
-                environmentVariables: new Dictionary<string, string> { ["DIALYSIS_DEPLOY_ENV"] = environment });
-        }
-        catch (Exception ex)
-        {
-            // The publish pipeline runs the deploy step regardless of --deploy false in some
-            // Aspire 13.x versions; it fails when Docker isn't available but the compose YAML
-            // has already been written by the prior step. Treat the failure as "soft" if the
-            // expected artifacts are on disk.
-            if (!(output / "docker-compose.yaml").FileExists())
+            if (!process.HasExited)
             {
-                throw;
+                process.Kill(entireProcessTree: true);
             }
-            Log.Warning("Compose publisher reported {Message} after writing the artifacts; treating as soft failure since docker-compose.yaml is on disk.", ex.Message);
         }
-
-        Log.Information("Generated {Files} file(s) under {Output}",
-            output.GlobFiles("*").Count, output);
+        catch (System.InvalidOperationException)
+        {
+            // Raced with the process exiting on its own — nothing to kill.
+        }
     }
 
     Target PublishKubernetes => _ => _
@@ -205,41 +294,19 @@ class Build : NukeBuild
             }
         });
 
+    Target PublishDeployArtifacts => _ => _
+        .Description("Regenerates EVERY deployment artifact in one shot — compose projects and Helm charts for all three environments (dev / staging / prod) — from the Aspire AppHost. Run this after any AppHost change, then commit deploy/. The deploy-artifacts CI gate fails the PR if these drift from the AppHost.")
+        .DependsOn(PublishAllCompose, PublishAllKubernetes);
+
+    Target InstallGitHooks => _ => _
+        .Description("Points git's core.hooksPath at the tracked .githooks/ directory so the repo's pre-commit guard runs. Run once after cloning.")
+        .Executes(() =>
+        {
+            StartProcess("git", "config core.hooksPath .githooks", RootDirectory).AssertZeroExitCode();
+            Log.Information("core.hooksPath set to .githooks — the pre-commit deploy-artifact guard is now active.");
+        });
+
     void PublishKubernetesForEnvironment(string environment)
-    {
-        if (Array.IndexOf(AllComposeEnvironments, environment) < 0)
-        {
-            throw new ArgumentException(
-                $"Unsupported --environment '{environment}'. Expected one of: {string.Join(", ", AllComposeEnvironments)}.");
-        }
-
-        var output = HelmChartOutputDirectoryFor(environment);
-        output.CreateOrCleanDirectory();
-        Log.Information("Running Aspire k8s publisher (environment={Environment}) → {Output}", environment, output);
-
-        // DIALYSIS_DEPLOY_ENV drives the AppHost's per-env shaping (same env var the
-        // compose publisher reads). --publisher k8s + --deploy false produces the Helm
-        // chart without trying to install into a real cluster.
-        try
-        {
-            DotNet(
-                $"run --project \"{AspireAppHost}\" --no-launch-profile --configuration {Configuration} -- " +
-                $"--publisher k8s --output-path \"{output}\" --deploy false",
-                environmentVariables: new Dictionary<string, string> { ["DIALYSIS_DEPLOY_ENV"] = environment });
-        }
-        catch (Exception ex)
-        {
-            // Mirror the compose target's tolerance: if the chart artifacts landed on disk,
-            // treat a downstream pipeline failure as soft (the publisher's deploy step needs
-            // kubectl + a real cluster, which we deliberately don't have in CI).
-            if (!(output / "Chart.yaml").FileExists())
-            {
-                throw;
-            }
-            Log.Warning("Kubernetes publisher reported {Message} after writing the chart; treating as soft failure since Chart.yaml is on disk.", ex.Message);
-        }
-
-        Log.Information("Generated {Files} file(s) under {Output}",
-            output.GlobFiles("**/*").Count, output);
-    }
+        => RunAspirePublisher("k8s", environment, HelmChartOutputDirectoryFor(environment),
+            sentinel: "Chart.yaml");
 }

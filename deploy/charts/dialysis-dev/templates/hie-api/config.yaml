@@ -23,4 +23,3 @@ data:
   VALKEY_PORT: "{{ .Values.config.hie_api.VALKEY_PORT }}"
   Hie__Authentication__Authority: "{{ .Values.config.hie_api.Hie__Authentication__Authority }}"
   Hie__Authentication__Audience: "{{ .Values.config.hie_api.Hie__Authentication__Audience }}"
-  Hie__Demo__Enabled: "{{ .Values.config.hie_api.Hie__Demo__Enabled }}"
