@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Medications.Domain;
 using Dialysis.PDMS.Medications.IvPumps;
@@ -26,6 +27,7 @@ public sealed class IvPumpsController : ControllerBase
     private readonly Dictionary<string, IIvPumpDriver> _byVendor;
 
     private readonly IPdmsRepository<IvPumpInfusion, Guid> _infusions;
+    private readonly IUnitOfWork _unitOfWork;
     /// <summary>
     /// Vendor-agnostic IV-pump telemetry inbound. Vendor edge agents POST raw payloads at
     /// <c>/iv-pumps/telemetry?vendor=bd-alaris</c> (or baxter-sigma, plum-360, pcd04); the
@@ -39,9 +41,11 @@ public sealed class IvPumpsController : ControllerBase
     /// <c>GET /sessions/{id}/iv-pumps/infusions</c>.
     /// </summary>
     public IvPumpsController(IEnumerable<IIvPumpDriver> drivers,
-        IPdmsRepository<IvPumpInfusion, Guid> infusions)
+        IPdmsRepository<IvPumpInfusion, Guid> infusions,
+        IUnitOfWork unitOfWork)
     {
         _infusions = infusions;
+        _unitOfWork = unitOfWork;
         _byVendor = drivers.ToDictionary(d => d.VendorCode, d => d, StringComparer.OrdinalIgnoreCase);
     }
 
@@ -123,6 +127,10 @@ public sealed class IvPumpsController : ControllerBase
                 _infusions.Update(infusion);
                 break;
         }
+
+        // Persist the lazily-created infusion / applied reading. Without this the telemetry write
+        // was tracked but never committed (the in-memory test repo hid it by "saving" on Add).
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return Accepted(new IvPumpReadingDto(
             VendorCode: reading.VendorCode,
