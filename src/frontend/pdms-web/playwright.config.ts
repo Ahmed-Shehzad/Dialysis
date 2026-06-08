@@ -17,8 +17,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
-    ? [["github"], ["html", { open: "never", outputFolder: "../../../e2e-artifacts/pdms-web/report" }]]
-    : [["list"], ["html", { open: "never", outputFolder: "../../../e2e-artifacts/pdms-web/report" }]],
+    ? [
+        ["github"],
+        ["html", { open: "never", outputFolder: "../../../e2e-artifacts/pdms-web/report" }],
+      ]
+    : [
+        ["list"],
+        ["html", { open: "never", outputFolder: "../../../e2e-artifacts/pdms-web/report" }],
+      ],
   // The Vite dev server compiles modules on first request, so the initial authenticated render can
   // take several seconds on a cold CI runner — give web-first assertions generous headroom.
   timeout: 60_000,

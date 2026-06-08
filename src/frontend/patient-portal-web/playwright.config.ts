@@ -18,8 +18,20 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
-    ? [["github"], ["html", { open: "never", outputFolder: "../../../e2e-artifacts/patient-portal-web/report" }]]
-    : [["list"], ["html", { open: "never", outputFolder: "../../../e2e-artifacts/patient-portal-web/report" }]],
+    ? [
+        ["github"],
+        [
+          "html",
+          { open: "never", outputFolder: "../../../e2e-artifacts/patient-portal-web/report" },
+        ],
+      ]
+    : [
+        ["list"],
+        [
+          "html",
+          { open: "never", outputFolder: "../../../e2e-artifacts/patient-portal-web/report" },
+        ],
+      ],
   // The Vite dev server compiles modules on first request, so the initial render (auth probe →
   // discovery query → effect → summary query → tiles) can take several seconds on a cold CI runner.
   // Give web-first assertions generous headroom so that cold-compile latency doesn't flake the run.
