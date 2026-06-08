@@ -1,5 +1,4 @@
 using Dialysis.BuildingBlocks.Transponder;
-using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Documents.Ports;
 using Dialysis.PDMS.Contracts.Integration;
@@ -17,7 +16,6 @@ namespace Dialysis.HIE.Documents.Consumers;
 public sealed class OnClinicalDocumentProduced : IConsumer<ClinicalDocumentProducedIntegrationEvent>
 {
     private readonly IDocumentReferenceRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<OnClinicalDocumentProduced> _logger;
     /// <summary>
     /// Consumes <see cref="ClinicalDocumentProducedIntegrationEvent"/> from PDMS Reporting and
@@ -27,11 +25,9 @@ public sealed class OnClinicalDocumentProduced : IConsumer<ClinicalDocumentProdu
     /// without re-indexing.
     /// </summary>
     public OnClinicalDocumentProduced(IDocumentReferenceRepository repository,
-        IUnitOfWork unitOfWork,
         ILogger<OnClinicalDocumentProduced> logger)
     {
         _repository = repository;
-        _unitOfWork = unitOfWork;
         _logger = logger;
     }
     public async Task HandleAsync(ConsumeContext<ClinicalDocumentProducedIntegrationEvent> context)
@@ -62,7 +58,8 @@ public sealed class OnClinicalDocumentProduced : IConsumer<ClinicalDocumentProdu
             languageCode: message.LanguageCode,
             hasAcroForms: false,
             hasJavascript: false);
-        _repository.Add(doc);
-        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+        var created = await _repository.TryAddIdempotentAsync(doc, ct).ConfigureAwait(false);
+        if (!created)
+            _logger.LogDebug("DocumentReference for report {ReportId} already indexed (concurrent insert); skipping.", message.ReportId);
     }
 }

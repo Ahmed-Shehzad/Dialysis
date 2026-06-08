@@ -10,16 +10,43 @@ public sealed class EfPatientIndex : IPatientIndex
     public EfPatientIndex(HieDbContext db) => _db = db;
     public async Task<PatientIndexEntry> UpsertAsync(PatientIndexEntry entry, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(entry);
+
         var existing = await _db.PatientIndexEntries
             .FirstOrDefaultAsync(p => p.PartnerId == entry.PartnerId && p.ExternalLogicalId == entry.ExternalLogicalId, cancellationToken)
             .ConfigureAwait(false);
-        if (existing is null)
+        if (existing is not null)
         {
-            await _db.PatientIndexEntries.AddAsync(entry, cancellationToken).ConfigureAwait(false);
+            existing.Refresh(entry.MedicalRecordNumber, entry.FamilyName, entry.GivenName, entry.DateOfBirth, entry.SexAtBirthCode, entry.UpdatedAtUtc);
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return existing;
+        }
+
+        // Own the save (isolated) so a concurrent insert that loses the race against the unique
+        // UX_PatientIndex_PartnerExternalId index resolves to the committed winner instead of
+        // surfacing the violation — and the returned id stays stable across the race.
+        await _db.PatientIndexEntries.AddAsync(entry, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return entry;
         }
-        existing.Refresh(entry.MedicalRecordNumber, entry.FamilyName, entry.GivenName, entry.DateOfBirth, entry.SexAtBirthCode, entry.UpdatedAtUtc);
-        return existing;
+        catch (DbUpdateException)
+        {
+            // A concurrent ingest committed the same (PartnerId, ExternalLogicalId) between our read
+            // and this save. Detach the doomed insert, re-read the winner (which must now exist),
+            // refresh it with the incoming demographics, and return that stable persisted entity. If
+            // the re-read can't find a winner the failure was something else and must surface.
+            _db.Entry(entry).State = EntityState.Detached;
+            var winner = await _db.PatientIndexEntries
+                .FirstOrDefaultAsync(p => p.PartnerId == entry.PartnerId && p.ExternalLogicalId == entry.ExternalLogicalId, cancellationToken)
+                .ConfigureAwait(false);
+            if (winner is null)
+                throw;
+            winner.Refresh(entry.MedicalRecordNumber, entry.FamilyName, entry.GivenName, entry.DateOfBirth, entry.SexAtBirthCode, entry.UpdatedAtUtc);
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return winner;
+        }
     }
 
     public async Task<IReadOnlyList<PatientIndexEntry>> MatchAsync(

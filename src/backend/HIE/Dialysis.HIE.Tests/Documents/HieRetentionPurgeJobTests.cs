@@ -89,6 +89,7 @@ public sealed class HieRetentionPurgeJobTests
         private readonly IReadOnlyList<DocumentReference> _documents;
         public StubDocumentRepository(IReadOnlyList<DocumentReference> documents) => _documents = documents;
         public void Add(DocumentReference document) { }
+        public Task<bool> TryAddIdempotentAsync(DocumentReference document, CancellationToken cancellationToken) => Task.FromResult(true);
         public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<DocumentReference?>(null);
         public Task<IReadOnlyList<DocumentReference>> ListAsync(Guid? patientId, string? kind, DocumentReferenceStatus? status, DocumentReferenceSource? source, int take, CancellationToken cancellationToken) =>
             Task.FromResult(_documents);

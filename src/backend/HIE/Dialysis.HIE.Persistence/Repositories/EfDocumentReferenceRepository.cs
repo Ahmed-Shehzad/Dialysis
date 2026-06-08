@@ -14,6 +14,33 @@ public sealed class EfDocumentReferenceRepository : IDocumentReferenceRepository
         _db.DocumentReferences.Add(document);
     }
 
+    public async Task<bool> TryAddIdempotentAsync(DocumentReference document, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        _db.DocumentReferences.Add(document);
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            // The document id is the source event id, so a concurrent indexer that committed the same
+            // primary key between the consumer's fast-path FindAsync and this save tripped the PK
+            // index. Detach the doomed insert and treat the conflict as idempotent ("already indexed")
+            // — unless the re-read can't find a winner, in which case the failure was something else
+            // and must surface.
+            _db.Entry(document).State = EntityState.Detached;
+            var exists = await _db.DocumentReferences
+                .AsNoTracking()
+                .AnyAsync(d => d.Id == document.Id, cancellationToken)
+                .ConfigureAwait(false);
+            if (!exists)
+                throw;
+            return false;
+        }
+    }
+
     public Task<DocumentReference?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         _db.DocumentReferences
             .Include(d => d.Signatures)
