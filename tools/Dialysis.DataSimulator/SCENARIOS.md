@@ -163,7 +163,8 @@ Seeded once per database; these are the operational backdrops the per-module adm
 
 These scenarios were **partially** driven — the simulator produced the *order* but not the
 *result*, or the entity existed but wasn't UI-discoverable. S14–S16 are now **closed** (the
-mechanism is noted under each); S17 (admin/identity) remains a smoke-assertion to add.
+mechanism is noted under each); S17 (admin/identity) is asserted by the backend smoke
+(`.github/workflows/simulator-smoke.yml`) against the minted token's `dialysis_permission` claim.
 
 ### S14 — Lab order → result → observation round-trip  *(closed)*
 - **Was:** `lab.PlaceLabOrder(patientId, "Serum")` (LOINC-coded) placed via the EHR BFF `_x/lab`
@@ -202,7 +203,7 @@ mechanism is noted under each); S17 (admin/identity) remains a smoke-assertion t
 - **Consistency assertion:** the discovery list is non-empty and each id resolves to a portal summary
   for that patient.
 
-### S17 — Identity / admin: permission catalog ↔ realm consistency  *(gap: admin context smoke)*
+### S17 — Identity / admin: permission catalog ↔ realm consistency  *(asserted in smoke)*
 - **Today:** the simulator mints a `dialysis-data-simulator` client_credentials token whose
   `dialysis_permission` claim carries the ~140 permissions every other journey relies on; the
   `admin` context (identity-web, `Dialysis.Admin.Bff`) renders the realm — identity-provider
