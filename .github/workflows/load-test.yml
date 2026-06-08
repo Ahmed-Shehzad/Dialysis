@@ -110,22 +110,40 @@ jobs:
           if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
             echo "::error::Could not obtain a service-account token from Keycloak."; exit 1
           fi
-          # 2) Create one PDMS session through the BFF so RecordReading has a real target — the
-          #    handler 404s on an unknown session id (it does not upsert).
-          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          TODAY=$(date -u +%Y-%m-%d)
-          SESSION_ID=$(curl -fsS -X POST "${BASE_URL}/pdms/api/v1.0/sessions" \
-            -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
-            -d "{\"patientId\":\"$(cat /proc/sys/kernel/random/uuid)\",\"scheduledStartUtc\":\"${NOW}\",\"dialyzerModel\":\"FX CorDiax 80\",\"prescribedDurationMinutes\":240,\"bloodFlowRateMlPerMin\":350,\"dialysateFlowRateMlPerMin\":500,\"dialysatePotassiumMmolPerL\":2.0,\"dialysateCalciumMmolPerL\":1.5,\"dialysateSodiumMmolPerL\":138.0,\"targetUfVolumeLiters\":2.5,\"anticoagulationProtocolCode\":\"HEPARIN-STD\",\"accessKind\":\"ArteriovenousFistula\",\"accessSite\":\"Left radiocephalic\",\"accessEstablishedOn\":\"${TODAY}\"}" \
-            | jq -r .id)
-          if [ -z "$SESSION_ID" ] || [ "$SESSION_ID" = "null" ]; then
-            echo "::error::Could not create a PDMS session for the load run."; exit 1
-          fi
-          echo "Seeded PDMS session ${SESSION_ID}."
-          # 3) Run the scenario. In CI we override the long scenario durations down to ~60s so the
-          #    smoke finishes in time; production / k6-operator cluster runs use the full durations.
-          ACCESS_TOKEN="$TOKEN" SESSION_IDS="$SESSION_ID" \
-            k6 run --duration 60s "tests/load/k6/${SCENARIO}"
+          # 2) Scenario-specific seeding, then run. In CI we override the long scenario durations down
+          #    to ~60s (--duration runs the script's default export) so the smoke finishes in time;
+          #    production / k6-operator cluster runs use the full `scenarios` durations.
+          RUN_ENV=(ACCESS_TOKEN="$TOKEN")
+          case "$SCENARIO" in
+            rpm-device-ingestion.js)
+              # The registry-governed ingest only accepts readings from a registered device, so
+              # register the one the script targets (mirrors the simulator: register → ingest).
+              DEVICE_ID="rpm-device-0001"
+              PATIENT_ID="00000000-0000-0000-0000-000000000001"
+              curl -fsS -X POST "${BASE_URL}/his/api/v1.0/integration/devices" \
+                -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+                -d "{\"deviceId\":\"${DEVICE_ID}\",\"deviceTypeCode\":\"dialysis-machine\",\"manufacturer\":\"B. Braun\",\"model\":\"Dialog iQ\",\"serialNumber\":\"${DEVICE_ID}\"}"
+              echo "Registered HIS device ${DEVICE_ID}."
+              RUN_ENV+=(DEVICE_IDS="$DEVICE_ID" PATIENT_ID="$PATIENT_ID")
+              ;;
+            *)
+              # Session scenarios (durable-write / sync-baseline / mixed): create one PDMS session
+              # through the BFF so RecordReading has a real target — the handler 404s on an unknown
+              # session id (it does not upsert).
+              NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+              TODAY=$(date -u +%Y-%m-%d)
+              SESSION_ID=$(curl -fsS -X POST "${BASE_URL}/pdms/api/v1.0/sessions" \
+                -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+                -d "{\"patientId\":\"$(cat /proc/sys/kernel/random/uuid)\",\"scheduledStartUtc\":\"${NOW}\",\"dialyzerModel\":\"FX CorDiax 80\",\"prescribedDurationMinutes\":240,\"bloodFlowRateMlPerMin\":350,\"dialysateFlowRateMlPerMin\":500,\"dialysatePotassiumMmolPerL\":2.0,\"dialysateCalciumMmolPerL\":1.5,\"dialysateSodiumMmolPerL\":138.0,\"targetUfVolumeLiters\":2.5,\"anticoagulationProtocolCode\":\"HEPARIN-STD\",\"accessKind\":\"ArteriovenousFistula\",\"accessSite\":\"Left radiocephalic\",\"accessEstablishedOn\":\"${TODAY}\"}" \
+                | jq -r .id)
+              if [ -z "$SESSION_ID" ] || [ "$SESSION_ID" = "null" ]; then
+                echo "::error::Could not create a PDMS session for the load run."; exit 1
+              fi
+              echo "Seeded PDMS session ${SESSION_ID}."
+              RUN_ENV+=(SESSION_IDS="$SESSION_ID")
+              ;;
+          esac
+          env "${RUN_ENV[@]}" k6 run --duration 60s "tests/load/k6/${SCENARIO}"
       - name: Stop Aspire stack
         if: always()
         run: kill $(cat /tmp/aspire.pid) || true

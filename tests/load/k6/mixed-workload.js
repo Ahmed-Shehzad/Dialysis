@@ -123,3 +123,12 @@ export function chartProfile() {
   healthyRate.add(res.status === 201 || res.status === 400);
   sleep(0.1);
 }
+
+// Single-iteration smoke for `k6 run --duration <t>`: the CLI flag overrides the `scenarios` block
+// and runs ONLY the default export, so this script needs one (the three profiles above are reached
+// via per-scenario `exec` for the full cluster run). Scoped to the confirmed-authorized PDMS read +
+// telemetry-write paths so the CI smoke stays green; the full three-profile mix runs on the cluster.
+export default function mixedSmoke() {
+  readsProfile();
+  telemetryProfile();
+}
