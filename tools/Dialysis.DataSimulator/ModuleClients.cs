@@ -33,8 +33,11 @@ public interface IEhrClient
     /// <summary>Orders an outpatient prescription.</summary>
     Task OrderPrescriptionAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken);
 
-    /// <summary>Orders an imaging study.</summary>
-    Task OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken);
+    /// <summary>Orders an imaging study; returns the imaging-order id.</summary>
+    Task<Guid> OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken);
+
+    /// <summary>Links a fulfilled study back to an imaging order (completes it — closes the result loop).</summary>
+    Task LinkImagingStudyAsync(Guid imagingOrderId, string studyInstanceUid, CancellationToken cancellationToken);
 
     /// <summary>Requests an outbound referral.</summary>
     Task RequestReferralAsync(Guid patientId, Guid providerId, CancellationToken cancellationToken);
@@ -309,8 +312,8 @@ public sealed class EhrClient : IEhrClient
             cancellationToken);
 
     /// <inheritdoc />
-    public Task OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken) =>
-        HttpJson.PostAsync(_client, "api/v1.0/clinical/imaging-orders",
+    public Task<Guid> OrderImagingStudyAsync(Guid patientId, Guid encounterId, Guid providerId, CancellationToken cancellationToken) =>
+        HttpJson.PostReadIdAsync(_client, "api/v1.0/clinical/imaging-orders",
             new
             {
                 patientId,
@@ -321,6 +324,11 @@ public sealed class EhrClient : IEhrClient
                 reasonText = "Vascular access surveillance",
             },
             cancellationToken);
+
+    /// <inheritdoc />
+    public Task LinkImagingStudyAsync(Guid imagingOrderId, string studyInstanceUid, CancellationToken cancellationToken) =>
+        HttpJson.PostAsync(_client, $"api/v1.0/clinical/imaging-orders/{imagingOrderId}/link-study",
+            new { studyInstanceUid }, cancellationToken);
 
     /// <inheritdoc />
     public Task RequestReferralAsync(Guid patientId, Guid providerId, CancellationToken cancellationToken) =>

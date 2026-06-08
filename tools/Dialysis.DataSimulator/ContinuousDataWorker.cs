@@ -206,7 +206,17 @@ public sealed class ContinuousDataWorker : BackgroundService
                 await _ehr.SignNoteAsync(noteId, provider, cancellationToken).ConfigureAwait(false);
             }).ConfigureAwait(false);
             await TryAsync("ehr.prescription", () => _ehr.OrderPrescriptionAsync(patientId, enc, provider, cancellationToken)).ConfigureAwait(false);
-            await TryAsync("ehr.imaging", () => _ehr.OrderImagingStudyAsync(patientId, enc, provider, cancellationToken)).ConfigureAwait(false);
+            await TryAsync("ehr.imaging", async () =>
+            {
+                var imagingOrderId = await _ehr.OrderImagingStudyAsync(patientId, enc, provider, cancellationToken).ConfigureAwait(false);
+                // Close the result loop for ~half the orders so the chart shows a *completed* study, not
+                // just a placed order — mirrors SmartConnect DICOM STOWing the fulfilled study back.
+                if (Math.Abs(imagingOrderId.GetHashCode()) % 2 == 0)
+                {
+                    var studyUid = $"1.2.840.10008.5.1.4.1.1.{(uint)imagingOrderId.GetHashCode()}";
+                    await _ehr.LinkImagingStudyAsync(imagingOrderId, studyUid, cancellationToken).ConfigureAwait(false);
+                }
+            }).ConfigureAwait(false);
             await TryAsync("ehr.avs", () => _ehr.AuthorAfterVisitSummaryAsync(patientId, enc, provider, cancellationToken)).ConfigureAwait(false);
         }
 

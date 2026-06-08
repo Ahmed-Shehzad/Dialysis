@@ -3,6 +3,7 @@ using Dialysis.CQRS;
 using Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
+using Dialysis.EHR.ClinicalNotes.Features.LinkImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
@@ -273,6 +274,33 @@ public sealed class ClinicalController : ControllerBase
         return Ok(rows);
     }
 
+    /// <summary>
+    /// Links a fulfilled study back to an imaging order and completes it. Normally driven by
+    /// SmartConnect DICOM STOW → <c>ImagingStudyLinkedIntegrationEvent</c>; exposed here so a result
+    /// can be recorded directly (e.g. the data simulator) without a full DICOM round-trip.
+    /// </summary>
+    [HttpPost("imaging-orders/{id:guid}/link-study")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> LinkImagingStudyAsync(
+        Guid id,
+        [FromBody] LinkImagingStudyRequest body,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        try
+        {
+            await _gateway.SendCommandAsync<LinkImagingStudyCommand, Unit>(
+                new LinkImagingStudyCommand(id, body.StudyInstanceUid), cancellationToken)
+                .ConfigureAwait(false);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     /// <summary>Human-in-the-loop sign-off on an order's advisory AI finding (accept or reject).</summary>
     [HttpPost("imaging-orders/{id:guid}/ai-finding/review")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -309,6 +337,9 @@ public sealed class ClinicalController : ControllerBase
 
     /// <summary>AI-finding sign-off request body.</summary>
     public sealed record ReviewImagingAiFindingRequest(bool Accepted);
+
+    /// <summary>Link-study request body (the fulfilled DICOM study UID).</summary>
+    public sealed record LinkImagingStudyRequest(string StudyInstanceUid);
 
     public sealed record RegisterPatientRequest
     {
