@@ -4,6 +4,7 @@ using Dialysis.EHR.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Xunit;
 
 namespace Dialysis.EHR.Tests;
 
