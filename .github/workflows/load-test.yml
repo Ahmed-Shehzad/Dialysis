@@ -64,6 +64,8 @@ jobs:
           Dialysis__EnableSonarQube=false \
           Dialysis__EnableWebApps=false \
           Pdms__DurableCommands__RecordReading__Enabled="$PDMS_DURABLE" \
+          His__DeviceRegistry__Ingest__RateLimit__PermitLimit=12000 \
+          His__DeviceRegistry__Ingest__RateLimit__WindowSeconds=60 \
             dotnet run --project src/aspire/Dialysis.AppHost --no-build --configuration Release --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
           # Connection-based readiness on :9090. Even slimmed, the stack is non-trivial (per-module
@@ -124,6 +126,21 @@ jobs:
                 -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
                 -d "{\"deviceId\":\"${DEVICE_ID}\",\"deviceTypeCode\":\"dialysis-machine\",\"manufacturer\":\"B. Braun\",\"model\":\"Dialog iQ\",\"serialNumber\":\"${DEVICE_ID}\"}"
               echo "Registered HIS device ${DEVICE_ID}."
+              # --- DIAGNOSTIC: capture the exact status + body of ingest responses so any reject
+              # (e.g. a 429 from the edge rate limiter) is visible in CI logs. Kept for future
+              # debugging — a burst of rapid posts surfaces backpressure the k6 run would otherwise
+              # only summarize as an accepted_rate number.
+              echo "----- ingest diagnostic burst (12 rapid posts) -----"
+              for n in $(seq 1 12); do
+                code=$(curl -s -o /tmp/ingest_body.txt -w '%{http_code}' \
+                  -X POST "${BASE_URL}/his/api/v1.0/integration/device-readings" \
+                  -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+                  -H "X-Command-Id: $(cat /proc/sys/kernel/random/uuid)" \
+                  -d "{\"deviceId\":\"${DEVICE_ID}\",\"patientId\":\"${PATIENT_ID}\",\"payloadJson\":\"{\\\"v\\\":${n}}\",\"externalMessageId\":\"$(cat /proc/sys/kernel/random/uuid)\"}")
+                echo "ingest #${n} -> HTTP ${code} | body: $(cat /tmp/ingest_body.txt)"
+              done
+              echo "----- AppHost log: rate-limit / ingest lines -----"
+              grep -iE "rate.?limit|429|TooManyRequests|DeviceIngest" /tmp/aspire.log | tail -n 40 || true
               RUN_ENV+=(DEVICE_IDS="$DEVICE_ID" PATIENT_ID="$PATIENT_ID")
               ;;
             *)
