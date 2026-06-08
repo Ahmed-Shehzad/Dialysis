@@ -37,21 +37,39 @@ jobs:
             --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
           echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
           sudo apt-get update && sudo apt-get install -y k6 jq
+      - name: Build Aspire stack
+        # Pre-build the whole AppHost graph (every module API + BFF + the gateway) OUTSIDE the
+        # readiness window below. A cold restore+build is ~10 min on a fresh runner; the previous
+        # failure's AppHost log showed `dotnet run` was still restoring NuGet packages at the
+        # 10-min readiness deadline. Building here means the timed `dotnet run --no-build` only
+        # pays for container pulls + process startup, not compilation.
+        run: dotnet build src/aspire/Dialysis.AppHost --configuration Release
       - name: Start Aspire stack
+        env:
+          SCENARIO: ${{ inputs.scenario || 'durable-write-flow.js' }}
         run: |
-          # Slim the stack to what the load run needs: skip the dev data dashboards
-          # (pgAdmin / valkey-admin) and the continuous data simulator. The dashboards just
-          # slow a cold runner (and the valkey-admin image stalls DCP startup), and the
-          # simulator would pump background write traffic that skews the k6 latency numbers.
+          # Slim the stack to exactly what the k6 gateway → BFF → API path needs: skip the dev
+          # data dashboards (pgAdmin / valkey-admin), the SonarQube analyzer (~700 MB image, ~2 GB
+          # RAM, embedded Elasticsearch), the seven Vite SPAs, and the continuous data simulator.
+          # None are on the load path, and together they're the bulk of the cold-start CPU/IO/RAM
+          # that starved the gateway before. --no-build reuses the Release build from the step above.
+          #
+          # Exercising the durable command bus + ledger + status surface is the whole point of the
+          # durable-write / mixed / rpm scenarios, so flip the PDMS RecordReading durable flag on for
+          # them; sync-write-baseline deliberately measures the NON-durable path, so leave it off.
+          PDMS_DURABLE=true
+          [ "$SCENARIO" = "sync-write-baseline.js" ] && PDMS_DURABLE=false
           Dialysis__EnableDevDashboards=false \
           Dialysis__EnableDataSimulator=false \
-            dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
+          Dialysis__EnableSonarQube=false \
+          Dialysis__EnableWebApps=false \
+          Pdms__DurableCommands__RecordReading__Enabled="$PDMS_DURABLE" \
+            dotnet run --project src/aspire/Dialysis.AppHost --no-build --configuration Release --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
-          # Connection-based readiness on :9090. The stack is heavy (per-module Postgres +
-          # RabbitMQ + Valkey + Keycloak + SonarQube + every API + BFF, gateway WaitFor's all),
-          # and a cold runner's image pulls + concurrent startup can starve CPU/IO, so allow up
-          # to ~15 min (10 occasionally flaked). Fail with the AppHost log if the gateway never
-          # comes up rather than load-testing a dead port.
+          # Connection-based readiness on :9090. Even slimmed, the stack is non-trivial (per-module
+          # Postgres + RabbitMQ + Valkey + Keycloak + every API + BFF, gateway WaitFor's all), and a
+          # cold runner's image pulls + concurrent startup can starve CPU/IO, so allow up to ~15 min.
+          # Fail with the AppHost log if the gateway never comes up rather than load-testing a dead port.
           echo "Waiting for gateway on :9090 …"
           ready=0
           for i in $(seq 1 225); do
@@ -68,22 +86,64 @@ jobs:
             tail -n 250 /tmp/aspire.log || true
             exit 1
           fi
-      - name: Seed a session for the load run
-        id: seed
-        run: |
-          # Drive the AppHost demo seeder to materialize a known session id so the load
-          # script doesn't bounce off 404s. (Demo seeder writes to PdmsDbContext via the
-          # composition module; details in src/backend/PDMS/Dialysis.PDMS.Composition/Demo.)
-          # Smoke runs scope to 60s so this stays a CI-friendly latency.
-          echo "session_ids=00000000-0000-0000-0000-000000000001" >>"$GITHUB_OUTPUT"
-      - name: Run k6 scenario
+      - name: Seed token + session and run k6 scenario
+        # Token + session creation + the k6 run live in ONE step so the bearer never crosses a step
+        # boundary (no step output / file persistence of a credential).
         env:
           BASE_URL: http://localhost:9090
-          SESSION_IDS: ${{ steps.seed.outputs.session_ids }}
+          SCENARIO: ${{ inputs.scenario || 'durable-write-flow.js' }}
+          # The dev-realm default for the dialysis-data-simulator confidential client (matches
+          # src/backend/Identity/keycloak/dialysis-realm.json and the AppHost parameter default).
+          # A repo secret overrides it if the realm secret is ever rotated.
+          SIM_CLIENT_SECRET: ${{ secrets.DATA_SIMULATOR_CLIENT_SECRET || 'data-simulator-dev-secret-change-me' }}
         run: |
-          # In CI we override the long scenario durations down to ~60s so the smoke
-          # finishes in time; production runs use the full durations.
-          k6 run --duration 60s tests/load/k6/${{ inputs.scenario || 'durable-write-flow.js' }}
+          set -euo pipefail
+          # 1) Mint a service-account bearer (client_credentials on dialysis-data-simulator). The dev
+          #    realm grants this account the pdms.* / his.* write permissions the load path needs, and
+          #    the per-context BFF forwards the bearer to the module API (AllowServiceBearerPassthrough
+          #    is on in the run-mode AppHost) so k6 reaches the API as an authenticated caller.
+          TOKEN=$(curl -fsS -X POST \
+            "http://localhost:8081/realms/dialysis/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=dialysis-data-simulator&client_secret=${SIM_CLIENT_SECRET}" \
+            | jq -r .access_token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Could not obtain a service-account token from Keycloak."; exit 1
+          fi
+          # 2) Scenario-specific seeding, then run. In CI we override the long scenario durations down
+          #    to ~60s (--duration runs the script's default export) so the smoke finishes in time;
+          #    production / k6-operator cluster runs use the full `scenarios` durations.
+          RUN_ENV=(ACCESS_TOKEN="$TOKEN")
+          case "$SCENARIO" in
+            rpm-device-ingestion.js)
+              # The registry-governed ingest only accepts readings from a registered device, so
+              # register the one the script targets (mirrors the simulator: register → ingest).
+              DEVICE_ID="rpm-device-0001"
+              PATIENT_ID="00000000-0000-0000-0000-000000000001"
+              curl -fsS -X POST "${BASE_URL}/his/api/v1.0/integration/devices" \
+                -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+                -d "{\"deviceId\":\"${DEVICE_ID}\",\"deviceTypeCode\":\"dialysis-machine\",\"manufacturer\":\"B. Braun\",\"model\":\"Dialog iQ\",\"serialNumber\":\"${DEVICE_ID}\"}"
+              echo "Registered HIS device ${DEVICE_ID}."
+              RUN_ENV+=(DEVICE_IDS="$DEVICE_ID" PATIENT_ID="$PATIENT_ID")
+              ;;
+            *)
+              # Session scenarios (durable-write / sync-baseline / mixed): create one PDMS session
+              # through the BFF so RecordReading has a real target — the handler 404s on an unknown
+              # session id (it does not upsert).
+              NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+              TODAY=$(date -u +%Y-%m-%d)
+              SESSION_ID=$(curl -fsS -X POST "${BASE_URL}/pdms/api/v1.0/sessions" \
+                -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+                -d "{\"patientId\":\"$(cat /proc/sys/kernel/random/uuid)\",\"scheduledStartUtc\":\"${NOW}\",\"dialyzerModel\":\"FX CorDiax 80\",\"prescribedDurationMinutes\":240,\"bloodFlowRateMlPerMin\":350,\"dialysateFlowRateMlPerMin\":500,\"dialysatePotassiumMmolPerL\":2.0,\"dialysateCalciumMmolPerL\":1.5,\"dialysateSodiumMmolPerL\":138.0,\"targetUfVolumeLiters\":2.5,\"anticoagulationProtocolCode\":\"HEPARIN-STD\",\"accessKind\":\"ArteriovenousFistula\",\"accessSite\":\"Left radiocephalic\",\"accessEstablishedOn\":\"${TODAY}\"}" \
+                | jq -r .id)
+              if [ -z "$SESSION_ID" ] || [ "$SESSION_ID" = "null" ]; then
+                echo "::error::Could not create a PDMS session for the load run."; exit 1
+              fi
+              echo "Seeded PDMS session ${SESSION_ID}."
+              RUN_ENV+=(SESSION_IDS="$SESSION_ID")
+              ;;
+          esac
+          env "${RUN_ENV[@]}" k6 run --duration 60s "tests/load/k6/${SCENARIO}"
       - name: Stop Aspire stack
         if: always()
         run: kill $(cat /tmp/aspire.pid) || true

@@ -58,6 +58,9 @@ export const options = {
 const BASE = __ENV.BASE_URL || 'http://localhost:9090';
 const BEARER = __ENV.ACCESS_TOKEN || '';
 const SESSION_POOL = (__ENV.SESSION_IDS || '').split(',').filter(Boolean);
+// Per-context BFF prefix: post the per-context split the gateway routes /pdms/api/* → PDMS BFF →
+// PDMS API (the BFF forwards a service-account bearer when AllowServiceBearerPassthrough is on).
+const PDMS = `${BASE}/pdms`;
 
 function pickSession() {
   if (SESSION_POOL.length === 0) {
@@ -88,7 +91,7 @@ export default function durableWriteFlow() {
   };
 
   const enqueueStart = Date.now();
-  let res = http.post(`${BASE}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
+  let res = http.post(`${PDMS}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
 
   // Honor the 503 + Retry-After contract from the durable bus on broker pressure.
   let retried = false;
@@ -96,7 +99,7 @@ export default function durableWriteFlow() {
     retried = true;
     retriedRate.add(1);
     sleep(parseInt(res.headers['Retry-After'] || '5', 10));
-    res = http.post(`${BASE}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
+    res = http.post(`${PDMS}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
   }
   enqueueLatency.add(Date.now() - enqueueStart);
   acceptedRate.add(res.status === 202 || res.status === 201);
@@ -111,7 +114,9 @@ export default function durableWriteFlow() {
   // Poll the status endpoint to assert the consumer drained the envelope.
   if (res.status === 202) {
     const correlationId = res.json('correlationId');
-    const statusUrl = res.headers['Location'] || `${BASE}/api/v1.0/command-status/${correlationId}`;
+    // The 202 Location / statusEndpoint is the module-relative /api/v1.0/... path; re-prefix it
+    // with the context so the poll routes back through the same BFF.
+    const statusUrl = `${PDMS}/api/v1.0/command-status/${correlationId}`;
     const pollStart = Date.now();
     for (let i = 0; i < 5; i++) {
       sleep(0.2);
