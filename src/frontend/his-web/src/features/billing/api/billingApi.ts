@@ -86,3 +86,11 @@ export const fetchBillingExportJobs = async (
   const response = await apiClient.get<BillingExportJob[]>(`${hisPrefix}/export-jobs`, { params });
   return response.data ?? [];
 };
+
+/**
+ * (Re-)dispatch a queued export job to EHR for assembly. HIS re-fires the queued trigger; EHR
+ * assembles the EDI 837 batch and reports back, which advances the job out of Queued. Returns 202.
+ */
+export const executeBillingExportJob = async (id: string): Promise<void> => {
+  await apiClient.post(`${hisPrefix}/export-jobs/${id}/execute`);
+};

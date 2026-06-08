@@ -66,6 +66,13 @@ public static class HospitalInformationSystemExtensions
 
             services.AddTransponder(t =>
             {
+                // Cross-module: EHR reports the outcome of a billing-export job back to HIS so the
+                // export-job queue advances out of Queued (HIS owns the queue; EHR owns the claims).
+                t.AddConsumer<Dialysis.EHR.Contracts.Integration.BillingExportJobCompletedIntegrationEvent,
+                    Dialysis.HIS.Operations.Consumers.BillingExportJobCompletedConsumer>();
+                t.AddConsumer<Dialysis.EHR.Contracts.Integration.BillingExportJobFailedIntegrationEvent,
+                    Dialysis.HIS.Operations.Consumers.BillingExportJobFailedConsumer>();
+
                 if (enableFhirSubscriptions)
                 {
                     t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedSubscriptionBroadcaster>();

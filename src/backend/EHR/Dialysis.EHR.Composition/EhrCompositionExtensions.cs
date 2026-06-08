@@ -159,6 +159,10 @@ public static class EhrCompositionExtensions
                 // Advisory AI imaging finding → attach to the order, pending clinician sign-off.
                 t.AddConsumer<ImagingAiFindingProducedIntegrationEvent, ImagingAiFindingProducedConsumer>();
                 t.AddConsumer<ClaimSubmittedIntegrationEvent, ClaimSubmittedConsumer>();
+                // Cross-module: HIS queues a payer-billing window → EHR (the authoritative claims
+                // pipeline) assembles the EDI 837 batch and reports the outcome back so HIS can flip
+                // the export job out of Queued.
+                t.AddConsumer<Dialysis.HIS.Contracts.IntegrationEvents.Billing.BillingExportJobQueuedIntegrationEvent, BillingExportJobQueuedConsumer>();
                 // Cross-module: PDMS completes a session → capture the itemised dialysis charge
                 // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
                 t.AddConsumer<DialysisSessionChargeReadyIntegrationEvent, DialysisSessionChargeReadyConsumer>();

@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.Operations.Features.AssignStaffRole;
+using Dialysis.HIS.Operations.Features.ExecuteBillingExportJob;
 using Dialysis.HIS.Operations.Features.GetBillingExportJobById;
 using Dialysis.HIS.Operations.Features.ListBillingExportJobs;
 using Dialysis.HIS.Operations.Features.RecordInventoryMovement;
@@ -71,6 +72,26 @@ public sealed class OperationsController : HisHateoasControllerBase
             $"/api/v{ApiVersionSegment}/operations/billing/export-jobs/{id}",
             new SubmitBillingExportJobResponse(id),
             LinkCapabilitiesIndex());
+    }
+
+    /// <summary>
+    /// Operator action — (re-)dispatch a queued billing-export job to EHR for assembly. Re-fires the
+    /// queued trigger so EHR's billing pipeline assembles the EDI 837 batch and reports the outcome
+    /// back (advancing the job out of <c>Queued</c>). Only jobs still in <c>Queued</c> can execute.
+    /// </summary>
+    [HttpPost("billing/export-jobs/{id:guid}/execute")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ExecuteBillingExportJobAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await _gateway
+            .SendCommandAsync<ExecuteBillingExportJobCommand, Unit>(
+                new ExecuteBillingExportJobCommand(id),
+                cancellationToken)
+            .ConfigureAwait(false);
+        // Literal location — AcceptedAtAction/AtRoute throw 500 under URL-segment API versioning.
+        return Accepted($"/api/v{ApiVersionSegment}/operations/billing/export-jobs/{id}");
     }
 
     [HttpGet("billing/export-jobs/{id:guid}")]
