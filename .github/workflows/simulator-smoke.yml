@@ -131,29 +131,26 @@ jobs:
             printf '%s' "$body" | jq -r "$filter" 2>/dev/null
           }
 
-          # Warm-up poll: wait for the slowest-to-populate signal — HIE outbound, which only appears
-          # once the simulator COMPLETES a dialysis session (the live pool must fill first, then the
-          # outbound dispatch row is written). Everything else (queues, patients, sessions, flows, the
-          # MPI inbound seed, ~half-resulted lab/imaging) is populated no later than this, so gating on
-          # it removes the eventually-consistent flake without a per-assert retry budget. Up to ~10 min
-          # (HIE sits at the end of the longest causal chain — journey → pool fills → session completes
-          # → event → HIE maps + enqueues — so it needs the most headroom on a cold/contended runner).
-          echo "warm-up: waiting for a completed session to reach the HIE outbound dispatch queue …"
+          # Warm-up: wait until the simulator has produced a healthy patient cohort, so the per-patient
+          # completeness scans below (resulted labs / completed imaging / portal discovery) have
+          # material. Gating on EHR patient volume is cheap and reliable — unlike HIE's outbound
+          # dispatch queue (the end of the longest async chain), it doesn't depend on cross-module event
+          # propagation, so it doesn't flake on cold boots. Refresh the token so the poll never
+          # authenticates with a stale (~5 min) token.
+          echo "warm-up: waiting for the simulator to populate a patient cohort …"
           warm=0
-          for i in $(seq 1 100); do
-            # Refresh the token roughly every ~3 min so the poll itself never authenticates with a
-            # stale token (which would make every fetch_count 403 and the warm-up never succeed).
-            [ "$((i % 30))" -eq 0 ] && mint_token
-            wc=$(fetch_count "${BASE_URL}/hie/api/v1.0/hie/ops/outbound" '.data | length')
-            if [[ "$wc" =~ ^[0-9]+$ ]] && [ "$wc" -ge 1 ]; then
+          for i in $(seq 1 60); do
+            [ "$((i % 20))" -eq 0 ] && mint_token
+            pc=$(fetch_count "${BASE_URL}/ehr/api/v1.0/patients?take=25" '.items | length')
+            if [[ "$pc" =~ ^[0-9]+$ ]] && [ "$pc" -ge 8 ]; then
               warm=1
-              echo "warm after ~$((60 + i * 6))s ($wc outbound dispatch item(s))."
+              echo "warm after ~$((60 + i * 6))s ($pc patients)."
               break
             fi
             sleep 6
           done
           if [ "$warm" -ne 1 ]; then
-            echo "::warning::HIE outbound still empty after ~11 min; asserting anyway (will surface the real gap below)."
+            echo "::warning::EHR patient cohort still small after ~6 min; asserting anyway."
           fi
 
           # Fresh token for the assertion phase — the warm-up may have outlived the one it started with.
@@ -211,22 +208,38 @@ jobs:
             "${BASE_URL}/smartconnect/api/v1/admin/flows" \
             'length'
 
-          # --- hie: inbound feed (HATEOAS envelope → .data), outbound as fallback --------------------
-          # Inbound is fed by the one-time MPI seed; outbound by every completed session/document. [S9/S12]
-          # HIE is the eventually-consistent laggard: its data only appears after cross-module
-          # integration events are relayed over RabbitMQ → mapped by the Outbound slice → dispatched,
-          # i.e. the end of the longest async chain. On a cold CI stack that can lag past the warm-up
-          # window even when the 6 synchronous contexts are flush, so treat an empty HIE as a WARNING,
-          # not a hard failure — the other contexts + the S14/S15/S16/S17 loops are the firm signal.
-          # (assert_nonempty bumps `failures` on a miss; snapshot and restore so HIE can't fail the job.)
-          hie_before=$failures
-          if ! assert_nonempty "hie" "${BASE_URL}/hie/api/v1.0/hie/ops/inbound" '.data | length'; then
-            echo "  [hie] inbound empty — retrying via the outbound dispatch queue …"
-            assert_nonempty "hie (outbound fallback)" "${BASE_URL}/hie/api/v1.0/hie/ops/outbound" '.data | length'
-          fi
-          if [ "$failures" -gt "$hie_before" ]; then
-            failures=$hie_before
-            echo "::warning::[hie] inbound + outbound still empty after warm-up — cross-context propagation lag (non-fatal)."
+          # --- hie: actively seed an inbound FHIR resource, then verify it surfaces (S9/S12) ---------
+          # The simulator's startup MPI seed + the outbound dispatch queue sit at the end of the longest
+          # async chain (cross-module events relayed over RabbitMQ → mapped → dispatched), so passively
+          # waiting for them flakes on cold boots. Instead drive HIE deterministically at assert time
+          # (HIE is up by now): grant a wildcard inbound consent, POST an inbound FHIR Patient from a
+          # partner (exactly what the simulator's MPI seed does), then confirm it lands on the inbound
+          # board. Self-contained → a firm HIE liveness assertion rather than a timing gamble.
+          hie_partner="smoke-partner"
+          cons_code=$(curl -sS -o /tmp/hie_consent.out -w '%{http_code}' \
+            -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+            "${BASE_URL}/hie/api/v1.0/hie/consents" \
+            -d "{\"patientId\":\"00000000-0000-0000-0000-000000000000\",\"partnerId\":\"${hie_partner}\",\"scope\":\"patient.demographics\",\"direction\":\"Inbound\",\"effectiveFromUtc\":\"2020-01-01T00:00:00Z\"}")
+          bundle_code=$(curl -sS -o /tmp/hie_bundle.out -w '%{http_code}' \
+            -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -H "X-HIE-Partner: ${hie_partner}" \
+            "${BASE_URL}/hie/api/v1.0/fhir/Bundle" \
+            -d '{"resourceType":"Patient","id":"smoke-hie-1","identifier":[{"system":"http://terminology.hl7.org/CodeSystem/v2-0203","value":"SMOKE-HIE-1"}],"name":[{"family":"Smoketest","given":["Hie"]}],"gender":"female","birthDate":"1980-01-01"}')
+          echo "[hie] seed: consent HTTP ${cons_code}, inbound bundle HTTP ${bundle_code}"
+          hie_ok=0
+          for i in $(seq 1 10); do
+            ic=$(fetch_count "${BASE_URL}/hie/api/v1.0/hie/ops/inbound" '.data | length')
+            if [[ "$ic" =~ ^[0-9]+$ ]] && [ "$ic" -ge 1 ]; then
+              echo "[hie] OK — $ic inbound resource(s) via /hie/api/v1.0/hie/ops/inbound"
+              hie_ok=1
+              break
+            fi
+            sleep 3
+          done
+          if [ "$hie_ok" -ne 1 ]; then
+            echo "::error::[hie] seeded inbound FHIR resource did not surface on /hie/ops/inbound (HIE inbound ingest broken)."
+            echo "  consent response: $(cat /tmp/hie_consent.out 2>/dev/null)"
+            echo "  bundle response:  $(cat /tmp/hie_bundle.out 2>/dev/null)"
+            failures=$((failures + 1))
           fi
 
           # --- lab: orders for a populated patient (via EHR BFF _x/lab aggregation) ------------------
