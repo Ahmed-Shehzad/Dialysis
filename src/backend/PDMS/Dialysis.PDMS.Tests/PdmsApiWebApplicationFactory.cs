@@ -15,6 +15,11 @@ public sealed class PdmsApiWebApplicationFactory : ModuleWebApplicationFactory<P
     protected override string ModuleSlug => "pdms";
 
     protected override string ConnectionStringName => "Pdms";
+
+    // PDMS startup migrations create the TimescaleDB hypertable for intradialytic readings, so the
+    // test container must be the TimescaleDB image (stock postgres lacks the extension) — matches the
+    // AppHost's pg-pdms image.
+    protected override string ContainerImage => "timescale/timescaledb:latest-pg17";
 }
 
 /// <summary>xUnit collection so the Postgres container is shared across the PDMS integration tests.</summary>
