@@ -17,6 +17,7 @@ using Dialysis.HIS.Operations.Features.RecordInventoryMovement;
 using Dialysis.HIS.Operations.Features.SubmitBillingExportJob;
 using Dialysis.HIS.PatientAccess;
 using Dialysis.HIS.PatientAccess.Features.GetPatientPortalSummary;
+using Dialysis.HIS.PatientAccess.Features.ListPortalPatients;
 using Dialysis.HIS.PatientFlow;
 using Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 using Dialysis.HIS.PatientFlow.Features.AssignChair;
@@ -124,6 +125,7 @@ public static class HisCqrsServiceCollectionExtensions
             cqrs.AddCommandBehavior<RegisterWalkInCommand, PatientQueueEntryDto, AuthorizationPipelineBehavior<RegisterWalkInCommand, PatientQueueEntryDto>>();
             cqrs.AddCommandBehavior<PlaceMedicationOrderCommand, Guid, AuthorizationPipelineBehavior<PlaceMedicationOrderCommand, Guid>>();
             cqrs.AddQueryBehavior<GetPatientPortalSummaryQuery, PatientPortalSummaryDto, AuthorizationPipelineBehavior<GetPatientPortalSummaryQuery, PatientPortalSummaryDto>>();
+            cqrs.AddQueryBehavior<ListPortalPatientsQuery, IReadOnlyList<Guid>, AuthorizationPipelineBehavior<ListPortalPatientsQuery, IReadOnlyList<Guid>>>();
         });
     }
 }
