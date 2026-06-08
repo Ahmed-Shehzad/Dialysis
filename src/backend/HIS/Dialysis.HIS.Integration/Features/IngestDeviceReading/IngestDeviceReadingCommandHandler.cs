@@ -1,6 +1,5 @@
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Exceptions;
-using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.Integration.DeviceIngestion;
 using Dialysis.HIS.Integration.DeviceRegistry;
 using Microsoft.Extensions.Options;
@@ -13,18 +12,15 @@ public sealed class IngestDeviceReadingCommandHandler : ICommandHandler<IngestDe
     private readonly IDeviceReadingRepository _repository;
     private readonly IDeviceRepository _devices;
     private readonly DeviceIngestionOptions _options;
-    private readonly IUnitOfWork _unitOfWork;
     public IngestDeviceReadingCommandHandler(SlidingWindowRateLimiter rateLimiter,
         IDeviceReadingRepository repository,
         IDeviceRepository devices,
-        IOptions<DeviceIngestionOptions> options,
-        IUnitOfWork unitOfWork)
+        IOptions<DeviceIngestionOptions> options)
     {
         _rateLimiter = rateLimiter;
         _repository = repository;
         _devices = devices;
         _options = options.Value;
-        _unitOfWork = unitOfWork;
     }
     public async Task<Guid> HandleAsync(IngestDeviceReadingCommand request, CancellationToken cancellationToken)
     {
@@ -35,27 +31,32 @@ public sealed class IngestDeviceReadingCommandHandler : ICommandHandler<IngestDe
         // RequireRegistration is on, so the registry can roll out without breaking existing ingest.
         await GovernAgainstRegistryAsync(request, cancellationToken).ConfigureAwait(false);
 
-        if (!string.IsNullOrWhiteSpace(request.ExternalMessageId))
+        // Normalize the dedup key once so the fast-path read and the stored value match.
+        var externalMessageId = string.IsNullOrWhiteSpace(request.ExternalMessageId)
+            ? null
+            : request.ExternalMessageId.Trim();
+
+        if (externalMessageId is not null)
         {
             var existing = await _repository
-                .FindIdByExternalMessageIdAsync(request.ExternalMessageId, cancellationToken)
+                .FindIdByExternalMessageIdAsync(externalMessageId, cancellationToken)
                 .ConfigureAwait(false);
             if (existing is not null)
                 return existing.Value;
         }
 
-        var id = request.ReadingId != Guid.Empty ? request.ReadingId : Guid.CreateVersion7();
-        _repository.Add(new DeviceReadingRecord
+        var record = new DeviceReadingRecord
         {
-            Id = id,
+            Id = request.ReadingId != Guid.Empty ? request.ReadingId : Guid.CreateVersion7(),
             DeviceId = request.DeviceId,
             PatientId = request.PatientId,
             PayloadJson = request.PayloadJson,
             ReceivedAtUtc = DateTime.UtcNow,
-            ExternalMessageId = string.IsNullOrWhiteSpace(request.ExternalMessageId) ? null : request.ExternalMessageId.Trim(),
-        });
-        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return id;
+            ExternalMessageId = externalMessageId,
+        };
+        // PersistIdempotentAsync flushes the reading + the device's last-seen stamp, and resolves a
+        // concurrent ExternalMessageId collision to the winning row's id (idempotent under races).
+        return await _repository.PersistIdempotentAsync(record, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task GovernAgainstRegistryAsync(IngestDeviceReadingCommand request, CancellationToken cancellationToken)
