@@ -37,21 +37,30 @@ jobs:
             --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
           echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
           sudo apt-get update && sudo apt-get install -y k6 jq
+      - name: Build Aspire stack
+        # Pre-build the whole AppHost graph (every module API + BFF + the gateway) OUTSIDE the
+        # readiness window below. A cold restore+build is ~10 min on a fresh runner; the previous
+        # failure's AppHost log showed `dotnet run` was still restoring NuGet packages at the
+        # 10-min readiness deadline. Building here means the timed `dotnet run --no-build` only
+        # pays for container pulls + process startup, not compilation.
+        run: dotnet build src/aspire/Dialysis.AppHost --configuration Release
       - name: Start Aspire stack
         run: |
-          # Slim the stack to what the load run needs: skip the dev data dashboards
-          # (pgAdmin / valkey-admin) and the continuous data simulator. The dashboards just
-          # slow a cold runner (and the valkey-admin image stalls DCP startup), and the
-          # simulator would pump background write traffic that skews the k6 latency numbers.
+          # Slim the stack to exactly what the k6 gateway → BFF → API path needs: skip the dev
+          # data dashboards (pgAdmin / valkey-admin), the SonarQube analyzer (~700 MB image, ~2 GB
+          # RAM, embedded Elasticsearch), the seven Vite SPAs, and the continuous data simulator.
+          # None are on the load path, and together they're the bulk of the cold-start CPU/IO/RAM
+          # that starved the gateway before. --no-build reuses the Release build from the step above.
           Dialysis__EnableDevDashboards=false \
           Dialysis__EnableDataSimulator=false \
-            dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
+          Dialysis__EnableSonarQube=false \
+          Dialysis__EnableWebApps=false \
+            dotnet run --project src/aspire/Dialysis.AppHost --no-build --configuration Release --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
-          # Connection-based readiness on :9090. The stack is heavy (per-module Postgres +
-          # RabbitMQ + Valkey + Keycloak + SonarQube + every API + BFF, gateway WaitFor's all),
-          # and a cold runner's image pulls + concurrent startup can starve CPU/IO, so allow up
-          # to ~15 min (10 occasionally flaked). Fail with the AppHost log if the gateway never
-          # comes up rather than load-testing a dead port.
+          # Connection-based readiness on :9090. Even slimmed, the stack is non-trivial (per-module
+          # Postgres + RabbitMQ + Valkey + Keycloak + every API + BFF, gateway WaitFor's all), and a
+          # cold runner's image pulls + concurrent startup can starve CPU/IO, so allow up to ~15 min.
+          # Fail with the AppHost log if the gateway never comes up rather than load-testing a dead port.
           echo "Waiting for gateway on :9090 …"
           ready=0
           for i in $(seq 1 225); do

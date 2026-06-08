@@ -354,68 +354,80 @@ if (enableDevDashboards)
 // SonarQube reaches its Postgres via the DCP-managed container network using the
 // resource name as the hostname; inside that network, Postgres listens on its
 // container target port (5432), not the random host-allocated port.
-var sonarPgPwd = builder.AddParameter("sonar-pg-password", "sonar", secret: true);
-
-var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgPwd)
-    .WithImage("postgres", "17-alpine")
-    .WithDataVolume("dialysis-sonarqube-pg-data")
-    .WithLifetime(ContainerLifetime.Persistent);
-
-// Pinned to the latest 26.x community image. Docker Hub tags follow YY.M.0.BUILD
-// (e.g. 26.5.0.122743-community), not the marketing "2025.x" naming in the doc
-// URLs — the prior `2025.1-community` attempt 404'd at pull time. Bumping the
-// digest is a deliberate operator action since SonarQube reindexes on major
-// upgrades and we don't want a transparent latest-tag pull to surprise devs.
-var sonarqube = builder.AddContainer("sonarqube", "sonarqube", "26.5.0.122743-community")
-    .WithEnvironment("SONAR_JDBC_URL", "jdbc:postgresql://postgres-sonarqube:5432/postgres")
-    .WithEnvironment("SONAR_JDBC_USERNAME", "postgres")
-    .WithEnvironment("SONAR_JDBC_PASSWORD", sonarPgPwd)
-    // Three named volumes so a `docker volume rm` to reset analysis state doesn't
-    // wipe the JVM caches or extensions (plugins) along with the index. SonarQube's
-    // own runbooks treat these as three independent backups too.
-    .WithVolume("dialysis-sonarqube-data", "/opt/sonarqube/data")
-    .WithVolume("dialysis-sonarqube-logs", "/opt/sonarqube/logs")
-    .WithVolume("dialysis-sonarqube-extensions", "/opt/sonarqube/extensions")
-    .WithHttpEndpoint(port: 9000, targetPort: 9000, name: "http")
-    // /api/system/status returns {"status":"UP"} when ready; SonarQube's startup is
-    // multi-phase (web → compute engine → search) and the port opens well before
-    // analysis is accepted, so a port-probe isn't enough.
-    .WithHttpHealthCheck("/api/system/status", statusCode: 200, endpointName: "http")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WaitFor(sonarPgServer);
-
-// One-shot bootstrap container: waits for SonarQube health, creates the "dialysis"
-// project (idempotent), generates an analysis token, and writes both to a named
-// volume so `tools/sonarqube/scan.sh` can read them without prompting. Uses the
-// SonarQube REST API with admin/admin (the fresh-install default) — first run
-// changes the password to a known dev value so the bootstrap stays idempotent.
 //
-// Code Quality / MQR mode: SonarQube 2025.1 defaults new projects to
-// Multi-Quality Rule (MQR) mode, which is what the user asked for as "code
-// quality mode on". No explicit toggle needed; the bootstrap script just creates
-// the project and the default profile applies.
-//
-// SonarQube is a dev-time analyzer, not a deployment concern — exclude it from
-// the k8s chart entirely (operators run Sonar on their own infrastructure).
-// The bind-mounted bootstrap script also can't ship to k8s (publisher rejects
-// bind mounts); skipping the registration for k8s avoids the whole branch.
-if (!isKubernetesPublish)
+// SonarQube is dev-time only and the single heaviest container in the graph (~700 MB image,
+// ~2 GB RAM, embedded Elasticsearch). It is ALWAYS registered for publish (the compose artifact
+// ships it) but a RUN-mode launch can opt out with Dialysis:EnableSonarQube=false, so a weight-
+// sensitive run — e.g. the CI k6 load test — doesn't pay for an analyzer it never touches and the
+// gateway comes up well inside the readiness window.
+var enableSonarQube = publishing ||
+    !string.Equals(builder.Configuration["Dialysis:EnableSonarQube"], "false", StringComparison.OrdinalIgnoreCase);
+IResourceBuilder<ContainerResource>? sonarqube = null;
+if (enableSonarQube)
 {
-    builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
-    .WithBindMount("../../../tools/sonarqube/bootstrap.sh", "/bootstrap.sh", isReadOnly: true)
-    .WithVolume("dialysis-sonarqube-bootstrap", "/state")
-    .WithContainerRuntimeArgs("--user", "0:0")
-    .WithEnvironment("SONAR_URL", "http://sonarqube:9000")
-    .WithEnvironment("SONAR_ADMIN_USER", "admin")
-    // Dev-only credential; rotated by the bootstrap script on first run, then
-    // re-used across launches. Real deployments must NOT reuse this.
-    .WithEnvironment("SONAR_ADMIN_PASSWORD", "admin")
-    .WithEnvironment("SONAR_PROJECT_KEY", "dialysis")
-    .WithEnvironment("SONAR_PROJECT_NAME", "Dialysis Modular Monolith")
-    .WithEntrypoint("/bin/sh")
-    .WithArgs("/bootstrap.sh")
-    .WithLifetime(ContainerLifetime.Session)
-    .WaitFor(sonarqube);
+    var sonarPgPwd = builder.AddParameter("sonar-pg-password", "sonar", secret: true);
+
+    var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgPwd)
+        .WithImage("postgres", "17-alpine")
+        .WithDataVolume("dialysis-sonarqube-pg-data")
+        .WithLifetime(ContainerLifetime.Persistent);
+
+    // Pinned to the latest 26.x community image. Docker Hub tags follow YY.M.0.BUILD
+    // (e.g. 26.5.0.122743-community), not the marketing "2025.x" naming in the doc
+    // URLs — the prior `2025.1-community` attempt 404'd at pull time. Bumping the
+    // digest is a deliberate operator action since SonarQube reindexes on major
+    // upgrades and we don't want a transparent latest-tag pull to surprise devs.
+    sonarqube = builder.AddContainer("sonarqube", "sonarqube", "26.5.0.122743-community")
+        .WithEnvironment("SONAR_JDBC_URL", "jdbc:postgresql://postgres-sonarqube:5432/postgres")
+        .WithEnvironment("SONAR_JDBC_USERNAME", "postgres")
+        .WithEnvironment("SONAR_JDBC_PASSWORD", sonarPgPwd)
+        // Three named volumes so a `docker volume rm` to reset analysis state doesn't
+        // wipe the JVM caches or extensions (plugins) along with the index. SonarQube's
+        // own runbooks treat these as three independent backups too.
+        .WithVolume("dialysis-sonarqube-data", "/opt/sonarqube/data")
+        .WithVolume("dialysis-sonarqube-logs", "/opt/sonarqube/logs")
+        .WithVolume("dialysis-sonarqube-extensions", "/opt/sonarqube/extensions")
+        .WithHttpEndpoint(port: 9000, targetPort: 9000, name: "http")
+        // /api/system/status returns {"status":"UP"} when ready; SonarQube's startup is
+        // multi-phase (web → compute engine → search) and the port opens well before
+        // analysis is accepted, so a port-probe isn't enough.
+        .WithHttpHealthCheck("/api/system/status", statusCode: 200, endpointName: "http")
+        .WithLifetime(ContainerLifetime.Persistent)
+        .WaitFor(sonarPgServer);
+
+    // One-shot bootstrap container: waits for SonarQube health, creates the "dialysis"
+    // project (idempotent), generates an analysis token, and writes both to a named
+    // volume so `tools/sonarqube/scan.sh` can read them without prompting. Uses the
+    // SonarQube REST API with admin/admin (the fresh-install default) — first run
+    // changes the password to a known dev value so the bootstrap stays idempotent.
+    //
+    // Code Quality / MQR mode: SonarQube 2025.1 defaults new projects to
+    // Multi-Quality Rule (MQR) mode, which is what the user asked for as "code
+    // quality mode on". No explicit toggle needed; the bootstrap script just creates
+    // the project and the default profile applies.
+    //
+    // SonarQube is a dev-time analyzer, not a deployment concern — exclude it from
+    // the k8s chart entirely (operators run Sonar on their own infrastructure).
+    // The bind-mounted bootstrap script also can't ship to k8s (publisher rejects
+    // bind mounts); skipping the registration for k8s avoids the whole branch.
+    if (!isKubernetesPublish)
+    {
+        builder.AddContainer("sonarqube-bootstrap", "curlimages/curl", "8.11.0")
+        .WithBindMount("../../../tools/sonarqube/bootstrap.sh", "/bootstrap.sh", isReadOnly: true)
+        .WithVolume("dialysis-sonarqube-bootstrap", "/state")
+        .WithContainerRuntimeArgs("--user", "0:0")
+        .WithEnvironment("SONAR_URL", "http://sonarqube:9000")
+        .WithEnvironment("SONAR_ADMIN_USER", "admin")
+        // Dev-only credential; rotated by the bootstrap script on first run, then
+        // re-used across launches. Real deployments must NOT reuse this.
+        .WithEnvironment("SONAR_ADMIN_PASSWORD", "admin")
+        .WithEnvironment("SONAR_PROJECT_KEY", "dialysis")
+        .WithEnvironment("SONAR_PROJECT_NAME", "Dialysis Modular Monolith")
+        .WithEntrypoint("/bin/sh")
+        .WithArgs("/bootstrap.sh")
+        .WithLifetime(ContainerLifetime.Session)
+        .WaitFor(sonarqube);
+    }
 }
 
 // --- Module hosts ----------------------------------------------------------
@@ -726,14 +738,23 @@ if (enableDataSimulator)
         .WithEnvironment("DataSimulator__Modules__Lab", "http://localhost:5302/ehr/api/_x/lab/");
 }
 
-IResourceBuilder<NodeAppResource> AddContextWeb(string folder, int port) =>
-    builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")
-        .WithReference(gateway).WaitFor(gateway)
-        .WithEnvironment("BROWSER", "none")
-        .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
-        .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
-        .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
-        .PublishAsDockerFile();
+// Vite SPAs are ALWAYS registered for publish (the compose/k8s artifacts must ship every web
+// image), but a RUN-mode launch can opt out with Dialysis:EnableWebApps=false for a lighter stack
+// — e.g. the CI k6 load test drives the gateway → BFF → API path and never serves the SPAs, so the
+// seven concurrent `npm install` + vite dev servers are pure startup contention there.
+var enableWebApps = publishing ||
+    !string.Equals(builder.Configuration["Dialysis:EnableWebApps"], "false", StringComparison.OrdinalIgnoreCase);
+
+IResourceBuilder<NodeAppResource>? AddContextWeb(string folder, int port) =>
+    enableWebApps
+        ? builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")
+            .WithReference(gateway).WaitFor(gateway)
+            .WithEnvironment("BROWSER", "none")
+            .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
+            .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
+            .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
+            .PublishAsDockerFile()
+        : null;
 
 // One React app per bounded context (folder name = Aspire resource; the app's own /<ctx> base
 // is set in its vite.config). The gateway reaches each on its pinned port.
@@ -815,15 +836,16 @@ if (isComposePublish)
     }
 
     // Per-context SPAs: built from their own nginx Dockerfile; the gateway reaches each on :80.
+    // enableWebApps is forced on under the publisher, so every web resource is non-null here.
     (IResourceBuilder<NodeAppResource> Web, string Folder, int Port)[] contextWebs =
     [
-        (hisWeb, "his-web", 5331),
-        (ehrWeb, "ehr-web", 5332),
-        (pdmsWeb, "pdms-web", 5333),
-        (smartConnectWeb, "smartconnect-web", 5334),
-        (hieWeb, "hie-web", 5335),
-        (identityWeb, "identity-web", 5336),
-        (portalWeb, "patient-portal-web", 5337),
+        (hisWeb!, "his-web", 5331),
+        (ehrWeb!, "ehr-web", 5332),
+        (pdmsWeb!, "pdms-web", 5333),
+        (smartConnectWeb!, "smartconnect-web", 5334),
+        (hieWeb!, "hie-web", 5335),
+        (identityWeb!, "identity-web", 5336),
+        (portalWeb!, "patient-portal-web", 5337),
     ];
     foreach (var (web, folder, port) in contextWebs)
     {
@@ -864,7 +886,8 @@ if (isComposePublish)
     rabbit.WithPublishedPorts((5672, 5672), (15672, 15672));
     valkey.WithPublishedPorts((6379, 6379));
     keycloak.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
-    sonarqube.WithPublishedPorts((9000, 9000));
+    // Always non-null under the compose publisher (enableSonarQube is forced on when publishing).
+    sonarqube?.WithPublishedPorts((9000, 9000));
 }
 
 // --- Kubernetes Ingress ---------------------------------------------------
