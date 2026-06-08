@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { MyOutsideRecordsCard } from "@/features/hie/components/MyOutsideRecordsCard";
@@ -14,7 +14,7 @@ import { MyCarePlanPanel } from "./MyCarePlanPanel";
 import { PatientConsentsPanel } from "./PatientConsentsPanel";
 import { RecentTreatmentsPanel } from "./RecentTreatmentsPanel";
 import { RemindersPanel } from "./RemindersPanel";
-import { fetchPortalSummary, type PatientPortalSummary } from "./api";
+import { fetchAccessiblePatients, fetchPortalSummary, type PatientPortalSummary } from "./api";
 
 const FALLBACK_DEMO_PATIENT_ID = "";
 
@@ -68,6 +68,26 @@ export const PatientPortalPage = () => {
   // pinned to it; a staff/dev session (no such claim) falls through to the manual id box below.
   const claimPatientId = useMemo(() => claimAsString(user?.claims.his_patient_id), [user?.claims]);
   const [manualId, setManualId] = useState(FALLBACK_DEMO_PATIENT_ID);
+
+  // No patient claim (staff/dev session) → discover patients that have portal data so the demo loop
+  // can be opened from a dropdown instead of pasting a Guid.
+  const accessiblePatients = useQuery({
+    queryKey: ["patient-portal", "accessible-patients"],
+    queryFn: () => fetchAccessiblePatients(),
+    enabled: !claimPatientId,
+    staleTime: 60_000,
+  });
+
+  const accessibleIds = accessiblePatients.data ?? [];
+
+  // Default the selection to the first discovered patient once the list arrives (only if the user
+  // hasn't already chosen / typed one).
+  useEffect(() => {
+    if (!claimPatientId && manualId.trim().length === 0 && accessibleIds.length > 0) {
+      setManualId(accessibleIds[0]);
+    }
+  }, [claimPatientId, manualId, accessibleIds]);
+
   const patientId = claimPatientId ?? (manualId.trim().length > 0 ? manualId.trim() : null);
 
   const summary = useQuery({
@@ -112,9 +132,23 @@ export const PatientPortalPage = () => {
         <section className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-100">
           <p>
             No <span className="font-mono">his_patient_id</span> claim on your session — the IdP
-            isn&apos;t configured with a patient-claim mapping yet. Enter a patient id manually for
-            the demo loop:
+            isn&apos;t configured with a patient-claim mapping yet. Pick a patient with data on file,
+            or enter an id manually, for the demo loop:
           </p>
+          {accessibleIds.length > 0 && (
+            <select
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+              aria-label="Patient with portal data"
+              className="w-full rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+            >
+              {accessibleIds.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          )}
           <div className="flex items-center gap-2">
             <input
               type="text"
