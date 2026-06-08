@@ -57,6 +57,8 @@ const BASE = __ENV.BASE_URL || 'http://localhost:9090';
 const BEARER = __ENV.ACCESS_TOKEN || '';
 const PATIENT_ID = __ENV.PATIENT_ID || '00000000-0000-0000-0000-000000000001';
 const DEVICE_POOL = (__ENV.DEVICE_IDS || 'rpm-device-0001').split(',').filter(Boolean);
+// Per-context BFF prefix: the gateway routes /his/api/* → HIS BFF → HIS API.
+const HIS = `${BASE}/his`;
 
 function pickDevice() {
   return DEVICE_POOL[randomIntBetween(0, DEVICE_POOL.length - 1)];
@@ -87,7 +89,7 @@ export default function rpmDeviceIngestion() {
     ...(BEARER ? { Authorization: `Bearer ${BEARER}` } : {}),
   };
 
-  const url = `${BASE}/api/v1.0/integration/device-readings`;
+  const url = `${HIS}/api/v1.0/integration/device-readings`;
   const start = Date.now();
   let res = http.post(url, body, { headers });
 

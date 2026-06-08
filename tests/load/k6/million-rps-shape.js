@@ -65,6 +65,8 @@ export const options = {
 const BASE = __ENV.BASE_URL || 'http://localhost:9090';
 const BEARER = __ENV.ACCESS_TOKEN || '';
 const SESSION_POOL = (__ENV.SESSION_IDS || '').split(',').filter(Boolean);
+// Per-context BFF prefix: the gateway (dev and deployed) routes /pdms/api/* → PDMS BFF → PDMS API.
+const PDMS = `${BASE}/pdms`;
 
 export default function millionRps() {
   const sessionId = SESSION_POOL.length > 0
@@ -88,7 +90,7 @@ export default function millionRps() {
   };
 
   const t0 = Date.now();
-  const res = http.post(`${BASE}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
+  const res = http.post(`${PDMS}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
   enqueueLatency.add(Date.now() - t0);
 
   if (res.status === 202 || res.status === 201) {

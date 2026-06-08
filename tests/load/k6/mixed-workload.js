@@ -58,6 +58,9 @@ const BASE = __ENV.BASE_URL || 'http://localhost:9090';
 const BEARER = __ENV.ACCESS_TOKEN || '';
 const SESSION_POOL = (__ENV.SESSION_IDS || '').split(',').filter(Boolean);
 const PATIENT_POOL = (__ENV.PATIENT_IDS || '').split(',').filter(Boolean);
+// Per-context BFF prefixes: the gateway routes /pdms/api/* → PDMS and /ehr/api/* → EHR.
+const PDMS = `${BASE}/pdms`;
+const EHR = `${BASE}/ehr`;
 
 function authHeaders() {
   return BEARER ? { Authorization: `Bearer ${BEARER}` } : {};
@@ -66,14 +69,14 @@ function authHeaders() {
 export function readsProfile() {
   const start = Date.now();
   // Realistic SPA navigation: list sessions → open one → list its readings.
-  const list = http.get(`${BASE}/api/v1.0/sessions?take=50`, { headers: authHeaders() });
+  const list = http.get(`${PDMS}/api/v1.0/sessions?take=50`, { headers: authHeaders() });
   healthyRate.add(list.status === 200);
 
   if (list.status === 200 && SESSION_POOL.length > 0) {
     const sessionId = SESSION_POOL[randomIntBetween(0, SESSION_POOL.length - 1)];
-    const detail = http.get(`${BASE}/api/v1.0/sessions/${sessionId}`, { headers: authHeaders() });
+    const detail = http.get(`${PDMS}/api/v1.0/sessions/${sessionId}`, { headers: authHeaders() });
     healthyRate.add(detail.status === 200 || detail.status === 404);
-    const readings = http.get(`${BASE}/api/v1.0/sessions/${sessionId}/readings?take=20`, { headers: authHeaders() });
+    const readings = http.get(`${PDMS}/api/v1.0/sessions/${sessionId}/readings?take=20`, { headers: authHeaders() });
     healthyRate.add(readings.status === 200 || readings.status === 404);
   }
   readLatency.add(Date.now() - start);
@@ -94,7 +97,7 @@ export function telemetryProfile() {
     conductivityMsPerCm: 14.0,
     notes: null,
   });
-  const res = http.post(`${BASE}/api/v1.0/sessions/${sessionId}/readings`, body, {
+  const res = http.post(`${PDMS}/api/v1.0/sessions/${sessionId}/readings`, body, {
     headers: { 'Content-Type': 'application/json', 'X-Command-Id': uuidv4(), ...authHeaders() },
   });
   writeLatency.add(Date.now() - start);
@@ -113,7 +116,7 @@ export function chartProfile() {
     severityCode: 'moderate',
   });
   const start = Date.now();
-  const res = http.post(`${BASE}/api/v1.0/allergies`, body, {
+  const res = http.post(`${EHR}/api/v1.0/allergies`, body, {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
   });
   writeLatency.add(Date.now() - start);

@@ -39,6 +39,8 @@ export const options = {
 const BASE = __ENV.BASE_URL || 'http://localhost:9090';
 const BEARER = __ENV.ACCESS_TOKEN || '';
 const SESSION_POOL = (__ENV.SESSION_IDS || '').split(',').filter(Boolean);
+// Per-context BFF prefix: the gateway routes /pdms/api/* → PDMS BFF → PDMS API.
+const PDMS = `${BASE}/pdms`;
 
 export default function syncBaseline() {
   const sessionId = SESSION_POOL.length > 0
@@ -63,7 +65,7 @@ export default function syncBaseline() {
   };
 
   const start = Date.now();
-  const res = http.post(`${BASE}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
+  const res = http.post(`${PDMS}/api/v1.0/sessions/${sessionId}/readings`, body, { headers });
   writeLatency.add(Date.now() - start);
   successRate.add(res.status === 201);
 
