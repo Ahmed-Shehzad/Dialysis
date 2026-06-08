@@ -224,8 +224,19 @@ public sealed class ContinuousDataWorker : BackgroundService
         await TryAsync("ehr.portal-appointment", () => _ehr.RequestPortalAppointmentAsync(patientId, cancellationToken)).ConfigureAwait(false);
         await TryAsync("ehr.portal-message", () => _ehr.SendPortalMessageAsync(patientId, cancellationToken)).ConfigureAwait(false);
 
-        // --- Lab (through the EHR BFF's _x/lab aggregation) ------------------------------------
-        await TryAsync("lab.order", () => _lab.PlaceLabOrderAsync(patientId, "Serum", cancellationToken)).ConfigureAwait(false);
+        // --- Lab (order through the EHR BFF's _x/lab aggregation; result back through EHR) ------
+        await TryAsync("lab.order-result", async () =>
+        {
+            var labOrderId = await _lab.PlaceLabOrderAsync(patientId, "Serum", cancellationToken).ConfigureAwait(false);
+            // Result ~half the orders (LOINC observations matching the two ordered tests) so the EHR
+            // chart + portal lab panel show resulted labs, not perpetually-pending orders — mirrors an
+            // ORU result returning from the LIS.
+            if (Math.Abs(labOrderId.GetHashCode()) % 2 == 0)
+            {
+                await _ehr.IngestLabResultAsync(patientId, labOrderId, "718-7", "13.2", "g/dL", "13.5-17.5", "L", cancellationToken).ConfigureAwait(false);
+                await _ehr.IngestLabResultAsync(patientId, labOrderId, "2160-0", "9.4", "mg/dL", "0.74-1.35", "H", cancellationToken).ConfigureAwait(false);
+            }
+        }).ConfigureAwait(false);
 
         // --- HIE: document (+ sign) + consent --------------------------------------------------
         await TryAsync("hie.document", async () =>

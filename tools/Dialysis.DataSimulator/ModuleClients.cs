@@ -53,6 +53,10 @@ public interface IEhrClient
 
     /// <summary>Upserts a CPT fee-schedule rate (admin master data for the billing console).</summary>
     Task CreateFeeScheduleAsync(string cptCode, string payerCode, decimal amount, string currencyCode, DateOnly effectiveFromUtc, CancellationToken cancellationToken);
+
+    /// <summary>Ingests a lab observation result against an order (closes the order→result loop on the chart).</summary>
+    Task IngestLabResultAsync(Guid patientId, Guid labOrderId, string loincCode, string valueText,
+        string? unitCode, string? referenceRangeText, string abnormalFlagCode, CancellationToken cancellationToken);
 }
 
 /// <summary>HIS scheduling + patient-flow + medication + device write surface (driven through the HIS BFF).</summary>
@@ -391,6 +395,22 @@ public sealed class EhrClient : IEhrClient
     public Task CreateFeeScheduleAsync(string cptCode, string payerCode, decimal amount, string currencyCode, DateOnly effectiveFromUtc, CancellationToken cancellationToken) =>
         HttpJson.PostAsync(_client, "api/v1.0/billing/fee-schedule",
             new { cptCode, payerCode, amount, currencyCode, effectiveFromUtc, effectiveUntilUtc = (DateOnly?)null },
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task IngestLabResultAsync(Guid patientId, Guid labOrderId, string loincCode, string valueText,
+        string? unitCode, string? referenceRangeText, string abnormalFlagCode, CancellationToken cancellationToken) =>
+        HttpJson.PostAsync(_client, $"api/v1.0/patients/{patientId}/lab-results",
+            new
+            {
+                labOrderId,
+                loincCode,
+                valueText,
+                unitCode,
+                referenceRangeText,
+                abnormalFlagCode,
+                observedAtUtc = DateTime.UtcNow,
+            },
             cancellationToken);
 }
 

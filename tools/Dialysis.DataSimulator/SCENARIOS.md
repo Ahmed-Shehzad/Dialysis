@@ -159,46 +159,48 @@ Seeded once per database; these are the operational backdrops the per-module adm
 
 ---
 
-## Tier 4 — coverage gaps to close (so the scenario is end-to-end, not half)
+## Tier 4 — completeness scenarios (the order→result / discoverability loops)
 
-These scenarios are **partially** driven today; the simulator produces the *order* but not the
-*result*, or the entity exists but isn't UI-discoverable. Closing them is the agreed coverage work
-(portal patientId, lab/imaging results).
+These scenarios were **partially** driven — the simulator produced the *order* but not the
+*result*, or the entity existed but wasn't UI-discoverable. S14–S16 are now **closed** (the
+mechanism is noted under each); S17 (admin/identity) remains a smoke-assertion to add.
 
-### S14 — Lab order → result → observation round-trip  *(gap: results)*
-- **Today:** `lab.PlaceLabOrder(patientId, "Serum")` (LOINC-coded) is placed via the EHR BFF
-  `_x/lab` aggregation; Lab publishes `LabOrderPlacedIntegrationEvent`.
-- **Gap:** no `LabResultReceivedIntegrationEvent` is ever simulated, so the order sits in
-  Placed/Transmitted forever and the EHR chart shows an order with **no result**.
-- **To close:** have the simulator (acting as the LIS via SmartConnect, or a direct result post)
-  feed a LOINC-coded result back for a fraction of orders.
-- **Related entities:** result `orderId` == the placed order; observation `patientId` matches.
-- **UI:** `ehr` chart → labs/results.
-- **Consistency assertion:** a resulted order shows its observation value on the chart, and the
-  observation's patient matches the order's patient.
+### S14 — Lab order → result → observation round-trip  *(closed)*
+- **Was:** `lab.PlaceLabOrder(patientId, "Serum")` (LOINC-coded) placed via the EHR BFF `_x/lab`
+  aggregation; no result was ever simulated and the EHR chart's lab-results read model was in fact
+  **never written by any code path** — the order showed with no result forever.
+- **Closed by:** wiring the (previously unused) `IngestLabResultCommand` handler to write the chart
+  read model (`LabResult.Receive` + `ILabResultRepository.Add`), exposing it at
+  `POST /api/v1.0/patients/{id}/lab-results`, and having the simulator result ~half the orders with
+  two LOINC observations (Hemoglobin 718-7, Creatinine 2160-0) matching the ordered tests.
+- **Related entities:** result `LabOrderId` == the placed order; observation `patientId` matches.
+- **UI:** `ehr` chart → labs/results; `portal` lab panel.
+- **Consistency assertion:** `GET /patients/{id}/lab-results` returns ≥1 observation whose patient
+  matches the order's patient and whose LOINC is one of the ordered tests.
 
-### S15 — Imaging order → result  *(gap: results)*
-- **Today:** `ehr.OrderImagingStudy(patientId, encounterId)` is placed.
-- **Gap:** no imaging result/report is simulated.
-- **To close:** SmartConnect DICOM C-STORE or a report post completes a fraction of imaging orders.
-- **UI:** `ehr` chart → imaging.
-- **Consistency assertion:** a completed imaging order shows a report/study reference for the same
-  encounter.
+### S15 — Imaging order → result  *(closed)*
+- **Was:** `ehr.OrderImagingStudy(patientId, encounterId)` placed; no result/report simulated, so
+  the order stayed `Ordered`.
+- **Closed by:** a `LinkImagingStudyCommand` + `POST /api/v1.0/clinical/imaging-orders/{id}/link-study`
+  exposing the same `order.LinkStudy()` the `ImagingStudyLinkedConsumer` runs for a STOW'd DICOM
+  study; the simulator captures the order id and links a study UID for ~half the orders.
+- **Related entities:** `StudyInstanceUid` set on the placed order; status → `Completed`.
+- **UI:** `ehr` chart → imaging (`GET /patients/{id}/imaging-orders`).
+- **Consistency assertion:** a completed imaging order shows a `studyInstanceUid` and `status:
+  Completed` for the same patient/encounter.
 
-### S16 — Patient portal round-trip  *(gap: portal patientId discoverability)*
-- **Today:** `ehr.RequestPortalAppointment`, `SendPortalMessage`, `AuthorAfterVisitSummary` write
-  portal artifacts for the patient, but the portal summary endpoint
-  (`/portal/api/v1.0/patient-access/patients/{id}/portal-summary`) needs a `patientId` and there is
-  no way for the portal SPA / smoke to *discover* which patient to open.
-- **Gap:** patientId discoverability for the portal context.
-- **To close:** expose a "demo patient" discovery (a portal endpoint that lists the patient(s) the
-  service-account/portal user may open), or have the simulator publish a known portal patient id the
-  smoke can read.
-- **Related entities:** the portal summary's appointment requests / secure messages / AVS reference
-  the same patient that EHR authored them for.
+### S16 — Patient portal round-trip  *(closed)*
+- **Was:** `ehr.RequestPortalAppointment`, `SendPortalMessage`, `AuthorAfterVisitSummary` wrote
+  portal artifacts, but the portal summary endpoint needs a `patientId` and there was no way for the
+  portal SPA / smoke to *discover* which patient to open.
+- **Closed by:** `GET /api/v1.0/patient-access/patients` (HIS PatientAccess, gated by
+  `his.patientaccess.portal.read`) listing patient ids that have portal-relevant data; the portal
+  SPA fetches it when there's no patient claim and defaults the selector to the first one.
+- **Related entities:** the discovered patient's summary / requests / messages / AVS all key to the
+  same patient EHR authored them for.
 - **UI:** `portal` summary, messages, appointment requests, after-visit summary.
-- **Consistency assertion:** the portal summary for the discovered patient shows the secure message +
-  appointment request + AVS that EHR wrote, all keyed to that patient.
+- **Consistency assertion:** the discovery list is non-empty and each id resolves to a portal summary
+  for that patient.
 
 ### S17 — Identity / admin: permission catalog ↔ realm consistency  *(gap: admin context smoke)*
 - **Today:** the simulator mints a `dialysis-data-simulator` client_credentials token whose
@@ -243,8 +245,8 @@ admin (identity-web) — is touched by at least one scenario.
 | S11 TEFCA partners | | | | | ✓ | | |
 | S12 MPI duplicates | | | | | ✓ | | |
 | S13 operational master data | ✓ | ✓ | ✓ | | | | |
-| S14 lab order → result | | ✓ | | (✓) | | | |
-| S15 imaging order → result | | ✓ | | (✓) | | | |
+| S14 lab order → result | | ✓ | | | | | |
+| S15 imaging order → result | | ✓ | | | | | |
 | S16 portal round-trip | | ✓ | | | | ✓ | |
 | S17 identity ↔ realm | | | | | | | ✓ |
 | **Contexts covered** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
