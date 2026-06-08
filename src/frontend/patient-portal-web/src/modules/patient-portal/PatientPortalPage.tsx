@@ -83,8 +83,9 @@ export const PatientPortalPage = () => {
   // Default the selection to the first discovered patient once the list arrives (only if the user
   // hasn't already chosen / typed one).
   useEffect(() => {
-    if (!claimPatientId && manualId.trim().length === 0 && accessibleIds.length > 0) {
-      setManualId(accessibleIds[0]);
+    const firstDiscovered = accessibleIds[0];
+    if (!claimPatientId && manualId.trim().length === 0 && firstDiscovered) {
+      setManualId(firstDiscovered);
     }
   }, [claimPatientId, manualId, accessibleIds]);
 
