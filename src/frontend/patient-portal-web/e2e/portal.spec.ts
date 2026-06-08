@@ -33,7 +33,9 @@ test.describe("patient portal — S16 discovery → related summary", () => {
         }),
     );
 
-    await page.goto("/");
+    // Absolute path including the SPA base — goto("/") would resolve to the origin root (Playwright
+    // resolves it against baseURL's origin, dropping the /portal/ base) where the app isn't served.
+    await page.goto("/portal/");
 
     // The portal header renders (we are past the auth gate, not on the login screen).
     await expect(page.getByRole("heading", { name: /your portal/i })).toBeVisible();

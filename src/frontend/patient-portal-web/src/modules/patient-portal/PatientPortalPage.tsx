@@ -78,7 +78,7 @@ export const PatientPortalPage = () => {
     staleTime: 60_000,
   });
 
-  const accessibleIds = accessiblePatients.data ?? [];
+  const accessibleIds = useMemo(() => accessiblePatients.data ?? [], [accessiblePatients.data]);
 
   // Default the selection to the first discovered patient once the list arrives (only if the user
   // hasn't already chosen / typed one).
