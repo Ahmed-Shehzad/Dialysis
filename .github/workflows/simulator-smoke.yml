@@ -1,0 +1,270 @@
+name: simulator-smoke
+# Boots the live Aspire stack with the data simulator ON and asserts that every BFF context actually
+# receives consistent, related data through the gateway. The simulator drives full healthcare
+# journeys THROUGH the per-context BFFs (his/ehr/pdms/smartconnect/hie/portal/admin + the headless
+# Lab via the EHR _x/lab aggregation), so per-context landing reads prove the gateway → BFF → API
+# write path is wired end to end. Beyond "non-empty landing", it also asserts the cross-entity
+# completeness loops the scenario catalogue (tools/Dialysis.DataSimulator/SCENARIOS.md) defines:
+# S14 lab order→result, S15 imaging order→result, S16 portal discovery→summary, S17 the identity
+# permission surface every SPA gates on. MIRRORS load-test.yml's stack-boot but keeps the simulator
+# enabled (it's the thing under test) and skips only the Vite SPAs / dashboards / SonarQube.
+on:
+  workflow_dispatch:
+  push:
+
+permissions: { contents: read }
+
+jobs:
+  smoke:
+    name: BFF data population smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Build Aspire stack
+        # Pre-build the whole AppHost graph (every module API + BFF + the gateway + the data
+        # simulator project) OUTSIDE the readiness window. A cold restore+build is ~10 min on a
+        # fresh runner; building here means the timed `dotnet run --no-build` only pays for
+        # container pulls + process startup, not compilation.
+        run: dotnet build src/aspire/Dialysis.AppHost --configuration Release
+      - name: Start Aspire stack (simulator ON)
+        run: |
+          # Slim the stack to the backend smoke path: skip the dev data dashboards (pgAdmin /
+          # valkey-admin), SonarQube (~700 MB image, ~2 GB RAM), and the seven Vite SPAs. Crucially
+          # leave the data simulator ENABLED (Dialysis:EnableDataSimulator defaults on; we do NOT set
+          # it false) — populating the BFFs is the whole point of this workflow. --no-build reuses the
+          # Release build from the step above.
+          Dialysis__EnableDevDashboards=false \
+          Dialysis__EnableSonarQube=false \
+          Dialysis__EnableWebApps=false \
+            dotnet run --project src/aspire/Dialysis.AppHost --no-build --configuration Release --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
+          echo $! > /tmp/aspire.pid
+          # Connection-based readiness on :9090. Even slimmed, the stack is non-trivial (per-module
+          # Postgres + RabbitMQ + Valkey + Keycloak + every API + BFF, gateway WaitFor's all), and a
+          # cold runner's image pulls + concurrent startup can starve CPU/IO, so allow up to ~15 min.
+          echo "Waiting for gateway on :9090 …"
+          ready=0
+          for i in $(seq 1 225); do
+            if curl -s -o /dev/null --max-time 5 http://localhost:9090/; then
+              echo "Gateway reachable after ~$((i * 4))s."
+              ready=1
+              break
+            fi
+            sleep 4
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::Aspire gateway never became reachable on :9090 within ~15 min."
+            echo '----- AppHost log (tail) -----'
+            tail -n 250 /tmp/aspire.log || true
+            exit 1
+          fi
+      - name: Let the simulator populate
+        # The simulator only starts AFTER every API + BFF + the gateway is up (it WaitFor's them all),
+        # so the gateway being reachable doesn't mean any journeys have run yet. The worker drives a
+        # small batch of full patient journeys per tick (~2 patients / 5s by default); 180s is plenty
+        # of headroom for several complete journeys (incl. the ~half that get lab/imaging results).
+        run: sleep 180
+      - name: Assert every BFF context has data
+        env:
+          # The dev-realm default for the dialysis-data-simulator confidential client (matches
+          # src/backend/Identity/keycloak/dialysis-realm.json and the AppHost parameter default).
+          # A repo secret overrides it if the realm secret is ever rotated.
+          SIM_CLIENT_SECRET: ${{ secrets.DATA_SIMULATOR_CLIENT_SECRET || 'data-simulator-dev-secret-change-me' }}
+          BASE_URL: http://localhost:9090
+        run: |
+          set -uo pipefail
+
+          # 1) Mint a service-account bearer (client_credentials on dialysis-data-simulator). The dev
+          #    realm grants this account the read permissions the landing endpoints need, and each
+          #    per-context BFF forwards the bearer to its module API (AllowServiceBearerPassthrough is
+          #    on in the run-mode AppHost) so the curl below reaches the API as an authenticated caller.
+          TOKEN=$(curl -fsS -X POST \
+            "http://localhost:8081/realms/dialysis/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=dialysis-data-simulator&client_secret=${SIM_CLIENT_SECRET}" \
+            | jq -r .access_token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Could not obtain a service-account token from Keycloak."
+            tail -n 200 /tmp/aspire.log || true
+            exit 1
+          fi
+
+          failures=0
+
+          # assert_nonempty <label> <url> <jq-filter-yielding-a-count>
+          #   Fetches <url> with the bearer, requires HTTP 2xx, parses the body with <jq-filter>
+          #   (which must evaluate to the element count), and fails the job (printing url + body) if
+          #   the count is missing or < 1. Prints the count on success.
+          assert_nonempty() {
+            local label="$1" url="$2" filter="$3"
+            local body code count
+            body=$(curl -sS -w $'\n%{http_code}' -H "Authorization: Bearer ${TOKEN}" "$url")
+            code=$(printf '%s' "$body" | tail -n1)
+            body=$(printf '%s' "$body" | sed '$d')
+            if [ "${code:0:1}" != "2" ]; then
+              echo "::error::[$label] HTTP $code from $url"
+              echo "  body: $body"
+              failures=$((failures + 1))
+              return 1
+            fi
+            count=$(printf '%s' "$body" | jq -r "$filter" 2>/dev/null)
+            if ! [[ "$count" =~ ^[0-9]+$ ]] || [ "$count" -lt 1 ]; then
+              echo "::error::[$label] empty/unexpected payload from $url (count='$count')"
+              echo "  body: $body"
+              failures=$((failures + 1))
+              return 1
+            fi
+            echo "[$label] OK — $count item(s) via $url"
+            return 0
+          }
+
+          # --- his: today's queue (HATEOAS envelope → .data is the array) ----------------------------
+          # GetTodaysQueueAsync returns ResourceEnvelope<IReadOnlyList<PatientQueueEntryDto>>
+          # (PatientFlowController.cs). Simulator feeds it via RegisterWalkIn/AssignChair.  [S1]
+          assert_nonempty "his" \
+            "${BASE_URL}/his/api/v1.0/patient-flow/todays-queue" \
+            '.data | length'
+
+          # --- ehr: patient search (raw PatientSearchResult, NOT enveloped → .items) -----------------
+          # PatientsController.SearchAsync returns Ok(PatientSearchResult); .items is the page.  [S1]
+          assert_nonempty "ehr" \
+            "${BASE_URL}/ehr/api/v1.0/patients?take=5" \
+            '.items | length'
+
+          # --- pdms: sessions list (raw array, NOT enveloped) ----------------------------------------
+          # SessionsController.ListAsync returns Ok(IReadOnlyList<DialysisSessionListItem>).  [S3]
+          assert_nonempty "pdms" \
+            "${BASE_URL}/pdms/api/v1.0/sessions?take=5" \
+            'length'
+
+          # --- smartconnect: integration flows (raw array via minimal-API admin group) ---------------
+          # admin.MapGet("/flows", …) → Results.Ok(repo.GetAllAsync()); simulator seeds 3 flows.  [S10]
+          assert_nonempty "smartconnect" \
+            "${BASE_URL}/smartconnect/api/v1/admin/flows" \
+            'length'
+
+          # --- hie: inbound feed (HATEOAS envelope → .data), outbound as fallback --------------------
+          # Inbound is fed by the one-time MPI seed; outbound by every completed session/document. [S9/S12]
+          if ! assert_nonempty "hie" \
+              "${BASE_URL}/hie/api/v1.0/hie/ops/inbound" \
+              '.data | length'; then
+            echo "  [hie] inbound empty/failed — retrying via the outbound dispatch queue …"
+            failures=$((failures - 1))   # undo the inbound miss; the fallback decides hie's fate
+            assert_nonempty "hie (outbound fallback)" \
+              "${BASE_URL}/hie/api/v1.0/hie/ops/outbound" \
+              '.data | length'
+          fi
+
+          # --- lab: orders for a populated patient (via EHR BFF _x/lab aggregation) ------------------
+          # Lab is headless — its only list endpoint is by-patient (raw array). The aggregation route
+          # {base}/api/_x/{key}/{rest} forwards {rest} verbatim, so Lab's
+          # `api/v1.0/lab/orders/by-patient/{id}` is reached at
+          # /ehr/api/_x/lab/api/v1.0/lab/orders/by-patient/{id}. The simulator places a lab order per
+          # journey with the SAME EHR patient id, so iterate the EHR page until one has ≥1 order. [S14]
+          echo "[lab] resolving a patient id with lab orders via the EHR _x/lab aggregation …"
+          patient_ids=$(curl -fsS -H "Authorization: Bearer ${TOKEN}" \
+            "${BASE_URL}/ehr/api/v1.0/patients?take=25" | jq -r '.items[].id' 2>/dev/null)
+          lab_ok=0
+          for pid in $patient_ids; do
+            body=$(curl -sS -H "Authorization: Bearer ${TOKEN}" \
+              "${BASE_URL}/ehr/api/_x/lab/api/v1.0/lab/orders/by-patient/${pid}")
+            count=$(printf '%s' "$body" | jq -r 'length' 2>/dev/null)
+            if [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -ge 1 ]; then
+              echo "[lab] OK — $count order(s) for patient ${pid}"
+              lab_ok=1
+              break
+            fi
+          done
+          if [ "$lab_ok" -ne 1 ]; then
+            echo "::error::[lab] no patient in the EHR page had a lab order via the _x/lab aggregation."
+            failures=$((failures + 1))
+          fi
+
+          # --- S14 completeness: a lab RESULT visible on the EHR chart -------------------------------
+          # The simulator results ~half its orders (IngestLabResult → chart read model). Confirm at
+          # least one patient has a resulted observation at GET /patients/{id}/lab-results (raw array),
+          # proving the order→result loop the chart + portal render — not just a pending order.
+          result_ok=0
+          for pid in $patient_ids; do
+            rc=$(curl -sS -H "Authorization: Bearer ${TOKEN}" \
+              "${BASE_URL}/ehr/api/v1.0/patients/${pid}/lab-results" | jq -r 'length' 2>/dev/null)
+            if [[ "$rc" =~ ^[0-9]+$ ]] && [ "$rc" -ge 1 ]; then
+              echo "[lab-result S14] OK — $rc observation(s) on the chart for patient ${pid}"
+              result_ok=1
+              break
+            fi
+          done
+          if [ "$result_ok" -ne 1 ]; then
+            echo "::error::[lab-result S14] no patient had a resulted lab on the EHR chart."
+            failures=$((failures + 1))
+          fi
+
+          # --- S15 completeness: a Completed imaging study on the EHR chart --------------------------
+          # The simulator links a study for ~half its imaging orders (LinkImagingStudy → Completed).
+          # ListImagingOrdersAsync returns a raw array of ImagingOrderDto; confirm one has a
+          # studyInstanceUid set (i.e. the study came back), for some patient.
+          imaging_ok=0
+          for pid in $patient_ids; do
+            ic=$(curl -sS -H "Authorization: Bearer ${TOKEN}" \
+              "${BASE_URL}/ehr/api/v1.0/clinical/patients/${pid}/imaging-orders" \
+              | jq -r '[.[] | select(.studyInstanceUid != null)] | length' 2>/dev/null)
+            if [[ "$ic" =~ ^[0-9]+$ ]] && [ "$ic" -ge 1 ]; then
+              echo "[imaging S15] OK — $ic completed study/studies for patient ${pid}"
+              imaging_ok=1
+              break
+            fi
+          done
+          if [ "$imaging_ok" -ne 1 ]; then
+            echo "::error::[imaging S15] no patient had a completed imaging study on the chart."
+            failures=$((failures + 1))
+          fi
+
+          # --- portal: discover a patient, then load its summary (S16) -------------------------------
+          # GET /portal/api/v1.0/patient-access/patients (HIS PatientAccess via the portal BFF, HATEOAS
+          # envelope → .data is the id array) lists patients with portal-relevant data. Take the first
+          # and confirm its portal-summary loads — proves the portal context is both populated and
+          # discoverable without a patient claim (the discovery the SPA's selector now uses).
+          portal_pid=$(curl -sS -H "Authorization: Bearer ${TOKEN}" \
+            "${BASE_URL}/portal/api/v1.0/patient-access/patients?take=25" | jq -r '.data[0] // empty' 2>/dev/null)
+          if [ -z "$portal_pid" ] || [ "$portal_pid" = "null" ]; then
+            echo "::error::[portal S16] discovery returned no patients with portal data."
+            failures=$((failures + 1))
+          else
+            # portal-summary is ResourceEnvelope<PatientPortalSummaryDto>; .data.patientId echoes the id.
+            assert_nonempty "portal S16" \
+              "${BASE_URL}/portal/api/v1.0/patient-access/patients/${portal_pid}/portal-summary" \
+              '.data.patientId | length'
+          fi
+
+          # --- admin / identity: the permission surface every other SPA gates on (S17) ---------------
+          # identity-web (admin context) renders the realm; the same realm mints this service token.
+          # Assert the token carries a non-empty dialysis_permission claim — the exact permission set
+          # the SPAs' PermissionGate enforces (token ⊆ realm catalog by construction). Also soft-check
+          # the IdP catalog endpoint responds (brokered IdPs ship disabled, so the list may be empty).
+          payload=$(printf '%s' "$TOKEN" | cut -d. -f2)
+          mod=$(( ${#payload} % 4 )); [ "$mod" -ne 0 ] && payload="${payload}$(printf '=%.0s' $(seq 1 $((4 - mod))))"
+          perm_count=$(printf '%s' "$payload" | tr '_-' '/+' | base64 -d 2>/dev/null \
+            | jq -r '.dialysis_permission | if type=="string" then fromjson else . end | length' 2>/dev/null)
+          if [[ "$perm_count" =~ ^[0-9]+$ ]] && [ "$perm_count" -ge 1 ]; then
+            echo "[admin S17] OK — service token carries $perm_count dialysis_permission entries (the SPA authz surface)."
+          else
+            echo "::error::[admin S17] token dialysis_permission claim missing/empty (got '$perm_count')."
+            failures=$((failures + 1))
+          fi
+          idp_code=$(curl -sS -o /dev/null -w '%{http_code}' "${BASE_URL}/identity/providers")
+          echo "[admin S17] /identity/providers responded HTTP ${idp_code} (brokered IdPs ship disabled; list may be empty)."
+
+          if [ "$failures" -ne 0 ]; then
+            echo "::error::$failures BFF context/scenario check(s) failed."
+            echo '----- AppHost log (tail) -----'
+            tail -n 200 /tmp/aspire.log || true
+            exit 1
+          fi
+          echo "All seven BFF contexts + the S14/S15/S16/S17 completeness loops returned data."
+      - name: Stop Aspire stack
+        if: always()
+        run: kill "$(cat /tmp/aspire.pid)" || true
