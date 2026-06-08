@@ -114,6 +114,12 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
         };
 
         field.Elements.SetString("/T", spec.Name);
+        // The field type (/FT) is what standards-compliant readers — pdfjs, Adobe, every viewer
+        // that calls getFieldObjects — use to classify the field. PDFsharp's internal field ctors
+        // (invoked here via reflection) don't serialize /FT, which leaves the widget's field type
+        // null in the output PDF: the field renders but readers can't type it, so an interactive
+        // form panel sees an empty field set. Set it explicitly per field kind.
+        field.Elements.SetName("/FT", FieldTypeName(spec));
         if (!string.IsNullOrWhiteSpace(spec.Tooltip))
             field.Elements.SetString("/TU", spec.Tooltip);
         field.ReadOnly = spec.ReadOnly;
@@ -126,6 +132,16 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
         field.Elements.SetReference("/P", page);
         return field;
     }
+
+    /// <summary>The PDF <c>/FT</c> field-type name for a placement spec.</summary>
+    private static string FieldTypeName(AcroFormField spec) => spec switch
+    {
+        TextFormField => "/Tx",
+        CheckBoxFormField => "/Btn",
+        SignatureFormField => "/Sig",
+        ChoiceFormField => "/Ch",
+        _ => throw new NotSupportedException($"No /FT mapping for AcroForm field '{spec.GetType().Name}'."),
+    };
 
     private static PdfTextField BuildTextField(PdfDocument document, TextFormField spec)
     {
@@ -142,8 +158,38 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
     private static PdfCheckBoxField BuildCheckBoxField(PdfDocument document, CheckBoxFormField spec)
     {
         var field = NewField<PdfCheckBoxField>(document);
-        field.Checked = spec.DefaultChecked;
+        // Set /V + /AS directly rather than via PdfCheckBoxField.Checked: the typed setter resolves
+        // the "on" state from an /AP appearance dictionary, which a freshly-built field doesn't have
+        // yet, so set_Checked(true) throws. The direct write is appearance-independent and valid.
+        SetCheckBoxState(field, spec.DefaultChecked);
         return field;
+    }
+
+    /// <summary>
+    /// Sets a checkbox's value + appearance state without going through PdfCheckBoxField.Checked
+    /// (which throws when the field has no /AP appearance dictionary to read the on-state from).
+    /// The on-state is the non-/Off key in /AP /N when present, else the conventional <c>/Yes</c>.
+    /// </summary>
+    private static void SetCheckBoxState(PdfAcroField field, bool on)
+    {
+        var onState = ResolveCheckBoxOnState(field) ?? "/Yes";
+        var state = on ? onState : "/Off";
+        field.Elements.SetName("/V", state);
+        field.Elements.SetName("/AS", state);
+    }
+
+    private static string? ResolveCheckBoxOnState(PdfAcroField field)
+    {
+        var normal = field.Elements.GetDictionary("/AP")?.Elements.GetDictionary("/N");
+        if (normal is not null)
+        {
+            foreach (var key in normal.Elements.Keys)
+            {
+                if (!string.Equals(key, "/Off", StringComparison.Ordinal))
+                    return key;
+            }
+        }
+        return null;
     }
 
     private static PdfSignatureField BuildSignatureField(PdfDocument document, SignatureFormField _)
@@ -277,7 +323,7 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
                 text.Text = raw ?? string.Empty;
                 break;
             case PdfCheckBoxField checkbox:
-                checkbox.Checked = IsTruthy(raw);
+                SetCheckBoxState(checkbox, IsTruthy(raw));
                 break;
             case PdfRadioButtonField radio:
                 if (!string.IsNullOrEmpty(raw))
