@@ -1,5 +1,4 @@
 using Dialysis.DomainDrivenDesign.Exceptions;
-using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.HIS.Integration.DeviceIngestion;
 using Dialysis.HIS.Integration.DeviceRegistry;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
@@ -21,8 +20,7 @@ public sealed class DeviceIngestionGovernanceTests
             new SlidingWindowRateLimiter(maxEventsPerWindow: 1000, window: TimeSpan.FromMinutes(1)),
             new FakeReadingRepository(),
             registry,
-            Options.Create(new DeviceIngestionOptions { RequireRegistration = requireRegistration }),
-            new NoopUnitOfWork());
+            Options.Create(new DeviceIngestionOptions { RequireRegistration = requireRegistration }));
 
     private static IngestDeviceReadingCommand Reading(string deviceId, Guid patientId) =>
         new(deviceId, patientId, "{\"v\":1}", ExternalMessageId: null);
@@ -105,13 +103,9 @@ public sealed class DeviceIngestionGovernanceTests
 
     private sealed class FakeReadingRepository : IDeviceReadingRepository
     {
-        public void Add(DeviceReadingRecord record) { }
         public Task<Guid?> FindIdByExternalMessageIdAsync(string externalMessageId, CancellationToken cancellationToken = default) =>
             Task.FromResult<Guid?>(null);
-    }
-
-    private sealed class NoopUnitOfWork : IUnitOfWork
-    {
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(1);
+        public Task<Guid> PersistIdempotentAsync(DeviceReadingRecord record, CancellationToken cancellationToken = default) =>
+            Task.FromResult(record.Id);
     }
 }
