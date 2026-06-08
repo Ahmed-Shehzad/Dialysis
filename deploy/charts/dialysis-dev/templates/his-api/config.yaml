@@ -25,4 +25,3 @@ data:
   His__Authentication__Authority: "{{ .Values.config.his_api.His__Authentication__Authority }}"
   His__Authentication__Audience: "{{ .Values.config.his_api.His__Authentication__Audience }}"
   His__Fhir__Enabled: "{{ .Values.config.his_api.His__Fhir__Enabled }}"
-  His__Demo__Enabled: "{{ .Values.config.his_api.His__Demo__Enabled }}"

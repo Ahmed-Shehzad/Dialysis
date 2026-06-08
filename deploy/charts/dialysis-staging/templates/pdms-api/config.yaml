@@ -24,7 +24,3 @@ data:
   Pdms__Transponder__EnableOutboxRelay: "{{ .Values.config.pdms_api.Pdms__Transponder__EnableOutboxRelay }}"
   Pdms__Authentication__Authority: "{{ .Values.config.pdms_api.Pdms__Authentication__Authority }}"
   Pdms__Authentication__Audience: "{{ .Values.config.pdms_api.Pdms__Authentication__Audience }}"
-  Pdms__Demo__Enabled: "{{ .Values.config.pdms_api.Pdms__Demo__Enabled }}"
-  Pdms__Demo__VitalsTicker: "{{ .Values.config.pdms_api.Pdms__Demo__VitalsTicker }}"
-  Pdms__Demo__MachineTelemetrySimulator: "{{ .Values.config.pdms_api.Pdms__Demo__MachineTelemetrySimulator }}"
-  Pdms__Demo__LifecycleSimulator: "{{ .Values.config.pdms_api.Pdms__Demo__LifecycleSimulator }}"

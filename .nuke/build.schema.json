@@ -26,11 +26,13 @@
       "enum": [
         "Clean",
         "Compile",
+        "InstallGitHooks",
         "Pack",
         "Publish",
         "PublishAllCompose",
         "PublishAllKubernetes",
         "PublishCompose",
+        "PublishDeployArtifacts",
         "PublishKubernetes",
         "Restore",
         "Test"

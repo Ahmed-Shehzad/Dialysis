@@ -107,3 +107,10 @@ node_modules/
 
 # Added by ggshield
 .cache_ggshield
+
+## Aspire intermediate manifest emitted alongside the generated deploy artifacts. Nothing consumes
+## it (Docker Compose reads docker-compose.yaml; Helm reads Chart.yaml + values.yaml + templates/),
+## and the k8s one is non-deterministic until the Aspire duplicate-DeploymentTargetAnnotation bug is
+## fixed — so it stays an untracked byproduct, excluded from the deploy-artifacts drift gate.
+deploy/compose/*/aspire-manifest.json
+deploy/charts/*/aspire-manifest.json

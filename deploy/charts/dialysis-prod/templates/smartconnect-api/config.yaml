@@ -24,8 +24,6 @@ data:
   SmartConnect__Transponder__EnableOutboxRelay: "{{ .Values.config.smartconnect_api.SmartConnect__Transponder__EnableOutboxRelay }}"
   SmartConnect__Authentication__Authority: "{{ .Values.config.smartconnect_api.SmartConnect__Authentication__Authority }}"
   SmartConnect__Authentication__Audience: "{{ .Values.config.smartconnect_api.SmartConnect__Authentication__Audience }}"
-  SmartConnect__Demo__Enabled: "{{ .Values.config.smartconnect_api.SmartConnect__Demo__Enabled }}"
-  SmartConnect__Demo__Hl7Simulator: "{{ .Values.config.smartconnect_api.SmartConnect__Demo__Hl7Simulator }}"
   SmartConnect__SourceConnectors__0__Name: "{{ .Values.config.smartconnect_api.SmartConnect__SourceConnectors__0__Name }}"
   SmartConnect__SourceConnectors__0__Kind: "{{ .Values.config.smartconnect_api.SmartConnect__SourceConnectors__0__Kind }}"
   SmartConnect__SourceConnectors__0__DefaultFlowId: "{{ .Values.config.smartconnect_api.SmartConnect__SourceConnectors__0__DefaultFlowId }}"
