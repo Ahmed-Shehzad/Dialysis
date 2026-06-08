@@ -20,8 +20,8 @@ export class VitalsAlarmAudioEngine {
   private ensureContext(): AudioContext | null {
     if (this.context) return this.context;
     const Ctor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      globalThis.AudioContext ??
+      (globalThis as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     this.context = new Ctor();
     return this.context;
@@ -30,13 +30,13 @@ export class VitalsAlarmAudioEngine {
   /** Resume the audio context (must be invoked from a user gesture). */
   async resume(): Promise<void> {
     const ctx = this.ensureContext();
-    if (ctx && ctx.state === "suspended") await ctx.resume();
+    if (ctx?.state === "suspended") await ctx.resume();
   }
 
   /** One short monitor "beep" — call once per incoming reading while in the moderate state. */
   playModerateBeep(): void {
     const ctx = this.context;
-    if (!ctx || ctx.state !== "running") return;
+    if (ctx?.state !== "running") return;
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -54,7 +54,7 @@ export class VitalsAlarmAudioEngine {
   /** Start the continuous critical alarm. Idempotent — a second call while running is a no-op. */
   startCriticalTone(): void {
     const ctx = this.context;
-    if (!ctx || ctx.state !== "running" || this.critical) return;
+    if (ctx?.state !== "running" || this.critical) return;
     const now = ctx.currentTime;
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, now);

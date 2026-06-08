@@ -26,6 +26,8 @@ on:
       - "Directory.Build.targets"
       - "Dialysis.slnx"
       - "global.json"
+      - "GitVersion.yml"
+      - ".config/dotnet-tools.json"
       - ".github/workflows/build-test.yml"
   pull_request:
     paths:
@@ -41,6 +43,8 @@ on:
       - "Directory.Build.targets"
       - "Dialysis.slnx"
       - "global.json"
+      - "GitVersion.yml"
+      - ".config/dotnet-tools.json"
       - ".github/workflows/build-test.yml"
   workflow_dispatch:
 
@@ -59,6 +63,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # NUKE Pack derives the package version from git history via GitVersion, which needs
+          # the full history + tags — the default shallow clone (fetch-depth 1) makes GitVersion
+          # fail and the packages fall back to an un-versioned default.
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -71,10 +80,13 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
 
-      # One NUKE invocation runs Restore → Compile once, then both Test (full suite incl.
-      # architecture gates) and Pack (NuGet packaging). Test failing stops the build before Pack.
-      - name: Test + Pack (Release) via NUKE
-        run: ./build.sh Test Pack --configuration Release
+      # One NUKE invocation. ShowVersion runs first as a fail-fast gate — it asserts GitVersion
+      # could derive a version (so a broken git state fails up front, not as a silently
+      # mis-versioned package), then Restore → Compile runs once, then both Test (full suite
+      # incl. architecture gates) and Pack (NuGet packaging, stamped with the derived version).
+      # Test failing stops the build before Pack.
+      - name: Show version + Test + Pack (Release) via NUKE
+        run: ./build.sh ShowVersion Test Pack --configuration Release
 
       - name: Upload test results
         if: always()

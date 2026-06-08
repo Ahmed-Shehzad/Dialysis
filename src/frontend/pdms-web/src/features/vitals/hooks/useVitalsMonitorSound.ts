@@ -47,7 +47,7 @@ export const useVitalsMonitorSound = ({
   active,
 }: Options): UseVitalsMonitorSoundResult => {
   const engineRef = useRef<VitalsAlarmAudioEngine | null>(null);
-  if (!engineRef.current) engineRef.current = new VitalsAlarmAudioEngine();
+  engineRef.current ??= new VitalsAlarmAudioEngine();
 
   const [enabled, setEnabled] = useState<boolean>(loadPref);
 

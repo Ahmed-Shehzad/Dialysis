@@ -2,6 +2,7 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -26,8 +27,43 @@ class Build : NukeBuild
     [Parameter("Configuration to build — Debug locally, Release on CI by default.")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Parameter("Override the package version emitted by Pack (e.g. 1.4.0 or 1.4.0-preview.1).")]
+    [Parameter("Override the package version emitted by Pack (e.g. 1.4.0 or 1.4.0-preview.1). " +
+               "When unset, the version is derived from git history by GitVersion (see GitVersion.yml).")]
     readonly string Version;
+
+    // GitVersion is resolved lazily — only when a target actually asks for a version — and
+    // tolerantly: Clean/Compile/Test never touch git history, and an environment where the
+    // tool can't run (no .git directory, or a shallow CI clone) degrades to null so an explicit
+    // --version still works. The GitVersion.Tool itself is pulled into the NuGet cache by the
+    // PackageDownload in _build.csproj; NUKE resolves its net10.0 build from there.
+    readonly Lazy<GitVersion> _gitVersion = new(ResolveGitVersionOrNull);
+
+    GitVersion GitVersionInfo => _gitVersion.Value;
+
+    static GitVersion ResolveGitVersionOrNull()
+    {
+        try
+        {
+            return GitVersionTasks.GitVersion(s => s
+                .SetFramework("net10.0")
+                .SetNoFetch(true)
+                .SetProcessWorkingDirectory(RootDirectory)).Result;
+        }
+        catch (System.Exception exception)
+        {
+            Log.Warning(exception,
+                "GitVersion could not derive a version (no git history, or a shallow clone?). " +
+                "Falling back to --version or each project's own <Version>.");
+            return null;
+        }
+    }
+
+    // The version Pack stamps onto the packages: an explicit --version wins; otherwise
+    // GitVersion's NuGet-compatible SemVer (e.g. 1.4.0 on a release tag, 1.4.1-ci.3 on the
+    // trunk between tags, 1.4.1-<branch>.5 on a feature/claude branch). Null only when neither
+    // is available, in which case Pack falls back to each project's own <Version>.
+    string PackageVersion =>
+        !string.IsNullOrWhiteSpace(Version) ? Version : GitVersionInfo?.SemVer;
 
     [Parameter("NuGet feed Publish pushes to.")]
     readonly string NuGetSource = "https://api.nuget.org/v3/index.json";
@@ -83,6 +119,28 @@ class Build : NukeBuild
             .SetResultsDirectory(TestResultsDirectory)
             .AddLoggers("trx")));
 
+    Target ShowVersion => _ => _
+        .Description("Prints the GitVersion-derived version for the current commit (SemVer, AssemblySemVer, InformationalVersion, branch, sha) — what Pack would stamp. Handy in CI logs and for sanity-checking a branch before tagging a release.")
+        .Executes(() =>
+        {
+            // Fail-fast gate: unlike Pack (which can fall back to --version / per-project <Version>),
+            // ShowVersion's whole job is to surface the git-derived version, so a null here is an
+            // error worth stopping on. Running this target first in CI (`./build.sh ShowVersion Test
+            // Pack`) makes a broken git state — e.g. a shallow clone without fetch-depth: 0 — fail
+            // loudly up front instead of silently shipping mis-versioned packages.
+            var gitVersion = Assert.NotNull(GitVersionInfo,
+                "GitVersion could not derive a version. Ensure this is a git checkout with full history " +
+                "(CI must check out with fetch-depth: 0), or pass --version to set one explicitly.");
+
+            Log.Information("SemVer                {Value}", gitVersion.SemVer);
+            Log.Information("FullSemVer            {Value}", gitVersion.FullSemVer);
+            Log.Information("MajorMinorPatch       {Value}", gitVersion.MajorMinorPatch);
+            Log.Information("AssemblySemVer        {Value}", gitVersion.AssemblySemVer);
+            Log.Information("InformationalVersion  {Value}", gitVersion.InformationalVersion);
+            Log.Information("BranchName            {Value}", gitVersion.BranchName);
+            Log.Information("Sha                   {Value}", gitVersion.Sha);
+        });
+
     Target Pack => _ => _
         .Description("Packs the projects explicitly marked <IsPackable>true</IsPackable> into artifacts/packages.")
         .DependsOn(Compile)
@@ -99,7 +157,9 @@ class Build : NukeBuild
                 .OrderBy(project => project.ToString())
                 .ToList();
 
-            Log.Information("Packing {Count} NuGet-packable project(s).", packableProjects.Count);
+            var packageVersion = PackageVersion;
+            Log.Information("Packing {Count} NuGet-packable project(s) at version {Version}.",
+                packableProjects.Count, packageVersion ?? "(per-project <Version>)");
             PackagesDirectory.CreateOrCleanDirectory();
 
             DotNetPack(s =>
@@ -109,8 +169,15 @@ class Build : NukeBuild
                     .EnableNoBuild()
                     .EnableIncludeSymbols()
                     .SetSymbolPackageFormat(DotNetSymbolPackageFormat.snupkg)
-                    .SetOutputDirectory(PackagesDirectory);
-                if (!string.IsNullOrWhiteSpace(Version)) s = s.SetVersion(Version);
+                    .SetOutputDirectory(PackagesDirectory)
+                    // NU5123 is a MAX_PATH advisory: GitVersion gives feature/claude branches a long
+                    // pre-release label (1.0.0-<branch>.n) which, on top of this repo's deliberately
+                    // descriptive assembly names, pushes a package's eventual restore path over the
+                    // ~200-char threshold. It is non-actionable for net10 consumers (long-path
+                    // support is universal) and the codes are warnings-as-errors repo-wide — relax it
+                    // for packaging only. Pack runs --no-build, so no compiler warnings are affected.
+                    .SetProperty("NoWarn", "NU5123");
+                if (!string.IsNullOrWhiteSpace(packageVersion)) s = s.SetVersion(packageVersion);
                 return s.CombineWith(packableProjects, (settings, project) => settings.SetProject(project));
             });
         });

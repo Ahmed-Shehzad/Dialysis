@@ -35,6 +35,7 @@
         "PublishDeployArtifacts",
         "PublishKubernetes",
         "Restore",
+        "ShowVersion",
         "Test"
       ]
     },
@@ -132,7 +133,7 @@
         },
         "Version": {
           "type": "string",
-          "description": "Override the package version emitted by Pack (e.g. 1.4.0 or 1.4.0-preview.1)"
+          "description": "Override the package version emitted by Pack (e.g. 1.4.0 or 1.4.0-preview.1). When unset, the version is derived from git history by GitVersion (see GitVersion.yml)"
         }
       }
     },
