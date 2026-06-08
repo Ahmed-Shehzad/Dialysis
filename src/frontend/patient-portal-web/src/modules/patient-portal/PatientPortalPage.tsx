@@ -132,8 +132,8 @@ export const PatientPortalPage = () => {
         <section className="space-y-2 rounded-lg border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-100">
           <p>
             No <span className="font-mono">his_patient_id</span> claim on your session — the IdP
-            isn&apos;t configured with a patient-claim mapping yet. Pick a patient with data on file,
-            or enter an id manually, for the demo loop:
+            isn&apos;t configured with a patient-claim mapping yet. Pick a patient with data on
+            file, or enter an id manually, for the demo loop:
           </p>
           {accessibleIds.length > 0 && (
             <select
