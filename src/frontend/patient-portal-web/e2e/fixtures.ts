@@ -32,12 +32,15 @@ export async function stubRealtime(page: Page): Promise<void> {
 }
 
 /**
- * Benign catch-all for any `/portal/api` call a secondary panel makes that a spec did not mock, so
- * those panels render empty instead of erroring. Register this BEFORE the specific routes — Playwright
- * matches the most-recently-registered handler first, so later, more specific routes take precedence.
+ * Aborts any `/portal/api` call a secondary panel makes that a spec did not explicitly mock. The SPA
+ * renders a friendly per-panel error state (via humanizeError) on a failed request, so aborting keeps
+ * the page mounted without us having to model every panel's response shape (a wrong-shaped 200 can
+ * crash a panel and, with no error boundary, unmount the whole page). Register this BEFORE the
+ * specific routes — Playwright matches the most-recently-registered handler first, so later, more
+ * specific routes take precedence.
  */
 export async function stubApiCatchAll(page: Page): Promise<void> {
-  await page.route("**/portal/api/**", (route) => route.fulfill({ json: { data: [], items: [] } }));
+  await page.route("**/portal/api/**", (route) => route.abort());
 }
 
 export const test = base;
