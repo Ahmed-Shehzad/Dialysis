@@ -14,11 +14,19 @@ on:
 
 permissions: { contents: read }
 
+# This boots the full Aspire stack (~30 min). Without cancellation, rapid successive pushes stack up
+# multiple concurrent boots that starve each other's runner (CPU/IO), making the eventually-consistent
+# contexts — especially HIE, whose data sits at the end of the longest causal chain — time out. Keep
+# only the newest run per ref.
+concurrency:
+  group: simulator-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   smoke:
     name: BFF data population smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -113,10 +121,12 @@ jobs:
           # once the simulator COMPLETES a dialysis session (the live pool must fill first, then the
           # outbound dispatch row is written). Everything else (queues, patients, sessions, flows, the
           # MPI inbound seed, ~half-resulted lab/imaging) is populated no later than this, so gating on
-          # it removes the eventually-consistent flake without a per-assert retry budget. Up to ~6 min.
+          # it removes the eventually-consistent flake without a per-assert retry budget. Up to ~10 min
+          # (HIE sits at the end of the longest causal chain — journey → pool fills → session completes
+          # → event → HIE maps + enqueues — so it needs the most headroom on a cold/contended runner).
           echo "warm-up: waiting for a completed session to reach the HIE outbound dispatch queue …"
           warm=0
-          for i in $(seq 1 60); do
+          for i in $(seq 1 100); do
             wc=$(fetch_count "${BASE_URL}/hie/api/v1.0/hie/ops/outbound" '.data | length')
             if [[ "$wc" =~ ^[0-9]+$ ]] && [ "$wc" -ge 1 ]; then
               warm=1
@@ -126,7 +136,7 @@ jobs:
             sleep 6
           done
           if [ "$warm" -ne 1 ]; then
-            echo "::warning::HIE outbound still empty after ~7 min; asserting anyway (will surface the real gap below)."
+            echo "::warning::HIE outbound still empty after ~11 min; asserting anyway (will surface the real gap below)."
           fi
 
           # assert_nonempty <label> <url> <jq-filter-yielding-a-count>
