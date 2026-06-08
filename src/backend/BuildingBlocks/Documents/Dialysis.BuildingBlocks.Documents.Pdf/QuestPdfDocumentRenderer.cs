@@ -67,15 +67,7 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
                 page.Margin(1.5f, Unit.Centimetre);
                 page.DefaultTextStyle(t => t.FontFamily(Fonts.Lato).FontSize(10));
 
-                page.Header().Element(h =>
-                {
-                    h.ClinicalHeader().Column(col =>
-                    {
-                        col.Item().Text(document.Title).SemiBold().FontSize(16);
-                        if (!string.IsNullOrWhiteSpace(document.Subtitle))
-                            col.Item().Text(document.Subtitle).FontSize(11).FontColor(ClinicalDocumentMacros.MutedTextColor);
-                    });
-                });
+                page.Header().Element(h => h.BrandLetterhead(document.Title, document.Subtitle));
 
                 page.Content().PaddingTop(8).Column(col =>
                 {
