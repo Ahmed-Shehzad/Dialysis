@@ -10,7 +10,10 @@ name: simulator-smoke
 # enabled (it's the thing under test) and skips only the Vite SPAs / dashboards / SonarQube.
 on:
   workflow_dispatch:
-  push:
+  # Heavy full-stack boot (~30 min) — like the other end-to-end jobs (his-outbox-e2e, load-test) this
+  # runs on demand + nightly rather than on every push, so it isn't a flaky per-commit gate.
+  schedule:
+    - cron: "0 6 * * *"
 
 permissions: { contents: read }
 
@@ -92,11 +95,17 @@ jobs:
           #    realm grants this account the read permissions the landing endpoints need, and each
           #    per-context BFF forwards the bearer to its module API (AllowServiceBearerPassthrough is
           #    on in the run-mode AppHost) so the curl below reaches the API as an authenticated caller.
-          TOKEN=$(curl -fsS -X POST \
-            "http://localhost:8081/realms/dialysis/protocol/openid-connect/token" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "grant_type=client_credentials&client_id=dialysis-data-simulator&client_secret=${SIM_CLIENT_SECRET}" \
-            | jq -r .access_token)
+          # client_credentials access tokens are short-lived (~5 min). Because the warm-up below can
+          # poll for ~11 min, mint via a helper we can re-invoke so the token never goes stale mid-run
+          # (a stale token surfaces as 403 "user (anonymous)" on the otherwise-authorized reads).
+          mint_token() {
+            TOKEN=$(curl -fsS -X POST \
+              "http://localhost:8081/realms/dialysis/protocol/openid-connect/token" \
+              -H "Content-Type: application/x-www-form-urlencoded" \
+              -d "grant_type=client_credentials&client_id=dialysis-data-simulator&client_secret=${SIM_CLIENT_SECRET}" \
+              | jq -r .access_token)
+          }
+          mint_token
           if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
             echo "::error::Could not obtain a service-account token from Keycloak."
             tail -n 200 /tmp/aspire.log || true
@@ -127,6 +136,9 @@ jobs:
           echo "warm-up: waiting for a completed session to reach the HIE outbound dispatch queue …"
           warm=0
           for i in $(seq 1 100); do
+            # Refresh the token roughly every ~3 min so the poll itself never authenticates with a
+            # stale token (which would make every fetch_count 403 and the warm-up never succeed).
+            [ "$((i % 30))" -eq 0 ] && mint_token
             wc=$(fetch_count "${BASE_URL}/hie/api/v1.0/hie/ops/outbound" '.data | length')
             if [[ "$wc" =~ ^[0-9]+$ ]] && [ "$wc" -ge 1 ]; then
               warm=1
@@ -138,6 +150,9 @@ jobs:
           if [ "$warm" -ne 1 ]; then
             echo "::warning::HIE outbound still empty after ~11 min; asserting anyway (will surface the real gap below)."
           fi
+
+          # Fresh token for the assertion phase — the warm-up may have outlived the one it started with.
+          mint_token
 
           # assert_nonempty <label> <url> <jq-filter-yielding-a-count>
           #   Fetches <url> with the bearer, requires HTTP 2xx, parses the body with <jq-filter>
