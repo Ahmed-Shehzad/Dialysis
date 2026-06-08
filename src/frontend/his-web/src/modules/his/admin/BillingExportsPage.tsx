@@ -1,19 +1,34 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchBillingExportJobs } from "@/features/billing/api/billingApi";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { executeBillingExportJob, fetchBillingExportJobs } from "@/features/billing/api/billingApi";
+import { humanizeError } from "@/lib/api/humanizeError";
+
+const statusTone = (statusCode: string): string => {
+  if (statusCode === "Completed") return "text-emerald-300";
+  if (statusCode === "Failed") return "text-rose-300";
+  return "text-amber-300";
+};
 
 /**
  * Operator dashboard for the HIS billing-export queue. Every job row is the trigger
  * HIS fires for EHR to assemble + submit claims for a payer/period window. Status
- * progresses Queued → Completed | Failed once the EHR consumer reports back.
+ * progresses Queued → Completed | Failed once the EHR consumer reports back. Operators
+ * can (re-)dispatch a queued job to EHR with the Execute action.
  */
 export const BillingExportsPage = () => {
   const [status, setStatus] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["his", "billing", "exports", { status }],
     queryFn: () => fetchBillingExportJobs({ status: status || undefined, take: 200 }),
     refetchInterval: 30_000,
+  });
+
+  const execute = useMutation({
+    mutationFn: (id: string) => executeBillingExportJob(id),
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: ["his", "billing", "exports"] }),
   });
 
   const rows = query.data ?? [];
@@ -64,6 +79,7 @@ export const BillingExportsPage = () => {
               <th className="pb-2 font-medium">Submitted</th>
               <th className="pb-2 font-medium">Completed</th>
               <th className="pb-2 font-medium">Notes</th>
+              <th className="w-28 pb-2 font-medium">Action</th>
             </tr>
           </thead>
           <tbody className="text-slate-200">
@@ -72,17 +88,7 @@ export const BillingExportsPage = () => {
                 <td className="py-2 align-top font-mono text-xs">{row.id.slice(0, 8)}…</td>
                 <td className="py-2 align-top font-mono text-xs">{row.payerCode}</td>
                 <td className="py-2 align-top">
-                  <span
-                    className={
-                      row.statusCode === "Completed"
-                        ? "text-emerald-300"
-                        : row.statusCode === "Failed"
-                          ? "text-rose-300"
-                          : "text-amber-300"
-                    }
-                  >
-                    {row.statusCode}
-                  </span>
+                  <span className={statusTone(row.statusCode)}>{row.statusCode}</span>
                 </td>
                 <td className="py-2 align-top font-mono text-xs">
                   {row.periodStart} → {row.periodEnd}
@@ -96,10 +102,30 @@ export const BillingExportsPage = () => {
                     : "—"}
                 </td>
                 <td className="py-2 align-top text-xs text-slate-400">{row.notes ?? "—"}</td>
+                <td className="py-2 align-top">
+                  {row.statusCode === "Queued" ? (
+                    <button
+                      type="button"
+                      onClick={() => execute.mutate(row.id)}
+                      disabled={execute.isPending && execute.variables === row.id}
+                      className="rounded border border-emerald-700/70 bg-emerald-950/40 px-2 py-1 text-xs font-medium text-emerald-100 hover:bg-emerald-900/50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {execute.isPending && execute.variables === row.id ? "Executing…" : "Execute"}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-600">—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {execute.error && (
+        <p role="alert" className="text-xs text-rose-300">
+          {humanizeError(execute.error)}
+        </p>
       )}
     </div>
   );

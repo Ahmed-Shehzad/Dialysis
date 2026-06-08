@@ -15,6 +15,9 @@ public sealed class EfBillingExportJobRepository : IBillingExportJobRepository
     public Task<BillingExportJob?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.BillingExportJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
 
+    public Task<BillingExportJob?> GetForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.BillingExportJobs.FirstOrDefaultAsync(j => j.Id == id, cancellationToken);
+
     public async Task<IReadOnlyList<BillingExportJob>> ListByStatusAsync(
         BillingExportJobStatus status,
         CancellationToken cancellationToken = default)

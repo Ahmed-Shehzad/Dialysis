@@ -65,6 +65,28 @@ public sealed class BillingExportJob : AggregateRoot<Guid>
         return job;
     }
 
+    /// <summary>
+    /// Operator-triggered (re-)dispatch: re-raises <see cref="BillingExportJobQueuedIntegrationEvent"/>
+    /// so EHR's billing pipeline (re-)assembles the EDI 837 batch. Valid only while the job is still
+    /// <see cref="BillingExportJobStatus.Queued"/> — a Completed/Failed job is terminal and cannot be
+    /// re-executed. Does not change persisted state; the status only advances when EHR reports back.
+    /// </summary>
+    public void RequeueForExecution(DateTime nowUtc)
+    {
+        if (Status != BillingExportJobStatus.Queued)
+            throw new DomainException($"BillingExportJob cannot be executed from status {Status.Name}.");
+
+        RaiseIntegrationEvent(new BillingExportJobQueuedIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: nowUtc,
+            SchemaVersion: 1,
+            JobId: Id,
+            PayerCode: PayerCode.Value,
+            PeriodStart: Period.Start,
+            PeriodEnd: Period.End,
+            Notes: Notes));
+    }
+
     public void MarkCompleted(DateTime nowUtc)
     {
         if (Status != BillingExportJobStatus.Queued)

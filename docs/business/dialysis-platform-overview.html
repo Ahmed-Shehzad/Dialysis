@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dialysis Care Platform — Business Overview</title>
+<style>
+  :root{
+    --ink:#0f2233; --ink-soft:#3b5266; --muted:#6b8197;
+    --teal:#0ea5a4; --teal-deep:#0b7c7b; --blue:#2563eb; --blue-soft:#dbeafe;
+    --bg:#f3f7fa; --card:#ffffff; --line:#e2ebf2; --gold:#e0a93b;
+    --ok:#16a34a; --warn:#dc2626;
+    --shadow:0 18px 50px rgba(15,34,51,.14);
+    --radius:18px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink); background:var(--bg);
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+
+  /* ---------- Stage / slides ---------- */
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:6vh 9vw 12vh; opacity:0; transform:translateY(14px) scale(.99);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .slide.active{display:flex;opacity:1;transform:none}
+  .slide h1{font-size:clamp(28px,4.4vw,56px);line-height:1.05;letter-spacing:-.5px}
+  .slide h2{font-size:clamp(22px,3vw,40px);line-height:1.1;letter-spacing:-.4px;margin-bottom:18px}
+  .slide p.lead{font-size:clamp(16px,1.7vw,22px);color:var(--ink-soft);line-height:1.5;max-width:50ch}
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--teal-deep);
+    background:#e3f5f4;border:1px solid #c5ebe9;border-radius:999px;padding:7px 14px;margin-bottom:22px
+  }
+  .kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+
+  /* ---------- Title slide ---------- */
+  .title-wrap{max-width:60ch}
+  .title-wrap .sub{margin-top:22px;font-size:clamp(16px,1.8vw,22px);color:var(--ink-soft);max-width:46ch;line-height:1.5}
+  .audience{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+  .audience .pill{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;box-shadow:0 6px 18px rgba(15,34,51,.06);font-weight:600;color:var(--ink)}
+  .audience .pill span{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
+  .brandbar{position:absolute;left:9vw;bottom:9vh;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px}
+  .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--teal),var(--blue));display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:var(--shadow)}
+
+  /* ---------- Generic helpers ---------- */
+  .grid{display:grid;gap:18px}
+  .two{grid-template-columns:1fr 1fr}
+  .three{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px;box-shadow:0 8px 24px rgba(15,34,51,.06)}
+  .card h3{font-size:18px;margin-bottom:8px}
+  .card p{color:var(--ink-soft);font-size:15px;line-height:1.5}
+  .emoji{font-size:30px;line-height:1;display:block;margin-bottom:12px}
+  .hint{margin-top:18px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .hint::before{content:"☝";font-size:15px}
+
+  /* ---------- Problem vs solution ---------- */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:8px}
+  .compare .col{border-radius:var(--radius);padding:24px}
+  .compare .bad{background:#fdf1f1;border:1px solid #f6d4d4}
+  .compare .good{background:#eefaf3;border:1px solid #c9ecd8}
+  .compare h3{font-size:17px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .compare ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+  .compare li{font-size:15px;color:var(--ink-soft);line-height:1.4;padding-left:28px;position:relative}
+  .compare .bad li::before{content:"✕";position:absolute;left:0;color:var(--warn);font-weight:800}
+  .compare .good li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:800}
+
+  /* ---------- Journey ---------- */
+  .journey{display:flex;align-items:stretch;gap:10px;margin:6px 0 10px;flex-wrap:wrap}
+  .step{
+    flex:1;min-width:120px;background:var(--card);border:2px solid var(--line);border-radius:14px;
+    padding:16px 14px;cursor:pointer;text-align:center;transition:.22s;position:relative
+  }
+  .step:hover{transform:translateY(-3px);border-color:#bfe3e2}
+  .step.active{border-color:var(--teal);background:#effbfa;box-shadow:0 10px 26px rgba(14,165,164,.18)}
+  .step .se{font-size:26px;display:block;margin-bottom:8px}
+  .step .sl{font-weight:700;font-size:14px}
+  .step .sn{position:absolute;top:8px;left:10px;font-size:11px;font-weight:800;color:var(--muted)}
+  .arrow{align-self:center;color:#bcccd9;font-size:22px;font-weight:800}
+  .journey-detail{
+    margin-top:14px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--teal);
+    border-radius:14px;padding:20px 22px;min-height:104px;box-shadow:0 8px 24px rgba(15,34,51,.06)
+  }
+  .journey-detail h3{font-size:19px;margin-bottom:6px}
+  .journey-detail p{color:var(--ink-soft);font-size:16px;line-height:1.5}
+
+  /* ---------- Module cards (expandable) ---------- */
+  .modgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .mod{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;cursor:pointer;transition:.2s;overflow:hidden}
+  .mod:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#cfe6e5}
+  .mod .emoji{font-size:26px;margin-bottom:10px}
+  .mod h3{font-size:16px}
+  .mod .tag{font-size:13px;color:var(--muted);margin-top:3px}
+  .mod .more{max-height:0;opacity:0;transition:.28s;color:var(--ink-soft);font-size:14px;line-height:1.5}
+  .mod.open{background:#f6fcfc;border-color:var(--teal)}
+  .mod.open .more{max-height:160px;opacity:1;margin-top:12px}
+
+  /* ---------- Spotlight ---------- */
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0}
+  .flow .node{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-weight:600;font-size:14px;box-shadow:0 6px 16px rgba(15,34,51,.06)}
+  .flow .node .ne{display:block;font-size:20px;margin-bottom:4px}
+  .flow .fa{color:var(--teal);font-weight:800;font-size:18px}
+  .before-after{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+  .ba{border-radius:14px;padding:20px}
+  .ba.b{background:#fbf3ee;border:1px solid #f0d9c8}
+  .ba.a{background:#eef6ff;border:1px solid #cfe2fb}
+  .ba h4{font-size:14px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;color:var(--ink-soft)}
+  .ba p{font-size:15px;color:var(--ink-soft);line-height:1.5}
+
+  /* ---------- Value stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:6px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 18px;text-align:center;box-shadow:0 8px 22px rgba(15,34,51,.06)}
+  .stat .big{font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--teal-deep);letter-spacing:-1px}
+  .stat .cap{font-size:14px;color:var(--ink-soft);margin-top:6px;line-height:1.35}
+
+  /* ---------- Trust ---------- */
+  .trust{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .trust .t{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 6px 18px rgba(15,34,51,.05)}
+  .trust .t .ic{font-size:26px}
+  .trust .t h3{font-size:16px;margin-bottom:4px}
+  .trust .t p{font-size:14px;color:var(--ink-soft);line-height:1.45}
+
+  /* ---------- Roadmap ---------- */
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:6px}
+  .lane{border-radius:16px;padding:22px;border:1px solid var(--line);background:var(--card)}
+  .lane.now{border-top:5px solid var(--teal)}
+  .lane.next{border-top:5px solid var(--blue)}
+  .lane.later{border-top:5px solid var(--gold)}
+  .lane h3{font-size:18px;margin-bottom:4px}
+  .lane .when{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .lane ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .lane li{font-size:15px;color:var(--ink-soft);padding-left:24px;position:relative;line-height:1.4}
+  .lane li::before{content:"•";position:absolute;left:6px;color:var(--teal);font-weight:800;font-size:18px;top:-2px}
+
+  /* ---------- Closing ---------- */
+  .closing{align-items:flex-start}
+  .closing h1{max-width:18ch}
+  .cta{margin-top:26px;display:flex;gap:14px;flex-wrap:wrap}
+  .cta .b1{background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;border:none}
+  .cta .b2{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .cta a{padding:14px 22px;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;box-shadow:0 8px 20px rgba(15,34,51,.08)}
+
+  /* ---------- Chrome: nav, progress, counter ---------- */
+  .progress{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--teal),var(--blue));width:0;transition:width .4s ease;z-index:50}
+  .nav{position:fixed;right:24px;bottom:22px;display:flex;align-items:center;gap:10px;z-index:50}
+  .nav button{
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    cursor:pointer;font-size:20px;color:var(--ink);box-shadow:var(--shadow);transition:.15s
+  }
+  .nav button:hover{transform:translateY(-2px);color:var(--teal-deep)}
+  .nav button:disabled{opacity:.35;cursor:default;transform:none}
+  .counter{position:fixed;left:24px;bottom:26px;font-size:13px;color:var(--muted);z-index:50;font-variant-numeric:tabular-nums}
+  .dots{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:9px;z-index:50}
+  .dots button{width:9px;height:9px;border-radius:50%;border:none;background:#c4d4e0;cursor:pointer;padding:0;transition:.2s}
+  .dots button.on{background:var(--teal);transform:scale(1.4)}
+  .help{position:fixed;left:24px;top:18px;font-size:12px;color:var(--muted);z-index:50}
+  kbd{background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:11px;font-family:var(--sans);color:var(--ink-soft)}
+
+  @media (max-width:760px){
+    .two,.three,.modgrid,.stats,.trust,.road,.before-after,.compare{grid-template-columns:1fr}
+    .slide{padding:7vh 7vw 14vh}
+  }
+
+  /* ---------- Print → one slide per page (Save as PDF) ---------- */
+  @media print{
+    body{overflow:visible}
+    .stage{position:static}
+    .slide{position:static;display:flex!important;opacity:1!important;transform:none!important;
+      page-break-after:always;min-height:100vh;break-inside:avoid}
+    .nav,.dots,.counter,.help,.progress{display:none!important}
+    .mod .more{max-height:none!important;opacity:1!important;margin-top:12px!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="help">Use <kbd>←</kbd> <kbd>→</kbd> to move · <kbd>F</kbd> full screen · click the highlighted items</div>
+
+<div class="stage" id="stage">
+
+  <!-- 1 · TITLE -->
+  <section class="slide active">
+    <div class="title-wrap">
+      <span class="kicker"><span class="dot"></span> Business Overview · Plain Language</span>
+      <h1>One platform that runs the dialysis clinic — from check‑in to getting paid.</h1>
+      <p class="sub">A simple walkthrough of what we’ve built, what it does for the business, and where it goes next. No technical knowledge needed.</p>
+      <div class="audience">
+        <div class="pill">For the Business Owner<span>What it’s worth & how it grows</span></div>
+        <div class="pill">For the Business Developer<span>What it does & where it’s headed</span></div>
+      </div>
+    </div>
+    <div class="brandbar"><div class="logo">D</div> Dialysis Care Platform · Minimum Viable Product</div>
+  </section>
+
+  <!-- 2 · THE PROBLEM -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> The problem we set out to solve</span>
+    <h2>Running a clinic today means juggling disconnected tools</h2>
+    <div class="compare">
+      <div class="col bad">
+        <h3>😣 The everyday reality</h3>
+        <ul>
+          <li>Front desk, treatment notes, and billing all live in separate places</li>
+          <li>The same patient details get re‑typed again and again</li>
+          <li>Billing is manual, slow, and easy to get wrong — cash comes in late</li>
+          <li>Sharing records with other clinics is faxes, phone calls, and waiting</li>
+          <li>Proving you handled patient privacy correctly is a scramble</li>
+        </ul>
+      </div>
+      <div class="col good">
+        <h3>✨ What we built instead</h3>
+        <ul>
+          <li>One connected system the whole clinic shares</li>
+          <li>Enter the patient once — their details follow them everywhere</li>
+          <li>Turn a completed visit into a submitted insurance claim in one click</li>
+          <li>Share records securely with partner organisations, with consent</li>
+          <li>Privacy, security, and a full record of “who did what” built in</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · SOLUTION IN ONE LINE -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> The solution, in one sentence</span>
+    <h2 style="max-width:24ch">Everything a dialysis clinic does in a day — booking, treating, recording, billing, and sharing — in a single, joined‑up system.</h2>
+    <p class="lead">The next slide follows a real patient through the system. Click each stage to see what happens.</p>
+  </section>
+
+  <!-- 4 · PATIENT JOURNEY (interactive) -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> Follow one patient</span>
+    <h2>The patient journey — click any step</h2>
+    <div class="journey" id="journey">
+      <div class="step active" data-i="0"><span class="sn">1</span><span class="se">📅</span><span class="sl">Book &amp; Check‑in</span></div>
+      <span class="arrow">→</span>
+      <div class="step" data-i="1"><span class="sn">2</span><span class="se">🩺</span><span class="sl">Treatment</span></div>
+      <span class="arrow">→</span>
+      <div class="step" data-i="2"><span class="sn">3</span><span class="se">📝</span><span class="sl">Record Care</span></div>
+      <span class="arrow">→</span>
+      <div class="step" data-i="3"><span class="sn">4</span><span class="se">💳</span><span class="sl">Bill &amp; Get Paid</span></div>
+      <span class="arrow">→</span>
+      <div class="step" data-i="4"><span class="sn">5</span><span class="se">🔁</span><span class="sl">Share Safely</span></div>
+    </div>
+    <div class="journey-detail" id="journeyDetail">
+      <h3>📅 Booking &amp; Check‑in</h3>
+      <p>The patient is scheduled and checked in at the front desk. From that moment, their name and details are loaded once and quietly carried into every screen the staff use — no re‑typing, no mix‑ups.</p>
+    </div>
+    <div class="hint">Tip: each step reveals what the staff and the patient experience.</div>
+  </section>
+
+  <!-- 5 · MVP -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> What’s working today (the MVP)</span>
+    <h2>A complete journey — already running end to end</h2>
+    <div class="grid three">
+      <div class="card"><span class="emoji">📅</span><h3>Book &amp; check in</h3><p>Schedule patients and start their visit; their details follow them across the whole system.</p></div>
+      <div class="card"><span class="emoji">🩺</span><h3>Treat &amp; monitor live</h3><p>Watch the dialysis session as it happens, with instant safety alerts at the chair.</p></div>
+      <div class="card"><span class="emoji">📝</span><h3>Record the care</h3><p>Capture the clinical details — notes, medications, results — in the patient’s chart.</p></div>
+      <div class="card"><span class="emoji">💳</span><h3>Bill in one click</h3><p>Turn completed visits into insurance claims and send them off automatically.</p></div>
+      <div class="card"><span class="emoji">🔁</span><h3>Share when needed</h3><p>Securely send and receive records with partner clinics and hospitals.</p></div>
+      <div class="card"><span class="emoji">🛡️</span><h3>Private &amp; audit‑ready</h3><p>Strong sign‑in, patient‑privacy rights, and a full record of every action.</p></div>
+    </div>
+  </section>
+
+  <!-- 6 · BUILDING BLOCKS (interactive) -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> The capabilities — in plain terms</span>
+    <h2>Six building blocks, one connected platform — click to explore</h2>
+    <div class="modgrid" id="mods">
+      <div class="mod" data-more="Scheduling, check‑in, staff rosters, and supplies. This is the engine room that keeps each clinic day moving.">
+        <span class="emoji">🏥</span><h3>Front Desk &amp; Operations</h3><div class="tag">Running the day</div>
+        <div class="more"></div>
+      </div>
+      <div class="mod" data-more="The patient’s full medical story — visit notes, prescriptions, lab results, allergies — in one trustworthy place clinicians can rely on.">
+        <span class="emoji">📋</span><h3>The Patient’s Story</h3><div class="tag">The medical chart</div>
+        <div class="more"></div>
+      </div>
+      <div class="mod" data-more="Live monitoring of the dialysis machine during treatment — vital signs on screen and immediate alerts if something needs attention.">
+        <span class="emoji">🩺</span><h3>The Treatment Chair</h3><div class="tag">Live &amp; safe care</div>
+        <div class="more"></div>
+      </div>
+      <div class="mod" data-more="Turns the care delivered into insurance claims, submits them to payers, and tracks the money coming back — faster, with fewer errors.">
+        <span class="emoji">💳</span><h3>Billing &amp; Getting Paid</h3><div class="tag">Revenue</div>
+        <div class="more"></div>
+      </div>
+      <div class="mod" data-more="Securely exchanges patient records with other clinics, hospitals, and labs — with the patient’s consent and a signed, traceable trail.">
+        <span class="emoji">🔁</span><h3>Connected Care</h3><div class="tag">Sharing records</div>
+        <div class="more"></div>
+      </div>
+      <div class="mod" data-more="Makes sure the right people see the right things, protects patient privacy, and records every access so you’re always audit‑ready.">
+        <span class="emoji">🛡️</span><h3>Privacy, Security &amp; Trust</h3><div class="tag">Peace of mind</div>
+        <div class="more"></div>
+      </div>
+    </div>
+    <div class="hint">Click any block to see what it does for the business.</div>
+  </section>
+
+  <!-- 7 · FEATURE SPOTLIGHT -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> Feature spotlight</span>
+    <h2>One click turns a month of care into submitted claims</h2>
+    <div class="flow">
+      <div class="node"><span class="ne">🖱️</span>Click “Run billing”</div>
+      <span class="fa">→</span>
+      <div class="node"><span class="ne">📑</span>System gathers the visits</div>
+      <span class="fa">→</span>
+      <div class="node"><span class="ne">📤</span>Claims sent to the insurer</div>
+      <span class="fa">→</span>
+      <div class="node"><span class="ne">✅</span>Result reported back</div>
+    </div>
+    <div class="before-after">
+      <div class="ba b"><h4>Before</h4><p>Billing staff manually pull together each insurer’s claims for the period — hours of work, easy to miss items, and money arrives late.</p></div>
+      <div class="ba a"><h4>Now</h4><p>One click assembles the claims, submits them, and reports exactly what went out — automatically. Less admin, fewer errors, faster cash flow.</p></div>
+    </div>
+    <div class="hint">A concrete example of the “do it once, do it right” idea running throughout the platform.</div>
+  </section>
+
+  <!-- 8 · REAL-TIME & RELIABILITY -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> Always on, never lost</span>
+    <h2>Real‑time where it matters, dependable everywhere</h2>
+    <div class="grid three">
+      <div class="card"><span class="emoji">📈</span><h3>Live at the chair</h3><p>Treatment readings update on screen as they happen, so staff can act the moment something changes.</p></div>
+      <div class="card"><span class="emoji">🔔</span><h3>Instant alerts</h3><p>The right staff are notified on screen straight away — no waiting, no checking back manually.</p></div>
+      <div class="card"><span class="emoji">🧷</span><h3>Nothing falls through</h3><p>If the system is briefly busy, important actions are safely held and finished — never silently dropped.</p></div>
+    </div>
+  </section>
+
+  <!-- 9 · TRUST & COMPLIANCE -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> Built for healthcare trust</span>
+    <h2>Privacy and compliance aren’t bolted on — they’re built in</h2>
+    <div class="trust">
+      <div class="t"><div class="ic">🔐</div><div><h3>Right people, right access</h3><p>Everyone signs in securely and only sees what their role allows.</p></div></div>
+      <div class="t"><div class="ic">🧾</div><div><h3>A full record of every action</h3><p>Who saw or changed what, and when — ready whenever you need to prove it.</p></div></div>
+      <div class="t"><div class="ic">🙋</div><div><h3>Patient privacy rights</h3><p>Requests to access or erase a patient’s data are handled across the whole system.</p></div></div>
+      <div class="t"><div class="ic">⏳</div><div><h3>Keep only what you should</h3><p>Records are retained for the right time and responsibly cleared after — by design.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 10 · BUILT TO GROW -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> An investment that lasts</span>
+    <h2>Built to grow without starting over</h2>
+    <div class="grid three">
+      <div class="card"><span class="emoji">🧩</span><h3>One system, not a patchwork</h3><p>All the pieces work together, so the business isn’t stitching tools together by hand.</p></div>
+      <div class="card"><span class="emoji">➕</span><h3>Add without rebuilding</h3><p>New capabilities snap in alongside what already works — no costly rip‑and‑replace.</p></div>
+      <div class="card"><span class="emoji">📊</span><h3>Scales with you</h3><p>More patients or more clinics? Add capacity — the system is designed to handle growth.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 · BUSINESS VALUE -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> What it’s worth to the business</span>
+    <h2>The outcomes that matter</h2>
+    <div class="stats">
+      <div class="stat"><div class="big">⏱️ Less</div><div class="cap">admin time spent re‑typing and chasing paperwork</div></div>
+      <div class="stat"><div class="big">💰 Faster</div><div class="cap">billing means cash arrives sooner, with fewer errors</div></div>
+      <div class="stat"><div class="big">🛡️ Safer</div><div class="cap">real‑time monitoring &amp; alerts protect patients</div></div>
+      <div class="stat"><div class="big">✅ Audit‑ready</div><div class="cap">privacy &amp; record‑keeping handled, all the time</div></div>
+    </div>
+    <p class="lead" style="margin-top:22px">One source of truth for the whole clinic — less friction for staff, a smoother experience for patients, and a clearer picture for the business.</p>
+  </section>
+
+  <!-- 12 · ROADMAP -->
+  <section class="slide">
+    <span class="kicker"><span class="dot"></span> Where it goes next</span>
+    <h2>A clear path forward</h2>
+    <div class="road">
+      <div class="lane now">
+        <div class="when">Available now</div><h3>The core journey</h3>
+        <ul>
+          <li>Book, check in, and treat patients</li>
+          <li>Live treatment monitoring</li>
+          <li>One‑click billing to insurers</li>
+          <li>Secure record sharing</li>
+          <li>Privacy &amp; audit built in</li>
+        </ul>
+      </div>
+      <div class="lane next">
+        <div class="when">Next</div><h3>Deeper &amp; self‑serve</h3>
+        <ul>
+          <li>Richer insurer connections</li>
+          <li>Patient self‑service portal</li>
+          <li>Dashboards for managers</li>
+          <li>More automation across billing</li>
+        </ul>
+      </div>
+      <div class="lane later">
+        <div class="when">Later</div><h3>Scale &amp; insight</h3>
+        <ul>
+          <li>Roll out across multiple sites</li>
+          <li>Trends &amp; early‑warning insights</li>
+          <li>Wider partner network</li>
+        </ul>
+      </div>
+    </div>
+    <div class="hint">Directional view — priorities flex with the business.</div>
+  </section>
+
+  <!-- 13 · CLOSING -->
+  <section class="slide closing">
+    <span class="kicker"><span class="dot"></span> In short</span>
+    <h1>From check‑in to claim — one platform that runs the clinic, protects the patient, and gets you paid.</h1>
+    <div class="cta">
+      <a class="b1" href="#" onclick="goTo(3);return false;">↺ Replay the patient journey</a>
+      <a class="b2" href="#" onclick="goTo(0);return false;">Back to start</a>
+    </div>
+    <div class="brandbar" style="position:static;margin-top:40px"><div class="logo">D</div> Thank you — happy to walk through any part in more detail.</div>
+  </section>
+
+</div>
+
+<!-- chrome -->
+<div class="counter"><span id="cur">1</span> / <span id="total">13</span></div>
+<div class="dots" id="dots"></div>
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const total = slides.length;
+  document.getElementById('total').textContent = total;
+
+  // dots
+  const dotsWrap = document.getElementById('dots');
+  slides.forEach((_, n) => {
+    const b = document.createElement('button');
+    b.addEventListener('click', () => goTo(n));
+    dotsWrap.appendChild(b);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function render(){
+    slides.forEach((s, n) => s.classList.toggle('active', n === i));
+    dots.forEach((d, n) => d.classList.toggle('on', n === i));
+    document.getElementById('cur').textContent = i + 1;
+    document.getElementById('progress').style.width = ((i)/(total-1))*100 + '%';
+    document.getElementById('prev').disabled = i === 0;
+    document.getElementById('next').disabled = i === total - 1;
+  }
+  function goTo(n){ i = Math.max(0, Math.min(total-1, n)); render(); }
+  function next(){ goTo(i+1); }
+  function prev(){ goTo(i-1); }
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  document.addEventListener('keydown', e => {
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key === 'Home'){ goTo(0); }
+    else if(e.key === 'End'){ goTo(total-1); }
+    else if(e.key.toLowerCase() === 'f'){
+      if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
+      else { document.exitFullscreen?.(); }
+    }
+  });
+
+  // ---- Interactive: patient journey ----
+  const journeyData = [
+    {t:"📅 Booking & Check‑in", d:"The patient is scheduled and checked in at the front desk. From that moment, their name and details are loaded once and quietly carried into every screen the staff use — no re‑typing, no mix‑ups."},
+    {t:"🩺 Treatment", d:"During dialysis, the session is monitored live. Key readings appear on screen as they happen, and staff are alerted immediately if anything needs attention — keeping the patient safe."},
+    {t:"📝 Recording the care", d:"What happened in the visit — notes, medications, results — is captured straight into the patient’s medical story, so it’s accurate and instantly available to the care team."},
+    {t:"💳 Billing & getting paid", d:"The completed visit is turned into an insurance claim and submitted automatically. The clinic gets paid faster, with far less manual work and fewer mistakes."},
+    {t:"🔁 Sharing safely", d:"When another clinic or hospital needs the patient’s records, they’re shared securely and with consent — and every exchange is tracked, so nothing is lost or untraceable."}
+  ];
+  const steps = Array.from(document.querySelectorAll('#journey .step'));
+  const jd = document.getElementById('journeyDetail');
+  steps.forEach(step => step.addEventListener('click', () => {
+    steps.forEach(s => s.classList.remove('active'));
+    step.classList.add('active');
+    const data = journeyData[+step.dataset.i];
+    jd.innerHTML = `<h3>${data.t}</h3><p>${data.d}</p>`;
+  }));
+
+  // ---- Interactive: module cards ----
+  document.querySelectorAll('#mods .mod').forEach(card => {
+    card.querySelector('.more').textContent = card.dataset.more;
+    card.addEventListener('click', () => card.classList.toggle('open'));
+  });
+
+  render();
+</script>
+</body>
+</html>

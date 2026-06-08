@@ -256,3 +256,105 @@ public enum EdiAckKind
     FunctionalAck999 = 0,
     ClaimAck277Ca = 1,
 }
+
+/// <summary>
+/// EHR reports back to HIS that a queued billing-export job has been assembled into an EDI 837
+/// claim batch for the payer/period. HIS owns the export-job queue; this is the completion signal
+/// that flips the <c>BillingExportJob</c> from <c>Queued</c> to <c>Completed</c>. Carries the batch
+/// summary (claim count + billed total) so the operator board reflects what EHR actually assembled.
+/// </summary>
+public sealed record BillingExportJobCompletedIntegrationEvent : IIntegrationEvent
+{
+    /// <summary>
+    /// EHR reports back to HIS that a queued billing-export job has been assembled into an EDI 837
+    /// claim batch for the payer/period. HIS owns the export-job queue; this is the completion signal
+    /// that flips the <c>BillingExportJob</c> from <c>Queued</c> to <c>Completed</c>. Carries the batch
+    /// summary (claim count + billed total) so the operator board reflects what EHR actually assembled.
+    /// </summary>
+    public BillingExportJobCompletedIntegrationEvent(Guid EventId,
+        DateTime OccurredOn,
+        int SchemaVersion,
+        Guid JobId,
+        string PayerCode,
+        int ClaimCount,
+        decimal BilledTotal,
+        string CurrencyCode,
+        DateTime CompletedAtUtc)
+    {
+        this.EventId = EventId;
+        this.OccurredOn = OccurredOn;
+        this.SchemaVersion = SchemaVersion;
+        this.JobId = JobId;
+        this.PayerCode = PayerCode;
+        this.ClaimCount = ClaimCount;
+        this.BilledTotal = BilledTotal;
+        this.CurrencyCode = CurrencyCode;
+        this.CompletedAtUtc = CompletedAtUtc;
+    }
+    public Guid EventId { get; init; }
+    public DateTime OccurredOn { get; init; }
+    public int SchemaVersion { get; init; }
+    public Guid JobId { get; init; }
+    public string PayerCode { get; init; }
+    public int ClaimCount { get; init; }
+    public decimal BilledTotal { get; init; }
+    public string CurrencyCode { get; init; }
+    public DateTime CompletedAtUtc { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid JobId, out string PayerCode, out int ClaimCount, out decimal BilledTotal, out string CurrencyCode, out DateTime CompletedAtUtc)
+    {
+        EventId = this.EventId;
+        OccurredOn = this.OccurredOn;
+        SchemaVersion = this.SchemaVersion;
+        JobId = this.JobId;
+        PayerCode = this.PayerCode;
+        ClaimCount = this.ClaimCount;
+        BilledTotal = this.BilledTotal;
+        CurrencyCode = this.CurrencyCode;
+        CompletedAtUtc = this.CompletedAtUtc;
+    }
+}
+
+/// <summary>
+/// EHR reports back to HIS that a queued billing-export job failed to assemble (e.g. the payer
+/// could not be resolved). Flips the <c>BillingExportJob</c> from <c>Queued</c> to <c>Failed</c>.
+/// </summary>
+public sealed record BillingExportJobFailedIntegrationEvent : IIntegrationEvent
+{
+    /// <summary>
+    /// EHR reports back to HIS that a queued billing-export job failed to assemble (e.g. the payer
+    /// could not be resolved). Flips the <c>BillingExportJob</c> from <c>Queued</c> to <c>Failed</c>.
+    /// </summary>
+    public BillingExportJobFailedIntegrationEvent(Guid EventId,
+        DateTime OccurredOn,
+        int SchemaVersion,
+        Guid JobId,
+        string PayerCode,
+        string Reason,
+        DateTime FailedAtUtc)
+    {
+        this.EventId = EventId;
+        this.OccurredOn = OccurredOn;
+        this.SchemaVersion = SchemaVersion;
+        this.JobId = JobId;
+        this.PayerCode = PayerCode;
+        this.Reason = Reason;
+        this.FailedAtUtc = FailedAtUtc;
+    }
+    public Guid EventId { get; init; }
+    public DateTime OccurredOn { get; init; }
+    public int SchemaVersion { get; init; }
+    public Guid JobId { get; init; }
+    public string PayerCode { get; init; }
+    public string Reason { get; init; }
+    public DateTime FailedAtUtc { get; init; }
+    public void Deconstruct(out Guid EventId, out DateTime OccurredOn, out int SchemaVersion, out Guid JobId, out string PayerCode, out string Reason, out DateTime FailedAtUtc)
+    {
+        EventId = this.EventId;
+        OccurredOn = this.OccurredOn;
+        SchemaVersion = this.SchemaVersion;
+        JobId = this.JobId;
+        PayerCode = this.PayerCode;
+        Reason = this.Reason;
+        FailedAtUtc = this.FailedAtUtc;
+    }
+}
