@@ -59,6 +59,14 @@ public sealed class EhrPatientFromHisWalkInConsumer : IConsumer<WalkInRegistered
             return;
         }
 
+        // The same patient may already be in EHR under a different id — registered directly, mirrored
+        // by the check-in sibling consumer, or carried on a replayed event. A second row would violate
+        // the unique IX_Patients_MedicalRecordNumber, so treat an already-known MRN as a no-op.
+        if (await _patients.FindByMedicalRecordNumberAsync(message.Mrn, context.CancellationToken).ConfigureAwait(false) is not null)
+        {
+            return;
+        }
+
         var name = ParseName(message.PatientName);
         var patient = Patient.Register(
             id: message.PatientId,

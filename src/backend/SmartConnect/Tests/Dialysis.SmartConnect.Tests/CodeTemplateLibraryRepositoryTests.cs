@@ -1,7 +1,7 @@
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -123,7 +123,7 @@ public sealed class CodeTemplateLibraryRepositoryTests
     private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_ctlib_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         return services.BuildServiceProvider();
     }
 

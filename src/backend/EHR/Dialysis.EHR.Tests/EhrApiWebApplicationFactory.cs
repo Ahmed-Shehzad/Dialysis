@@ -1,3 +1,4 @@
+using Dialysis.EHR.Api;
 using Dialysis.EHR.Persistence;
 using Dialysis.Module.Hosting.Testing;
 

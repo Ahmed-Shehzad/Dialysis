@@ -1,6 +1,6 @@
 using System.Text;
 using Dialysis.SmartConnect.Attachments;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -123,7 +123,7 @@ public sealed class AttachmentStoreTests
     private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_attach_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         return services.BuildServiceProvider();
     }
 }

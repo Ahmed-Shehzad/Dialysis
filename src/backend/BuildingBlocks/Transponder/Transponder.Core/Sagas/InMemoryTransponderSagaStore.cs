@@ -9,7 +9,7 @@ namespace Dialysis.BuildingBlocks.Transponder.Sagas;
 public sealed class InMemoryTransponderSagaStore : ITransponderSagaStore
 {
     private readonly ConcurrentDictionary<string, TransponderSagaRecord> _rows = new(StringComparer.Ordinal);
-    private readonly object _sync = new();
+    private readonly Lock _sync = new();
 
     private static string RowKey(string sagaKind, string instanceKey) => sagaKind + "\u001f" + instanceKey;
 

@@ -1,4 +1,5 @@
 using Dialysis.Module.Hosting.Testing;
+using Dialysis.PDMS.Api;
 using Dialysis.PDMS.Persistence;
 using Xunit;
 

@@ -3,7 +3,7 @@ using System.Text;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +31,7 @@ public sealed class FlowRuntimeEngineParallelOutboundTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<DelayedCountingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_par_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         await using var sp = services.BuildServiceProvider();
 
@@ -74,7 +74,7 @@ public sealed class FlowRuntimeEngineParallelOutboundTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<DelayedCountingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_seq_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         await using var sp = services.BuildServiceProvider();
 
@@ -116,7 +116,7 @@ public sealed class FlowRuntimeEngineParallelOutboundTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<DelayedCountingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_concurrent_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         await using var sp = services.BuildServiceProvider();
 

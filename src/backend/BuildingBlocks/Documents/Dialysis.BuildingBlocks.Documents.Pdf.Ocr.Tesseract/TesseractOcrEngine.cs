@@ -20,7 +20,7 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
     private readonly TesseractOcrOptions _options;
     private readonly ILogger<TesseractOcrEngine> _logger;
     private readonly Dictionary<string, Tess.TesseractEngine> _enginesByLanguage = new(StringComparer.Ordinal);
-    private readonly object _enginesLock = new();
+    private readonly Lock _enginesLock = new();
 
     public TesseractOcrEngine(IOptions<TesseractOcrOptions> options, ILogger<TesseractOcrEngine> logger)
     {
@@ -54,7 +54,8 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
                 if (!iter.TryGetBoundingBox(Tess.PageIteratorLevel.Word, out var box))
                     continue;
                 var wordText = iter.GetText(Tess.PageIteratorLevel.Word);
-                if (string.IsNullOrWhiteSpace(wordText)) continue;
+                if (string.IsNullOrWhiteSpace(wordText))
+                    continue;
                 var conf = iter.GetConfidence(Tess.PageIteratorLevel.Word) / 100.0;
                 words.Add(new OcrWord(
                     wordText.Trim(),

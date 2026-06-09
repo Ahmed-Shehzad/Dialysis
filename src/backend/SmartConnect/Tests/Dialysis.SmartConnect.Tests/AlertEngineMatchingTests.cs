@@ -1,5 +1,5 @@
 using Dialysis.SmartConnect.Alerts;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -116,7 +116,7 @@ public sealed class AlertEngineMatchingTests
     {
         var recorded = new List<string>();
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_alert_engine_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         var fakeTime = new AdvanceableTimeProvider(DateTimeOffset.UtcNow);
         services.AddSingleton<TimeProvider>(fakeTime);

@@ -1,17 +1,16 @@
 using System.Net;
 using System.Text;
 using Dialysis.SmartConnect.Attachments;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
 
-public sealed class AttachmentEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class AttachmentEndpointTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory ;
+    private readonly SmartConnectApiFactory _factory;
 
-    public AttachmentEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public AttachmentEndpointTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Get_Metadata_Then_Bytes_Round_Trips_Async()

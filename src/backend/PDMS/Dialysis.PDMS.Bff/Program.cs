@@ -4,18 +4,28 @@ using Dialysis.PDMS.Bff.Notifications;
 using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.ServiceDefaults;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddServiceDefaults();
-builder.AddModuleBff();
+namespace Dialysis.PDMS.Bff;
 
-// Event-driven push: live chairside alarms for the PDMS SPA (intradialytic adverse events, …).
-// Reads still go through the synchronous proxy.
-builder.AddModuleBffEvents(transponder =>
-    transponder.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventNotificationConsumer>());
+/// <summary>Application entry point.</summary>
+public partial class Program
+{
+    /// <summary>Builds and runs the host.</summary>
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.AddServiceDefaults();
+        builder.AddModuleBff();
 
-var app = builder.Build();
-app.MapDefaultEndpoints();
-app.MapModuleBff();
-app.MapModuleBffEvents();
+        // Event-driven push: live chairside alarms for the PDMS SPA (intradialytic adverse events, …).
+        // Reads still go through the synchronous proxy.
+        builder.AddModuleBffEvents(transponder =>
+            transponder.AddConsumer<IntradialyticAdverseEventIntegrationEvent, IntradialyticAdverseEventNotificationConsumer>());
 
-await app.RunAsync().ConfigureAwait(false);
+        var app = builder.Build();
+        app.MapDefaultEndpoints();
+        app.MapModuleBff();
+        app.MapModuleBffEvents();
+
+        await app.RunAsync().ConfigureAwait(false);
+    }
+}

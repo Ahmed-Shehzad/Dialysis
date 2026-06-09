@@ -22,6 +22,7 @@ using Dialysis.SmartConnect.TimeSync;
 using Dialysis.SmartConnect.Transforms;
 using Dialysis.SmartConnect.VariableMaps;
 using Hl7.Fhir.Model;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -34,7 +35,7 @@ public static class SmartConnectServiceCollectionExtensions
     {
         /// <summary>
         /// Registers SmartConnect runtime services: <see cref="IFlowRuntime"/>, <see cref="IFlowPluginRegistry"/>, and built-in plugins.
-        /// Call persistence plugins (for example <c>AddSmartConnectPersistenceInMemory</c> or <c>AddSmartConnectPersistenceForSqlServer</c>) to register <see cref="IIntegrationFlowRepository"/> and <see cref="IMessageLedger"/>.
+        /// Call the PostgreSQL persistence plugin (<c>AddSmartConnectPersistenceForPostgresql</c>) to register <see cref="IIntegrationFlowRepository"/> and <see cref="IMessageLedger"/>.
         /// </summary>
         public IServiceCollection AddSmartConnectCore()
         {
@@ -255,7 +256,12 @@ public static class SmartConnectServiceCollectionExtensions
             else
                 services.Configure<DataPrunerOptions>(_ => { });
 
-            services.AddHostedService<DataPrunerHostedService>();
+            // Persistent Hangfire recurring job (daily 01:00 UTC) in place of a BackgroundService timer.
+            services.AddSingleton<DataPrunerJob>();
+            services.AddHangfireRecurringJob<DataPrunerJob>(
+                "smartconnect:data-pruner",
+                job => job.RunOnceAsync(CancellationToken.None),
+                cronExpression: "0 1 * * *");
             return services;
         }
     }

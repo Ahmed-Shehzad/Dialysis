@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Module.Hosting.Authorization;
 using Dialysis.Module.Hosting.Health;
 using Dialysis.Module.Hosting.Middleware;
@@ -38,6 +39,9 @@ public static class ModuleHostingApplicationBuilderExtensions
                 app.UseAuthentication();
                 app.UseAuthorization();
             }
+
+            // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for this host).
+            app.UseModuleHangfireDashboard(app.Environment.ApplicationName);
 
             app.MapModuleHealthEndpoints();
             return app;

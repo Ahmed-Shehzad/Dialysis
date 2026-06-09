@@ -1,6 +1,5 @@
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Api.Controllers.V1;
-using Dialysis.EHR.Billing.Consumers;
 using Dialysis.EHR.Billing.Ports;
 using Microsoft.AspNetCore.Mvc;
 using Shouldly;

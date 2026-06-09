@@ -35,6 +35,15 @@ fi
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+# Always tear down the scanner's .sonarqube/ working dir on exit (success, failure, or Ctrl-C).
+# If it survives, the globally-installed SonarQube.Integration.ImportBefore.targets MSBuild hook
+# auto-detects it and injects the server's Sonar-cs.ruleset into EVERY subsequent `dotnet build`,
+# silently overriding the .editorconfig analyzer severities — every tuned-down rule snaps back to
+# `warning` and the local build reports hundreds of phantom issues. Cleaning up keeps `dotnet build`
+# honoring .editorconfig; the analysis is already uploaded by `sonarscanner end` before we get here.
+cleanup_sonarqube() { rm -rf "$REPO_ROOT/.sonarqube"; }
+trap cleanup_sonarqube EXIT
+
 COVERAGE_OUT="$REPO_ROOT/artifacts/coverage/sonarqube.xml"
 mkdir -p "$(dirname "$COVERAGE_OUT")"
 

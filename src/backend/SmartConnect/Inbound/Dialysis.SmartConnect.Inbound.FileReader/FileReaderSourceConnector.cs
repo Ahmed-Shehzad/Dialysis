@@ -403,15 +403,13 @@ public sealed class FileReaderSourceConnector : ISourceConnector
         var anchors = new List<int>();
         for (var i = 0; i + 3 < text.Length; i++)
         {
-            if (text[i] == 'M' && text[i + 1] == 'S' && text[i + 2] == 'H' && text[i + 3] == '|')
+            // Only treat MSH at the start of the file or after a line break as a boundary;
+            // an MSH inside a segment value (rare but possible in free-text fields) shouldn't
+            // start a new record.
+            if (text[i] == 'M' && text[i + 1] == 'S' && text[i + 2] == 'H' && text[i + 3] == '|'
+                && (i == 0 || text[i - 1] == '\r' || text[i - 1] == '\n'))
             {
-                // Only treat MSH at the start of the file or after a line break as a boundary;
-                // an MSH inside a segment value (rare but possible in free-text fields) shouldn't
-                // start a new record.
-                if (i == 0 || text[i - 1] == '\r' || text[i - 1] == '\n')
-                {
-                    anchors.Add(i);
-                }
+                anchors.Add(i);
             }
         }
 

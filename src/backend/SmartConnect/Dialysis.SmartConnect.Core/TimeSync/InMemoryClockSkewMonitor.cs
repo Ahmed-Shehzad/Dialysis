@@ -33,7 +33,7 @@ public sealed class InMemoryClockSkewMonitor : IClockSkewMonitor
 
     private sealed class SourceState
     {
-        private readonly object _gate = new();
+        private readonly Lock _gate = new();
         private DateTime _lastObservedAtUtc;
         private TimeSpan _lastSkew;
         private TimeSpan _maxAbsSkew;

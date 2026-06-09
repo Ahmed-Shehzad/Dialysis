@@ -2,16 +2,14 @@ using System.Collections.Concurrent;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
 
-namespace Dialysis.EHR.Billing.Consumers;
+namespace Dialysis.EHR.Tests.Billing;
 
 /// <summary>
-/// Process-scoped in-memory <see cref="ICptFeeScheduleAdminRepository"/> for dev hosts running
-/// the billing slice with <c>EHR:Billing:Persistence:Provider=InMemory</c>. Production registers
-/// the EF-backed variant so edits survive restarts and are shared across replicas. Add/Remove
-/// mutate the backing store immediately, so the caller's <c>SaveChangesAsync</c> is a harmless
-/// no-op for this implementation.
+/// In-memory <see cref="ICptFeeScheduleAdminRepository"/> test double for the fee-schedule controller
+/// unit tests (the controller's HTTP result behaviour is what's under test, not persistence). Production
+/// uses the EF-backed PostgreSQL repository.
 /// </summary>
-public sealed class InMemoryCptFeeScheduleAdminRepository : ICptFeeScheduleAdminRepository
+internal sealed class InMemoryCptFeeScheduleAdminRepository : ICptFeeScheduleAdminRepository
 {
     private readonly ConcurrentDictionary<Guid, CptFeeScheduleEntry> _entries = new();
 

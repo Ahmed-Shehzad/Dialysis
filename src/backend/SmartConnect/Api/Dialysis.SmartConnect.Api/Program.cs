@@ -2,9 +2,9 @@ using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Hipaa;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
-using Dialysis.SmartConnect;
 using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Contracts.Security;
 using Dialysis.SmartConnect.Inbound;
@@ -16,86 +16,130 @@ using Dialysis.SmartConnect.Inbound.Transponder;
 using Dialysis.SmartConnect.Dicom.Persistence;
 using Dialysis.SmartConnect.Dicom.Web;
 using Dialysis.SmartConnect.Management.AspNetCore;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
+using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddServiceDefaults();
+namespace Dialysis.SmartConnect.Api;
 
-builder.AddModuleHost<SmartConnectPermissionCatalog>(new ModuleHostingOptions
+
+/// <summary>Marker for <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.</summary>
+public partial class Program
 {
-    ModuleSlug = "smartconnect",
-    HandlerAssemblies = [typeof(Dialysis.SmartConnect.Api.Program).Assembly],
-});
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.AddServiceDefaults();
 
-builder.Services.AddSmartConnectPersistenceInMemory(databaseName: "SmartConnectApi");
-builder.Services.AddSmartConnectCore();
-// DICOMweb instance store + ingestion (on SmartConnectDbContext; uses the host's IAttachmentBlobStore).
-builder.Services.AddDicomIngestion();
-builder.Services.AddSmartConnectDataPruner(o =>
-{
-    var hours = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:IntervalHours");
-    if (hours is > 0)
-        o.Interval = TimeSpan.FromHours(hours.Value);
-    var days = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:RetentionDays");
-    if (days is > 0)
-        o.RetentionPeriod = TimeSpan.FromDays(days.Value);
-});
-builder.Services.AddDefaultInboundMessageFactory();
-builder.Services.AddSmartConnectInboundTransport();
-builder.Services.AddSmartConnectInboundHttpOptions();
-builder.Services.AddSmartConnectMllpInbound();
-builder.Services.AddSmartConnectFileReader();
-builder.Services.AddSmartConnectSftpInbound();
-builder.Services.AddSmartConnectTransponderInboundBridgeIfEnabled(builder.Configuration);
-builder.Services.AddHostedService<BuiltInCodeTemplatesSeeder>();
+        builder.AddModuleHost<SmartConnectPermissionCatalog>(new ModuleHostingOptions
+        {
+            ModuleSlug = "smartconnect",
+            HandlerAssemblies = [typeof(Program).Assembly],
+        });
 
-// Transponder bus for the host: required by the transponder-bus outbound adapter, and carries the
-// Lab result bridge that turns a routed inbound ORU into the Lab context's typed result event.
-builder.Services.AddTransponder(t =>
-    t.AddConsumer<Dialysis.SmartConnect.Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent,
-        Dialysis.SmartConnect.Api.Lab.LabResultBridgeConsumer>());
+        // SmartConnect's relational store runs on PostgreSQL like every other DB-backed module host
+        // (Aspire provisions postgres-smartconnect and injects ConnectionStrings:SmartConnect via
+        // WithReference). A connection string is required — tests boot against a PostgreSQL Testcontainer.
+        var connectionString = builder.Configuration.GetConnectionString("SmartConnect");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                "ConnectionStrings:SmartConnect must be set — SmartConnect persists to PostgreSQL.");
+        builder.Services.AddSmartConnectPersistenceForPostgresql(connectionString);
+        builder.Services.AddSmartConnectCore();
+        // DICOMweb instance store + ingestion (on SmartConnectDbContext; uses the host's IAttachmentBlobStore).
+        builder.Services.AddDicomIngestion();
+        builder.Services.AddSmartConnectDataPruner(o =>
+        {
+            var hours = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:IntervalHours");
+            if (hours is > 0)
+                o.Interval = TimeSpan.FromHours(hours.Value);
+            var days = builder.Configuration.GetValue<double?>("SmartConnect:DataPruner:RetentionDays");
+            if (days is > 0)
+                o.RetentionPeriod = TimeSpan.FromDays(days.Value);
+        });
+        builder.Services.AddDefaultInboundMessageFactory();
+        builder.Services.AddSmartConnectInboundTransport();
+        builder.Services.AddSmartConnectInboundHttpOptions();
+        builder.Services.AddSmartConnectMllpInbound();
+        builder.Services.AddSmartConnectFileReader();
+        builder.Services.AddSmartConnectSftpInbound();
+        builder.Services.AddSmartConnectTransponderInboundBridgeIfEnabled(builder.Configuration);
+        builder.Services.AddHostedService<BuiltInCodeTemplatesSeeder>();
 
-// HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
-builder.Services.AddFhirAudit();
-builder.Services.AddHipaaCompliance("smartconnect");
-builder.Services.AddHipaaAspNetCoreSafeguards();
+        // Transponder bus for the host: required by the transponder-bus outbound adapter, and carries the
+        // Lab result bridge that turns a routed inbound ORU into the Lab context's typed result event.
+        builder.Services.AddTransponder(t =>
+            t.AddConsumer<Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent,
+                Lab.LabResultBridgeConsumer>());
 
-var app = builder.Build();
+        // RabbitMQ transport, wired exactly like every other module (His/Ehr/Pdms/Hie/Lab) from
+        // SmartConnect:Transponder:RabbitMq:* — Aspire + the deploy artifacts inject the ConnectionUri.
+        // Without it (the WebApplicationFactory test hosts + local dev without a broker) the bus stays
+        // in-process. This is what lets the Lab result bridge's LabResultReceivedIntegrationEvent actually
+        // reach the Lab module cross-process; the routed-payload event is delivered back to this host's
+        // consumer via the Listen<> subscription. SmartConnect publishes directly (no outbox DbContext).
+        var rabbitUri = builder.Configuration["SmartConnect:Transponder:RabbitMq:ConnectionUri"];
+        var rabbitQueue = builder.Configuration["SmartConnect:Transponder:RabbitMq:QueueName"];
+        var rabbitExchange = builder.Configuration["SmartConnect:Transponder:RabbitMq:ExchangeName"];
+        if (!string.IsNullOrWhiteSpace(rabbitUri))
+        {
+            builder.Services.AddTransponderRabbitMq(
+                o =>
+                {
+                    o.ConnectionUri = rabbitUri;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
+                },
+                sub => sub.Listen<Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent>());
+        }
 
-app.UseStaticFiles();
-app.UseModuleHost();
+        // HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
+        builder.Services.AddFhirAudit();
+        builder.Services.AddHipaaCompliance("smartconnect");
+        builder.Services.AddHipaaAspNetCoreSafeguards();
 
-app.MapGet("/", () => Results.Redirect("/smartconnect/index.html", permanent: false));
-app.MapSmartConnectInboundRoutes();
-app.MapSmartConnectManagementRoutes();
-app.MapSmartConnectWorkbenchRoutes();
-app.MapHipaaSafeguardsEndpoint();
-app.MapSmartConnectGroupRoutes();
-app.MapSmartConnectLedgerRoutes();
-app.MapSmartConnectConfigurationMapRoutes();
-app.MapSmartConnectCodeTemplateLibraryRoutes();
-app.MapSmartConnectAttachmentRoutes();
-app.MapSmartConnectAlertRoutes();
-app.MapSmartConnectEventsRoutes();
-app.MapSmartConnectPrunerRoutes();
+        var app = builder.Build();
 
-// DICOMweb (PS3.18) — QIDO-RS search, WADO-RS retrieve, STOW-RS store — under /dicom-web. PHI:
-// secured with RequireAuthorization wherever an identity authority is configured (Aspire dev + all
-// deployments); the no-Authority bare path registers no auth services, so the gate is guarded.
-var dicomWeb = app.MapGroup("/dicom-web").WithTags("DICOMweb");
-if (!string.IsNullOrWhiteSpace(app.Configuration["SmartConnect:Authentication:Authority"]))
-{
-    dicomWeb.RequireAuthorization();
-}
-dicomWeb.MapQidoRs();
-dicomWeb.MapWadoRs();
-dicomWeb.MapStowRs();
-dicomWeb.MapDicomRenderedRs();
+        // Apply EF migrations on startup so the SmartConnect module is self-hosting against a fresh
+        // Aspire-managed Postgres container. Gated on configuration (SmartConnect:AutoMigrate, default
+        // true in Development) — in production the DBA owns the migration step out-of-band.
+        if (builder.Configuration.GetValue("SmartConnect:AutoMigrate", app.Environment.IsDevelopment()))
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();
+            await db.Database.MigrateAsync().ConfigureAwait(false);
+        }
 
-await app.RunAsync().ConfigureAwait(false);
+        app.UseStaticFiles();
+        app.UseModuleHost();
 
-namespace Dialysis.SmartConnect.Api
-{
-    /// <summary>Marker for <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.</summary>
-    public partial class Program;
+        app.MapGet("/", () => Results.Redirect("/smartconnect/index.html", permanent: false));
+        app.MapSmartConnectInboundRoutes();
+        app.MapSmartConnectManagementRoutes();
+        app.MapSmartConnectWorkbenchRoutes();
+        app.MapHipaaSafeguardsEndpoint();
+        app.MapSmartConnectGroupRoutes();
+        app.MapSmartConnectLedgerRoutes();
+        app.MapSmartConnectConfigurationMapRoutes();
+        app.MapSmartConnectCodeTemplateLibraryRoutes();
+        app.MapSmartConnectAttachmentRoutes();
+        app.MapSmartConnectAlertRoutes();
+        app.MapSmartConnectEventsRoutes();
+        app.MapSmartConnectPrunerRoutes();
+
+        // DICOMweb (PS3.18) — QIDO-RS search, WADO-RS retrieve, STOW-RS store — under /dicom-web. PHI:
+        // secured with RequireAuthorization wherever an identity authority is configured (Aspire dev + all
+        // deployments); the no-Authority bare path registers no auth services, so the gate is guarded.
+        var dicomWeb = app.MapGroup("/dicom-web").WithTags("DICOMweb");
+        if (!string.IsNullOrWhiteSpace(app.Configuration["SmartConnect:Authentication:Authority"]))
+        {
+            dicomWeb.RequireAuthorization();
+        }
+        dicomWeb.MapQidoRs();
+        dicomWeb.MapWadoRs();
+        dicomWeb.MapStowRs();
+        dicomWeb.MapDicomRenderedRs();
+
+        await app.RunAsync().ConfigureAwait(false);
+    }
 }

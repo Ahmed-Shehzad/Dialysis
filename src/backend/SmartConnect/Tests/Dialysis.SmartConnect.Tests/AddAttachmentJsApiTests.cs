@@ -4,7 +4,7 @@ using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Dialysis.SmartConnect.Tests.TestPlugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,7 +74,7 @@ public sealed class AddAttachmentJsApiTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_addatt_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         var sp = services.BuildServiceProvider();

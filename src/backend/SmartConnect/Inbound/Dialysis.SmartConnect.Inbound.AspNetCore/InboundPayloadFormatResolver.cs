@@ -9,10 +9,10 @@ internal static class InboundPayloadFormatResolver
     /// </summary>
     public static PayloadFormat Resolve(string? explicitHeader, string? contentType)
     {
-        if (!string.IsNullOrWhiteSpace(explicitHeader))
+        if (!string.IsNullOrWhiteSpace(explicitHeader)
+            && Enum.TryParse<PayloadFormat>(explicitHeader.Trim(), ignoreCase: true, out var parsed))
         {
-            if (Enum.TryParse<PayloadFormat>(explicitHeader.Trim(), ignoreCase: true, out var parsed))
-                return parsed;
+            return parsed;
         }
 
         if (string.IsNullOrWhiteSpace(contentType))

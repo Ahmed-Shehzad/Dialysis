@@ -61,14 +61,12 @@ public static class SmartConnectInboundEndpointExtensions
         CancellationToken cancellationToken)
     {
         var opts = options.Value;
-        if (!string.IsNullOrEmpty(opts.ApiKey))
+        if (!string.IsNullOrEmpty(opts.ApiKey)
+            && (!http.Request.Headers.TryGetValue(ApiKeyHeaderName, out var key) ||
+                !string.Equals(key.ToString(), opts.ApiKey, StringComparison.Ordinal)))
         {
-            if (!http.Request.Headers.TryGetValue(ApiKeyHeaderName, out var key) ||
-                !string.Equals(key.ToString(), opts.ApiKey, StringComparison.Ordinal))
-            {
-                http.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return;
-            }
+            http.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         http.Request.Headers.TryGetValue(InboundPayloadFormatResolver.PayloadFormatHeaderName, out var fmtHeader);
@@ -163,14 +161,12 @@ public static class SmartConnectInboundEndpointExtensions
         CancellationToken cancellationToken)
     {
         var opts = options.Value;
-        if (!string.IsNullOrEmpty(opts.ApiKey))
+        if (!string.IsNullOrEmpty(opts.ApiKey)
+            && (!http.Request.Headers.TryGetValue(ApiKeyHeaderName, out var key) ||
+                !string.Equals(key.ToString(), opts.ApiKey, StringComparison.Ordinal)))
         {
-            if (!http.Request.Headers.TryGetValue(ApiKeyHeaderName, out var key) ||
-                !string.Equals(key.ToString(), opts.ApiKey, StringComparison.Ordinal))
-            {
-                http.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return;
-            }
+            http.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
 
         http.Request.Headers.TryGetValue(InboundPayloadFormatResolver.PayloadFormatHeaderName, out var fmtHeader);

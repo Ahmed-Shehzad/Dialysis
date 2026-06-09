@@ -1,5 +1,5 @@
 using Dialysis.SmartConnect.Alerts;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -91,7 +91,7 @@ public sealed class AlertRuleRepositoryTests
     private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_alerts_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         return services.BuildServiceProvider();
     }
 }

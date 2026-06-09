@@ -3,6 +3,7 @@ using Dialysis.BuildingBlocks.Documents.Signing;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.BuildingBlocks.Documents.Storage.Valkey;
 using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Contracts.Integration;
@@ -108,19 +109,32 @@ public static class HealthInformationExchangeExtensions
                 services.AddHttpClient(Dialysis.BuildingBlocks.Documents.Signing.Csc.CscV2Client.HttpClientName);
                 services.AddEidasQesSigning(signingSection);
             }
-            // LTV upgrader is opt-in too — hosts toggle Documents:Signing:Ltv:AutoUpgrade.
-            services.AddHostedService<Dialysis.BuildingBlocks.Documents.Signing.Hosted.LtvUpgraderHostedService>();
+            // LTV upgrader is opt-in (Documents:Signing:Ltv:AutoUpgrade) — a persistent daily Hangfire
+            // job (02:00 UTC) promoting outstanding PAdES-B-T signatures to LTA before the TSA cert expires.
+            if (configuration.GetValue("Documents:Signing:Ltv:AutoUpgrade", false))
+            {
+                services.AddHangfireRecurringJob<Dialysis.BuildingBlocks.Documents.Signing.Hosted.ILtvUpgradeJob>(
+                    "hie:documents:ltv-upgrade",
+                    job => job.RunOnceAsync(CancellationToken.None),
+                    cronExpression: "0 2 * * *");
+            }
 
             // Document retention + DSR Art. 17 erasure ----------------------------------
             // The purger walks every operator-defined DocumentRetentionPolicy; the eraser
             // contributes HIE-side documents to a DPO-approved Art. 17 erasure request.
-            services.Configure<Dialysis.HIE.Documents.Hosted.RetentionPurgerOptions>(
-                configuration.GetSection("Documents:Retention"));
             services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IRetentionPurgeJob,
                 Dialysis.HIE.Documents.Hosted.HieRetentionPurgeJob>();
             services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IPatientEraser,
                 Dialysis.HIE.Documents.Erasure.HieDocumentsPatientEraser>();
-            services.AddHostedService<Dialysis.HIE.Documents.Hosted.RetentionPurgerHostedService>();
+            // Opt-in (Documents:Retention:AutoPurge) — a persistent daily Hangfire job (03:00 UTC) that
+            // walks every operator-defined DocumentRetentionPolicy and tombstones expired documents.
+            if (configuration.GetValue("Documents:Retention:AutoPurge", false))
+            {
+                services.AddHangfireRecurringJob<Dialysis.BuildingBlocks.DataProtection.Erasure.IRetentionPurgeJob>(
+                    "hie:documents:retention-purge",
+                    job => job.RunOnceAsync(CancellationToken.None),
+                    cronExpression: "0 3 * * *");
+            }
 
             // TEFCA QHIN onboarding — operator-facing admin surface for trust-anchor / mTLS /
             // IAS JWT management. The shared IDocumentBlobStore (already registered above)

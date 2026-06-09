@@ -1,6 +1,5 @@
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.CQRS;
-using Dialysis.Identity.Api;
 using Dialysis.Identity.Composition;
 using Dialysis.Identity.Contracts.Security;
 using Dialysis.Identity.Provisioning.Features.AssignRoleToUser;
@@ -13,119 +12,124 @@ using Dialysis.Identity.Provisioning.Features.RevokeRoleFromUser;
 using Dialysis.Module.Hosting;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace Dialysis.Identity.Api;
 
-const string connectionStringName = "Identity";
-var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
-var enableOutbox = builder.Configuration.GetValue("Identity:Transponder:EnableOutboxRelay", false);
-var rabbitUri = builder.Configuration["Identity:Transponder:RabbitMq:ConnectionUri"];
-var rabbitQueue = builder.Configuration["Identity:Transponder:RabbitMq:QueueName"];
-var rabbitExchange = builder.Configuration["Identity:Transponder:RabbitMq:ExchangeName"];
-
-builder.AddModuleHost<IdentityPermissionCatalog>(new ModuleHostingOptions
+/// <summary>Application entry point.</summary>
+public partial class Program
 {
-    ModuleSlug = "identity",
-    HandlerAssemblies =
-    [
-        typeof(Dialysis.Identity.Provisioning.IdentityProvisioningMarker).Assembly
-    ],
-});
+    /// <summary>Builds and runs the host.</summary>
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddIdentity(
-    builder.Configuration,
-    configurePersistence: string.IsNullOrWhiteSpace(connectionString)
-        ? null
-        : options => options.UseNpgsql(
-            connectionString,
-            pg => pg.MigrationsHistoryTable("__ef_migrations", "identity")),
-    enableOutboxRelay: enableOutbox,
-    configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
-        ? null
-        : s => s.AddTransponderRabbitMq(o =>
+        const string connectionStringName = "Identity";
+        var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                $"ConnectionStrings:{connectionStringName} must be set — this module persists to PostgreSQL.");
+        var enableOutbox = builder.Configuration.GetValue("Identity:Transponder:EnableOutboxRelay", false);
+        var rabbitUri = builder.Configuration["Identity:Transponder:RabbitMq:ConnectionUri"];
+        var rabbitQueue = builder.Configuration["Identity:Transponder:RabbitMq:QueueName"];
+        var rabbitExchange = builder.Configuration["Identity:Transponder:RabbitMq:ExchangeName"];
+
+        builder.AddModuleHost<IdentityPermissionCatalog>(new ModuleHostingOptions
         {
-            o.ConnectionUri = rabbitUri;
-            if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
-            if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
-        }));
+            ModuleSlug = "identity",
+            HandlerAssemblies =
+            [
+                typeof(Dialysis.Identity.Provisioning.IdentityProvisioningMarker).Assembly
+            ],
+        });
 
-var app = builder.Build();
+        builder.Services.AddIdentity(
+            builder.Configuration,
+            configurePersistence: options => options.UseNpgsql(
+                    connectionString,
+                    pg => pg.MigrationsHistoryTable("__ef_migrations", "identity")),
+            enableOutboxRelay: enableOutbox,
+            configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
+                ? null
+                : s => s.AddTransponderRabbitMq(o =>
+                {
+                    o.ConnectionUri = rabbitUri;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
+                }));
 
-app.UseModuleHost();
-app.MapOpenApi();
+        var app = builder.Build();
 
-app.MapGet("/", () => Results.Ok(new { module = "identity", version = "v1" })).AllowAnonymous();
+        app.UseModuleHost();
+        app.MapOpenApi();
 
-var users = app.MapGroup("/api/v1/users");
+        app.MapGet("/", () => Results.Ok(new { module = "identity", version = "v1" })).AllowAnonymous();
 
-users.MapPost("/", async (ProvisionUserCommand command, ICqrsGateway gateway, CancellationToken ct) =>
-{
-    var id = await gateway.SendCommandAsync<ProvisionUserCommand, Guid>(command, ct).ConfigureAwait(false);
-    return Results.Created($"/api/v1/users/{id}", new { id });
-});
+        var users = app.MapGroup("/api/v1/users");
 
-users.MapPost("/{userId:guid}/deactivate", async (Guid userId, ICqrsGateway gateway, CancellationToken ct) =>
-{
-    await gateway.SendCommandAsync<DeactivateUserCommand, Unit>(new DeactivateUserCommand(userId), ct).ConfigureAwait(false);
-    return Results.NoContent();
-});
+        users.MapPost("/", async (ProvisionUserCommand command, ICqrsGateway gateway, CancellationToken ct) =>
+        {
+            var id = await gateway.SendCommandAsync<ProvisionUserCommand, Guid>(command, ct).ConfigureAwait(false);
+            return Results.Created($"/api/v1/users/{id}", new { id });
+        });
 
-users.MapGet("/{userId:guid}/permissions", async (Guid userId, ICqrsGateway gateway, CancellationToken ct) =>
-{
-    var dto = await gateway.SendQueryAsync<ListUserPermissionsQuery, UserPermissionsDto?>(
-        new ListUserPermissionsQuery(userId), ct).ConfigureAwait(false);
-    return dto is null ? Results.NotFound() : Results.Ok(dto);
-});
+        users.MapPost("/{userId:guid}/deactivate", async (Guid userId, ICqrsGateway gateway, CancellationToken ct) =>
+        {
+            await gateway.SendCommandAsync<DeactivateUserCommand, Unit>(new DeactivateUserCommand(userId), ct).ConfigureAwait(false);
+            return Results.NoContent();
+        });
 
-users.MapPost("/{userId:guid}/roles", async (
-    Guid userId,
-    AssignRoleBody body,
-    ICqrsGateway gateway,
-    CancellationToken ct) =>
-{
-    await gateway.SendCommandAsync<AssignRoleToUserCommand, Unit>(
-        new AssignRoleToUserCommand(userId, body.RoleCode), ct).ConfigureAwait(false);
-    return Results.NoContent();
-});
+        users.MapGet("/{userId:guid}/permissions", async (Guid userId, ICqrsGateway gateway, CancellationToken ct) =>
+        {
+            var dto = await gateway.SendQueryAsync<ListUserPermissionsQuery, UserPermissionsDto?>(
+                new ListUserPermissionsQuery(userId), ct).ConfigureAwait(false);
+            return dto is null ? Results.NotFound() : Results.Ok(dto);
+        });
 
-users.MapDelete("/{userId:guid}/roles/{roleCode}", async (
-    Guid userId,
-    string roleCode,
-    ICqrsGateway gateway,
-    CancellationToken ct) =>
-{
-    await gateway.SendCommandAsync<RevokeRoleFromUserCommand, Unit>(
-        new RevokeRoleFromUserCommand(userId, roleCode), ct).ConfigureAwait(false);
-    return Results.NoContent();
-});
+        users.MapPost("/{userId:guid}/roles", async (
+            Guid userId,
+            AssignRoleBody body,
+            ICqrsGateway gateway,
+            CancellationToken ct) =>
+        {
+            await gateway.SendCommandAsync<AssignRoleToUserCommand, Unit>(
+                new AssignRoleToUserCommand(userId, body.RoleCode), ct).ConfigureAwait(false);
+            return Results.NoContent();
+        });
 
-var roles = app.MapGroup("/api/v1/roles");
+        users.MapDelete("/{userId:guid}/roles/{roleCode}", async (
+            Guid userId,
+            string roleCode,
+            ICqrsGateway gateway,
+            CancellationToken ct) =>
+        {
+            await gateway.SendCommandAsync<RevokeRoleFromUserCommand, Unit>(
+                new RevokeRoleFromUserCommand(userId, roleCode), ct).ConfigureAwait(false);
+            return Results.NoContent();
+        });
 
-roles.MapPost("/", async (DefineRoleCommand command, ICqrsGateway gateway, CancellationToken ct) =>
-{
-    var id = await gateway.SendCommandAsync<DefineRoleCommand, Guid>(command, ct).ConfigureAwait(false);
-    return Results.Created($"/api/v1/roles/{id}", new { id });
-});
+        var roles = app.MapGroup("/api/v1/roles");
 
-roles.MapGet("/", async (ICqrsGateway gateway, CancellationToken ct) =>
-{
-    var list = await gateway.SendQueryAsync<ListRolesQuery, IReadOnlyList<RoleSummaryDto>>(new ListRolesQuery(), ct)
-        .ConfigureAwait(false);
-    return Results.Ok(list);
-});
+        roles.MapPost("/", async (DefineRoleCommand command, ICqrsGateway gateway, CancellationToken ct) =>
+        {
+            var id = await gateway.SendCommandAsync<DefineRoleCommand, Guid>(command, ct).ConfigureAwait(false);
+            return Results.Created($"/api/v1/roles/{id}", new { id });
+        });
 
-await app.RunAsync().ConfigureAwait(false);
+        roles.MapGet("/", async (ICqrsGateway gateway, CancellationToken ct) =>
+        {
+            var list = await gateway.SendQueryAsync<ListRolesQuery, IReadOnlyList<RoleSummaryDto>>(new ListRolesQuery(), ct)
+                .ConfigureAwait(false);
+            return Results.Ok(list);
+        });
 
-namespace Dialysis.Identity.Api
+        await app.RunAsync().ConfigureAwait(false);
+    }
+}
+
+/// <summary>Body for assigning a role to a user.</summary>
+public sealed record AssignRoleBody
 {
     /// <summary>Body for assigning a role to a user.</summary>
-    public sealed record AssignRoleBody
-    {
-        /// <summary>Body for assigning a role to a user.</summary>
-        public AssignRoleBody(string RoleCode) => this.RoleCode = RoleCode;
-        public string RoleCode { get; init; }
-        public void Deconstruct(out string roleCode) => roleCode = this.RoleCode;
-    }
-
-    /// <summary>Test factory marker.</summary>
-    public partial class Program;
+    public AssignRoleBody(string RoleCode) => this.RoleCode = RoleCode;
+    public string RoleCode { get; init; }
+    public void Deconstruct(out string roleCode) => roleCode = this.RoleCode;
 }

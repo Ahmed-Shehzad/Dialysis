@@ -10,7 +10,6 @@ public sealed class EfPatientPortalReadModel : IPatientPortalReadModel
     public EfPatientPortalReadModel(HisDbContext db) => _db = db;
     public async Task<PatientPortalSummaryDto> GetSummaryAsync(Guid patientId, CancellationToken cancellationToken = default)
     {
-        var nowUtc = DateTime.UtcNow;
         var upcoming = await _db.Appointments.AsNoTracking()
             .Where(a => a.PatientId == patientId && a.StatusCode == "Booked")
             .CountAsync(cancellationToken).ConfigureAwait(false);

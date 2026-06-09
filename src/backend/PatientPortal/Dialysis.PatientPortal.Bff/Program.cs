@@ -4,22 +4,32 @@ using Dialysis.Module.Bff.Events;
 using Dialysis.PatientPortal.Bff.Notifications;
 using Dialysis.ServiceDefaults;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddServiceDefaults();
-builder.AddModuleBff();
+namespace Dialysis.PatientPortal.Bff;
 
-// Event-driven push: the portal consumes the patient-facing integration events and fans them out to
-// the patient's SPA session over SignalR (queue bff-portal). Reads stay on the synchronous proxy.
-builder.AddModuleBffEvents(transponder =>
+/// <summary>Application entry point.</summary>
+public partial class Program
 {
-    transponder.AddConsumer<PatientPortalSecureMessageReceivedIntegrationEvent, SecureMessageReceivedNotificationConsumer>();
-    transponder.AddConsumer<PatientPortalAppointmentResolvedIntegrationEvent, AppointmentResolvedNotificationConsumer>();
-    transponder.AddConsumer<AfterVisitSummaryPublishedIntegrationEvent, AfterVisitSummaryPublishedNotificationConsumer>();
-});
+    /// <summary>Builds and runs the host.</summary>
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.AddServiceDefaults();
+        builder.AddModuleBff();
 
-var app = builder.Build();
-app.MapDefaultEndpoints();
-app.MapModuleBff();
-app.MapModuleBffEvents();
+        // Event-driven push: the portal consumes the patient-facing integration events and fans them out to
+        // the patient's SPA session over SignalR (queue bff-portal). Reads stay on the synchronous proxy.
+        builder.AddModuleBffEvents(transponder =>
+        {
+            transponder.AddConsumer<PatientPortalSecureMessageReceivedIntegrationEvent, SecureMessageReceivedNotificationConsumer>();
+            transponder.AddConsumer<PatientPortalAppointmentResolvedIntegrationEvent, AppointmentResolvedNotificationConsumer>();
+            transponder.AddConsumer<AfterVisitSummaryPublishedIntegrationEvent, AfterVisitSummaryPublishedNotificationConsumer>();
+        });
 
-await app.RunAsync().ConfigureAwait(false);
+        var app = builder.Build();
+        app.MapDefaultEndpoints();
+        app.MapModuleBff();
+        app.MapModuleBffEvents();
+
+        await app.RunAsync().ConfigureAwait(false);
+    }
+}

@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -131,7 +131,7 @@ public sealed class MessageLedgerSearchableColumnsTests
     private static ServiceProvider Build_Services()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_search_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         return services.BuildServiceProvider();
     }
 }

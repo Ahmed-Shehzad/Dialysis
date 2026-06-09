@@ -2,7 +2,7 @@ using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -105,7 +105,7 @@ public sealed class AttachmentOrphanReaperTests
         public string RootPath { get; }
         public IAttachmentBlobStore Blobs { get; }
         public SmartConnectDbContext Db { get; }
-        public AttachmentOrphanReaperHostedService Reaper { get; }
+        public AttachmentOrphanReaperJob Reaper { get; }
         public FakeTimeProvider Clock { get; } = new();
         private readonly ServiceProvider _sp;
 
@@ -115,7 +115,7 @@ public sealed class AttachmentOrphanReaperTests
             Directory.CreateDirectory(RootPath);
 
             var services = new ServiceCollection();
-            services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_reaper_{Guid.NewGuid():N}");
+            services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
             if (!useInRowStore)
             {
                 services.UseFileSystemAttachmentBlobStore(o => o.RootPath = RootPath);
@@ -131,11 +131,11 @@ public sealed class AttachmentOrphanReaperTests
             var scope = _sp.CreateScope();
             Db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();
             Blobs = scope.ServiceProvider.GetRequiredService<IAttachmentBlobStore>();
-            Reaper = new AttachmentOrphanReaperHostedService(
+            Reaper = new AttachmentOrphanReaperJob(
                 _sp.GetRequiredService<IServiceScopeFactory>(),
                 Options.Create(_sp.GetRequiredService<IOptions<AttachmentOrphanReaperOptions>>().Value),
                 Clock,
-                NullLogger<AttachmentOrphanReaperHostedService>.Instance);
+                NullLogger<AttachmentOrphanReaperJob>.Instance);
         }
 
         public async ValueTask DisposeAsync()

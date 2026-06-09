@@ -1,3 +1,4 @@
+using Dialysis.HIS.Api;
 using Dialysis.HIS.Persistence;
 using Dialysis.Module.Hosting.Testing;
 
