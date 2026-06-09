@@ -6,8 +6,7 @@ import {
   markHospitalEventFollowedUp,
 } from "@/features/care-coordination/api/careCoordinationApi";
 import { humanizeError } from "@/lib/api/humanizeError";
-
-const shortId = (id: string): string => id.slice(0, 8);
+import { PatientLabel } from "@/features/patients/PatientLabel";
 
 const kindTone = (kind: HospitalEvent["kind"]): string => {
   switch (kind) {
@@ -64,11 +63,11 @@ export const CareCoordinationWorklistPage = () => {
                 <span className={`col-span-2 text-xs font-semibold uppercase ${kindTone(e.kind)}`}>
                   {hospitalEventKindLabel(e.kind)}
                 </span>
-                <span className="col-span-3 font-mono text-xs text-slate-400">
+                <span className="col-span-3 truncate text-xs text-slate-300">
                   {e.patientId ? (
-                    <span title={e.patientId}>patient {shortId(e.patientId)}</span>
+                    <PatientLabel patientId={e.patientId} showMrn={false} />
                   ) : (
-                    <span className="text-amber-300" title={e.externalPatientRef ?? ""}>
+                    <span className="font-mono text-amber-300" title={e.externalPatientRef ?? ""}>
                       unmatched ({e.externalPatientRef ?? "?"})
                     </span>
                   )}

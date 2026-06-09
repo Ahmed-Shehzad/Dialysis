@@ -26,7 +26,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.BuildingBlocks.DurableCommandBus.CommandLedgerEntry", b =>
                 {
                     b.Property<Guid>("CommandId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("AppliedAtUtc")
@@ -77,7 +76,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore.AuditEventRecord", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("AgentId")
@@ -183,7 +181,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore.NotificationOutboxRecord", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<int>("Attempts")
@@ -268,7 +265,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore.TransponderInboxMessageEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("CompletedAtUtc")
@@ -300,7 +296,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore.TransponderOutboxMessageEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("AssemblyQualifiedEventType")
@@ -336,7 +331,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore.TransponderSagaInstanceEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("InstanceKey")
@@ -378,7 +372,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.Medications.Domain.IvPumpInfusion", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("ActualRateMlPerHour")
@@ -455,7 +448,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.Medications.Domain.MedicationAdministrationEntry", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ActorSub")
@@ -494,7 +486,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.Medications.Domain.MedicationAdministrationRecord", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("ClosedAtUtc")
@@ -546,7 +537,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.Medications.Domain.MedicationInventoryItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -592,7 +582,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.OnCall.Domain.AlarmDispatch", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("AcknowledgedBySub")
@@ -669,7 +658,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.OnCall.Domain.EscalationPolicy", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -727,7 +715,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.OnCall.Domain.OnCallRotation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Backup")
@@ -783,10 +770,61 @@ namespace Dialysis.PDMS.Persistence.Migrations
                     b.ToTable("OnCallRotations", "pdms_oncall");
                 });
 
+            modelBuilder.Entity("Dialysis.PDMS.Reporting.Directory.PatientDirectoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FamilyName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("GivenName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MedicalRecordNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PatientDirectory", "pdms_directory");
+                });
+
             modelBuilder.Entity("Dialysis.PDMS.Reporting.Domain.ReportTemplate", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -841,7 +879,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.Reporting.Domain.SessionReport", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ContentHash")
@@ -912,7 +949,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.TreatmentSessions.Domain.DialysisMachine", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -976,7 +1012,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.TreatmentSessions.Domain.DialysisSession", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("AbortReasonCode")
@@ -1056,7 +1091,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.TreatmentSessions.Domain.IntradialyticReading", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("ArterialPressureMmHg")
@@ -1181,7 +1215,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.TreatmentSessions.Domain.RawHl7Message", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1246,7 +1279,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.TreatmentSessions.Domain.TreatmentAlarm", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("AcknowledgedBy")
@@ -1325,7 +1357,6 @@ namespace Dialysis.PDMS.Persistence.Migrations
             modelBuilder.Entity("Dialysis.PDMS.TreatmentSessions.Domain.TreatmentObservation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ContainmentPath")

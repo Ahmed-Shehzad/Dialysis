@@ -6,6 +6,7 @@ import {
   type DialysisSessionSummary,
 } from "@/features/sessions/api/sessionsApi";
 import { ScheduleSessionDialog } from "@/features/sessions/components/ScheduleSessionDialog";
+import { PatientLabel } from "@/features/patients/PatientLabel";
 import { ModuleHeader } from "@/shell/ModuleHeader";
 
 type StatusFilter = "all" | "active" | DialysisSessionSummary["status"];
@@ -182,8 +183,8 @@ const SessionsTable = ({ title, rows }: { title: string; rows: DialysisSessionSu
           {rows.map((s) => (
             <tr key={s.id} className="hover:bg-slate-900/60">
               <td className="px-4 py-2 font-mono text-xs text-slate-300">{s.id.slice(0, 8)}</td>
-              <td className="px-4 py-2 font-mono text-xs text-slate-300">
-                {s.patientId.slice(0, 8)}
+              <td className="px-4 py-2">
+                <PatientLabel patientId={s.patientId} className="text-slate-200" />
               </td>
               <td className="px-4 py-2">{statusBadge(s.status)}</td>
               <td className="px-4 py-2 text-xs text-slate-400">

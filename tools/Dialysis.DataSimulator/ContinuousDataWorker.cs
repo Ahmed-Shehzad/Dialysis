@@ -21,6 +21,10 @@ public sealed class ContinuousDataWorker : BackgroundService
     // its per-tick fan-out, so this pool size never overwhelms the 2s cadence.
     private const int MaxLiveSessions = 12;
 
+    // Cap the staff appointment-request worklist so it stays small and approvable. The journey files new
+    // requests slowly (gated below), and the startup drain trims any backlog a persistent EHR DB accrued.
+    private const int MaxPendingAppointmentRequests = 12;
+
     private readonly IEhrClient _ehr;
     private readonly IHisClient _his;
     private readonly ILabClient _lab;
@@ -30,6 +34,10 @@ public sealed class ContinuousDataWorker : BackgroundService
     private readonly DataSimulatorOptions _options;
     private readonly ILogger<ContinuousDataWorker> _logger;
     private long _sequence;
+
+    // Captured once at the top of ExecuteAsync so the best-effort helpers (which don't take a token) can
+    // tell a genuine shutdown from an HttpClient timeout — see CancellationClassifier for why that matters.
+    private CancellationToken _stoppingToken;
 
     /// <summary>Creates the worker.</summary>
     public ContinuousDataWorker(
@@ -62,6 +70,8 @@ public sealed class ContinuousDataWorker : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _stoppingToken = stoppingToken;
+
         if (!_options.Enabled)
         {
             _logger.LogInformation("DataSimulator is disabled (DataSimulator:Enabled=false); idling.");
@@ -74,10 +84,12 @@ public sealed class ContinuousDataWorker : BackgroundService
 
         // Registry-level demo data (TEFCA QHIN partners + MPI duplicate review queue) is seeded once at
         // startup — it isn't part of any single patient journey. Idempotent, so restarts don't pile up.
-        await SeedHieRegistryAsync(stoppingToken).ConfigureAwait(false);
+        // Best-effort like the rest: a slow/unreachable endpoint here must not abort startup or fault the
+        // host (the journey loop below still runs and self-heals once the modules are reachable).
+        await TryAsync("seed.hie-registry", () => SeedHieRegistryAsync(stoppingToken)).ConfigureAwait(false);
         // Admin / operational master data shown on the per-module admin consoles (reporting templates,
         // inventory, on-call, fee schedule, billing exports, terminology, alarm-dispatch audit).
-        await SeedAdminRegistriesAsync(stoppingToken).ConfigureAwait(false);
+        await TryAsync("seed.admin-registries", () => SeedAdminRegistriesAsync(stoppingToken)).ConfigureAwait(false);
         // SmartConnect integration flows — seeded separately because SmartConnect persistence is
         // in-memory (resets every restart), so this re-seeds each run rather than gating on the
         // persistent PDMS marker above.
@@ -86,6 +98,9 @@ public sealed class ContinuousDataWorker : BackgroundService
         // PDMS DB persists across restarts, so without this the live pool grows unbounded and the
         // vitals ticker fans out across dozens of sessions — starving the chairside 2s cadence.
         await TryAsync("seed.drain-sessions", () => DrainExcessLiveSessionsAsync(stoppingToken)).ConfigureAwait(false);
+        // Trim the staff appointment-request worklist down to a small, approvable size — clears the backlog
+        // a long-lived EHR DB accumulated from earlier runs (the collision-prone "duplicate" pile).
+        await TryAsync("seed.drain-appointment-requests", () => DrainExcessPendingAppointmentRequestsAsync(stoppingToken)).ConfigureAwait(false);
 
         var interval = TimeSpan.FromSeconds(Math.Max(1, _options.IntervalSeconds));
         while (!stoppingToken.IsCancellationRequested)
@@ -127,6 +142,28 @@ public sealed class ContinuousDataWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Trims the staff pending appointment-request queue back down to <see cref="MaxPendingAppointmentRequests"/>
+    /// by cancelling the surplus, so a long-lived (persistent) EHR DB doesn't carry an unbounded,
+    /// collision-prone worklist between runs. The pending list is soonest-preferred first, so we keep
+    /// those and cancel the furthest-out tail.
+    /// </summary>
+    private async Task DrainExcessPendingAppointmentRequestsAsync(CancellationToken cancellationToken)
+    {
+        var pending = await _ehr.ListPendingAppointmentRequestsAsync(500, cancellationToken).ConfigureAwait(false);
+        if (pending.Count <= MaxPendingAppointmentRequests)
+            return;
+
+        _logger.LogInformation("Draining {Excess} backlogged pending appointment request(s) down to {Max}.",
+            pending.Count - MaxPendingAppointmentRequests, MaxPendingAppointmentRequests);
+        for (var i = MaxPendingAppointmentRequests; i < pending.Count; i++)
+        {
+            var request = pending[i];
+            await TryAsync("drain.appointment-request",
+                () => _ehr.CancelAppointmentRequestAsync(request.PatientId, request.Id, cancellationToken)).ConfigureAwait(false);
+        }
+    }
+
     private async Task RunJourneyAsync(GeneratedPatient patient, CancellationToken cancellationToken)
     {
         // Register the patient first — every downstream call threads this id. A 409 means the MRN is
@@ -141,7 +178,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             _logger.LogDebug("Patient already exists (MRN {Mrn}); skipping journey.", patient.MedicalRecordNumber);
             return;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
             _logger.LogWarning("Patient registration failed (MRN {Mrn}): {Message}; continuing.", patient.MedicalRecordNumber, ex.Message);
             return;
@@ -172,7 +209,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             {
                 await _his.AssignChairAsync(entryId, chair, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
                 _logger.LogDebug("Chair {Chair} not assigned (likely occupied): {Message}", chair, ex.Message);
             }
@@ -221,7 +258,10 @@ public sealed class ContinuousDataWorker : BackgroundService
         }
 
         await TryAsync("ehr.referral", () => _ehr.RequestReferralAsync(patientId, provider, cancellationToken)).ConfigureAwait(false);
-        await TryAsync("ehr.portal-appointment", () => _ehr.RequestPortalAppointmentAsync(patientId, cancellationToken)).ConfigureAwait(false);
+        // Only ~1 in 8 patients files a portal appointment request — otherwise the staff worklist grows
+        // without bound (one per patient, never auto-resolved). The startup drain trims any backlog.
+        if ((patientId.GetHashCode() & 7) == 0)
+            await TryAsync("ehr.portal-appointment", () => _ehr.RequestPortalAppointmentAsync(patientId, cancellationToken)).ConfigureAwait(false);
         await TryAsync("ehr.portal-message", () => _ehr.SendPortalMessageAsync(patientId, cancellationToken)).ConfigureAwait(false);
 
         // --- Lab (order through the EHR BFF's _x/lab aggregation; result back through EHR) ------
@@ -440,7 +480,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             {
                 alreadySeeded = await _pdms.HasOnCallRotationsAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
                 _logger.LogInformation("Admin-seed probe not ready (attempt {Attempt}/20): {Message}; retrying.", attempt, ex.Message);
                 try { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false); }
@@ -633,7 +673,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         {
             await action().ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
             _logger.LogWarning("Journey step {Step} failed: {Message}", step, ex.Message);
         }
@@ -646,7 +686,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         {
             return await action().ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
             _logger.LogWarning("Journey step {Step} failed: {Message}", step, ex.Message);
             return null;

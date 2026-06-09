@@ -30,6 +30,15 @@ npm run typecheck
 npm run test:e2e
 ```
 
+## Walkthrough tutorials (video + screenshots)
+
+The PDF document workflows are visualised as recorded Playwright walkthroughs (video + a labelled
+screenshot sequence, written to the gitignored `e2e-artifacts/hie-web/` tree, overwritten each run):
+
+- **AcroForm invoice** — open → render → detect fields → fill → save: step-by-step guide in
+  [e2e/acroform-tutorial.md](e2e/acroform-tutorial.md) (spec: [e2e/acroform.workflow.spec.ts](e2e/acroform.workflow.spec.ts)).
+- **PDF signing** — cert source + PAdES level → sign → signature history: [e2e/signing.workflow.spec.ts](e2e/signing.workflow.spec.ts).
+
 ## How it runs
 
 Reached through the Gateway at `http://localhost:9090/hie/`; the HIE BFF handles auth and proxies `/hie/api` (including the FHIR + admin surfaces) and `/hie/hubs` (subscription stream). `enforceGatewayOrigin()` keeps the cookie intact.

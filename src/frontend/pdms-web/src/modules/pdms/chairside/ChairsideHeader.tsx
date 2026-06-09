@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { DialysisSessionSummary } from "@/features/sessions/api/sessionsApi";
 import { StatusBadge, type Status as RealtimeStatus } from "@/components/ui/StatusBadge";
 import { usePatientContext } from "@/shell/PatientContextProvider";
+import { usePatientDemographics } from "@/features/patients/usePatientName";
 import { useElapsedTime } from "./useElapsedTime";
 
 const STATUS_TONE: Record<DialysisSessionSummary["status"], string> = {
@@ -28,6 +29,10 @@ interface ChairsideHeaderProps {
  */
 export const ChairsideHeader = ({ session, sessionId, realtimeStatus }: ChairsideHeaderProps) => {
   const { patient } = usePatientContext();
+  // EHR owns patient identity — read it live through the PDMS BFF's _x/ehr aggregation so the
+  // chairside header shows the real name + MRN + DOB even on a direct link (no cross-app context set).
+  const { patient: ehrPatient, displayName: ehrName } = usePatientDemographics(session?.patientId);
+  const contextMatches = !!session && patient?.id === session.patientId;
   const usageTime = useElapsedTime(session?.actualStartUtc, {
     endUtc: session?.actualEndUtc,
     pausedAtUtc: session?.pausedAtUtc,
@@ -36,12 +41,18 @@ export const ChairsideHeader = ({ session, sessionId, realtimeStatus }: Chairsid
   const isPaused = session?.status === "Paused";
   const station = session?.machineId ?? "Live session";
   const patientLabel =
-    patient && session && patient.id === session.patientId
+    ehrName ??
+    (contextMatches
       ? patient.displayName
       : session
         ? `Patient ${session.patientId.slice(0, 8)}…`
-        : `Session ${sessionId.slice(0, 8)}…`;
-  const mrn = patient && session && patient.id === session.patientId ? patient.mrn : undefined;
+        : `Session ${sessionId.slice(0, 8)}…`);
+  const mrn = ehrPatient?.medicalRecordNumber ?? (contextMatches ? patient.mrn : undefined);
+  const dob = ehrPatient?.dateOfBirth;
+  // MRN · DOB subline, omitting whichever isn't known yet.
+  const patientMeta = [mrn ? `MRN ${mrn}` : null, dob ? `DOB ${dob}` : null]
+    .filter(Boolean)
+    .join(" · ");
   const statusTone = session ? STATUS_TONE[session.status] : "text-slate-400";
 
   return (
@@ -65,7 +76,7 @@ export const ChairsideHeader = ({ session, sessionId, realtimeStatus }: Chairsid
               </Link>
             )}
           </p>
-          {mrn && <p className="text-xs text-slate-400">{mrn}</p>}
+          {patientMeta && <p className="text-xs text-slate-400">{patientMeta}</p>}
         </div>
 
         <div>

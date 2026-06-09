@@ -57,6 +57,9 @@ orleans.codegen.cs
 .sonarqube/
 
 ## Test & coverage
+## Playwright e2e artifacts (videos, screenshots, traces, HTML reports) — one subtree per SPA under
+## e2e-artifacts/<app>/. Regenerated (and overwritten) on every `npm run test:e2e`; never committed.
+e2e-artifacts/
 TestResults/
 [Tt]est[Rr]esult*/
 *.trx

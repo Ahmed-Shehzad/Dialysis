@@ -71,6 +71,13 @@ public interface IPatientRepository
 {
     Task<Patient?> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Batch identity lookup — resolves many patient ids in one round-trip so label-rendering callers
+    /// (a list page with N rows) avoid an N+1 of single <see cref="GetAsync"/> calls. Missing ids are
+    /// simply absent from the result; order is not guaranteed.
+    /// </summary>
+    Task<IReadOnlyList<Patient>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
     Task<Patient?> FindByMedicalRecordNumberAsync(string medicalRecordNumber, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Patient>> SearchAsync(string? nameFragment, int take, CancellationToken cancellationToken = default);

@@ -18,6 +18,7 @@ import { KioskVitals } from "@/modules/pdms/chairside/KioskVitals";
 import { LiveCostTile } from "@/modules/pdms/chairside/LiveCostTile";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { usePatientContext } from "@/shell/PatientContextProvider";
+import { usePatientDemographics } from "@/features/patients/usePatientName";
 
 type LiveTab = "vitals" | "medications" | "reports";
 
@@ -65,14 +66,22 @@ export const SessionLivePage = () => {
   // same patient surfaced in the top-of-shell context bar and can jump back to their chart.
   const { patient, select } = usePatientContext();
   const { user } = useAuth();
+  // EHR owns demographics — read them live so the context bar shows the real name/MRN (not a GUID).
+  const { patient: ehrPatient, displayName: ehrName } = usePatientDemographics(session?.patientId);
   useEffect(() => {
     if (!session) return;
-    if (patient?.id === session.patientId) return;
-    select({
-      id: session.patientId,
-      displayName: `Patient ${session.patientId.slice(0, 8)}…`,
-    });
-  }, [session, patient, select]);
+    const displayName = ehrName ?? `Patient ${session.patientId.slice(0, 8)}…`;
+    const mrn = ehrPatient?.medicalRecordNumber;
+    // Re-select on a patient change, or once the real name/MRN arrives to replace the placeholder.
+    if (
+      patient?.id === session.patientId &&
+      patient.displayName === displayName &&
+      patient.mrn === mrn
+    ) {
+      return;
+    }
+    select({ id: session.patientId, displayName, mrn });
+  }, [session, patient, select, ehrName, ehrPatient]);
 
   const [tab, setTab] = useState<LiveTab>("vitals");
 

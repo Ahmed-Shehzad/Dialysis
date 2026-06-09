@@ -23,8 +23,10 @@ using Dialysis.PDMS.OnCall.Consumers;
 using Dialysis.PDMS.OnCall.Dispatch;
 using Dialysis.PDMS.OnCall.Domain;
 using Dialysis.PDMS.Reporting.Consumers;
+using Dialysis.PDMS.Reporting.Directory;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
+using Dialysis.EHR.Contracts.Integration;
 using Dialysis.PDMS.Reporting.Templating;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.PDMS.Contracts.Integration;
@@ -149,6 +151,7 @@ public static class PdmsCompositionExtensions
                 services.AddPdmsInMemoryRepository<OnCallRotation, Guid>();
                 services.AddPdmsInMemoryRepository<EscalationPolicy, Guid>();
                 services.AddPdmsInMemoryRepository<AlarmDispatch, Guid>();
+                services.AddPdmsInMemoryRepository<PatientDirectoryEntry, Guid>();
             }
             else
             {
@@ -201,6 +204,12 @@ public static class PdmsCompositionExtensions
                 t.AddConsumer<DialysisMachineTreatmentSnapshotIntegrationEvent, TreatmentSnapshotConsumer>();
                 t.AddConsumer<DialysisMachineAlarmIntegrationEvent, TreatmentAlarmConsumer>();
                 t.AddConsumer<PatientPlacedInChairIntegrationEvent, PatientPlacedInChairConsumer>();
+
+                // EHR patient demographics → local directory cache, so the background report builder can
+                // print a real patient name + MRN on the session PDFs (PDMS doesn't own patient identity).
+                t.AddConsumer<PatientRegisteredIntegrationEvent, PatientRegisteredDirectoryConsumer>();
+                t.AddConsumer<PatientDemographicsUpdatedIntegrationEvent, PatientDemographicsUpdatedDirectoryConsumer>();
+                t.AddConsumer<PatientsMergedIntegrationEvent, PatientsMergedDirectoryConsumer>();
 
                 // Completed session → post-session reports (discharge letter + billing summary)
                 // and the billing charge that drives the itemised invoice (EHR → HIE).

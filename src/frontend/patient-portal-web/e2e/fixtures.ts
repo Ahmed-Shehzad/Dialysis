@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 /** Minimal shape of the BFF `/portal/identity/user` probe response stubbed in tests. */
 export interface PortalUser {
@@ -43,5 +43,4 @@ export async function stubApiCatchAll(page: Page): Promise<void> {
   await page.route("**/portal/api/**", (route) => route.abort());
 }
 
-export const test = base;
-export { expect };
+export { expect, test } from "@playwright/test";

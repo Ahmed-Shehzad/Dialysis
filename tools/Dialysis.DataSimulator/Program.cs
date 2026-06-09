@@ -5,6 +5,14 @@ using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+// This process exists solely to run two independent, self-healing seeding loops. The .NET default
+// (BackgroundServiceExceptionBehavior.StopHost) couples them: an unhandled fault in either loop tears the
+// whole process down — including the healthy other loop. The loops already log-and-continue past per-call
+// failures (see CancellationClassifier), so an escaped exception is unexpected; surface it loudly but keep
+// the process and the sibling loop alive rather than killing the simulator.
+builder.Services.Configure<HostOptions>(o =>
+    o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
+
 builder.Services.Configure<DataSimulatorOptions>(builder.Configuration.GetSection(DataSimulatorOptions.SectionName));
 
 builder.Services.AddSingleton<PatientGenerator>();

@@ -1,5 +1,8 @@
 namespace Dialysis.DataSimulator;
 
+/// <summary>A row from the staff pending appointment-request queue (extra fields on the wire are ignored).</summary>
+public sealed record PendingAppointmentRequest(Guid Id, Guid PatientId);
+
 /// <summary>EHR clinical + chart + portal write surface (driven through the EHR BFF).</summary>
 public interface IEhrClient
 {
@@ -47,6 +50,12 @@ public interface IEhrClient
 
     /// <summary>Files a patient-portal appointment request (staff-impersonated in dev).</summary>
     Task RequestPortalAppointmentAsync(Guid patientId, CancellationToken cancellationToken);
+
+    /// <summary>Lists the staff pending appointment-request queue (id + owning patient).</summary>
+    Task<IReadOnlyList<PendingAppointmentRequest>> ListPendingAppointmentRequestsAsync(int take, CancellationToken cancellationToken);
+
+    /// <summary>Cancels (withdraws) a still-pending appointment request — used to drain the demo queue.</summary>
+    Task CancelAppointmentRequestAsync(Guid patientId, Guid requestId, CancellationToken cancellationToken);
 
     /// <summary>Sends a patient-portal secure message (staff-impersonated in dev).</summary>
     Task SendPortalMessageAsync(Guid patientId, CancellationToken cancellationToken);
@@ -366,24 +375,47 @@ public sealed class EhrClient : IEhrClient
         await HttpJson.PostAsync(_client, $"api/v1.0/after-visit-summaries/{summaryId}/publish", null, cancellationToken).ConfigureAwait(false);
     }
 
+    private static readonly string[] _portalReasons =
+    [
+        "Routine follow-up", "Access site check", "Medication review", "Dietitian consult",
+    ];
+
     /// <inheritdoc />
     public Task RequestPortalAppointmentAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        // Stagger the preferred slot deterministically per patient across 5 business days x 8 hourly
-        // slots. Staff approve a request by booking the *demo* provider at this preferred time, so if
-        // every request shared one slot the second approval would always collide (overlap -> 409).
+        // Spread the preferred slot deterministically per patient across many NON-overlapping 30-minute
+        // slots (15 business days x 8 clinic hours x 2 half-hour starts = 240). Staff approve a request by
+        // booking the *demo* provider at this time, so distinct, non-overlapping slots are what keep two
+        // approvals from colliding (an overlapping booking -> DomainException -> 409). Varying the reason
+        // also stops the worklist from looking like one duplicated "Routine follow-up" row.
         var bytes = patientId.ToByteArray();
-        var slot = (bytes[0] | (bytes[1] << 8)) % 40;
-        var earliest = DateTime.UtcNow.Date.AddDays(3 + (slot / 8)).AddHours(9 + (slot % 8));
+        var slot = (bytes[0] | (bytes[1] << 8) | (bytes[2] << 16)) % 240;
+        var earliest = DateTime.UtcNow.Date
+            .AddDays(3 + (slot / 16))           // 16 slots/day across 15 business days
+            .AddHours(9 + ((slot / 2) % 8))     // clinic hours 09:00–16:30
+            .AddMinutes((slot % 2) * 30);       // :00 or :30 — back-to-back 30-min visits never overlap
         return HttpJson.PostAsync(_client, $"api/v1.0/portal/appointment-requests/patients/{patientId}",
             new
             {
-                reasonText = "Routine follow-up",
+                reasonText = _portalReasons[slot % _portalReasons.Length],
                 earliestPreferredUtc = earliest,
                 latestPreferredUtc = earliest.AddDays(7),
             },
             cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<PendingAppointmentRequest>> ListPendingAppointmentRequestsAsync(int take, CancellationToken cancellationToken)
+    {
+        var rows = await HttpJson.GetEnvelopedAsync<List<PendingAppointmentRequest>>(
+            _client, $"api/v1.0/portal/appointment-requests/pending?take={take}", cancellationToken).ConfigureAwait(false);
+        return rows ?? [];
+    }
+
+    /// <inheritdoc />
+    public Task CancelAppointmentRequestAsync(Guid patientId, Guid requestId, CancellationToken cancellationToken) =>
+        HttpJson.PostAsync(_client,
+            $"api/v1.0/portal/appointment-requests/patients/{patientId}/{requestId}/cancel", null, cancellationToken);
 
     /// <inheritdoc />
     public Task SendPortalMessageAsync(Guid patientId, CancellationToken cancellationToken) =>

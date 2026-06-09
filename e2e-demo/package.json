@@ -1,0 +1,13 @@
+{
+  "name": "dialysis-e2e-demo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Full-system MVP demo: a single continuous Playwright walkthrough that drives every SPA + BFF through the live Aspire Gateway and records a >=20-minute video.",
+  "scripts": {
+    "demo": "playwright test",
+    "show": "playwright show-report ../e2e-artifacts/mvp-demo/report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

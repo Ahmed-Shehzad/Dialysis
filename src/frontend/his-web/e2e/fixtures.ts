@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 /** Minimal shape of the BFF `/his/identity/user` probe response stubbed in tests. */
 export interface MockUser {
@@ -37,5 +37,21 @@ export async function stubApiCatchAll(page: Page): Promise<void> {
   await page.route("**/his/api/**", (route) => route.abort());
 }
 
-export const test = base;
-export { expect };
+/**
+ * Navigates to a lazy-loaded workflow route and waits for its anchor heading. The per-context pages
+ * are `React.lazy` chunks; on a cold Vite dev server the first dynamic import for a chunk can lose a
+ * race and fail. If the heading doesn't appear quickly we reload once — by then Vite has compiled the
+ * chunk, so the second navigation renders reliably.
+ */
+export async function gotoWorkflow(page: Page, path: string, headingName: string): Promise<void> {
+  await page.goto(path);
+  const heading = page.getByRole("heading", { name: headingName }).first();
+  try {
+    await heading.waitFor({ state: "visible", timeout: 8_000 });
+  } catch {
+    await page.reload();
+    await heading.waitFor({ state: "visible", timeout: 20_000 });
+  }
+}
+
+export { expect, test } from "@playwright/test";

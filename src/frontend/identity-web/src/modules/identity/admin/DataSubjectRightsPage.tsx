@@ -12,6 +12,7 @@ import {
   rejectErasureRequest,
   type ErasureRequestRow,
 } from "@/features/data-protection/api/erasureApi";
+import { PatientLabel } from "@/features/patients/PatientLabel";
 
 /**
  * Operator-files-on-behalf-of-data-subject UI for GDPR Art. 15 (access), Art. 17
@@ -161,7 +162,7 @@ const ApprovalRow = ({
         <div>
           <span className="font-mono text-xs text-slate-400">{row.id}</span>
           <div className="text-slate-200">
-            Patient <span className="font-mono text-xs">{row.patientId}</span>
+            Patient <PatientLabel patientId={row.patientId} className="font-medium" />
           </div>
           <div className="text-xs text-slate-500">
             Requested by {row.requestedBy} ·{" "}
