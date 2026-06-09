@@ -42,5 +42,12 @@ export default defineConfig({
       slowMo: Number(process.env.DEMO_SLOWMO ?? 110),
     },
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Re-assert the 1600x900 viewport after the device preset (Desktop Chrome defaults to 1280x720,
+  // which would letterbox the 1600x900 video with grey margins).
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1600, height: 900 } },
+    },
+  ],
 });
