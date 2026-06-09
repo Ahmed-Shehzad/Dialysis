@@ -290,8 +290,6 @@ public partial class Program
         var smartconnectPgServer = Pg(builder, "postgres-smartconnect");
         var hiePgServer = Pg(builder, "postgres-hie");
         var labPgServer = Pg(builder, "postgres-lab");
-        // Dedicated jobs database for the Transponder Hangfire scheduler, shared by every host (Hangfire owns its own schema).
-        var hangfirePgServer = Pg(builder, "postgres-hangfire");
 
         var hisDb = hisPgServer.AddDatabase("His", databaseName: "dialysis_his");
         var ehrDb = ehrPgServer.AddDatabase("Ehr", databaseName: "dialysis_ehr");
@@ -299,7 +297,6 @@ public partial class Program
         var smartconnectDb = smartconnectPgServer.AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
         var hieDb = hiePgServer.AddDatabase("Hie", databaseName: "dialysis_hie");
         var labDb = labPgServer.AddDatabase("Lab", databaseName: "dialysis_lab");
-        var hangfireDb = hangfirePgServer.AddDatabase("Hangfire", databaseName: "dialysis_hangfire");
 
         // --- Dev data dashboards (Postgres / Valkey / RabbitMQ) --------------------
         //
@@ -320,7 +317,6 @@ public partial class Program
             smartconnectPgServer.WithPgAdmin();
             hiePgServer.WithPgAdmin();
             labPgServer.WithPgAdmin();
-            hangfirePgServer.WithPgAdmin();
 
             // Valkey: the official Valkey Admin web UI (https://valkey-admin.valkey.io). The Valkey hosting
             // package ships no UI helper, so add the container directly and point it at the broker by its DCP
@@ -449,7 +445,7 @@ public partial class Program
 
         var hisApi = builder.AddProject<Projects.Dialysis_HIS_Api>("his-api")
             .WithReference(hisDb).WaitFor(hisDb)
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(hisDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
@@ -462,7 +458,7 @@ public partial class Program
 
         var ehrApi = builder.AddProject<Projects.Dialysis_EHR_Api>("ehr-api")
             .WithReference(ehrDb).WaitFor(ehrDb)
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(ehrDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
@@ -474,7 +470,7 @@ public partial class Program
 
         var pdmsApi = builder.AddProject<Projects.Dialysis_PDMS_Api>("pdms-api")
             .WithReference(pdmsDb).WaitFor(pdmsDb)
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(pdmsDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
@@ -486,7 +482,7 @@ public partial class Program
 
         var smartConnectApi = builder.AddProject<Projects.Dialysis_SmartConnect_Api>("smartconnect-api")
             .WithReference(smartconnectDb).WaitFor(smartconnectDb)
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(smartconnectDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
@@ -511,7 +507,7 @@ public partial class Program
 
         var hieApi = builder.AddProject<Projects.Dialysis_HIE_Api>("hie-api")
             .WithReference(hieDb).WaitFor(hieDb)
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(hieDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
@@ -526,7 +522,7 @@ public partial class Program
         // LIS) and consumes the bridged LabResultReceivedIntegrationEvent to record results on the order.
         var labApi = builder.AddProject<Projects.Dialysis_Lab_Api>("lab-api")
             .WithReference(labDb).WaitFor(labDb)
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(labDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
@@ -549,7 +545,7 @@ public partial class Program
         }
 
         var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-bff")
-            .WithReference(hangfireDb).WaitFor(hangfireDb)
+            .WithReference(hisDb, connectionName: "Hangfire").WaitFor(hisDb)
             // Pin the BFF to a deterministic host port. The dialysis-bff Keycloak client only
             // accepts redirect_uris under http://localhost:5275/* (and the gateway port). Letting
             // Aspire allocate randomly per session breaks the OIDC handshake. Mutate the existing
@@ -650,7 +646,6 @@ public partial class Program
                 // Consume-only — no DbContext/outbox. Harmless for BFFs that don't call AddModuleBffEvents.
                 .WithReference(rabbit).WaitFor(rabbit)
                 .WithReference(valkey).WaitFor(valkey)
-                .WithReference(hangfireDb).WaitFor(hangfireDb)
                 .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
                 .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
 
@@ -663,12 +658,14 @@ public partial class Program
         }
 
         var hisBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret)
+            .WithReference(hisDb, connectionName: "Hangfire")
             .WaitFor(smartConnectApi)
             // DICOMweb imaging viewer reachable from this context — /his/api/_x/dicom/dicom-web/* → SmartConnect.
             .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
         // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context
         // (the chart's Labs panel) under /ehr/api/_x/lab/*.
         var ehrBff = AddContextBff(builder.AddProject<Projects.Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret)
+            .WithReference(ehrDb, connectionName: "Hangfire")
             .WaitFor(hieApi).WaitFor(labApi).WaitFor(smartConnectApi)
             .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"))
             .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"))
@@ -676,13 +673,16 @@ public partial class Program
             .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
         // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
         var pdmsBff = AddContextBff(builder.AddProject<Projects.Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret)
+            .WithReference(pdmsDb, connectionName: "Hangfire")
             .WaitFor(ehrApi).WaitFor(hieApi).WaitFor(smartConnectApi)
             .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
             .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"))
             // DICOMweb imaging viewer for the chairside view — /pdms/api/_x/dicom/dicom-web/* → SmartConnect.
             .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
-        var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret);
+        var smartConnectBff = AddContextBff(builder.AddProject<Projects.Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret)
+            .WithReference(smartconnectDb, connectionName: "Hangfire");
         var hieBff = AddContextBff(builder.AddProject<Projects.Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret)
+            .WithReference(hieDb, connectionName: "Hangfire")
             .WaitFor(smartConnectApi)
             .WaitFor(hisApi).WaitFor(ehrApi).WaitFor(pdmsApi)
             // DICOMweb imaging viewer reachable from this context — /hie/api/_x/dicom/dicom-web/* → SmartConnect.
@@ -695,6 +695,7 @@ public partial class Program
             .WithEnvironment("Bff__Module__Aggregations__3__Address", pdmsApi.GetEndpoint("http"));
         // Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
         var adminBff = AddContextBff(builder.AddProject<Projects.Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret)
+            .WithReference(hieDb, connectionName: "Hangfire")
             .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi)
             .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
             .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
@@ -703,6 +704,7 @@ public partial class Program
             .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
         // Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
         var portalBff = AddContextBff(builder.AddProject<Projects.Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret)
+            .WithReference(hisDb, connectionName: "Hangfire")
             .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi).WaitFor(smartConnectApi)
             .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
             .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
@@ -900,7 +902,6 @@ public partial class Program
             pdmsPgServer.WithPublishedDatabasePort(hostPort: 5443, databaseName: "dialysis_pdms", environment: deployEnv);
             hiePgServer.WithPublishedDatabasePort(hostPort: 5445, databaseName: "dialysis_hie", environment: deployEnv);
             labPgServer.WithPublishedDatabasePort(hostPort: 5446, databaseName: "dialysis_lab", environment: deployEnv);
-            hangfirePgServer.WithPublishedDatabasePort(hostPort: 5447, databaseName: "dialysis_hangfire", environment: deployEnv);
 
             rabbit.WithPublishedPorts((5672, 5672), (15672, 15672));
             valkey.WithPublishedPorts((6379, 6379));
