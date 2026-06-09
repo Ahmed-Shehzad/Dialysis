@@ -21,6 +21,10 @@ public sealed class ContinuousDataWorker : BackgroundService
     // its per-tick fan-out, so this pool size never overwhelms the 2s cadence.
     private const int MaxLiveSessions = 12;
 
+    // Cap the staff appointment-request worklist so it stays small and approvable. The journey files new
+    // requests slowly (gated below), and the startup drain trims any backlog a persistent EHR DB accrued.
+    private const int MaxPendingAppointmentRequests = 12;
+
     private readonly IEhrClient _ehr;
     private readonly IHisClient _his;
     private readonly ILabClient _lab;
@@ -94,6 +98,9 @@ public sealed class ContinuousDataWorker : BackgroundService
         // PDMS DB persists across restarts, so without this the live pool grows unbounded and the
         // vitals ticker fans out across dozens of sessions — starving the chairside 2s cadence.
         await TryAsync("seed.drain-sessions", () => DrainExcessLiveSessionsAsync(stoppingToken)).ConfigureAwait(false);
+        // Trim the staff appointment-request worklist down to a small, approvable size — clears the backlog
+        // a long-lived EHR DB accumulated from earlier runs (the collision-prone "duplicate" pile).
+        await TryAsync("seed.drain-appointment-requests", () => DrainExcessPendingAppointmentRequestsAsync(stoppingToken)).ConfigureAwait(false);
 
         var interval = TimeSpan.FromSeconds(Math.Max(1, _options.IntervalSeconds));
         while (!stoppingToken.IsCancellationRequested)
@@ -132,6 +139,28 @@ public sealed class ContinuousDataWorker : BackgroundService
         {
             var id = live[i].Id;
             await TryAsync($"drain.session", () => _pdms.CompleteSessionAsync(id, 2.4m, cancellationToken)).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Trims the staff pending appointment-request queue back down to <see cref="MaxPendingAppointmentRequests"/>
+    /// by cancelling the surplus, so a long-lived (persistent) EHR DB doesn't carry an unbounded,
+    /// collision-prone worklist between runs. The pending list is soonest-preferred first, so we keep
+    /// those and cancel the furthest-out tail.
+    /// </summary>
+    private async Task DrainExcessPendingAppointmentRequestsAsync(CancellationToken cancellationToken)
+    {
+        var pending = await _ehr.ListPendingAppointmentRequestsAsync(500, cancellationToken).ConfigureAwait(false);
+        if (pending.Count <= MaxPendingAppointmentRequests)
+            return;
+
+        _logger.LogInformation("Draining {Excess} backlogged pending appointment request(s) down to {Max}.",
+            pending.Count - MaxPendingAppointmentRequests, MaxPendingAppointmentRequests);
+        for (var i = MaxPendingAppointmentRequests; i < pending.Count; i++)
+        {
+            var request = pending[i];
+            await TryAsync("drain.appointment-request",
+                () => _ehr.CancelAppointmentRequestAsync(request.PatientId, request.Id, cancellationToken)).ConfigureAwait(false);
         }
     }
 
@@ -229,7 +258,10 @@ public sealed class ContinuousDataWorker : BackgroundService
         }
 
         await TryAsync("ehr.referral", () => _ehr.RequestReferralAsync(patientId, provider, cancellationToken)).ConfigureAwait(false);
-        await TryAsync("ehr.portal-appointment", () => _ehr.RequestPortalAppointmentAsync(patientId, cancellationToken)).ConfigureAwait(false);
+        // Only ~1 in 8 patients files a portal appointment request — otherwise the staff worklist grows
+        // without bound (one per patient, never auto-resolved). The startup drain trims any backlog.
+        if ((patientId.GetHashCode() & 7) == 0)
+            await TryAsync("ehr.portal-appointment", () => _ehr.RequestPortalAppointmentAsync(patientId, cancellationToken)).ConfigureAwait(false);
         await TryAsync("ehr.portal-message", () => _ehr.SendPortalMessageAsync(patientId, cancellationToken)).ConfigureAwait(false);
 
         // --- Lab (order through the EHR BFF's _x/lab aggregation; result back through EHR) ------

@@ -11,6 +11,20 @@ public sealed class PortalAppointmentRequestRepository : IPortalAppointmentReque
     public Task<PortalAppointmentRequest?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.PortalAppointmentRequests.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
+    public Task<PortalAppointmentRequest?> FindOpenDuplicateAsync(
+        Guid patientId,
+        string reasonText,
+        DateTime earliestPreferredUtc,
+        DateTime latestPreferredUtc,
+        CancellationToken cancellationToken = default) =>
+        _db.PortalAppointmentRequests.FirstOrDefaultAsync(
+            r => r.PatientId == patientId
+                && r.Status == PortalAppointmentRequestStatus.Pending
+                && r.ReasonText == reasonText
+                && r.EarliestPreferredUtc == earliestPreferredUtc
+                && r.LatestPreferredUtc == latestPreferredUtc,
+            cancellationToken);
+
     public async Task<IReadOnlyList<PortalAppointmentRequest>> ListByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
         await _db.PortalAppointmentRequests
             .Where(r => r.PatientId == patientId)
