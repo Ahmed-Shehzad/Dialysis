@@ -8,6 +8,7 @@ import {
   type OutboundBundleStatus,
 } from "@/features/hie/api/hieApi";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { PatientLabel } from "@/features/patients/PatientLabel";
 
 const TONE_BY_STATUS: Record<OutboundBundleStatus, string> = {
   1: "border-amber-700/70 bg-amber-950/30 text-amber-100",
@@ -130,11 +131,15 @@ const OutboundRow = ({
       {bundle.partnerId}
     </span>
     <span className="col-span-2 truncate text-xs text-slate-200">{bundle.resourceType}</span>
-    <span
-      className="col-span-3 truncate font-mono text-xs text-slate-400"
-      title={`${bundle.logicalId} · patient ${bundle.patientId}`}
-    >
-      {bundle.logicalId}
+    <span className="col-span-3 min-w-0 text-xs">
+      <span className="block truncate font-mono text-slate-400" title={bundle.logicalId}>
+        {bundle.logicalId}
+      </span>
+      <PatientLabel
+        patientId={bundle.patientId}
+        showMrn={false}
+        className="block truncate text-[11px] text-slate-300"
+      />
     </span>
     <span className="col-span-1">
       <span className={`rounded-full border px-2 py-0.5 text-xs ${TONE_BY_STATUS[bundle.status]}`}>
