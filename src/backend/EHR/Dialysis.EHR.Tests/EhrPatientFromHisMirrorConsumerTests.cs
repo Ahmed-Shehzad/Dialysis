@@ -20,7 +20,7 @@ namespace Dialysis.EHR.Tests;
 public sealed class EhrPatientFromHisMirrorConsumerTests
 {
     [Fact]
-    public async Task CheckIn_Skips_When_Mrn_Already_Present_Under_A_Different_Id_Async()
+    public async Task Check_In_Skips_When_Mrn_Already_Present_Under_A_Different_Id_Async()
     {
         var repo = new FakeRepo(SeedPatient(Guid.CreateVersion7(), "MRN-DUP-1"));
         var uow = new CountingUow();
@@ -38,7 +38,7 @@ public sealed class EhrPatientFromHisMirrorConsumerTests
     }
 
     [Fact]
-    public async Task WalkIn_Skips_When_Mrn_Already_Present_Under_A_Different_Id_Async()
+    public async Task Walk_In_Skips_When_Mrn_Already_Present_Under_A_Different_Id_Async()
     {
         var repo = new FakeRepo(SeedPatient(Guid.CreateVersion7(), "MRN-DUP-2"));
         var uow = new CountingUow();
@@ -55,7 +55,7 @@ public sealed class EhrPatientFromHisMirrorConsumerTests
     }
 
     [Fact]
-    public async Task CheckIn_Creates_The_Patient_When_Both_Id_And_Mrn_Are_New_Async()
+    public async Task Check_In_Creates_The_Patient_When_Both_Id_And_Mrn_Are_New_Async()
     {
         var repo = new FakeRepo();
         var uow = new CountingUow();
