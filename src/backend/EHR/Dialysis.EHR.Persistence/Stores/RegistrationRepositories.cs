@@ -22,6 +22,11 @@ public sealed class PatientRepository : IPatientRepository
     public Task<Patient?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         _db.Patients.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Patient>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default) =>
+        ids.Count == 0
+            ? []
+            : await _db.Patients.Where(p => ids.Contains(p.Id)).ToListAsync(cancellationToken).ConfigureAwait(false);
+
     public Task<Patient?> FindByMedicalRecordNumberAsync(string medicalRecordNumber, CancellationToken cancellationToken = default) =>
         _db.Patients.FirstOrDefaultAsync(p => p.MedicalRecordNumber == medicalRecordNumber, cancellationToken);
 

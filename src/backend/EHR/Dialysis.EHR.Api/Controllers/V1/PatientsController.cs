@@ -6,6 +6,7 @@ using Dialysis.EHR.Integration.Features.IngestLabResult;
 using Dialysis.EHR.PatientChart.Features.GetPatientChart;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Registration.Features.GetPatientById;
+using Dialysis.EHR.Registration.Features.GetPatientsByIds;
 using Dialysis.EHR.Registration.Features.SearchPatients;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,10 @@ namespace Dialysis.EHR.Api.Controllers.V1;
 [Route("api/v{version:apiVersion}/patients")]
 public sealed class PatientsController : ControllerBase
 {
+    // Caps the batch identity lookup so one request can't fan out unbounded; the SPA resolver chunks to
+    // this size. Matches the SearchPatients take ceiling.
+    private const int MaxBatchSize = 200;
+
     private readonly ICqrsGateway _gateway;
     public PatientsController(ICqrsGateway gateway) => _gateway = gateway;
     [HttpGet]
@@ -51,6 +56,31 @@ public sealed class PatientsController : ControllerBase
                 new GetPatientByIdQuery(patientId), cancellationToken)
             .ConfigureAwait(false);
         return detail is null ? NotFound() : Ok(detail);
+    }
+
+    /// <summary>
+    /// Batch identity lookup for label rendering — resolves many patient ids in ONE call so a list page
+    /// with N rows avoids an N+1 of single fetches. Ids go in the body (not the query string) to keep
+    /// patient identifiers out of gateway / proxy access logs. Returns a slim name+MRN+DOB projection;
+    /// missing ids are simply absent. Same <c>PatientRead</c> gate as the single fetch.
+    /// </summary>
+    [HttpPost("by-ids")]
+    [ProducesResponseType(typeof(IReadOnlyList<PatientLabelDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetByIdsAsync(
+        [FromBody] PatientsByIdsRequest body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var ids = (body.Ids ?? []).Where(id => id != Guid.Empty).Distinct().ToArray();
+        if (ids.Length == 0) return Ok(Array.Empty<PatientLabelDto>());
+        if (ids.Length > MaxBatchSize)
+            return BadRequest(new { error = $"At most {MaxBatchSize} ids per request." });
+
+        var rows = await _gateway
+            .SendQueryAsync<GetPatientsByIdsQuery, IReadOnlyList<PatientLabelDto>>(
+                new GetPatientsByIdsQuery(ids), cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(rows);
     }
 
     [HttpGet("{patientId:guid}/chart")]
@@ -134,6 +164,9 @@ public sealed class PatientsController : ControllerBase
             cancellationToken).ConfigureAwait(false);
         return Created($"/api/v1.0/patients/{patientId}/lab-results/{id}", new { id });
     }
+
+    /// <summary>Batch identity-lookup body — the patient ids to resolve to labels (capped per request).</summary>
+    public sealed record PatientsByIdsRequest(IReadOnlyList<Guid> Ids);
 
     /// <summary>Inbound lab-result body (the lab observation to record against an order).</summary>
     public sealed record IngestLabResultRequest(

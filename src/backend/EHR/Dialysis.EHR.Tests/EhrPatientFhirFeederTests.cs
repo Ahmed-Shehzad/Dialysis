@@ -68,6 +68,9 @@ public sealed class EhrPatientFhirFeederTests
         public Task<Patient?> GetAsync(Guid id, CancellationToken cancellationToken = default)
             => Task.FromResult(_patients.FirstOrDefault(p => p.Id == id));
 
+        public Task<IReadOnlyList<Patient>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<Patient>>([.. _patients.Where(p => ids.Contains(p.Id))]);
+
         public Task<Patient?> FindByMedicalRecordNumberAsync(string medicalRecordNumber, CancellationToken cancellationToken = default)
             => Task.FromResult(_patients.FirstOrDefault(p => p.MedicalRecordNumber == medicalRecordNumber));
 
