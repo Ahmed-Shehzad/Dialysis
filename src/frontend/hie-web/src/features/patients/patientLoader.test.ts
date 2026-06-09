@@ -27,7 +27,8 @@ describe("patientLoader (N+1 guard)", () => {
     const results = await Promise.all(ids.map((id) => loadPatientLabel(id)));
 
     expect(fetchPatientsByIds).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(fetchPatientsByIds).mock.calls[0][0]).toHaveLength(50);
+    const firstBatch = vi.mocked(fetchPatientsByIds).mock.calls.at(0)?.[0] ?? [];
+    expect(firstBatch).toHaveLength(50);
     expect(results).toHaveLength(50);
     expect(results[0]?.id).toBe("patient-0");
   });

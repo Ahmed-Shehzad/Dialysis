@@ -8,6 +8,7 @@ import {
   type LostCharge,
 } from "@/features/billing/api/billingApi";
 import { humanizeError } from "@/lib/api/humanizeError";
+import { PatientLabel } from "@/features/patients/PatientLabel";
 
 const shortId = (id: string): string => id.slice(0, 8);
 const money = (amount: number, currency: string): string => `${amount.toFixed(2)} ${currency}`;
@@ -89,8 +90,8 @@ export const BillingWorklistPage = () => {
               <span className="col-span-4 font-mono text-xs text-slate-300" title={e.encounterId}>
                 encounter {shortId(e.encounterId)}
               </span>
-              <span className="col-span-5 font-mono text-xs text-slate-400" title={e.patientId}>
-                patient {shortId(e.patientId)}
+              <span className="col-span-5 truncate text-xs text-slate-300">
+                <PatientLabel patientId={e.patientId} showMrn={false} />
               </span>
               <span className="col-span-3 text-right text-xs text-amber-300">
                 closed {daysAgo(e.closedAtUtc)}
@@ -111,8 +112,8 @@ export const BillingWorklistPage = () => {
           {(chargeLag.data ?? []).map((c: Charge) => (
             <li key={c.chargeId} className="grid grid-cols-12 items-center gap-2 py-2">
               <span className="col-span-3 text-slate-200">CPT {c.cptCode}</span>
-              <span className="col-span-4 font-mono text-xs text-slate-400" title={c.patientId}>
-                patient {shortId(c.patientId)}
+              <span className="col-span-4 truncate text-xs text-slate-300">
+                <PatientLabel patientId={c.patientId} showMrn={false} />
               </span>
               <span className="col-span-3 text-slate-300">
                 {money(c.billedAmount, c.currencyCode)}
