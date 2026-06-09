@@ -174,6 +174,9 @@ public partial class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for the Identity BFF).
+        app.UseModuleHangfireDashboard("identity BFF");
+
         app.MapGet(BffRoutes.Root, () => Results.Text(
             $"Dialysis Identity BFF — GET {BffRoutes.Login} to sign in, GET {BffRoutes.User} for claims, "
             + $"{BffRoutes.Base}/his/... to proxy to HIS when ReverseProxy is configured.",

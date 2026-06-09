@@ -246,6 +246,9 @@ public static class ModuleBffExtensions
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for this BFF).
+        app.UseModuleHangfireDashboard($"{module.Slug} BFF");
+
         app.MapGet(routes.Root, () => Results.Text(
             $"Dialysis {module.Slug} BFF — GET {routes.Login} to sign in, GET {routes.User} for claims.",
             "text/plain"));

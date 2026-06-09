@@ -444,6 +444,7 @@ public partial class Program
         // everything without per-module appsettings overrides.
 
         var hisApi = builder.AddProject<Projects.Dialysis_HIS_Api>("his-api")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(hisDb).WaitFor(hisDb)
             .WithReference(hisDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
@@ -457,6 +458,7 @@ public partial class Program
             .WithEnvironment("His__Fhir__Enabled", "true");
 
         var ehrApi = builder.AddProject<Projects.Dialysis_EHR_Api>("ehr-api")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(ehrDb).WaitFor(ehrDb)
             .WithReference(ehrDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
@@ -469,6 +471,7 @@ public partial class Program
             .WithEnvironment("Ehr__Authentication__Audience", "account");
 
         var pdmsApi = builder.AddProject<Projects.Dialysis_PDMS_Api>("pdms-api")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(pdmsDb).WaitFor(pdmsDb)
             .WithReference(pdmsDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
@@ -481,6 +484,7 @@ public partial class Program
             .WithEnvironment("Pdms__Authentication__Audience", "account");
 
         var smartConnectApi = builder.AddProject<Projects.Dialysis_SmartConnect_Api>("smartconnect-api")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(smartconnectDb).WaitFor(smartconnectDb)
             .WithReference(smartconnectDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
@@ -506,6 +510,7 @@ public partial class Program
             .WithEnvironment("SmartConnect__SourceConnectors__1__Parameters__Pattern", "*.hl7");
 
         var hieApi = builder.AddProject<Projects.Dialysis_HIE_Api>("hie-api")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(hieDb).WaitFor(hieDb)
             .WithReference(hieDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
@@ -522,6 +527,7 @@ public partial class Program
         // Postgres + the bus: it publishes LabOrderPlacedIntegrationEvent (SmartConnect transmits it to the
         // LIS) and consumes the bridged LabResultReceivedIntegrationEvent to record results on the order.
         var labApi = builder.AddProject<Projects.Dialysis_Lab_Api>("lab-api")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(labDb).WaitFor(labDb)
             .WithReference(labDb, connectionName: "Hangfire")
             .WithReference(rabbit).WaitFor(rabbit)
@@ -546,6 +552,7 @@ public partial class Program
         }
 
         var identityBff = builder.AddProject<Projects.Dialysis_Identity_Bff>("identity-bff")
+            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
             .WithReference(hisDb, connectionName: "Hangfire").WaitFor(hisDb)
             // Pin the BFF to a deterministic host port. The dialysis-bff Keycloak client only
             // accepts redirect_uris under http://localhost:5275/* (and the gateway port). Letting
@@ -649,6 +656,7 @@ public partial class Program
                 .WithReference(valkey).WaitFor(valkey)
                 .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
                 .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
+            configured.WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" });
 
             // DEV-ONLY: let the data simulator's service-account bearer flow through the BFF to the module API,
             // so it can drive writes via the full BFF routing path. Run-mode only — never published to artifacts.
