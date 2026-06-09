@@ -6,6 +6,7 @@ import {
   type DialysisSessionSummary,
 } from "@/features/sessions/api/sessionsApi";
 import { ScheduleSessionDialog } from "@/features/sessions/components/ScheduleSessionDialog";
+import { usePatientDemographics } from "@/features/patients/usePatientName";
 import { ModuleHeader } from "@/shell/ModuleHeader";
 
 type StatusFilter = "all" | "active" | DialysisSessionSummary["status"];
@@ -37,6 +38,26 @@ const statusBadge = (status: DialysisSessionSummary["status"]) => {
 
 const formatDateTime = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString() : "—";
+
+/** Patient column: real name + MRN read live from EHR (via the BFF _x/ehr aggregation), GUID fallback. */
+const PatientCell = ({ patientId }: { patientId: string }) => {
+  const { patient, displayName, isLoading } = usePatientDemographics(patientId);
+  if (displayName) {
+    return (
+      <div className="min-w-0">
+        <p className="truncate text-slate-200">{displayName}</p>
+        {patient?.medicalRecordNumber && (
+          <p className="font-mono text-xs text-slate-500">MRN {patient.medicalRecordNumber}</p>
+        )}
+      </div>
+    );
+  }
+  return (
+    <span className="font-mono text-xs text-slate-400">
+      {isLoading ? "…" : `${patientId.slice(0, 8)}…`}
+    </span>
+  );
+};
 
 export const SessionsPage = () => {
   const [filter, setFilter] = useState<StatusFilter>("all");
@@ -182,8 +203,8 @@ const SessionsTable = ({ title, rows }: { title: string; rows: DialysisSessionSu
           {rows.map((s) => (
             <tr key={s.id} className="hover:bg-slate-900/60">
               <td className="px-4 py-2 font-mono text-xs text-slate-300">{s.id.slice(0, 8)}</td>
-              <td className="px-4 py-2 font-mono text-xs text-slate-300">
-                {s.patientId.slice(0, 8)}
+              <td className="px-4 py-2">
+                <PatientCell patientId={s.patientId} />
               </td>
               <td className="px-4 py-2">{statusBadge(s.status)}</td>
               <td className="px-4 py-2 text-xs text-slate-400">
