@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Hangfire;
 using Hangfire.Common;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,17 +24,23 @@ public static class HangfireRecurringJobExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers a recurring job. Build <paramref name="job"/> with
-        /// <c>Job.FromExpression&lt;TJob&gt;(j =&gt; j.RunAsync(CancellationToken.None))</c>; the job type
-        /// is resolved from DI when Hangfire fires it, so it must be registered as a service.
+        /// Registers a recurring job that runs <typeparamref name="TJob"/>'s method on the given cron
+        /// schedule. <typeparamref name="TJob"/> is resolved from DI each time Hangfire fires it, so it
+        /// must be registered as a service. Pass <c>CancellationToken.None</c> in the expression —
+        /// Hangfire substitutes the real shutdown token at run time. Callers need no direct Hangfire
+        /// reference (the <see cref="Job"/> is built here from the expression).
         /// </summary>
-        public IServiceCollection AddHangfireRecurringJob(string recurringJobId, Job job, string cronExpression)
+        public IServiceCollection AddHangfireRecurringJob<TJob>(
+            string recurringJobId,
+            Expression<Func<TJob, Task>> methodCall,
+            string cronExpression)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(recurringJobId);
-            ArgumentNullException.ThrowIfNull(job);
+            ArgumentNullException.ThrowIfNull(methodCall);
             ArgumentException.ThrowIfNullOrWhiteSpace(cronExpression);
 
-            services.AddSingleton(new HangfireRecurringJobRegistration(recurringJobId, job, cronExpression));
+            services.AddSingleton(new HangfireRecurringJobRegistration(
+                recurringJobId, Job.FromExpression(methodCall), cronExpression));
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, HangfireRecurringJobInstaller>());
             return services;
         }
