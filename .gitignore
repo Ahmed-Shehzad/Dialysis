@@ -55,7 +55,12 @@ orleans.codegen.cs
 
 ## SonarQube (local scanner state)
 .sonarqube/
-.sonarlint/
+## SonarLint / "SonarQube for IDE": ignore the per-user connected-mode caches but
+## SHARE the team binding (connectedMode.json) + its README, so every contributor's
+## IDE auto-binds to the Aspire-hosted SonarQube (project `dialysis`).
+.sonarlint/*
+!.sonarlint/connectedMode.json
+!.sonarlint/README.md
 
 ## Test & coverage
 ## Playwright e2e artifacts (videos, screenshots, traces, HTML reports) — one subtree per SPA under
