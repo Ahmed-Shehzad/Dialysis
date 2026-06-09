@@ -33,7 +33,7 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
     public Resource Apply(Resource resource, DeIdentificationProfile profile)
     {
         ArgumentNullException.ThrowIfNull(resource);
-        var clone = (Resource)resource.DeepCopy();
+        var clone = resource.DeepCopy();
         var rules = ResolveRules(profile);
 
         // Type-agnostic baseline: drop the narrative. Rendered HTML can contain names, dates,

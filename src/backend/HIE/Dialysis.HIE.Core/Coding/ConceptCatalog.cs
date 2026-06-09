@@ -27,7 +27,7 @@ public sealed class ConceptCatalog : IConceptCatalog
             $"Concept '{conceptName}' is not registered. Add a ConceptCatalogEntry in module composition.");
 
     public CodeableConcept? TryGet(string conceptName) =>
-        _concepts.TryGetValue(conceptName, out var concept) ? (CodeableConcept)concept.DeepCopy() : null;
+        _concepts.TryGetValue(conceptName, out var concept) ? concept.DeepCopy() : null;
 
     /// <summary>Returns the registered raw entries — used by the startup validator.</summary>
     public IReadOnlyCollection<ConceptCatalogEntry> Entries => [.. _entries.Values];

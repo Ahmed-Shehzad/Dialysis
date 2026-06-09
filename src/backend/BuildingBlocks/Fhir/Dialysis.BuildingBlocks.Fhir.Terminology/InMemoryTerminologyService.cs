@@ -99,7 +99,7 @@ public sealed class InMemoryTerminologyService : ITerminologyService
                     });
                 }
             }
-            var clone = (ValueSet)vs.DeepCopy();
+            var clone = vs.DeepCopy();
             clone.Expansion = expansion;
             return new ValueTask<ValueSet>(clone);
         }

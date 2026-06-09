@@ -145,7 +145,7 @@ public sealed class FhirArtifactVerifier : IFhirArtifactVerifier
     {
         // Re-generate onto a clone so a malformed differential surfaces here independently of how
         // the artifact was built. A clean snapshot is the strongest proof the profile is computable.
-        var clone = (StructureDefinition)sd.DeepCopy();
+        var clone = sd.DeepCopy();
         var generator = new SnapshotGenerator(_registry, SnapshotGeneratorSettings.CreateDefault());
 
         try
