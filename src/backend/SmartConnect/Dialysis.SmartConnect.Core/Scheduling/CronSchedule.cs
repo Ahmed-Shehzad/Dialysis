@@ -3,7 +3,9 @@ using Cronos;
 namespace Dialysis.SmartConnect.Scheduling;
 
 /// <summary>
-/// Cron-expression-driven schedule (Mirth "Polling Type: Cron"). Wraps <see cref="Cronos.CronExpression"/>.
+/// Cron-expression-driven schedule (Mirth "Polling Type: Cron"). Wraps <c>Cronos.CronExpression</c>
+/// (cref'd as plain text: Hangfire.Core embeds its own internal Cronos, which would make a resolved
+/// cref ambiguous).
 /// 5-field (standard, minute precision) and 6-field (with seconds) expressions are both supported;
 /// the constructor detects field count automatically.
 /// </summary>

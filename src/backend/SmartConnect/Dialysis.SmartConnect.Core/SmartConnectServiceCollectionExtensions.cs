@@ -22,6 +22,7 @@ using Dialysis.SmartConnect.TimeSync;
 using Dialysis.SmartConnect.Transforms;
 using Dialysis.SmartConnect.VariableMaps;
 using Hl7.Fhir.Model;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -255,7 +256,12 @@ public static class SmartConnectServiceCollectionExtensions
             else
                 services.Configure<DataPrunerOptions>(_ => { });
 
-            services.AddHostedService<DataPrunerHostedService>();
+            // Persistent Hangfire recurring job (daily 01:00 UTC) in place of a BackgroundService timer.
+            services.AddSingleton<DataPrunerJob>();
+            services.AddHangfireRecurringJob<DataPrunerJob>(
+                "smartconnect:data-pruner",
+                job => job.RunOnceAsync(CancellationToken.None),
+                cronExpression: "0 1 * * *");
             return services;
         }
     }

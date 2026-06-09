@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -44,7 +45,12 @@ public static class AttachmentBlobStoreServiceCollectionExtensions
             services.AddOptions<AttachmentOrphanReaperOptions>();
         }
         services.TryAddSingleton(TimeProvider.System);
-        services.AddHostedService<AttachmentOrphanReaperHostedService>();
+        // Persistent Hangfire recurring job (hourly) in place of a BackgroundService sweep timer.
+        services.AddSingleton<AttachmentOrphanReaperJob>();
+        services.AddHangfireRecurringJob<AttachmentOrphanReaperJob>(
+            "smartconnect:attachment-orphan-reaper",
+            job => job.SweepAsync(CancellationToken.None),
+            cronExpression: "0 * * * *");
         return services;
     }
 
