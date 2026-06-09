@@ -64,9 +64,11 @@ public sealed class EfCptFeeScheduleTests
     private static StubDbContext NewContext()
     {
         var options = new DbContextOptionsBuilder<StubDbContext>()
-            .UseInMemoryDatabase($"fee-schedule-{Guid.NewGuid():N}")
+            .UseNpgsql(EhrTestPostgres.NewDatabaseConnectionString())
             .Options;
-        return new StubDbContext(options);
+        var context = new StubDbContext(options);
+        EhrTestPostgres.EnsureCreated(context.Database);
+        return context;
     }
 
     private sealed class StubDbContext : DbContext

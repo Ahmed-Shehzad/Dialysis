@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Net;
 using System.Text.Json;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -14,11 +13,11 @@ namespace Dialysis.SmartConnect.Tests;
 /// logic itself is already covered by MessageLedgerSearchableColumnsTests; this fixture's job is
 /// to lock in the HTTP-to-criteria binding so the operator-dashboard filter UI works end-to-end.
 /// </summary>
-public sealed class LedgerMessageTypeSenderIdFiltersTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LedgerMessageTypeSenderIdFiltersTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public LedgerMessageTypeSenderIdFiltersTests(WebApplicationFactory<Program> factory) =>
+    public LedgerMessageTypeSenderIdFiltersTests(SmartConnectApiFactory factory) =>
         _factory = factory;
 
     [Fact]

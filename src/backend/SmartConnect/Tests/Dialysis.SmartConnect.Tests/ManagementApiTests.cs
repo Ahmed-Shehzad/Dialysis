@@ -2,7 +2,6 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.BuiltInPlugins;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -12,7 +11,7 @@ public sealed class ManagementApiTests
     [Fact]
     public async Task Postflow_Start_Pause_Resume_Cycle_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
         var flowId = Guid.NewGuid();
         var flow = new IntegrationFlow
@@ -66,7 +65,7 @@ public sealed class ManagementApiTests
     [Fact]
     public async Task Export_Group_Returns_Json_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
         var groupId = Guid.NewGuid();
         var create = await client.PostAsJsonAsync(
@@ -84,7 +83,7 @@ public sealed class ManagementApiTests
     [Fact]
     public async Task Ledger_Query_Returns_Entries_After_Dispatch_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
         var flowId = Guid.NewGuid();
         var flow = new IntegrationFlow

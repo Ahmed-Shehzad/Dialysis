@@ -1,7 +1,7 @@
 using System.Text;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Dialysis.SmartConnect.Tests.TestPlugins;
@@ -18,7 +18,7 @@ public sealed class FlowRuntimeEngineTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_test_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();
@@ -82,7 +82,7 @@ public sealed class FlowRuntimeEngineTests
     public async Task Dispatch_When_Filter_Drops_Stops_Outbounds_And_Ledger_Records_Drop_Async()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_test_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();
@@ -133,7 +133,7 @@ public sealed class FlowRuntimeEngineTests
         var services = new ServiceCollection();
         services.AddSingleton<FailingOutboundAdapter>();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_test_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();
@@ -182,7 +182,7 @@ public sealed class FlowRuntimeEngineTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_test_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();
@@ -235,7 +235,7 @@ public sealed class FlowRuntimeEngineTests
             ResponseBytes = "MSH|^~\\&|ACK||AE"u8.ToArray(),
         };
         services.AddSingleton(capturing);
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_test_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();

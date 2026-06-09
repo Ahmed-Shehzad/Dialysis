@@ -25,11 +25,13 @@
     const list = Array.isArray(children) ? children : [children];
     for (const c of list) {
       if (c === null || c === void 0 || c === false) continue;
-      node.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
+      node.appendChild(
+        c instanceof Node ? c : document.createTextNode(String(c))
+      );
     }
   }
   function clear(node) {
-    while (node.firstChild) node.removeChild(node.firstChild);
+    while (node.firstChild) node.firstChild.remove();
   }
   function formatDate(iso) {
     if (!iso) return "\u2014";
@@ -289,7 +291,16 @@
     "00280011": "Columns",
     "7FE00010": "PixelData"
   };
-  var _longLengthVrs = /* @__PURE__ */ new Set(["OB", "OW", "OF", "OD", "OL", "SQ", "UT", "UN"]);
+  var _longLengthVrs = /* @__PURE__ */ new Set([
+    "OB",
+    "OW",
+    "OF",
+    "OD",
+    "OL",
+    "SQ",
+    "UT",
+    "UN"
+  ]);
   function _parseDicom(bytes) {
     if (bytes.length < 132) return null;
     if (bytes[128] !== 68 || bytes[129] !== 73 || bytes[130] !== 67 || bytes[131] !== 77) {
@@ -302,7 +313,7 @@
       const group = view.getUint16(pos, true);
       const element = view.getUint16(pos + 2, true);
       const tag = `${group.toString(16).padStart(4, "0")}${element.toString(16).padStart(4, "0")}`.toUpperCase();
-      const vr = String.fromCharCode(bytes[pos + 4], bytes[pos + 5]);
+      const vr = String.fromCodePoint(bytes[pos + 4], bytes[pos + 5]);
       let length;
       let valueOffset;
       if (_longLengthVrs.has(vr)) {
@@ -321,9 +332,13 @@
     return elements;
   }
   function _decodeValue(bytes, element) {
-    if (element.tag === "7FE00010") return `${element.length} bytes (download to view)`;
+    if (element.tag === "7FE00010")
+      return `${element.length} bytes (download to view)`;
     if (element.length === 0) return "";
-    const slice = bytes.subarray(element.valueOffset, element.valueOffset + element.length);
+    const slice = bytes.subarray(
+      element.valueOffset,
+      element.valueOffset + element.length
+    );
     switch (element.vr) {
       case "AE":
       case "AS":
@@ -346,13 +361,35 @@
         return text;
       }
       case "US":
-        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getUint16(0, true));
+        return String(
+          new DataView(
+            slice.buffer,
+            slice.byteOffset,
+            slice.byteLength
+          ).getUint16(0, true)
+        );
       case "UL":
-        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getUint32(0, true));
+        return String(
+          new DataView(
+            slice.buffer,
+            slice.byteOffset,
+            slice.byteLength
+          ).getUint32(0, true)
+        );
       case "SS":
-        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt16(0, true));
+        return String(
+          new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt16(
+            0,
+            true
+          )
+        );
       case "SL":
-        return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt32(0, true));
+        return String(
+          new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt32(
+            0,
+            true
+          )
+        );
       default:
         return `${slice.byteLength} bytes`;
     }
@@ -380,7 +417,11 @@
   function _tryReadUint16(bytes, elements, tag) {
     const e = elements.find((el2) => el2.tag === tag);
     if (!e || e.length < 2) return null;
-    return new DataView(bytes.buffer, bytes.byteOffset + e.valueOffset, e.length).getUint16(0, true);
+    return new DataView(
+      bytes.buffer,
+      bytes.byteOffset + e.valueOffset,
+      e.length
+    ).getUint16(0, true);
   }
   function _tryReadString(bytes, elements, tag) {
     const e = elements.find((el2) => el2.tag === tag);
@@ -397,7 +438,10 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     const imageData = ctx.createImageData(info.columns, info.rows);
-    const pixelBuffer = bytes.subarray(info.pixelOffset, info.pixelOffset + info.pixelLength);
+    const pixelBuffer = bytes.subarray(
+      info.pixelOffset,
+      info.pixelOffset + info.pixelLength
+    );
     if (info.samplesPerPixel === 1) {
       for (let i = 0; i < info.columns * info.rows; i++) {
         const grey = pixelBuffer[i] ?? 0;
@@ -426,8 +470,20 @@
     const elements = _parseDicom(bytes);
     if (elements === null) {
       return el("div", { class: "viewer viewer-fallback" }, [
-        el("p", { class: "muted" }, `Not a recognisable DICOM file (no DICM preamble at offset 128).`),
-        el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect")
+        el(
+          "p",
+          { class: "muted" },
+          `Not a recognisable DICOM file (no DICM preamble at offset 128).`
+        ),
+        el(
+          "a",
+          {
+            href: downloadAttachmentUrl(attachmentId),
+            target: "_blank",
+            rel: "noopener"
+          },
+          "Download to inspect"
+        )
       ]);
     }
     const tbody = el("tbody");
@@ -437,22 +493,40 @@
       if (!keyword) continue;
       renderedKnown++;
       const value = _decodeValue(bytes, e);
-      tbody.appendChild(el("tr", {}, [
-        el("td", {}, keyword),
-        el("td", {}, el("code", {}, `(${e.tag.slice(0, 4)},${e.tag.slice(4)})`)),
-        el("td", {}, e.vr),
-        el("td", {}, value)
-      ]));
+      tbody.appendChild(
+        el("tr", {}, [
+          el("td", {}, keyword),
+          el(
+            "td",
+            {},
+            el("code", {}, `(${e.tag.slice(0, 4)},${e.tag.slice(4)})`)
+          ),
+          el("td", {}, e.vr),
+          el("td", {}, value)
+        ])
+      );
     }
     const summary = el("p", { class: "muted" }, [
       `Parsed ${elements.length} elements; showing ${renderedKnown} well-known tags. `,
-      el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download for full PACS viewing")
+      el(
+        "a",
+        {
+          href: downloadAttachmentUrl(attachmentId),
+          target: "_blank",
+          rel: "noopener"
+        },
+        "Download for full PACS viewing"
+      )
     ]);
     const children = [summary];
     const previewHost = el("div", { class: "viewer-dicom-image" });
     const pixelInfo = _readPixelDataInfo(bytes, elements);
     if (pixelInfo !== null) {
-      const showButton = el("button", { type: "button" }, "Show image");
+      const showButton = el(
+        "button",
+        { type: "button" },
+        "Show image"
+      );
       showButton.addEventListener("click", () => {
         showButton.disabled = true;
         const canvas = _renderPixelsToCanvas(bytes, pixelInfo);
@@ -462,7 +536,11 @@
               `Image preview not supported for ${pixelInfo.photometric} ${pixelInfo.bitsAllocated}-bit (planar ${pixelInfo.planarConfiguration}). `,
               el(
                 "a",
-                { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" },
+                {
+                  href: downloadAttachmentUrl(attachmentId),
+                  target: "_blank",
+                  rel: "noopener"
+                },
                 "Download to view in PACS"
               )
             ])
@@ -472,24 +550,39 @@
         canvas.className = "viewer viewer-dicom-canvas";
         previewHost.appendChild(canvas);
       });
-      children.push(showButton);
-      children.push(previewHost);
+      children.push(showButton, previewHost);
     }
     if (renderedKnown > 0) {
-      children.push(el("table", { class: "viewer viewer-dicom-tags" }, [
-        el("thead", {}, el("tr", {}, [
-          el("th", {}, "Tag"),
-          el("th", {}, "(group,element)"),
-          el("th", {}, "VR"),
-          el("th", {}, "Value")
-        ])),
-        tbody
-      ]));
+      children.push(
+        el("table", { class: "viewer viewer-dicom-tags" }, [
+          el(
+            "thead",
+            {},
+            el("tr", {}, [
+              el("th", {}, "Tag"),
+              el("th", {}, "(group,element)"),
+              el("th", {}, "VR"),
+              el("th", {}, "Value")
+            ])
+          ),
+          tbody
+        ])
+      );
     } else {
-      children.push(el("p", { class: "muted" }, [
-        "No recognisable header tags in this file \u2014 likely a fragment or a private SOP class. ",
-        el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect")
-      ]));
+      children.push(
+        el("p", { class: "muted" }, [
+          "No recognisable header tags in this file \u2014 likely a fragment or a private SOP class. ",
+          el(
+            "a",
+            {
+              href: downloadAttachmentUrl(attachmentId),
+              target: "_blank",
+              rel: "noopener"
+            },
+            "Download to inspect"
+          )
+        ])
+      );
     }
     return el("div", { class: "viewer viewer-dicom" }, children);
   }
@@ -512,11 +605,11 @@
       return this;
     }
     start() {
-      window.addEventListener("hashchange", () => this.dispatch());
+      globalThis.addEventListener("hashchange", () => this.dispatch());
       this.dispatch();
     }
     async dispatch() {
-      const raw = window.location.hash.replace(/^#/, "");
+      const raw = globalThis.location.hash.replace(/^#/, "");
       const segments = raw.split("/").filter(Boolean);
       const ctx = { hash: raw, segments, target: this.target };
       clear(this.target);
@@ -527,10 +620,14 @@
         } else if (this.fallback) {
           await this.fallback(ctx);
         } else {
-          this.target.appendChild(el("p", { class: "err" }, `No panel for #${raw}.`));
+          this.target.appendChild(
+            el("p", { class: "err" }, `No panel for #${raw}.`)
+          );
         }
       } catch (e) {
-        this.target.appendChild(el("p", { class: "err" }, `Panel error: ${e.message ?? e}`));
+        this.target.appendChild(
+          el("p", { class: "err" }, `Panel error: ${e.message ?? e}`)
+        );
       }
     }
   };
@@ -663,14 +760,18 @@
     const messageId = ctx.segments[1];
     ctx.target.appendChild(el("h2", {}, "Attachments"));
     if (!messageId) {
-      ctx.target.appendChild(el("p", { class: "muted" }, [
-        "Open from the message browser \u2014 the URL is ",
-        el("code", {}, "#attachments/{messageId}"),
-        "."
-      ]));
+      ctx.target.appendChild(
+        el("p", { class: "muted" }, [
+          "Open from the message browser \u2014 the URL is ",
+          el("code", {}, "#attachments/{messageId}"),
+          "."
+        ])
+      );
       return;
     }
-    ctx.target.appendChild(el("p", { class: "muted" }, ["Message ", el("code", {}, messageId)]));
+    ctx.target.appendChild(
+      el("p", { class: "muted" }, ["Message ", el("code", {}, messageId)])
+    );
     const status = el("p", { class: "muted" }, "Loading\u2026");
     ctx.target.appendChild(status);
     try {
@@ -683,17 +784,33 @@
       const previewHost = el("div", { class: "attachment-preview" });
       const tbody = el("tbody");
       for (const a of attachments) {
-        const delBtn = el("button", { type: "button" }, "Delete");
-        const previewBtn = el("button", { type: "button" }, "Preview");
+        const delBtn = el(
+          "button",
+          { type: "button" },
+          "Delete"
+        );
+        const previewBtn = el(
+          "button",
+          { type: "button" },
+          "Preview"
+        );
         const row = el("tr", {}, [
           el("td", {}, el("code", {}, a.id)),
           el("td", {}, a.mimeType ?? "\u2014"),
-          el("td", {}, a.sizeBytes !== void 0 ? String(a.sizeBytes) : "\u2014"),
+          el("td", {}, a.sizeBytes === void 0 ? "\u2014" : String(a.sizeBytes)),
           el("td", {}, formatDate(a.createdUtc)),
           el("td", {}, [
             previewBtn,
             " ",
-            el("a", { href: downloadAttachmentUrl(a.id), target: "_blank", rel: "noopener" }, "download"),
+            el(
+              "a",
+              {
+                href: downloadAttachmentUrl(a.id),
+                target: "_blank",
+                rel: "noopener"
+              },
+              "download"
+            ),
             " ",
             delBtn
           ])
@@ -702,16 +819,20 @@
           previewBtn.disabled = true;
           try {
             clear(previewHost);
-            previewHost.appendChild(el("h3", {}, [
-              "Preview ",
-              el("code", {}, a.id),
-              ` \u2014 ${a.mimeType ?? "unknown MIME"}`
-            ]));
+            previewHost.appendChild(
+              el("h3", {}, [
+                "Preview ",
+                el("code", {}, a.id),
+                ` \u2014 ${a.mimeType ?? "unknown MIME"}`
+              ])
+            );
             const bytes = await fetchAttachmentBytes(a.id);
             const viewer = pickViewer(a.mimeType);
             previewHost.appendChild(viewer(bytes, a.id, a.mimeType ?? ""));
           } catch (e) {
-            previewHost.appendChild(errBlock(`Preview failed: ${e.message ?? e}`));
+            previewHost.appendChild(
+              errBlock(`Preview failed: ${e.message ?? e}`)
+            );
           } finally {
             previewBtn.disabled = false;
           }
@@ -728,20 +849,28 @@
         });
         tbody.appendChild(row);
       }
-      ctx.target.appendChild(el("table", {}, [
-        el("thead", {}, el("tr", {}, [
-          el("th", {}, "Id"),
-          el("th", {}, "MIME"),
-          el("th", {}, "Size"),
-          el("th", {}, "Created"),
-          el("th", {}, "Actions")
-        ])),
-        tbody
-      ]));
+      ctx.target.appendChild(
+        el("table", {}, [
+          el(
+            "thead",
+            {},
+            el("tr", {}, [
+              el("th", {}, "Id"),
+              el("th", {}, "MIME"),
+              el("th", {}, "Size"),
+              el("th", {}, "Created"),
+              el("th", {}, "Actions")
+            ])
+          ),
+          tbody
+        ])
+      );
       ctx.target.appendChild(previewHost);
     } catch (e) {
       status.remove();
-      ctx.target.appendChild(errBlock(`Could not load attachments: ${e.message ?? e}`));
+      ctx.target.appendChild(
+        errBlock(`Could not load attachments: ${e.message ?? e}`)
+      );
     }
   }
 

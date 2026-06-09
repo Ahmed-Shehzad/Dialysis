@@ -10,7 +10,7 @@ namespace Dialysis.Identity.Tests;
 /// Per-fixture PostgreSQL Testcontainer wired to <see cref="IdentityDbContext"/> via the shared
 /// <see cref="ModuleWebApplicationFactory{TEntryPoint,TDbContext}"/> base.
 /// </summary>
-public sealed class IdentityApiWebApplicationFactory : ModuleWebApplicationFactory<IdentityApi::Program, IdentityDbContext>
+public sealed class IdentityApiWebApplicationFactory : ModuleWebApplicationFactory<IdentityApi::Dialysis.Identity.Api.Program, IdentityDbContext>
 {
     protected override string ModuleSlug => "identity";
 

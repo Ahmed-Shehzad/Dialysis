@@ -25,143 +25,149 @@ using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddServiceDefaults();
+namespace Dialysis.EHR.Api;
 
-const string connectionStringName = "Ehr";
-var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
-var enableOutbox = builder.Configuration.GetValue("Ehr:Transponder:EnableOutboxRelay", false);
-var rabbitUri = builder.Configuration["Ehr:Transponder:RabbitMq:ConnectionUri"];
-var rabbitQueue = builder.Configuration["Ehr:Transponder:RabbitMq:QueueName"];
-var rabbitExchange = builder.Configuration["Ehr:Transponder:RabbitMq:ExchangeName"];
-
-builder.AddModuleHost<EhrPermissionCatalog>(new ModuleHostingOptions
+/// <summary>Test factory marker.</summary>
+public partial class Program
 {
-    ModuleSlug = "ehr",
-    HandlerAssemblies =
-    [
-        typeof(EhrRegistrationMarker).Assembly,
-        typeof(EhrPatientChartMarker).Assembly,
-        typeof(EhrSchedulingMarker).Assembly,
-        typeof(EhrPatientPortalMarker).Assembly,
-        typeof(EhrClinicalNotesMarker).Assembly,
-        typeof(EhrBillingMarker).Assembly,
-        typeof(EhrIntegrationMarker).Assembly
-    ],
-});
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.AddServiceDefaults();
 
-var enableEhrBulkDataExport = builder.Configuration.GetValue("Ehr:Fhir:BulkData:Enabled", false);
-var enableEhrSmartOnFhir = builder.Configuration.GetValue("Ehr:Fhir:Smart:Enabled", false);
-var enableEhrSubscriptions = builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Enabled", false);
-// Persistence defaults to the feature flag; set false to use the in-memory registry
-// (no DB / migration dependency — handy for local dev and demos).
-var enableEhrSubscriptionsPersistence =
-    builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Persistence", enableEhrSubscriptions);
-var ehrBulkDataExportScope = builder.Configuration["Ehr:Fhir:BulkData:RequireScope"]
-    ?? (enableEhrSmartOnFhir ? "system/*.read" : null);
-var ehrSubscriptionsScope = builder.Configuration["Ehr:Fhir:Subscriptions:RequireScope"]
-    ?? (enableEhrSmartOnFhir ? "user/*.write" : null);
+        const string connectionStringName = "Ehr";
+        var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                $"ConnectionStrings:{connectionStringName} must be set — this module persists to PostgreSQL.");
+        var enableOutbox = builder.Configuration.GetValue("Ehr:Transponder:EnableOutboxRelay", false);
+        var rabbitUri = builder.Configuration["Ehr:Transponder:RabbitMq:ConnectionUri"];
+        var rabbitQueue = builder.Configuration["Ehr:Transponder:RabbitMq:QueueName"];
+        var rabbitExchange = builder.Configuration["Ehr:Transponder:RabbitMq:ExchangeName"];
 
-builder.Services.AddElectronicHealthRecord(
-    builder.Configuration,
-    configurePersistence: string.IsNullOrWhiteSpace(connectionString)
-        ? null
-        : options => options.UseNpgsql(
-            connectionString,
-            pg => pg.MigrationsHistoryTable("__ef_migrations", "ehr")),
-    enableOutboxRelay: enableOutbox,
-    enableFhirBulkDataPersistence: enableEhrBulkDataExport,
-    enableFhirBulkDataExport: enableEhrBulkDataExport,
-    enableFhirSmartOnFhir: enableEhrSmartOnFhir,
-    enableFhirSubscriptions: enableEhrSubscriptions,
-    enableFhirSubscriptionsPersistence: enableEhrSubscriptionsPersistence,
-    configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
-        ? null
-        : s => s.AddTransponderRabbitMq(o =>
+        builder.AddModuleHost<EhrPermissionCatalog>(new ModuleHostingOptions
         {
-            o.ConnectionUri = rabbitUri;
-            if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
-            if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
-        },
-        sub =>
+            ModuleSlug = "ehr",
+            HandlerAssemblies =
+            [
+                typeof(EhrRegistrationMarker).Assembly,
+    typeof(EhrPatientChartMarker).Assembly,
+    typeof(EhrSchedulingMarker).Assembly,
+    typeof(EhrPatientPortalMarker).Assembly,
+    typeof(EhrClinicalNotesMarker).Assembly,
+    typeof(EhrBillingMarker).Assembly,
+    typeof(EhrIntegrationMarker).Assembly
+            ],
+        });
+
+        var enableEhrBulkDataExport = builder.Configuration.GetValue("Ehr:Fhir:BulkData:Enabled", false);
+        var enableEhrSmartOnFhir = builder.Configuration.GetValue("Ehr:Fhir:Smart:Enabled", false);
+        var enableEhrSubscriptions = builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Enabled", false);
+        // Persistence defaults to the feature flag; set false to use the in-memory registry
+        // (no DB / migration dependency — handy for local dev and demos).
+        var enableEhrSubscriptionsPersistence =
+            builder.Configuration.GetValue("Ehr:Fhir:Subscriptions:Persistence", enableEhrSubscriptions);
+        var ehrBulkDataExportScope = builder.Configuration["Ehr:Fhir:BulkData:RequireScope"]
+            ?? (enableEhrSmartOnFhir ? "system/*.read" : null);
+        var ehrSubscriptionsScope = builder.Configuration["Ehr:Fhir:Subscriptions:RequireScope"]
+            ?? (enableEhrSmartOnFhir ? "user/*.write" : null);
+
+        builder.Services.AddElectronicHealthRecord(
+            builder.Configuration,
+            configurePersistence: options => options.UseNpgsql(
+                    connectionString,
+                    pg => pg.MigrationsHistoryTable("__ef_migrations", "ehr")),
+            enableOutboxRelay: enableOutbox,
+            enableFhirBulkDataPersistence: enableEhrBulkDataExport,
+            enableFhirBulkDataExport: enableEhrBulkDataExport,
+            enableFhirSmartOnFhir: enableEhrSmartOnFhir,
+            enableFhirSubscriptions: enableEhrSubscriptions,
+            enableFhirSubscriptionsPersistence: enableEhrSubscriptionsPersistence,
+            configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
+                ? null
+                : s => s.AddTransponderRabbitMq(o =>
+                {
+                    o.ConnectionUri = rabbitUri;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue))
+                        o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange))
+                        o.ExchangeName = rabbitExchange;
+                },
+                sub =>
+                {
+                    // Subscribe to integration events we react to from other modules / our own outbox.
+                    sub.Listen<PrescriptionOrderedIntegrationEvent>();
+                    sub.Listen<LabOrderPlacedIntegrationEvent>();
+                    sub.Listen<ClaimSubmittedIntegrationEvent>();
+                    if (enableEhrSubscriptions)
+                        sub.Listen<LabResultReceivedIntegrationEvent>();
+                }));
+
+        // HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
+        builder.Services.AddFhirAudit();
+        builder.Services.AddHipaaCompliance("ehr");
+        builder.Services.AddHipaaAspNetCoreSafeguards();
+
+        // Patient-portal self-access gate (own-patient, plus dev-only staff impersonation). Scoped because it
+        // depends on the per-request ICurrentUser.
+        builder.Services.AddScoped<Security.EhrPortalAccess>();
+
+        // Durable command bus — third opt-in module (after PDMS PR #140, HIS PR #141).
+        // RecordVitalSign and RecordAllergy are the EHR chart writes most worth durable
+        // buffering: vitals are high-volume, allergies are clinically critical. Flag off
+        // by default; flip per env once production traffic patterns settle.
+        builder.Services.AddDurableCommandBus<EhrDbContext>("ehr", b =>
         {
-            // Subscribe to integration events we react to from other modules / our own outbox.
-            sub.Listen<PrescriptionOrderedIntegrationEvent>();
-            sub.Listen<LabOrderPlacedIntegrationEvent>();
-            sub.Listen<ClaimSubmittedIntegrationEvent>();
-            if (enableEhrSubscriptions)
-                sub.Listen<LabResultReceivedIntegrationEvent>();
-        }));
+            b.RegisterCommand<RecordVitalSignCommand, Guid>(requiredPermission: EhrPermissions.VitalsRecord);
+            b.RegisterCommand<RecordAllergyCommand, Guid>(requiredPermission: EhrPermissions.AllergyRecord);
+        });
+        builder.Services.Configure<Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
+            o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
 
-// HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.
-builder.Services.AddFhirAudit();
-builder.Services.AddHipaaCompliance("ehr");
-builder.Services.AddHipaaAspNetCoreSafeguards();
+        builder.Services
+            .AddControllers()
+            // Accept string-named enum payloads from the SPA (consistent with PDMS/SmartConnect);
+            // otherwise System.Text.Json only binds the integer backing values and rejects names with 400.
+            .AddJsonOptions(o =>
+                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
-// Patient-portal self-access gate (own-patient, plus dev-only staff impersonation). Scoped because it
-// depends on the per-request ICurrentUser.
-builder.Services.AddScoped<Dialysis.EHR.Api.Security.EhrPortalAccess>();
+        var app = builder.Build();
 
-// Durable command bus — third opt-in module (after PDMS PR #140, HIS PR #141).
-// RecordVitalSign and RecordAllergy are the EHR chart writes most worth durable
-// buffering: vitals are high-volume, allergies are clinically critical. Flag off
-// by default; flip per env once production traffic patterns settle.
-builder.Services.AddDurableCommandBus<EhrDbContext>("ehr", b =>
-{
-    b.RegisterCommand<RecordVitalSignCommand, Guid>(requiredPermission: EhrPermissions.VitalsRecord);
-    b.RegisterCommand<RecordAllergyCommand, Guid>(requiredPermission: EhrPermissions.AllergyRecord);
-});
-builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
-    o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
+        // Apply EF migrations on startup so the EHR module is self-hosting against a fresh
+        // Aspire-managed Postgres container. Gated on configuration (Ehr:AutoMigrate, default
+        // true in Development) — in production the DBA owns the migration step out-of-band.
+        // (Previously the demo seeder applied migrations as a side effect; that was removed in
+        // #167, so the schema must be created here like HIS does.)
+        if (!string.IsNullOrWhiteSpace(connectionString)
+            && builder.Configuration.GetValue("Ehr:AutoMigrate", app.Environment.IsDevelopment()))
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<EhrDbContext>();
+            await db.Database.MigrateAsync().ConfigureAwait(false);
+        }
 
-builder.Services
-    .AddControllers()
-    // Accept string-named enum payloads from the SPA (consistent with PDMS/SmartConnect);
-    // otherwise System.Text.Json only binds the integer backing values and rejects names with 400.
-    .AddJsonOptions(o =>
-        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+        app.UseModuleHost();
+        if (enableEhrSubscriptions)
+            app.UseWebSockets();
+        app.MapOpenApi();
 
-var app = builder.Build();
+        app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
+        app.MapHipaaSafeguardsEndpoint();
+        // GDPR / BDSG surface — RoPA + data-subject-rights. The SPA admin pages proxy here
+        // (/api/ehr/admin/data-protection/ropa, /api/ehr/api/v1.0/data-subject-rights/...).
+        app.MapEuDataProtectionRoutes();
+        app.MapDurableCommandStatusEndpoint();
+        app.MapControllers();
 
-// Apply EF migrations on startup so the EHR module is self-hosting against a fresh
-// Aspire-managed Postgres container. Gated on configuration (Ehr:AutoMigrate, default
-// true in Development) — in production the DBA owns the migration step out-of-band.
-// (Previously the demo seeder applied migrations as a side effect; that was removed in
-// #167, so the schema must be created here like HIS does.)
-if (!string.IsNullOrWhiteSpace(connectionString)
-    && builder.Configuration.GetValue("Ehr:AutoMigrate", app.Environment.IsDevelopment()))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<EhrDbContext>();
-    await db.Database.MigrateAsync().ConfigureAwait(false);
-}
+        if (enableEhrSmartOnFhir)
+            app.MapSmartConfigurationEndpoint();
 
-app.UseModuleHost();
-if (enableEhrSubscriptions)
-    app.UseWebSockets();
-app.MapOpenApi();
+        if (enableEhrBulkDataExport)
+            app.MapFhirBulkDataEndpoints(requireScope: ehrBulkDataExportScope);
 
-app.MapGet("/", () => Results.Ok(new { module = "ehr", version = "v1" }));
-app.MapHipaaSafeguardsEndpoint();
-// GDPR / BDSG surface — RoPA + data-subject-rights. The SPA admin pages proxy here
-// (/api/ehr/admin/data-protection/ropa, /api/ehr/api/v1.0/data-subject-rights/...).
-app.MapEuDataProtectionRoutes();
-app.MapDurableCommandStatusEndpoint();
-app.MapControllers();
+        if (enableEhrSubscriptions)
+            app.MapFhirSubscriptionEndpoints(requireScope: ehrSubscriptionsScope);
 
-if (enableEhrSmartOnFhir)
-    app.MapSmartConfigurationEndpoint();
-
-if (enableEhrBulkDataExport)
-    app.MapFhirBulkDataEndpoints(requireScope: ehrBulkDataExportScope);
-
-if (enableEhrSubscriptions)
-    app.MapFhirSubscriptionEndpoints(requireScope: ehrSubscriptionsScope);
-
-await app.RunAsync().ConfigureAwait(false);
-
-namespace Dialysis.EHR.Api
-{
-    /// <summary>Test factory marker.</summary>
-    public partial class Program;
+        await app.RunAsync().ConfigureAwait(false);
+    }
 }

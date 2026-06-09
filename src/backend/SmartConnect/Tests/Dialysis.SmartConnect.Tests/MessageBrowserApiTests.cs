@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Dialysis.SmartConnect.BuiltInPlugins;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -11,7 +10,7 @@ public sealed class MessageBrowserApiTests
     [Fact]
     public async Task Messages_Endpoint_Returns_Paginated_Results_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
         var flowId = Guid.NewGuid();
         var flow = new IntegrationFlow
@@ -45,7 +44,7 @@ public sealed class MessageBrowserApiTests
     [Fact]
     public async Task Get_Message_By_Id_Returns_Entry_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
         var flowId = Guid.NewGuid();
         var flow = new IntegrationFlow
@@ -80,7 +79,7 @@ public sealed class MessageBrowserApiTests
     [Fact]
     public async Task Flow_Statistics_Returns_Counts_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
         var flowId = Guid.NewGuid();
         var flow = new IntegrationFlow
@@ -111,7 +110,7 @@ public sealed class MessageBrowserApiTests
     [Fact]
     public async Task Reprocess_Nonexistent_Entry_Returns_404_Async()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new SmartConnectApiFactory();
         var client = factory.CreateClient();
 
         var resp = await client.PostAsync(

@@ -4,18 +4,17 @@ using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
 
-public sealed class InboundHttpIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class InboundHttpIntegrationTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory ;
+    private readonly SmartConnectApiFactory _factory;
 
-    public InboundHttpIntegrationTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public InboundHttpIntegrationTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Post_Inbound_Message_Returns_200_And_Records_Ledger_Async()

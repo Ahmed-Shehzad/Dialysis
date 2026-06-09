@@ -1,5 +1,6 @@
 using System.Reflection;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.CQRS;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.Module.Contracts.Authorization;
@@ -131,6 +132,13 @@ public static class ModuleHostingServiceCollectionExtensions
             // module API, partitioned per authenticated subject (sub claim) or IP fallback.
             // See docs/operations/load-and-capacity.md for the per-tier shedding story.
             builder.Services.AddModuleRateLimiting(builder.Configuration.GetSection(options.ModuleSlug));
+
+            // Transponder Hangfire scheduler — PostgreSQL-backed background scheduling. The AppHost
+            // injects ConnectionStrings:Hangfire (the host's module database); it is absent in tests,
+            // where Hangfire is skipped.
+            var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
+            if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
+                builder.Services.AddTransponderHangfire(hangfireConnectionString);
 
             return builder;
         }

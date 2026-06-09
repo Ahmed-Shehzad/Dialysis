@@ -2,7 +2,7 @@ using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -115,7 +115,7 @@ public sealed class AttachmentOrphanReaperTests
             Directory.CreateDirectory(RootPath);
 
             var services = new ServiceCollection();
-            services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_reaper_{Guid.NewGuid():N}");
+            services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
             if (!useInRowStore)
             {
                 services.UseFileSystemAttachmentBlobStore(o => o.RootPath = RootPath);

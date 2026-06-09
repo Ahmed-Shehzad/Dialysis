@@ -7,65 +7,71 @@ using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddServiceDefaults();
+namespace Dialysis.Lab.Api;
 
-const string connectionStringName = "Lab";
-var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
-var enableOutbox = builder.Configuration.GetValue("Lab:Transponder:EnableOutboxRelay", false);
-var rabbitUri = builder.Configuration["Lab:Transponder:RabbitMq:ConnectionUri"];
-var rabbitQueue = builder.Configuration["Lab:Transponder:RabbitMq:QueueName"];
-var rabbitExchange = builder.Configuration["Lab:Transponder:RabbitMq:ExchangeName"];
-
-builder.AddModuleHost<LabPermissionCatalog>(new ModuleHostingOptions
+/// <summary>Application entry point.</summary>
+public partial class Program
 {
-    ModuleSlug = "lab",
-    HandlerAssemblies = [typeof(LabOrdersMarker).Assembly],
-});
+    /// <summary>Builds and runs the host.</summary>
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.AddServiceDefaults();
 
-builder.Services.AddLaboratory(
-    builder.Configuration,
-    configurePersistence: string.IsNullOrWhiteSpace(connectionString)
-        ? null
-        : options => options.UseNpgsql(
-            connectionString,
-            pg => pg.MigrationsHistoryTable("__ef_migrations", "lab")),
-    enableOutboxRelay: enableOutbox,
-    configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
-        ? null
-        : s => s.AddTransponderRabbitMq(o =>
+        const string connectionStringName = "Lab";
+        var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                $"ConnectionStrings:{connectionStringName} must be set — this module persists to PostgreSQL.");
+        var enableOutbox = builder.Configuration.GetValue("Lab:Transponder:EnableOutboxRelay", false);
+        var rabbitUri = builder.Configuration["Lab:Transponder:RabbitMq:ConnectionUri"];
+        var rabbitQueue = builder.Configuration["Lab:Transponder:RabbitMq:QueueName"];
+        var rabbitExchange = builder.Configuration["Lab:Transponder:RabbitMq:ExchangeName"];
+
+        builder.AddModuleHost<LabPermissionCatalog>(new ModuleHostingOptions
         {
-            o.ConnectionUri = rabbitUri;
-            if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
-            if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
-        }));
+            ModuleSlug = "lab",
+            HandlerAssemblies = [typeof(LabOrdersMarker).Assembly],
+        });
 
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(o =>
-        o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+        builder.Services.AddLaboratory(
+            builder.Configuration,
+            configurePersistence: options => options.UseNpgsql(
+                    connectionString,
+                    pg => pg.MigrationsHistoryTable("__ef_migrations", "lab")),
+            enableOutboxRelay: enableOutbox,
+            configureTransponderTransport: string.IsNullOrWhiteSpace(rabbitUri)
+                ? null
+                : s => s.AddTransponderRabbitMq(o =>
+                {
+                    o.ConnectionUri = rabbitUri;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
+                }));
 
-var app = builder.Build();
+        builder.Services
+            .AddControllers()
+            .AddJsonOptions(o =>
+                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
-// Apply EF migrations on startup so the Lab module is self-hosting against a fresh
-// Aspire-managed Postgres container. Gated on configuration (Lab:AutoMigrate, default
-// true in Development) — in production the DBA owns the migration step out-of-band.
-if (!string.IsNullOrWhiteSpace(connectionString)
-    && builder.Configuration.GetValue("Lab:AutoMigrate", app.Environment.IsDevelopment()))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<LabDbContext>();
-    await db.Database.MigrateAsync().ConfigureAwait(false);
-}
+        var app = builder.Build();
 
-app.UseModuleHost();
-app.MapOpenApi();
-app.MapGet("/", () => Results.Ok(new { module = "lab", version = "v1" }));
-app.MapControllers();
+        // Apply EF migrations on startup so the Lab module is self-hosting against a fresh
+        // Aspire-managed Postgres container. Gated on configuration (Lab:AutoMigrate, default
+        // true in Development) — in production the DBA owns the migration step out-of-band.
+        if (!string.IsNullOrWhiteSpace(connectionString)
+            && builder.Configuration.GetValue("Lab:AutoMigrate", app.Environment.IsDevelopment()))
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<LabDbContext>();
+            await db.Database.MigrateAsync().ConfigureAwait(false);
+        }
 
-await app.RunAsync().ConfigureAwait(false);
+        app.UseModuleHost();
+        app.MapOpenApi();
+        app.MapGet("/", () => Results.Ok(new { module = "lab", version = "v1" }));
+        app.MapControllers();
 
-namespace Dialysis.Lab.Api
-{
-    public partial class Program;
+        await app.RunAsync().ConfigureAwait(false);
+    }
 }

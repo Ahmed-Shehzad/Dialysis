@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -11,11 +10,11 @@ namespace Dialysis.SmartConnect.Tests;
 /// arbitrary HL7 payload without round-tripping a real message. Uses the same JavascriptTransform
 /// binding path as the production runtime — so a script that works here works in a deployed flow.
 /// </summary>
-public sealed class DebugEvaluateScriptEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class DebugEvaluateScriptEndpointTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public DebugEvaluateScriptEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public DebugEvaluateScriptEndpointTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Evaluates_Script_Reading_Pid3_Via_Msg_Global_Async()

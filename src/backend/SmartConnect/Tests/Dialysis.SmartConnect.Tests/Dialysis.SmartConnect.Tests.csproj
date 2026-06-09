@@ -16,6 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Testcontainers.Azurite" />
     <PackageReference Include="Testcontainers.Minio" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Npgsql" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
@@ -36,7 +38,6 @@
     <ProjectReference Include="../../Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj" />
     <ProjectReference Include="../../Dialysis.SmartConnect.Core/Dialysis.SmartConnect.Core.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
-    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
     <ProjectReference Include="../../AvScanning/Dialysis.SmartConnect.AvScanning.ClamAv/Dialysis.SmartConnect.AvScanning.ClamAv.csproj" />
     <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob.csproj" />

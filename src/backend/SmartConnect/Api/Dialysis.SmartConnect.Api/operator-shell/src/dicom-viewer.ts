@@ -37,7 +37,16 @@ const _wellKnownTags: Readonly<Record<string, string>> = {
 
 /** Variable-length value-representations need a 32-bit length field; the rest use
  * 16-bit. Per DICOM PS3.5 Table 7.1-1. */
-const _longLengthVrs = new Set(["OB", "OW", "OF", "OD", "OL", "SQ", "UT", "UN"]);
+const _longLengthVrs = new Set([
+  "OB",
+  "OW",
+  "OF",
+  "OD",
+  "OL",
+  "SQ",
+  "UT",
+  "UN",
+]);
 
 interface DicomElement {
   tag: string; // 8-char hex GGGGEEEE
@@ -52,7 +61,12 @@ interface DicomElement {
  * just yield however many elements were readable before the walk fell off the end. */
 function _parseDicom(bytes: Uint8Array): DicomElement[] | null {
   if (bytes.length < 132) return null;
-  if (bytes[128] !== 0x44 || bytes[129] !== 0x49 || bytes[130] !== 0x43 || bytes[131] !== 0x4D) {
+  if (
+    bytes[128] !== 0x44 ||
+    bytes[129] !== 0x49 ||
+    bytes[130] !== 0x43 ||
+    bytes[131] !== 0x4d
+  ) {
     return null; // missing "DICM" magic
   }
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -61,8 +75,9 @@ function _parseDicom(bytes: Uint8Array): DicomElement[] | null {
   while (pos + 6 <= bytes.byteLength) {
     const group = view.getUint16(pos, true);
     const element = view.getUint16(pos + 2, true);
-    const tag = `${group.toString(16).padStart(4, "0")}${element.toString(16).padStart(4, "0")}`.toUpperCase();
-    const vr = String.fromCharCode(bytes[pos + 4], bytes[pos + 5]);
+    const tag =
+      `${group.toString(16).padStart(4, "0")}${element.toString(16).padStart(4, "0")}`.toUpperCase();
+    const vr = String.fromCodePoint(bytes[pos + 4], bytes[pos + 5]);
     let length: number;
     let valueOffset: number;
     if (_longLengthVrs.has(vr)) {
@@ -86,9 +101,13 @@ function _parseDicom(bytes: Uint8Array): DicomElement[] | null {
 /** Decode an element's bytes into a display string. Pixel data and other large opaque
  * blobs get a "N bytes" placeholder so we don't dump megabytes into the DOM. */
 function _decodeValue(bytes: Uint8Array, element: DicomElement): string {
-  if (element.tag === "7FE00010") return `${element.length} bytes (download to view)`;
+  if (element.tag === "7FE00010")
+    return `${element.length} bytes (download to view)`;
   if (element.length === 0) return "";
-  const slice = bytes.subarray(element.valueOffset, element.valueOffset + element.length);
+  const slice = bytes.subarray(
+    element.valueOffset,
+    element.valueOffset + element.length,
+  );
   // String-valued VRs (per PS3.5) decode as ASCII; preserve the standard's trailing
   // padding semantics by trimming nulls and trailing spaces.
   switch (element.vr) {
@@ -113,13 +132,35 @@ function _decodeValue(bytes: Uint8Array, element: DicomElement): string {
       return text;
     }
     case "US":
-      return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getUint16(0, true));
+      return String(
+        new DataView(
+          slice.buffer,
+          slice.byteOffset,
+          slice.byteLength,
+        ).getUint16(0, true),
+      );
     case "UL":
-      return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getUint32(0, true));
+      return String(
+        new DataView(
+          slice.buffer,
+          slice.byteOffset,
+          slice.byteLength,
+        ).getUint32(0, true),
+      );
     case "SS":
-      return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt16(0, true));
+      return String(
+        new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt16(
+          0,
+          true,
+        ),
+      );
     case "SL":
-      return String(new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt32(0, true));
+      return String(
+        new DataView(slice.buffer, slice.byteOffset, slice.byteLength).getInt32(
+          0,
+          true,
+        ),
+      );
     default:
       return `${slice.byteLength} bytes`;
   }
@@ -142,12 +183,16 @@ interface PixelDataInfo {
   pixelLength: number;
 }
 
-function _readPixelDataInfo(bytes: Uint8Array, elements: DicomElement[]): PixelDataInfo | null {
+function _readPixelDataInfo(
+  bytes: Uint8Array,
+  elements: DicomElement[],
+): PixelDataInfo | null {
   const rows = _tryReadUint16(bytes, elements, "00280010");
   const columns = _tryReadUint16(bytes, elements, "00280011");
   const bitsAllocated = _tryReadUint16(bytes, elements, "00280100") ?? 8;
   const samplesPerPixel = _tryReadUint16(bytes, elements, "00280002") ?? 1;
-  const photometric = _tryReadString(bytes, elements, "00280004") ?? "MONOCHROME2";
+  const photometric =
+    _tryReadString(bytes, elements, "00280004") ?? "MONOCHROME2";
   const planarConfiguration = _tryReadUint16(bytes, elements, "00280006") ?? 0;
   const pixelDataElement = elements.find((e) => e.tag === "7FE00010");
   if (rows === null || columns === null || !pixelDataElement) return null;
@@ -163,13 +208,25 @@ function _readPixelDataInfo(bytes: Uint8Array, elements: DicomElement[]): PixelD
   };
 }
 
-function _tryReadUint16(bytes: Uint8Array, elements: DicomElement[], tag: string): number | null {
+function _tryReadUint16(
+  bytes: Uint8Array,
+  elements: DicomElement[],
+  tag: string,
+): number | null {
   const e = elements.find((el) => el.tag === tag);
   if (!e || e.length < 2) return null;
-  return new DataView(bytes.buffer, bytes.byteOffset + e.valueOffset, e.length).getUint16(0, true);
+  return new DataView(
+    bytes.buffer,
+    bytes.byteOffset + e.valueOffset,
+    e.length,
+  ).getUint16(0, true);
 }
 
-function _tryReadString(bytes: Uint8Array, elements: DicomElement[], tag: string): string | null {
+function _tryReadString(
+  bytes: Uint8Array,
+  elements: DicomElement[],
+  tag: string,
+): string | null {
   const e = elements.find((el) => el.tag === tag);
   if (!e) return null;
   const slice = bytes.subarray(e.valueOffset, e.valueOffset + e.length);
@@ -179,7 +236,10 @@ function _tryReadString(bytes: Uint8Array, elements: DicomElement[], tag: string
     .trim();
 }
 
-function _renderPixelsToCanvas(bytes: Uint8Array, info: PixelDataInfo): HTMLCanvasElement | null {
+function _renderPixelsToCanvas(
+  bytes: Uint8Array,
+  info: PixelDataInfo,
+): HTMLCanvasElement | null {
   // Only the narrow common-case combinations are supported here. Operators with
   // exotic SOP classes use a real PACS.
   const supported =
@@ -197,7 +257,10 @@ function _renderPixelsToCanvas(bytes: Uint8Array, info: PixelDataInfo): HTMLCanv
   if (!ctx) return null;
 
   const imageData = ctx.createImageData(info.columns, info.rows);
-  const pixelBuffer = bytes.subarray(info.pixelOffset, info.pixelOffset + info.pixelLength);
+  const pixelBuffer = bytes.subarray(
+    info.pixelOffset,
+    info.pixelOffset + info.pixelLength,
+  );
 
   if (info.samplesPerPixel === 1) {
     // MONOCHROME2 — grey to RGB expansion.
@@ -229,12 +292,28 @@ function _renderPixelsToCanvas(bytes: Uint8Array, info: PixelDataInfo): HTMLCanv
   return canvas;
 }
 
-function _dicomViewer(bytes: Uint8Array, attachmentId: string, mimeType: string): HTMLElement {
+function _dicomViewer(
+  bytes: Uint8Array,
+  attachmentId: string,
+  mimeType: string,
+): HTMLElement {
   const elements = _parseDicom(bytes);
   if (elements === null) {
     return el("div", { class: "viewer viewer-fallback" }, [
-      el("p", { class: "muted" }, `Not a recognisable DICOM file (no DICM preamble at offset 128).`),
-      el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect"),
+      el(
+        "p",
+        { class: "muted" },
+        `Not a recognisable DICOM file (no DICM preamble at offset 128).`,
+      ),
+      el(
+        "a",
+        {
+          href: downloadAttachmentUrl(attachmentId),
+          target: "_blank",
+          rel: "noopener",
+        },
+        "Download to inspect",
+      ),
     ]);
   }
 
@@ -245,17 +324,31 @@ function _dicomViewer(bytes: Uint8Array, attachmentId: string, mimeType: string)
     if (!keyword) continue;
     renderedKnown++;
     const value = _decodeValue(bytes, e);
-    tbody.appendChild(el("tr", {}, [
-      el("td", {}, keyword),
-      el("td", {}, el("code", {}, `(${e.tag.slice(0, 4)},${e.tag.slice(4)})`)),
-      el("td", {}, e.vr),
-      el("td", {}, value),
-    ]));
+    tbody.appendChild(
+      el("tr", {}, [
+        el("td", {}, keyword),
+        el(
+          "td",
+          {},
+          el("code", {}, `(${e.tag.slice(0, 4)},${e.tag.slice(4)})`),
+        ),
+        el("td", {}, e.vr),
+        el("td", {}, value),
+      ]),
+    );
   }
 
   const summary = el("p", { class: "muted" }, [
     `Parsed ${elements.length} elements; showing ${renderedKnown} well-known tags. `,
-    el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download for full PACS viewing"),
+    el(
+      "a",
+      {
+        href: downloadAttachmentUrl(attachmentId),
+        target: "_blank",
+        rel: "noopener",
+      },
+      "Download for full PACS viewing",
+    ),
   ]);
 
   const children: ElChild[] = [summary];
@@ -266,7 +359,11 @@ function _dicomViewer(bytes: Uint8Array, attachmentId: string, mimeType: string)
   const previewHost = el("div", { class: "viewer-dicom-image" });
   const pixelInfo = _readPixelDataInfo(bytes, elements);
   if (pixelInfo !== null) {
-    const showButton = el("button", { type: "button" }, "Show image") as HTMLButtonElement;
+    const showButton = el(
+      "button",
+      { type: "button" },
+      "Show image",
+    ) as HTMLButtonElement;
     showButton.addEventListener("click", () => {
       showButton.disabled = true;
       const canvas = _renderPixelsToCanvas(bytes, pixelInfo);
@@ -276,7 +373,11 @@ function _dicomViewer(bytes: Uint8Array, attachmentId: string, mimeType: string)
             `Image preview not supported for ${pixelInfo.photometric} ${pixelInfo.bitsAllocated}-bit (planar ${pixelInfo.planarConfiguration}). `,
             el(
               "a",
-              { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" },
+              {
+                href: downloadAttachmentUrl(attachmentId),
+                target: "_blank",
+                rel: "noopener",
+              },
               "Download to view in PACS",
             ),
           ]),
@@ -286,25 +387,40 @@ function _dicomViewer(bytes: Uint8Array, attachmentId: string, mimeType: string)
       canvas.className = "viewer viewer-dicom-canvas";
       previewHost.appendChild(canvas);
     });
-    children.push(showButton);
-    children.push(previewHost);
+    children.push(showButton, previewHost);
   }
 
   if (renderedKnown > 0) {
-    children.push(el("table", { class: "viewer viewer-dicom-tags" }, [
-      el("thead", {}, el("tr", {}, [
-        el("th", {}, "Tag"),
-        el("th", {}, "(group,element)"),
-        el("th", {}, "VR"),
-        el("th", {}, "Value"),
-      ])),
-      tbody,
-    ]));
+    children.push(
+      el("table", { class: "viewer viewer-dicom-tags" }, [
+        el(
+          "thead",
+          {},
+          el("tr", {}, [
+            el("th", {}, "Tag"),
+            el("th", {}, "(group,element)"),
+            el("th", {}, "VR"),
+            el("th", {}, "Value"),
+          ]),
+        ),
+        tbody,
+      ]),
+    );
   } else {
-    children.push(el("p", { class: "muted" }, [
-      "No recognisable header tags in this file — likely a fragment or a private SOP class. ",
-      el("a", { href: downloadAttachmentUrl(attachmentId), target: "_blank", rel: "noopener" }, "Download to inspect"),
-    ]));
+    children.push(
+      el("p", { class: "muted" }, [
+        "No recognisable header tags in this file — likely a fragment or a private SOP class. ",
+        el(
+          "a",
+          {
+            href: downloadAttachmentUrl(attachmentId),
+            target: "_blank",
+            rel: "noopener",
+          },
+          "Download to inspect",
+        ),
+      ]),
+    );
   }
   return el("div", { class: "viewer viewer-dicom" }, children);
 }

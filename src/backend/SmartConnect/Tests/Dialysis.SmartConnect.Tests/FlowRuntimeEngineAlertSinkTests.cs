@@ -3,7 +3,7 @@ using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -74,7 +74,7 @@ public sealed class FlowRuntimeEngineAlertSinkTests
         invocations = captured;
 
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_alert_e2e_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         var sp = services.BuildServiceProvider();
 

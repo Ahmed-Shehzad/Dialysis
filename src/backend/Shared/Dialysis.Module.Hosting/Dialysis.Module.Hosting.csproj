@@ -19,6 +19,7 @@
     <ProjectReference Include="../../CQRS/Dialysis.CQRS.Core/Dialysis.CQRS.Core.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Intercessor/Intercessor.Abstractions/Intercessor.Abstractions.csproj" />
     <ProjectReference Include="../../BuildingBlocks/DistributedCache/Dialysis.BuildingBlocks.DistributedCache.Valkey/Dialysis.BuildingBlocks.DistributedCache.Valkey.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Hangfire/Transponder.Scheduling.Hangfire.csproj" />
   </ItemGroup>
 
   <ItemGroup>

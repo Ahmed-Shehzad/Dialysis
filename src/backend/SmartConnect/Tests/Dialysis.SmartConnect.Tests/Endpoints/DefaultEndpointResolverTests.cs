@@ -1,7 +1,7 @@
 using Dialysis.SmartConnect.Endpoints;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -75,7 +75,7 @@ public sealed class DefaultEndpointResolverTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_ep_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         return services.BuildServiceProvider();
     }

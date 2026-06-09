@@ -207,24 +207,12 @@ public static class EhrCompositionExtensions
                 EhrCommandRegistrations.RegisterAuthorizationBehaviors(c);
             });
 
-            // Billing ports — `EHR:Billing:Persistence:Provider` selects between the
-            // EF-backed variants (production: persistent across restarts and replicas)
-            // and the configurable / in-memory variants (dev / tests). The TryAdd*
-            // calls leave operators free to register their own implementations.
-            var billingProvider = configuration["EHR:Billing:Persistence:Provider"] ?? "Postgres";
-            if (billingProvider.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
-            {
-                services.TryAddSingleton<ICptFeeSchedule, ConfigurableCptFeeSchedule>();
-                services.TryAddSingleton<IChargeIdempotencyStore, InMemoryChargeIdempotencyStore>();
-                services.TryAddSingleton<ICptFeeScheduleAdminRepository, InMemoryCptFeeScheduleAdminRepository>();
-            }
-            else
-            {
-                services.TryAddScoped<DbContext>(sp => sp.GetRequiredService<EhrDbContext>());
-                services.TryAddScoped<ICptFeeSchedule, EfCptFeeSchedule>();
-                services.TryAddScoped<IChargeIdempotencyStore, EfChargeIdempotencyStore>();
-                services.TryAddScoped<ICptFeeScheduleAdminRepository, EfCptFeeScheduleAdminRepository>();
-            }
+            // Billing ports — EF-backed against PostgreSQL (persistent across restarts and replicas).
+            // The TryAdd* calls leave operators free to register their own implementations.
+            services.TryAddScoped<DbContext>(sp => sp.GetRequiredService<EhrDbContext>());
+            services.TryAddScoped<ICptFeeSchedule, EfCptFeeSchedule>();
+            services.TryAddScoped<IChargeIdempotencyStore, EfChargeIdempotencyStore>();
+            services.TryAddScoped<ICptFeeScheduleAdminRepository, EfCptFeeScheduleAdminRepository>();
 
             if (enableOutboxRelay)
                 services.AddTransponderOutboxRelay<EhrDbContext>();

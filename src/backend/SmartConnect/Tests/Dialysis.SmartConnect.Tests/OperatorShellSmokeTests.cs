@@ -4,11 +4,11 @@ using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
 
-public sealed class OperatorShellSmokeTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class OperatorShellSmokeTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory ;
+    private readonly SmartConnectApiFactory _factory;
 
-    public OperatorShellSmokeTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public OperatorShellSmokeTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Indexhtml_Serves_With_Expected_Nav_Anchors_Async()

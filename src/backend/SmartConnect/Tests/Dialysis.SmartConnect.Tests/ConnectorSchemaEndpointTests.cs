@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -13,11 +12,11 @@ namespace Dialysis.SmartConnect.Tests;
 /// registered adapter with a <c>hasSchema</c> flag, and GET /connectors/outbound/{kind}/schema
 /// returns the JSON Schema for adapters that have published one.
 /// </summary>
-public sealed class ConnectorSchemaEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ConnectorSchemaEndpointTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public ConnectorSchemaEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public ConnectorSchemaEndpointTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task List_Endpoint_Returns_Every_Registered_Outbound_Adapter_Kind_Async()

@@ -1,3 +1,4 @@
+using Dialysis.HIE.Api;
 using Dialysis.HIE.Persistence;
 using Dialysis.Module.Hosting.Testing;
 using Xunit;

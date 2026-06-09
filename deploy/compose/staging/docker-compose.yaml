@@ -205,6 +205,32 @@ services:
       timeout: "3s"
       retries: 10
       start_period: "5s"
+  postgres-hangfire:
+    image: "docker.io/postgres:17-alpine"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+    ports:
+      - "5447:5432"
+    expose:
+      - "5432"
+    volumes:
+      - type: "volume"
+        target: "/var/lib/postgresql/data"
+        source: "dialysis-postgres-hangfire-data"
+        read_only: false
+    networks:
+      - "aspire"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "pg_isready -U postgres -d dialysis_hangfire"
+      interval: "10s"
+      timeout: "3s"
+      retries: 10
+      start_period: "5s"
   postgres-sonarqube:
     image: "docker.io/postgres:17-alpine"
     environment:
@@ -295,6 +321,14 @@ services:
       HIS_URI: "postgresql://postgres:${POSTGRES_HIS_PASSWORD}@postgres-his:5432/dialysis_his"
       HIS_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-his:5432/dialysis_his"
       HIS_DATABASENAME: "dialysis_his"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ConnectionStrings__rabbitmq: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
@@ -323,6 +357,8 @@ services:
       - "${HIS_API_PORT}"
     depends_on:
       postgres-his:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       rabbitmq:
         condition: "service_started"
@@ -354,6 +390,14 @@ services:
       EHR_URI: "postgresql://postgres:${POSTGRES_EHR_PASSWORD}@postgres-ehr:5432/dialysis_ehr"
       EHR_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-ehr:5432/dialysis_ehr"
       EHR_DATABASENAME: "dialysis_ehr"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ConnectionStrings__rabbitmq: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
@@ -381,6 +425,8 @@ services:
       - "${EHR_API_PORT}"
     depends_on:
       postgres-ehr:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       rabbitmq:
         condition: "service_started"
@@ -412,6 +458,14 @@ services:
       PDMS_URI: "postgresql://postgres:${POSTGRES_PDMS_PASSWORD}@postgres-pdms:5432/dialysis_pdms"
       PDMS_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-pdms:5432/dialysis_pdms"
       PDMS_DATABASENAME: "dialysis_pdms"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ConnectionStrings__rabbitmq: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
@@ -439,6 +493,8 @@ services:
       - "${PDMS_API_PORT}"
     depends_on:
       postgres-pdms:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       rabbitmq:
         condition: "service_started"
@@ -470,6 +526,14 @@ services:
       SMARTCONNECT_URI: "postgresql://postgres:${POSTGRES_SMARTCONNECT_PASSWORD}@postgres-smartconnect:5432/dialysis_smartconnect"
       SMARTCONNECT_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-smartconnect:5432/dialysis_smartconnect"
       SMARTCONNECT_DATABASENAME: "dialysis_smartconnect"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ConnectionStrings__rabbitmq: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
@@ -507,6 +571,8 @@ services:
     depends_on:
       postgres-smartconnect:
         condition: "service_started"
+      postgres-hangfire:
+        condition: "service_started"
       rabbitmq:
         condition: "service_started"
       valkey:
@@ -537,6 +603,14 @@ services:
       HIE_URI: "postgresql://postgres:${POSTGRES_HIE_PASSWORD}@postgres-hie:5432/dialysis_hie"
       HIE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hie:5432/dialysis_hie"
       HIE_DATABASENAME: "dialysis_hie"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ConnectionStrings__rabbitmq: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
@@ -563,6 +637,8 @@ services:
       - "${HIE_API_PORT}"
     depends_on:
       postgres-hie:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       rabbitmq:
         condition: "service_started"
@@ -594,6 +670,14 @@ services:
       LAB_URI: "postgresql://postgres:${POSTGRES_LAB_PASSWORD}@postgres-lab:5432/dialysis_lab"
       LAB_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-lab:5432/dialysis_lab"
       LAB_DATABASENAME: "dialysis_lab"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ConnectionStrings__rabbitmq: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
@@ -622,6 +706,8 @@ services:
     depends_on:
       postgres-lab:
         condition: "service_started"
+      postgres-hangfire:
+        condition: "service_started"
       rabbitmq:
         condition: "service_started"
       valkey:
@@ -644,6 +730,14 @@ services:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       HTTP_PORTS: "5275"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       ASPNETCORE_URLS: "http://+:5275"
       Identity__Keycloak__Authority: "http://keycloak:8080/realms/dialysis"
       Identity__Keycloak__ClientSecret: "${IDENTITY_BFF_CLIENT_SECRET}"
@@ -655,6 +749,8 @@ services:
       - "5275"
       - "${IDENTITY_BFF_PORT}"
     depends_on:
+      postgres-hangfire:
+        condition: "service_started"
       keycloak:
         condition: "service_started"
       his-api:
@@ -773,6 +869,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://smartconnect-api:${SMARTCONNECT_API_PORT}"
@@ -789,6 +893,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       smartconnect-api:
         condition: "service_started"
@@ -820,6 +926,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://hie-api:${HIE_API_PORT}"
@@ -838,6 +952,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       hie-api:
         condition: "service_started"
@@ -873,6 +989,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://ehr-api:${EHR_API_PORT}"
@@ -891,6 +1015,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       ehr-api:
         condition: "service_started"
@@ -926,6 +1052,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       ASPNETCORE_ENVIRONMENT: "Staging"
@@ -941,6 +1075,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
     networks:
       - "aspire"
@@ -970,6 +1106,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://smartconnect-api:${SMARTCONNECT_API_PORT}"
@@ -989,6 +1133,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       smartconnect-api:
         condition: "service_started"
@@ -1026,6 +1172,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://his-api:${HIS_API_PORT}"
@@ -1045,6 +1199,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       ehr-api:
         condition: "service_started"
@@ -1080,6 +1236,14 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      ConnectionStrings__Hangfire: "Host=postgres-hangfire;Port=5432;Username=postgres;Password=${POSTGRES_HANGFIRE_PASSWORD};Database=dialysis_hangfire"
+      HANGFIRE_HOST: "postgres-hangfire"
+      HANGFIRE_PORT: "5432"
+      HANGFIRE_USERNAME: "postgres"
+      HANGFIRE_PASSWORD: "${POSTGRES_HANGFIRE_PASSWORD}"
+      HANGFIRE_URI: "postgresql://postgres:${POSTGRES_HANGFIRE_PASSWORD}@postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hangfire:5432/dialysis_hangfire"
+      HANGFIRE_DATABASENAME: "dialysis_hangfire"
       Bff__Events__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Bff__Events__SignalR__BackplaneConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Bff__Module__Aggregations__0__Address: "http://ehr-api:${EHR_API_PORT}"
@@ -1099,6 +1263,8 @@ services:
       rabbitmq:
         condition: "service_started"
       valkey:
+        condition: "service_started"
+      postgres-hangfire:
         condition: "service_started"
       ehr-api:
         condition: "service_started"
@@ -1291,6 +1457,8 @@ volumes:
   dialysis-postgres-hie-data:
     driver: "local"
   dialysis-postgres-lab-data:
+    driver: "local"
+  dialysis-postgres-hangfire-data:
     driver: "local"
   dialysis-sonarqube-pg-data:
     driver: "local"

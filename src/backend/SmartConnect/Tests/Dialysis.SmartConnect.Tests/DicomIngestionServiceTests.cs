@@ -1,7 +1,7 @@
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Dicom;
 using Dialysis.SmartConnect.Dicom.Persistence;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using FellowOakDicom;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -58,7 +58,7 @@ public sealed class DicomIngestionServiceTests
     private static (IServiceCollection Services, RecordingBlobStore Blobs) BuildServices()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory($"Dicom-{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         var blobs = new RecordingBlobStore();
         services.AddSingleton<IAttachmentBlobStore>(blobs);
         services.AddSingleton(TimeProvider.System);

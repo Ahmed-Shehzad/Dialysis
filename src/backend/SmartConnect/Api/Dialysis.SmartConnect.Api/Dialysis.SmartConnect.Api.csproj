@@ -27,7 +27,11 @@
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Sftp/Dialysis.SmartConnect.Inbound.Sftp.csproj" />
     <ProjectReference Include="../../Inbound/Dialysis.SmartConnect.Inbound.Transponder/Dialysis.SmartConnect.Inbound.Transponder.csproj" />
     <ProjectReference Include="../../Management/Dialysis.SmartConnect.Management.AspNetCore/Dialysis.SmartConnect.Management.AspNetCore.csproj" />
-    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
+    <!-- PostgreSQL is the SmartConnect store everywhere (Aspire/deploy inject ConnectionStrings:SmartConnect). -->
+    <ProjectReference Include="../../Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+    <!-- RabbitMQ transport for the host's Transponder bus. Wired when SmartConnect:Transponder:RabbitMq:ConnectionUri
+         is set (Aspire/deploy inject it); without it the bus stays in-process — consistent with every other module. -->
+    <ProjectReference Include="../../../BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Fhir/Dialysis.BuildingBlocks.Fhir.Audit/Dialysis.BuildingBlocks.Fhir.Audit.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa/Dialysis.BuildingBlocks.Hipaa.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Hipaa/Dialysis.BuildingBlocks.Hipaa.AspNetCore/Dialysis.BuildingBlocks.Hipaa.AspNetCore.csproj" />

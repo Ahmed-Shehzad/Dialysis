@@ -1,7 +1,7 @@
 using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -82,7 +82,7 @@ public sealed class ContentAddressableAttachmentBlobStoreTests
         public Fixture()
         {
             var services = new ServiceCollection();
-            services.AddSmartConnectPersistenceInMemory(databaseName: $"Cas-{Guid.NewGuid():N}");
+            services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
             services.AddSingleton<RecordingBlobStore>();
             _services = services.BuildServiceProvider();
             Inner = _services.GetRequiredService<RecordingBlobStore>();

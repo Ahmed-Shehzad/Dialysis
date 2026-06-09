@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Net;
 using System.Text.Json;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -14,11 +13,11 @@ namespace Dialysis.SmartConnect.Tests;
 /// the searchable-columns tests; this fixture's job is to lock in the HTTP-to-criteria
 /// binding so the operator dashboard's batch-id filter works end-to-end.
 /// </summary>
-public sealed class LedgerBatchIdFiltersTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LedgerBatchIdFiltersTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public LedgerBatchIdFiltersTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public LedgerBatchIdFiltersTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Messages_Endpoint_Filters_By_BatchId_Async()

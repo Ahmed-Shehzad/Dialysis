@@ -12,7 +12,6 @@ using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.PDMS.Core.Persistence;
-using Dialysis.PDMS.Core.Persistence.InMemory;
 using Dialysis.PDMS.Core.Persistence.Postgresql;
 using Dialysis.BuildingBlocks.ClinicianNotification;
 using Dialysis.PDMS.Medications.Consumers;
@@ -134,32 +133,11 @@ public static class PdmsCompositionExtensions
             services.AddSingleton<HaemodialysisSessionOpenEhrProjector>();
             services.AddSingleton<ChairOccupancyProjection>();
 
-            // Medications + Reporting + OnCall slice persistence. Provider is selected via
-            // `Pdms:Persistence:Provider` config — `Postgres` (default for hosted environments)
-            // backs every aggregate with EF + Postgres; `InMemory` keeps the dev-machine flow
-            // fast (no Postgres required) and is what the test fixtures use.
-            var provider = configuration["Pdms:Persistence:Provider"] ?? "Postgres";
-            var useInMemory = provider.Equals("InMemory", StringComparison.OrdinalIgnoreCase);
-
-            if (useInMemory)
-            {
-                services.AddPdmsInMemoryRepository<MedicationAdministrationRecord, Guid>();
-                services.AddPdmsInMemoryRepository<IvPumpInfusion, Guid>();
-                services.AddPdmsInMemoryRepository<MedicationInventoryItem, Guid>();
-                services.AddPdmsInMemoryRepository<SessionReport, Guid>();
-                services.AddPdmsInMemoryRepository<ReportTemplate, Guid>();
-                services.AddPdmsInMemoryRepository<OnCallRotation, Guid>();
-                services.AddPdmsInMemoryRepository<EscalationPolicy, Guid>();
-                services.AddPdmsInMemoryRepository<AlarmDispatch, Guid>();
-                services.AddPdmsInMemoryRepository<PatientDirectoryEntry, Guid>();
-            }
-            else
-            {
-                // Open-generic registration — `PdmsRepository<,>` resolves whichever aggregate
-                // the controller / consumer asks for, against the same PdmsDbContext.
-                services.AddScoped<DbContext>(sp => sp.GetRequiredService<PdmsDbContext>());
-                services.AddScoped(typeof(IPdmsRepository<,>), typeof(PdmsRepository<,>));
-            }
+            // Medications + Reporting + OnCall slice persistence — open-generic registration so
+            // `PdmsRepository<,>` resolves whichever aggregate the controller / consumer asks for,
+            // against the same PdmsDbContext (PostgreSQL).
+            services.AddScoped<DbContext>(sp => sp.GetRequiredService<PdmsDbContext>());
+            services.AddScoped(typeof(IPdmsRepository<,>), typeof(PdmsRepository<,>));
 
             // Vendor-neutral IV pump driver registry — one ParseAsync per vendor wire shape.
             services.AddSingleton<IIvPumpDriver, BdAlarisCqiDriver>();

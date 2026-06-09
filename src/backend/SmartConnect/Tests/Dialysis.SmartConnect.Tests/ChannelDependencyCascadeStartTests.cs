@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -12,11 +11,11 @@ namespace Dialysis.SmartConnect.Tests;
 ///  - 409 + cycle path when the dependency graph contains a cycle.
 ///  - Skips dependencies that are already Started.
 /// </summary>
-public sealed class ChannelDependencyCascadeStartTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ChannelDependencyCascadeStartTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public ChannelDependencyCascadeStartTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public ChannelDependencyCascadeStartTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Cascade_Starts_Entire_Dependency_Chain_In_Order_Async()

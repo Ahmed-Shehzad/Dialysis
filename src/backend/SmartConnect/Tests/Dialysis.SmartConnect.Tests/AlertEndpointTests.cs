@@ -1,16 +1,15 @@
 using System.Net;
 using System.Net.Http.Json;
 using Dialysis.SmartConnect.Alerts;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
 
-public sealed class AlertEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class AlertEndpointTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory ;
+    private readonly SmartConnectApiFactory _factory;
 
-    public AlertEndpointTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public AlertEndpointTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Post_Then_Get_Round_Trips_A_Rule_Async()

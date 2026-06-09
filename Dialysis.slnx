@@ -133,7 +133,6 @@
   </Folder>
   <Folder Name="/src/backend/EHR/Persistence/">
     <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Abstractions/Dialysis.EHR.Core.Persistence.Abstractions.csproj" />
-    <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.InMemory/Dialysis.EHR.Core.Persistence.InMemory.csproj" />
     <Project Path="src/backend/EHR/Persistence/Dialysis.EHR.Core.Persistence.Postgresql/Dialysis.EHR.Core.Persistence.Postgresql.csproj" />
   </Folder>
   <Folder Name="/src/backend/PDMS/">
@@ -152,7 +151,6 @@
   </Folder>
   <Folder Name="/src/backend/PDMS/Persistence/">
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Abstractions/Dialysis.PDMS.Core.Persistence.Abstractions.csproj" />
-    <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.InMemory/Dialysis.PDMS.Core.Persistence.InMemory.csproj" />
     <Project Path="src/backend/PDMS/Persistence/Dialysis.PDMS.Core.Persistence.Postgresql/Dialysis.PDMS.Core.Persistence.Postgresql.csproj" />
   </Folder>
   <Folder Name="/src/backend/Shared/">
@@ -251,7 +249,6 @@
   </Folder>
   <Folder Name="/src/backend/SmartConnect/Persistence/">
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Abstractions.csproj" />
-    <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql/Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob/Dialysis.SmartConnect.Persistence.ObjectStorage.AzureBlob.csproj" />
     <Project Path="src/backend/SmartConnect/Persistence/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable/Dialysis.SmartConnect.Persistence.ObjectStorage.ContentAddressable.csproj" />

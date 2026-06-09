@@ -21,6 +21,7 @@
     <!-- Valkey-backed IDistributedCache + Data Protection key ring for the server-side cookie
          ticket store (keeps the per-context BFF cookie down to a session key on the shared origin). -->
     <ProjectReference Include="../../BuildingBlocks/DistributedCache/Dialysis.BuildingBlocks.DistributedCache.Valkey/Dialysis.BuildingBlocks.DistributedCache.Valkey.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Hangfire/Transponder.Scheduling.Hangfire.csproj" />
   </ItemGroup>
 
 </Project>

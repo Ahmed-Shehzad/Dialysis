@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -12,11 +11,11 @@ namespace Dialysis.SmartConnect.Tests;
 ///  - 204 once the dependency is Started.
 ///  - 204 immediately when ?force=true is supplied, even with stopped deps.
 /// </summary>
-public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ChannelDependencyStartEnforcementTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public ChannelDependencyStartEnforcementTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public ChannelDependencyStartEnforcementTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Start_Returns_422_With_Unmet_Dependencies_Async()

@@ -2,7 +2,7 @@ using System.Text;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Dialysis.SmartConnect.Tests.TestPlugins;
 using Hl7.Fhir.Model;
@@ -69,7 +69,7 @@ public sealed class MllpToFhirEndToEndTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_e2e_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         var sp = services.BuildServiceProvider();

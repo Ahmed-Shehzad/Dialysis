@@ -3,7 +3,7 @@ using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Dialysis.SmartConnect.Tests.TestPlugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +18,7 @@ public sealed class FlowRuntimeEngineDsfRoutingTests
     {
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_dsf_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();
@@ -93,7 +93,7 @@ public sealed class FlowRuntimeEngineDsfRoutingTests
 
         var services = new ServiceCollection();
         services.AddSingleton<CapturingOutboundAdapter>();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_dsf_idx_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
 
         await using var sp = services.BuildServiceProvider();

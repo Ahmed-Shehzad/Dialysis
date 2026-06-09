@@ -1,5 +1,5 @@
 using Dialysis.SmartConnect.CodeTemplates;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -48,7 +48,7 @@ public sealed class BuiltInCodeTemplatesSeederTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_seed_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         return services.BuildServiceProvider();
     }
 }

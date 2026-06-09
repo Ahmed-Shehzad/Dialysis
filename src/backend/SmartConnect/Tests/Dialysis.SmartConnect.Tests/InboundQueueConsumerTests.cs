@@ -3,7 +3,7 @@ using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.Hosting;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +21,7 @@ public sealed class InboundQueueConsumerTests
         using var host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
-                services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_queue_{Guid.NewGuid():N}");
+                services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
                 services.AddSmartConnectCore();
                 services.AddDefaultInboundMessageFactory();
                 services.AddSmartConnectInboundTransport();

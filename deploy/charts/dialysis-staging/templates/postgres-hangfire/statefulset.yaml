@@ -1,0 +1,46 @@
+---
+apiVersion: "apps/v1"
+kind: "StatefulSet"
+metadata:
+  name: "postgres-hangfire-statefulset"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "postgres-hangfire"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "{{ .Chart.Name }}"
+        app.kubernetes.io/component: "postgres-hangfire"
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+    spec:
+      containers:
+        - image: "docker.io/postgres:17-alpine"
+          name: "postgres-hangfire"
+          envFrom:
+            - configMapRef:
+                name: "postgres-hangfire-config"
+            - secretRef:
+                name: "postgres-hangfire-secrets"
+          ports:
+            - name: "tcp"
+              protocol: "TCP"
+              containerPort: 5432
+          volumeMounts:
+            - name: "dialysis-postgres-hangfire-data"
+              mountPath: "/var/lib/postgresql/data"
+          imagePullPolicy: "IfNotPresent"
+      volumes:
+        - name: "dialysis-postgres-hangfire-data"
+          emptyDir: {}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "{{ .Chart.Name }}"
+      app.kubernetes.io/component: "postgres-hangfire"
+      app.kubernetes.io/instance: "{{ .Release.Name }}"
+  replicas: 1
+  persistentVolumeClaimRetentionPolicy: {}
+  updateStrategy:
+    rollingUpdate: {}
+    type: "RollingUpdate"

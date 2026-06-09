@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -14,11 +13,11 @@ namespace Dialysis.SmartConnect.Tests;
 ///  - GET on the blob endpoint streams the bytes back.
 ///  - GETs against a blob id NOT referenced by the channel return 404 (no enumeration).
 /// </summary>
-public sealed class ChannelBlobAttachmentTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ChannelBlobAttachmentTests : IClassFixture<SmartConnectApiFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-    public ChannelBlobAttachmentTests(WebApplicationFactory<Program> factory) => _factory = factory;
+    public ChannelBlobAttachmentTests(SmartConnectApiFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Blob_Upload_Then_Reference_On_Channel_Then_Download_Round_Trips_Async()

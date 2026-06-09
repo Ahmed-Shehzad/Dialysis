@@ -1,7 +1,7 @@
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.InMemory;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
 using Dialysis.SmartConnect.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +45,7 @@ public sealed class DefaultMessageRouterTests
     public async Task Resolves_Only_Started_Flows_With_Matching_Subscriptions_Async()
     {
         var services = new ServiceCollection();
-        services.AddSmartConnectPersistenceInMemory(databaseName: $"sc_router_{Guid.NewGuid():N}");
+        services.AddSmartConnectPersistenceForPostgresql(SmartConnectPostgres.NewDatabaseConnectionString());
         services.AddSmartConnectCore();
         await using var sp = services.BuildServiceProvider();
 

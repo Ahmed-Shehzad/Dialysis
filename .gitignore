@@ -55,6 +55,7 @@ orleans.codegen.cs
 
 ## SonarQube (local scanner state)
 .sonarqube/
+.sonarlint/
 
 ## Test & coverage
 ## Playwright e2e artifacts (videos, screenshots, traces, HTML reports) — one subtree per SPA under
