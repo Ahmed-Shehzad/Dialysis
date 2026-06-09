@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Dialysis.DomainDrivenDesign.Specifications;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Medications.Domain;
+using Dialysis.PDMS.Reporting.Directory;
 using Dialysis.PDMS.Reporting.Generators;
 using Dialysis.PDMS.TreatmentSessions.Domain;
 using Dialysis.PDMS.TreatmentSessions.Ports;
@@ -28,7 +29,7 @@ public sealed class SessionReportContextBuilderTests
         session.Complete(start.AddMinutes(140), achievedUfVolumeLiters: 2.5m);
 
         var builder = new SessionReportContextBuilder(
-            new StubSessionRepo(session), new StubMedications(), new StubAlarms());
+            new StubSessionRepo(session), new StubMedications(), new StubAlarms(), new StubPatientDirectory());
         var ctx = await builder.BuildAsync(session.Id, CancellationToken.None);
 
         ctx.ShouldNotBeNull();
@@ -59,7 +60,7 @@ public sealed class SessionReportContextBuilderTests
             alarmSource: "Venous pressure high", alarmPhase: "Dialysis", observedAtUtc: start.AddMinutes(10));
 
         var builder = new SessionReportContextBuilder(
-            new StubSessionRepo(session), new StubMedications(mar), new StubAlarms(alarm));
+            new StubSessionRepo(session), new StubMedications(mar), new StubAlarms(alarm), new StubPatientDirectory());
         var ctx = await builder.BuildAsync(session.Id, CancellationToken.None);
 
         ctx.ShouldNotBeNull();
@@ -78,8 +79,41 @@ public sealed class SessionReportContextBuilderTests
     public async Task Returns_Null_For_Unknown_Session_Async()
     {
         var builder = new SessionReportContextBuilder(
-            new StubSessionRepo(null), new StubMedications(), new StubAlarms());
+            new StubSessionRepo(null), new StubMedications(), new StubAlarms(), new StubPatientDirectory());
         (await builder.BuildAsync(Guid.NewGuid(), CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Fills_Real_Name_And_Mrn_From_The_Patient_Directory_Async()
+    {
+        var session = NewStartedSession(out var start);
+        session.Complete(start.AddMinutes(120), achievedUfVolumeLiters: 2.0m);
+
+        var directoryEntry = PatientDirectoryEntry.From(
+            session.PatientId, "MRN-99001", "Marcus", "Bell", new DateOnly(1968, 3, 14), start);
+
+        var builder = new SessionReportContextBuilder(
+            new StubSessionRepo(session), new StubMedications(), new StubAlarms(),
+            new StubPatientDirectory(directoryEntry));
+        var ctx = await builder.BuildAsync(session.Id, CancellationToken.None);
+
+        ctx.ShouldNotBeNull();
+        ctx!.PatientDisplayName.ShouldBe("Marcus Bell");
+        ctx.MedicalRecordNumber.ShouldBe("MRN-99001");
+    }
+
+    [Fact]
+    public async Task Falls_Back_To_Placeholder_When_Patient_Not_In_Directory_Async()
+    {
+        var session = NewStartedSession(out var start);
+        session.Complete(start.AddMinutes(120), achievedUfVolumeLiters: 2.0m);
+
+        var builder = new SessionReportContextBuilder(
+            new StubSessionRepo(session), new StubMedications(), new StubAlarms(), new StubPatientDirectory());
+        var ctx = await builder.BuildAsync(session.Id, CancellationToken.None);
+
+        ctx.ShouldNotBeNull();
+        ctx!.PatientDisplayName.ShouldStartWith("Patient ");
     }
 
     private static DialysisSession NewStartedSession(out DateTime start)
@@ -139,6 +173,24 @@ public sealed class SessionReportContextBuilderTests
         public Task AddAsync(MedicationAdministrationRecord aggregate, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public void Update(MedicationAdministrationRecord aggregate) { }
         public void Remove(MedicationAdministrationRecord aggregate) { }
+    }
+
+    private sealed class StubPatientDirectory : IPdmsRepository<PatientDirectoryEntry, Guid>
+    {
+        private readonly List<PatientDirectoryEntry> _entries;
+        public StubPatientDirectory(params PatientDirectoryEntry[] seed) => _entries = [.. seed];
+        public Task<PatientDirectoryEntry?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_entries.FirstOrDefault(e => e.Id == id));
+        public Task<IReadOnlyList<PatientDirectoryEntry>> ListAsync(
+            ISpecification<PatientDirectoryEntry>? specification = null, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<PatientDirectoryEntry>>([.. _entries]);
+        public Task AddAsync(PatientDirectoryEntry aggregate, CancellationToken cancellationToken = default)
+        {
+            _entries.Add(aggregate);
+            return Task.CompletedTask;
+        }
+        public void Update(PatientDirectoryEntry aggregate) { }
+        public void Remove(PatientDirectoryEntry aggregate) => _entries.Remove(aggregate);
     }
 
     private sealed class StubAlarms : ITreatmentAlarmRepository

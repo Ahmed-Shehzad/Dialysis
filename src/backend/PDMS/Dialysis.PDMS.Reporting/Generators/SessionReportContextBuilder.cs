@@ -1,6 +1,7 @@
 using System.Globalization;
 using Dialysis.PDMS.Core.Persistence;
 using Dialysis.PDMS.Medications.Domain;
+using Dialysis.PDMS.Reporting.Directory;
 using Dialysis.PDMS.TreatmentSessions.Ports;
 
 namespace Dialysis.PDMS.Reporting.Generators;
@@ -11,10 +12,11 @@ namespace Dialysis.PDMS.Reporting.Generators;
 /// machine alarms. Duration is the pause-aware machine usage time computed by the aggregate, so
 /// the reporting PDFs and the billing charge agree with the live chairside estimate.
 ///
-/// Patient identity (name, MRN, allergies, preferred language) is owned by HIS/EHR — not PDMS —
-/// so those fields carry safe id-derived placeholders here; the human-readable PDFs treat them
-/// as best-effort. The billing / invoice pipeline keys off the patient and session ids, not the
-/// labels, so it is unaffected.
+/// Patient identity (name, MRN, allergies, preferred language) is owned by HIS/EHR — not PDMS. The
+/// name + MRN are filled from the local <see cref="PatientDirectoryEntry"/> cache (fed asynchronously by
+/// EHR patient events); when the patient hasn't been mirrored yet, the fields fall back to safe
+/// id-derived placeholders. The billing / invoice pipeline keys off the patient and session ids, not the
+/// labels, so it is unaffected either way.
 /// </summary>
 public sealed class SessionReportContextBuilder : ISessionReportContextBuilder
 {
@@ -24,16 +26,19 @@ public sealed class SessionReportContextBuilder : ISessionReportContextBuilder
     private readonly IDialysisSessionRepository _sessions;
     private readonly IPdmsRepository<MedicationAdministrationRecord, Guid> _medications;
     private readonly ITreatmentAlarmRepository _alarms;
+    private readonly IPdmsRepository<PatientDirectoryEntry, Guid> _patientDirectory;
 
     /// <summary>Creates the builder.</summary>
     public SessionReportContextBuilder(
         IDialysisSessionRepository sessions,
         IPdmsRepository<MedicationAdministrationRecord, Guid> medications,
-        ITreatmentAlarmRepository alarms)
+        ITreatmentAlarmRepository alarms,
+        IPdmsRepository<PatientDirectoryEntry, Guid> patientDirectory)
     {
         _sessions = sessions;
         _medications = medications;
         _alarms = alarms;
+        _patientDirectory = patientDirectory;
     }
 
     /// <inheritdoc />
@@ -62,11 +67,15 @@ public sealed class SessionReportContextBuilder : ISessionReportContextBuilder
         var patientRef = ShortRef(session.PatientId);
         var chairLabel = session.MachineId is { } machine ? ShortRef(machine) : "—";
 
+        // Fill the real name + MRN from the EHR-fed directory cache; fall back to id-derived placeholders
+        // when the patient hasn't been mirrored into PDMS yet (e.g. an event still in flight).
+        var patient = await _patientDirectory.GetByIdAsync(session.PatientId, cancellationToken).ConfigureAwait(false);
+
         return new SessionReportContext(
             SessionId: session.Id,
             PatientId: session.PatientId,
-            PatientDisplayName: $"Patient {patientRef}",
-            MedicalRecordNumber: patientRef,
+            PatientDisplayName: patient?.DisplayName ?? $"Patient {patientRef}",
+            MedicalRecordNumber: patient is null ? patientRef : patient.MedicalRecordNumber,
             ChairLabel: chairLabel,
             Modality: HaemodialysisModality,
             StartedAtUtc: startedAt,

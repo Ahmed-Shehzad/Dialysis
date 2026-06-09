@@ -7,6 +7,7 @@ using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Medications.Domain;
 using Dialysis.PDMS.OnCall.Domain;
 using Dialysis.PDMS.Persistence.Configurations;
+using Dialysis.PDMS.Reporting.Directory;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.TreatmentSessions.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,10 @@ public sealed class PdmsDbContext : ModuleDbContextBase
     public DbSet<EscalationPolicy> EscalationPolicies => Set<EscalationPolicy>();
     public DbSet<AlarmDispatch> AlarmDispatches => Set<AlarmDispatch>();
 
+    // Local cache of EHR-owned patient demographics (name/MRN/DOB), fed by EHR patient events, so the
+    // background report builder can print a real name/MRN on session PDFs. Rows live in `pdms_directory`.
+    public DbSet<PatientDirectoryEntry> PatientDirectory => Set<PatientDirectoryEntry>();
+
     // Durable command bus idempotency + status ledger; rows live in `pdms_durablecommands.command_ledger`.
     public DbSet<CommandLedgerEntry> CommandLedgerEntries => Set<CommandLedgerEntry>();
 
@@ -68,6 +73,7 @@ public sealed class PdmsDbContext : ModuleDbContextBase
         modelBuilder.ApplyConfiguration(new OnCallRotationConfiguration());
         modelBuilder.ApplyConfiguration(new EscalationPolicyConfiguration());
         modelBuilder.ApplyConfiguration(new AlarmDispatchConfiguration());
+        modelBuilder.ApplyConfiguration(new PatientDirectoryEntryConfiguration());
 
         modelBuilder.Entity<DialysisSession>(b =>
         {
