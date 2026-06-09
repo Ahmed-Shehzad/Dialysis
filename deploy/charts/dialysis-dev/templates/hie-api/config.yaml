@@ -26,5 +26,6 @@ data:
   RABBITMQ_USERNAME: "{{ .Values.config.hie_api.RABBITMQ_USERNAME }}"
   VALKEY_HOST: "{{ .Values.config.hie_api.VALKEY_HOST }}"
   VALKEY_PORT: "{{ .Values.config.hie_api.VALKEY_PORT }}"
+  Hie__Transponder__EnableOutboxRelay: "{{ .Values.config.hie_api.Hie__Transponder__EnableOutboxRelay }}"
   Hie__Authentication__Authority: "{{ .Values.config.hie_api.Hie__Authentication__Authority }}"
   Hie__Authentication__Audience: "{{ .Values.config.hie_api.Hie__Authentication__Audience }}"

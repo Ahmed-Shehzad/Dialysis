@@ -588,6 +588,7 @@ services:
       VALKEY_PORT: "6379"
       VALKEY_PASSWORD: "${VALKEY_PASSWORD}"
       VALKEY_URI: "valkey://:${VALKEY_PASSWORD}@valkey:6379"
+      Hie__Transponder__EnableOutboxRelay: "true"
       Hie__Transponder__RabbitMq__ConnectionUri: "amqp://guest:${RABBITMQ_PASSWORD}@rabbitmq:5672"
       Hie__DistributedCache__Valkey__ConnectionString: "valkey:6379,password=${VALKEY_PASSWORD}"
       Hie__Authentication__Authority: "http://keycloak:8080/realms/dialysis"

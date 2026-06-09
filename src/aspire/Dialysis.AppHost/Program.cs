@@ -511,6 +511,7 @@ public partial class Program
             .WithReference(rabbit).WaitFor(rabbit)
             .WithReference(valkey).WaitFor(valkey)
             .WaitFor(keycloak)
+            .WithEnvironment("Hie__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("Hie__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("Hie__DistributedCache__Valkey__ConnectionString", valkey)
             .WithEnvironment("Hie__Authentication__Authority", keycloakRealmUri)

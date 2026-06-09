@@ -407,6 +407,7 @@ config:
     RABBITMQ_USERNAME: "guest"
     VALKEY_HOST: "valkey-service"
     VALKEY_PORT: "6379"
+    Hie__Transponder__EnableOutboxRelay: "true"
     Hie__Authentication__Authority: "http://keycloak-service:8080/realms/dialysis"
     Hie__Authentication__Audience: "account"
   lab_api:
