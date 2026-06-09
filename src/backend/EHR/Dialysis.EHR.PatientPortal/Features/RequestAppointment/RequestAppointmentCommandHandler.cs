@@ -33,10 +33,11 @@ public sealed class RequestAppointmentCommandHandler : ICommandHandler<RequestAp
         }
 
         var id = Guid.CreateVersion7();
+        // Pass the non-null local (Submit re-validates + trims; a blank reason still throws "Reason required").
         var portalRequest = PortalAppointmentRequest.Submit(
             id,
             request.PatientId,
-            request.ReasonText,
+            reasonText,
             request.EarliestPreferredUtc,
             request.LatestPreferredUtc);
         _requests.Add(portalRequest);
