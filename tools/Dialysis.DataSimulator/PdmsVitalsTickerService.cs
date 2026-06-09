@@ -51,7 +51,7 @@ public sealed class PdmsVitalsTickerService : BackgroundService
             {
                 await TickAsync(stoppingToken).ConfigureAwait(false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, stoppingToken))
             {
                 _logger.LogWarning(ex, "PDMS vitals tick failed; will retry on the next interval.");
             }
@@ -88,7 +88,7 @@ public sealed class PdmsVitalsTickerService : BackgroundService
                 await pdms.RecordReadingAsync(session.Id, NextReading(session.Id), cancellationToken).ConfigureAwait(false);
                 return true;
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, cancellationToken))
             {
                 _logger.LogWarning(ex, "Failed to record a reading for session {SessionId}.", session.Id);
                 return false;

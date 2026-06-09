@@ -31,6 +31,10 @@ public sealed class ContinuousDataWorker : BackgroundService
     private readonly ILogger<ContinuousDataWorker> _logger;
     private long _sequence;
 
+    // Captured once at the top of ExecuteAsync so the best-effort helpers (which don't take a token) can
+    // tell a genuine shutdown from an HttpClient timeout — see CancellationClassifier for why that matters.
+    private CancellationToken _stoppingToken;
+
     /// <summary>Creates the worker.</summary>
     public ContinuousDataWorker(
         IEhrClient ehr,
@@ -62,6 +66,8 @@ public sealed class ContinuousDataWorker : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _stoppingToken = stoppingToken;
+
         if (!_options.Enabled)
         {
             _logger.LogInformation("DataSimulator is disabled (DataSimulator:Enabled=false); idling.");
@@ -74,10 +80,12 @@ public sealed class ContinuousDataWorker : BackgroundService
 
         // Registry-level demo data (TEFCA QHIN partners + MPI duplicate review queue) is seeded once at
         // startup — it isn't part of any single patient journey. Idempotent, so restarts don't pile up.
-        await SeedHieRegistryAsync(stoppingToken).ConfigureAwait(false);
+        // Best-effort like the rest: a slow/unreachable endpoint here must not abort startup or fault the
+        // host (the journey loop below still runs and self-heals once the modules are reachable).
+        await TryAsync("seed.hie-registry", () => SeedHieRegistryAsync(stoppingToken)).ConfigureAwait(false);
         // Admin / operational master data shown on the per-module admin consoles (reporting templates,
         // inventory, on-call, fee schedule, billing exports, terminology, alarm-dispatch audit).
-        await SeedAdminRegistriesAsync(stoppingToken).ConfigureAwait(false);
+        await TryAsync("seed.admin-registries", () => SeedAdminRegistriesAsync(stoppingToken)).ConfigureAwait(false);
         // SmartConnect integration flows — seeded separately because SmartConnect persistence is
         // in-memory (resets every restart), so this re-seeds each run rather than gating on the
         // persistent PDMS marker above.
@@ -141,7 +149,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             _logger.LogDebug("Patient already exists (MRN {Mrn}); skipping journey.", patient.MedicalRecordNumber);
             return;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
             _logger.LogWarning("Patient registration failed (MRN {Mrn}): {Message}; continuing.", patient.MedicalRecordNumber, ex.Message);
             return;
@@ -172,7 +180,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             {
                 await _his.AssignChairAsync(entryId, chair, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
                 _logger.LogDebug("Chair {Chair} not assigned (likely occupied): {Message}", chair, ex.Message);
             }
@@ -440,7 +448,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             {
                 alreadySeeded = await _pdms.HasOnCallRotationsAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
                 _logger.LogInformation("Admin-seed probe not ready (attempt {Attempt}/20): {Message}; retrying.", attempt, ex.Message);
                 try { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false); }
@@ -633,7 +641,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         {
             await action().ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
             _logger.LogWarning("Journey step {Step} failed: {Message}", step, ex.Message);
         }
@@ -646,7 +654,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         {
             return await action().ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
             _logger.LogWarning("Journey step {Step} failed: {Message}", step, ex.Message);
             return null;
