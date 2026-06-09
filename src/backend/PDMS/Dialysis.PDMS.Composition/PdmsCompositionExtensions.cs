@@ -20,7 +20,6 @@ using Dialysis.PDMS.Medications.Contracts;
 using Dialysis.PDMS.OnCall.Consumers;
 using Dialysis.PDMS.OnCall.Dispatch;
 using Dialysis.PDMS.Reporting.Consumers;
-using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.PDMS.Reporting.Templating;
