@@ -202,6 +202,12 @@ export const BillingChargesPage = () => {
   );
 };
 
+const verdictTone = (verdict: string): string => {
+  if (verdict === "Accepted") return "text-emerald-300";
+  if (verdict === "Rejected") return "text-rose-300";
+  return "text-amber-300";
+};
+
 const AckTimelineDrawer = ({ claimId, onClose }: { claimId: string; onClose: () => void }) => {
   const query = useQuery({
     queryKey: ["ehr", "billing", "claims", claimId, "acks"],
@@ -265,17 +271,7 @@ const AckTimelineDrawer = ({ claimId, onClose }: { claimId: string; onClose: () 
                   <span className="font-mono text-slate-400">
                     {new Date(a.receivedAtUtc).toISOString().replace("T", " ").slice(0, 19)} Z
                   </span>
-                  <span
-                    className={
-                      a.verdict === "Accepted"
-                        ? "text-emerald-300"
-                        : a.verdict === "Rejected"
-                          ? "text-rose-300"
-                          : "text-amber-300"
-                    }
-                  >
-                    {a.verdict}
-                  </span>
+                  <span className={verdictTone(a.verdict)}>{a.verdict}</span>
                 </div>
                 <div className="mt-1 text-slate-200">
                   {a.kind}

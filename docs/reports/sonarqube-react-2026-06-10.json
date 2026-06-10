@@ -1,0 +1,952 @@
+{
+  "generatedAt": "2026-06-10T03:41:57.870Z",
+  "total": 114,
+  "filesPerApp": {
+    "his-web": 52,
+    "ehr-web": 94,
+    "pdms-web": 81,
+    "smartconnect-web": 66,
+    "hie-web": 64,
+    "identity-web": 62,
+    "patient-portal-web": 72
+  },
+  "perApp": {
+    "his-web": 8,
+    "ehr-web": 31,
+    "pdms-web": 23,
+    "smartconnect-web": 13,
+    "hie-web": 12,
+    "identity-web": 9,
+    "patient-portal-web": 18
+  },
+  "perSeverity": {
+    "1": 0,
+    "2": 114
+  },
+  "perRule": {
+    "sonarjs/pseudo-random": 8,
+    "sonarjs/void-use": 50,
+    "sonarjs/no-nested-conditional": 19,
+    "sonarjs/redundant-type-aliases": 9,
+    "sonarjs/no-nested-functions": 9,
+    "sonarjs/slow-regex": 1,
+    "sonarjs/cognitive-complexity": 5,
+    "sonarjs/no-nested-template-literals": 3,
+    "sonarjs/no-redundant-boolean": 4,
+    "sonarjs/no-clear-text-protocols": 6
+  },
+  "findings": [
+    {
+      "app": "his-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "his-web",
+      "file": "src/features/notifications/useBffNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 55,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "his-web",
+      "file": "src/features/notifications/useBffNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 56,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "his-web",
+      "file": "src/modules/his/admin/BillingExportsPage.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 31,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "his-web",
+      "file": "src/modules/his/admin/DeviceRegistryPage.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 48,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "his-web",
+      "file": "src/modules/his/today/QueueCard.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 74,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "his-web",
+      "file": "src/modules/his/today/queueApi.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 148,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "his-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/hie/components/ConsentAdminPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 70,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/hie/components/OutboundQueuePanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 49,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/imaging/components/ImagingPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 62,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/imaging/components/ImagingPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 69,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/notifications/useBffNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 55,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/notifications/useBffNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 56,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 22,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 27,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 32,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/admin/AppointmentRequestsWorklist.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 67,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/admin/BillingChargesPage.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 272,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/admin/ConditionControlPanel.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 110,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/AddNoteDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 56,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/AddNoteDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 59,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/AfterVisitSummaryAuthoringCard.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 63,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/AfterVisitSummaryAuthoringCard.tsx",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 110,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/EhrChartPage.tsx",
+      "rule": "sonarjs/slow-regex",
+      "severity": 2,
+      "line": 57,
+      "message": "Make sure the regex used here, which is vulnerable to super-linear runtime due to backtracking, cannot lead to denial of service."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/EhrChartPage.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 408,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/MessagingCard.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 50,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/MessagingCard.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 51,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/OrderLabsDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 71,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/OrderPrescriptionDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 81,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/OrderSetDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 60,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/PatientTimeline.tsx",
+      "rule": "sonarjs/cognitive-complexity",
+      "severity": 2,
+      "line": 70,
+      "message": "Refactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/PatientTimeline.tsx",
+      "rule": "sonarjs/no-nested-template-literals",
+      "severity": 2,
+      "line": 90,
+      "message": "Refactor this code to not use nested template literals."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/PatientTimeline.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 113,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/PatientTimeline.tsx",
+      "rule": "sonarjs/no-nested-template-literals",
+      "severity": 2,
+      "line": 139,
+      "message": "Refactor this code to not use nested template literals."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/RecentNotesPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 57,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/modules/ehr/chart/ReferralDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 32,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "ehr-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/cognitive-complexity",
+      "severity": 2,
+      "line": 123,
+      "message": "Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-redundant-boolean",
+      "severity": 2,
+      "line": 284,
+      "message": "Refactor the code to avoid using this boolean literal."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 485,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/medications/components/RecordAdministrationDialog.tsx",
+      "rule": "sonarjs/no-clear-text-protocols",
+      "severity": 2,
+      "line": 31,
+      "message": "Using http protocol is insecure. Use https instead."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/medications/components/RecordAdministrationDialog.tsx",
+      "rule": "sonarjs/no-clear-text-protocols",
+      "severity": 2,
+      "line": 95,
+      "message": "Using http protocol is insecure. Use https instead."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/medications/components/RecordAdministrationDialog.tsx",
+      "rule": "sonarjs/no-clear-text-protocols",
+      "severity": 2,
+      "line": 96,
+      "message": "Using http protocol is insecure. Use https instead."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/medications/components/RecordAdministrationDialog.tsx",
+      "rule": "sonarjs/no-clear-text-protocols",
+      "severity": 2,
+      "line": 97,
+      "message": "Using http protocol is insecure. Use https instead."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/notifications/useBffNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 55,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/notifications/useBffNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 56,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 22,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 27,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 32,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/vitals/audio/vitalsAlarmAudio.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 98,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/vitals/components/VitalsSoundToggle.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 30,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/vitals/hooks/useVitalsMonitorSound.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 65,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/features/vitals/hooks/useVitalsStream.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 84,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/modules/pdms/admin/ReportingTemplatesPage.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 171,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/modules/pdms/chairs/ChairBoardPage.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 23,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/modules/pdms/chairside/ChairsideAlarmStrip.tsx",
+      "rule": "sonarjs/no-nested-template-literals",
+      "severity": 2,
+      "line": 61,
+      "message": "Refactor this code to not use nested template literals."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/modules/pdms/chairside/ChairsideHeader.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 47,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/modules/pdms/chairside/alarmsApi.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 90,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "pdms-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/api/adapterSchemas.ts",
+      "rule": "sonarjs/no-clear-text-protocols",
+      "severity": 2,
+      "line": 227,
+      "message": "Using http protocol is insecure. Use https instead."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/api/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 38,
+      "message": "Remove this redundant type alias and replace its occurrences with \"RouteFilterSlot\"."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/api/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 48,
+      "message": "Remove this redundant type alias and replace its occurrences with \"RouteFilterSlot\"."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/components/AdapterParametersForm.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 110,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/components/NewChannelDialog.tsx",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 71,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/components/OutboundConcurrencyTimeline.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 41,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/tabs/DependencyGraphTab.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 186,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/tabs/Hl7WorkbenchTab.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 402,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/features/smartconnect/tabs/Hl7WorkbenchTab.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 404,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/pages/ChannelEditorPage.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 118,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/pages/ChannelEditorPage.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 119,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "smartconnect-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/cognitive-complexity",
+      "severity": 2,
+      "line": 123,
+      "message": "Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-redundant-boolean",
+      "severity": 2,
+      "line": 284,
+      "message": "Refactor the code to avoid using this boolean literal."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 485,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/hie/components/ConsentAdminPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 70,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/hie/components/OutboundQueuePanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 50,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 26,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 31,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/modules/hie/admin/MpiStewardPage.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 34,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/pages/FhirAuthoringPage.tsx",
+      "rule": "sonarjs/no-clear-text-protocols",
+      "severity": 2,
+      "line": 276,
+      "message": "Using http protocol is insecure. Use https instead."
+    },
+    {
+      "app": "hie-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/cognitive-complexity",
+      "severity": 2,
+      "line": 123,
+      "message": "Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-redundant-boolean",
+      "severity": 2,
+      "line": 284,
+      "message": "Refactor the code to avoid using this boolean literal."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 485,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 22,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 27,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/patients/patientLoader.ts",
+      "rule": "sonarjs/no-nested-functions",
+      "severity": 2,
+      "line": 32,
+      "message": "Refactor this code to not nest functions more than 4 levels deep."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/features/vitals/hooks/useVitalsStream.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 84,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "identity-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/cognitive-complexity",
+      "severity": 2,
+      "line": 123,
+      "message": "Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-redundant-boolean",
+      "severity": 2,
+      "line": 284,
+      "message": "Refactor the code to avoid using this boolean literal."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/documents/components/PdfViewerDrawer.tsx",
+      "rule": "sonarjs/no-nested-conditional",
+      "severity": 2,
+      "line": 485,
+      "message": "Extract this nested ternary operation into an independent statement."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/durable-commands/components/toastBus.ts",
+      "rule": "sonarjs/pseudo-random",
+      "severity": 2,
+      "line": 40,
+      "message": "Make sure that using this pseudorandom number generator is safe here."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/hie/components/ConsentAdminPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 70,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/hie/components/OutboundQueuePanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 49,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/notifications/usePatientPortalNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 40,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/notifications/usePatientPortalNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 42,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/notifications/usePatientPortalNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 46,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/notifications/usePatientPortalNotifications.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 59,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/features/vitals/hooks/useVitalsStream.ts",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 84,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/modules/patient-portal/BookAppointmentDialog.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 66,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/modules/patient-portal/MessagesPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 52,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/modules/patient-portal/MessagesPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 64,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/modules/patient-portal/MessagesPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 77,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/modules/patient-portal/MessagesPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 78,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/modules/patient-portal/MyAppointmentRequestsPanel.tsx",
+      "rule": "sonarjs/void-use",
+      "severity": 2,
+      "line": 60,
+      "message": "Remove this use of the \"void\" operator."
+    },
+    {
+      "app": "patient-portal-web",
+      "file": "src/shell/types.ts",
+      "rule": "sonarjs/redundant-type-aliases",
+      "severity": 2,
+      "line": 21,
+      "message": "Remove this redundant type alias and replace its occurrences with \"string\"."
+    }
+  ]
+}

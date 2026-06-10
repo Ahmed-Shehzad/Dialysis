@@ -19,6 +19,12 @@ const NODE_WIDTH = 220;
 const NODE_HEIGHT = 64;
 const COL_GAP = 80;
 const ROW_GAP = 24;
+
+const depLabel = (count: number): string => {
+  if (count === 0) return "no deps";
+  const suffix = count === 1 ? "" : "s";
+  return `${count} dep${suffix}`;
+};
 const MARGIN = 32;
 
 const stateColor = (state: FlowRuntimeStateValue): string => {
@@ -181,9 +187,7 @@ export const DependencyGraphTab = () => {
                 {FlowRuntimeStateName(n.flow.runtimeState)} · {n.flow.dataTypes?.join(", ") || "—"}
               </text>
               <text x={12} y={58} fill="#64748b" fontSize={10}>
-                {n.flow.dependencies.length === 0
-                  ? "no deps"
-                  : `${n.flow.dependencies.length} dep${n.flow.dependencies.length === 1 ? "" : "s"}`}
+                {depLabel(n.flow.dependencies.length)}
               </text>
             </g>
           ))}

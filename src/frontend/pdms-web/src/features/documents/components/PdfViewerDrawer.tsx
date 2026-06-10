@@ -281,9 +281,14 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
 
   const doc = detail.data;
   const canSign =
-    (signMode === "Platform" && true) ||
+    signMode === "Platform" ||
     (signMode === "User" && signerUserId.trim().length > 0) ||
     (signMode === "RemoteQes" && tspCredentialId.trim().length > 0);
+
+  const jsToggleLabel = (): string => {
+    if (jsToggleMutation.isPending) return "Updating…";
+    return doc?.allowJavaScriptExecution ? "Disable JS execution" : "Authorize JS execution";
+  };
 
   // pdfjs's enableScripting opens up AcroForm calc + OpenAction + /AA events to the
   // document JS sandbox. We only enable it when the server has flipped the per-document
@@ -480,11 +485,7 @@ export const PdfViewerDrawer = ({ documentId, onClose }: Props) => {
                       : "border border-amber-700 text-amber-200 hover:border-amber-500")
                   }
                 >
-                  {jsToggleMutation.isPending
-                    ? "Updating…"
-                    : doc.allowJavaScriptExecution
-                      ? "Disable JS execution"
-                      : "Authorize JS execution"}
+                  {jsToggleLabel()}
                 </button>
               </>
             )}

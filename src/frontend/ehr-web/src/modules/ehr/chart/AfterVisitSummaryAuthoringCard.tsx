@@ -59,8 +59,13 @@ export const AfterVisitSummaryAuthoringCard = ({ patientId }: { patientId: strin
     },
   });
 
-  const kindLabel = (k: AvsLineKind): string =>
-    k === 1 ? "Instruction" : k === 2 ? "Follow-up" : "Resource";
+  const kindLabel = (k: AvsLineKind): string => {
+    if (k === 1) return "Instruction";
+    if (k === 2) return "Follow-up";
+    return "Resource";
+  };
+
+  const removeLine = (index: number): void => setLines((ls) => ls.filter((_, j) => j !== index));
 
   return (
     <section className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
@@ -107,7 +112,7 @@ export const AfterVisitSummaryAuthoringCard = ({ patientId }: { patientId: strin
                   </span>
                   <button
                     type="button"
-                    onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}
+                    onClick={() => removeLine(i)}
                     className="text-xs text-slate-400 hover:text-rose-300"
                   >
                     remove

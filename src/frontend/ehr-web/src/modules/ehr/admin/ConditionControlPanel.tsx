@@ -92,6 +92,12 @@ export const ConditionControlPanel = () => {
   );
 };
 
+const statToneClass = (tone?: "emerald" | "rose"): string => {
+  if (tone === "emerald") return "text-emerald-300";
+  if (tone === "rose") return "text-rose-300";
+  return "text-clinic-50";
+};
+
 const Stat = ({
   label,
   value,
@@ -103,16 +109,6 @@ const Stat = ({
 }) => (
   <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
     <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-    <p
-      className={`mt-1 text-2xl font-semibold ${
-        tone === "emerald"
-          ? "text-emerald-300"
-          : tone === "rose"
-            ? "text-rose-300"
-            : "text-clinic-50"
-      }`}
-    >
-      {value}
-    </p>
+    <p className={`mt-1 text-2xl font-semibold ${statToneClass(tone)}`}>{value}</p>
   </div>
 );

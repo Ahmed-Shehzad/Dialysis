@@ -18,7 +18,7 @@ export type ModuleSlug =
  * (e.g. `his.patient_access.view`). Acts as documentation today; once the BFF surfaces
  * permission claims to the SPA, `PermissionGate` will start enforcing it.
  */
-export type ModulePermission = string;
+export type ModulePermission = string & { readonly __brand?: "ModulePermission" };
 
 export interface ModuleManifest {
   slug: ModuleSlug;

@@ -48,6 +48,54 @@ const stringify = (field: AdapterField, value: unknown): string => {
   return String(value);
 };
 
+const AdapterFieldControl = ({
+  field,
+  id,
+  raw,
+  onInput,
+}: {
+  field: AdapterField;
+  id: string;
+  raw: string;
+  onInput: (value: string) => void;
+}) => {
+  if (field.type === "json") {
+    return (
+      <textarea
+        id={id}
+        value={raw}
+        onChange={(e) => onInput(e.target.value)}
+        rows={2}
+        placeholder={field.placeholder}
+        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-[11px] text-slate-100"
+      />
+    );
+  }
+  if (field.type === "boolean") {
+    return (
+      <select
+        id={id}
+        value={raw === "true" ? "true" : "false"}
+        onChange={(e) => onInput(e.target.value)}
+        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+      >
+        <option value="false">false</option>
+        <option value="true">true</option>
+      </select>
+    );
+  }
+  return (
+    <input
+      id={id}
+      type={field.type === "number" ? "number" : "text"}
+      value={raw}
+      onChange={(e) => onInput(e.target.value)}
+      placeholder={field.placeholder}
+      className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+    />
+  );
+};
+
 export const AdapterParametersForm = ({
   kind,
   propertiesJson,
@@ -98,35 +146,12 @@ export const AdapterParametersForm = ({
               {field.label}
               {field.required && <span className="ml-1 text-rose-300">*</span>}
             </span>
-            {field.type === "json" ? (
-              <textarea
-                id={id}
-                value={raw}
-                onChange={(e) => setFieldValue(field, e.target.value)}
-                rows={2}
-                placeholder={field.placeholder}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-[11px] text-slate-100"
-              />
-            ) : field.type === "boolean" ? (
-              <select
-                id={id}
-                value={raw === "true" ? "true" : "false"}
-                onChange={(e) => setFieldValue(field, e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
-              >
-                <option value="false">false</option>
-                <option value="true">true</option>
-              </select>
-            ) : (
-              <input
-                id={id}
-                type={field.type === "number" ? "number" : "text"}
-                value={raw}
-                onChange={(e) => setFieldValue(field, e.target.value)}
-                placeholder={field.placeholder}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
-              />
-            )}
+            <AdapterFieldControl
+              field={field}
+              id={id}
+              raw={raw}
+              onInput={(value) => setFieldValue(field, value)}
+            />
             {field.hint && (
               <span className="mt-0.5 block text-[10px] text-slate-500">{field.hint}</span>
             )}

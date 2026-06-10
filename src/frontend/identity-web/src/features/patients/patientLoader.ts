@@ -2,6 +2,20 @@ import { fetchPatientsByIds, type PatientLabel } from "@/features/ehr/api/ehrApi
 
 type Resolve = (value: PatientLabel | null) => void;
 
+/** Resolve every waiter in the batch with its row (or null when the id wasn't returned). */
+const settleBatch = (batch: Map<string, Resolve[]>, byId: Map<string, PatientLabel>): void => {
+  batch.forEach((waiters, id) => {
+    const value = byId.get(id) ?? null;
+    waiters.forEach((resolve) => resolve(value));
+  });
+};
+
+// Degrade to "unresolved" (the UI shows the id placeholder) rather than rejecting — a missing label
+// must never break the page, and we never surface an error object that might carry PHI.
+const failBatch = (batch: Map<string, Resolve[]>): void => {
+  batch.forEach((waiters) => waiters.forEach((resolve) => resolve(null)));
+};
+
 /**
  * DataLoader-style coalescing loader for patient labels. Every `load(id)` issued within a tick is
  * batched into ONE `POST /patients/by-ids`, so a list rendering N `<PatientLabel/>` rows makes a single
@@ -20,16 +34,8 @@ const createPatientLoader = () => {
     const ids = [...batch.keys()];
 
     void fetchPatientsByIds(ids).then(
-      (rows) => {
-        const byId = new Map(rows.map((r) => [r.id, r]));
-        batch.forEach((waiters, id) => {
-          const value = byId.get(id) ?? null;
-          waiters.forEach((resolve) => resolve(value));
-        });
-      },
-      // Degrade to "unresolved" (the UI shows the id placeholder) rather than rejecting — a missing label
-      // must never break the page, and we never surface an error object that might carry PHI.
-      () => batch.forEach((waiters) => waiters.forEach((resolve) => resolve(null))),
+      (rows) => settleBatch(batch, new Map(rows.map((r) => [r.id, r]))),
+      () => failBatch(batch),
     );
   };
 

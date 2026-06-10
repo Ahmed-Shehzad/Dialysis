@@ -40,13 +40,9 @@ export const ChairsideHeader = ({ session, sessionId, realtimeStatus }: Chairsid
   });
   const isPaused = session?.status === "Paused";
   const station = session?.machineId ?? "Live session";
-  const patientLabel =
-    ehrName ??
-    (contextMatches
-      ? patient.displayName
-      : session
-        ? `Patient ${session.patientId.slice(0, 8)}…`
-        : `Session ${sessionId.slice(0, 8)}…`);
+  const sessionFallbackLabel = (): string =>
+    session ? `Patient ${session.patientId.slice(0, 8)}…` : `Session ${sessionId.slice(0, 8)}…`;
+  const patientLabel = ehrName ?? (contextMatches ? patient.displayName : sessionFallbackLabel());
   const mrn = ehrPatient?.medicalRecordNumber ?? (contextMatches ? patient.mrn : undefined);
   const dob = ehrPatient?.dateOfBirth;
   // MRN · DOB subline, omitting whichever isn't known yet.
