@@ -1,0 +1,11 @@
+apiVersion: "v2"
+name: "dialysis-unit-portal"
+version: "0.1.0"
+kubeVersion: ">= 1.18.0-0"
+description: "Dialysis 'portal' deployment unit (prod) — independently deployable bounded-context slice of the platform; cross-unit dependencies are external connection strings / config values pointing at sibling unit releases in the same namespace. Generated from the Aspire AppHost; do not hand-edit the manifests, re-run the NUKE PublishKubernetesUnit target."
+type: "application"
+keywords:
+  - "aspire"
+  - "kubernetes"
+appVersion: "0.1.0"
+deprecated: false

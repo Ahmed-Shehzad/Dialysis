@@ -1,0 +1,15 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "pdms-web-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "pdms-web"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  NODE_ENV: "{{ .Values.config.pdms_web.NODE_ENV }}"
+  BROWSER: "{{ .Values.config.pdms_web.BROWSER }}"
+  VITE_GATEWAY_URL: "{{ .Values.config.pdms_web.VITE_GATEWAY_URL }}"
+  VITE_API_BASE_URL: "{{ .Values.config.pdms_web.VITE_API_BASE_URL }}"
+  PORT: "{{ .Values.config.pdms_web.PORT }}"

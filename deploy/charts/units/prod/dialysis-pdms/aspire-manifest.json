@@ -1,0 +1,215 @@
+{
+  "resources": {
+    "unit-registry": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "k8s": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "rabbitmq-connection": {
+      "type": "parameter.v0",
+      "value": "{rabbitmq-connection.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "default": {
+            "value": "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+          }
+        }
+      }
+    },
+    "valkey-connection": {
+      "type": "parameter.v0",
+      "value": "{valkey-connection.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "default": {
+            "value": "valkey-service:6379,password=CHANGE-ME"
+          }
+        }
+      }
+    },
+    "rabbitmq": {
+      "type": "value.v0",
+      "connectionString": "{rabbitmq-connection.value}"
+    },
+    "valkey": {
+      "type": "value.v0",
+      "connectionString": "{valkey-connection.value}"
+    },
+    "keycloak-authority": {
+      "type": "parameter.v0",
+      "value": "{keycloak-authority.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "default": {
+            "value": "http://keycloak-service:8081/realms/dialysis"
+          }
+        }
+      }
+    },
+    "pdms-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{pdms-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "postgres-pdms": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-pdms.bindings.tcp.host};Port={postgres-pdms.bindings.tcp.port};Username=postgres;Password={postgres-pdms-password.value}",
+      "image": "docker.io/timescale/timescaledb:latest-pg17",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-pdms-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-pdms-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "Pdms": {
+      "type": "value.v0",
+      "connectionString": "{postgres-pdms.connectionString};Database=dialysis_pdms"
+    },
+    "pdms-api": {
+      "type": "project.v1",
+      "path": "../../../../../src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{pdms-api.bindings.http.targetPort}",
+        "ConnectionStrings__Pdms": "{Pdms.connectionString}",
+        "PDMS_HOST": "{postgres-pdms.bindings.tcp.host}",
+        "PDMS_PORT": "{postgres-pdms.bindings.tcp.port}",
+        "PDMS_USERNAME": "postgres",
+        "PDMS_PASSWORD": "{postgres-pdms-password.value}",
+        "PDMS_URI": "postgresql://postgres:{postgres-pdms-password-uri-encoded.value}@{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "PDMS_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "PDMS_DATABASENAME": "dialysis_pdms",
+        "ConnectionStrings__Hangfire": "{Pdms.connectionString}",
+        "HANGFIRE_HOST": "{postgres-pdms.bindings.tcp.host}",
+        "HANGFIRE_PORT": "{postgres-pdms.bindings.tcp.port}",
+        "HANGFIRE_USERNAME": "postgres",
+        "HANGFIRE_PASSWORD": "{postgres-pdms-password.value}",
+        "HANGFIRE_URI": "postgresql://postgres:{postgres-pdms-password-uri-encoded.value}@{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "HANGFIRE_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "HANGFIRE_DATABASENAME": "dialysis_pdms",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "Pdms__Transponder__EnableOutboxRelay": "true",
+        "Pdms__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Pdms__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "Pdms__Authentication__Authority": "{keycloak-authority.value}",
+        "Pdms__Authentication__Audience": "account"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "pdms-bff": {
+      "type": "project.v1",
+      "path": "../../../../../src/backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://\u002B:5303",
+        "Bff__Keycloak__Authority": "{keycloak-authority.value}",
+        "Bff__Keycloak__ClientSecret": "{pdms-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{pdms-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "ConnectionStrings__Hangfire": "{Pdms.connectionString}",
+        "HANGFIRE_HOST": "{postgres-pdms.bindings.tcp.host}",
+        "HANGFIRE_PORT": "{postgres-pdms.bindings.tcp.port}",
+        "HANGFIRE_USERNAME": "postgres",
+        "HANGFIRE_PASSWORD": "{postgres-pdms-password.value}",
+        "HANGFIRE_URI": "postgresql://postgres:{postgres-pdms-password-uri-encoded.value}@{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "HANGFIRE_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-pdms.bindings.tcp.host}:{postgres-pdms.bindings.tcp.port}/dialysis_pdms",
+        "HANGFIRE_DATABASENAME": "dialysis_pdms",
+        "Bff__Module__Aggregations__0__Address": "http://ehr-api-service:8080",
+        "Bff__Module__Aggregations__1__Address": "http://hie-api-service:8080",
+        "Bff__Module__Aggregations__2__Address": "http://smartconnect-api-service:8080"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5303
+        }
+      }
+    },
+    "pdms-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../../../src/frontend/pdms-web",
+        "dockerfile": "../../../../../src/frontend/pdms-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "http://gateway-service:9090",
+        "VITE_API_BASE_URL": "http://gateway-service:9090",
+        "PORT": "{pdms-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5333
+        }
+      }
+    },
+    "postgres-pdms-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-pdms-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-pdms-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-pdms-password.value}",
+      "filter": "uri"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+---
+apiVersion: "networking.k8s.io/v1"
+kind: "Ingress"
+metadata:
+  name: "dialysis"
+spec:
+  ingressClassName: "nginx"
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: "gateway-service"
+                port:
+                  name: "http"
+            pathType: "Prefix"
+            path: "/"

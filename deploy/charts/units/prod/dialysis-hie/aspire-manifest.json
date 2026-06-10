@@ -1,0 +1,216 @@
+{
+  "resources": {
+    "unit-registry": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "k8s": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "rabbitmq-connection": {
+      "type": "parameter.v0",
+      "value": "{rabbitmq-connection.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "default": {
+            "value": "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+          }
+        }
+      }
+    },
+    "valkey-connection": {
+      "type": "parameter.v0",
+      "value": "{valkey-connection.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "default": {
+            "value": "valkey-service:6379,password=CHANGE-ME"
+          }
+        }
+      }
+    },
+    "rabbitmq": {
+      "type": "value.v0",
+      "connectionString": "{rabbitmq-connection.value}"
+    },
+    "valkey": {
+      "type": "value.v0",
+      "connectionString": "{valkey-connection.value}"
+    },
+    "keycloak-authority": {
+      "type": "parameter.v0",
+      "value": "{keycloak-authority.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "default": {
+            "value": "http://keycloak-service:8081/realms/dialysis"
+          }
+        }
+      }
+    },
+    "hie-bff-client-secret": {
+      "type": "parameter.v0",
+      "value": "{hie-bff-client-secret.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "postgres-hie": {
+      "type": "container.v1",
+      "connectionString": "Host={postgres-hie.bindings.tcp.host};Port={postgres-hie.bindings.tcp.port};Username=postgres;Password={postgres-hie-password.value}",
+      "image": "docker.io/postgres:17-alpine",
+      "volumes": [
+        {
+          "name": "dialysis-postgres-hie-data",
+          "target": "/var/lib/postgresql/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "{postgres-hie-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "Hie": {
+      "type": "value.v0",
+      "connectionString": "{postgres-hie.connectionString};Database=dialysis_hie"
+    },
+    "hie-api": {
+      "type": "project.v1",
+      "path": "../../../../../src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{hie-api.bindings.http.targetPort}",
+        "ConnectionStrings__Hie": "{Hie.connectionString}",
+        "HIE_HOST": "{postgres-hie.bindings.tcp.host}",
+        "HIE_PORT": "{postgres-hie.bindings.tcp.port}",
+        "HIE_USERNAME": "postgres",
+        "HIE_PASSWORD": "{postgres-hie-password.value}",
+        "HIE_URI": "postgresql://postgres:{postgres-hie-password-uri-encoded.value}@{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HIE_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HIE_DATABASENAME": "dialysis_hie",
+        "ConnectionStrings__Hangfire": "{Hie.connectionString}",
+        "HANGFIRE_HOST": "{postgres-hie.bindings.tcp.host}",
+        "HANGFIRE_PORT": "{postgres-hie.bindings.tcp.port}",
+        "HANGFIRE_USERNAME": "postgres",
+        "HANGFIRE_PASSWORD": "{postgres-hie-password.value}",
+        "HANGFIRE_URI": "postgresql://postgres:{postgres-hie-password-uri-encoded.value}@{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HANGFIRE_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HANGFIRE_DATABASENAME": "dialysis_hie",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "Hie__Transponder__EnableOutboxRelay": "true",
+        "Hie__Transponder__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Hie__DistributedCache__Valkey__ConnectionString": "{valkey.connectionString}",
+        "Hie__Authentication__Authority": "{keycloak-authority.value}",
+        "Hie__Authentication__Audience": "account"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "hie-bff": {
+      "type": "project.v1",
+      "path": "../../../../../src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "ASPNETCORE_URLS": "http://\u002B:5305",
+        "Bff__Keycloak__Authority": "{keycloak-authority.value}",
+        "Bff__Keycloak__ClientSecret": "{hie-bff-client-secret.value}",
+        "Bff__Module__ModuleApiAddress": "{hie-api.bindings.http.url}",
+        "ConnectionStrings__rabbitmq": "{rabbitmq.connectionString}",
+        "ConnectionStrings__valkey": "{valkey.connectionString}",
+        "Bff__Events__RabbitMq__ConnectionUri": "{rabbitmq.connectionString}",
+        "Bff__Events__SignalR__BackplaneConnectionString": "{valkey.connectionString}",
+        "ConnectionStrings__Hangfire": "{Hie.connectionString}",
+        "HANGFIRE_HOST": "{postgres-hie.bindings.tcp.host}",
+        "HANGFIRE_PORT": "{postgres-hie.bindings.tcp.port}",
+        "HANGFIRE_USERNAME": "postgres",
+        "HANGFIRE_PASSWORD": "{postgres-hie-password.value}",
+        "HANGFIRE_URI": "postgresql://postgres:{postgres-hie-password-uri-encoded.value}@{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HANGFIRE_JDBCCONNECTIONSTRING": "jdbc:postgresql://{postgres-hie.bindings.tcp.host}:{postgres-hie.bindings.tcp.port}/dialysis_hie",
+        "HANGFIRE_DATABASENAME": "dialysis_hie",
+        "Bff__Module__Aggregations__0__Address": "http://smartconnect-api-service:8080",
+        "Bff__Module__Aggregations__1__Address": "http://his-api-service:8080",
+        "Bff__Module__Aggregations__2__Address": "http://ehr-api-service:8080",
+        "Bff__Module__Aggregations__3__Address": "http://pdms-api-service:8080"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5305
+        }
+      }
+    },
+    "hie-web": {
+      "type": "container.v1",
+      "build": {
+        "context": "../../../../../src/frontend/hie-web",
+        "dockerfile": "../../../../../src/frontend/hie-web/Dockerfile"
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "BROWSER": "none",
+        "VITE_GATEWAY_URL": "http://gateway-service:9090",
+        "VITE_API_BASE_URL": "http://gateway-service:9090",
+        "PORT": "{hie-web.bindings.http.targetPort}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5335
+        }
+      }
+    },
+    "postgres-hie-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-hie-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22
+            }
+          }
+        }
+      }
+    },
+    "postgres-hie-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-hie-password.value}",
+      "filter": "uri"
+    }
+  }
+}

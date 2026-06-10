@@ -1,0 +1,25 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "his-bff-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "his-bff"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "{{ .Values.config.his_bff.OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY }}"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "{{ .Values.config.his_bff.ASPNETCORE_FORWARDEDHEADERS_ENABLED }}"
+  ASPNETCORE_URLS: "{{ .Values.config.his_bff.ASPNETCORE_URLS }}"
+  Bff__Keycloak__Authority: "{{ .Values.config.his_bff.keycloak_authority }}"
+  Bff__Module__ModuleApiAddress: "http://his-api-service:{{ .Values.parameters.his_api.port_http }}"
+  ConnectionStrings__rabbitmq: "{{ .Values.config.his_bff.rabbitmq_connection }}"
+  ConnectionStrings__valkey: "{{ .Values.config.his_bff.valkey_connection }}"
+  Bff__Events__RabbitMq__ConnectionUri: "{{ .Values.config.his_bff.rabbitmq_connection }}"
+  Bff__Events__SignalR__BackplaneConnectionString: "{{ .Values.config.his_bff.valkey_connection }}"
+  HANGFIRE_HOST: "{{ .Values.config.his_bff.HANGFIRE_HOST }}"
+  HANGFIRE_PORT: "{{ .Values.config.his_bff.HANGFIRE_PORT }}"
+  HANGFIRE_USERNAME: "{{ .Values.config.his_bff.HANGFIRE_USERNAME }}"
+  HANGFIRE_JDBCCONNECTIONSTRING: "{{ .Values.config.his_bff.HANGFIRE_JDBCCONNECTIONSTRING }}"
+  HANGFIRE_DATABASENAME: "{{ .Values.config.his_bff.HANGFIRE_DATABASENAME }}"
+  Bff__Module__Aggregations__0__Address: "{{ .Values.config.his_bff.Bff__Module__Aggregations__0__Address }}"

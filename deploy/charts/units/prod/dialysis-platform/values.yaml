@@ -1,0 +1,35 @@
+parameters:
+  gateway:
+    gateway_image: "gateway:latest"
+secrets:
+  rabbitmq:
+    rabbitmq_password: ""
+  valkey:
+    valkey_password: ""
+config:
+  rabbitmq:
+    RABBITMQ_DEFAULT_USER: "guest"
+  gateway:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    HTTP_PORTS: "9090"
+    ASPNETCORE_URLS: "http://+:9090"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    Gateway__Audience: "account"
+    Gateway__RequireAuthentication: "true"
+    ReverseProxy__Clusters__identity__Destinations__d1__Address: "http://identity-bff-service:5275/"
+    ReverseProxy__Clusters__his_bff__Destinations__d1__Address: "http://his-bff-service:5301/"
+    ReverseProxy__Clusters__ehr_bff__Destinations__d1__Address: "http://ehr-bff-service:5302/"
+    ReverseProxy__Clusters__pdms_bff__Destinations__d1__Address: "http://pdms-bff-service:5303/"
+    ReverseProxy__Clusters__smartconnect_bff__Destinations__d1__Address: "http://smartconnect-bff-service:5304/"
+    ReverseProxy__Clusters__hie_bff__Destinations__d1__Address: "http://hie-bff-service:5305/"
+    ReverseProxy__Clusters__admin_bff__Destinations__d1__Address: "http://admin-bff-service:5306/"
+    ReverseProxy__Clusters__portal_bff__Destinations__d1__Address: "http://portal-bff-service:5307/"
+    ReverseProxy__Clusters__his_web__Destinations__d1__Address: "http://his-web-service:5331/"
+    ReverseProxy__Clusters__ehr_web__Destinations__d1__Address: "http://ehr-web-service:5332/"
+    ReverseProxy__Clusters__pdms_web__Destinations__d1__Address: "http://pdms-web-service:5333/"
+    ReverseProxy__Clusters__smartconnect_web__Destinations__d1__Address: "http://smartconnect-web-service:5334/"
+    ReverseProxy__Clusters__hie_web__Destinations__d1__Address: "http://hie-web-service:5335/"
+    ReverseProxy__Clusters__admin_web__Destinations__d1__Address: "http://identity-web-service:5336/"
+    ReverseProxy__Clusters__portal_web__Destinations__d1__Address: "http://patient-portal-web-service:5337/"
+    ReverseProxy__Clusters__keycloak__Destinations__d1__Address: "http://keycloak-service:8081/"
