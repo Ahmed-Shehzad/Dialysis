@@ -27,6 +27,13 @@ spec:
             - name: "http"
               protocol: "TCP"
               containerPort: 9000
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
           volumeMounts:
             - name: "dialysis-sonarqube-data"
               mountPath: "/opt/sonarqube/data"

@@ -27,6 +27,13 @@ spec:
             - name: "http"
               protocol: "TCP"
               containerPort: {{ .Values.parameters.pdms_api.port_http | int }}
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
           imagePullPolicy: "IfNotPresent"
   selector:
     matchLabels:

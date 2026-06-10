@@ -379,10 +379,13 @@ public class Program
         {
             var sonarPgPwd = builder.AddParameter("sonar-pg-password", "sonar", secret: true);
 
+            // Hardened at declaration (not in the k8s decoration block below) because the
+            // resource is scoped to this branch; the callback only runs under the k8s publisher.
             var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgPwd)
                 .WithImage("postgres", "17-alpine")
                 .WithDataVolume("dialysis-sonarqube-pg-data")
-                .WithLifetime(ContainerLifetime.Persistent);
+                .WithLifetime(ContainerLifetime.Persistent)
+                .WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Postgres, deployEnv);
 
             // Pinned to the latest 26.x community image. Docker Hub tags follow YY.M.0.BUILD
             // (e.g. 26.5.0.122743-community), not the marketing "2025.x" naming in the doc
@@ -923,6 +926,42 @@ public class Program
             keycloak.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
             // Always non-null under the compose publisher (enableSonarQube is forced on when publishing).
             sonarqube?.WithPublishedPorts((9000, 9000));
+        }
+
+        // --- Kubernetes-publish decoration ------------------------------------------
+        // The k8s sibling of the compose block above: pod resource envelopes per tier, explicit
+        // replica counts for the horizontally-scaled tiers (+ PodDisruptionBudgets whenever
+        // replicas > 1), and the namespace-wide NetworkPolicies (default deny cross-namespace
+        // ingress; the gateway alone stays reachable from outside, for the Ingress controller).
+        // All applied via PublishAsKubernetesService callbacks, so the dev F5 loop and the
+        // compose publisher both bypass this block.
+        if (isKubernetesPublish)
+        {
+            foreach (var api in new[] { hisApi, ehrApi, pdmsApi, smartConnectApi, hieApi, labApi })
+            {
+                api.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.ModuleApi, deployEnv);
+            }
+            identityBff.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Bff, deployEnv);
+            foreach (var bff in new[] { hisBff, ehrBff, pdmsBff, smartConnectBff, hieBff, adminBff, portalBff })
+            {
+                bff.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Bff, deployEnv);
+            }
+            // enableWebApps is forced on under the publisher, so every web resource is non-null here.
+            foreach (var web in new[] { hisWeb!, ehrWeb!, pdmsWeb!, smartConnectWeb!, hieWeb!, identityWeb!, portalWeb! })
+            {
+                web.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Web, deployEnv);
+            }
+            gateway
+                .WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Gateway, deployEnv)
+                .WithKubernetesNetworkPolicies();
+            foreach (var pg in new[] { hisPgServer, smartconnectPgServer, ehrPgServer, pdmsPgServer, hiePgServer, labPgServer })
+            {
+                pg.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Postgres, deployEnv);
+            }
+            rabbit.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
+            valkey.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
+            keycloak.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
+            sonarqube?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
         }
 
         // --- Kubernetes Ingress ---------------------------------------------------
