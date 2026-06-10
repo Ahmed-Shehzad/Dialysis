@@ -19,16 +19,20 @@ public sealed class InventoryController : ControllerBase
 {
     private readonly IPdmsRepository<MedicationInventoryItem, Guid> _inventory;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<InventoryController> _logger;
     /// <summary>
     /// Pharmacy inventory dashboard backing the operator's <c>/admin/inventory</c> page.
     /// Read-only listing, plus receive / deduct / adjust operator actions. Stock changes
     /// are persisted through the aggregate so the low-stock integration event fires on
     /// the same code path that the OnMedicationAdministered consumer uses.
     /// </summary>
-    public InventoryController(IPdmsRepository<MedicationInventoryItem, Guid> inventory, IUnitOfWork unitOfWork)
+    public InventoryController(IPdmsRepository<MedicationInventoryItem, Guid> inventory,
+        IUnitOfWork unitOfWork,
+        ILogger<InventoryController> logger)
     {
         _inventory = inventory;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<InventoryItemDto>), StatusCodes.Status200OK)]
@@ -102,7 +106,11 @@ public sealed class InventoryController : ControllerBase
                 request.InitialOnHandUnits,
                 request.Threshold);
         }
-        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Rejected inventory item create: {Reason}", ex.Message);
+            return BadRequest(ex.Message);
+        }
         await _inventory.AddAsync(item, cancellationToken).ConfigureAwait(false);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         // Literal Location URI (not CreatedAtAction): URL-segment API versioning can't resolve the
