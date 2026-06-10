@@ -379,13 +379,18 @@ public class Program
         {
             var sonarPgPwd = builder.AddParameter("sonar-pg-password", "sonar", secret: true);
 
-            // Hardened at declaration (not in the k8s decoration block below) because the
-            // resource is scoped to this branch; the callback only runs under the k8s publisher.
             var sonarPgServer = builder.AddPostgres("postgres-sonarqube", password: sonarPgPwd)
                 .WithImage("postgres", "17-alpine")
                 .WithDataVolume("dialysis-sonarqube-pg-data")
-                .WithLifetime(ContainerLifetime.Persistent)
-                .WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Postgres, deployEnv);
+                .WithLifetime(ContainerLifetime.Persistent);
+            // Hardened at declaration (not in the k8s decoration block below) because the
+            // resource is scoped to this branch. Must be gated to the k8s publisher: the
+            // PublishAsKubernetesService annotation trips the compose pipeline's
+            // 'validate-kubernetes' step otherwise.
+            if (isKubernetesPublish)
+            {
+                sonarPgServer.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Postgres, deployEnv);
+            }
 
             // Pinned to the latest 26.x community image. Docker Hub tags follow YY.M.0.BUILD
             // (e.g. 26.5.0.122743-community), not the marketing "2025.x" naming in the doc

@@ -74,6 +74,11 @@ class Build : NukeBuild
     [Parameter("Deployment environment for PublishCompose — one of dev / staging / prod. Default: prod.")]
     readonly string Environment = "prod";
 
+    [Parameter("Container registry + repository prefix PushImages publishes to — e.g. mycompany.jfrog.io/dialysis-docker " +
+               "(a Docker repository on JFrog Artifactory / JFrog Container Registry) or ghcr.io/myorg. " +
+               "Authenticate first: `docker login <registry host>` (JFrog: username + identity token).")]
+    readonly string Registry;
+
     static readonly string[] AllComposeEnvironments = ["dev", "staging", "prod"];
 
     AbsolutePath SolutionFile => RootDirectory / "Dialysis.slnx";
@@ -227,7 +232,8 @@ class Build : NukeBuild
     // production-hardened compose envs HANG. In the common case the artifact is fully written before
     // that, so TryPublishOnce treats "sentinel on disk" as success; when the race crashes the
     // pipeline before the chart is written, the retry loop runs it again.
-    void RunAspirePublisher(string publisher, string environment, AbsolutePath output, string sentinel)
+    void RunAspirePublisher(string publisher, string environment, AbsolutePath output, string sentinel,
+        IReadOnlyDictionary<string, string> extraEnvironment = null)
     {
         if (Array.IndexOf(AllComposeEnvironments, environment) < 0)
         {
@@ -243,7 +249,7 @@ class Build : NukeBuild
         const int maxAttempts = 4;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            if (TryPublishOnce(publisher, environment, output, sentinel, attempt, maxAttempts))
+            if (TryPublishOnce(publisher, environment, output, sentinel, attempt, maxAttempts, extraEnvironment))
             {
                 Log.Information("Generated {Files} file(s) under {Output}", output.GlobFiles("**/*").Count, output);
                 return;
@@ -254,7 +260,8 @@ class Build : NukeBuild
             $"Aspire {publisher} publisher failed to write {sentinel} for environment '{environment}' after {maxAttempts} attempts.");
     }
 
-    bool TryPublishOnce(string publisher, string environment, AbsolutePath output, string sentinel, int attempt, int maxAttempts)
+    bool TryPublishOnce(string publisher, string environment, AbsolutePath output, string sentinel, int attempt, int maxAttempts,
+        IReadOnlyDictionary<string, string> extraEnvironment = null)
     {
         output.CreateOrCleanDirectory();
         var sentinelPath = output / sentinel;
@@ -277,8 +284,13 @@ class Build : NukeBuild
             startInfo.ArgumentList.Add(argument);
         }
         // ProcessStartInfo seeds Environment from the parent (complete PATH); just overlay the
-        // per-env switch that drives the AppHost's HSTS / replicas / OTEL shaping.
+        // per-env switch that drives the AppHost's HSTS / replicas / OTEL shaping (plus any
+        // caller-specific extras, e.g. PushImages' registry/tag qualification).
         startInfo.Environment["DIALYSIS_DEPLOY_ENV"] = environment;
+        foreach (var (key, value) in extraEnvironment ?? new Dictionary<string, string>())
+        {
+            startInfo.Environment[key] = value;
+        }
 
         using var process = System.Diagnostics.Process.Start(startInfo)
             ?? throw new InvalidOperationException("Failed to start the Aspire publisher process.");
@@ -364,6 +376,121 @@ class Build : NukeBuild
     Target PublishDeployArtifacts => _ => _
         .Description("Regenerates EVERY deployment artifact in one shot — compose projects and Helm charts for all three environments (dev / staging / prod) — from the Aspire AppHost. Run this after any AppHost change, then commit deploy/. The deploy-artifacts CI gate fails the PR if these drift from the AppHost.")
         .DependsOn(PublishAllCompose, PublishAllKubernetes);
+
+    Target PushImages => _ => _
+        .Description("Builds every repo-built deployment image (module APIs, BFFs, gateway, SPAs) and pushes it to --registry " +
+                     "(e.g. a JFrog Artifactory / JCR Docker repository), tagged with the GitVersion-derived SemVer (--version overrides). " +
+                     "Also writes artifacts/images/values-images-<environment>.yaml — a Helm values override that points the committed " +
+                     "deploy/charts/dialysis-<environment> chart at the pushed images (`helm install ... -f <file>`). " +
+                     "Requires a running Docker daemon and a prior `docker login`. See docs/operations/container-registry.md.")
+        .Requires(() => Registry)
+        .Executes(() =>
+        {
+            var tag = PackageVersion ?? "latest";
+            // Publish a scratch compose project with registry-qualified image names next to the
+            // build stanzas (DIALYSIS_IMAGE_REGISTRY/_TAG → ComposePublishExtensions). The
+            // committed deploy/compose/<env> folders stay registry-free; this throwaway copy is
+            // the single source for what to build, what to push, and what the chart should pull.
+            var scratch = TemporaryDirectory / ("push-images-" + Environment);
+            RunAspirePublisher("compose", Environment, scratch, sentinel: "docker-compose.yaml",
+                extraEnvironment: new Dictionary<string, string>
+                {
+                    ["DIALYSIS_IMAGE_REGISTRY"] = Registry,
+                    ["DIALYSIS_IMAGE_TAG"] = tag,
+                });
+
+            var composeFile = scratch / "docker-compose.yaml";
+            var services = ParseRegistryBuiltServices(composeFile);
+            if (services.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"No registry-qualified buildable services found in {composeFile} — expected image names starting with '{Registry}'.");
+            }
+            Log.Information("Building + pushing {Count} image(s) to {Registry} with tag {Tag}", services.Count, Registry, tag);
+
+            // NUKE's ArgumentStringHandler double-quotes interpolated values containing spaces,
+            // so a joined service list would arrive at compose as ONE argument. A bare `build`
+            // builds exactly the services that carry a build stanza (our 22); pushes go one
+            // service per invocation for the same quoting reason (and per-image progress).
+            StartProcess("docker", $"compose -f {composeFile} build", RootDirectory)
+                .AssertWaitForExit().AssertZeroExitCode();
+            foreach (var (name, image) in services)
+            {
+                Log.Information("Pushing {Image}", image);
+                StartProcess("docker", $"compose -f {composeFile} push {name}", RootDirectory)
+                    .AssertWaitForExit().AssertZeroExitCode();
+            }
+
+            // Helm values override: parameters.<name>.<name>_image keys mirror the generated
+            // chart's values.yaml (resource name with '-' → '_').
+            var valuesFile = ArtifactsDirectory / "images" / $"values-images-{Environment}.yaml";
+            valuesFile.Parent.CreateDirectory();
+            var lines = new List<string>
+            {
+                $"# Generated by `./build.sh PushImages --registry {Registry} --environment {Environment}`.",
+                $"# Points deploy/charts/dialysis-{Environment} at the pushed images:",
+                $"#   helm install dialysis deploy/charts/dialysis-{Environment} -f {valuesFile}",
+                "parameters:",
+            };
+            foreach (var (name, image) in services.OrderBy(service => service.Name))
+            {
+                var parameter = name.Replace('-', '_');
+                lines.Add($"  {parameter}:");
+                lines.Add($"    {parameter}_image: \"{image}\"");
+            }
+            valuesFile.WriteAllLines(lines);
+            Log.Information("Wrote Helm image override → {File}", valuesFile);
+        });
+
+    // Reads the scratch compose file PushImages generated and returns every service that both
+    // builds from a repo Dockerfile and is named for the target registry. The file is
+    // machine-generated with stable two/four-space indentation, so a line scan is reliable —
+    // and it keeps the build free of a YAML-parser dependency.
+    List<(string Name, string Image)> ParseRegistryBuiltServices(AbsolutePath composeFile)
+    {
+        var services = new List<(string Name, string Image)>();
+        string currentService = null;
+        string currentImage = null;
+        var currentHasBuild = false;
+        void FlushCurrent()
+        {
+            if (currentService is not null && currentHasBuild && currentImage is not null
+                && currentImage.StartsWith(Registry.TrimEnd('/') + "/", System.StringComparison.Ordinal))
+            {
+                services.Add((currentService, currentImage));
+            }
+        }
+        foreach (var line in composeFile.ReadAllLines())
+        {
+            var serviceMatch = System.Text.RegularExpressions.Regex.Match(line, "^  ([A-Za-z0-9_.-]+):\\s*$");
+            if (serviceMatch.Success)
+            {
+                FlushCurrent();
+                currentService = serviceMatch.Groups[1].Value;
+                currentImage = null;
+                currentHasBuild = false;
+                continue;
+            }
+            if (!line.StartsWith("    ", System.StringComparison.Ordinal) && line.Trim().Length > 0 && !line.StartsWith("  ", System.StringComparison.Ordinal))
+            {
+                // Left the `services:` block (e.g. top-level `networks:`).
+                FlushCurrent();
+                currentService = null;
+                continue;
+            }
+            var imageMatch = System.Text.RegularExpressions.Regex.Match(line, "^    image: \"(.+)\"\\s*$");
+            if (imageMatch.Success)
+            {
+                currentImage = imageMatch.Groups[1].Value;
+            }
+            else if (System.Text.RegularExpressions.Regex.IsMatch(line, "^    build:\\s*$"))
+            {
+                currentHasBuild = true;
+            }
+        }
+        FlushCurrent();
+        return services;
+    }
 
     Target InstallGitHooks => _ => _
         .Description("Points git's core.hooksPath at the tracked .githooks/ directory so the repo's pre-commit guard runs. Run once after cloning.")

@@ -34,9 +34,10 @@ public static class ComposePublishExtensions
         string moduleConfigPrefix,
         int hostPort,
         string environment) =>
-        builder.PublishAsDockerComposeService((_, service) =>
+        builder.PublishAsDockerComposeService((resource, service) =>
         {
             ApplyModuleDockerfileBuild(service, projectRelativePath, assemblyDllName);
+            ApplyPublishedImageName(service, resource.Name);
             ApplyHostPort(service, hostPort, AspNetContainerPort);
             ApplyAspNetEnvironment(service, environment, AspNetContainerPort);
             ApplyModuleHardening(service, moduleConfigPrefix, environment);
@@ -54,9 +55,10 @@ public static class ComposePublishExtensions
         string assemblyDllName,
         int hostPort,
         string environment) =>
-        builder.PublishAsDockerComposeService((_, service) =>
+        builder.PublishAsDockerComposeService((resource, service) =>
         {
             ApplyModuleDockerfileBuild(service, projectRelativePath, assemblyDllName);
+            ApplyPublishedImageName(service, resource.Name);
             ApplyHostPort(service, hostPort, hostPort);
             ApplyAspNetEnvironment(service, environment, hostPort);
         });
@@ -71,13 +73,14 @@ public static class ComposePublishExtensions
         this IResourceBuilder<NodeAppResource> builder,
         string frontendFolder,
         int hostPort) =>
-        builder.PublishAsDockerComposeService((_, service) =>
+        builder.PublishAsDockerComposeService((resource, service) =>
         {
             service.Build = new Build
             {
                 Context = RepoRootFromCompose + "/src/frontend/" + frontendFolder,
                 Dockerfile = "Dockerfile",
             };
+            ApplyPublishedImageName(service, resource.Name);
             ApplyHostPort(service, hostPort, 80);
             service.Environment.Remove("BROWSER");
         });
@@ -92,13 +95,14 @@ public static class ComposePublishExtensions
         int hostPort,
         string environment,
         IReadOnlyList<(string ClusterId, string Address)> clusterOverrides) =>
-        builder.PublishAsDockerComposeService((_, service) =>
+        builder.PublishAsDockerComposeService((resource, service) =>
         {
             service.Build = new Build
             {
                 Context = RepoRootFromCompose,
                 Dockerfile = "Dockerfile.gateway",
             };
+            ApplyPublishedImageName(service, resource.Name);
             ApplyHostPort(service, hostPort, hostPort);
             ApplyAspNetEnvironment(service, environment, hostPort);
             if (DeploymentEnvironment.RequiresProductionHardening(environment))
@@ -163,6 +167,20 @@ public static class ComposePublishExtensions
                 ["MODULE_DLL"] = dll,
             },
         };
+    }
+
+    /// <summary>
+    /// Names the built image <c>&lt;registry&gt;/&lt;service&gt;:&lt;tag&gt;</c> when the publish invocation
+    /// carries <c>DIALYSIS_IMAGE_REGISTRY</c> (the NUKE <c>PushImages</c> flow); no-op otherwise so
+    /// the committed, drift-gated compose folders keep build-only services with local names.
+    /// </summary>
+    private static void ApplyPublishedImageName(Service service, string serviceName)
+    {
+        var image = ContainerRegistryPublishExtensions.QualifiedImageName(serviceName);
+        if (image is not null)
+        {
+            service.Image = image;
+        }
     }
 
     private static void ApplyHostPort(Service service, int host, int container) =>

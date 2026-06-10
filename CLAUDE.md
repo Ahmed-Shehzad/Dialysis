@@ -53,6 +53,8 @@ Each NUKE target wraps `dotnet run --project src/aspire/Dialysis.AppHost --publi
 
 The per-env shapes share ~90% of the topology; the diff is a small set of strings (`ASPNETCORE_ENVIRONMENT`, HSTS / `ForwardedHeaders`, `Authentication__RequireAuthorityWhenNotDevelopment`, OTLP wiring, replica counts, healthcheck cadence, host port mappings). See `deploy/compose/README.md` for the per-env matrix.
 
+**Image registry (JFrog Artifactory / any OCI registry)**: `./build.sh PushImages --registry <host>/<docker-repo>` builds all 22 repo-built images (module APIs, BFFs, gateway, SPAs), pushes them tagged with the GitVersion SemVer, and writes `artifacts/images/values-images-<env>.yaml` for `helm install -f`. The committed `deploy/` artifacts stay registry-free (the drift gate regenerates them with a bare environment); registry qualification is publish-time-only via `DIALYSIS_IMAGE_REGISTRY`/`DIALYSIS_IMAGE_TAG`. See `docs/operations/container-registry.md`.
+
 Run a compose env locally:
 
 ```bash
