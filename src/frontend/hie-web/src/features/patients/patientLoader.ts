@@ -1,3 +1,4 @@
+// Intentionally diverges from the shared copy (ehr/pdms/identity): hie-web has no full EHR API module, so it batches through its own patientDirectoryApi (the HIE BFF's _x/ehr aggregation).
 import { fetchPatientsByIds, type PatientLabel } from "./patientDirectoryApi";
 
 type Resolve = (value: PatientLabel | null) => void;

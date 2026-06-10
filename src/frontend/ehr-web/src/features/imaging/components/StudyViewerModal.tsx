@@ -48,16 +48,30 @@ export const StudyViewerModal = ({
   const go = (delta: number) =>
     setIndex((i) => Math.min(Math.max(i + delta, 0), Math.max(count - 1, 0)));
 
+  // Escape is the keyboard dismissal path (the backdrop click below is mouse-only).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    globalThis.addEventListener("keydown", handler);
+    return () => globalThis.removeEventListener("keydown", handler);
+  }, [onClose]);
+
   return (
     <div
+      role="presentation"
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
+      onClick={(e) => {
+        // Backdrop-only dismissal — clicks inside the dialog bubble here with a
+        // different target, so they never close it.
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`DICOM study viewer — study ${studyInstanceUid}`}
         className="flex max-h-[90vh] max-w-3xl flex-col overflow-hidden rounded-lg border border-slate-700 bg-slate-900 p-4"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-center justify-between gap-4">
           <div className="min-w-0">

@@ -64,7 +64,7 @@ export type UseDurableCommandResult<TVariables> = UseMutationResult<
  *   const { mutate, tracking } = useDurableCommand({
  *     label: "session reading",
  *     mutationFn: vars => apiClient
- *       .post(`/admin/api/_x/pdms/api/v1.0/sessions/${sid}/readings`, vars)
+ *       .post(`/{ctx}/api/v1.0/sessions/${sid}/readings`, vars)
  *       .then(r => r.data),
  *     onApplied: () => qc.invalidateQueries({ queryKey: ["readings", sid] }),
  *   });

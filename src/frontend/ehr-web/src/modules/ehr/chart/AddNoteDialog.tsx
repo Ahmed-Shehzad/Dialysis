@@ -79,9 +79,13 @@ export const AddNoteDialog = ({ patientId, onClose }: AddNoteDialogProps) => {
 
   return createPortal(
     <div
+      role="presentation"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      onClick={() => {
-        if (!mutation.isPending) onClose();
+      onClick={(e) => {
+        // Backdrop-only dismissal — clicks inside the dialog bubble here with a
+        // different target, so they never close it. Escape (wired above) is the
+        // keyboard dismissal path.
+        if (e.target === e.currentTarget && !mutation.isPending) onClose();
       }}
     >
       <div
@@ -89,7 +93,6 @@ export const AddNoteDialog = ({ patientId, onClose }: AddNoteDialogProps) => {
         aria-modal="true"
         aria-labelledby={titleId}
         className="w-full max-w-lg rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <header className="mb-4">
           <p className="text-xs uppercase tracking-wide text-slate-400">Add note</p>

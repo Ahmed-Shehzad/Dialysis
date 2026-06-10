@@ -574,16 +574,16 @@ const DrawerShell = ({
       // queues a `close` event that fires *after* the second setup has re-opened the dialog.
       // Routing that through onClose would unmount the freshly-opened drawer, so it flashes and
       // disappears — i.e. clicking the trigger button looks like "nothing happens". Escape fires
-      // `cancel` (handled here); clicking the backdrop is matched via e.target === the dialog.
+      // `cancel` (handled here); clicking the backdrop hits the presentation div below.
       onCancel={onClose}
-      onClick={(e) => {
-        if (e.target === ref.current) onClose();
-      }}
       className="fixed inset-0 z-40 m-0 flex h-full max-h-none w-full max-w-none items-center justify-end border-0 bg-transparent p-0 text-slate-100 backdrop:bg-slate-950/70"
     >
+      {/* Mouse-only click-to-dismiss region behind the drawer; Escape (onCancel above) is the
+          keyboard dismissal path, so the dialog element itself needs no click handler. */}
+      <div role="presentation" className="absolute inset-0" onClick={onClose} />
       <div
         className={
-          "h-full overflow-y-auto border-l border-slate-800 bg-slate-900 p-5 shadow-xl " +
+          "relative h-full overflow-y-auto border-l border-slate-800 bg-slate-900 p-5 shadow-xl " +
           (wide ? "w-full max-w-lg" : "w-full max-w-sm")
         }
       >

@@ -150,8 +150,11 @@ export const Hl7WorkbenchTab = () => {
       </header>
 
       <section className="space-y-2">
-        <label className="block text-sm text-slate-300">1 · Paste</label>
+        <label htmlFor="hl7-workbench-payload" className="block text-sm text-slate-300">
+          1 · Paste
+        </label>
         <textarea
+          id="hl7-workbench-payload"
           aria-label="HL7 v2 message payload"
           value={payload}
           onChange={(e) => setPayload(e.target.value)}
@@ -167,7 +170,7 @@ export const Hl7WorkbenchTab = () => {
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="block text-sm text-slate-300">2 · Parse</label>
+          <h3 className="block text-sm text-slate-300">2 · Parse</h3>
           <button
             type="button"
             disabled={!payload || parseMutation.isPending}
@@ -185,7 +188,7 @@ export const Hl7WorkbenchTab = () => {
 
       <section className="space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <label className="block text-sm text-slate-300">3 · Validate</label>
+          <h3 className="block text-sm text-slate-300">3 · Validate</h3>
           <button
             type="button"
             disabled={!payload || validateMutation.isPending}
@@ -221,7 +224,9 @@ export const Hl7WorkbenchTab = () => {
 
       <section className="space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <label className="block text-sm text-slate-300">4 · Send</label>
+          <label htmlFor="hl7-workbench-channel" className="block text-sm text-slate-300">
+            4 · Send
+          </label>
           <button
             type="button"
             disabled={!payload || !selectedFlowId || dispatchMutation.isPending}
@@ -232,6 +237,7 @@ export const Hl7WorkbenchTab = () => {
           </button>
         </div>
         <select
+          id="hl7-workbench-channel"
           aria-label="Target HL7v2 channel"
           value={selectedFlowId}
           onChange={(e) => setSelectedFlowId(e.target.value)}

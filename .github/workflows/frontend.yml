@@ -22,6 +22,18 @@ env:
   HUSKY: "0"
 
 jobs:
+  # Fast drift gate for the byte-for-byte duplication convention: the SPAs share no npm
+  # package, so cross-cutting files are duplicated verbatim across apps. This fails the
+  # build the moment one copy is edited without propagating to its siblings.
+  duplicate-sync:
+    name: duplicated-file sync check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify duplicated files are byte-identical across apps
+        run: ./tools/frontend/check-duplicate-sync.sh
+
   spa:
     name: ${{ matrix.app }} build + checks
     runs-on: ubuntu-latest

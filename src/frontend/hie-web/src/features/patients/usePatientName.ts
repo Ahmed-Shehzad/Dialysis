@@ -1,3 +1,4 @@
+// Intentionally diverges from the shared copy (ehr/pdms/identity): hie-web has no full EHR API module, so it resolves labels through its own patientDirectoryApi (the HIE BFF's _x/ehr aggregation).
 import { useQuery } from "@tanstack/react-query";
 import { type PatientLabel } from "./patientDirectoryApi";
 import { loadPatientLabel } from "./patientLoader";

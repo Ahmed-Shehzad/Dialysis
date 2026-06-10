@@ -1,3 +1,4 @@
+// Intentionally diverges from the shared copy (ehr/pdms/identity): the portal user only ever views one patient (themselves), so there is no batched patientLoader — this resolves per-id via fetchEhrPatient on the portal BFF's _x/ehr aggregation.
 import { useQuery } from "@tanstack/react-query";
 import { fetchEhrPatient } from "@/features/ehr/api/ehrApi";
 

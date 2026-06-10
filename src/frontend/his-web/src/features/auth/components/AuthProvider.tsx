@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { configureApiClient } from "@/lib/api/apiClient";
 import { tokenStore, decodeJwt, isExpired } from "@/lib/auth/token";
-import { fetchCurrentUser, type AuthenticatedUser } from "../api/authApi";
+import { CONTEXT_PREFIX, fetchCurrentUser, type AuthenticatedUser } from "../api/authApi";
 
 type AuthState = {
   user: AuthenticatedUser | null;
@@ -105,9 +105,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           /\/$/,
           "",
         );
-        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/his/");
+        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + CONTEXT_PREFIX + "/");
         const providerParam = provider ? "&provider=" + encodeURIComponent(provider) : "";
-        const target = apiBase + "/his/identity/login?" + returnUrlParam + providerParam;
+        const target =
+          apiBase + CONTEXT_PREFIX + "/identity/login?" + returnUrlParam + providerParam;
         console.info(
           "[auth] signIn → navigating to",
           target,
@@ -122,7 +123,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "",
         );
         const target =
-          apiBase + "/his/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/his/");
+          apiBase +
+          CONTEXT_PREFIX +
+          "/identity/logout?returnUrl=" +
+          encodeURIComponent(apiBase + CONTEXT_PREFIX + "/");
         console.info("[auth] signOut → navigating to", target);
         globalThis.location.assign(target);
       },
