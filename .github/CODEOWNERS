@@ -1,0 +1,12 @@
+# Default: the repository owner reviews everything.
+* @Ahmed-Shehzad
+
+# Compliance-sensitive surfaces — call them out explicitly so review routing survives
+# future team growth: data-protection (GDPR/BDSG), HIPAA scaffolding, identity/auth,
+# and the deployment topology.
+/src/backend/BuildingBlocks/DataProtection/ @Ahmed-Shehzad
+/src/backend/BuildingBlocks/Hipaa/ @Ahmed-Shehzad
+/src/backend/Identity/ @Ahmed-Shehzad
+/src/backend/Shared/Dialysis.Module.Bff/ @Ahmed-Shehzad
+/deploy/ @Ahmed-Shehzad
+/.github/ @Ahmed-Shehzad

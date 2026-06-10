@@ -167,7 +167,7 @@ It also enforces aggregate-root encapsulation and integration-event versioning. 
 
 ### Reference-architecture alignment (HIS-specific)
 
-HIS is mapped to Tummers et al. (2021) — see `src/backend/HIS/README.md` and `his_ddd_modular_plan.md`. Discovery: `GET /api/v1.0/reference-architecture/catalog`, `.../capabilities` (CQRS in `Dialysis.HIS.RaCapabilities`, schema `his_ra`), `GET /api/v1.0/help`.
+HIS is mapped to Tummers et al. (2021) — see `src/backend/HIS/ARCHITECTURE.md`. Discovery: `GET /api/v1.0/reference-architecture/catalog`, `.../capabilities` (CQRS in `Dialysis.HIS.RaCapabilities`, schema `his_ra`), `GET /api/v1.0/help`.
 
 ### Identity / auth
 
