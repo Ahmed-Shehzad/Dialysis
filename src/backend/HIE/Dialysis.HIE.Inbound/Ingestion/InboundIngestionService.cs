@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.Fhir.Tefca;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
+using Dialysis.HIE.Core.Coding;
 using Dialysis.HIE.Inbound.Domain;
 using Dialysis.HIE.Inbound.Mpi;
 using Dialysis.HIE.Inbound.Ports;
@@ -156,7 +158,7 @@ public sealed class InboundIngestionService
                     string? unit = null;
                     if (observation.Value is Quantity q)
                     {
-                        valueQuantity = q.Value?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        valueQuantity = q.Value?.ToString(CultureInfo.InvariantCulture);
                         unit = q.Unit;
                     }
                     else if (observation.Value is FhirString fs)
@@ -213,7 +215,7 @@ public sealed class InboundIngestionService
         if (!string.IsNullOrWhiteSpace(patient.BirthDate) && DateOnly.TryParse(patient.BirthDate, out var parsedDob))
             dob = parsedDob;
         var mrn = patient.Identifier
-            .Find(i => string.Equals(i.System, Core.Coding.CodeSystems.MrnIdentifier, StringComparison.Ordinal))?.Value;
+            .Find(i => string.Equals(i.System, CodeSystems.MrnIdentifier, StringComparison.Ordinal))?.Value;
 
         var entry = new PatientIndexEntry(
             partnerId,
@@ -247,15 +249,15 @@ public sealed class InboundIngestionService
     /// Probable/Certain is queued for a steward. Deduped on the unordered entry pair so repeated
     /// ingests don't pile up reviews.
     /// </summary>
-    private async Task DetectDuplicatesAsync(Domain.PatientIndexEntry source, CancellationToken cancellationToken)
+    private async Task DetectDuplicatesAsync(PatientIndexEntry source, CancellationToken cancellationToken)
     {
-        var criteria = new Mpi.PatientMatchCriteria(
+        var criteria = new PatientMatchCriteria(
             source.MedicalRecordNumber, source.FamilyName, source.GivenName, source.DateOfBirth, source.SexAtBirthCode);
 
         var matches = await _matchService.FindMatchesAsync(criteria, take: 10, cancellationToken).ConfigureAwait(false);
         foreach (var match in matches)
         {
-            if (match.Entry.Id == source.Id || match.Grade < Mpi.MatchGrade.Probable)
+            if (match.Entry.Id == source.Id || match.Grade < MatchGrade.Probable)
             {
                 continue;
             }
@@ -267,9 +269,9 @@ public sealed class InboundIngestionService
             var now = _timeProvider.GetUtcNow().UtcDateTime;
             var crossSource = !string.Equals(source.PartnerId, match.Entry.PartnerId, StringComparison.Ordinal);
 
-            if (_matchOptions.AutoLinkCertainMatches && match.Grade == Mpi.MatchGrade.Certain && crossSource)
+            if (_matchOptions.AutoLinkCertainMatches && match.Grade == MatchGrade.Certain && crossSource)
             {
-                _linkReviews.Add(Mpi.PatientLinkReview.AutoLink(
+                _linkReviews.Add(PatientLinkReview.AutoLink(
                     source.Id, source.PartnerId, Label(source),
                     match.Entry.Id, match.Entry.PartnerId, Label(match.Entry),
                     match.Score, match.Grade, _matchOptions.AutoLinkActor, now));
@@ -279,14 +281,14 @@ public sealed class InboundIngestionService
                 continue;
             }
 
-            _linkReviews.Add(Mpi.PatientLinkReview.Raise(
+            _linkReviews.Add(PatientLinkReview.Raise(
                 source.Id, source.PartnerId, Label(source),
                 match.Entry.Id, match.Entry.PartnerId, Label(match.Entry),
                 match.Score, match.Grade, now));
         }
     }
 
-    private static string Label(Domain.PatientIndexEntry e) =>
+    private static string Label(PatientIndexEntry e) =>
         $"{e.FamilyName}, {e.GivenName} {(e.DateOfBirth?.ToString("yyyy-MM-dd") ?? "?")} [{e.PartnerId}]".Trim();
 
     private async Task EmitAsync<T>(T evt, CancellationToken cancellationToken)

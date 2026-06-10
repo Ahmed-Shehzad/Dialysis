@@ -29,8 +29,8 @@ public sealed record PullPartnerDocumentsCommand : ICommand<PartnerPullResult>, 
 
     public void Deconstruct(out Guid partnerId, out string partnerPatientId, out string? purpose)
     {
-        partnerId = this.PartnerId;
-        partnerPatientId = this.PartnerPatientId;
-        purpose = this.Purpose;
+        partnerId = PartnerId;
+        partnerPatientId = PartnerPatientId;
+        purpose = Purpose;
     }
 }

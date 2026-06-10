@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -76,8 +77,8 @@ public sealed class EpicAuthProvider : IExternalEhrAuthProvider
             audience: _options.TokenEndpoint,
             claims:
             [
-                new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sub, _options.ClientId),
-                new System.Security.Claims.Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
+                new Claim(JwtRegisteredClaimNames.Sub, _options.ClientId),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             ],
             notBefore: now,
             expires: now.Add(_options.ClientAssertionLifetime),

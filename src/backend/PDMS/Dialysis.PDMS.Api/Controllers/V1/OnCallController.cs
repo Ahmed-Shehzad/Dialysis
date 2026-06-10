@@ -320,13 +320,13 @@ public sealed record UpsertRotationRequest
     public ChainLinkRequest Supervisor { get; init; }
     public void Deconstruct(out Guid chairId, out string shiftCode, out DateOnly effectiveFromUtc, out DateOnly effectiveUntilUtc, out ChainLinkRequest primary, out ChainLinkRequest backup, out ChainLinkRequest supervisor)
     {
-        chairId = this.ChairId;
-        shiftCode = this.ShiftCode;
-        effectiveFromUtc = this.EffectiveFromUtc;
-        effectiveUntilUtc = this.EffectiveUntilUtc;
-        primary = this.Primary;
-        backup = this.Backup;
-        supervisor = this.Supervisor;
+        chairId = ChairId;
+        shiftCode = ShiftCode;
+        effectiveFromUtc = EffectiveFromUtc;
+        effectiveUntilUtc = EffectiveUntilUtc;
+        primary = Primary;
+        backup = Backup;
+        supervisor = Supervisor;
     }
 }
 
@@ -345,9 +345,9 @@ public sealed record ChainLinkRequest
     public IReadOnlyList<ChannelTargetRequest> Channels { get; init; }
     public void Deconstruct(out string clinicianSub, out string displayName, out IReadOnlyList<ChannelTargetRequest> channels)
     {
-        clinicianSub = this.ClinicianSub;
-        displayName = this.DisplayName;
-        channels = this.Channels;
+        clinicianSub = ClinicianSub;
+        displayName = DisplayName;
+        channels = Channels;
     }
 }
 
@@ -362,8 +362,8 @@ public sealed record ChannelTargetRequest
     public string Address { get; init; }
     public void Deconstruct(out string channel, out string address)
     {
-        channel = this.Channel;
-        address = this.Address;
+        channel = Channel;
+        address = Address;
     }
 }
 
@@ -394,13 +394,13 @@ public sealed record UpsertPolicyRequest
     public bool QuietHoursSuppressNonCritical { get; init; }
     public void Deconstruct(out string name, out int criticalPrimaryWindowSeconds, out int criticalBackupWindowSeconds, out int warningPrimaryWindowSeconds, out int warningBackupWindowSeconds, out int informationalPrimaryWindowSeconds, out bool quietHoursSuppressNonCritical)
     {
-        name = this.Name;
-        criticalPrimaryWindowSeconds = this.CriticalPrimaryWindowSeconds;
-        criticalBackupWindowSeconds = this.CriticalBackupWindowSeconds;
-        warningPrimaryWindowSeconds = this.WarningPrimaryWindowSeconds;
-        warningBackupWindowSeconds = this.WarningBackupWindowSeconds;
-        informationalPrimaryWindowSeconds = this.InformationalPrimaryWindowSeconds;
-        quietHoursSuppressNonCritical = this.QuietHoursSuppressNonCritical;
+        name = Name;
+        criticalPrimaryWindowSeconds = CriticalPrimaryWindowSeconds;
+        criticalBackupWindowSeconds = CriticalBackupWindowSeconds;
+        warningPrimaryWindowSeconds = WarningPrimaryWindowSeconds;
+        warningBackupWindowSeconds = WarningBackupWindowSeconds;
+        informationalPrimaryWindowSeconds = InformationalPrimaryWindowSeconds;
+        quietHoursSuppressNonCritical = QuietHoursSuppressNonCritical;
     }
 }
 
@@ -408,7 +408,7 @@ public sealed record AcknowledgeAlarmRequest
 {
     public AcknowledgeAlarmRequest(string ClinicianSub) => this.ClinicianSub = ClinicianSub;
     public string ClinicianSub { get; init; }
-    public void Deconstruct(out string clinicianSub) => clinicianSub = this.ClinicianSub;
+    public void Deconstruct(out string clinicianSub) => clinicianSub = ClinicianSub;
 }
 
 public sealed record OnCallRotationDto
@@ -450,14 +450,14 @@ public sealed record OnCallRotationDto
     public ChainLinkDto Supervisor { get; init; }
     public void Deconstruct(out Guid id, out Guid chairId, out string shiftCode, out DateOnly effectiveFromUtc, out DateOnly effectiveUntilUtc, out ChainLinkDto primary, out ChainLinkDto backup, out ChainLinkDto supervisor)
     {
-        id = this.Id;
-        chairId = this.ChairId;
-        shiftCode = this.ShiftCode;
-        effectiveFromUtc = this.EffectiveFromUtc;
-        effectiveUntilUtc = this.EffectiveUntilUtc;
-        primary = this.Primary;
-        backup = this.Backup;
-        supervisor = this.Supervisor;
+        id = Id;
+        chairId = ChairId;
+        shiftCode = ShiftCode;
+        effectiveFromUtc = EffectiveFromUtc;
+        effectiveUntilUtc = EffectiveUntilUtc;
+        primary = Primary;
+        backup = Backup;
+        supervisor = Supervisor;
     }
 }
 
@@ -478,9 +478,9 @@ public sealed record ChainLinkDto
     public IReadOnlyList<ChannelTargetDto> Channels { get; init; }
     public void Deconstruct(out string clinicianSub, out string displayName, out IReadOnlyList<ChannelTargetDto> channels)
     {
-        clinicianSub = this.ClinicianSub;
-        displayName = this.DisplayName;
-        channels = this.Channels;
+        clinicianSub = ClinicianSub;
+        displayName = DisplayName;
+        channels = Channels;
     }
 }
 
@@ -495,8 +495,8 @@ public sealed record ChannelTargetDto
     public string Address { get; init; }
     public void Deconstruct(out string channel, out string address)
     {
-        channel = this.Channel;
-        address = this.Address;
+        channel = Channel;
+        address = Address;
     }
 }
 
@@ -539,14 +539,14 @@ public sealed record EscalationPolicyDto
     public bool QuietHoursSuppressNonCritical { get; init; }
     public void Deconstruct(out Guid id, out string name, out int criticalPrimaryWindowSeconds, out int criticalBackupWindowSeconds, out int warningPrimaryWindowSeconds, out int warningBackupWindowSeconds, out int informationalPrimaryWindowSeconds, out bool quietHoursSuppressNonCritical)
     {
-        id = this.Id;
-        name = this.Name;
-        criticalPrimaryWindowSeconds = this.CriticalPrimaryWindowSeconds;
-        criticalBackupWindowSeconds = this.CriticalBackupWindowSeconds;
-        warningPrimaryWindowSeconds = this.WarningPrimaryWindowSeconds;
-        warningBackupWindowSeconds = this.WarningBackupWindowSeconds;
-        informationalPrimaryWindowSeconds = this.InformationalPrimaryWindowSeconds;
-        quietHoursSuppressNonCritical = this.QuietHoursSuppressNonCritical;
+        id = Id;
+        name = Name;
+        criticalPrimaryWindowSeconds = CriticalPrimaryWindowSeconds;
+        criticalBackupWindowSeconds = CriticalBackupWindowSeconds;
+        warningPrimaryWindowSeconds = WarningPrimaryWindowSeconds;
+        warningBackupWindowSeconds = WarningBackupWindowSeconds;
+        informationalPrimaryWindowSeconds = InformationalPrimaryWindowSeconds;
+        quietHoursSuppressNonCritical = QuietHoursSuppressNonCritical;
     }
 }
 
@@ -611,18 +611,18 @@ public sealed record AlarmDispatchDto
     public IReadOnlyList<AlarmDispatchAttemptDto> Attempts { get; init; }
     public void Deconstruct(out Guid id, out Guid infusionId, out Guid sessionId, out Guid chairId, out string alarmCode, out string severity, out DateTime startedAtUtc, out DateTime? resolvedAtUtc, out string status, out int currentLinkIndex, out string? acknowledgedBySub, out IReadOnlyList<AlarmDispatchAttemptDto> attempts)
     {
-        id = this.Id;
-        infusionId = this.InfusionId;
-        sessionId = this.SessionId;
-        chairId = this.ChairId;
-        alarmCode = this.AlarmCode;
-        severity = this.Severity;
-        startedAtUtc = this.StartedAtUtc;
-        resolvedAtUtc = this.ResolvedAtUtc;
-        status = this.Status;
-        currentLinkIndex = this.CurrentLinkIndex;
-        acknowledgedBySub = this.AcknowledgedBySub;
-        attempts = this.Attempts;
+        id = Id;
+        infusionId = InfusionId;
+        sessionId = SessionId;
+        chairId = ChairId;
+        alarmCode = AlarmCode;
+        severity = Severity;
+        startedAtUtc = StartedAtUtc;
+        resolvedAtUtc = ResolvedAtUtc;
+        status = Status;
+        currentLinkIndex = CurrentLinkIndex;
+        acknowledgedBySub = AcknowledgedBySub;
+        attempts = Attempts;
     }
 }
 
@@ -650,11 +650,11 @@ public sealed record AlarmDispatchAttemptDto
     public DateTime AttemptedAtUtc { get; init; }
     public void Deconstruct(out int chainLinkIndex, out string channel, out string address, out bool delivered, out string? failureReason, out DateTime attemptedAtUtc)
     {
-        chainLinkIndex = this.ChainLinkIndex;
-        channel = this.Channel;
-        address = this.Address;
-        delivered = this.Delivered;
-        failureReason = this.FailureReason;
-        attemptedAtUtc = this.AttemptedAtUtc;
+        chainLinkIndex = ChainLinkIndex;
+        channel = Channel;
+        address = Address;
+        delivered = Delivered;
+        failureReason = FailureReason;
+        attemptedAtUtc = AttemptedAtUtc;
     }
 }

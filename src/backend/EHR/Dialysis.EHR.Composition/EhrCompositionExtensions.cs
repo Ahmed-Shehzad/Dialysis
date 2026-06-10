@@ -1,29 +1,28 @@
 using Dialysis.BuildingBlocks.ClinicianNotification;
+using Dialysis.BuildingBlocks.DataProtection;
+using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
-using Dialysis.BuildingBlocks.Fhir.DeIdentification;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.DeIdentification;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
-using Dialysis.EHR.PatientChart.Fhir;
-using Dialysis.EHR.Registration.Fhir;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.CQRS;
+using Dialysis.EHR.Billing;
+using Dialysis.EHR.Billing.ChargeEdits;
+using Dialysis.EHR.Billing.Coding;
+using Dialysis.EHR.Billing.Consumers;
+using Dialysis.EHR.Billing.Ports;
 using Dialysis.EHR.ClinicalNotes;
+using Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport;
+using Dialysis.EHR.ClinicalNotes.Features.QualityMeasures;
 using Dialysis.EHR.ClinicalNotes.Ports;
 using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.Contracts.Integration;
-using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
-using Dialysis.PDMS.Contracts.Integration;
-using Dialysis.BuildingBlocks.DataProtection;
-using Dialysis.BuildingBlocks.DataProtection.LawfulBases;
-using Dialysis.EHR.Billing;
-using Dialysis.EHR.Billing.Consumers;
-using Dialysis.EHR.Billing.Ports;
-using Dialysis.EHR.Persistence.Billing;
 using Dialysis.EHR.Core;
 using Dialysis.EHR.Integration;
 using Dialysis.EHR.Integration.Adapters;
@@ -31,11 +30,19 @@ using Dialysis.EHR.Integration.Consumers;
 using Dialysis.EHR.Integration.Ports;
 using Dialysis.EHR.Integration.Projections;
 using Dialysis.EHR.PatientChart;
+using Dialysis.EHR.PatientChart.Fhir;
 using Dialysis.EHR.PatientChart.Projections;
 using Dialysis.EHR.PatientPortal;
 using Dialysis.EHR.Persistence;
+using Dialysis.EHR.Persistence.Billing;
 using Dialysis.EHR.Registration;
+using Dialysis.EHR.Registration.Fhir;
 using Dialysis.EHR.Scheduling;
+using Dialysis.HIE.Contracts.Integration;
+using Dialysis.HIS.Contracts.IntegrationEvents.Billing;
+using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
+using Dialysis.PDMS.Contracts.Integration;
+using Hl7.Fhir.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,26 +81,26 @@ public static class EhrCompositionExtensions
             services.AddScoped<IClinicalSafetyChecker, ClinicalSafetyChecker>();
 
             // Quality / MIPS care-gap prompts — config-driven, empty by default.
-            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureOptions>(
-                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureOptions.SectionName));
-            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IQualityMeasureEvaluator,
-                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.QualityMeasureEvaluator>();
+            services.Configure<QualityMeasureOptions>(
+                configuration.GetSection(QualityMeasureOptions.SectionName));
+            services.AddScoped<IQualityMeasureEvaluator,
+                QualityMeasureEvaluator>();
 
             // Point-of-care clinical decision support — condition-specific prompts, config-driven, empty by default.
-            services.Configure<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions>(
-                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.CdsOptions.SectionName));
-            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.IClinicalDecisionSupportEvaluator,
-                Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport.ClinicalDecisionSupportEvaluator>();
+            services.Configure<CdsOptions>(
+                configuration.GetSection(CdsOptions.SectionName));
+            services.AddScoped<IClinicalDecisionSupportEvaluator,
+                ClinicalDecisionSupportEvaluator>();
 
             // Population condition-control measures + at-risk outreach — config-driven, dispatch off by default.
-            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ControlMeasureOptions>(
-                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ControlMeasureOptions.SectionName));
-            services.Configure<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.OutreachOptions>(
-                configuration.GetSection(Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.OutreachOptions.SectionName));
-            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IConditionControlEvaluator,
-                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ConditionControlEvaluator>();
-            services.AddScoped<Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.IOutreachContactResolver,
-                Dialysis.EHR.ClinicalNotes.Features.QualityMeasures.ConfiguredFallbackOutreachContactResolver>();
+            services.Configure<ControlMeasureOptions>(
+                configuration.GetSection(ControlMeasureOptions.SectionName));
+            services.Configure<OutreachOptions>(
+                configuration.GetSection(OutreachOptions.SectionName));
+            services.AddScoped<IConditionControlEvaluator,
+                ConditionControlEvaluator>();
+            services.AddScoped<IOutreachContactResolver,
+                ConfiguredFallbackOutreachContactResolver>();
             services.AddClinicianNotification();
 
             // Revenue cycle: auto-capture professional charges on encounter close (opt-in, default off).
@@ -101,16 +108,16 @@ public static class EhrCompositionExtensions
                 configuration.GetSection(EncounterChargeAutomationOptions.SectionName));
 
             // E/M coding assist — suggests the visit level + flags under-coding. Config-driven, empty → no suggestion.
-            services.Configure<Dialysis.EHR.Billing.Coding.EmCodingOptions>(
-                configuration.GetSection(Dialysis.EHR.Billing.Coding.EmCodingOptions.SectionName));
-            services.AddScoped<Dialysis.EHR.Billing.Coding.IEvaluationManagementCoder,
-                Dialysis.EHR.Billing.Coding.EvaluationManagementCoder>();
+            services.Configure<EmCodingOptions>(
+                configuration.GetSection(EmCodingOptions.SectionName));
+            services.AddScoped<IEvaluationManagementCoder,
+                EvaluationManagementCoder>();
 
             // Charge-review edits (frequency / coverage / ABN / under-coding) — config-driven, empty by default.
-            services.Configure<Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions>(
-                configuration.GetSection(Dialysis.EHR.Billing.ChargeEdits.ChargeEditOptions.SectionName));
-            services.AddScoped<Dialysis.EHR.Billing.ChargeEdits.IChargeEditChecker,
-                Dialysis.EHR.Billing.ChargeEdits.ChargeEditChecker>();
+            services.Configure<ChargeEditOptions>(
+                configuration.GetSection(ChargeEditOptions.SectionName));
+            services.AddScoped<IChargeEditChecker,
+                ChargeEditChecker>();
 
             services.AddEuDataProtection("ehr", registry =>
             {
@@ -162,7 +169,7 @@ public static class EhrCompositionExtensions
                 // Cross-module: HIS queues a payer-billing window → EHR (the authoritative claims
                 // pipeline) assembles the EDI 837 batch and reports the outcome back so HIS can flip
                 // the export job out of Queued.
-                t.AddConsumer<Dialysis.HIS.Contracts.IntegrationEvents.Billing.BillingExportJobQueuedIntegrationEvent, BillingExportJobQueuedConsumer>();
+                t.AddConsumer<BillingExportJobQueuedIntegrationEvent, BillingExportJobQueuedConsumer>();
                 // Cross-module: PDMS completes a session → capture the itemised dialysis charge
                 // and emit the invoice-ready event that HIE Documents renders into an AcroForm PDF.
                 t.AddConsumer<DialysisSessionChargeReadyIntegrationEvent, DialysisSessionChargeReadyConsumer>();
@@ -177,10 +184,10 @@ public static class EhrCompositionExtensions
                 // hospital-event read model that drives the proactive follow-up worklist.
                 t.AddConsumer<PatientAdmittedIntegrationEvent, PatientAdmittedHospitalEventProjector>();
                 t.AddConsumer<PatientDischargedIntegrationEvent, PatientDischargedHospitalEventProjector>();
-                t.AddConsumer<Dialysis.HIE.Contracts.Integration.ExternalEncounterIngestedIntegrationEvent, ExternalEncounterHospitalEventProjector>();
+                t.AddConsumer<ExternalEncounterIngestedIntegrationEvent, ExternalEncounterHospitalEventProjector>();
                 // Patient safety: project PDMS intradialytic adverse events into the cross-patient
                 // surveillance read model that drives the safety-signal dashboard.
-                t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, Dialysis.EHR.Integration.Consumers.AdverseEventProjector>();
+                t.AddConsumer<IntradialyticAdverseEventIntegrationEvent, AdverseEventProjector>();
                 // Cross-module: mirror HIS check-ins so HIS-originated patients exist in EHR.
                 t.AddConsumer<PatientCheckedInIntegrationEvent, EhrPatientFromHisCheckInConsumer>();
                 t.AddConsumer<WalkInRegisteredIntegrationEvent, EhrPatientFromHisWalkInConsumer>();
@@ -242,12 +249,12 @@ public static class EhrCompositionExtensions
                 // PHI-safe analytics export: the Safe Harbor de-identifier the export runner applies
                 // when a job is requested with _deIdentify (fail-closed if missing).
                 services.AddFhirDeIdentification();
-                services.AddFhirBulkDataFeeder<EhrPatientFhirFeeder, Hl7.Fhir.Model.Patient>();
-                services.AddFhirBulkDataFeeder<EhrVitalSignObservationFeeder, Hl7.Fhir.Model.Observation>();
-                services.AddFhirBulkDataFeeder<EhrAllergyIntoleranceFeeder, Hl7.Fhir.Model.AllergyIntolerance>();
-                services.AddFhirBulkDataFeeder<EhrImmunizationFeeder, Hl7.Fhir.Model.Immunization>();
-                services.AddFhirBulkDataFeeder<EhrMedicationStatementFeeder, Hl7.Fhir.Model.MedicationStatement>();
-                services.AddFhirBulkDataFeeder<EhrCarePlanFeeder, Hl7.Fhir.Model.CarePlan>();
+                services.AddFhirBulkDataFeeder<EhrPatientFhirFeeder, Patient>();
+                services.AddFhirBulkDataFeeder<EhrVitalSignObservationFeeder, Observation>();
+                services.AddFhirBulkDataFeeder<EhrAllergyIntoleranceFeeder, AllergyIntolerance>();
+                services.AddFhirBulkDataFeeder<EhrImmunizationFeeder, Immunization>();
+                services.AddFhirBulkDataFeeder<EhrMedicationStatementFeeder, MedicationStatement>();
+                services.AddFhirBulkDataFeeder<EhrCarePlanFeeder, CarePlan>();
             }
 
             if (enableFhirSmartOnFhir)

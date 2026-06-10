@@ -1,4 +1,8 @@
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using Dialysis.SmartConnect.DataTypes;
 using Dialysis.SmartConnect.Scheduling;
 using Microsoft.Extensions.Logging;
 
@@ -235,8 +239,8 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             return;
         }
 
-        var sizeBytes = info.Length.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        var lastWriteUtc = info.LastWriteTimeUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        var sizeBytes = info.Length.ToString(CultureInfo.InvariantCulture);
+        var lastWriteUtc = info.LastWriteTimeUtc.ToString("O", CultureInfo.InvariantCulture);
 
         var sourceMap = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
@@ -270,8 +274,8 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             if (records.Count > 1)
             {
                 perRecordMetadata[BatchMetadataKeys.BatchId] = batchId;
-                perRecordMetadata[BatchMetadataKeys.Sequence] = (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                perRecordMetadata[BatchMetadataKeys.Total] = records.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                perRecordMetadata[BatchMetadataKeys.Sequence] = (i + 1).ToString(CultureInfo.InvariantCulture);
+                perRecordMetadata[BatchMetadataKeys.Total] = records.Count.ToString(CultureInfo.InvariantCulture);
                 perRecordMetadata[BatchMetadataKeys.Source] = batchSource;
             }
 
@@ -336,19 +340,19 @@ public sealed class FileReaderSourceConnector : ISourceConnector
             return SplitDelimitedText(bytes, parameters);
         }
 
-        var text = System.Text.Encoding.UTF8.GetString(bytes);
+        var text = Encoding.UTF8.GetString(bytes);
         IEnumerable<string> records = parameters.SplitMode switch
         {
             FileReaderSplitMode.Hl7V2 => SplitOnHl7v2(text),
             FileReaderSplitMode.Line => text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries),
-            FileReaderSplitMode.Regex => System.Text.RegularExpressions.Regex
+            FileReaderSplitMode.Regex => Regex
                 .Split(text, parameters.SplitPattern ?? string.Empty)
                 .Where(r => !string.IsNullOrWhiteSpace(r)),
             _ => [text],
         };
 
         var result = records
-            .Select(r => System.Text.Encoding.UTF8.GetBytes(r))
+            .Select(r => Encoding.UTF8.GetBytes(r))
             .Where(b => b.Length > 0)
             .ToArray();
         return result.Length == 0 ? [bytes] : result;
@@ -365,9 +369,9 @@ public sealed class FileReaderSourceConnector : ISourceConnector
     private static IReadOnlyList<byte[]> SplitDelimitedText(byte[] bytes, FileReaderParameters parameters)
     {
         var delimiter = !string.IsNullOrEmpty(parameters.DelimitedTextDelimiter)
-            ? Dialysis.SmartConnect.DataTypes.DelimitedTextStreaming.ResolveDelimiter(parameters.DelimitedTextDelimiter!)
+            ? DelimitedTextStreaming.ResolveDelimiter(parameters.DelimitedTextDelimiter!)
             : ',';
-        var options = new Dialysis.SmartConnect.DataTypes.DelimitedTextStreaming.Options(
+        var options = new DelimitedTextStreaming.Options(
             Delimiter: delimiter,
             HasHeaderRow: parameters.DelimitedTextHasHeaderRow,
             TrimWhitespace: true,
@@ -378,19 +382,19 @@ public sealed class FileReaderSourceConnector : ISourceConnector
         // blanks + drop the header in lockstep, but reread the line from the byte buffer
         // so the payload is bytes-faithful rather than re-serialised JSON.
         using var input = new MemoryStream(bytes, writable: false);
-        using var reader = new StreamReader(input, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        using var reader = new StreamReader(input, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
 
         if (parameters.DelimitedTextHasHeaderRow)
         {
             // Consume the header row from the reader so subsequent ReadLine calls return data.
-            _ = Dialysis.SmartConnect.DataTypes.DelimitedTextStreaming.ReadHeader(reader, options);
+            _ = DelimitedTextStreaming.ReadHeader(reader, options);
         }
 
         var records = new List<byte[]>();
         while (reader.ReadLine() is { } line)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
-            records.Add(System.Text.Encoding.UTF8.GetBytes(line));
+            records.Add(Encoding.UTF8.GetBytes(line));
         }
         return records.Count == 0 ? [bytes] : records;
     }

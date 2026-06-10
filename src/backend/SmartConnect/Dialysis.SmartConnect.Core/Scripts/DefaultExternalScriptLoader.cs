@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Microsoft.Extensions.Options;
 
 namespace Dialysis.SmartConnect.Scripts;
@@ -108,7 +109,7 @@ public sealed class DefaultExternalScriptLoader : IExternalScriptLoader
             }
             await ms.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
-        return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        return Encoding.UTF8.GetString(ms.ToArray());
     }
 
     private static bool IsWithin(string fullPath, string root)

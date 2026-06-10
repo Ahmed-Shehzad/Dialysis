@@ -35,8 +35,5 @@ public sealed record ChairAssignmentDto
 
 public sealed record ListChairAssignmentsQuery : IQuery<IReadOnlyList<ChairAssignmentDto>>, IPermissionedCommand
 {
-    public ListChairAssignmentsQuery()
-    {
-    }
     public string RequiredPermission => PdmsPermissions.SessionRead;
 }

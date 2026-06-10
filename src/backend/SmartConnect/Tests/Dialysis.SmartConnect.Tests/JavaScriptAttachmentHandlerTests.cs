@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Attachments.Handlers;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
@@ -25,7 +26,7 @@ public sealed class JavaScriptAttachmentHandlerTests
             FlowId = Guid.CreateVersion7(),
             MessageId = Guid.CreateVersion7(),
             ChannelMimeType = "application/octet-stream",
-            PropertiesJson = System.Text.Json.JsonSerializer.Serialize(new { script }),
+            PropertiesJson = JsonSerializer.Serialize(new { script }),
             Store = store,
         };
 

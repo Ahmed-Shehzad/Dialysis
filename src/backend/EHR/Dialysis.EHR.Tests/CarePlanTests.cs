@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.PatientChart.Domain;
 using Dialysis.EHR.PatientChart.Features.CarePlanning;
@@ -68,7 +69,7 @@ public sealed class CarePlanTests
         public void Add(CarePlan carePlan) { }
         public async IAsyncEnumerable<CarePlan> StreamAllAsync(
             DateTimeOffset? since,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             _ = since;
             yield return _plan;

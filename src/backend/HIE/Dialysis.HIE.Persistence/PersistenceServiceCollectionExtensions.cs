@@ -6,11 +6,12 @@ using Dialysis.HIE.Consent;
 using Dialysis.HIE.Consent.Ports;
 using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.HIE.Documents.Ports;
-using Dialysis.HIE.Tefca.Ports;
 using Dialysis.HIE.Inbound.Ports;
+using Dialysis.HIE.Inbound.Terminology;
 using Dialysis.HIE.OpenEhr.Ports;
 using Dialysis.HIE.Outbound.Ports;
 using Dialysis.HIE.Persistence.Repositories;
+using Dialysis.HIE.Tefca.Ports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -52,7 +53,7 @@ public static class PersistenceServiceCollectionExtensions
             services.AddScoped<IConsentGate, ConsentGate>();
             services.AddScoped<IDocumentReferenceRepository, EfDocumentReferenceRepository>();
             services.AddScoped<IDocumentRetentionPolicyRepository, EfDocumentRetentionPolicyRepository>();
-            services.AddScoped<Inbound.Terminology.IAuthoredTerminologyRepository, EfAuthoredTerminologyRepository>();
+            services.AddScoped<IAuthoredTerminologyRepository, EfAuthoredTerminologyRepository>();
             services.AddScoped<IQhinPartnerRepository, EfQhinPartnerRepository>();
             services.AddScoped<IErasureRequestStore, EfErasureRequestStore>();
             services.AddScoped<IRestrictionRequestStore, EfRestrictionRequestStore>();

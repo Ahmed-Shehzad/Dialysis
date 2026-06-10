@@ -1,8 +1,8 @@
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

@@ -1,4 +1,5 @@
 using Dialysis.HIE.Core.Abstraction.Partners;
+using Dialysis.HIE.Tefca.Ias;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,7 @@ public static class HttpPartnerServiceCollectionExtensions
                     var logger = sp.GetRequiredService<ILogger<FhirHttpPartnerEndpoint>>();
                     // Optional: when the host wires an IAS issuer, IAS-enabled partners mint a
                     // per-call JWT; otherwise the static bearer token stands.
-                    var iasIssuer = sp.GetService<Dialysis.HIE.Tefca.Ias.IIasJwtIssuer>();
+                    var iasIssuer = sp.GetService<IIasJwtIssuer>();
                     return new FhirHttpPartnerEndpoint(capturedId, client, capturedOptions, logger, iasIssuer);
                 });
             }

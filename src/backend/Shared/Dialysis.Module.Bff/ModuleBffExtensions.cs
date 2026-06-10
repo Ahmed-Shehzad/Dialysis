@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
 using Dialysis.BuildingBlocks.Transponder.Hosting;
@@ -290,7 +291,7 @@ public static class ModuleBffExtensions
                     StringComparer.Ordinal);
             var realmAccessRoles = ctx.User.FindAll("realm_access").Select(c => c.Value).FirstOrDefault();
             var roles = ctx.User.FindAll("roles").Select(c => c.Value)
-                .Concat(ctx.User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value))
+                .Concat(ctx.User.FindAll(ClaimTypes.Role).Select(c => c.Value))
                 .Distinct(StringComparer.Ordinal)
                 .ToArray();
             var permissions = ExtractPermissions(ctx.User.FindAll("dialysis_permission").Select(c => c.Value));

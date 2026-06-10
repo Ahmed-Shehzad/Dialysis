@@ -28,6 +28,6 @@ internal static class CancellationClassifier
     /// cancelled). An HttpClient timeout — same exception type, but our token is still live — returns false
     /// so callers treat it as a per-call failure to log and continue past, not a reason to stop.
     /// </summary>
-    public static bool IsHostStopping(System.Exception ex, System.Threading.CancellationToken stoppingToken) =>
-        ex is System.OperationCanceledException && stoppingToken.IsCancellationRequested;
+    public static bool IsHostStopping(Exception ex, CancellationToken stoppingToken) =>
+        ex is OperationCanceledException && stoppingToken.IsCancellationRequested;
 }

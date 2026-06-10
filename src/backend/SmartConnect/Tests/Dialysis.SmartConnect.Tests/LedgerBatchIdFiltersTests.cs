@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
@@ -111,8 +112,8 @@ public sealed class LedgerBatchIdFiltersTests : IClassFixture<SmartConnectApiFac
     {
         var metadata = ImmutableDictionary<string, string>.Empty
             .Add(BatchMetadataKeys.BatchId, batchId)
-            .Add(BatchMetadataKeys.Sequence, sequence.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .Add(BatchMetadataKeys.Total, total.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            .Add(BatchMetadataKeys.Sequence, sequence.ToString(CultureInfo.InvariantCulture))
+            .Add(BatchMetadataKeys.Total, total.ToString(CultureInfo.InvariantCulture));
         if (!string.IsNullOrWhiteSpace(messageType))
         {
             metadata = metadata

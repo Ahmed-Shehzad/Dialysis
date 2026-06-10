@@ -119,7 +119,7 @@ public sealed class MedicationAdministrationRecord : AggregateRoot<Guid>
     {
         if (Status != MarStatus.Open)
             throw new InvalidOperationException(
-                $"Cannot mutate a closed MAR. Reopen via the operator override path first.");
+                "Cannot mutate a closed MAR. Reopen via the operator override path first.");
     }
 }
 

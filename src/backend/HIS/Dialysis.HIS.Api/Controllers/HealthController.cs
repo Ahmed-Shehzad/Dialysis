@@ -44,8 +44,8 @@ public sealed class HealthController : ControllerBase
         public string Module { get; init; }
         public void Deconstruct(out string status, out string module)
         {
-            status = this.Status;
-            module = this.Module;
+            status = Status;
+            module = Module;
         }
     }
 }

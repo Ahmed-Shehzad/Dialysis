@@ -1,3 +1,4 @@
+using System.Text;
 using Dialysis.BuildingBlocks.Direct;
 using Dialysis.HIE.Core.Abstraction.Partners;
 using Hl7.Fhir.Model;
@@ -80,6 +81,6 @@ public sealed class DirectPartnerEndpoint : IPartnerEndpoint
 
         var json = SerializeFhirJson(resource);
         var fileName = $"{resource.TypeName}.json";
-        return new DirectAttachment(fileName, "application/fhir+json", System.Text.Encoding.UTF8.GetBytes(json));
+        return new DirectAttachment(fileName, "application/fhir+json", Encoding.UTF8.GetBytes(json));
     }
 }

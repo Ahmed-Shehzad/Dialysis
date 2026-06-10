@@ -88,6 +88,6 @@ public sealed class DataManagementController : HisHateoasControllerBase
     {
         public SubmitDataImportJobResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 }

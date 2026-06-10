@@ -1,7 +1,7 @@
 using Dialysis.CQRS.Queries;
 using Dialysis.EHR.ClinicalNotes.Domain;
-using Dialysis.EHR.Contracts.Security;
 using Dialysis.EHR.ClinicalNotes.Ports;
+using Dialysis.EHR.Contracts.Security;
 using Dialysis.Module.Contracts.Authorization;
 
 namespace Dialysis.EHR.ClinicalNotes.Features.OrderSets;

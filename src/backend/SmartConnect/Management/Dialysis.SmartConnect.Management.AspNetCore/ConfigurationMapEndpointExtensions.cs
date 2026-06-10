@@ -97,6 +97,6 @@ public static class ConfigurationMapEndpointExtensions
     {
         public ConfigMapValueBody(string Value) => this.Value = Value;
         public string Value { get; init; }
-        public void Deconstruct(out string value) => value = this.Value;
+        public void Deconstruct(out string value) => value = Value;
     }
 }

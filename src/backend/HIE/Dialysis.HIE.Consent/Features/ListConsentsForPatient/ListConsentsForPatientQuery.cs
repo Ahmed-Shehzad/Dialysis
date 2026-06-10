@@ -10,7 +10,7 @@ public sealed record ListConsentsForPatientQuery : IQuery<IReadOnlyList<ConsentD
     public ListConsentsForPatientQuery(Guid PatientId) => this.PatientId = PatientId;
     public string RequiredPermission => HiePermissions.ConsentManage;
     public Guid PatientId { get; init; }
-    public void Deconstruct(out Guid patientId) => patientId = this.PatientId;
+    public void Deconstruct(out Guid patientId) => patientId = PatientId;
 }
 
 public sealed record ConsentDto
@@ -43,13 +43,13 @@ public sealed record ConsentDto
     public DateTime? RevokedAtUtc { get; init; }
     public void Deconstruct(out Guid id, out Guid patientId, out string partnerId, out string scope, out ConsentDirection direction, out DateTime effectiveFromUtc, out DateTime? effectiveToUtc, out DateTime? revokedAtUtc)
     {
-        id = this.Id;
-        patientId = this.PatientId;
-        partnerId = this.PartnerId;
-        scope = this.Scope;
-        direction = this.Direction;
-        effectiveFromUtc = this.EffectiveFromUtc;
-        effectiveToUtc = this.EffectiveToUtc;
-        revokedAtUtc = this.RevokedAtUtc;
+        id = Id;
+        patientId = PatientId;
+        partnerId = PartnerId;
+        scope = Scope;
+        direction = Direction;
+        effectiveFromUtc = EffectiveFromUtc;
+        effectiveToUtc = EffectiveToUtc;
+        revokedAtUtc = RevokedAtUtc;
     }
 }

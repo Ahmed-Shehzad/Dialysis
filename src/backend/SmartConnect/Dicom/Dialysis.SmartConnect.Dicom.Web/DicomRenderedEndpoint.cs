@@ -74,7 +74,7 @@ public static class DicomRenderedEndpoint
         try
         {
             var file = await DicomFile.OpenAsync(new MemoryStream(bytes.Value.ToArray())).ConfigureAwait(false);
-            using var image = new DicomImage(file.Dataset).RenderImage(0).AsSharpImage();
+            using var image = new DicomImage(file.Dataset).RenderImage().AsSharpImage();
             var output = new MemoryStream();
             await image.SaveAsPngAsync(output, cancellationToken).ConfigureAwait(false);
             output.Position = 0;

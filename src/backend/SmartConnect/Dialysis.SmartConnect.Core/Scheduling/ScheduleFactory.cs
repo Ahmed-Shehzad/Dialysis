@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Dialysis.SmartConnect.Scheduling;
 
@@ -8,7 +9,7 @@ public static class ScheduleFactory
     private static readonly JsonSerializerOptions _scheduleJsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
+        Converters = { new JsonStringEnumConverter() },
     };
 
     /// <summary>

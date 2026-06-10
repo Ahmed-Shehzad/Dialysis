@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Dicom;
 using Dialysis.SmartConnect.Dicom.Persistence;
@@ -106,7 +107,7 @@ public sealed class DicomIngestionServiceTests
             return Task.CompletedTask;
         }
         public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var kv in _data)
             {

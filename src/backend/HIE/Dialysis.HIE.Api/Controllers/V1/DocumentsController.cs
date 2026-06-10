@@ -242,13 +242,13 @@ public sealed class DocumentsController : ControllerBase
         public string? Category { get; init; }
         public void Deconstruct(out Guid patientId, out string kind, out string title, out string mimeType, out string base64Content, out string? languageCode, out string? category)
         {
-            patientId = this.PatientId;
-            kind = this.Kind;
-            title = this.Title;
-            mimeType = this.MimeType;
-            base64Content = this.Base64Content;
-            languageCode = this.LanguageCode;
-            category = this.Category;
+            patientId = PatientId;
+            kind = Kind;
+            title = Title;
+            mimeType = MimeType;
+            base64Content = Base64Content;
+            languageCode = LanguageCode;
+            category = Category;
         }
     }
 
@@ -279,13 +279,13 @@ public sealed class DocumentsController : ControllerBase
         public string? TspCredentialId { get; init; }
         public void Deconstruct(out PdfSigningCertificateSource certificateSource, out string? userId, out string? reason, out string? location, out string? contactInfo, out PadesConformance? level, out string? tspCredentialId)
         {
-            certificateSource = this.CertificateSource;
-            userId = this.UserId;
-            reason = this.Reason;
-            location = this.Location;
-            contactInfo = this.ContactInfo;
-            level = this.Level;
-            tspCredentialId = this.TspCredentialId;
+            certificateSource = CertificateSource;
+            userId = UserId;
+            reason = Reason;
+            location = Location;
+            contactInfo = ContactInfo;
+            level = Level;
+            tspCredentialId = TspCredentialId;
         }
     }
 
@@ -293,14 +293,14 @@ public sealed class DocumentsController : ControllerBase
     {
         public UploadedDocumentDto(Guid DocumentId) => this.DocumentId = DocumentId;
         public Guid DocumentId { get; init; }
-        public void Deconstruct(out Guid documentId) => documentId = this.DocumentId;
+        public void Deconstruct(out Guid documentId) => documentId = DocumentId;
     }
 
     public sealed record FillDocumentRequest
     {
         public FillDocumentRequest(Dictionary<string, string>? FieldValues) => this.FieldValues = FieldValues;
         public Dictionary<string, string>? FieldValues { get; init; }
-        public void Deconstruct(out Dictionary<string, string>? fieldValues) => fieldValues = this.FieldValues;
+        public void Deconstruct(out Dictionary<string, string>? fieldValues) => fieldValues = FieldValues;
     }
 
     public sealed record FilledDocumentDto
@@ -318,9 +318,9 @@ public sealed class DocumentsController : ControllerBase
         public IReadOnlyList<string> UnknownFields { get; init; }
         public void Deconstruct(out Guid documentId, out IReadOnlyList<string> filledFieldNames, out IReadOnlyList<string> unknownFields)
         {
-            documentId = this.DocumentId;
-            filledFieldNames = this.FilledFieldNames;
-            unknownFields = this.UnknownFields;
+            documentId = DocumentId;
+            filledFieldNames = FilledFieldNames;
+            unknownFields = UnknownFields;
         }
     }
 
@@ -328,7 +328,7 @@ public sealed class DocumentsController : ControllerBase
     {
         public JavaScriptExecutionRequest(bool Allow) => this.Allow = Allow;
         public bool Allow { get; init; }
-        public void Deconstruct(out bool allow) => allow = this.Allow;
+        public void Deconstruct(out bool allow) => allow = Allow;
     }
 
     public sealed record JavaScriptExecutionPolicyDto
@@ -342,8 +342,8 @@ public sealed class DocumentsController : ControllerBase
         public bool AllowJavaScriptExecution { get; init; }
         public void Deconstruct(out Guid documentId, out bool allowJavaScriptExecution)
         {
-            documentId = this.DocumentId;
-            allowJavaScriptExecution = this.AllowJavaScriptExecution;
+            documentId = DocumentId;
+            allowJavaScriptExecution = AllowJavaScriptExecution;
         }
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace Dialysis.Module.Gateway;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)

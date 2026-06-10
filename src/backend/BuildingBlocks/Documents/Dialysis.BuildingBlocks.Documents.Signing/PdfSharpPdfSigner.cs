@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Dialysis.BuildingBlocks.Documents.Signing.Csc;
 using Dialysis.BuildingBlocks.Documents.Signing.Ltv;
 using Microsoft.Extensions.Logging;
@@ -102,7 +103,7 @@ public sealed class PdfSharpPdfSigner : IPdfSigner
             Revocation: evidence);
     }
 
-    private byte[] SignWithPdfSharp(ReadOnlyMemory<byte> pdf, PdfSigningRequest request, System.Security.Cryptography.X509Certificates.X509Certificate2 certificate)
+    private byte[] SignWithPdfSharp(ReadOnlyMemory<byte> pdf, PdfSigningRequest request, X509Certificate2 certificate)
     {
         using var input = new MemoryStream(pdf.ToArray(), writable: false);
         using var document = PdfReader.Open(input, PdfDocumentOpenMode.Modify);
@@ -146,7 +147,7 @@ public sealed class PdfSharpPdfSigner : IPdfSigner
 
     private async Task<(byte[] bytes, RevocationEvidence? evidence)> AugmentForLtvAsync(
         byte[] signedBytes,
-        System.Security.Cryptography.X509Certificates.X509Certificate2 certificate,
+        X509Certificate2 certificate,
         CancellationToken cancellationToken)
     {
         var collected = _evidenceCollector.Collect(certificate);

@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Documents.Pdf.AcroForms;
 using Dialysis.BuildingBlocks.Documents.Pdf.Components;
 using Dialysis.BuildingBlocks.Documents.Pdf.Graphics;
 using Dialysis.BuildingBlocks.Documents.Pdf.Macros;
+using QuestPDF;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -34,7 +35,7 @@ public sealed class QuestPdfDocumentRenderer : IPdfDocumentRenderer
 
     static QuestPdfDocumentRenderer() =>
         // Community licence is the default; production hosts flip via QuestPdfLicensingOptions.
-        QuestPDF.Settings.License = LicenseType.Community;
+        Settings.License = LicenseType.Community;
 
     /// <summary>Default ctor — uses the PDFsharp-backed AcroForms processor + SkiaSharp graphics.</summary>
     public QuestPdfDocumentRenderer()

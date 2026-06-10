@@ -54,7 +54,7 @@ public sealed class DeclarativeArchetypeProjectionTests
         var observation = new Observation
         {
             Code = new CodeableConcept("http://loinc.org", "29463-7", "Body weight", null),
-            Value = new Quantity(75.5m, "kg", "http://unitsofmeasure.org"),
+            Value = new Quantity(75.5m, "kg"),
             Effective = new FhirDateTime("2026-06-03T12:00:00Z"),
             Status = ObservationStatus.Final,
             Interpretation = { new CodeableConcept("http://hl7.org/fhir/v2/0078", "N") },

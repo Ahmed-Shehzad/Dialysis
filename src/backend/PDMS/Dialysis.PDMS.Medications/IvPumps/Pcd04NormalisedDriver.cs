@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace Dialysis.PDMS.Medications.IvPumps;
@@ -46,7 +47,7 @@ public sealed class Pcd04NormalisedDriver : IIvPumpDriver
                 case "MSH":
                     // MSH-7 = message timestamp; MSH-10 = control id (use as sequence proxy).
                     if (fields.Length > 7 && DateTime.TryParseExact(fields[6], "yyyyMMddHHmmss", null,
-                        System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+                        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
                         out var ts))
                     {
                         timestamp = ts;
@@ -68,8 +69,8 @@ public sealed class Pcd04NormalisedDriver : IIvPumpDriver
                     if (fields.Length < 6) break;
                     var idParts = fields[3].Split('^');
                     var code = idParts.Length > 0 ? idParts[0] : string.Empty;
-                    if (!decimal.TryParse(fields[5], System.Globalization.NumberStyles.Number,
-                        System.Globalization.CultureInfo.InvariantCulture, out var val))
+                    if (!decimal.TryParse(fields[5], NumberStyles.Number,
+                        CultureInfo.InvariantCulture, out var val))
                     {
                         break;
                     }

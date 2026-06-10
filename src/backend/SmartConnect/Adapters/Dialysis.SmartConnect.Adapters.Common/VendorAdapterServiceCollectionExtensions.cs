@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Dialysis.SmartConnect.Adapters;
 
@@ -19,7 +21,7 @@ public static class VendorAdapterServiceCollectionExtensions
         {
             services.TryAddSingleton<IDistributedCache>(_ =>
                 new MemoryDistributedCache(
-                    Microsoft.Extensions.Options.Options.Create(new Microsoft.Extensions.Caching.Memory.MemoryDistributedCacheOptions())));
+                    Options.Create(new MemoryDistributedCacheOptions())));
             services.TryAddSingleton<OAuth2TokenAcquirer>(sp => new OAuth2TokenAcquirer(
                 sp.GetRequiredService<IHttpClientFactory>(),
                 sp.GetRequiredService<IDistributedCache>()));

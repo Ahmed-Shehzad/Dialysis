@@ -4,7 +4,6 @@ using Dialysis.SmartConnect.Ncpdp;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Xunit;
-
 // Disambiguate System.Threading.Tasks.Task from Hl7.Fhir.Model.Task (FHIR resource type)
 // — the FHIR namespace import pulls in a Task resource we don't use here, but it collides
 // with the async return type on every [Fact] async method below.

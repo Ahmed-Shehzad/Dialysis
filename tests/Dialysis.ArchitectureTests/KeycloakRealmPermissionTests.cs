@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using Dialysis.Module.Contracts.Authorization;
 using Shouldly;
@@ -113,9 +114,9 @@ public sealed class KeycloakRealmPermissionTests
         throw new FileNotFoundException($"Could not locate '{relative}' walking up from {AppContext.BaseDirectory}.");
     }
 
-    private static IEnumerable<Type> SafeGetTypes(System.Reflection.Assembly a)
+    private static IEnumerable<Type> SafeGetTypes(Assembly a)
     {
         try { return a.GetTypes(); }
-        catch (System.Reflection.ReflectionTypeLoadException ex) { return ex.Types.Where(t => t is not null)!; }
+        catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t is not null)!; }
     }
 }

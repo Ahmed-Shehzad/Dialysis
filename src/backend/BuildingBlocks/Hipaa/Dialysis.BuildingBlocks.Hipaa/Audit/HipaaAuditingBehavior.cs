@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Intercessor;
 using Hl7.Fhir.Model;
 using Microsoft.Extensions.Logging;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.BuildingBlocks.Hipaa.Audit;
 
@@ -67,7 +68,7 @@ public sealed class HipaaAuditingBehavior<TRequest, TResponse> : IPipelineBehavi
         }
     }
 
-    private async System.Threading.Tasks.Task TryEmitAsync(bool success, string? errorDetail, CancellationToken cancellationToken)
+    private async Task TryEmitAsync(bool success, string? errorDetail, CancellationToken cancellationToken)
     {
         var ev = new AuditEvent
         {

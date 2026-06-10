@@ -1,13 +1,14 @@
 using Dialysis.EHR.Bff.Notifications;
+using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
-using Dialysis.Lab.Contracts.IntegrationEvents;
 using Dialysis.Module.Bff;
 using Dialysis.Module.Bff.Events;
 using Dialysis.ServiceDefaults;
+using LabResultReceivedIntegrationEvent = Dialysis.Lab.Contracts.IntegrationEvents.LabResultReceivedIntegrationEvent;
 
 namespace Dialysis.EHR.Bff;
 
-public partial class Program
+public class Program
 {
     public static async Task Main(string[] args)
     {
@@ -25,9 +26,9 @@ public partial class Program
             transponder.AddConsumer<PatientAdmittedIntegrationEvent, HospitalAdmitNotificationConsumer>();
             transponder.AddConsumer<PatientDischargedIntegrationEvent, HospitalDischargeNotificationConsumer>();
             // Patient participation: a patient's inbound secure message → "new patient message" toast on the chart.
-            transponder.AddConsumer<Contracts.Integration.PatientPortalSecureMessageSentIntegrationEvent, SecureMessageSentNotificationConsumer>();
+            transponder.AddConsumer<PatientPortalSecureMessageSentIntegrationEvent, SecureMessageSentNotificationConsumer>();
             // A patient's appointment request → "new appointment request" toast for staff.
-            transponder.AddConsumer<Contracts.Integration.PatientPortalAppointmentRequestedIntegrationEvent, AppointmentRequestedNotificationConsumer>();
+            transponder.AddConsumer<PatientPortalAppointmentRequestedIntegrationEvent, AppointmentRequestedNotificationConsumer>();
         });
 
         var app = builder.Build();

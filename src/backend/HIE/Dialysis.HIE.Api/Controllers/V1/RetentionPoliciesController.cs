@@ -74,7 +74,7 @@ public sealed class RetentionPoliciesController : ControllerBase
     {
         public UpsertRetentionPolicyBody(int RetentionDays) => this.RetentionDays = RetentionDays;
         public int RetentionDays { get; init; }
-        public void Deconstruct(out int retentionDays) => retentionDays = this.RetentionDays;
+        public void Deconstruct(out int retentionDays) => retentionDays = RetentionDays;
     }
 
     public sealed record UpsertedPolicyDto
@@ -90,9 +90,9 @@ public sealed class RetentionPoliciesController : ControllerBase
         public int RetentionDays { get; init; }
         public void Deconstruct(out Guid id, out string kind, out int retentionDays)
         {
-            id = this.Id;
-            kind = this.Kind;
-            retentionDays = this.RetentionDays;
+            id = Id;
+            kind = Kind;
+            retentionDays = RetentionDays;
         }
     }
 }

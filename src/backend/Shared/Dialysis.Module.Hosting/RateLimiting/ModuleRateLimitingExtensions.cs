@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
@@ -42,7 +43,7 @@ public static class ModuleRateLimitingExtensions
                     var opts = ctx.HttpContext.RequestServices
                         .GetRequiredService<IOptions<ModuleRateLimitOptions>>().Value;
                     var retryAfterSeconds = Math.Max(1, 60 / Math.Max(1, opts.TokensPerSecond / 60));
-                    ctx.HttpContext.Response.Headers["Retry-After"] = retryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    ctx.HttpContext.Response.Headers["Retry-After"] = retryAfterSeconds.ToString(CultureInfo.InvariantCulture);
                     return ValueTask.CompletedTask;
                 };
                 rl.AddPolicy(PolicyName, http =>

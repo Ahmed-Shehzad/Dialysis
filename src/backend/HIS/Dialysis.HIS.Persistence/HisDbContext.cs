@@ -34,7 +34,7 @@ public sealed class HisDbContext : ModuleDbContextBase, IUnitOfWork
 {
     private const string RaSchema = "his_ra";
 
-    private readonly Dialysis.BuildingBlocks.Hipaa.Encryption.EncryptedStringValueConverter _phiConverter;
+    private readonly EncryptedStringValueConverter _phiConverter;
 
     /// <summary>
     /// HIS facility-operations DbContext. Patient registration, scheduling, clinical notes, prescribing, and billing
@@ -44,7 +44,7 @@ public sealed class HisDbContext : ModuleDbContextBase, IUnitOfWork
     /// </summary>
     public HisDbContext(DbContextOptions<HisDbContext> options,
         IOptions<TransponderPersistenceOptions> persistenceOptions,
-        Dialysis.BuildingBlocks.Hipaa.Encryption.IPhiProtector phiProtector) : base(options, persistenceOptions) =>
+        IPhiProtector phiProtector) : base(options, persistenceOptions) =>
         _phiConverter = new EncryptedStringValueConverter(phiProtector);
 
     protected override string ModuleSchema => "his";

@@ -71,8 +71,8 @@ public static class FhirBulkDataServiceCollectionExtensions
 
             var routes = new List<IEndpointConventionBuilder>
         {
-            endpoints.MapGet(prefix + "/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.System, groupId: null)),
-            endpoints.MapGet(prefix + "/Patient/$export", (HttpContext ctx) => StartExportAsync(ctx, ExportScope.Patient, groupId: null)),
+            endpoints.MapGet(prefix + "/$export", ctx => StartExportAsync(ctx, ExportScope.System, groupId: null)),
+            endpoints.MapGet(prefix + "/Patient/$export", ctx => StartExportAsync(ctx, ExportScope.Patient, groupId: null)),
             endpoints.MapGet(prefix + "/Group/{id}/$export", (HttpContext ctx, string id) => StartExportAsync(ctx, ExportScope.Group, groupId: id)),
             endpoints.MapGet(prefix + "/bulk-data/jobs/{id}", PollJobAsync),
             endpoints.MapDelete(prefix + "/bulk-data/jobs/{id}", CancelJobAsync),

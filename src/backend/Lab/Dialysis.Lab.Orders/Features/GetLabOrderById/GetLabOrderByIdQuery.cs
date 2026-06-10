@@ -10,7 +10,7 @@ public sealed record GetLabOrderByIdQuery : IQuery<LabOrderDto?>, IPermissionedC
     public GetLabOrderByIdQuery(Guid Id) => this.Id = Id;
     public string RequiredPermission => LabPermissions.OrderRead;
     public Guid Id { get; init; }
-    public void Deconstruct(out Guid id) => id = this.Id;
+    public void Deconstruct(out Guid id) => id = Id;
 }
 
 /// <summary>Full order projection incl. requested tests and any returned observations.</summary>

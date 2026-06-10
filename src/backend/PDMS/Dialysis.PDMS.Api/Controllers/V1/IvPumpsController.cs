@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Core.Persistence;
+using Dialysis.PDMS.Medications.Contracts;
 using Dialysis.PDMS.Medications.Domain;
 using Dialysis.PDMS.Medications.IvPumps;
 using Microsoft.AspNetCore.Mvc;
@@ -118,7 +119,7 @@ public sealed class IvPumpsController : ControllerBase
                 infusion.MarkAlarm(
                     alarmCode: reading.AlarmCode ?? "UNKNOWN",
                     alarmText: reading.AlarmText ?? "Pump raised an alarm.",
-                    severity: reading.AlarmSeverity ?? Dialysis.PDMS.Medications.Contracts.IvPumpAlarmSeverity.Warning,
+                    severity: reading.AlarmSeverity ?? IvPumpAlarmSeverity.Warning,
                     raisedAtUtc: reading.CapturedAtUtc);
                 _infusions.Update(infusion);
                 break;

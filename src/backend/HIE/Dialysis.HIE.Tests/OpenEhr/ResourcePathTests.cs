@@ -65,7 +65,7 @@ public sealed class ResourcePathTests
     [Fact]
     public void Evaluate_Subtype_Cast_Returns_Value_On_Match()
     {
-        var observation = new Observation { Value = new Quantity(75.5m, "kg", "http://unitsofmeasure.org") };
+        var observation = new Observation { Value = new Quantity(75.5m, "kg") };
         ResourcePath.Evaluate(observation, "Value as Quantity.Value").ShouldBe(75.5m);
         ResourcePath.Evaluate(observation, "Value as Quantity.Unit").ShouldBe("kg");
     }

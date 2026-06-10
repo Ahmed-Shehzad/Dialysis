@@ -1,3 +1,4 @@
+using System.Text;
 using Dialysis.BuildingBlocks.Fhir.CdaBridge;
 using Dialysis.BuildingBlocks.Fhir.Tefca;
 using Dialysis.HIE.Core.Abstraction.Consent;
@@ -165,7 +166,7 @@ public sealed class CareSummaryAssembler
 
     private static DocumentReference BuildDocumentReference(Guid patientId, string ccdXml, DateTime now)
     {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(ccdXml);
+        var bytes = Encoding.UTF8.GetBytes(ccdXml);
         return new DocumentReference
         {
             Id = Guid.NewGuid().ToString(),

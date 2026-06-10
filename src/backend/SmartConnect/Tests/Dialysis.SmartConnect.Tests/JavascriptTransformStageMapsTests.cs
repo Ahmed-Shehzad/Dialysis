@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.VariableMaps;
 using Microsoft.Extensions.DependencyInjection;
@@ -105,7 +106,7 @@ public sealed class JavascriptTransformStageMapsTests
     }
 
     private static string Params(string script) =>
-        $$$"""{"script": {{{System.Text.Json.JsonSerializer.Serialize(script)}}} }""";
+        $$$"""{"script": {{{JsonSerializer.Serialize(script)}}} }""";
 
     private static IntegrationMessage Wrap_Message() =>
         new()

@@ -7,7 +7,7 @@ namespace Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
 /// declared route key), the activity name, and the response status. This closes the
 /// audit-trail loop the DPIA cites for GDPR Art. 30 + BDSG §22 + the HIPAA security rule.
 /// </summary>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class PhiAccessAttribute : Attribute
 {
     /// <summary>

@@ -1,18 +1,20 @@
 using Dialysis.BuildingBlocks.Fhir;
 using Dialysis.BuildingBlocks.Fhir.Audit.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
-using Dialysis.BuildingBlocks.Fhir.DeIdentification;
 using Dialysis.BuildingBlocks.Fhir.BulkData.EntityFrameworkCore;
+using Dialysis.BuildingBlocks.Fhir.DeIdentification;
 using Dialysis.BuildingBlocks.Fhir.Smart;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Fhir.Validation;
-using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
+using Dialysis.EHR.Contracts.Integration;
+using Dialysis.HIS.Contracts.IntegrationEvents.PatientFlow;
 using Dialysis.HIS.Integration.DeviceIngestion;
 using Dialysis.HIS.Integration.DeviceRegistry;
+using Dialysis.HIS.Operations.Consumers;
 using Dialysis.HIS.PatientFlow.Fhir;
 using Dialysis.HIS.Persistence;
 using Hl7.Fhir.Model;
@@ -68,10 +70,10 @@ public static class HospitalInformationSystemExtensions
             {
                 // Cross-module: EHR reports the outcome of a billing-export job back to HIS so the
                 // export-job queue advances out of Queued (HIS owns the queue; EHR owns the claims).
-                t.AddConsumer<Dialysis.EHR.Contracts.Integration.BillingExportJobCompletedIntegrationEvent,
-                    Dialysis.HIS.Operations.Consumers.BillingExportJobCompletedConsumer>();
-                t.AddConsumer<Dialysis.EHR.Contracts.Integration.BillingExportJobFailedIntegrationEvent,
-                    Dialysis.HIS.Operations.Consumers.BillingExportJobFailedConsumer>();
+                t.AddConsumer<BillingExportJobCompletedIntegrationEvent,
+                    BillingExportJobCompletedConsumer>();
+                t.AddConsumer<BillingExportJobFailedIntegrationEvent,
+                    BillingExportJobFailedConsumer>();
 
                 if (enableFhirSubscriptions)
                 {

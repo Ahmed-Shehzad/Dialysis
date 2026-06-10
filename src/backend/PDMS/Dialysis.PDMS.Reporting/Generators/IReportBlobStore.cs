@@ -1,3 +1,5 @@
+using Dialysis.PDMS.Reporting.Domain;
+
 namespace Dialysis.PDMS.Reporting.Generators;
 
 /// <summary>
@@ -17,11 +19,11 @@ public interface IReportBlobStore
 public interface ISessionReportRepository
 {
     /// <summary>Stages a new report; persisted by the consumer's unit of work.</summary>
-    Task AddAsync(Domain.SessionReport report, CancellationToken cancellationToken);
-    Task<Domain.SessionReport?> FindAsync(Guid reportId, CancellationToken cancellationToken);
+    Task AddAsync(SessionReport report, CancellationToken cancellationToken);
+    Task<SessionReport?> FindAsync(Guid reportId, CancellationToken cancellationToken);
 
     /// <summary>Returns every report already produced for a session — the consumer's idempotency key is <c>(SessionId, Kind)</c>.</summary>
-    Task<IReadOnlyList<Domain.SessionReport>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<SessionReport>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken);
 }
 
 /// <summary>Repository for the operator-authored <see cref="Domain.ReportTemplate"/>.</summary>
@@ -32,8 +34,8 @@ public interface IReportTemplateRepository
     /// <paramref name="preferredLanguageCode"/> (BCP-47), falling back to the primary subtag and
     /// then the language-neutral default per <see cref="Domain.ReportTemplateResolver"/>.
     /// </summary>
-    Task<Domain.ReportTemplate?> FindActiveAsync(
-        Domain.ReportKind kind,
+    Task<ReportTemplate?> FindActiveAsync(
+        ReportKind kind,
         string? preferredLanguageCode,
         CancellationToken cancellationToken);
 }

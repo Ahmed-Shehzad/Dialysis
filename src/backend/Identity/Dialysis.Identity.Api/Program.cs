@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.CQRS;
 using Dialysis.Identity.Composition;
 using Dialysis.Identity.Contracts.Security;
+using Dialysis.Identity.Provisioning;
 using Dialysis.Identity.Provisioning.Features.AssignRoleToUser;
 using Dialysis.Identity.Provisioning.Features.DeactivateUser;
 using Dialysis.Identity.Provisioning.Features.DefineRole;
@@ -15,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Dialysis.Identity.Api;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)
@@ -37,7 +38,7 @@ public partial class Program
             ModuleSlug = "identity",
             HandlerAssemblies =
             [
-                typeof(Dialysis.Identity.Provisioning.IdentityProvisioningMarker).Assembly
+                typeof(IdentityProvisioningMarker).Assembly
             ],
         });
 
@@ -131,5 +132,5 @@ public sealed record AssignRoleBody
     /// <summary>Body for assigning a role to a user.</summary>
     public AssignRoleBody(string RoleCode) => this.RoleCode = RoleCode;
     public string RoleCode { get; init; }
-    public void Deconstruct(out string roleCode) => roleCode = this.RoleCode;
+    public void Deconstruct(out string roleCode) => roleCode = RoleCode;
 }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Dialysis.SmartConnect.Attachments.Handlers;
 
 /// <summary>
@@ -47,14 +49,14 @@ public sealed class CustomAttachmentHandlerHost : IAttachmentHandler
         if (string.IsNullOrWhiteSpace(propertiesJson)) return null;
         try
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(propertiesJson);
+            using var doc = JsonDocument.Parse(propertiesJson);
             if (doc.RootElement.TryGetProperty("customKind", out var el)
-                && el.ValueKind == System.Text.Json.JsonValueKind.String)
+                && el.ValueKind == JsonValueKind.String)
             {
                 return el.GetString();
             }
         }
-        catch (System.Text.Json.JsonException) { /* malformed properties JSON → no custom kind */ }
+        catch (JsonException) { /* malformed properties JSON → no custom kind */ }
         return null;
     }
 }

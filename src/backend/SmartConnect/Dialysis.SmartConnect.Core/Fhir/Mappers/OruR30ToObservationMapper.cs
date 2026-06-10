@@ -1,3 +1,4 @@
+using System.Globalization;
 using Dialysis.SmartConnect.DataTypes;
 using Hl7.Fhir.Model;
 
@@ -40,7 +41,7 @@ public sealed class OruR30ToObservationMapper : IFhirV2MessageMapper<Observation
 
         var raw = message.GetValue("OBX.5");
         var unit = message.GetValue("OBX.6.1");
-        if (!string.IsNullOrEmpty(raw) && decimal.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out var numeric))
+        if (!string.IsNullOrEmpty(raw) && decimal.TryParse(raw, CultureInfo.InvariantCulture, out var numeric))
         {
             observation.Value = new Quantity { Value = numeric, Unit = unit, System = "http://unitsofmeasure.org", Code = unit };
         }

@@ -3,8 +3,8 @@ using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.BuiltInPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Entities;
-using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Json;
+using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

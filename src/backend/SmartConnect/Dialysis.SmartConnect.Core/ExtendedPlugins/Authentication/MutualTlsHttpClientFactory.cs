@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using Dialysis.SmartConnect.Authentication;
 
@@ -35,7 +36,7 @@ public sealed class MutualTlsHttpClientFactory : IMutualTlsHttpClientFactory, ID
     {
         var handler = new SocketsHttpHandler
         {
-            SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+            SslOptions = new SslClientAuthenticationOptions
             {
                 ClientCertificates = new X509CertificateCollection { cert },
             },

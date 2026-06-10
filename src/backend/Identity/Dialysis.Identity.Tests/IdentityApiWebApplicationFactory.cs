@@ -1,5 +1,4 @@
 extern alias IdentityApi;
-
 using Dialysis.Identity.Persistence;
 using Dialysis.Module.Hosting.Testing;
 using Xunit;

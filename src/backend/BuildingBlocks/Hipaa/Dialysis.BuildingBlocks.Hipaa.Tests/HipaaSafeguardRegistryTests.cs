@@ -1,10 +1,12 @@
+using System.Xml.Linq;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Hipaa.Safeguards;
+using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -62,12 +64,12 @@ public sealed class HipaaSafeguardRegistryTests
 
     private sealed class NoOpEmitter : IAuditEventEmitter
     {
-        public ValueTask EmitAsync(Hl7.Fhir.Model.AuditEvent auditEvent, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+        public ValueTask EmitAsync(AuditEvent auditEvent, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
     private sealed class InMemoryXmlRepo : IXmlRepository
     {
-        public IReadOnlyCollection<System.Xml.Linq.XElement> GetAllElements() => [];
-        public void StoreElement(System.Xml.Linq.XElement element, string friendlyName) { }
+        public IReadOnlyCollection<XElement> GetAllElements() => [];
+        public void StoreElement(XElement element, string friendlyName) { }
     }
 }

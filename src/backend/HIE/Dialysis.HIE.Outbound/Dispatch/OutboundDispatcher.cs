@@ -2,6 +2,7 @@ using System.Text.Json;
 using Dialysis.BuildingBlocks.Fhir.Tefca;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Contracts.Integration;
+using Dialysis.HIE.Core.Abstraction.Partners;
 using Dialysis.HIE.OpenEhr;
 using Dialysis.HIE.Outbound.Domain;
 using Dialysis.HIE.Outbound.Partners;
@@ -84,7 +85,7 @@ public sealed class OutboundDispatcher : IOutboundDispatcher
 
         try
         {
-            var context = new Dialysis.HIE.Core.Abstraction.Partners.PartnerDeliveryContext(
+            var context = new PartnerDeliveryContext(
                 bundle.PatientId,
                 string.IsNullOrWhiteSpace(bundle.Purpose) ? TefcaPermittedPurposes.Treatment : bundle.Purpose);
             var result = await endpoint.DeliverAsync(resource, context, cancellationToken).ConfigureAwait(false);

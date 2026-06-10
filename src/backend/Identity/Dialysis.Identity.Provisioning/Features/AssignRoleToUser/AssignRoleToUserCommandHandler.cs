@@ -1,3 +1,4 @@
+using System.Text;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Dialysis.CQRS;
@@ -68,7 +69,7 @@ public sealed class AssignRoleToUserCommandHandler : ICommandHandler<AssignRoleT
         var payload = _serializer.Serialize(@event);
         await _outbox.EnqueueAsync(new TransponderOutboxEnvelope(
             AssemblyQualifiedEventType: typeof(RoleAssignedIntegrationEvent).AssemblyQualifiedName!,
-            PayloadJson: System.Text.Encoding.UTF8.GetString(payload.Span),
+            PayloadJson: Encoding.UTF8.GetString(payload.Span),
             Id: @event.EventId),
             cancellationToken).ConfigureAwait(false);
 

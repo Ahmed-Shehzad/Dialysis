@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore.Audit;
@@ -9,6 +10,7 @@ using Dialysis.BuildingBlocks.Hipaa;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Module.Hosting;
+using Dialysis.Module.Hosting.Telemetry;
 using Dialysis.PDMS.Api.Realtime;
 using Dialysis.PDMS.Composition;
 using Dialysis.PDMS.Contracts.Security;
@@ -18,11 +20,12 @@ using Dialysis.PDMS.TreatmentSessions.Features.RecordReading;
 using Dialysis.PDMS.TreatmentSessions.Realtime;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace Dialysis.PDMS.Api;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)
@@ -81,7 +84,7 @@ public partial class Program
         builder.Services
             .AddControllers()
             .AddJsonOptions(o =>
-                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()))
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
             // Emit a FHIR AuditEvent for every [PhiAccess]-tagged action — closes the audit-trail
             // loop the GDPR / BDSG / PDSG envelope cites.
             .AddPhiAccessAuditing();
@@ -109,7 +112,7 @@ public partial class Program
             signalRBuilder.AddStackExchangeRedis(valkeyConnectionString, o =>
             {
                 // Channel prefix isolates PDMS pub/sub traffic from other modules that may share Valkey.
-                o.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("pdms-signalr");
+                o.Configuration.ChannelPrefix = RedisChannel.Literal("pdms-signalr");
             });
         }
 
@@ -132,7 +135,7 @@ public partial class Program
         // Surface the bus's meter to the OTLP pipeline so the Aspire dashboard + the prod
         // Grafana dashboards (deploy/k8s/observability/dashboards/) pick up its counters +
         // histograms automatically.
-        builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
+        builder.Services.Configure<ModuleTelemetryOptions>(o =>
             o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
 
         var app = builder.Build();

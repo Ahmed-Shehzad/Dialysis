@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.DataTypes;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
+using Dialysis.SmartConnect.Transforms;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -89,7 +90,7 @@ public static class WorkbenchEndpoints
                         var metadata = ImmutableDictionary<string, string>.Empty
                             .Add("smartconnect.filter.parameters", paramsJson);
 
-                        var verdict = Transforms.VerifyHl7Core.Inspect(body.PayloadText, metadata);
+                        var verdict = VerifyHl7Core.Inspect(body.PayloadText, metadata);
 
                         object? parsedHeader = null;
                         string? segmentsJson = null;

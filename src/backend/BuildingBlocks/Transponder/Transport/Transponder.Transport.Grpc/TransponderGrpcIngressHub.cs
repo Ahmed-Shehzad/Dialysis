@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 
 namespace Dialysis.BuildingBlocks.Transponder.Transport.Grpc;
@@ -49,7 +50,7 @@ public sealed class TransponderGrpcIngressHub
         var clone = new TransportEnvelope
         {
             RoutingKey = source.RoutingKey,
-            Payload = Google.Protobuf.ByteString.CopyFrom(source.Payload.Span),
+            Payload = ByteString.CopyFrom(source.Payload.Span),
             CorrelationId = source.CorrelationId,
             DeduplicationId = source.DeduplicationId,
             ContentType = source.ContentType,

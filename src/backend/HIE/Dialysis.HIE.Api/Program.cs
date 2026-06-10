@@ -1,11 +1,20 @@
+using System.Text.Json.Serialization;
 using Dialysis.BuildingBlocks.Fhir.AspNetCore;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Hipaa;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
+using Dialysis.HIE.Api.Controllers;
 using Dialysis.HIE.Composition;
+using Dialysis.HIE.Consent;
 using Dialysis.HIE.Contracts.Security;
+using Dialysis.HIE.Documents;
+using Dialysis.HIE.Inbound;
+using Dialysis.HIE.OpenEhr;
+using Dialysis.HIE.Outbound;
 using Dialysis.HIE.Persistence;
+using Dialysis.HIE.Query;
+using Dialysis.HIE.Tefca;
 using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +22,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Dialysis.HIE.Api;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)
@@ -36,13 +45,13 @@ public partial class Program
             ModuleSlug = "hie",
             HandlerAssemblies =
             [
-                typeof(Dialysis.HIE.Outbound.HieOutboundMarker).Assembly,
-                typeof(Dialysis.HIE.Inbound.HieInboundMarker).Assembly,
-                typeof(Dialysis.HIE.Query.HieQueryMarker).Assembly,
-                typeof(Dialysis.HIE.Consent.HieConsentMarker).Assembly,
-                typeof(Dialysis.HIE.OpenEhr.HieOpenEhrMarker).Assembly,
-                typeof(Dialysis.HIE.Documents.HieDocumentsMarker).Assembly,
-                typeof(Dialysis.HIE.Tefca.HieTefcaMarker).Assembly,
+                typeof(HieOutboundMarker).Assembly,
+                typeof(HieInboundMarker).Assembly,
+                typeof(HieQueryMarker).Assembly,
+                typeof(HieConsentMarker).Assembly,
+                typeof(HieOpenEhrMarker).Assembly,
+                typeof(HieDocumentsMarker).Assembly,
+                typeof(HieTefcaMarker).Assembly,
             ],
         });
 
@@ -67,7 +76,7 @@ public partial class Program
         builder.Services.AddHipaaAspNetCoreSafeguards();
 
         // Patient self-access gate (own-patient, plus dev-only staff impersonation). Scoped: depends on ICurrentUser.
-        builder.Services.AddScoped<Dialysis.HIE.Api.Controllers.HiePortalAccess>();
+        builder.Services.AddScoped<HiePortalAccess>();
 
         builder.Services
             .AddControllers()
@@ -75,7 +84,7 @@ public partial class Program
             // Without this converter System.Text.Json only binds the integer backing values, so a
             // string enum payload fails model binding and the action returns 400 before it runs.
             .AddJsonOptions(o =>
-                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         var app = builder.Build();
 

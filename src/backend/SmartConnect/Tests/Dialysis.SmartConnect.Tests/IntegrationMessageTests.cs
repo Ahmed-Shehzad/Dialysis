@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Xunit;
 
 namespace Dialysis.SmartConnect.Tests;
@@ -22,7 +23,7 @@ public sealed class IntegrationMessageTests
         var m1 = original.WithMetadata("k1", "a");
         var m2 = m1.WithMetadata("k1", "b").WithMetadata("k2", "c");
 
-        Assert.Same(original.Metadata, System.Collections.Immutable.ImmutableDictionary<string, string>.Empty);
+        Assert.Same(original.Metadata, ImmutableDictionary<string, string>.Empty);
         Assert.Equal("a", m1.Metadata["k1"]);
         Assert.Equal("b", m2.Metadata["k1"]);
         Assert.Equal("c", m2.Metadata["k2"]);

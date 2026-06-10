@@ -68,7 +68,7 @@ public sealed class ExportJobRunnerDeIdentificationTests : IAsyncLifetime
         var failed = await store.GetAsync(job.Id, CancellationToken.None);
         failed!.Status.ShouldBe(ExportJobStatus.Failed);
         failed.Error.ShouldNotBeNull();
-        failed.Error!.ShouldContain("de-identification", Case.Insensitive);
+        failed.Error!.ShouldContain("de-identification");
 
         // No identified PHI was written — the job failed before any file was opened.
         Directory.Exists(Path.Combine(_root, job.Id)).ShouldBeFalse();

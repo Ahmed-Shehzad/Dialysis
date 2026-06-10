@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace Dialysis.BuildingBlocks.Tefca.Ti.Smcb;
 
 /// <summary>
@@ -58,7 +60,7 @@ public sealed record SmcBCertificateChain
     {
         get
         {
-            using var sha = System.Security.Cryptography.SHA256.Create();
+            using var sha = SHA256.Create();
             var hash = sha.ComputeHash([.. CertificatesDer.SelectMany(c => c)]);
             return Convert.ToHexString(hash);
         }

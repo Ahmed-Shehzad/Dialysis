@@ -29,7 +29,7 @@ public sealed record GenerateCareSummaryCommand : ICommand<CareSummaryResult>, I
 
     public void Deconstruct(out Guid patientId, out string? purpose)
     {
-        patientId = this.PatientId;
-        purpose = this.Purpose;
+        patientId = PatientId;
+        purpose = Purpose;
     }
 }

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 
 namespace Dialysis.SmartConnect.ExtendedPlugins;
 
@@ -20,7 +21,7 @@ public sealed class MessageBuilderTransformStage : ITransformStage
 
         try
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(raw);
+            using var doc = JsonDocument.Parse(raw);
             var root = doc.RootElement;
             var prefix = root.TryGetProperty("prefix", out var p) ? p.GetString() ?? "" : "";
             var suffix = root.TryGetProperty("suffix", out var s) ? s.GetString() ?? "" : "";
@@ -31,7 +32,7 @@ public sealed class MessageBuilderTransformStage : ITransformStage
             var combined = prefix + body + suffix;
             return Task.FromResult(message.CloneWithPayload(Encoding.UTF8.GetBytes(combined)));
         }
-        catch (System.Text.Json.JsonException)
+        catch (JsonException)
         {
             return Task.FromResult(message);
         }

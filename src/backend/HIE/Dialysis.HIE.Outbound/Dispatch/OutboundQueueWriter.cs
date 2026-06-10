@@ -1,6 +1,6 @@
-using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.BuildingBlocks.Fhir.Tefca;
+using Dialysis.HIE.Core.Abstraction.Consent;
 using Dialysis.HIE.Outbound.Domain;
 using Dialysis.HIE.Outbound.Partners;
 using Dialysis.HIE.Outbound.Ports;

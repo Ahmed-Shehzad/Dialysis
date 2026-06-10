@@ -76,8 +76,8 @@ internal static class VariableMapsJsBinder
         public IDictionary<string, object?> Global { get; init; }
         public void Deconstruct(out IDictionary<string, object?> globalChannel, out IDictionary<string, object?> global)
         {
-            globalChannel = this.GlobalChannel;
-            global = this.Global;
+            globalChannel = GlobalChannel;
+            global = Global;
         }
     }
 

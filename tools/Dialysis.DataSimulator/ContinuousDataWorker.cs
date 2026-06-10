@@ -1,5 +1,8 @@
+using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -138,7 +141,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         for (var i = 0; i < excess; i++)
         {
             var id = live[i].Id;
-            await TryAsync($"drain.session", () => _pdms.CompleteSessionAsync(id, 2.4m, cancellationToken)).ConfigureAwait(false);
+            await TryAsync("drain.session", () => _pdms.CompleteSessionAsync(id, 2.4m, cancellationToken)).ConfigureAwait(false);
         }
     }
 
@@ -173,7 +176,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         {
             patientId = await _ehr.RegisterPatientAsync(patient, cancellationToken).ConfigureAwait(false);
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
         {
             _logger.LogDebug(ex, "Patient already exists (MRN {Mrn}); skipping journey.", patient.MedicalRecordNumber);
             return;
@@ -577,7 +580,7 @@ public sealed class ContinuousDataWorker : BackgroundService
     private async Task SeedTerminologyAsync(CancellationToken cancellationToken)
     {
         const string csUrl = "https://dialysis.local/fhir/CodeSystem/modality";
-        var codeSystem = System.Text.Json.JsonSerializer.Serialize(new
+        var codeSystem = JsonSerializer.Serialize(new
         {
             resourceType = "CodeSystem",
             url = csUrl,
@@ -594,7 +597,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         await _hie.CreateTerminologyResourceAsync("CodeSystem", csUrl, "1.0.0", "active", "Dialysis modality", codeSystem, cancellationToken).ConfigureAwait(false);
 
         const string vsUrl = "https://dialysis.local/fhir/ValueSet/modality";
-        var valueSet = System.Text.Json.JsonSerializer.Serialize(new
+        var valueSet = JsonSerializer.Serialize(new
         {
             resourceType = "ValueSet",
             url = vsUrl,
@@ -639,7 +642,7 @@ public sealed class ContinuousDataWorker : BackgroundService
     private async Task SeedAlarmDispatchAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         const string deviceId = "SIGMA-SEED-PUMP-1";
-        var now = DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture);
+        var now = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
         // Start the infusion (lazily created), then raise an alarm — the OnCall consumer turns the
         // alarm into an AlarmDispatch for the chair (the seeded rotation covers SeedChairId).
         await _pdms.IngestIvPumpTelemetryAsync("baxter-sigma", sessionId, SeedChairId, new
@@ -657,7 +660,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             deviceId,
             eventType = "ALARM",
             seq = 2,
-            ts = DateTime.UtcNow.AddSeconds(5).ToString("o", System.Globalization.CultureInfo.InvariantCulture),
+            ts = DateTime.UtcNow.AddSeconds(5).ToString("o", CultureInfo.InvariantCulture),
             alarm = new { code = "OCCLUSION", text = "Downstream occlusion detected", severity = "WARNING" },
         }, cancellationToken).ConfigureAwait(false);
 

@@ -1,11 +1,9 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
-using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.HIE.Outbound.PublicHealth;
-using Hl7.Fhir.Model;
 using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Outbound.Consumers;
@@ -19,11 +17,11 @@ public sealed class LabOrderPlacedConsumer : IConsumer<LabOrderPlacedIntegration
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<LabOrderPlacedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<LabOrderPlacedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<LabOrderPlacedIntegrationEvent, ServiceRequest>)_mapper,
+            _mapper,
             ConsentScopes.Labs,
             cancellationToken: context.CancellationToken);
 }
@@ -45,7 +43,7 @@ public sealed class LabResultReceivedConsumer : IConsumer<LabResultReceivedInteg
         await _writer.EnqueueAsync(
             message,
             message.PatientId,
-            (IFhirResourceMapper<LabResultReceivedIntegrationEvent, Observation>)_mapper,
+            _mapper,
             ConsentScopes.Labs,
             cancellationToken: context.CancellationToken).ConfigureAwait(false);
 

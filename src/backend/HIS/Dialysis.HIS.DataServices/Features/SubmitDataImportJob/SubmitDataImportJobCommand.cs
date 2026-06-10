@@ -8,5 +8,5 @@ public sealed record SubmitDataImportJobCommand : ICommand<Guid>, IPermissionedC
     public SubmitDataImportJobCommand(string SourceDescription) => this.SourceDescription = SourceDescription;
     public string RequiredPermission => HisPermissions.DataImportSubmit;
     public string SourceDescription { get; init; }
-    public void Deconstruct(out string sourceDescription) => sourceDescription = this.SourceDescription;
+    public void Deconstruct(out string sourceDescription) => sourceDescription = SourceDescription;
 }

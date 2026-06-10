@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
@@ -88,7 +89,7 @@ public static class FhirTerminologyServiceCollectionExtensions
                 var inner = new HttpFhirTerminologyService(
                     http,
                     sp.GetRequiredService<IOptions<FhirTerminologyOptions>>(),
-                    sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<HttpFhirTerminologyService>>());
+                    sp.GetRequiredService<ILogger<HttpFhirTerminologyService>>());
 
                 return new MemoryCacheTerminologyDecorator(
                     inner,

@@ -62,11 +62,11 @@ public sealed record PdfSigningRequest
     public string? ContactInfo { get; init; }
     public void Deconstruct(out PdfSigningCertificateSource certificateSource, out string? userId, out string? reason, out string? location, out string? contactInfo)
     {
-        certificateSource = this.CertificateSource;
-        userId = this.UserId;
-        reason = this.Reason;
-        location = this.Location;
-        contactInfo = this.ContactInfo;
+        certificateSource = CertificateSource;
+        userId = UserId;
+        reason = Reason;
+        location = Location;
+        contactInfo = ContactInfo;
     }
 }
 
@@ -121,11 +121,11 @@ public sealed record VisibleSignaturePlacement
     public double Height { get; init; }
     public void Deconstruct(out int pageNumber, out double x, out double y, out double width, out double height)
     {
-        pageNumber = this.PageNumber;
-        x = this.X;
-        y = this.Y;
-        width = this.Width;
-        height = this.Height;
+        pageNumber = PageNumber;
+        x = X;
+        y = Y;
+        width = Width;
+        height = Height;
     }
 }
 
@@ -167,14 +167,14 @@ public sealed record PdfSigningResult
     public RevocationEvidence? Revocation { get; init; }
     public void Deconstruct(out byte[] signedPdf, out string certThumbprint, out PadesConformance level, out bool isQualified, out string? tsaUri, out string? tsaCertThumbprint, out DateTime? timestampedAtUtc, out RevocationEvidence? revocation)
     {
-        signedPdf = this.SignedPdf;
-        certThumbprint = this.CertThumbprint;
-        level = this.Level;
-        isQualified = this.IsQualified;
-        tsaUri = this.TsaUri;
-        tsaCertThumbprint = this.TsaCertThumbprint;
-        timestampedAtUtc = this.TimestampedAtUtc;
-        revocation = this.Revocation;
+        signedPdf = SignedPdf;
+        certThumbprint = CertThumbprint;
+        level = Level;
+        isQualified = IsQualified;
+        tsaUri = TsaUri;
+        tsaCertThumbprint = TsaCertThumbprint;
+        timestampedAtUtc = TimestampedAtUtc;
+        revocation = Revocation;
     }
 }
 
@@ -191,8 +191,8 @@ public sealed record RevocationEvidence
     public byte[] Blob { get; init; }
     public void Deconstruct(out RevocationEvidenceKind kind, out byte[] blob)
     {
-        kind = this.Kind;
-        blob = this.Blob;
+        kind = Kind;
+        blob = Blob;
     }
 }
 

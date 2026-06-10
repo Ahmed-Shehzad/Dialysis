@@ -4,7 +4,7 @@ using Dialysis.PDMS.OnCall.Domain;
 namespace Dialysis.PDMS.OnCall.Dispatch;
 
 /// <summary>
-/// Generic <see cref="IPdmsRepository{TAggregate, TId}"/>-backed lookup for the active
+/// Generic <see cref="IPdmsRepository{TAggregate,TId}"/>-backed lookup for the active
 /// rotation. We pull every rotation row for the chair, filter to the one that covers
 /// <paramref name="atUtc"/>, and return it. Production deployments should index the
 /// rotation table on <c>(ChairId, EffectiveFromUtc, EffectiveUntilUtc)</c> so this stays

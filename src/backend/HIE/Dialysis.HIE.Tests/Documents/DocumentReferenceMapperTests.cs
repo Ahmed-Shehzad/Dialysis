@@ -2,6 +2,7 @@ using Dialysis.HIE.Documents.Domain;
 using Dialysis.HIE.Documents.Fhir;
 using Shouldly;
 using Xunit;
+using DocumentReferenceStatus = Hl7.Fhir.Model.DocumentReferenceStatus;
 
 namespace Dialysis.HIE.Tests.Documents;
 
@@ -25,7 +26,7 @@ public sealed class DocumentReferenceMapperTests
 
         var fhir = DocumentReferenceMapper.ToFhir(doc);
 
-        fhir.Status.ShouldBe(Hl7.Fhir.Model.DocumentReferenceStatus.Current);
+        fhir.Status.ShouldBe(DocumentReferenceStatus.Current);
         fhir.Type.ShouldNotBeNull();
         fhir.Type!.Coding[0].Code.ShouldBe("DischargeLetter");
         fhir.Subject.ShouldNotBeNull();
@@ -44,7 +45,7 @@ public sealed class DocumentReferenceMapperTests
 
         var fhir = DocumentReferenceMapper.ToFhir(doc);
 
-        fhir.Status.ShouldBe(Hl7.Fhir.Model.DocumentReferenceStatus.EnteredInError);
+        fhir.Status.ShouldBe(DocumentReferenceStatus.EnteredInError);
     }
 
     private static DocumentReference MakeDocument() => new(

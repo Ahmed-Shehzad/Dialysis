@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.Extensions.Logging;
@@ -108,7 +109,7 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
         {
             return _parser.Deserialize<TResource>(body);
         }
-        catch (Exception ex) when (ex is FormatException or DeserializationFailedException or System.Text.Json.JsonException)
+        catch (Exception ex) when (ex is FormatException or DeserializationFailedException or JsonException)
         {
             _logger.LogError(ex, "Failed to parse FHIR response from {Url}", relativeUrl);
             return null;

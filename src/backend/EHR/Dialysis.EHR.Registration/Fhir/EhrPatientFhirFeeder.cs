@@ -6,11 +6,12 @@ using Hl7.Fhir.Model;
 using FhirContactPoint = Hl7.Fhir.Model.ContactPoint;
 using FhirHumanName = Hl7.Fhir.Model.HumanName;
 using FhirPatient = Hl7.Fhir.Model.Patient;
+using Patient = Dialysis.EHR.Registration.Domain.Patient;
 
 namespace Dialysis.EHR.Registration.Fhir;
 
 /// <summary>
-/// Streams every EHR <see cref="Patient"/> aggregate as a FHIR R4 <c>Patient</c> resource for
+/// Streams every EHR <see cref="Domain.Patient"/> aggregate as a FHIR R4 <c>Patient</c> resource for
 /// inclusion in a Bulk Data <c>$export</c>. EHR is the patient-identity system of record;
 /// the projection emits MRN as a business identifier, demographics, contact points, and
 /// primary address.
@@ -19,7 +20,7 @@ public sealed class EhrPatientFhirFeeder : INdjsonResourceFeeder<FhirPatient>
 {
     private readonly IPatientRepository _patients;
     /// <summary>
-    /// Streams every EHR <see cref="Patient"/> aggregate as a FHIR R4 <c>Patient</c> resource for
+    /// Streams every EHR <see cref="Domain.Patient"/> aggregate as a FHIR R4 <c>Patient</c> resource for
     /// inclusion in a Bulk Data <c>$export</c>. EHR is the patient-identity system of record;
     /// the projection emits MRN as a business identifier, demographics, contact points, and
     /// primary address.
@@ -41,7 +42,7 @@ public sealed class EhrPatientFhirFeeder : INdjsonResourceFeeder<FhirPatient>
         }
     }
 
-    private static FhirPatient Project(Domain.Patient source)
+    private static FhirPatient Project(Patient source)
     {
         var fhir = new FhirPatient
         {

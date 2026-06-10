@@ -1,10 +1,11 @@
+using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
-using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Hl7.Fhir.Model;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Outbound.Consumers;
 
@@ -17,7 +18,7 @@ public sealed class PatientRegisteredConsumer : IConsumer<PatientRegisteredInteg
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<PatientRegisteredIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<PatientRegisteredIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
@@ -35,7 +36,7 @@ public sealed class PatientDemographicsUpdatedConsumer : IConsumer<PatientDemogr
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<PatientDemographicsUpdatedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<PatientDemographicsUpdatedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
@@ -53,7 +54,7 @@ public sealed class PatientsMergedConsumer : IConsumer<PatientsMergedIntegration
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<PatientsMergedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<PatientsMergedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.SurvivingPatientId,

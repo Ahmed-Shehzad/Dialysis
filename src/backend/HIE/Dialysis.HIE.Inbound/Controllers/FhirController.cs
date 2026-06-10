@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Dialysis.HIE.Core.Coding;
 using Dialysis.HIE.Inbound.Ingestion;
 using Dialysis.HIE.Inbound.Mpi;
 using Hl7.Fhir.Model;
@@ -95,7 +96,7 @@ public sealed class FhirController : ControllerBase
             {
                 patient.Identifier.Add(new Identifier
                 {
-                    System = Core.Coding.CodeSystems.MrnIdentifier,
+                    System = CodeSystems.MrnIdentifier,
                     Value = m.MedicalRecordNumber,
                 });
             }

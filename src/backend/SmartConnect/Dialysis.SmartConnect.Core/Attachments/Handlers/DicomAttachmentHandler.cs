@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using FellowOakDicom;
@@ -136,8 +137,8 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
         if (string.IsNullOrWhiteSpace(raw)) return false;
         var parts = raw.Replace("(", "").Replace(")", "").Split(',');
         if (parts.Length != 2) return false;
-        if (!ushort.TryParse(parts[0].Trim(), System.Globalization.NumberStyles.HexNumber, null, out var group)) return false;
-        if (!ushort.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.HexNumber, null, out var element)) return false;
+        if (!ushort.TryParse(parts[0].Trim(), NumberStyles.HexNumber, null, out var group)) return false;
+        if (!ushort.TryParse(parts[1].Trim(), NumberStyles.HexNumber, null, out var element)) return false;
         tag = new DicomTag(group, element);
         return true;
     }

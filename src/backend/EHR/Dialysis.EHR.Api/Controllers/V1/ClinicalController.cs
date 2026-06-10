@@ -1,21 +1,21 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.EHR.ClinicalNotes.Features.ClinicalDecisionSupport;
 using Dialysis.EHR.ClinicalNotes.Features.DraftClinicalNote;
-using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.LinkImagingStudy;
+using Dialysis.EHR.ClinicalNotes.Features.ListImagingOrdersForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.ListReferralsForPatient;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
-using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
 using Dialysis.EHR.ClinicalNotes.Features.OrderPrescription;
 using Dialysis.EHR.ClinicalNotes.Features.QualityMeasures;
+using Dialysis.EHR.ClinicalNotes.Features.RequestReferral;
 using Dialysis.EHR.ClinicalNotes.Features.ReviewImagingAiFinding;
 using Dialysis.EHR.ClinicalNotes.Features.SignClinicalNote;
 using Dialysis.EHR.ClinicalNotes.Features.StartEncounter;
 using Dialysis.EHR.ClinicalNotes.SafetyChecks;
 using Dialysis.EHR.Registration.Features.RegisterPatient;
-using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.Module.Contracts.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -308,7 +308,7 @@ public sealed class ClinicalController : ControllerBase
     public async Task<IActionResult> ReviewImagingAiFindingAsync(
         Guid id,
         [FromBody] ReviewImagingAiFindingRequest body,
-        [FromServices] Dialysis.Module.Contracts.Authorization.ICurrentUser currentUser,
+        [FromServices] ICurrentUser currentUser,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);

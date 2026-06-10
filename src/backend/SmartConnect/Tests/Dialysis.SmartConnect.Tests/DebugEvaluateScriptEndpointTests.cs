@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Xunit;
 
@@ -32,8 +33,8 @@ public sealed class DebugEvaluateScriptEndpointTests : IClassFixture<SmartConnec
         var debugBody = await response.Content.ReadAsStringAsync();
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected 200 OK, got {response.StatusCode}. Body: {debugBody}");
 
-        var result = System.Text.Json.JsonSerializer.Deserialize<EvaluateResponse>(debugBody,
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var result = JsonSerializer.Deserialize<EvaluateResponse>(debugBody,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(result);
         Assert.Equal("MRN-12345", result!.Result);
     }

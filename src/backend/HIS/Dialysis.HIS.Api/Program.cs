@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
@@ -20,6 +21,7 @@ using Dialysis.HIS.Operations;
 using Dialysis.HIS.Persistence;
 using Dialysis.HIS.RaCapabilities;
 using Dialysis.Module.Hosting;
+using Dialysis.Module.Hosting.Telemetry;
 using Dialysis.ServiceDefaults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +30,7 @@ using Microsoft.Extensions.Options;
 namespace Dialysis.HIS.Api;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)
@@ -153,7 +155,7 @@ public partial class Program
         // Surface the bus's meter to the OTLP pipeline so the Aspire dashboard + the prod
         // Grafana dashboards (deploy/k8s/observability/dashboards/) pick up its counters +
         // histograms automatically.
-        builder.Services.Configure<Dialysis.Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
+        builder.Services.Configure<ModuleTelemetryOptions>(o =>
             o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
 
         builder.Services
@@ -161,7 +163,7 @@ public partial class Program
             // Accept string-named enum payloads from the SPA (consistent with PDMS/SmartConnect);
             // otherwise System.Text.Json only binds the integer backing values and rejects names with 400.
             .AddJsonOptions(o =>
-                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         var app = builder.Build();
 

@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
 using Dialysis.PDMS.Reporting.Templating;
+using PdfSharp.Pdf.IO;
 using Shouldly;
 using Xunit;
 
@@ -103,7 +104,7 @@ public sealed class GeneratorTests
         var pdf = await generator.GenerateSignableAsync(SampleContext(), template: null, CancellationToken.None);
 
         using var ms = new MemoryStream(pdf);
-        using var doc = PdfSharp.Pdf.IO.PdfReader.Open(ms, PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import);
+        using var doc = PdfReader.Open(ms, PdfDocumentOpenMode.Import);
         doc.AcroForm.ShouldNotBeNull();
         doc.AcroForm.Fields.DescendantNames.ShouldContain("clinician_signature");
         doc.AcroForm.Fields.DescendantNames.ShouldContain("patient_consent_received");

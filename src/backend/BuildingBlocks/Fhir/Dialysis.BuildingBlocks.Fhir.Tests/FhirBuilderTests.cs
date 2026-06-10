@@ -66,7 +66,7 @@ public sealed class FhirBuilderTests
     {
         public DemoSource(string Id) => this.Id = Id;
         public string Id { get; init; }
-        public void Deconstruct(out string id) => id = this.Id;
+        public void Deconstruct(out string id) => id = Id;
     }
 
     private sealed class DemoMapper : IFhirResourceMapper<DemoSource, Patient>

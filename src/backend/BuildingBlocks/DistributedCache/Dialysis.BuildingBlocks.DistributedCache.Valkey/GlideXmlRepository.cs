@@ -35,7 +35,7 @@ internal sealed class GlideXmlRepository : IXmlRepository
     public IReadOnlyCollection<XElement> GetAllElements()
     {
         var values = _multiplexer.GetDatabase()
-            .ListRangeAsync(_key, 0, -1)
+            .ListRangeAsync(_key)
             .GetAwaiter()
             .GetResult();
 

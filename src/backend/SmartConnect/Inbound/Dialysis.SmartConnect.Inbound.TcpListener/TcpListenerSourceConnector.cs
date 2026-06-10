@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Buffers.Binary;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
@@ -200,7 +201,7 @@ public sealed class TcpListenerSourceConnector : ISourceConnector
 
                 Span<byte> lenBytes = stackalloc byte[4];
                 buffer.Slice(0, 4).CopyTo(lenBytes);
-                var msgLen = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(lenBytes);
+                var msgLen = (int)BinaryPrimitives.ReadUInt32BigEndian(lenBytes);
                 if (msgLen > maxBytes)
                 {
                     // skip malformed

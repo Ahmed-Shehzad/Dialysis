@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -126,6 +127,6 @@ public static class QidoRsEndpoint
 
     private static DateTimeOffset? TryParseDicomDate(string s) =>
         DateTimeOffset.TryParseExact(
-            s, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.AssumeUniversal, out var dt) ? dt : null;
+            s, "yyyyMMdd", CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal, out var dt) ? dt : null;
 }

@@ -56,7 +56,7 @@ public static class ResourcePath
                         mapped.Add(step);
                     }
                 }
-                current = (IReadOnlyList<object?>)mapped;
+                current = mapped;
                 continue;
             }
             current = ApplySegment(current, segment);

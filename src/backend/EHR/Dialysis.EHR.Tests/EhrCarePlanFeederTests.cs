@@ -3,8 +3,10 @@ using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Dialysis.EHR.PatientChart.Domain;
 using Dialysis.EHR.PatientChart.Fhir;
 using Dialysis.EHR.PatientChart.Ports;
+using Hl7.Fhir.Model;
 using Shouldly;
 using Xunit;
+using CarePlan = Dialysis.EHR.PatientChart.Domain.CarePlan;
 using FhirCarePlan = Hl7.Fhir.Model.CarePlan;
 using Task = System.Threading.Tasks.Task;
 
@@ -31,7 +33,7 @@ public sealed class EhrCarePlanFeederTests
 
         var fhir = results.ShouldHaveSingleItem();
         fhir.Id.ShouldBe(plan.Id.ToString());
-        fhir.Status.ShouldBe(Hl7.Fhir.Model.RequestStatus.Active);
+        fhir.Status.ShouldBe(RequestStatus.Active);
         fhir.Intent.ShouldBe(FhirCarePlan.CarePlanIntent.Plan);
         fhir.Title.ShouldBe("Dialysis adequacy");
         fhir.Subject.Reference.ShouldBe($"Patient/{patient}");

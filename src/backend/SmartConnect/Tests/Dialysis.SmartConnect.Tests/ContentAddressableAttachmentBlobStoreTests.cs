@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
@@ -131,7 +132,7 @@ public sealed class ContentAddressableAttachmentBlobStoreTests
         }
 
         public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var kv in _data)
             {

@@ -25,11 +25,11 @@ public sealed record UserPermissionsDto
     public IReadOnlyList<string> Permissions { get; init; }
     public void Deconstruct(out Guid userId, out string subject, out string displayName, out IReadOnlyList<string> roles, out IReadOnlyList<string> permissions)
     {
-        userId = this.UserId;
-        subject = this.Subject;
-        displayName = this.DisplayName;
-        roles = this.Roles;
-        permissions = this.Permissions;
+        userId = UserId;
+        subject = Subject;
+        displayName = DisplayName;
+        roles = Roles;
+        permissions = Permissions;
     }
 }
 
@@ -38,5 +38,5 @@ public sealed record ListUserPermissionsQuery : IQuery<UserPermissionsDto?>, IPe
     public ListUserPermissionsQuery(Guid UserId) => this.UserId = UserId;
     public string RequiredPermission => IdentityPermissions.UserRead;
     public Guid UserId { get; init; }
-    public void Deconstruct(out Guid userId) => userId = this.UserId;
+    public void Deconstruct(out Guid userId) => userId = UserId;
 }

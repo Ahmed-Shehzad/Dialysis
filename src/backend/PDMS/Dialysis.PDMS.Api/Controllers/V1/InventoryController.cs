@@ -136,13 +136,13 @@ public sealed record CreateInventoryItemRequest
     public int Threshold { get; init; }
     public void Deconstruct(out string medicationCodeSystem, out string medicationCode, out string medicationDisplay, out string lotNumber, out DateTime expiryUtc, out int initialOnHandUnits, out int threshold)
     {
-        medicationCodeSystem = this.MedicationCodeSystem;
-        medicationCode = this.MedicationCode;
-        medicationDisplay = this.MedicationDisplay;
-        lotNumber = this.LotNumber;
-        expiryUtc = this.ExpiryUtc;
-        initialOnHandUnits = this.InitialOnHandUnits;
-        threshold = this.Threshold;
+        medicationCodeSystem = MedicationCodeSystem;
+        medicationCode = MedicationCode;
+        medicationDisplay = MedicationDisplay;
+        lotNumber = LotNumber;
+        expiryUtc = ExpiryUtc;
+        initialOnHandUnits = InitialOnHandUnits;
+        threshold = Threshold;
     }
 }
 
@@ -157,8 +157,8 @@ public sealed record ReceiveStockRequest
     public string Reason { get; init; }
     public void Deconstruct(out int units, out string reason)
     {
-        units = this.Units;
-        reason = this.Reason;
+        units = Units;
+        reason = Reason;
     }
 }
 
@@ -173,8 +173,8 @@ public sealed record AdjustStockRequest
     public string Reason { get; init; }
     public void Deconstruct(out int newOnHandUnits, out string reason)
     {
-        newOnHandUnits = this.NewOnHandUnits;
-        reason = this.Reason;
+        newOnHandUnits = NewOnHandUnits;
+        reason = Reason;
     }
 }
 
@@ -221,14 +221,14 @@ public sealed record InventoryItemDto
     public bool LowStock { get; init; }
     public void Deconstruct(out Guid id, out string medicationCodeSystem, out string medicationCode, out string medicationDisplay, out string lotNumber, out DateTime expiryUtc, out int onHandUnits, out int threshold, out bool lowStock)
     {
-        id = this.Id;
-        medicationCodeSystem = this.MedicationCodeSystem;
-        medicationCode = this.MedicationCode;
-        medicationDisplay = this.MedicationDisplay;
-        lotNumber = this.LotNumber;
-        expiryUtc = this.ExpiryUtc;
-        onHandUnits = this.OnHandUnits;
-        threshold = this.Threshold;
-        lowStock = this.LowStock;
+        id = Id;
+        medicationCodeSystem = MedicationCodeSystem;
+        medicationCode = MedicationCode;
+        medicationDisplay = MedicationDisplay;
+        lotNumber = LotNumber;
+        expiryUtc = ExpiryUtc;
+        onHandUnits = OnHandUnits;
+        threshold = Threshold;
+        lowStock = LowStock;
     }
 }

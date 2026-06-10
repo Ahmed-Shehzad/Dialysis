@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.BuildingBlocks.Fhir.BulkData;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -163,7 +164,7 @@ public sealed class DefaultExportJobOrchestratorTests : IAsyncLifetime
 
     private sealed class TwoPatientsFeeder : INdjsonResourceFeeder<Patient>
     {
-        public async IAsyncEnumerable<Patient> StreamAsync(ExportJob job, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<Patient> StreamAsync(ExportJob job, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             yield return new Patient { Id = "p1" };
             await Task.Yield();

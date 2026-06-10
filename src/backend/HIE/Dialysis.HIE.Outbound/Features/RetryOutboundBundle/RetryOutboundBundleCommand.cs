@@ -23,5 +23,5 @@ public sealed record RetryOutboundBundleCommand : ICommand, IPermissionedCommand
     public RetryOutboundBundleCommand(Guid BundleId) => this.BundleId = BundleId;
     public string RequiredPermission => HiePermissions.OutboundPublish;
     public Guid BundleId { get; init; }
-    public void Deconstruct(out Guid bundleId) => bundleId = this.BundleId;
+    public void Deconstruct(out Guid bundleId) => bundleId = BundleId;
 }

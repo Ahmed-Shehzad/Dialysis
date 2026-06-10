@@ -35,9 +35,9 @@ public sealed record IdentityProviderDescriptor
     public string? IconUri { get; init; }
     public void Deconstruct(out string alias, out string displayName, out string? iconUri)
     {
-        alias = this.Alias;
-        displayName = this.DisplayName;
-        iconUri = this.IconUri;
+        alias = Alias;
+        displayName = DisplayName;
+        iconUri = IconUri;
     }
 }
 

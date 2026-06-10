@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -23,10 +25,10 @@ public sealed class XmlTransformStage : ITransformStage
             return Task.FromResult(message);
 
         // Parse parameters as JSON
-        System.Text.Json.Nodes.JsonNode? parameters;
+        JsonNode? parameters;
         try
         {
-            parameters = System.Text.Json.Nodes.JsonNode.Parse(parametersJson);
+            parameters = JsonNode.Parse(parametersJson);
         }
         catch
         {
@@ -144,7 +146,7 @@ internal static class Hl7V2XmlSerializer
                 // Match the same 1-based numbering Hl7V2Message.GetValue uses (MSH offset +2,
                 // other segments offset +1).
                 var label = seg.Name == "MSH" ? f + 2 : f + 1;
-                var fieldEl = new XElement($"F{label.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+                var fieldEl = new XElement($"F{label.ToString(CultureInfo.InvariantCulture)}");
                 var repeats = seg.Fields[f];
                 if (repeats.Length == 1)
                 {

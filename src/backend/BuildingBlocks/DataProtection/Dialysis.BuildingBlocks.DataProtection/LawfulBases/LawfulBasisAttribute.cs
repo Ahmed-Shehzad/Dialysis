@@ -13,7 +13,7 @@ namespace Dialysis.BuildingBlocks.DataProtection.LawfulBases;
 ///   <item>Integration-event consumers that read identifiable health data from a sibling module.</item>
 /// </list>
 /// </summary>
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class LawfulBasisAttribute : Attribute
 {
     public LawfulBasisAttribute(LawfulBasis basis, DataCategory categories)

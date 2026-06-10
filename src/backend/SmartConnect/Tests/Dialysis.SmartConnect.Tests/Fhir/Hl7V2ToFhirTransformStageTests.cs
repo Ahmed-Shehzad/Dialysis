@@ -1,4 +1,5 @@
 using System.Text;
+using Dialysis.SmartConnect.DataTypes;
 using Dialysis.SmartConnect.Fhir;
 using Dialysis.SmartConnect.Fhir.Mappers;
 using Hl7.Fhir.Model;
@@ -110,6 +111,6 @@ public sealed class Hl7V2ToFhirTransformStageTests
         public MapperWrapper(IFhirV2MessageMapper<TResource> inner) => _inner = inner;
         public string TriggerEvent => _inner.TriggerEvent;
 
-        public Resource Map(Dialysis.SmartConnect.DataTypes.Hl7V2Message message) => _inner.Map(message);
+        public Resource Map(Hl7V2Message message) => _inner.Map(message);
     }
 }

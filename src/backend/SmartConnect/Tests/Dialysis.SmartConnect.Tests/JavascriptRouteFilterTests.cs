@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Xunit;
@@ -82,7 +83,7 @@ public sealed class JavascriptRouteFilterTests
             CorrelationId = "corr-123",
             Payload = "x"u8.ToArray(),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = System.Collections.Immutable.ImmutableDictionary<string, string>.Empty.Add(
+            Metadata = ImmutableDictionary<string, string>.Empty.Add(
                 JavascriptRouteFilter.ParametersMetadataKey,
                 """{"script":"correlationId === 'corr-123' && flowId.length > 0"}"""),
             ReceivedAtUtc = DateTimeOffset.UtcNow,
@@ -102,7 +103,7 @@ public sealed class JavascriptRouteFilterTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = System.Collections.Immutable.ImmutableDictionary<string, string>.Empty.Add(
+            Metadata = ImmutableDictionary<string, string>.Empty.Add(
                 JavascriptRouteFilter.ParametersMetadataKey,
                 parametersJson),
             ReceivedAtUtc = DateTimeOffset.UtcNow,

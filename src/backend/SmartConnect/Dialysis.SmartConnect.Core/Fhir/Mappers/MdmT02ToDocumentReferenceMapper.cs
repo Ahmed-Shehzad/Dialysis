@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Dialysis.SmartConnect.DataTypes;
 using Hl7.Fhir.Model;
@@ -52,9 +53,9 @@ public sealed class MdmT02ToDocumentReferenceMapper : IFhirV2MessageMapper<Docum
         if (!string.IsNullOrEmpty(date) && date.Length >= 8)
         {
             doc.DateElement = new Instant(new DateTimeOffset(
-                int.Parse(date[..4], System.Globalization.CultureInfo.InvariantCulture),
-                int.Parse(date.Substring(4, 2), System.Globalization.CultureInfo.InvariantCulture),
-                int.Parse(date.Substring(6, 2), System.Globalization.CultureInfo.InvariantCulture),
+                int.Parse(date[..4], CultureInfo.InvariantCulture),
+                int.Parse(date.Substring(4, 2), CultureInfo.InvariantCulture),
+                int.Parse(date.Substring(6, 2), CultureInfo.InvariantCulture),
                 0, 0, 0, TimeSpan.Zero));
         }
 

@@ -57,11 +57,11 @@ public sealed record DocumentPreview
     public string? DocumentTypeName { get; init; }
     public void Deconstruct(out DocumentPreviewFormat format, out string? content, out string mimeType, out string? rootElement, out string? documentTypeName)
     {
-        format = this.Format;
-        content = this.Content;
-        mimeType = this.MimeType;
-        rootElement = this.RootElement;
-        documentTypeName = this.DocumentTypeName;
+        format = Format;
+        content = Content;
+        mimeType = MimeType;
+        rootElement = RootElement;
+        documentTypeName = DocumentTypeName;
     }
 }
 
@@ -70,7 +70,7 @@ public sealed record GetDocumentPreviewQuery : IQuery<DocumentPreview?>, IPermis
     public GetDocumentPreviewQuery(Guid Id) => this.Id = Id;
     public string RequiredPermission => HiePermissions.DocumentsView;
     public Guid Id { get; init; }
-    public void Deconstruct(out Guid id) => id = this.Id;
+    public void Deconstruct(out Guid id) => id = Id;
 }
 
 public sealed class GetDocumentPreviewQueryHandler : IQueryHandler<GetDocumentPreviewQuery, DocumentPreview?>

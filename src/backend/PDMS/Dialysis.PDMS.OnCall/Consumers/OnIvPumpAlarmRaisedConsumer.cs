@@ -2,8 +2,8 @@ using Dialysis.BuildingBlocks.ClinicianNotification;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Medications.Contracts;
-using Dialysis.PDMS.OnCall.Domain;
 using Dialysis.PDMS.OnCall.Dispatch;
+using Dialysis.PDMS.OnCall.Domain;
 
 namespace Dialysis.PDMS.OnCall.Consumers;
 

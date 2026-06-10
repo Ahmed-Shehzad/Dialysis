@@ -13,7 +13,7 @@ public readonly record struct RouteFilterResult
 
     public static RouteFilterResult Drop() => new(RouteFilterDisposition.Drop);
     public RouteFilterDisposition Disposition { get; init; }
-    public void Deconstruct(out RouteFilterDisposition disposition) => disposition = this.Disposition;
+    public void Deconstruct(out RouteFilterDisposition disposition) => disposition = Disposition;
 }
 
 public enum RouteFilterDisposition

@@ -175,10 +175,10 @@ public sealed class TokenRefreshService : ITokenRefreshService
         public int ExpiresInSeconds { get; init; }
         public void Deconstruct(out string accessToken, out string? refreshToken, out string? idToken, out int expiresInSeconds)
         {
-            accessToken = this.AccessToken;
-            refreshToken = this.RefreshToken;
-            idToken = this.IdToken;
-            expiresInSeconds = this.ExpiresInSeconds;
+            accessToken = AccessToken;
+            refreshToken = RefreshToken;
+            idToken = IdToken;
+            expiresInSeconds = ExpiresInSeconds;
         }
     }
 }

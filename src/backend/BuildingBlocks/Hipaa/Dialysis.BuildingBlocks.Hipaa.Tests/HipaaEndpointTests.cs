@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.Fhir.Audit;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
+using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.BuildingBlocks.Hipaa.Tests;
 
@@ -52,6 +54,6 @@ public sealed class HipaaEndpointTests
 
     private sealed class NoOpEmitter : IAuditEventEmitter
     {
-        public ValueTask EmitAsync(Hl7.Fhir.Model.AuditEvent auditEvent, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+        public ValueTask EmitAsync(AuditEvent auditEvent, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 }
