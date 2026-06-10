@@ -62,7 +62,7 @@ jobs:
     name: NUKE Test + Pack
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # NUKE Pack derives the package version from git history via GitVersion, which needs
           # the full history + tags — the default shallow clone (fetch-depth 1) makes GitVersion
@@ -141,7 +141,7 @@ jobs:
         ports:
           - "5672:5672"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-dotnet@v4
         with:
