@@ -15,7 +15,7 @@ public static class EpicAdapterServiceCollectionExtensions
         {
             services.AddOptions<EpicAdapterOptions>().Bind(epicSection);
             services.AddVendorAdapterTokenAcquirer();
-            services.AddHttpClient("Epic");
+            services.AddResilientVendorHttpClient("Epic");
             services.AddSingleton<EpicAuthProvider>();
             services.AddSingleton<IExternalEhrAuthProvider>(sp => sp.GetRequiredService<EpicAuthProvider>());
             services.AddSingleton<EpicFhirAdapter>();

@@ -15,7 +15,7 @@ public static class OpenEmrAdapterServiceCollectionExtensions
         {
             services.AddOptions<OpenEmrAdapterOptions>().Bind(openEmrSection);
             services.AddVendorAdapterTokenAcquirer();
-            services.AddHttpClient("OpenEMR");
+            services.AddResilientVendorHttpClient("OpenEMR");
             services.AddSingleton<OpenEmrAuthProvider>();
             services.AddSingleton<IExternalEhrAuthProvider>(sp => sp.GetRequiredService<OpenEmrAuthProvider>());
             services.AddSingleton<OpenEmrFhirAdapter>();

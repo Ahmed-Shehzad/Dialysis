@@ -53,7 +53,7 @@ public class Program
         builder.Services.Configure<BffSpaOptions>(builder.Configuration.GetSection(BffSpaOptions.SectionName));
         builder.Services.Configure<IdentityFederationOptions>(builder.Configuration.GetSection(IdentityFederationOptions.SectionName));
         builder.Services.AddSingleton<IIdentityProviderCatalog, ConfiguredIdentityProviderCatalog>();
-        builder.Services.AddHttpClient("keycloak");
+        builder.Services.AddResilientBffHttpClient("keycloak");
         builder.Services.AddScoped<IHisAccessTokenProvider, HisAccessTokenProvider>();
         builder.Services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
         builder.Services.AddSingleton(TimeProvider.System);

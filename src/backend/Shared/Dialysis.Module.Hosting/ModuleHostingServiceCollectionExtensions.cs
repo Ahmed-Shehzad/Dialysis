@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 
 namespace Dialysis.Module.Hosting;
 
@@ -116,7 +117,27 @@ public static class ModuleHostingServiceCollectionExtensions
             builder.Services.AddExceptionHandler<ModulePermissionDeniedExceptionHandler>();
             builder.Services.AddProblemDetails();
             builder.Services.AddModuleApiVersioning();
-            builder.Services.AddHealthChecks();
+
+            // /health/ready must verify the module's real dependencies, not just process-up:
+            // the module Postgres (ConnectionStrings:<slug>, matched case-insensitively, e.g.
+            // "His") and the Transponder RabbitMQ broker when one is configured. Each probe is
+            // skipped when its configuration is absent (in-memory tests, identity-only smoke).
+            var healthChecks = builder.Services.AddHealthChecks();
+            var moduleDbConnectionString = builder.Configuration.GetConnectionString(options.ModuleSlug);
+            if (!string.IsNullOrWhiteSpace(moduleDbConnectionString))
+                healthChecks.AddNpgSql(moduleDbConnectionString, name: $"{options.ModuleSlug}-postgres");
+
+            var rabbitConnectionUri = builder.Configuration[$"{options.ModuleSlug}:Transponder:RabbitMq:ConnectionUri"];
+            if (!string.IsNullOrWhiteSpace(rabbitConnectionUri))
+            {
+                healthChecks.AddRabbitMQ(
+                    async _ =>
+                    {
+                        var factory = new ConnectionFactory { Uri = new Uri(rabbitConnectionUri) };
+                        return await factory.CreateConnectionAsync().ConfigureAwait(false);
+                    },
+                    name: $"{options.ModuleSlug}-rabbitmq");
+            }
 
             var valkeySection = builder.Configuration.GetSection($"{options.ModuleSlug}:DistributedCache:Valkey");
             if (!string.IsNullOrWhiteSpace(valkeySection["ConnectionString"]))

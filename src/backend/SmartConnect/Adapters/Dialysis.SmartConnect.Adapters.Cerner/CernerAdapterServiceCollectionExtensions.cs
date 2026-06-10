@@ -15,7 +15,7 @@ public static class CernerAdapterServiceCollectionExtensions
         {
             services.AddOptions<CernerAdapterOptions>().Bind(cernerSection);
             services.AddVendorAdapterTokenAcquirer();
-            services.AddHttpClient("Cerner");
+            services.AddResilientVendorHttpClient("Cerner");
             services.AddSingleton<CernerAuthProvider>();
             services.AddSingleton<IExternalEhrAuthProvider>(sp => sp.GetRequiredService<CernerAuthProvider>());
             services.AddSingleton<CernerFhirAdapter>();

@@ -43,7 +43,7 @@ public static class ModuleBffExtensions
         builder.Services.Configure<BffSpaOptions>(config.GetSection(BffSpaOptions.SectionName));
         builder.Services.Configure<IdentityFederationOptions>(config.GetSection(IdentityFederationOptions.SectionName));
         builder.Services.AddSingleton<IIdentityProviderCatalog, ConfiguredIdentityProviderCatalog>();
-        builder.Services.AddHttpClient("keycloak");
+        builder.Services.AddResilientBffHttpClient("keycloak");
         builder.Services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
         builder.Services.AddSingleton(TimeProvider.System);
 
