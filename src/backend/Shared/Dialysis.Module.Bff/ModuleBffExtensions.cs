@@ -77,6 +77,7 @@ public static class ModuleBffExtensions
             .Configure<ITicketStore>((o, store) => o.SessionStore = store);
 
         var kc = config.GetSection(KeycloakBffOptions.SectionName).Get<KeycloakBffOptions>() ?? new KeycloakBffOptions();
+        KeycloakSecretGuard.EnsureProductionClientSecret(builder.Environment, kc.ClientSecret);
         var authority = kc.Authority?.Trim() ?? "";
         if (string.IsNullOrEmpty(authority))
             throw new InvalidOperationException(

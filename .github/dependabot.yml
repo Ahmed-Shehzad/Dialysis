@@ -1,0 +1,65 @@
+# Automated dependency-update PRs. Security scanning already runs weekly
+# (security.yml: dotnet/npm audit, Trivy, ZAP); this adds the missing other half —
+# something that actually PROPOSES the updates. Central package management means the
+# nuget ecosystem updates land in Directory.Packages.props only.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      # Keep the big coupled families moving together so a partial bump can't wedge
+      # the build (versions of these are expected to stay in lockstep).
+      aspire:
+        patterns: ["Aspire.*"]
+      opentelemetry:
+        patterns: ["OpenTelemetry.*"]
+      efcore-npgsql:
+        patterns: ["Microsoft.EntityFrameworkCore*", "Npgsql*"]
+      hl7-fhir:
+        patterns: ["Hl7.Fhir.*"]
+
+  # The seven SPAs are deliberately independent npm roots (no workspace) — one entry each.
+  - package-ecosystem: npm
+    directory: /src/frontend/his-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /src/frontend/ehr-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /src/frontend/pdms-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /src/frontend/smartconnect-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /src/frontend/hie-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /src/frontend/identity-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /src/frontend/patient-portal-web
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+
+  - package-ecosystem: pip
+    directory: /tools/smartconnect
+    schedule:
+      interval: weekly
+      day: monday

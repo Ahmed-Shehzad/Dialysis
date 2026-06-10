@@ -48,6 +48,11 @@ public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundSe
                         .ToListAsync(stoppingToken)
                         .ConfigureAwait(false);
 
+                    // Lag gauge from the batch head (ordered by CreatedAtUtc) — zero extra queries.
+                    TransponderOutboxMetrics.RecordOldestPendingAge(
+                        typeof(TContext).Name,
+                        batch.Count == 0 ? TimeSpan.Zero : DateTime.UtcNow - batch[0].CreatedAtUtc);
+
                     foreach (var row in batch)
                     {
                         try
@@ -58,9 +63,11 @@ public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundSe
                             row.ProcessedAtUtc = DateTime.UtcNow;
                             await db.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
                             processedAny = true;
+                            TransponderOutboxMetrics.RecordPublished(typeof(TContext).Name);
                         }
                         catch (Exception ex)
                         {
+                            TransponderOutboxMetrics.RecordFailure(typeof(TContext).Name);
                             _logger.LogError(
                                 ex,
                                 "Transponder outbox relay failed for row {OutboxId}; will retry on next poll.",

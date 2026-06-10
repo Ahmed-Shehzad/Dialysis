@@ -36,6 +36,10 @@
          Keep this version in lockstep with .config/dotnet-tools.json (gitversion.tool). The
          bracketed [x] form pins an exact version, which PackageDownload requires. -->
     <PackageDownload Include="GitVersion.Tool" Version="[6.7.0]" />
+    <!-- ReportGenerator aggregates the per-project Cobertura files the Test target collects
+         into artifacts/coverage (HTML + JSON summary + GitHub markdown). Same PackageDownload
+         pattern as GitVersion: NUKE's ReportGeneratorTasks resolves the tool from the cache. -->
+    <PackageDownload Include="ReportGenerator" Version="[5.5.10]" />
   </ItemGroup>
 
 </Project>

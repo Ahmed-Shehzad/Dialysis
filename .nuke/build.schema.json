@@ -26,6 +26,7 @@
       "enum": [
         "Clean",
         "Compile",
+        "CoverageReport",
         "InstallGitHooks",
         "Pack",
         "Publish",
@@ -122,6 +123,11 @@
         "Environment": {
           "type": "string",
           "description": "Deployment environment for PublishCompose — one of dev / staging / prod. Default: prod"
+        },
+        "MinCoverage": {
+          "type": "number",
+          "description": "Minimum line-coverage percentage CoverageReport enforces (0–100). Default 0 = report-only; ratchet upward once a baseline is established",
+          "format": "double"
         },
         "NuGetApiKey": {
           "type": "string",

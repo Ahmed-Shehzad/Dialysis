@@ -41,6 +41,7 @@
     <PackageVersion Include="StackExchange.Redis" Version="2.13.17" />
     <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.RabbitMQ" Version="9.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />
     <!-- Capped at 5.0.0 by the latest EF Core: Microsoft.EntityFrameworkCore.Design 10.0.8
          transitively pulls Microsoft.CodeAnalysis.CSharp.Workspaces / Workspaces.MSBuild 5.0.0,

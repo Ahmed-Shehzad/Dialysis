@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -114,7 +115,7 @@ class Build : NukeBuild
             .EnableNoRestore()));
 
     Target Test => _ => _
-        .Description("Runs the full test suite with TRX logs into artifacts/test-results.")
+        .Description("Runs the full test suite with TRX logs + per-project Cobertura coverage into artifacts/test-results.")
         .DependsOn(Compile)
         .Produces(TestResultsDirectory / "*.trx")
         .Executes(() => DotNetTest(s => s
@@ -122,7 +123,47 @@ class Build : NukeBuild
             .SetConfiguration(Configuration)
             .EnableNoBuild()
             .SetResultsDirectory(TestResultsDirectory)
+            // coverlet.collector rides on every *Tests* project via Directory.Build.props.
+            .SetDataCollector("XPlat Code Coverage")
             .AddLoggers("trx")));
+
+    [Parameter("Minimum line-coverage percentage CoverageReport enforces (0–100). Default 0 = report-only; " +
+               "ratchet upward once a baseline is established.")]
+    readonly double MinCoverage;
+
+    AbsolutePath CoverageReportDirectory => ArtifactsDirectory / "coverage";
+
+    Target CoverageReport => _ => _
+        .Description("Aggregates the Cobertura files Test produced into artifacts/coverage (HTML + JSON summary + " +
+                     "GitHub-flavoured markdown summary) and fails if line coverage is below --min-coverage.")
+        .After(Test)
+        .Produces(CoverageReportDirectory / "Summary.json")
+        .Executes(() =>
+        {
+            var coverageFiles = TestResultsDirectory.GlobFiles("**/coverage.cobertura.xml");
+            if (coverageFiles.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"No coverage.cobertura.xml found under {TestResultsDirectory} — run the Test target first.");
+            }
+            CoverageReportDirectory.CreateOrCleanDirectory();
+            ReportGeneratorTasks.ReportGenerator(s => s
+                .SetFramework("net9.0")
+                .SetReports(coverageFiles.Select(f => f.ToString()))
+                .SetTargetDirectory(CoverageReportDirectory)
+                .SetReportTypes(ReportTypes.HtmlInline, ReportTypes.JsonSummary, ReportTypes.MarkdownSummaryGithub));
+
+            // ReportGenerator's JsonSummary carries {"summary":{"linecoverage": <percent>}}.
+            var summaryJson = (CoverageReportDirectory / "Summary.json").ReadAllText();
+            using var document = System.Text.Json.JsonDocument.Parse(summaryJson);
+            var lineCoverage = document.RootElement.GetProperty("summary").GetProperty("linecoverage").GetDouble();
+            Log.Information("Line coverage: {Coverage:F1}% (gate: {Gate:F1}%)", lineCoverage, MinCoverage);
+            if (lineCoverage < MinCoverage)
+            {
+                throw new InvalidOperationException(
+                    $"Line coverage {lineCoverage:F1}% is below the --min-coverage gate of {MinCoverage:F1}%.");
+            }
+        });
 
     Target ShowVersion => _ => _
         .Description("Prints the GitVersion-derived version for the current commit (SemVer, AssemblySemVer, InformationalVersion, branch, sha) — what Pack would stamp. Handy in CI logs and for sanity-checking a branch before tagging a release.")
