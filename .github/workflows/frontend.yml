@@ -29,7 +29,7 @@ jobs:
     name: duplicated-file sync check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Verify duplicated files are byte-identical across apps
         run: ./tools/frontend/check-duplicate-sync.sh
@@ -52,9 +52,9 @@ jobs:
       run:
         working-directory: src/frontend/${{ matrix.app }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
@@ -103,9 +103,9 @@ jobs:
       run:
         working-directory: src/frontend/${{ matrix.app }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.app }}
           path: src/frontend/${{ matrix.app }}/playwright-report
