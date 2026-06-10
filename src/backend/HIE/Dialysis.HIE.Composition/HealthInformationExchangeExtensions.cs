@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Documents.Signing;
@@ -34,8 +35,11 @@ using Dialysis.HIE.Outbound.Partners.Direct;
 using Dialysis.HIE.Outbound.Partners.Http;
 using Dialysis.HIE.Outbound.PublicHealth;
 using Dialysis.HIE.Persistence;
+using Dialysis.HIE.Persistence.DataSubjectRights;
+using Dialysis.HIE.Persistence.Erasure;
 using Dialysis.HIE.Query;
 using Dialysis.HIE.Tefca.Ias;
+using Dialysis.Module.Hosting.Resilience;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -116,7 +120,7 @@ public static class HealthInformationExchangeExtensions
             // command rejects RemoteQes requests with a clean InvalidOperationException.
             if (!string.IsNullOrWhiteSpace(signingSection.GetSection("Tsp:BaseUri").Value))
             {
-                services.AddHttpClient(CscV2Client.HttpClientName);
+                services.AddResilientModuleHttpClient(CscV2Client.HttpClientName);
                 services.AddEidasQesSigning(signingSection);
             }
             // LTV upgrader is opt-in (Documents:Signing:Ltv:AutoUpgrade) — a persistent daily Hangfire
@@ -129,13 +133,19 @@ public static class HealthInformationExchangeExtensions
                     cronExpression: "0 2 * * *");
             }
 
-            // Document retention + DSR Art. 17 erasure ----------------------------------
-            // The purger walks every operator-defined DocumentRetentionPolicy; the eraser
-            // contributes HIE-side documents to a DPO-approved Art. 17 erasure request.
+            // Document retention + DSR Art. 15/17/20 ------------------------------------
+            // The purger walks every operator-defined DocumentRetentionPolicy. Erasure is the
+            // module-wide HiePatientEraser: it composes the Documents-slice eraser (blob purge +
+            // tombstone) and extends coverage to consents, outbound bundles, and openEHR
+            // compositions, reporting one coherent "hie" entry on the erasure audit row. The
+            // extractor is the Art. 15/20 mirror — same tables, read instead of deleted.
             services.AddScoped<IRetentionPurgeJob,
                 HieRetentionPurgeJob>();
+            services.AddScoped<HieDocumentsPatientEraser>();
             services.AddScoped<IPatientEraser,
-                HieDocumentsPatientEraser>();
+                HiePatientEraser>();
+            services.AddScoped<IModuleDataExtractor,
+                HieModuleDataExtractor>();
             // Opt-in (Documents:Retention:AutoPurge) — a persistent daily Hangfire job (03:00 UTC) that
             // walks every operator-defined DocumentRetentionPolicy and tombstones expired documents.
             if (configuration.GetValue("Documents:Retention:AutoPurge", false))

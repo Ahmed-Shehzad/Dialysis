@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
@@ -6,6 +7,7 @@ using Dialysis.EHR.ClinicalNotes.Ports;
 using Dialysis.EHR.Integration.Ports;
 using Dialysis.EHR.PatientChart.Ports;
 using Dialysis.EHR.PatientPortal.Ports;
+using Dialysis.EHR.Persistence.DataSubjectRights;
 using Dialysis.EHR.Persistence.Erasure;
 using Dialysis.EHR.Persistence.Stores;
 using Dialysis.EHR.Registration.Ports;
@@ -50,6 +52,8 @@ public static class EhrPersistenceServiceCollectionExtensions
             services.AddModuleIntegrationEventOutbox();
             services.AddScoped<IPatientEraser,
                 EhrPatientEraser>();
+            services.AddScoped<IModuleDataExtractor,
+                EhrModuleDataExtractor>();
 
             // Registration
             services.AddScoped<IPatientRepository, PatientRepository>();

@@ -1,6 +1,8 @@
+using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.PDMS.Persistence.DataSubjectRights;
 using Dialysis.PDMS.Persistence.Erasure;
 using Dialysis.PDMS.Persistence.Stores;
 using Dialysis.PDMS.TreatmentSessions.Ports;
@@ -45,6 +47,8 @@ public static class PdmsPersistenceServiceCollectionExtensions
             services.AddScoped<ITreatmentAlarmRepository, TreatmentAlarmRepository>();
             services.AddScoped<IPatientEraser,
                 PdmsPatientEraser>();
+            services.AddScoped<IModuleDataExtractor,
+                PdmsModuleDataExtractor>();
 
             return services;
         }
