@@ -48,7 +48,7 @@ jobs:
           fi
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: { name: dotnet-vuln, path: dotnet-vuln.txt, retention-days: 30 }
 
   # --- 3. Vulnerable npm dependencies ----------------------------------------
@@ -173,5 +173,5 @@ jobs:
         run: kill $(cat /tmp/aspire.pid) || true
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: { name: zap-baseline, path: report_html.html, retention-days: 30 }
