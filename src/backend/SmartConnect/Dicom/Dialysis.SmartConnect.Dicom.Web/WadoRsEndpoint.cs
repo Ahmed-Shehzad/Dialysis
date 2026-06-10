@@ -1,3 +1,4 @@
+using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -90,7 +91,7 @@ public static class WadoRsEndpoint
 
     private static void WriteAscii(MemoryStream stream, string s)
     {
-        var bytes = System.Text.Encoding.ASCII.GetBytes(s);
+        var bytes = Encoding.ASCII.GetBytes(s);
         stream.Write(bytes, 0, bytes.Length);
     }
 }

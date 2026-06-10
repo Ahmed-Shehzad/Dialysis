@@ -9,5 +9,5 @@ public sealed record ManagerDashboardQuery : IQuery<ManagerDashboardSnapshotDto>
     public ManagerDashboardQuery(string? ReportFocus = null) => this.ReportFocus = ReportFocus;
     public string RequiredPermission => HisPermissions.DataReport;
     public string? ReportFocus { get; init; }
-    public void Deconstruct(out string? reportFocus) => reportFocus = this.ReportFocus;
+    public void Deconstruct(out string? reportFocus) => reportFocus = ReportFocus;
 }

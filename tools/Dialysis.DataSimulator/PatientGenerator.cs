@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Bogus;
 using Bogus.DataSets;
 
@@ -24,7 +26,7 @@ public sealed class PatientGenerator
     public static GeneratedPatient Generate(int seed, long sequence)
     {
         var derived = unchecked((int)((seed * 2654435761L) + sequence));
-        var faker = new Faker("en") { Random = new Randomizer(derived) };
+        var faker = new Faker() { Random = new Randomizer(derived) };
 
         var gender = faker.Random.Bool() ? Name.Gender.Male : Name.Gender.Female;
         var family = faker.Name.LastName(gender);
@@ -41,7 +43,7 @@ public sealed class PatientGenerator
 
     private static Guid DeterministicGuid(string key)
     {
-        var bytes = System.Security.Cryptography.SHA1.HashData(System.Text.Encoding.UTF8.GetBytes(key));
+        var bytes = SHA1.HashData(Encoding.UTF8.GetBytes(key));
         var guid = new byte[16];
         Array.Copy(bytes, guid, 16);
         guid[6] = (byte)((guid[6] & 0x0F) | 0x50);

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -199,7 +200,7 @@ public sealed partial class Hl7V2Message : ParsedMessage
             for (var f = 0; f < seg.Fields.Count; f++)
             {
                 // Restore 1-based path indices: MSH fields start at index 3 (1=field-sep, 2=encoding-chars).
-                var indexLabel = (seg.Name == "MSH" ? f + 2 : f + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var indexLabel = (seg.Name == "MSH" ? f + 2 : f + 1).ToString(CultureInfo.InvariantCulture);
                 fieldsBag[indexLabel] = seg.Fields[f];
             }
             bucket.Add(fieldsBag);

@@ -62,15 +62,15 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
             var resources = loinc switch
             {
                 CdaConstants.ProblemsSectionLoinc =>
-                    CdaSectionParsers.ParseProblems(section, patientId).Cast<Resource>(),
+                    CdaSectionParsers.ParseProblems(section, patientId),
                 CdaConstants.AllergiesSectionLoinc =>
-                    CdaSectionParsers.ParseAllergies(section, patientId).Cast<Resource>(),
+                    CdaSectionParsers.ParseAllergies(section, patientId),
                 CdaConstants.MedicationsSectionLoinc =>
-                    CdaSectionParsers.ParseMedications(section, patientId).Cast<Resource>(),
+                    CdaSectionParsers.ParseMedications(section, patientId),
                 CdaConstants.ResultsSectionLoinc =>
-                    CdaSectionParsers.ParseObservations(section, patientId, "laboratory").Cast<Resource>(),
+                    CdaSectionParsers.ParseObservations(section, patientId, "laboratory"),
                 CdaConstants.VitalSignsSectionLoinc =>
-                    CdaSectionParsers.ParseObservations(section, patientId, "vital-signs").Cast<Resource>(),
+                    CdaSectionParsers.ParseObservations(section, patientId, "vital-signs"),
                 CdaConstants.ImmunizationsSectionLoinc =>
                     CdaSectionParsers.ParseImmunizations(section, patientId).Cast<Resource>(),
                 _ => [],

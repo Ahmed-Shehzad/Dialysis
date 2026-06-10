@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.BuildingBlocks.Documents.Pdf.Conversion;
 using Dialysis.BuildingBlocks.Documents.Pdf.Ocr;
 using Shouldly;
@@ -79,7 +80,7 @@ public sealed class OcrAugmentedExtractorTests
         public async IAsyncEnumerable<RasterizedPage> RasterizeAsync(
             ReadOnlyMemory<byte> pdfDocument,
             RasterizationOptions options,
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var page in _pages)
             {

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using FellowOakDicom;
@@ -199,11 +200,11 @@ public sealed class DicomTransformStage : ITransformStage
                          .Replace(",", string.Empty, StringComparison.Ordinal);
         if (trimmed.Length != 8)
             return false;
-        if (!ushort.TryParse(trimmed[..4], System.Globalization.NumberStyles.HexNumber,
-                System.Globalization.CultureInfo.InvariantCulture, out var group))
+        if (!ushort.TryParse(trimmed[..4], NumberStyles.HexNumber,
+                CultureInfo.InvariantCulture, out var group))
             return false;
-        if (!ushort.TryParse(trimmed[4..], System.Globalization.NumberStyles.HexNumber,
-                System.Globalization.CultureInfo.InvariantCulture, out var element))
+        if (!ushort.TryParse(trimmed[4..], NumberStyles.HexNumber,
+                CultureInfo.InvariantCulture, out var element))
             return false;
         tag = new DicomTag(group, element);
         return true;

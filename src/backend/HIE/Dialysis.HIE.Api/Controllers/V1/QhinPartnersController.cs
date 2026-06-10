@@ -164,9 +164,9 @@ public sealed class QhinPartnersController : ControllerBase
         public string IasEndpoint { get; init; }
         public void Deconstruct(out string name, out string fhirBaseUrl, out string iasEndpoint)
         {
-            name = this.Name;
-            fhirBaseUrl = this.FhirBaseUrl;
-            iasEndpoint = this.IasEndpoint;
+            name = Name;
+            fhirBaseUrl = FhirBaseUrl;
+            iasEndpoint = IasEndpoint;
         }
     }
 
@@ -174,14 +174,14 @@ public sealed class QhinPartnersController : ControllerBase
     {
         public StatusBody(QhinPartnerStatus Next) => this.Next = Next;
         public QhinPartnerStatus Next { get; init; }
-        public void Deconstruct(out QhinPartnerStatus next) => next = this.Next;
+        public void Deconstruct(out QhinPartnerStatus next) => next = Next;
     }
 
     public sealed record AnchorBody
     {
         public AnchorBody(string CertificatePem) => this.CertificatePem = CertificatePem;
         public string CertificatePem { get; init; }
-        public void Deconstruct(out string certificatePem) => certificatePem = this.CertificatePem;
+        public void Deconstruct(out string certificatePem) => certificatePem = CertificatePem;
     }
 
     public sealed record MtlsBody
@@ -195,8 +195,8 @@ public sealed class QhinPartnersController : ControllerBase
         public string PfxPassword { get; init; }
         public void Deconstruct(out string base64Pfx, out string pfxPassword)
         {
-            base64Pfx = this.Base64Pfx;
-            pfxPassword = this.PfxPassword;
+            base64Pfx = Base64Pfx;
+            pfxPassword = PfxPassword;
         }
     }
 
@@ -213,9 +213,9 @@ public sealed class QhinPartnersController : ControllerBase
         public int? LifetimeSeconds { get; init; }
         public void Deconstruct(out string subjectPatientId, out string? scope, out int? lifetimeSeconds)
         {
-            subjectPatientId = this.SubjectPatientId;
-            scope = this.Scope;
-            lifetimeSeconds = this.LifetimeSeconds;
+            subjectPatientId = SubjectPatientId;
+            scope = Scope;
+            lifetimeSeconds = LifetimeSeconds;
         }
     }
 
@@ -223,27 +223,27 @@ public sealed class QhinPartnersController : ControllerBase
     {
         public OnboardedDto(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     public sealed record AttachedAnchorDto
     {
         public AttachedAnchorDto(Guid AnchorId) => this.AnchorId = AnchorId;
         public Guid AnchorId { get; init; }
-        public void Deconstruct(out Guid anchorId) => anchorId = this.AnchorId;
+        public void Deconstruct(out Guid anchorId) => anchorId = AnchorId;
     }
 
     public sealed record RotatedMtlsDto
     {
         public RotatedMtlsDto(string Thumbprint) => this.Thumbprint = Thumbprint;
         public string Thumbprint { get; init; }
-        public void Deconstruct(out string thumbprint) => thumbprint = this.Thumbprint;
+        public void Deconstruct(out string thumbprint) => thumbprint = Thumbprint;
     }
 
     public sealed record IssuedIasJwtDto
     {
         public IssuedIasJwtDto(string Token) => this.Token = Token;
         public string Token { get; init; }
-        public void Deconstruct(out string token) => token = this.Token;
+        public void Deconstruct(out string token) => token = Token;
     }
 }

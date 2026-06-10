@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Dialysis.DataSimulator;
 
 /// <summary>A row from the staff pending appointment-request queue (extra fields on the wire are ignored).</summary>
@@ -787,7 +789,7 @@ public sealed class PdmsClient : IPdmsClient
     /// <inheritdoc />
     public async Task<bool> HasOnCallRotationsAsync(CancellationToken cancellationToken)
     {
-        var rows = await HttpJson.GetAsync<List<System.Text.Json.JsonElement>>(
+        var rows = await HttpJson.GetAsync<List<JsonElement>>(
             _client, "api/v1.0/oncall/rotations", cancellationToken).ConfigureAwait(false);
         return (rows?.Count ?? 0) > 0;
     }
@@ -804,7 +806,7 @@ public sealed class SmartConnectClient : ISmartConnectClient
     /// <inheritdoc />
     public async Task<bool> HasFlowsAsync(CancellationToken cancellationToken)
     {
-        var rows = await HttpJson.GetAsync<List<System.Text.Json.JsonElement>>(
+        var rows = await HttpJson.GetAsync<List<JsonElement>>(
             _client, "api/v1/admin/flows", cancellationToken).ConfigureAwait(false);
         return (rows?.Count ?? 0) > 0;
     }

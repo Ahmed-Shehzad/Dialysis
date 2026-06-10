@@ -9,7 +9,7 @@ public sealed record GetBillingExportJobByIdQuery : IQuery<BillingExportJobStatu
     public string RequiredPermission => HisPermissions.DataReport;
     public GetBillingExportJobByIdQuery(Guid Id) => this.Id = Id;
     public Guid Id { get; init; }
-    public void Deconstruct(out Guid id) => id = this.Id;
+    public void Deconstruct(out Guid id) => id = Id;
 }
 
 public sealed record BillingExportJobStatusDto
@@ -42,13 +42,13 @@ public sealed record BillingExportJobStatusDto
     public string? Notes { get; init; }
     public void Deconstruct(out Guid id, out string payerCode, out string statusCode, out DateOnly periodStart, out DateOnly periodEnd, out DateTime submittedAtUtc, out DateTime? completedAtUtc, out string? notes)
     {
-        id = this.Id;
-        payerCode = this.PayerCode;
-        statusCode = this.StatusCode;
-        periodStart = this.PeriodStart;
-        periodEnd = this.PeriodEnd;
-        submittedAtUtc = this.SubmittedAtUtc;
-        completedAtUtc = this.CompletedAtUtc;
-        notes = this.Notes;
+        id = Id;
+        payerCode = PayerCode;
+        statusCode = StatusCode;
+        periodStart = PeriodStart;
+        periodEnd = PeriodEnd;
+        submittedAtUtc = SubmittedAtUtc;
+        completedAtUtc = CompletedAtUtc;
+        notes = Notes;
     }
 }

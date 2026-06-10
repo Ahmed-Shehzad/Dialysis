@@ -67,8 +67,5 @@ public sealed record ActiveAlarmDto
 
 public sealed record ListActiveAlarmsQuery : IQuery<IReadOnlyList<ActiveAlarmDto>>, IPermissionedCommand
 {
-    public ListActiveAlarmsQuery()
-    {
-    }
     public string RequiredPermission => PdmsPermissions.AlarmRead;
 }

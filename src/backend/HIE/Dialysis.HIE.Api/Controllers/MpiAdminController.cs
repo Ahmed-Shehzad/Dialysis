@@ -48,7 +48,7 @@ public sealed class MpiAdminController : ControllerBase
         var reviewedBy = currentUser.UserId ?? User.Identity?.Name ?? "steward";
         try
         {
-            await _cqrs.SendCommandAsync<ResolvePatientLinkReviewCommand, Dialysis.CQRS.Unit>(
+            await _cqrs.SendCommandAsync<ResolvePatientLinkReviewCommand, Unit>(
                 new ResolvePatientLinkReviewCommand(id, body.Link, body.Note, reviewedBy), cancellationToken)
                 .ConfigureAwait(false);
             return NoContent();

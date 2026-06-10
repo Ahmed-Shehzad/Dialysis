@@ -71,8 +71,8 @@ public sealed class HipaaAuditingBehaviorTests
         public string? CurrentUserId { get; init; }
         public void Deconstruct(out string moduleSlug, out string? currentUserId)
         {
-            moduleSlug = this.ModuleSlug;
-            currentUserId = this.CurrentUserId;
+            moduleSlug = ModuleSlug;
+            currentUserId = CurrentUserId;
         }
     }
 

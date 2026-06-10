@@ -286,7 +286,6 @@ public sealed class NatsTransponderTransport : ITransponderTransport
             routingKey,
             body ?? [],
             correlationId,
-            "application/json",
             DeduplicationId: deduplicationId);
     }
 

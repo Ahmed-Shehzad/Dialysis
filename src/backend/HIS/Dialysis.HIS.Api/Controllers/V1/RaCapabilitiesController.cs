@@ -4,14 +4,14 @@ using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.RaCapabilities.Features;
 using Dialysis.HIS.RaCapabilities.Features.ClearPatientAlert;
 using Dialysis.HIS.RaCapabilities.Features.EnqueueWaitlistEntry;
+using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
+using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Features.PostOrganizationalCommunication;
 using Dialysis.HIS.RaCapabilities.Features.RecordClinicalDecisionSupportEvaluation;
 using Dialysis.HIS.RaCapabilities.Features.RecordMedicationDispensing;
 using Dialysis.HIS.RaCapabilities.Features.RecordSecurityMechanismAssessment;
-using Dialysis.HIS.RaCapabilities.Features.RegisterFinancialErpLink;
-using Dialysis.HIS.RaCapabilities.Features.ListResearchEducationActivities;
-using Dialysis.HIS.RaCapabilities.Features.ListSpecialistEncounters;
 using Dialysis.HIS.RaCapabilities.Features.RegisterEhrDocumentExchange;
+using Dialysis.HIS.RaCapabilities.Features.RegisterFinancialErpLink;
 using Dialysis.HIS.RaCapabilities.Features.RegisterResearchEducationActivity;
 using Dialysis.HIS.RaCapabilities.Features.RegisterSpecialistEncounter;
 using Dialysis.HIS.RaCapabilities.Features.RequestAnalyticsExportJob;
@@ -41,7 +41,7 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
     {
         public CapabilityIndexDto(IReadOnlyList<LinkDto> Endpoints) => this.Endpoints = Endpoints;
         public IReadOnlyList<LinkDto> Endpoints { get; init; }
-        public void Deconstruct(out IReadOnlyList<LinkDto> endpoints) => endpoints = this.Endpoints;
+        public void Deconstruct(out IReadOnlyList<LinkDto> endpoints) => endpoints = Endpoints;
     }
 
     [HttpGet("")]
@@ -74,7 +74,7 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
     public async Task<IActionResult> OrganizationalCommunicationsAsync(CancellationToken cancellationToken)
     {
         var data = await _gateway.SendQueryAsync<ListOrganizationalCommunicationsQuery, IReadOnlyList<RaOrgCommunicationRow>>(new ListOrganizationalCommunicationsQuery(), cancellationToken).ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("generic-mis/organizational-communications")]
@@ -87,21 +87,21 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
         return CreatedResource(
             $"{Request.Path}/{id}",
             new PostOrgCommunicationResponse(id),
-            LinkTo("ra:org-communications", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/organizational-communications", "GET"));
+            LinkTo("ra:org-communications", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/organizational-communications"));
     }
 
     public sealed record PostOrgCommunicationResponse
     {
         public PostOrgCommunicationResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("generic-mis/quality-workflows")]
     public async Task<IActionResult> QualityWorkflowsAsync(CancellationToken cancellationToken)
     {
         var data = await _gateway.SendQueryAsync<ListQualityWorkflowTasksQuery, IReadOnlyList<RaQualityWorkflowTaskRow>>(new ListQualityWorkflowTasksQuery(), cancellationToken).ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("generic-mis/quality-workflows/{taskId:guid}/status")]
@@ -123,14 +123,14 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
     {
         public QualityTaskStatusBody(string NewStatusCode) => this.NewStatusCode = NewStatusCode;
         public string NewStatusCode { get; init; }
-        public void Deconstruct(out string newStatusCode) => newStatusCode = this.NewStatusCode;
+        public void Deconstruct(out string newStatusCode) => newStatusCode = NewStatusCode;
     }
 
     [HttpGet("generic-mis/financial-erp-depth")]
     public async Task<IActionResult> FinancialErpDepthAsync(CancellationToken cancellationToken)
     {
         var data = await _gateway.SendQueryAsync<ListFinancialErpLinksQuery, IReadOnlyList<RaFinancialErpLinkRow>>(new ListFinancialErpLinksQuery(), cancellationToken).ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("generic-mis/financial-erp-depth/records")]
@@ -147,15 +147,14 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RegisterFinancialErpLinkResponse(id),
             LinkTo(
                 "ra:financial-erp",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/financial-erp-depth",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/financial-erp-depth"));
     }
 
     public sealed record RegisterFinancialErpLinkResponse
     {
         public RegisterFinancialErpLinkResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("generic-mis/research-education")]
@@ -166,7 +165,7 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
                 new ListResearchEducationActivitiesQuery(),
                 cancellationToken)
             .ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("generic-mis/research-education/activities")]
@@ -183,22 +182,21 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RegisterResearchEducationActivityResponse(id),
             LinkTo(
                 "ra:research-education",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/research-education",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/generic-mis/research-education"));
     }
 
     public sealed record RegisterResearchEducationActivityResponse
     {
         public RegisterResearchEducationActivityResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("planning-and-scheduling/waitlists")]
     public async Task<IActionResult> WaitlistsAsync(CancellationToken cancellationToken)
     {
         var data = await _gateway.SendQueryAsync<ListWaitlistEntriesQuery, IReadOnlyList<RaWaitlistEntryRow>>(new ListWaitlistEntriesQuery(), cancellationToken).ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:scheduling", $"/api/v{ApiVersionSegment}/scheduling/resources", "GET"));
+        return OkResource(data, LinkTo("ra:scheduling", $"/api/v{ApiVersionSegment}/scheduling/resources"));
     }
 
     [HttpPost("planning-and-scheduling/waitlists")]
@@ -209,21 +207,21 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
         return CreatedResource(
             $"{Request.Path}/{id}",
             new EnqueueWaitlistResponse(id),
-            LinkTo("ra:waitlists", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/planning-and-scheduling/waitlists", "GET"));
+            LinkTo("ra:waitlists", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/planning-and-scheduling/waitlists"));
     }
 
     public sealed record EnqueueWaitlistResponse
     {
         public EnqueueWaitlistResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("patient-monitoring/ehr-document-exchange")]
     public async Task<IActionResult> EhrDocumentExchangeAsync(CancellationToken cancellationToken)
     {
         var data = await _gateway.SendQueryAsync<ListEhrDocumentExchangesQuery, IReadOnlyList<RaEhrDocumentExchangeRow>>(new ListEhrDocumentExchangesQuery(), cancellationToken).ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("patient-monitoring/ehr-document-exchange/records")]
@@ -240,15 +238,14 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RegisterEhrDocumentResponse(id),
             LinkTo(
                 "ra:ehr-documents",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/patient-monitoring/ehr-document-exchange",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/patient-monitoring/ehr-document-exchange"));
     }
 
     public sealed record RegisterEhrDocumentResponse
     {
         public RegisterEhrDocumentResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("patient-monitoring/specialist-encounters")]
@@ -259,7 +256,7 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
                 new ListSpecialistEncountersQuery(),
                 cancellationToken)
             .ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("patient-monitoring/specialist-encounters/records")]
@@ -276,22 +273,21 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RegisterSpecialistEncounterResponse(id),
             LinkTo(
                 "ra:specialist-encounters",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/patient-monitoring/specialist-encounters",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/patient-monitoring/specialist-encounters"));
     }
 
     public sealed record RegisterSpecialistEncounterResponse
     {
         public RegisterSpecialistEncounterResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("patient-monitoring/advanced-alerting")]
     public async Task<IActionResult> AdvancedAlertingAsync(CancellationToken cancellationToken)
     {
         var data = await _gateway.SendQueryAsync<ListPatientAlertsQuery, IReadOnlyList<RaPatientAlertRow>>(new ListPatientAlertsQuery(), cancellationToken).ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET"));
+        return OkResource(data, LinkTo("ra:capability-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities"));
     }
 
     [HttpPost("patient-monitoring/advanced-alerting/{alertId:guid}/clear")]
@@ -325,15 +321,14 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RecordMedicationDispensingResponse(id),
             LinkTo(
                 "ra:dispensing",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/medication-management/dispensing-and-barcode",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/medication-management/dispensing-and-barcode"));
     }
 
     public sealed record RecordMedicationDispensingResponse
     {
         public RecordMedicationDispensingResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("medication-management/clinical-decision-support")]
@@ -357,15 +352,14 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RecordCdsResponse(id),
             LinkTo(
                 "ra:cds",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/medication-management/clinical-decision-support",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/medication-management/clinical-decision-support"));
     }
 
     public sealed record RecordCdsResponse
     {
         public RecordCdsResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("data-management/analytics-exports")]
@@ -385,14 +379,14 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
         return CreatedResource(
             $"{Request.Path}/{id}",
             new RequestAnalyticsExportResponse(id),
-            LinkTo("ra:analytics-exports", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/data-management/analytics-exports", "GET"));
+            LinkTo("ra:analytics-exports", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/data-management/analytics-exports"));
     }
 
     public sealed record RequestAnalyticsExportResponse
     {
         public RequestAnalyticsExportResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     [HttpGet("data-management/full-text-and-indexing")]
@@ -403,7 +397,7 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
                 new ListFullTextSearchEntriesQuery(q),
                 cancellationToken)
             .ConfigureAwait(false);
-        return OkResource(data, LinkTo("ra:patient-search", $"/api/v{ApiVersionSegment}/data-management/patients/search", "GET"));
+        return OkResource(data, LinkTo("ra:patient-search", $"/api/v{ApiVersionSegment}/data-management/patients/search"));
     }
 
     [HttpGet("security/mechanisms-hardening")]
@@ -427,14 +421,13 @@ public sealed class RaCapabilitiesController : HisHateoasControllerBase
             new RecordSecurityAssessmentResponse(id),
             LinkTo(
                 "ra:security-hardening",
-                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/security/mechanisms-hardening",
-                "GET"));
+                $"/api/v{ApiVersionSegment}/reference-architecture/capabilities/security/mechanisms-hardening"));
     }
 
     public sealed record RecordSecurityAssessmentResponse
     {
         public RecordSecurityAssessmentResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 }

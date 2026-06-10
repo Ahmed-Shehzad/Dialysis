@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Dialysis.SmartConnect.Iteration;
@@ -87,7 +88,7 @@ public sealed class IteratorTransformStage : ITransformStage
             var subMessage = message
                 .CloneWithPayload(Encoding.UTF8.GetBytes(element.Value), PayloadFormat.Utf8Text)
                 .WithMetadata(ElementMetadataKey, element.Value)
-                .WithMetadata(IndexMetadataKey, element.Index.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                .WithMetadata(IndexMetadataKey, element.Index.ToString(CultureInfo.InvariantCulture));
 
             if (!string.IsNullOrWhiteSpace(childParamsJson))
                 subMessage = subMessage.WithMetadata(ParametersMetadataKey, childParamsJson);

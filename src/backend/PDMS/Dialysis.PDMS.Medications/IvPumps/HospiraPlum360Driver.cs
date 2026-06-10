@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace Dialysis.PDMS.Medications.IvPumps;
@@ -34,7 +35,7 @@ public sealed class HospiraPlum360Driver : IIvPumpDriver
             ?? throw new FormatException("Plum 360 payload missing pump_id.");
         var kindStr = root.GetProperty("kind").GetString() ?? "progress";
         var timestamp = root.TryGetProperty("ts", out var t) && t.ValueKind == JsonValueKind.String
-            ? DateTime.Parse(t.GetString()!, null, System.Globalization.DateTimeStyles.RoundtripKind)
+            ? DateTime.Parse(t.GetString()!, null, DateTimeStyles.RoundtripKind)
             : DateTime.UtcNow;
         // Plum 360 doesn't include an explicit sequence; use the Unix ticks of the timestamp
         // as a monotonic proxy so the dispatch path can correlate updates.

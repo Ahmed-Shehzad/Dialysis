@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -235,7 +236,7 @@ public static class SmartConnectInboundEndpointExtensions
 
         var results = await Task.WhenAll(dispatchTasks).ConfigureAwait(false);
         var anyFailed = false;
-        var aggregateError = new System.Text.StringBuilder();
+        var aggregateError = new StringBuilder();
         foreach (var r in results)
         {
             if (!r.Succeeded)

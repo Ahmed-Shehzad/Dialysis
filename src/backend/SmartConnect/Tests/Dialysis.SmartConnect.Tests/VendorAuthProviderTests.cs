@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using Dialysis.SmartConnect.Adapters;
 using Dialysis.SmartConnect.Adapters.Allscripts;
 using Dialysis.SmartConnect.Adapters.Cerner;
@@ -142,7 +143,7 @@ public sealed class VendorAuthProviderTests
             LastAuthScheme = request.Headers.Authorization?.Scheme;
             if (request.Headers.Authorization?.Parameter is { } encoded)
             {
-                LastBasicCredential = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+                LastBasicCredential = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
             }
             if (request.Headers.TryGetValues("AppName", out var values))
             {

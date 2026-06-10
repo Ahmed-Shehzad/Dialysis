@@ -1,4 +1,5 @@
 using Markdig;
+using Stubble.Core;
 using Stubble.Core.Builders;
 
 namespace Dialysis.PDMS.Reporting.Templating;
@@ -15,7 +16,7 @@ namespace Dialysis.PDMS.Reporting.Templating;
 /// </summary>
 public sealed class MustacheMarkdownBinder
 {
-    private static readonly Stubble.Core.StubbleVisitorRenderer _stubble = new StubbleBuilder().Build();
+    private static readonly StubbleVisitorRenderer _stubble = new StubbleBuilder().Build();
     private static readonly MarkdownPipeline _pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .Build();

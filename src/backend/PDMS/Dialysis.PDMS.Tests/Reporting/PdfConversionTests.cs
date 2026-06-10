@@ -1,7 +1,7 @@
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Documents.Pdf.Conversion;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Shouldly;
 using Xunit;
 
@@ -39,9 +39,9 @@ public sealed class PdfConversionTests
         md.ShouldNotBeNullOrWhiteSpace();
         // Lato's `ti` / `ft` ligatures aren't always recoverable by PdfPig (subset fonts
         // skip the ToUnicode entry), so we assert on tokens that don't ligature.
-        md.ShouldContain("discharge", Case.Insensitive);
-        md.ShouldContain("morning", Case.Insensitive);
-        md.ShouldContain("session", Case.Insensitive);
+        md.ShouldContain("discharge");
+        md.ShouldContain("morning");
+        md.ShouldContain("session");
     }
 
     [Fact]
@@ -67,8 +67,8 @@ public sealed class PdfConversionTests
         var combined = string.Join(" ", paragraphs.Select(p => string.Concat(p.Descendants<Text>().Select(t => t.Text))));
         // Lato's ligatures aren't always round-trippable through PdfPig, so we assert on
         // tokens that don't ligature.
-        combined.ShouldContain("discharge", Case.Insensitive);
-        combined.ShouldContain("session", Case.Insensitive);
+        combined.ShouldContain("discharge");
+        combined.ShouldContain("session");
     }
 
     [Fact]

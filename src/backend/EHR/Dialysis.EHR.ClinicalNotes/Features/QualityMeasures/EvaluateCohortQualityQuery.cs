@@ -82,7 +82,7 @@ public sealed class EvaluateCohortQualityQueryHandler
             {
                 var current = measureGapCounts.TryGetValue(gap.MeasureId, out var existing)
                     ? existing
-                    : (Title: gap.Title, Count: 0);
+                    : (gap.Title, Count: 0);
                 measureGapCounts[gap.MeasureId] = (current.Title, current.Count + 1);
             }
         }

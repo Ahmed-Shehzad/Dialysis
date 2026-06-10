@@ -1,8 +1,10 @@
 using Dialysis.BuildingBlocks.Fhir.Validation;
 using Dialysis.BuildingBlocks.Fhir.Validation.Authoring;
+using Hl7.Fhir.Model;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.BuildingBlocks.Fhir.Tests.Authoring;
 
@@ -46,7 +48,7 @@ public sealed class FhirArtifactAuthoringTests
 
         // Resolvable on the fly for downstream validation / profile layering.
         registry.TryGet(spec.Url, out var resolved).ShouldBeTrue();
-        resolved.ShouldBeOfType<Hl7.Fhir.Model.StructureDefinition>();
+        resolved.ShouldBeOfType<StructureDefinition>();
         var byCanonical = await registry.TryResolveByCanonicalUriAsync(spec.Url);
         byCanonical.Value.ShouldNotBeNull();
     }
@@ -68,8 +70,8 @@ public sealed class FhirArtifactAuthoringTests
         result.Verification.IsValid.ShouldBeFalse();
         result.Published.ShouldBeFalse();
         result.Verification.Outcome.Issue
-            .ShouldContain(i => i.Severity == Hl7.Fhir.Model.OperationOutcome.IssueSeverity.Error
-                || i.Severity == Hl7.Fhir.Model.OperationOutcome.IssueSeverity.Fatal);
+            .ShouldContain(i => i.Severity == OperationOutcome.IssueSeverity.Error
+                || i.Severity == OperationOutcome.IssueSeverity.Fatal);
         registry.TryGet(spec.Url, out _).ShouldBeFalse();
     }
 
@@ -130,7 +132,7 @@ public sealed class FhirArtifactAuthoringTests
 
         // The unresolved external dependency is advisory (a Warning), never a hard failure.
         result.Verification.Outcome.Issue
-            .ShouldContain(i => i.Severity == Hl7.Fhir.Model.OperationOutcome.IssueSeverity.Warning
+            .ShouldContain(i => i.Severity == OperationOutcome.IssueSeverity.Warning
                 && i.Diagnostics!.Contains("us/core", StringComparison.Ordinal));
 
         registry.ImplementationGuides.ShouldContain(g => g.Url == igSpec.Url);

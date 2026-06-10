@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using Dialysis.SmartConnect.DataTypes;
@@ -392,7 +394,7 @@ public static class MessageDocumentExporter
         return JsonSerializer.Serialize(bundle, new JsonSerializerOptions
         {
             WriteIndented = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         });
     }
 
@@ -517,7 +519,7 @@ public static class MessageDocumentExporter
 
     private static Guid DeterministicGuid(string scope, string? seed)
     {
-        var bytes = System.Security.Cryptography.MD5.HashData(
+        var bytes = MD5.HashData(
             Encoding.UTF8.GetBytes($"{scope}:{seed ?? "anon"}"));
         return new Guid(bytes);
     }

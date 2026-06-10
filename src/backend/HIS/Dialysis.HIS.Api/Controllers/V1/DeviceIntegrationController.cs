@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.CQRS;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
 using Microsoft.AspNetCore.Mvc;
@@ -71,7 +72,7 @@ public sealed class DeviceIntegrationController : HisHateoasControllerBase
             var id = await _gateway.SendCommandAsync<IngestDeviceReadingCommand, Guid>(commandWithId, cancellationToken).ConfigureAwait(false);
             return CreatedResource($"{Request.Path}/{id}", new IngestDeviceReadingResponse(id), LinkCapabilitiesIndex());
         }
-        catch (Dialysis.DomainDrivenDesign.Exceptions.DomainException ex)
+        catch (DomainException ex)
         {
             // Registry governance rejected the reading (unknown/suspended/retired device, or a
             // patient-binding mismatch). Surface as a 400 rather than a 500.
@@ -109,10 +110,10 @@ public sealed class DeviceIntegrationController : HisHateoasControllerBase
         /// <summary>Deconstructs the request body.</summary>
         public void Deconstruct(out string deviceId, out Guid patientId, out string payloadJson, out string? externalMessageId)
         {
-            deviceId = this.DeviceId;
-            patientId = this.PatientId;
-            payloadJson = this.PayloadJson;
-            externalMessageId = this.ExternalMessageId;
+            deviceId = DeviceId;
+            patientId = PatientId;
+            payloadJson = PayloadJson;
+            externalMessageId = ExternalMessageId;
         }
     }
 
@@ -120,6 +121,6 @@ public sealed class DeviceIntegrationController : HisHateoasControllerBase
     {
         public IngestDeviceReadingResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 }

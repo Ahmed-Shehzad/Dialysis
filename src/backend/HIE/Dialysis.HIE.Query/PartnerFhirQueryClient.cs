@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using Dialysis.HIE.Tefca.Domain;
 using Dialysis.HIE.Tefca.Ias;
@@ -64,7 +65,7 @@ public sealed class PartnerFhirQueryClient : IPartnerFhirQuery
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .Handle<HttpRequestException>()
                     .Handle<TaskCanceledException>()
-                    .HandleResult(r => (int)r.StatusCode >= 500 || r.StatusCode == System.Net.HttpStatusCode.TooManyRequests),
+                    .HandleResult(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.TooManyRequests),
             })
             .Build();
     }

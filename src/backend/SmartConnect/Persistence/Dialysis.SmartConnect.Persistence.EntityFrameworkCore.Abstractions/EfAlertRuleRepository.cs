@@ -45,7 +45,7 @@ public sealed class EfAlertRuleRepository : IAlertRuleRepository
         ArgumentNullException.ThrowIfNull(rule);
 
         var existing = await _db.AlertRules.FirstOrDefaultAsync(r => r.Id == rule.Id, cancellationToken).ConfigureAwait(false);
-        var enabledFlowIdsJson = JsonSerializer.Serialize(rule.EnabledFlowIds ?? (IReadOnlyList<Guid>)[], _jsonOpts);
+        var enabledFlowIdsJson = JsonSerializer.Serialize(rule.EnabledFlowIds ?? [], _jsonOpts);
         var patternsJson = JsonSerializer.Serialize(rule.ErrorPatterns, _jsonOpts);
         var actionsJson = JsonSerializer.Serialize(rule.Actions, _jsonOpts);
         var throttleSeconds = (int)(rule.ThrottleWindow?.TotalSeconds ?? 0);

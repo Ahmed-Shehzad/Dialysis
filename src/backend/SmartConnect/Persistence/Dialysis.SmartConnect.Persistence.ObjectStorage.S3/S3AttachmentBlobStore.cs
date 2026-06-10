@@ -1,5 +1,6 @@
 using System.Net;
 using System.Runtime.CompilerServices;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -152,7 +153,7 @@ public sealed class S3AttachmentBlobStore : IAttachmentBlobStore, IDisposable
         }
         else
         {
-            config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(opts.Region);
+            config.RegionEndpoint = RegionEndpoint.GetBySystemName(opts.Region);
         }
 
         if (!string.IsNullOrEmpty(opts.AccessKey) && !string.IsNullOrEmpty(opts.SecretKey))

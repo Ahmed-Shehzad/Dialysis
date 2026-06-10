@@ -56,7 +56,7 @@ public sealed class ChannelRedispatchAlertActionProvider : IAlertActionProvider
         }
 
         var payload = AlertVariables.Render(
-            props.PayloadTemplate ?? $"{{\"alertId\":\"${{alertId}}\",\"errorType\":\"${{errorType}}\",\"errorDetail\":\"${{errorDetail}}\"}}",
+            props.PayloadTemplate ?? "{\"alertId\":\"${alertId}\",\"errorType\":\"${errorType}\",\"errorDetail\":\"${errorDetail}\"}",
             evt,
             rule);
 

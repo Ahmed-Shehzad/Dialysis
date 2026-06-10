@@ -93,12 +93,12 @@ public sealed class ConsentAdminController : ControllerBase
         public DateTime? EffectiveToUtc { get; init; }
         public void Deconstruct(out Guid patientId, out string partnerId, out string scope, out ConsentDirection direction, out DateTime effectiveFromUtc, out DateTime? effectiveToUtc)
         {
-            patientId = this.PatientId;
-            partnerId = this.PartnerId;
-            scope = this.Scope;
-            direction = this.Direction;
-            effectiveFromUtc = this.EffectiveFromUtc;
-            effectiveToUtc = this.EffectiveToUtc;
+            patientId = PatientId;
+            partnerId = PartnerId;
+            scope = Scope;
+            direction = Direction;
+            effectiveFromUtc = EffectiveFromUtc;
+            effectiveToUtc = EffectiveToUtc;
         }
     }
 
@@ -106,6 +106,6 @@ public sealed class ConsentAdminController : ControllerBase
     {
         public GrantedConsentDto(Guid ConsentId) => this.ConsentId = ConsentId;
         public Guid ConsentId { get; init; }
-        public void Deconstruct(out Guid consentId) => consentId = this.ConsentId;
+        public void Deconstruct(out Guid consentId) => consentId = ConsentId;
     }
 }

@@ -106,7 +106,7 @@ public sealed class DatabaseOutboundAdapter : IOutboundAdapter
             DatabaseParameterSource.Metadata when !string.IsNullOrWhiteSpace(binding.Path) =>
                 message.Metadata.TryGetValue(binding.Path!, out var value)
                     ? value
-                    : (object)DBNull.Value,
+                    : DBNull.Value,
             DatabaseParameterSource.Metadata => DBNull.Value,
             _ => DBNull.Value,
         };

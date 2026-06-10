@@ -21,7 +21,7 @@ internal sealed class NotNullValidator<T, TProperty> : IPropertyValidator<T, TPr
         if (value is not null)
             yield break;
 
-        yield return new ValidationFailure(propertyName, $"'{propertyName}' must not be null.", null);
+        yield return new ValidationFailure(propertyName, $"'{propertyName}' must not be null.");
     }
 }
 
@@ -43,7 +43,7 @@ internal sealed class EnumerableNotEmptyValidator<T, TCollection> : IPropertyVal
     {
         if (value is null)
         {
-            yield return new ValidationFailure(propertyName, $"'{propertyName}' must not be empty.", null);
+            yield return new ValidationFailure(propertyName, $"'{propertyName}' must not be empty.");
             yield break;
         }
 
@@ -311,7 +311,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
             {
                 return
                 [
-                    new ValidationFailure(path, $"'{path}' must not be null.", null)
+                    new ValidationFailure(path, $"'{path}' must not be null.")
                 ];
             }
 
@@ -401,7 +401,7 @@ public sealed class RuleBuilder<T, TProperty> : IRuleBuilder<T, TProperty>, IExe
         {
             return
             [
-                new ValidationFailure(PropertyPath, $"Could not read property '{PropertyPath}': {ex.Message}", null)
+                new ValidationFailure(PropertyPath, $"Could not read property '{PropertyPath}': {ex.Message}")
             ];
         }
 

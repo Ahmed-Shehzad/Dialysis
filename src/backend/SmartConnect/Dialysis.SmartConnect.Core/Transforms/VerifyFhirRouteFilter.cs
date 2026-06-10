@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Dialysis.BuildingBlocks.Fhir.Validation;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -81,8 +82,8 @@ internal static class VerifyFhirCore
         public string? Reason { get; init; }
         public void Deconstruct(out bool isValid, out string? reason)
         {
-            isValid = this.IsValid;
-            reason = this.Reason;
+            isValid = IsValid;
+            reason = Reason;
         }
     }
 
@@ -104,7 +105,7 @@ internal static class VerifyFhirCore
             // Firely's POCO deserializer is in-memory and CPU-bound, so calling it here is fine.
             resource = _parser.Deserialize<Resource>(json);
         }
-        catch (Exception ex) when (ex is FormatException or DeserializationFailedException or System.Text.Json.JsonException)
+        catch (Exception ex) when (ex is FormatException or DeserializationFailedException or JsonException)
         {
             return new(false, $"FHIR parse failed: {ex.Message}");
         }

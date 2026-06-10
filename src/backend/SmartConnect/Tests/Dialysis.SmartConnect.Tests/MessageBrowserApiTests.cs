@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Dialysis.SmartConnect.BuiltInPlugins;
@@ -116,6 +117,6 @@ public sealed class MessageBrowserApiTests
         var resp = await client.PostAsync(
             $"/api/v1/admin/messages/{Guid.NewGuid()}/reprocess", null);
 
-        Assert.Equal(System.Net.HttpStatusCode.NotFound, resp.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
     }
 }

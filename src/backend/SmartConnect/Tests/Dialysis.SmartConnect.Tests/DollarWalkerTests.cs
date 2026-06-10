@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.VariableMaps;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,7 +60,7 @@ public sealed class DollarWalkerTests
         var v = $('nothing-here');
         (typeof v === 'undefined') ? 'undef' : ('defined:' + v);
         """;
-        var paramsJson = $$$"""{"script": {{{System.Text.Json.JsonSerializer.Serialize(script)}}} }""";
+        var paramsJson = $$$"""{"script": {{{JsonSerializer.Serialize(script)}}} }""";
 
         var msg = Wrap_Message().WithMetadata(JavascriptTransformStage.ParametersMetadataKey, paramsJson);
         var result = await stage.TransformAsync(msg, CancellationToken.None);
@@ -79,7 +80,7 @@ public sealed class DollarWalkerTests
 
         var stage = new JavascriptTransformStage(services);
         var script = "var v = $('k'); (v === null || typeof v === 'undefined') ? 'NIL' : String(v);";
-        var paramsJson = $$$"""{"script": {{{System.Text.Json.JsonSerializer.Serialize(script)}}} }""";
+        var paramsJson = $$$"""{"script": {{{JsonSerializer.Serialize(script)}}} }""";
 
         var msg = Wrap_Message().WithMetadata(JavascriptTransformStage.ParametersMetadataKey, paramsJson);
         var result = await stage.TransformAsync(msg, CancellationToken.None);

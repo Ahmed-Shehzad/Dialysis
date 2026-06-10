@@ -1,3 +1,4 @@
+using System.Text;
 using Dialysis.SmartConnect.Inbound.Mllp;
 using Xunit;
 
@@ -48,7 +49,7 @@ public sealed class MllpFrameDecoderTests
         var dec = new MllpFrameDecoder(1024);
         void Frame(string s)
         {
-            var b = System.Text.Encoding.UTF8.GetBytes(s);
+            var b = Encoding.UTF8.GetBytes(s);
             var f = new byte[1 + b.Length + 2];
             f[0] = 0x0B;
             b.AsSpan().CopyTo(f.AsSpan(1));

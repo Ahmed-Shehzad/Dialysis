@@ -33,8 +33,8 @@ public sealed record GetPatientInsightsQuery : IQuery<PatientInsightsSummary>, I
 
     public void Deconstruct(out string patientReference, out int scan, out int recentTake)
     {
-        patientReference = this.PatientReference;
-        scan = this.Scan;
-        recentTake = this.RecentTake;
+        patientReference = PatientReference;
+        scan = Scan;
+        recentTake = RecentTake;
     }
 }

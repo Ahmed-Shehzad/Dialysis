@@ -5,6 +5,7 @@ using SkiaSharp.Skottie;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode.Internal;
+using FormatException = System.FormatException;
 
 namespace Dialysis.BuildingBlocks.Documents.Pdf.Graphics;
 
@@ -54,7 +55,7 @@ public sealed class SkiaDocumentGraphicsRenderer : IDocumentGraphicsRenderer
         {
             matrix = Encode(spec.Payload, MapSymbology(spec.Symbology), spec.Width, spec.Height, hints);
         }
-        catch (Exception ex) when (ex is WriterException or ArgumentException or System.FormatException)
+        catch (Exception ex) when (ex is WriterException or ArgumentException or FormatException)
         {
             // ZXing throws when the payload is illegal for the symbology (e.g. letters in an
             // EAN-13, odd digit count in ITF). Surface a clear, actionable message rather than
@@ -86,7 +87,7 @@ public sealed class SkiaDocumentGraphicsRenderer : IDocumentGraphicsRenderer
             canvas.Clear(ToSkColor(spec.Background));
 
             var progress = Math.Clamp(spec.Progress, 0.0, 1.0);
-            animation.Seek(progress, null);
+            animation.Seek(progress);
             animation.Render(canvas, new SKRect(0, 0, spec.Width, spec.Height));
             canvas.Flush();
 

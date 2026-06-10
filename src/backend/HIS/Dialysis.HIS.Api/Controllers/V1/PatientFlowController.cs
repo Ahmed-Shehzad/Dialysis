@@ -98,13 +98,13 @@ public sealed class PatientFlowController : HisHateoasControllerBase
     {
         public AdmitPatientResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 
     public sealed record QueueActionResponse
     {
         public QueueActionResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 }

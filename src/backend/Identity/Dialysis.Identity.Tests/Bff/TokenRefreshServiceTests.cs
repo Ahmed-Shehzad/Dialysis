@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Dialysis.Identity.Bff.Configuration;
@@ -142,7 +143,7 @@ public sealed class TokenRefreshServiceTests
             handlerType: typeof(CookieAuthenticationHandler));
         var httpContext = new DefaultHttpContext { RequestServices = new EmptyProvider() };
         var ticket = new AuthenticationTicket(
-            new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity("test")),
+            new ClaimsPrincipal(new ClaimsIdentity("test")),
             properties,
             scheme.Name);
         return new CookieValidatePrincipalContext(httpContext, scheme, new CookieAuthenticationOptions(), ticket);

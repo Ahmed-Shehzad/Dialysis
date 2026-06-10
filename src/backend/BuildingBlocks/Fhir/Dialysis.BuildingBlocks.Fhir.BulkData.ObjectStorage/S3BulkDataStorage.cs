@@ -1,3 +1,4 @@
+using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
@@ -27,7 +28,7 @@ public sealed class S3BulkDataStorage : IBulkDataStorage, IDisposable
         if (!string.IsNullOrWhiteSpace(o.ServiceUrl))
             config.ServiceURL = o.ServiceUrl;
         else
-            config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(o.Region);
+            config.RegionEndpoint = RegionEndpoint.GetBySystemName(o.Region);
 
         _client = string.IsNullOrWhiteSpace(o.AccessKey)
             ? new AmazonS3Client(config)

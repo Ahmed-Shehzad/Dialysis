@@ -1,4 +1,6 @@
 using System.Buffers;
+using System.Buffers.Binary;
+using System.Text;
 using Dialysis.SmartConnect.Inbound.TcpListener;
 using Xunit;
 
@@ -15,7 +17,7 @@ public sealed class TcpListenerFrameDecoderTests
         var found = TcpListenerSourceConnector.TryReadFrame(ref buffer, FrameDecodingMode.LineFeed, 4096, out var frame);
 
         Assert.True(found);
-        Assert.Equal("hello", System.Text.Encoding.UTF8.GetString(frame.ToArray()));
+        Assert.Equal("hello", Encoding.UTF8.GetString(frame.ToArray()));
     }
 
     [Fact]
@@ -51,7 +53,7 @@ public sealed class TcpListenerFrameDecoderTests
     {
         var payload = "test data"u8.ToArray();
         var lenBytes = new byte[4];
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(lenBytes, (uint)payload.Length);
+        BinaryPrimitives.WriteUInt32BigEndian(lenBytes, (uint)payload.Length);
         var data = lenBytes.Concat(payload).ToArray();
         var buffer = new ReadOnlySequence<byte>(data);
 
@@ -66,7 +68,7 @@ public sealed class TcpListenerFrameDecoderTests
     {
         var payload = "test data"u8.ToArray();
         var lenBytes = new byte[4];
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(lenBytes, (uint)payload.Length);
+        BinaryPrimitives.WriteUInt32BigEndian(lenBytes, (uint)payload.Length);
         var data = lenBytes.Concat(payload).ToArray();
         var buffer = new ReadOnlySequence<byte>(data);
 

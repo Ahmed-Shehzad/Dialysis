@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Dialysis.EHR.Billing.Edi837.Inbound;
 
 /// <summary>
@@ -23,7 +25,7 @@ public sealed class Edi277CaAckParser
         if (ackBytes.Length == 0)
             throw new ArgumentException("Empty 277CA payload.", nameof(ackBytes));
 
-        var text = System.Text.Encoding.ASCII.GetString(ackBytes.Span);
+        var text = Encoding.ASCII.GetString(ackBytes.Span);
         var delimiters = Edi999Delimiters.Probe(text);
         var segments = text.Split(delimiters.SegmentTerminator, StringSplitOptions.RemoveEmptyEntries);
 

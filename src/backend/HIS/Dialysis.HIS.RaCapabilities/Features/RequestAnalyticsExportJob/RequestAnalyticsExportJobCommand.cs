@@ -8,5 +8,5 @@ public sealed record RequestAnalyticsExportJobCommand : ICommand<Guid>, IPermiss
     public RequestAnalyticsExportJobCommand(string PipelineCode) => this.PipelineCode = PipelineCode;
     public string RequiredPermission => HisPermissions.RaCommandsWrite;
     public string PipelineCode { get; init; }
-    public void Deconstruct(out string pipelineCode) => pipelineCode = this.PipelineCode;
+    public void Deconstruct(out string pipelineCode) => pipelineCode = PipelineCode;
 }

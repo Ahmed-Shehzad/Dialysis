@@ -12,10 +12,10 @@ namespace Dialysis.HIE.Documents.Fhir;
 /// </summary>
 public static class DocumentReferenceMapper
 {
-    public static Hl7.Fhir.Model.DocumentReference ToFhir(Domain.DocumentReference document)
+    public static DocumentReference ToFhir(Domain.DocumentReference document)
     {
         ArgumentNullException.ThrowIfNull(document);
-        return new Hl7.Fhir.Model.DocumentReference
+        return new DocumentReference
         {
             Id = document.Id.ToString("N"),
             Status = document.Status switch
@@ -33,7 +33,7 @@ public static class DocumentReferenceMapper
             Date = new DateTimeOffset(DateTime.SpecifyKind(document.CreatedAtUtc, DateTimeKind.Utc)),
             Content =
             [
-                new Hl7.Fhir.Model.DocumentReference.ContentComponent
+                new DocumentReference.ContentComponent
                 {
                     Attachment = new Attachment
                     {

@@ -1,10 +1,10 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
 using Dialysis.Lab.Contracts;
-using Dialysis.Module.Contracts.Authorization;
 using Dialysis.Lab.Orders.Features.GetLabOrderById;
 using Dialysis.Lab.Orders.Features.ListLabOrdersByPatient;
 using Dialysis.Lab.Orders.Features.PlaceLabOrder;
+using Dialysis.Module.Contracts.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dialysis.Lab.Api.Controllers.V1;

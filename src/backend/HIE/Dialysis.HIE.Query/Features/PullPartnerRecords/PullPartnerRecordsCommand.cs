@@ -42,9 +42,9 @@ public sealed record PullPartnerRecordsCommand : ICommand<PartnerPullResult>, IP
 
     public void Deconstruct(out Guid partnerId, out string query, out string subject, out string? purpose)
     {
-        partnerId = this.PartnerId;
-        query = this.Query;
-        subject = this.Subject;
-        purpose = this.Purpose;
+        partnerId = PartnerId;
+        query = Query;
+        subject = Subject;
+        purpose = Purpose;
     }
 }

@@ -1,31 +1,41 @@
+using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.Documents.Pdf;
 using Dialysis.BuildingBlocks.Documents.Signing;
+using Dialysis.BuildingBlocks.Documents.Signing.Csc;
+using Dialysis.BuildingBlocks.Documents.Signing.Hosted;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.BuildingBlocks.Documents.Storage.Valkey;
+using Dialysis.BuildingBlocks.Fhir.CdaBridge;
+using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.EHR.Contracts.Integration;
+using Dialysis.HIE.Core.Coding;
 using Dialysis.HIE.Documents.Consumers;
+using Dialysis.HIE.Documents.Erasure;
+using Dialysis.HIE.Documents.Hosted;
 using Dialysis.HIE.Documents.Invoicing;
 using Dialysis.HIE.Inbound.Ingestion;
+using Dialysis.HIE.Inbound.Insights;
 using Dialysis.HIE.Inbound.Mpi;
+using Dialysis.HIE.Inbound.Terminology;
+using Dialysis.HIE.OpenEhr;
+using Dialysis.HIE.OpenEhr.Archetypes.Declarative;
+using Dialysis.HIE.OpenEhr.Consumers;
 using Dialysis.HIE.Outbound;
+using Dialysis.HIE.Outbound.CareSummary;
 using Dialysis.HIE.Outbound.Consumers;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.HIE.Outbound.Partners;
 using Dialysis.HIE.Outbound.Partners.Direct;
 using Dialysis.HIE.Outbound.Partners.Http;
-using Dialysis.BuildingBlocks.Fhir.CdaBridge;
-using Dialysis.BuildingBlocks.Fhir.Terminology;
-using Dialysis.HIE.Core.Coding;
-using Dialysis.HIE.OpenEhr;
-using Dialysis.HIE.OpenEhr.Archetypes.Declarative;
-using Dialysis.HIE.OpenEhr.Consumers;
+using Dialysis.HIE.Outbound.PublicHealth;
 using Dialysis.HIE.Persistence;
 using Dialysis.HIE.Query;
+using Dialysis.HIE.Tefca.Ias;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -57,7 +67,7 @@ public static class HealthInformationExchangeExtensions
             services.AddHieConceptCatalog();
             // Overlay operator-authored (DB) terminology onto the in-memory catalog at startup so
             // authored ValueSets/CodeSystems/ConceptMaps serve via the terminology endpoints.
-            services.AddHostedService<Dialysis.HIE.Inbound.Terminology.TerminologyCatalogLoader>();
+            services.AddHostedService<TerminologyCatalogLoader>();
 
             services.Configure<OutboundOptions>(configuration.GetSection("Hie:Outbound"));
 
@@ -106,14 +116,14 @@ public static class HealthInformationExchangeExtensions
             // command rejects RemoteQes requests with a clean InvalidOperationException.
             if (!string.IsNullOrWhiteSpace(signingSection.GetSection("Tsp:BaseUri").Value))
             {
-                services.AddHttpClient(Dialysis.BuildingBlocks.Documents.Signing.Csc.CscV2Client.HttpClientName);
+                services.AddHttpClient(CscV2Client.HttpClientName);
                 services.AddEidasQesSigning(signingSection);
             }
             // LTV upgrader is opt-in (Documents:Signing:Ltv:AutoUpgrade) — a persistent daily Hangfire
             // job (02:00 UTC) promoting outstanding PAdES-B-T signatures to LTA before the TSA cert expires.
             if (configuration.GetValue("Documents:Signing:Ltv:AutoUpgrade", false))
             {
-                services.AddHangfireRecurringJob<Dialysis.BuildingBlocks.Documents.Signing.Hosted.ILtvUpgradeJob>(
+                services.AddHangfireRecurringJob<ILtvUpgradeJob>(
                     "hie:documents:ltv-upgrade",
                     job => job.RunOnceAsync(CancellationToken.None),
                     cronExpression: "0 2 * * *");
@@ -122,15 +132,15 @@ public static class HealthInformationExchangeExtensions
             // Document retention + DSR Art. 17 erasure ----------------------------------
             // The purger walks every operator-defined DocumentRetentionPolicy; the eraser
             // contributes HIE-side documents to a DPO-approved Art. 17 erasure request.
-            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IRetentionPurgeJob,
-                Dialysis.HIE.Documents.Hosted.HieRetentionPurgeJob>();
-            services.AddScoped<Dialysis.BuildingBlocks.DataProtection.Erasure.IPatientEraser,
-                Dialysis.HIE.Documents.Erasure.HieDocumentsPatientEraser>();
+            services.AddScoped<IRetentionPurgeJob,
+                HieRetentionPurgeJob>();
+            services.AddScoped<IPatientEraser,
+                HieDocumentsPatientEraser>();
             // Opt-in (Documents:Retention:AutoPurge) — a persistent daily Hangfire job (03:00 UTC) that
             // walks every operator-defined DocumentRetentionPolicy and tombstones expired documents.
             if (configuration.GetValue("Documents:Retention:AutoPurge", false))
             {
-                services.AddHangfireRecurringJob<Dialysis.BuildingBlocks.DataProtection.Erasure.IRetentionPurgeJob>(
+                services.AddHangfireRecurringJob<IRetentionPurgeJob>(
                     "hie:documents:retention-purge",
                     job => job.RunOnceAsync(CancellationToken.None),
                     cronExpression: "0 3 * * *");
@@ -140,10 +150,10 @@ public static class HealthInformationExchangeExtensions
             // IAS JWT management. The shared IDocumentBlobStore (already registered above)
             // backs the mTLS PFX storage; the IAS issuer reads its signing key from
             // configuration so a future RS256/cert-backed implementation slots in here.
-            services.Configure<Dialysis.HIE.Tefca.Ias.IasJwtIssuerOptions>(
+            services.Configure<IasJwtIssuerOptions>(
                 configuration.GetSection("Tefca:IasJwtIssuer"));
-            services.AddSingleton<Dialysis.HIE.Tefca.Ias.IIasJwtIssuer,
-                Dialysis.HIE.Tefca.Ias.HmacIasJwtIssuer>();
+            services.AddSingleton<IIasJwtIssuer,
+                HmacIasJwtIssuer>();
 
             services.AddScoped<PatientMapper>();
             services.AddScoped<EncounterMapper>();
@@ -156,16 +166,16 @@ public static class HealthInformationExchangeExtensions
             // Per-partner routing — replaces the old single hard-coded DefaultPartnerId.
             services.AddSingleton<IPartnerRouter, ConfiguredPartnerRouter>();
             // Public-health electronic case reporting (mandated-reporting path; no-op until configured).
-            services.Configure<Dialysis.HIE.Outbound.PublicHealth.PublicHealthReportingOptions>(
-                configuration.GetSection(Dialysis.HIE.Outbound.PublicHealth.PublicHealthReportingOptions.SectionName));
-            services.AddSingleton<Dialysis.HIE.Outbound.PublicHealth.IReportabilityClassifier,
-                Dialysis.HIE.Outbound.PublicHealth.ConfiguredReportabilityClassifier>();
-            services.AddScoped<Dialysis.HIE.Outbound.PublicHealth.PublicHealthReporter>();
+            services.Configure<PublicHealthReportingOptions>(
+                configuration.GetSection(PublicHealthReportingOptions.SectionName));
+            services.AddSingleton<IReportabilityClassifier,
+                ConfiguredReportabilityClassifier>();
+            services.AddScoped<PublicHealthReporter>();
             services.AddScoped<OutboundQueueWriter>();
             // C-CDA CCD generation for Directed Exchange: the FHIR→CDA mapper + the assembler that
             // folds a patient's already-mapped resources into a CCD and queues it as a DocumentReference.
             services.AddFhirCdaBridge();
-            services.AddScoped<Dialysis.HIE.Outbound.CareSummary.CareSummaryAssembler>();
+            services.AddScoped<CareSummaryAssembler>();
             services.AddFhirHttpPartnerEndpoints(configuration);
             // Direct secure messaging (S/MIME) as an alternative outbound transport — wired when
             // Hie:Direct is configured; partners opt in per-partner via Transport=Direct.
@@ -181,7 +191,7 @@ public static class HealthInformationExchangeExtensions
             services.AddArchetypeMappingCatalog();
             services.AddScoped<InboundIngestionService>();
             // Actionable insights: the cross-source "Community Health Record" projection.
-            services.AddScoped<Dialysis.HIE.Inbound.Insights.ExternalPatientInsightsBuilder>();
+            services.AddScoped<ExternalPatientInsightsBuilder>();
 
             // Query-based exchange (pull): outbound FHIR query client → inbound ingestion pipeline.
             services.AddHiePartnerQuery(configuration);

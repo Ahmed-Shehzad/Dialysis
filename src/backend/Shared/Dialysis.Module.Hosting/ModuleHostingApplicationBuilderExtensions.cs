@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Dialysis.Module.Hosting;
 
@@ -33,7 +34,7 @@ public static class ModuleHostingApplicationBuilderExtensions
             app.UseMiddleware<CorrelationIdMiddleware>();
             app.UseModuleRateLimiting();
 
-            var auth = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ModuleAuthenticationOptions>>().Value;
+            var auth = app.Services.GetRequiredService<IOptions<ModuleAuthenticationOptions>>().Value;
             if (!string.IsNullOrWhiteSpace(auth.Authority))
             {
                 app.UseAuthentication();

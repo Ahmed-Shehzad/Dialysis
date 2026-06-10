@@ -15,7 +15,7 @@ public sealed class DurableCommandCatalogTests
     {
         public SampleCommand(string Note) => this.Note = Note;
         public string Note { get; init; }
-        public void Deconstruct(out string note) => note = this.Note;
+        public void Deconstruct(out string note) => note = Note;
     }
 
     public sealed record UnregisteredCommand : ICommand<int>;

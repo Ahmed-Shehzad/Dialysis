@@ -88,7 +88,7 @@ public sealed class ExternalPatientInsightsBuilder
             .Select(g => new
             {
                 Code = g.Key,
-                Display = g.First().Coding!.Display,
+                g.First().Coding!.Display,
                 Sources = SourcesOf(g.Select(x => x.PartnerId)),
             })
             .Where(g => g.Sources.Count > 1)
@@ -105,7 +105,7 @@ public sealed class ExternalPatientInsightsBuilder
             .Select(g => new
             {
                 Code = g.Key,
-                Display = g.First().Coding!.Display,
+                g.First().Coding!.Display,
                 Sources = SourcesOf(g.Select(x => x.PartnerId)),
             })
             .Where(g => g.Sources.Count > 1)

@@ -138,7 +138,7 @@ public sealed class EncounterClosedChargeConsumerTests
     {
         private readonly Dictionary<(Guid, string), Guid> _seen = new();
         public Task<Guid?> FindChargeIdAsync(Guid sessionId, string cptCode, CancellationToken cancellationToken)
-            => Task.FromResult(_seen.TryGetValue((sessionId, cptCode), out var id) ? (Guid?)id : null);
+            => Task.FromResult<Guid?>(_seen.TryGetValue((sessionId, cptCode), out var id) ? id : null);
         public Task RegisterAsync(Guid sessionId, string cptCode, Guid chargeId, CancellationToken cancellationToken)
         {
             _seen[(sessionId, cptCode)] = chargeId;

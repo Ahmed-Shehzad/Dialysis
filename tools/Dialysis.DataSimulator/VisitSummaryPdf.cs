@@ -1,3 +1,4 @@
+using QuestPDF;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,7 +14,7 @@ internal static class VisitSummaryPdf
 {
     // QuestPDF requires a license to be declared once before first use; Community is free for our use.
     // Mirrors src/backend/BuildingBlocks/Documents/.../QuestPdfDocumentRenderer.cs.
-    static VisitSummaryPdf() => QuestPDF.Settings.License = LicenseType.Community;
+    static VisitSummaryPdf() => Settings.License = LicenseType.Community;
 
     /// <summary>Renders <paramref name="body"/> under <paramref name="title"/> as PDF bytes.</summary>
     public static byte[] Render(string title, string body) =>

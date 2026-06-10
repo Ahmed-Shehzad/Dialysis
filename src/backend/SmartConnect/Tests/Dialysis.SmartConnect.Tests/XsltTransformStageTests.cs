@@ -1,4 +1,6 @@
+using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Xunit;
 
@@ -83,7 +85,7 @@ public sealed class XsltTransformStageTests
             CorrelationId = "c1",
             Payload = Encoding.UTF8.GetBytes(payload),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = System.Collections.Immutable.ImmutableDictionary<string, string>.Empty.Add(
+            Metadata = ImmutableDictionary<string, string>.Empty.Add(
                 XsltTransformStage.ParametersMetadataKey,
                 parametersJson),
             ReceivedAtUtc = DateTimeOffset.UtcNow,
@@ -91,5 +93,5 @@ public sealed class XsltTransformStageTests
     }
 
     private static string Escape_Json(string s) =>
-        System.Text.Json.JsonSerializer.Serialize(s);
+        JsonSerializer.Serialize(s);
 }

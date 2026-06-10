@@ -2,6 +2,7 @@ using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.CQRS;
 using Dialysis.HIS.Integration.DeviceIngestion;
 using Dialysis.HIS.Integration.Features.IngestDeviceReading;
+using Dialysis.HIS.PatientFlow.Features.AdmitPatient;
 using Dialysis.HIS.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -111,8 +112,8 @@ public sealed class IngestDeviceReadingDurablePathTests
         var bus = scope.ServiceProvider.GetRequiredService<IDurableCommandBus>();
 
         await Should.ThrowAsync<DurableCommandException>(() =>
-            bus.EnqueueAsync<Dialysis.HIS.PatientFlow.Features.AdmitPatient.AdmitPatientCommand, Guid>(
-                new Dialysis.HIS.PatientFlow.Features.AdmitPatient.AdmitPatientCommand(
+            bus.EnqueueAsync<AdmitPatientCommand, Guid>(
+                new AdmitPatientCommand(
                     Guid.CreateVersion7(), "WARD-A1"),
                 commandId: Guid.CreateVersion7(),
                 CancellationToken.None));

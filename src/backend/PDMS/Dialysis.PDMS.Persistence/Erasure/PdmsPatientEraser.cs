@@ -98,7 +98,7 @@ public sealed class PdmsPatientEraser : IPatientEraser
             .ExecuteUpdateAsync(
                 s => s
                     .SetProperty(e => e.IsDeleted, true)
-                    .SetProperty(e => e.DeletedAt, (DateTime?)now)
+                    .SetProperty(e => e.DeletedAt, now)
                     .SetProperty(e => e.DeletedBy, approvedBy),
                 cancellationToken)
             .ConfigureAwait(false);

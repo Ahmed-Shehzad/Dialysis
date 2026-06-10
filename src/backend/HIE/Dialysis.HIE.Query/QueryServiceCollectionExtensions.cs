@@ -1,3 +1,4 @@
+using Dialysis.HIE.Query.Xca;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,9 +19,9 @@ public static class QueryServiceCollectionExtensions
             services.AddScoped<IPartnerFhirQuery, PartnerFhirQueryClient>();
             services.AddScoped<IPartnerPatientDiscovery, PartnerPatientDiscoveryClient>();
             // XCA document query/retrieve — one instance serves both ports.
-            services.AddScoped<Xca.XcaDocumentClient>();
-            services.AddScoped<Xca.IXcaQueryClient>(sp => sp.GetRequiredService<Xca.XcaDocumentClient>());
-            services.AddScoped<Xca.IXcaRetrieveClient>(sp => sp.GetRequiredService<Xca.XcaDocumentClient>());
+            services.AddScoped<XcaDocumentClient>();
+            services.AddScoped<IXcaQueryClient>(sp => sp.GetRequiredService<XcaDocumentClient>());
+            services.AddScoped<IXcaRetrieveClient>(sp => sp.GetRequiredService<XcaDocumentClient>());
             return services;
         }
     }

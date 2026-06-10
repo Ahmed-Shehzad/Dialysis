@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Dialysis.CQRS;
+using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.HIS.Api.Hateoas;
 using Dialysis.HIS.Operations.Features.AssignStaffRole;
 using Dialysis.HIS.Operations.Features.ExecuteBillingExportJob;
@@ -129,7 +130,7 @@ public sealed class OperationsController : HisHateoasControllerBase
                 .ConfigureAwait(false);
             return Ok(rows);
         }
-        catch (Dialysis.DomainDrivenDesign.Exceptions.DomainException ex)
+        catch (DomainException ex)
         {
             return BadRequest(new { error = ex.Message });
         }
@@ -139,20 +140,20 @@ public sealed class OperationsController : HisHateoasControllerBase
     {
         public AssignStaffRoleBody(string RoleCode) => this.RoleCode = RoleCode;
         public string RoleCode { get; init; }
-        public void Deconstruct(out string roleCode) => roleCode = this.RoleCode;
+        public void Deconstruct(out string roleCode) => roleCode = RoleCode;
     }
 
     public sealed record InventoryMovementBody
     {
         public InventoryMovementBody(int DeltaQuantity) => this.DeltaQuantity = DeltaQuantity;
         public int DeltaQuantity { get; init; }
-        public void Deconstruct(out int deltaQuantity) => deltaQuantity = this.DeltaQuantity;
+        public void Deconstruct(out int deltaQuantity) => deltaQuantity = DeltaQuantity;
     }
 
     public sealed record SubmitBillingExportJobResponse
     {
         public SubmitBillingExportJobResponse(Guid Id) => this.Id = Id;
         public Guid Id { get; init; }
-        public void Deconstruct(out Guid id) => id = this.Id;
+        public void Deconstruct(out Guid id) => id = Id;
     }
 }

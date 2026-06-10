@@ -8,7 +8,7 @@ public sealed record GetDataImportJobByIdQuery : IQuery<DataImportJobStatusDto?>
     public GetDataImportJobByIdQuery(Guid Id) => this.Id = Id;
     public string RequiredPermission => HisPermissions.DataImportSubmit;
     public Guid Id { get; init; }
-    public void Deconstruct(out Guid id) => id = this.Id;
+    public void Deconstruct(out Guid id) => id = Id;
 }
 
 public sealed record DataImportJobStatusDto
@@ -32,10 +32,10 @@ public sealed record DataImportJobStatusDto
     public string? ValidationSummary { get; init; }
     public void Deconstruct(out Guid id, out string sourceDescription, out DateTime submittedAtUtc, out string statusCode, out string? validationSummary)
     {
-        id = this.Id;
-        sourceDescription = this.SourceDescription;
-        submittedAtUtc = this.SubmittedAtUtc;
-        statusCode = this.StatusCode;
-        validationSummary = this.ValidationSummary;
+        id = Id;
+        sourceDescription = SourceDescription;
+        submittedAtUtc = SubmittedAtUtc;
+        statusCode = StatusCode;
+        validationSummary = ValidationSummary;
     }
 }

@@ -47,15 +47,15 @@ public sealed record PatientDetailDto
     public string Status { get; init; }
     public void Deconstruct(out Guid id, out string medicalRecordNumber, out string familyName, out string givenName, out string? middleName, out DateOnly dateOfBirth, out string? sexAtBirthCode, out string? preferredLanguageCode, out string status)
     {
-        id = this.Id;
-        medicalRecordNumber = this.MedicalRecordNumber;
-        familyName = this.FamilyName;
-        givenName = this.GivenName;
-        middleName = this.MiddleName;
-        dateOfBirth = this.DateOfBirth;
-        sexAtBirthCode = this.SexAtBirthCode;
-        preferredLanguageCode = this.PreferredLanguageCode;
-        status = this.Status;
+        id = Id;
+        medicalRecordNumber = MedicalRecordNumber;
+        familyName = FamilyName;
+        givenName = GivenName;
+        middleName = MiddleName;
+        dateOfBirth = DateOfBirth;
+        sexAtBirthCode = SexAtBirthCode;
+        preferredLanguageCode = PreferredLanguageCode;
+        status = Status;
     }
 }
 
@@ -64,5 +64,5 @@ public sealed record GetPatientByIdQuery : IQuery<PatientDetailDto?>, IPermissio
     public GetPatientByIdQuery(Guid PatientId) => this.PatientId = PatientId;
     public string RequiredPermission => EhrPermissions.PatientRead;
     public Guid PatientId { get; init; }
-    public void Deconstruct(out Guid patientId) => patientId = this.PatientId;
+    public void Deconstruct(out Guid patientId) => patientId = PatientId;
 }

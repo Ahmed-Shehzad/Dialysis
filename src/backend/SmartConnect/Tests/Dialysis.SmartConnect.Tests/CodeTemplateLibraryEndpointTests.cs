@@ -28,7 +28,7 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<SmartConnec
                 new
                 {
                     id = Guid.Empty,
-                    libraryId = libraryId,
+                    libraryId,
                     name = "addOne",
                     code = "function addOne(n){return n+1;}",
                     contexts = new[] { CodeTemplateContext.SourceTransformer },

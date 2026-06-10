@@ -1,5 +1,8 @@
 using Asp.Versioning;
+using Dialysis.CQRS;
+using Dialysis.EHR.Billing.Coding;
 using Dialysis.EHR.Billing.Domain;
+using Dialysis.EHR.Billing.Features.CodingAssist;
 using Dialysis.EHR.Billing.Ports;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +22,7 @@ public sealed class BillingController : ControllerBase
     private readonly IClaimRepository _claims;
     private readonly IChargeRepository _charges;
     private readonly IBillableEncounterRepository _billableEncounters;
-    private readonly Dialysis.CQRS.ICqrsGateway _gateway;
+    private readonly ICqrsGateway _gateway;
     /// <summary>
     /// HTTP surface for the EHR Billing slice — read-only views the SPA needs on top of
     /// the Charge / Claim / acknowledgement aggregates that EHR.Billing owns. Write
@@ -29,7 +32,7 @@ public sealed class BillingController : ControllerBase
     public BillingController(IClaimRepository claims,
         IChargeRepository charges,
         IBillableEncounterRepository billableEncounters,
-        Dialysis.CQRS.ICqrsGateway gateway)
+        ICqrsGateway gateway)
     {
         _claims = claims;
         _charges = charges;
@@ -42,14 +45,14 @@ public sealed class BillingController : ControllerBase
     /// unless <c>Ehr:Billing:EmCoding</c> levels are configured.
     /// </summary>
     [HttpPost("em-suggestion")]
-    [ProducesResponseType(typeof(Dialysis.EHR.Billing.Coding.EmSuggestion), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EmSuggestion), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SuggestEmLevelAsync(
         [FromBody] EmSuggestionRequest body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var suggestion = await _gateway.SendQueryAsync<Dialysis.EHR.Billing.Features.CodingAssist.SuggestEmLevelQuery, Dialysis.EHR.Billing.Coding.EmSuggestion?>(
-            new Dialysis.EHR.Billing.Features.CodingAssist.SuggestEmLevelQuery(
+        var suggestion = await _gateway.SendQueryAsync<SuggestEmLevelQuery, EmSuggestion?>(
+            new SuggestEmLevelQuery(
                 body.DiagnosisIcd10 ?? [], body.ProcedureCpt ?? [], body.DataReviewedCount),
             cancellationToken).ConfigureAwait(false);
         return suggestion is null ? NoContent() : Ok(suggestion);

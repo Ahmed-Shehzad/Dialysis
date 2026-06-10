@@ -35,7 +35,7 @@ internal static class CdaSectionEmitters
                         new XAttribute("typeCode", "SUBJ"),
                         new XElement(_hl7 + "observation",
                             CdaEmitting.CodeElement("value", c.Code),
-                            CdaEmitting.EffectiveTimePoint("effectiveTime", c.Onset as DataType))))));
+                            CdaEmitting.EffectiveTimePoint("effectiveTime", c.Onset))))));
         return Section(CdaConstants.ProblemsTemplateId, CdaConstants.ProblemsSectionLoinc, "Problems", [.. entries]);
     }
 
@@ -47,7 +47,7 @@ internal static class CdaSectionEmitters
                     new XElement(_hl7 + "entryRelationship",
                         new XAttribute("typeCode", "SUBJ"),
                         new XElement(_hl7 + "observation",
-                            CdaEmitting.EffectiveTimePoint("effectiveTime", a.Onset as DataType),
+                            CdaEmitting.EffectiveTimePoint("effectiveTime", a.Onset),
                             new XElement(_hl7 + "participant",
                                 new XAttribute("typeCode", "CSM"),
                                 new XElement(_hl7 + "participantRole",
@@ -76,10 +76,10 @@ internal static class CdaSectionEmitters
             new XElement(_hl7 + "component",
                 new XElement(_hl7 + "observation",
                     CdaEmitting.CodeElement("code", o.Code),
-                    CdaEmitting.EffectiveTimePoint("effectiveTime", o.Effective as DataType),
+                    CdaEmitting.EffectiveTimePoint("effectiveTime", o.Effective),
                     CdaEmitting.ValueElement(o.Value))));
         var entry = new XElement(_hl7 + "entry",
-            new XElement(_hl7 + "organizer", [.. components.Cast<object>()]));
+            new XElement(_hl7 + "organizer", [.. components]));
         return Section(templateId, loinc, title, entry);
     }
 

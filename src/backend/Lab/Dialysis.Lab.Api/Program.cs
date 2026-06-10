@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Lab.Composition;
 using Dialysis.Lab.Contracts.Security;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Dialysis.Lab.Api;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)
@@ -52,7 +53,7 @@ public partial class Program
         builder.Services
             .AddControllers()
             .AddJsonOptions(o =>
-                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         var app = builder.Build();
 

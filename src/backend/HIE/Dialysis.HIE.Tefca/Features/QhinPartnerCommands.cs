@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Dialysis.BuildingBlocks.Documents.Storage;
 using Dialysis.CQRS;
 using Dialysis.CQRS.Commands;
@@ -48,15 +49,15 @@ public sealed record QhinPartnerRow
     public string UpdatedBy { get; init; }
     public void Deconstruct(out Guid id, out string name, out string fhirBaseUrl, out string iasEndpoint, out QhinPartnerStatus status, out string? mtlsCertThumbprint, out int trustAnchorCount, out DateTime updatedAtUtc, out string updatedBy)
     {
-        id = this.Id;
-        name = this.Name;
-        fhirBaseUrl = this.FhirBaseUrl;
-        iasEndpoint = this.IasEndpoint;
-        status = this.Status;
-        mtlsCertThumbprint = this.MtlsCertThumbprint;
-        trustAnchorCount = this.TrustAnchorCount;
-        updatedAtUtc = this.UpdatedAtUtc;
-        updatedBy = this.UpdatedBy;
+        id = Id;
+        name = Name;
+        fhirBaseUrl = FhirBaseUrl;
+        iasEndpoint = IasEndpoint;
+        status = Status;
+        mtlsCertThumbprint = MtlsCertThumbprint;
+        trustAnchorCount = TrustAnchorCount;
+        updatedAtUtc = UpdatedAtUtc;
+        updatedBy = UpdatedBy;
     }
 }
 
@@ -90,14 +91,14 @@ public sealed record QhinTrustAnchorRow
     public string AttachedBy { get; init; }
     public void Deconstruct(out Guid id, out string subject, out string thumbprint, out DateTime notBefore, out DateTime notAfter, out TrustAnchorStatus status, out DateTime attachedAtUtc, out string attachedBy)
     {
-        id = this.Id;
-        subject = this.Subject;
-        thumbprint = this.Thumbprint;
-        notBefore = this.NotBefore;
-        notAfter = this.NotAfter;
-        status = this.Status;
-        attachedAtUtc = this.AttachedAtUtc;
-        attachedBy = this.AttachedBy;
+        id = Id;
+        subject = Subject;
+        thumbprint = Thumbprint;
+        notBefore = NotBefore;
+        notAfter = NotAfter;
+        status = Status;
+        attachedAtUtc = AttachedAtUtc;
+        attachedBy = AttachedBy;
     }
 }
 
@@ -137,16 +138,16 @@ public sealed record QhinPartnerDetail
     public IReadOnlyList<QhinTrustAnchorRow> TrustAnchors { get; init; }
     public void Deconstruct(out Guid id, out string name, out string fhirBaseUrl, out string iasEndpoint, out QhinPartnerStatus status, out string? mtlsCertThumbprint, out DateTime createdAtUtc, out DateTime updatedAtUtc, out string updatedBy, out IReadOnlyList<QhinTrustAnchorRow> trustAnchors)
     {
-        id = this.Id;
-        name = this.Name;
-        fhirBaseUrl = this.FhirBaseUrl;
-        iasEndpoint = this.IasEndpoint;
-        status = this.Status;
-        mtlsCertThumbprint = this.MtlsCertThumbprint;
-        createdAtUtc = this.CreatedAtUtc;
-        updatedAtUtc = this.UpdatedAtUtc;
-        updatedBy = this.UpdatedBy;
-        trustAnchors = this.TrustAnchors;
+        id = Id;
+        name = Name;
+        fhirBaseUrl = FhirBaseUrl;
+        iasEndpoint = IasEndpoint;
+        status = Status;
+        mtlsCertThumbprint = MtlsCertThumbprint;
+        createdAtUtc = CreatedAtUtc;
+        updatedAtUtc = UpdatedAtUtc;
+        updatedBy = UpdatedBy;
+        trustAnchors = TrustAnchors;
     }
 }
 
@@ -179,7 +180,7 @@ public sealed record GetQhinPartnerQuery : IQuery<QhinPartnerDetail?>, IPermissi
     public GetQhinPartnerQuery(Guid Id) => this.Id = Id;
     public string RequiredPermission => HiePermissions.TefcaPartnersView;
     public Guid Id { get; init; }
-    public void Deconstruct(out Guid id) => id = this.Id;
+    public void Deconstruct(out Guid id) => id = Id;
 }
 
 public sealed class GetQhinPartnerQueryHandler : IQueryHandler<GetQhinPartnerQuery, QhinPartnerDetail?>
@@ -217,10 +218,10 @@ public sealed record OnboardQhinPartnerCommand : ICommand<Guid>, IPermissionedCo
     public string UpdatedBy { get; init; }
     public void Deconstruct(out string name, out string fhirBaseUrl, out string iasEndpoint, out string updatedBy)
     {
-        name = this.Name;
-        fhirBaseUrl = this.FhirBaseUrl;
-        iasEndpoint = this.IasEndpoint;
-        updatedBy = this.UpdatedBy;
+        name = Name;
+        fhirBaseUrl = FhirBaseUrl;
+        iasEndpoint = IasEndpoint;
+        updatedBy = UpdatedBy;
     }
 }
 
@@ -267,11 +268,11 @@ public sealed record ReviseQhinPartnerCommand : ICommand, IPermissionedCommand
     public string UpdatedBy { get; init; }
     public void Deconstruct(out Guid id, out string name, out string fhirBaseUrl, out string iasEndpoint, out string updatedBy)
     {
-        id = this.Id;
-        name = this.Name;
-        fhirBaseUrl = this.FhirBaseUrl;
-        iasEndpoint = this.IasEndpoint;
-        updatedBy = this.UpdatedBy;
+        id = Id;
+        name = Name;
+        fhirBaseUrl = FhirBaseUrl;
+        iasEndpoint = IasEndpoint;
+        updatedBy = UpdatedBy;
     }
 }
 
@@ -314,9 +315,9 @@ public sealed record TransitionQhinPartnerStatusCommand : ICommand, IPermissione
     public string UpdatedBy { get; init; }
     public void Deconstruct(out Guid id, out QhinPartnerStatus next, out string updatedBy)
     {
-        id = this.Id;
-        next = this.Next;
-        updatedBy = this.UpdatedBy;
+        id = Id;
+        next = Next;
+        updatedBy = UpdatedBy;
     }
 }
 
@@ -359,9 +360,9 @@ public sealed record AttachTrustAnchorCommand : ICommand<Guid>, IPermissionedCom
     public string AttachedBy { get; init; }
     public void Deconstruct(out Guid partnerId, out string certificatePem, out string attachedBy)
     {
-        partnerId = this.PartnerId;
-        certificatePem = this.CertificatePem;
-        attachedBy = this.AttachedBy;
+        partnerId = PartnerId;
+        certificatePem = CertificatePem;
+        attachedBy = AttachedBy;
     }
 }
 
@@ -408,8 +409,8 @@ public sealed record RevokeTrustAnchorCommand : ICommand, IPermissionedCommand
     public Guid AnchorId { get; init; }
     public void Deconstruct(out Guid partnerId, out Guid anchorId)
     {
-        partnerId = this.PartnerId;
-        anchorId = this.AnchorId;
+        partnerId = PartnerId;
+        anchorId = AnchorId;
     }
 }
 
@@ -454,10 +455,10 @@ public sealed record RotateMtlsCertificateCommand : ICommand<string>, IPermissio
     public string UpdatedBy { get; init; }
     public void Deconstruct(out Guid partnerId, out string base64Pfx, out string pfxPassword, out string updatedBy)
     {
-        partnerId = this.PartnerId;
-        base64Pfx = this.Base64Pfx;
-        pfxPassword = this.PfxPassword;
-        updatedBy = this.UpdatedBy;
+        partnerId = PartnerId;
+        base64Pfx = Base64Pfx;
+        pfxPassword = PfxPassword;
+        updatedBy = UpdatedBy;
     }
 }
 
@@ -497,7 +498,7 @@ public sealed class RotateMtlsCertificateCommandHandler : ICommandHandler<Rotate
     {
         try
         {
-            var certificate = System.Security.Cryptography.X509Certificates.X509CertificateLoader
+            var certificate = X509CertificateLoader
                 .LoadPkcs12(pfxBytes, password);
             return certificate.Thumbprint;
         }
@@ -526,10 +527,10 @@ public sealed record IssueIasJwtCommand : ICommand<string>, IPermissionedCommand
     public int LifetimeSeconds { get; init; }
     public void Deconstruct(out Guid partnerId, out string subjectPatientId, out string scope, out int lifetimeSeconds)
     {
-        partnerId = this.PartnerId;
-        subjectPatientId = this.SubjectPatientId;
-        scope = this.Scope;
-        lifetimeSeconds = this.LifetimeSeconds;
+        partnerId = PartnerId;
+        subjectPatientId = SubjectPatientId;
+        scope = Scope;
+        lifetimeSeconds = LifetimeSeconds;
     }
 }
 

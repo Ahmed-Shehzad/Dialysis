@@ -1,4 +1,6 @@
 using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
 using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Identity.Bff.Configuration;
@@ -10,13 +12,14 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Yarp.ReverseProxy.Transforms;
 
 namespace Dialysis.Identity.Bff;
 
 /// <summary>Application entry point.</summary>
-public partial class Program
+public class Program
 {
     /// <summary>Builds and runs the host.</summary>
     public static async Task Main(string[] args)
@@ -205,7 +208,7 @@ public partial class Program
         app.MapGet(BffRoutes.Login, (
             string? returnUrl,
             string? provider,
-            Microsoft.Extensions.Options.IOptions<BffSpaOptions> spa,
+            IOptions<BffSpaOptions> spa,
             IIdentityProviderCatalog catalog) =>
         {
             var props = new AuthenticationProperties { RedirectUri = ResolveReturnUrl(returnUrl, spa.Value) };
@@ -221,7 +224,7 @@ public partial class Program
         app.MapGet(BffRoutes.Providers, (IIdentityProviderCatalog catalog) =>
             Results.Json(new { providers = catalog.List() }));
 
-        app.MapGet(BffRoutes.Logout, async (string? returnUrl, HttpContext ctx, Microsoft.Extensions.Options.IOptions<BffSpaOptions> spa) =>
+        app.MapGet(BffRoutes.Logout, async (string? returnUrl, HttpContext ctx, IOptions<BffSpaOptions> spa) =>
         {
             var target = ResolveReturnUrl(returnUrl, spa.Value);
             await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
@@ -254,7 +257,7 @@ public partial class Program
                     StringComparer.Ordinal);
             var realmAccessRoles = ctx.User.FindAll("realm_access").Select(c => c.Value).FirstOrDefault();
             var roles = ctx.User.FindAll("roles").Select(c => c.Value)
-                .Concat(ctx.User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value))
+                .Concat(ctx.User.FindAll(ClaimTypes.Role).Select(c => c.Value))
                 .Distinct(StringComparer.Ordinal)
                 .ToArray();
             // Permissions surface as one or more `dialysis_permission` claims (the realm mapper emits
@@ -293,8 +296,8 @@ public partial class Program
                 {
                     try
                     {
-                        using var doc = System.Text.Json.JsonDocument.Parse(raw);
-                        if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        using var doc = JsonDocument.Parse(raw);
+                        if (doc.RootElement.ValueKind == JsonValueKind.Array)
                         {
                             foreach (var element in doc.RootElement.EnumerateArray())
                             {
@@ -305,7 +308,7 @@ public partial class Program
                             continue;
                         }
                     }
-                    catch (System.Text.Json.JsonException)
+                    catch (JsonException)
                     {
                         // fall through to scalar handling
                     }

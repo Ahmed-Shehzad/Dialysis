@@ -1,3 +1,4 @@
+using System.Xml;
 using System.Xml.Linq;
 
 namespace Dialysis.SmartConnect.CodeTemplates;
@@ -70,7 +71,7 @@ public sealed class MirthXmlCodeTemplateImporter
         {
             doc = XDocument.Parse(xml);
         }
-        catch (System.Xml.XmlException ex)
+        catch (XmlException ex)
         {
             throw new ArgumentException("XML payload was malformed.", nameof(xml), ex);
         }

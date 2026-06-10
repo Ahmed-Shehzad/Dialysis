@@ -69,8 +69,7 @@ public static class IterableResolver
 
         // Split into segments — HL7 uses CR; tolerate LF / CRLF as well.
         var segments = payload
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .ToArray();
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
         var (segName, fieldIndex, wantFieldRepeats) = ParseHl7Expression(expression);
 

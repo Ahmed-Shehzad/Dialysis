@@ -1,5 +1,6 @@
-using Dialysis.EHR.Contracts.Integration;
+using System.Globalization;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
+using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Core.Coding;
 using Hl7.Fhir.Model;
 
@@ -19,7 +20,7 @@ public sealed class LabResultMapper : IFhirResourceMapper<LabResultReceivedInteg
             Code = new CodeableConcept(CodeSystems.Loinc, e.LoincCode),
         };
 
-        if (decimal.TryParse(e.ValueText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var numeric))
+        if (decimal.TryParse(e.ValueText, NumberStyles.Float, CultureInfo.InvariantCulture, out var numeric))
         {
             observation.Value = new Quantity
             {

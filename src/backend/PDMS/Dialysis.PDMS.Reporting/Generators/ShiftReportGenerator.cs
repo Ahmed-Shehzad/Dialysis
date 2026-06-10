@@ -81,9 +81,9 @@ public sealed record ShiftReportContext
     public IReadOnlyList<SessionReportContext> Sessions { get; init; }
     public void Deconstruct(out string shiftLabel, out DateTime windowStartUtc, out DateTime windowEndUtc, out IReadOnlyList<SessionReportContext> sessions)
     {
-        shiftLabel = this.ShiftLabel;
-        windowStartUtc = this.WindowStartUtc;
-        windowEndUtc = this.WindowEndUtc;
-        sessions = this.Sessions;
+        shiftLabel = ShiftLabel;
+        windowStartUtc = WindowStartUtc;
+        windowEndUtc = WindowEndUtc;
+        sessions = Sessions;
     }
 }

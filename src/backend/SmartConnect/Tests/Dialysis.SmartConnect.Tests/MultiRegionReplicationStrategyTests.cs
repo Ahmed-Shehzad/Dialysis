@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Persistence.ObjectStorage.Replication;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -70,7 +71,7 @@ public sealed class MultiRegionReplicationStrategyTests
         public Task<ReadOnlyMemory<byte>?> ReadAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<ReadOnlyMemory<byte>?>(null);
         public Task DeleteAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
         public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             yield break;
@@ -89,7 +90,7 @@ public sealed class MultiRegionReplicationStrategyTests
         public Task DeleteAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromException(new InvalidOperationException("simulated region outage"));
         public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
-            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             yield break;

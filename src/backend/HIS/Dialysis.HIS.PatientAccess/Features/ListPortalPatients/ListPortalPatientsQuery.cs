@@ -23,7 +23,7 @@ public sealed record ListPortalPatientsQuery : IQuery<IReadOnlyList<Guid>>, IPer
     public int Take { get; init; }
 
     /// <summary>Deconstructs the query.</summary>
-    public void Deconstruct(out int take) => take = this.Take;
+    public void Deconstruct(out int take) => take = Take;
 }
 
 /// <summary>Returns the discoverable portal patient ids from the read model.</summary>

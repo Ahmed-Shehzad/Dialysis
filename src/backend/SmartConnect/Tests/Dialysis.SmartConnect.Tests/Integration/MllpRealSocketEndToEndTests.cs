@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.Mllp;
 using Dialysis.SmartConnect.TimeSync;
@@ -66,7 +67,7 @@ public sealed class MllpRealSocketEndToEndTests
             var captured = await capturedTransport.WaitFor_Async(timeout: TimeSpan.FromSeconds(5));
             Assert.NotNull(captured);
             // The transport sees the inner payload bytes — framing removed.
-            var receivedText = System.Text.Encoding.UTF8.GetString(captured!.Payload.Span);
+            var receivedText = Encoding.UTF8.GetString(captured!.Payload.Span);
             Assert.Equal(payloadText, receivedText);
             Assert.Equal(options.DefaultFlowId, captured.FlowId);
         }
@@ -126,7 +127,7 @@ public sealed class MllpRealSocketEndToEndTests
 
     private static async Task Send_Mllp_Frame_Async(NetworkStream stream, string payloadText)
     {
-        var payload = System.Text.Encoding.UTF8.GetBytes(payloadText);
+        var payload = Encoding.UTF8.GetBytes(payloadText);
         var framed = new byte[payload.Length + 3];
         framed[0] = StartBlock;
         Array.Copy(payload, 0, framed, 1, payload.Length);

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.FileReader;
@@ -62,7 +63,7 @@ public sealed class FileReaderSourceMapTests
             IReadOnlyDictionary<string, string>? metadata = null,
             DateTimeOffset? receivedAtUtc = null)
         {
-            var meta = System.Collections.Immutable.ImmutableDictionary<string, string>.Empty;
+            var meta = ImmutableDictionary<string, string>.Empty;
             if (metadata is not null)
             {
                 foreach (var kv in metadata) meta = meta.SetItem(kv.Key, kv.Value);

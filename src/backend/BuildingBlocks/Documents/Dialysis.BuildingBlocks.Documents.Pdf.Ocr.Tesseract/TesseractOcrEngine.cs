@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Tess = global::Tesseract;
+using Tess = Tesseract;
 
 namespace Dialysis.BuildingBlocks.Documents.Pdf.Ocr.Tesseract;
 

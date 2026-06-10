@@ -1,3 +1,4 @@
+using System.Text;
 using Dialysis.SmartConnect.Attachments;
 using Dialysis.SmartConnect.Attachments.Handlers;
 using FellowOakDicom;
@@ -65,7 +66,7 @@ public sealed class DicomAttachmentHandlerTests
             Id = ctx.MessageId,
             FlowId = ctx.FlowId,
             CorrelationId = "c1",
-            Payload = System.Text.Encoding.UTF8.GetBytes("not dicom"),
+            Payload = Encoding.UTF8.GetBytes("not dicom"),
             PayloadFormat = PayloadFormat.Utf8Text,
             ReceivedAtUtc = DateTimeOffset.UtcNow,
         };

@@ -9,7 +9,7 @@ namespace Dialysis.BuildingBlocks.Hipaa.Audit;
 /// during pipeline construction so the audit decision is deterministic without runtime reflection
 /// on every dispatch.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
 public sealed class PhiAccessAttribute : Attribute
 {
     /// <summary>

@@ -32,7 +32,7 @@ public sealed class DeviceTypeCatalog : IDeviceTypeCatalog
     /// </summary>
     public static IReadOnlyList<DeviceType> Default { get; } =
     [
-        new("dialysis-machine", "Hemodialysis machine", "dialysis", null),
+        new("dialysis-machine", "Hemodialysis machine", "dialysis"),
         new("pulse-oximeter", "Pulse oximeter", "vitals", "%"),
         new("weight-scale", "Weight scale", "vitals", "kg"),
         new("glucose-meter", "Blood glucose meter", "vitals", "mg/dL"),

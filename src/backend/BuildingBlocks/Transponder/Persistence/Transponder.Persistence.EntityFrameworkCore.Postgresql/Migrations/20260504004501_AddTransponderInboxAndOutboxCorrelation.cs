@@ -1,7 +1,6 @@
-using System;
-using Microsoft.EntityFrameworkCore.Migrations;
-
 #nullable disable
+
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore.Postgresql.Migrations
 {

@@ -26,7 +26,7 @@ public sealed record RasterizationOptions
         this.DpiY = DpiY;
         this.Format = Format;
     }
-    public static RasterizationOptions OcrDefault { get; } = new(300, 300, RasterImageFormat.Png);
+    public static RasterizationOptions OcrDefault { get; } = new();
     public int DpiX { get; init; }
     public int DpiY { get; init; }
     public RasterImageFormat Format { get; init; }

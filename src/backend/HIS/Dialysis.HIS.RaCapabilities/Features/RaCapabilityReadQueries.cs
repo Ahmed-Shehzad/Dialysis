@@ -63,7 +63,7 @@ public sealed record ListFullTextSearchEntriesQuery : IQuery<IReadOnlyList<RaFul
     public ListFullTextSearchEntriesQuery(string? SearchTextContains = null) => this.SearchTextContains = SearchTextContains;
     public string RequiredPermission => HisPermissions.RaCapabilitiesRead;
     public string? SearchTextContains { get; init; }
-    public void Deconstruct(out string? searchTextContains) => searchTextContains = this.SearchTextContains;
+    public void Deconstruct(out string? searchTextContains) => searchTextContains = SearchTextContains;
 }
 
 public sealed record ListSecurityMechanismHardeningsQuery

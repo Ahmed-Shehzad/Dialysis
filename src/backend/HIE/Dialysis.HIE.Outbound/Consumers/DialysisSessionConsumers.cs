@@ -1,10 +1,11 @@
+using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.HIE.Core.Abstraction.Consent;
-using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
 using Dialysis.PDMS.Contracts.Integration;
 using Hl7.Fhir.Model;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dialysis.HIE.Outbound.Consumers;
 
@@ -17,7 +18,7 @@ public sealed class DialysisSessionStartedConsumer : IConsumer<DialysisSessionSt
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<DialysisSessionStartedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<DialysisSessionStartedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
@@ -35,7 +36,7 @@ public sealed class DialysisSessionCompletedConsumer : IConsumer<DialysisSession
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<DialysisSessionCompletedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<DialysisSessionCompletedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
@@ -53,7 +54,7 @@ public sealed class DialysisSessionAbortedConsumer : IConsumer<DialysisSessionAb
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<DialysisSessionAbortedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<DialysisSessionAbortedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
@@ -71,11 +72,11 @@ public sealed class IntradialyticAdverseEventConsumer : IConsumer<IntradialyticA
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<IntradialyticAdverseEventIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<IntradialyticAdverseEventIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<IntradialyticAdverseEventIntegrationEvent, AdverseEvent>)_mapper,
+            _mapper,
             ConsentScopes.DialysisSessions,
             cancellationToken: context.CancellationToken);
 }

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using Dialysis.BuildingBlocks.Tefca.Ti.Endpoints;
 using Dialysis.BuildingBlocks.Tefca.Ti.Smcb;
 using Microsoft.Extensions.Logging;
@@ -103,7 +104,7 @@ public sealed class GematikTelematikInfrastrukturClient : ITelematikInfrastruktu
 
     private sealed record GematikDiscoveryDocument
     {
-        [System.Text.Json.Serialization.JsonPropertyName("issuer")]
+        [JsonPropertyName("issuer")]
         public string? Issuer { get; init; }
     }
 }

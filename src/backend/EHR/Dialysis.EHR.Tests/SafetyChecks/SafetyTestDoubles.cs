@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.ClinicalNotes.Domain;
 using Dialysis.EHR.ClinicalNotes.Ports;
@@ -13,7 +14,7 @@ internal static class SafetyTestData
 {
     public static Allergy Allergy(Guid patientId, string code, string display,
         AllergyVerificationStatus status = AllergyVerificationStatus.Confirmed) =>
-        global::Dialysis.EHR.PatientChart.Domain.Allergy.Record(
+        EHR.PatientChart.Domain.Allergy.Record(
             Guid.NewGuid(), patientId, new Coding("http://snomed.info/sct", code, display),
             AllergySeverity.Severe, status);
 
@@ -23,12 +24,12 @@ internal static class SafetyTestData
             "1 tab", "daily", DateOnly.FromDateTime(DateTime.UtcNow));
 
     public static Prescription Prescription(Guid patientId, string rxnorm, string display) =>
-        global::Dialysis.EHR.ClinicalNotes.Domain.Prescription.Order(
+        EHR.ClinicalNotes.Domain.Prescription.Order(
             Guid.NewGuid(), patientId, Guid.NewGuid(), Guid.NewGuid(),
             rxnorm, display, "1 tab", "daily", 30, 0, "PHARM-1", "ncpdp");
 
     public static LabOrder LabOrder(Guid patientId, params string[] loinc) =>
-        global::Dialysis.EHR.ClinicalNotes.Domain.LabOrder.Order(
+        EHR.ClinicalNotes.Domain.LabOrder.Order(
             Guid.NewGuid(), patientId, Guid.NewGuid(), Guid.NewGuid(), "LAB-1", loinc, "fhir");
 }
 
@@ -41,7 +42,7 @@ internal sealed class FakeAllergyRepository : IAllergyRepository
     public Task<IReadOnlyList<Allergy>> ListByPatientAsync(Guid patientId, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<Allergy>>([.. _items.Where(a => a.PatientId == patientId)]);
     public async IAsyncEnumerable<Allergy> StreamAllAsync(DateTimeOffset? since,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var a in _items) { yield return a; }
         await Task.CompletedTask.ConfigureAwait(false);
@@ -60,7 +61,7 @@ internal sealed class FakeMedicationStatementRepository : IMedicationStatementRe
             [.. _items.Where(m => m.PatientId == patientId
                 && (!activeOnly || m.Status == MedicationStatementStatus.Active))]);
     public async IAsyncEnumerable<MedicationStatement> StreamAllAsync(DateTimeOffset? since,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var m in _items) { yield return m; }
         await Task.CompletedTask.ConfigureAwait(false);

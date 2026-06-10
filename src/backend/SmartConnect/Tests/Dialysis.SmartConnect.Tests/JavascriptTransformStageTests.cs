@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Xunit;
@@ -17,7 +18,7 @@ public sealed class JavascriptTransformStageTests
             CorrelationId = "c1",
             Payload = "ab"u8.ToArray(),
             PayloadFormat = PayloadFormat.Utf8Text,
-            Metadata = System.Collections.Immutable.ImmutableDictionary<string, string>.Empty.Add(
+            Metadata = ImmutableDictionary<string, string>.Empty.Add(
                 JavascriptTransformStage.ParametersMetadataKey,
                 """{"script":"payloadText + 'cd'"}"""),
             ReceivedAtUtc = DateTimeOffset.UtcNow,

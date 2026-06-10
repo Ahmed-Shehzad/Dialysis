@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Dialysis.PDMS.Medications.Contracts;
 
@@ -40,7 +41,7 @@ public sealed class BdAlarisCqiDriver : IIvPumpDriver
         var eventCode = root.GetProperty("event").GetString() ?? "INFUSION_PROGRESS";
         var sequence = root.TryGetProperty("sequence", out var s) ? s.GetInt64() : 0L;
         var timestamp = root.TryGetProperty("timestamp", out var t) && t.ValueKind == JsonValueKind.String
-            ? DateTime.Parse(t.GetString()!, null, System.Globalization.DateTimeStyles.RoundtripKind)
+            ? DateTime.Parse(t.GetString()!, null, DateTimeStyles.RoundtripKind)
             : DateTime.UtcNow;
 
         var infusion = root.TryGetProperty("infusion", out var inf) ? inf : default;
@@ -114,7 +115,7 @@ public sealed class BdAlarisCqiDriver : IIvPumpDriver
         return prop.ValueKind switch
         {
             JsonValueKind.Number => prop.GetDecimal(),
-            JsonValueKind.String when decimal.TryParse(prop.GetString(), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var d) => d,
+            JsonValueKind.String when decimal.TryParse(prop.GetString(), NumberStyles.Number, CultureInfo.InvariantCulture, out var d) => d,
             _ => null,
         };
     }

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Dialysis.BuildingBlocks.DataProtection.AspNetCore;
 using Dialysis.BuildingBlocks.DurableCommandBus;
 using Dialysis.BuildingBlocks.DurableCommandBus.AspNetCore;
@@ -8,6 +9,7 @@ using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Hipaa;
 using Dialysis.BuildingBlocks.Hipaa.AspNetCore;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
+using Dialysis.EHR.Api.Security;
 using Dialysis.EHR.Billing;
 using Dialysis.EHR.ClinicalNotes;
 using Dialysis.EHR.Composition;
@@ -22,13 +24,14 @@ using Dialysis.EHR.Persistence;
 using Dialysis.EHR.Registration;
 using Dialysis.EHR.Scheduling;
 using Dialysis.Module.Hosting;
+using Dialysis.Module.Hosting.Telemetry;
 using Dialysis.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dialysis.EHR.Api;
 
 /// <summary>Test factory marker.</summary>
-public partial class Program
+public class Program
 {
     public static async Task Main(string[] args)
     {
@@ -110,7 +113,7 @@ public partial class Program
 
         // Patient-portal self-access gate (own-patient, plus dev-only staff impersonation). Scoped because it
         // depends on the per-request ICurrentUser.
-        builder.Services.AddScoped<Security.EhrPortalAccess>();
+        builder.Services.AddScoped<EhrPortalAccess>();
 
         // Durable command bus — third opt-in module (after PDMS PR #140, HIS PR #141).
         // RecordVitalSign and RecordAllergy are the EHR chart writes most worth durable
@@ -121,7 +124,7 @@ public partial class Program
             b.RegisterCommand<RecordVitalSignCommand, Guid>(requiredPermission: EhrPermissions.VitalsRecord);
             b.RegisterCommand<RecordAllergyCommand, Guid>(requiredPermission: EhrPermissions.AllergyRecord);
         });
-        builder.Services.Configure<Module.Hosting.Telemetry.ModuleTelemetryOptions>(o =>
+        builder.Services.Configure<ModuleTelemetryOptions>(o =>
             o.AdditionalMeters.Add(DurableCommandMetrics.MeterName));
 
         builder.Services
@@ -129,7 +132,7 @@ public partial class Program
             // Accept string-named enum payloads from the SPA (consistent with PDMS/SmartConnect);
             // otherwise System.Text.Json only binds the integer backing values and rejects names with 400.
             .AddJsonOptions(o =>
-                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         var app = builder.Build();
 

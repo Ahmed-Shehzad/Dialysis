@@ -309,20 +309,20 @@ public sealed class SessionsController : ControllerBase
         public DateOnly AccessEstablishedOn { get; init; }
         public void Deconstruct(out Guid patientId, out DateTime scheduledStartUtc, out string dialyzerModel, out int prescribedDurationMinutes, out int bloodFlowRateMlPerMin, out int dialysateFlowRateMlPerMin, out decimal dialysatePotassiumMmolPerL, out decimal dialysateCalciumMmolPerL, out decimal dialysateSodiumMmolPerL, out decimal targetUfVolumeLiters, out string anticoagulationProtocolCode, out VascularAccessKind accessKind, out string accessSite, out DateOnly accessEstablishedOn)
         {
-            patientId = this.PatientId;
-            scheduledStartUtc = this.ScheduledStartUtc;
-            dialyzerModel = this.DialyzerModel;
-            prescribedDurationMinutes = this.PrescribedDurationMinutes;
-            bloodFlowRateMlPerMin = this.BloodFlowRateMlPerMin;
-            dialysateFlowRateMlPerMin = this.DialysateFlowRateMlPerMin;
-            dialysatePotassiumMmolPerL = this.DialysatePotassiumMmolPerL;
-            dialysateCalciumMmolPerL = this.DialysateCalciumMmolPerL;
-            dialysateSodiumMmolPerL = this.DialysateSodiumMmolPerL;
-            targetUfVolumeLiters = this.TargetUfVolumeLiters;
-            anticoagulationProtocolCode = this.AnticoagulationProtocolCode;
-            accessKind = this.AccessKind;
-            accessSite = this.AccessSite;
-            accessEstablishedOn = this.AccessEstablishedOn;
+            patientId = PatientId;
+            scheduledStartUtc = ScheduledStartUtc;
+            dialyzerModel = DialyzerModel;
+            prescribedDurationMinutes = PrescribedDurationMinutes;
+            bloodFlowRateMlPerMin = BloodFlowRateMlPerMin;
+            dialysateFlowRateMlPerMin = DialysateFlowRateMlPerMin;
+            dialysatePotassiumMmolPerL = DialysatePotassiumMmolPerL;
+            dialysateCalciumMmolPerL = DialysateCalciumMmolPerL;
+            dialysateSodiumMmolPerL = DialysateSodiumMmolPerL;
+            targetUfVolumeLiters = TargetUfVolumeLiters;
+            anticoagulationProtocolCode = AnticoagulationProtocolCode;
+            accessKind = AccessKind;
+            accessSite = AccessSite;
+            accessEstablishedOn = AccessEstablishedOn;
         }
     }
 
@@ -330,14 +330,14 @@ public sealed class SessionsController : ControllerBase
     {
         public CompleteSessionRequest(decimal AchievedUfVolumeLiters) => this.AchievedUfVolumeLiters = AchievedUfVolumeLiters;
         public decimal AchievedUfVolumeLiters { get; init; }
-        public void Deconstruct(out decimal achievedUfVolumeLiters) => achievedUfVolumeLiters = this.AchievedUfVolumeLiters;
+        public void Deconstruct(out decimal achievedUfVolumeLiters) => achievedUfVolumeLiters = AchievedUfVolumeLiters;
     }
 
     public sealed record AbortSessionRequest
     {
         public AbortSessionRequest(string ReasonCode) => this.ReasonCode = ReasonCode;
         public string ReasonCode { get; init; }
-        public void Deconstruct(out string reasonCode) => reasonCode = this.ReasonCode;
+        public void Deconstruct(out string reasonCode) => reasonCode = ReasonCode;
     }
 
     public sealed record RecordAdverseEventRequest
@@ -353,9 +353,9 @@ public sealed class SessionsController : ControllerBase
         public string? Notes { get; init; }
         public void Deconstruct(out string eventKindCode, out string severity, out string? notes)
         {
-            eventKindCode = this.EventKindCode;
-            severity = this.Severity;
-            notes = this.Notes;
+            eventKindCode = EventKindCode;
+            severity = Severity;
+            notes = Notes;
         }
     }
 
@@ -389,14 +389,14 @@ public sealed class SessionsController : ControllerBase
         public string? Notes { get; init; }
         public void Deconstruct(out int systolicBloodPressure, out int diastolicBloodPressure, out int heartRateBpm, out decimal arterialPressureMmHg, out decimal venousPressureMmHg, out decimal ultrafiltrationRateMlPerHour, out decimal conductivityMsPerCm, out string? notes)
         {
-            systolicBloodPressure = this.SystolicBloodPressure;
-            diastolicBloodPressure = this.DiastolicBloodPressure;
-            heartRateBpm = this.HeartRateBpm;
-            arterialPressureMmHg = this.ArterialPressureMmHg;
-            venousPressureMmHg = this.VenousPressureMmHg;
-            ultrafiltrationRateMlPerHour = this.UltrafiltrationRateMlPerHour;
-            conductivityMsPerCm = this.ConductivityMsPerCm;
-            notes = this.Notes;
+            systolicBloodPressure = SystolicBloodPressure;
+            diastolicBloodPressure = DiastolicBloodPressure;
+            heartRateBpm = HeartRateBpm;
+            arterialPressureMmHg = ArterialPressureMmHg;
+            venousPressureMmHg = VenousPressureMmHg;
+            ultrafiltrationRateMlPerHour = UltrafiltrationRateMlPerHour;
+            conductivityMsPerCm = ConductivityMsPerCm;
+            notes = Notes;
         }
     }
 }

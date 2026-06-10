@@ -5,10 +5,13 @@ using Dialysis.BuildingBlocks.Fhir.Subscriptions.EntityFrameworkCore;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Billing.Domain;
+using Dialysis.EHR.Billing.ReadModels;
 using Dialysis.EHR.ClinicalNotes.Domain;
 using Dialysis.EHR.Integration.Domain;
+using Dialysis.EHR.Integration.ReadModels;
 using Dialysis.EHR.PatientChart.Domain;
 using Dialysis.EHR.PatientPortal.Domain;
+using Dialysis.EHR.Persistence.Configurations;
 using Dialysis.EHR.Registration.Domain;
 using Dialysis.EHR.Scheduling.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -68,12 +71,12 @@ public sealed class EhrDbContext : ModuleDbContextBase
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<CptFeeScheduleEntry> CptFeeSchedule => Set<CptFeeScheduleEntry>();
     public DbSet<ChargeIdempotencyMarker> ChargeIdempotencyMarkers => Set<ChargeIdempotencyMarker>();
-    public DbSet<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter> BillableEncounters =>
-        Set<global::Dialysis.EHR.Billing.ReadModels.BillableEncounter>();
-    public DbSet<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent> HospitalEvents =>
-        Set<global::Dialysis.EHR.Integration.ReadModels.HospitalEvent>();
-    public DbSet<global::Dialysis.EHR.Integration.ReadModels.AdverseEventRecord> AdverseEvents =>
-        Set<global::Dialysis.EHR.Integration.ReadModels.AdverseEventRecord>();
+    public DbSet<BillableEncounter> BillableEncounters =>
+        Set<BillableEncounter>();
+    public DbSet<HospitalEvent> HospitalEvents =>
+        Set<HospitalEvent>();
+    public DbSet<AdverseEventRecord> AdverseEvents =>
+        Set<AdverseEventRecord>();
 
     // Integration
     public DbSet<PharmacyTransmission> PharmacyTransmissions => Set<PharmacyTransmission>();
@@ -87,7 +90,7 @@ public sealed class EhrDbContext : ModuleDbContextBase
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        Configurations.EhrModelConfiguration.Configure(modelBuilder);
+        EhrModelConfiguration.Configure(modelBuilder);
 
         modelBuilder.ApplyConfiguration(new AuditEventRecordConfiguration());
         modelBuilder.ApplyConfiguration(new ExportJobRecordConfiguration());

@@ -1,3 +1,4 @@
+using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -46,7 +47,7 @@ public sealed class S3PresignedAttachmentDownloadUrlFactory : IAttachmentDownloa
         }
         else
         {
-            config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(opts.Region);
+            config.RegionEndpoint = RegionEndpoint.GetBySystemName(opts.Region);
         }
         _client = !string.IsNullOrEmpty(opts.AccessKey) && !string.IsNullOrEmpty(opts.SecretKey)
             ? new AmazonS3Client(opts.AccessKey, opts.SecretKey, config)

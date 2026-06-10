@@ -1,5 +1,5 @@
-using Dialysis.EHR.Contracts.Integration;
 using Dialysis.BuildingBlocks.Fhir.Mapping;
+using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Core.Coding;
 using Hl7.Fhir.Model;
 

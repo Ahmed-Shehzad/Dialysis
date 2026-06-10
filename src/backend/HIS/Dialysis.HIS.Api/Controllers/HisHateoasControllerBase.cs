@@ -19,7 +19,7 @@ public abstract class HisHateoasControllerBase : ControllerBase
         LinkTo("ra:catalog", $"/api/v{ApiVersionSegment}/reference-architecture/catalog");
 
     protected LinkDto LinkCapabilitiesIndex() =>
-        LinkTo("ra:capabilities-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities", "GET");
+        LinkTo("ra:capabilities-index", $"/api/v{ApiVersionSegment}/reference-architecture/capabilities");
 
     protected LinkDto SelfLink() =>
         new("self", $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}{Request.QueryString}", Request.Method);

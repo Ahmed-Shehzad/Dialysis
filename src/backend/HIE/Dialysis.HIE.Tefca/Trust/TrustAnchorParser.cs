@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Dialysis.HIE.Tefca.Trust;
@@ -23,7 +24,7 @@ public static class TrustAnchorParser
                 NotAfter: certificate.NotAfter.ToUniversalTime(),
                 CertificatePem: certificatePem);
         }
-        catch (Exception ex) when (ex is FormatException or System.Security.Cryptography.CryptographicException)
+        catch (Exception ex) when (ex is FormatException or CryptographicException)
         {
             throw new ArgumentException(
                 "Trust anchor PEM is not a valid X.509 certificate.", nameof(certificatePem), ex);

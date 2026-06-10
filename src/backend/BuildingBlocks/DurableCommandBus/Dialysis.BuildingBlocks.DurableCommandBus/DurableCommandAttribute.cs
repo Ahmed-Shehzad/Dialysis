@@ -6,7 +6,7 @@ namespace Dialysis.BuildingBlocks.DurableCommandBus;
 /// in still requires calling <c>RegisterCommand&lt;TCommand,TResult&gt;</c> on the durable-bus
 /// builder, since that's where the typed dispatcher closure is built.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
 public sealed class DurableCommandAttribute : Attribute
 {
     /// <summary>

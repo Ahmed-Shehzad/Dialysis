@@ -5,6 +5,6 @@ namespace Dialysis.HIS.Contracts.Security;
 /// the shared <see cref="Dialysis.Module.Contracts.Authorization.IPermissionedCommand"/> existed. Inherits from the
 /// shared abstraction so <c>Dialysis.Module.Hosting</c>'s authorization pipeline behavior recognises it.
 /// </summary>
-public interface IPermissionedCommand : Dialysis.Module.Contracts.Authorization.IPermissionedCommand
+public interface IPermissionedCommand : Module.Contracts.Authorization.IPermissionedCommand
 {
 }

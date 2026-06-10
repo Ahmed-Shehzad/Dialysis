@@ -5,16 +5,18 @@ using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Transport.RabbitMq;
 using Dialysis.Module.Hosting;
 using Dialysis.ServiceDefaults;
+using Dialysis.SmartConnect.Api.Lab;
 using Dialysis.SmartConnect.CodeTemplates;
+using Dialysis.SmartConnect.Contracts.Integration;
 using Dialysis.SmartConnect.Contracts.Security;
+using Dialysis.SmartConnect.Dicom.Persistence;
+using Dialysis.SmartConnect.Dicom.Web;
 using Dialysis.SmartConnect.Inbound;
 using Dialysis.SmartConnect.Inbound.AspNetCore;
 using Dialysis.SmartConnect.Inbound.FileReader;
 using Dialysis.SmartConnect.Inbound.Mllp;
 using Dialysis.SmartConnect.Inbound.Sftp;
 using Dialysis.SmartConnect.Inbound.Transponder;
-using Dialysis.SmartConnect.Dicom.Persistence;
-using Dialysis.SmartConnect.Dicom.Web;
 using Dialysis.SmartConnect.Management.AspNetCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore.Postgresql;
@@ -24,7 +26,7 @@ namespace Dialysis.SmartConnect.Api;
 
 
 /// <summary>Marker for <see cref="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory{TEntryPoint}"/>.</summary>
-public partial class Program
+public class Program
 {
     public static async Task Main(string[] args)
     {
@@ -69,8 +71,8 @@ public partial class Program
         // Transponder bus for the host: required by the transponder-bus outbound adapter, and carries the
         // Lab result bridge that turns a routed inbound ORU into the Lab context's typed result event.
         builder.Services.AddTransponder(t =>
-            t.AddConsumer<Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent,
-                Lab.LabResultBridgeConsumer>());
+            t.AddConsumer<SmartConnectRoutedPayloadIntegrationEvent,
+                LabResultBridgeConsumer>());
 
         // RabbitMQ transport, wired exactly like every other module (His/Ehr/Pdms/Hie/Lab) from
         // SmartConnect:Transponder:RabbitMq:* — Aspire + the deploy artifacts inject the ConnectionUri.
@@ -90,7 +92,7 @@ public partial class Program
                     if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
                     if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
                 },
-                sub => sub.Listen<Contracts.Integration.SmartConnectRoutedPayloadIntegrationEvent>());
+                sub => sub.Listen<SmartConnectRoutedPayloadIntegrationEvent>());
         }
 
         // HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.

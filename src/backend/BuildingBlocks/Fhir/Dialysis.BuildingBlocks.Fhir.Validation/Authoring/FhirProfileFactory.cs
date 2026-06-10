@@ -121,10 +121,10 @@ public sealed class FhirProfileFactory : IFhirProfileFactory
 
     private static BindingStrength ParseStrength(string? strength) => strength?.Trim().ToLowerInvariant() switch
     {
-        "required" => Hl7.Fhir.Model.BindingStrength.Required,
-        "extensible" => Hl7.Fhir.Model.BindingStrength.Extensible,
-        "preferred" => Hl7.Fhir.Model.BindingStrength.Preferred,
-        _ => Hl7.Fhir.Model.BindingStrength.Example,
+        "required" => BindingStrength.Required,
+        "extensible" => BindingStrength.Extensible,
+        "preferred" => BindingStrength.Preferred,
+        _ => BindingStrength.Example,
     };
 
     private async Task GenerateSnapshotAsync(StructureDefinition sd)

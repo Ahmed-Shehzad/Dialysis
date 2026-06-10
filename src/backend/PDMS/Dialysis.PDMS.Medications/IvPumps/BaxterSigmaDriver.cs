@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace Dialysis.PDMS.Medications.IvPumps;
@@ -34,7 +35,7 @@ public sealed class BaxterSigmaDriver : IIvPumpDriver
         var eventType = root.GetProperty("eventType").GetString() ?? "INFUSION_PROGRESS";
         var sequence = root.TryGetProperty("seq", out var s) ? s.GetInt64() : 0L;
         var timestamp = root.TryGetProperty("ts", out var t) && t.ValueKind == JsonValueKind.String
-            ? DateTime.Parse(t.GetString()!, null, System.Globalization.DateTimeStyles.RoundtripKind)
+            ? DateTime.Parse(t.GetString()!, null, DateTimeStyles.RoundtripKind)
             : DateTime.UtcNow;
 
         decimal? programmedRate = null;

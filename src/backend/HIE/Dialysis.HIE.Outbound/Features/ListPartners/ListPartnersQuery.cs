@@ -47,8 +47,5 @@ public sealed record PartnerStatusDto
 
 public sealed record ListPartnersQuery : IQuery<IReadOnlyList<PartnerStatusDto>>, IPermissionedCommand
 {
-    public ListPartnersQuery()
-    {
-    }
     public string RequiredPermission => HiePermissions.PartnersAdminister;
 }

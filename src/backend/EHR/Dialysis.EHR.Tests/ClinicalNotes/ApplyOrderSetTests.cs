@@ -1,5 +1,6 @@
 using Dialysis.CQRS;
 using Dialysis.CQRS.Commands;
+using Dialysis.CQRS.Queries;
 using Dialysis.EHR.ClinicalNotes.Domain;
 using Dialysis.EHR.ClinicalNotes.Features.OrderImagingStudy;
 using Dialysis.EHR.ClinicalNotes.Features.OrderLabTest;
@@ -85,6 +86,6 @@ public sealed class ApplyOrderSetTests
         }
 
         public Task<TResponse> SendQueryAsync<TQuery, TResponse>(TQuery query, CancellationToken cancellationToken = default)
-            where TQuery : Dialysis.CQRS.Queries.IQuery<TResponse> => throw new NotSupportedException();
+            where TQuery : IQuery<TResponse> => throw new NotSupportedException();
     }
 }

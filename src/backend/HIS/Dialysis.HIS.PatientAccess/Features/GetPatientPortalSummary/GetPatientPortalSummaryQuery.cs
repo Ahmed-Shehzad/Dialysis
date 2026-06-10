@@ -10,5 +10,5 @@ public sealed record GetPatientPortalSummaryQuery : IQuery<PatientPortalSummaryD
     public GetPatientPortalSummaryQuery(Guid PatientId) => this.PatientId = PatientId;
     public string RequiredPermission => HisPermissions.PatientPortalRead;
     public Guid PatientId { get; init; }
-    public void Deconstruct(out Guid patientId) => patientId = this.PatientId;
+    public void Deconstruct(out Guid patientId) => patientId = PatientId;
 }

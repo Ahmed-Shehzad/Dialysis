@@ -1,3 +1,5 @@
+using Hl7.Fhir.Model;
+
 namespace Dialysis.BuildingBlocks.Fhir.Subscriptions;
 
 public interface ISubscriptionRegistry
@@ -30,7 +32,7 @@ public interface ISubscriptionNotificationDispatcher
     ValueTask DispatchAsync(
         FhirSubscriptionRegistration subscription,
         IReadOnlyDictionary<string, string> payloadAttributes,
-        Hl7.Fhir.Model.Resource? payloadResource,
+        Resource? payloadResource,
         CancellationToken cancellationToken);
 }
 

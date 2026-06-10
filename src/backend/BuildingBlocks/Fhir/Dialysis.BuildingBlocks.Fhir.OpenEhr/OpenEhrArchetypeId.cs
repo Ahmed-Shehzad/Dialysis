@@ -32,8 +32,8 @@ public sealed record OpenEhrArchetypeId
     }
     public void Deconstruct(out string @namespace, out string conceptName, out int majorVersion)
     {
-        @namespace = this.Namespace;
-        conceptName = this.ConceptName;
-        majorVersion = this.MajorVersion;
+        @namespace = Namespace;
+        conceptName = ConceptName;
+        majorVersion = MajorVersion;
     }
 }

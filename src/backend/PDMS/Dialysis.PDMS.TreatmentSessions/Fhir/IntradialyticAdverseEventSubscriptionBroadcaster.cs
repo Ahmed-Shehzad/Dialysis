@@ -1,3 +1,4 @@
+using System.Net;
 using Dialysis.BuildingBlocks.Fhir.Subscriptions;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.PDMS.Contracts.Integration;
@@ -58,7 +59,7 @@ public sealed class IntradialyticAdverseEventSubscriptionBroadcaster : IConsumer
             adverseEvent.Text = new Narrative
             {
                 Status = Narrative.NarrativeStatus.Generated,
-                Div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\">{System.Net.WebUtility.HtmlEncode(ev.Notes)}</div>",
+                Div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\">{WebUtility.HtmlEncode(ev.Notes)}</div>",
             };
         }
 

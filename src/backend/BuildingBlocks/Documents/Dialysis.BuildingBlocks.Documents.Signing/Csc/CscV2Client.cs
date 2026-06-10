@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Distributed;
@@ -55,7 +56,7 @@ public sealed class CscV2Client
         ArgumentException.ThrowIfNullOrWhiteSpace(credentialId);
         var access = await GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
         using var message = new HttpRequestMessage(HttpMethod.Post, ResolveUri("credentials/info"));
-        message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access);
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", access);
         message.Content = JsonContent.Create(new CredentialInfoRequest(credentialId, Certificates: "chain", CertInfo: true, AuthInfo: true));
         using var response = await _httpClient.SendAsync(message, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
@@ -78,7 +79,7 @@ public sealed class CscV2Client
         var sad = await AuthorizeCredentialAsync(credentialId, access, cancellationToken).ConfigureAwait(false);
 
         using var signMessage = new HttpRequestMessage(HttpMethod.Post, ResolveUri("signatures/signHash"));
-        signMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access);
+        signMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", access);
         signMessage.Content = JsonContent.Create(new SignHashRequest(
             CredentialId: credentialId,
             Sad: sad,
@@ -97,7 +98,7 @@ public sealed class CscV2Client
     private async Task<string> AuthorizeCredentialAsync(string credentialId, string accessToken, CancellationToken cancellationToken)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, ResolveUri("credentials/authorize"));
-        message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         message.Content = JsonContent.Create(new AuthorizeRequest(credentialId, NumSignatures: 1));
         using var response = await _httpClient.SendAsync(message, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();

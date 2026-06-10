@@ -1,7 +1,7 @@
+using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.EHR.Contracts.Integration;
 using Dialysis.HIE.Core.Abstraction.Consent;
-using Dialysis.BuildingBlocks.Fhir.Mapping;
 using Dialysis.HIE.Outbound.CareSummary;
 using Dialysis.HIE.Outbound.Dispatch;
 using Dialysis.HIE.Outbound.Mappers;
@@ -21,7 +21,7 @@ public sealed class EncounterOpenedConsumer : IConsumer<EncounterOpenedIntegrati
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<EncounterOpenedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<EncounterOpenedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
@@ -83,11 +83,11 @@ public sealed class ClinicalNoteSignedConsumer : IConsumer<ClinicalNoteSignedInt
         _writer = writer;
         _mapper = mapper;
     }
-    public System.Threading.Tasks.Task HandleAsync(ConsumeContext<ClinicalNoteSignedIntegrationEvent> context) =>
+    public Task HandleAsync(ConsumeContext<ClinicalNoteSignedIntegrationEvent> context) =>
         _writer.EnqueueAsync(
             context.Message,
             context.Message.PatientId,
-            (IFhirResourceMapper<ClinicalNoteSignedIntegrationEvent, DocumentReference>)_mapper,
+            _mapper,
             ConsentScopes.ClinicalNotes,
             cancellationToken: context.CancellationToken);
 }

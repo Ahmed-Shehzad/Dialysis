@@ -1,7 +1,9 @@
+using System.Collections;
 using System.Collections.Immutable;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Xunit;
 
@@ -128,7 +130,7 @@ public sealed class DatabaseOutboundAdapterTests
             }
             """;
         var attack = "'; DROP TABLE users; --";
-        var msg = Build(json, System.Text.Encoding.UTF8.GetBytes(attack));
+        var msg = Build(json, Encoding.UTF8.GetBytes(attack));
 
         var result = await adapter.SendAsync(msg, 0, CancellationToken.None);
 
@@ -299,9 +301,9 @@ public sealed class DatabaseOutboundAdapterTests
 
         public override bool Contains(string value) => IndexOf(value) >= 0;
 
-        public override void CopyTo(Array array, int index) => ((System.Collections.ICollection)_items).CopyTo(array, index);
+        public override void CopyTo(Array array, int index) => ((ICollection)_items).CopyTo(array, index);
 
-        public override System.Collections.IEnumerator GetEnumerator() => _items.GetEnumerator();
+        public override IEnumerator GetEnumerator() => _items.GetEnumerator();
 
         public override int IndexOf(object value) => _items.IndexOf((DbParameter)value);
 

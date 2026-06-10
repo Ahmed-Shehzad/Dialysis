@@ -15,7 +15,7 @@ public static class HisTransponderOutboxEnvelope
     {
         ArgumentNullException.ThrowIfNull(integrationEvent);
         var type = integrationEvent.GetType();
-        var json = JsonSerializer.Serialize((object)integrationEvent, type, _jsonOptions);
+        var json = JsonSerializer.Serialize(integrationEvent, type, _jsonOptions);
         var aq = type.AssemblyQualifiedName ?? type.FullName ?? type.Name;
         return new TransponderOutboxEnvelope(aq, json, Id: integrationEvent.EventId);
     }
