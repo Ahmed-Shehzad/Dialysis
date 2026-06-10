@@ -3,9 +3,20 @@ namespace Dialysis.SmartConnect.Prescription;
 /// <summary>
 /// Therapy modality from IG Table 2 — <c>MDC_HDIALY_MACH_TX_MODALITY</c>. The IG
 /// covers <c>HD</c> (haemodialysis), <c>HF</c> (haemofiltration), and <c>HDF</c>
-/// (haemodiafiltration). The basic prescription wire layout differs between HD (fluid
-/// channel <c>1.1.4</c>) and HF (convective channel <c>1.1.4</c>); the responder
-/// branches on this value.
+/// (haemodiafiltration). Channel expectations per modality:
+/// <list type="bullet">
+///   <item><c>HD</c> — diffusive: dialysate fluid channel required, no substitution fluid.</item>
+///   <item><c>HF</c> — primarily convective: substitution/replacement fluid required;
+///     dialysate is absent or minimal (the model allows a minimal dialysate section).</item>
+///   <item><c>HDF</c> — diffusive + convective: both dialysate <b>and</b> substitution
+///     fluid required.</item>
+/// </list>
+/// The model stays protocol-neutral; each channel is mapped outward independently as
+/// IEEE 11073 MDC-coded observation rows (see <see cref="Hl7V2RxResponseBuilder"/>) rather
+/// than one monolithic per-modality payload. Consistency between modality and the channels
+/// actually present is surfaced via
+/// <see cref="PrescriptionDocument.GetModalityConsistencyWarnings"/> — warnings, not
+/// refusals, so a machine query is always answered with whatever the prescription carries.
 /// </summary>
 public enum TherapyModality
 {
@@ -98,18 +109,61 @@ public sealed record UltrafiltrationSettings
 }
 
 /// <summary>
-/// The model the prescription resolver returns. Maps 1:1 to the OBX hierarchy in the
-/// IG §5.4.2 sample. Profile-based therapies and HF / HDF wires are not yet modelled —
-/// when modality &gt; HD, the responder emits the basic frame and logs a TODO so
-/// integrators can spot the gap.
+/// Substitution / replacement fluid channel — the convective leg of HF and HDF. Absent
+/// for plain HD. <c>DilutionMode</c> is the infusion point relative to the filter
+/// (<c>PRE</c> / <c>POST</c> per IG conventions, kept as a string like the other mode
+/// fields so the model stays protocol-neutral).
+/// </summary>
+public sealed record SubstitutionFluidSettings
+{
+    /// <summary>
+    /// Substitution / replacement fluid channel — the convective leg of HF and HDF. Absent
+    /// for plain HD. <c>DilutionMode</c> is the infusion point relative to the filter
+    /// (<c>PRE</c> / <c>POST</c> per IG conventions, kept as a string like the other mode
+    /// fields so the model stays protocol-neutral).
+    /// </summary>
+    public SubstitutionFluidSettings(string DilutionMode,
+        int FlowRateMlPerMin,
+        int TargetVolumeMl,
+        string FluidName)
+    {
+        this.DilutionMode = DilutionMode;
+        this.FlowRateMlPerMin = FlowRateMlPerMin;
+        this.TargetVolumeMl = TargetVolumeMl;
+        this.FluidName = FluidName;
+    }
+    public string DilutionMode { get; init; }
+    public int FlowRateMlPerMin { get; init; }
+    public int TargetVolumeMl { get; init; }
+    public string FluidName { get; init; }
+    public void Deconstruct(out string DilutionMode, out int FlowRateMlPerMin, out int TargetVolumeMl, out string FluidName)
+    {
+        DilutionMode = this.DilutionMode;
+        FlowRateMlPerMin = this.FlowRateMlPerMin;
+        TargetVolumeMl = this.TargetVolumeMl;
+        FluidName = this.FluidName;
+    }
+}
+
+/// <summary>
+/// The model the prescription resolver returns. Protocol-neutral: each channel section is
+/// optional and maps outward independently as IEEE 11073 MDC-coded observation rows (the
+/// OBX hierarchy of IG §5.4.2) — HF and HDF are expressed through which channels are
+/// present (HF: substitution fluid, dialysate absent/minimal; HDF: dialysate + substitution
+/// fluid), not through per-modality payload shapes. FHIR remains the clinical-system
+/// exchange boundary (HIE); this model serves the device-side HL7v2 / 11073 family only.
+/// Profile-driven UF (linear / exponential / step per IG §5.3) is still a future slice.
 /// </summary>
 public sealed record PrescriptionDocument
 {
     /// <summary>
-    /// The model the prescription resolver returns. Maps 1:1 to the OBX hierarchy in the
-    /// IG §5.4.2 sample. Profile-based therapies and HF / HDF wires are not yet modelled —
-    /// when modality &gt; HD, the responder emits the basic frame and logs a TODO so
-    /// integrators can spot the gap.
+    /// The model the prescription resolver returns. Protocol-neutral: each channel section is
+    /// optional and maps outward independently as IEEE 11073 MDC-coded observation rows (the
+    /// OBX hierarchy of IG §5.4.2) — HF and HDF are expressed through which channels are
+    /// present (HF: substitution fluid, dialysate absent/minimal; HDF: dialysate + substitution
+    /// fluid), not through per-modality payload shapes. FHIR remains the clinical-system
+    /// exchange boundary (HIE); this model serves the device-side HL7v2 / 11073 family only.
+    /// Profile-driven UF (linear / exponential / step per IG §5.3) is still a future slice.
     /// </summary>
     public PrescriptionDocument(string MedicalRecordNumber,
         string OrderNumber,
@@ -120,7 +174,8 @@ public sealed record PrescriptionDocument
         string TherapyCompletionMethod,
         BloodPumpSettings BloodPump,
         DialysateFluidSettings? Dialysate,
-        UltrafiltrationSettings Ultrafiltration)
+        UltrafiltrationSettings Ultrafiltration,
+        SubstitutionFluidSettings? SubstitutionFluid = null)
     {
         this.MedicalRecordNumber = MedicalRecordNumber;
         this.OrderNumber = OrderNumber;
@@ -132,6 +187,7 @@ public sealed record PrescriptionDocument
         this.BloodPump = BloodPump;
         this.Dialysate = Dialysate;
         this.Ultrafiltration = Ultrafiltration;
+        this.SubstitutionFluid = SubstitutionFluid;
     }
     public string MedicalRecordNumber { get; init; }
     public string OrderNumber { get; init; }
@@ -143,7 +199,43 @@ public sealed record PrescriptionDocument
     public BloodPumpSettings BloodPump { get; init; }
     public DialysateFluidSettings? Dialysate { get; init; }
     public UltrafiltrationSettings Ultrafiltration { get; init; }
-    public void Deconstruct(out string MedicalRecordNumber, out string OrderNumber, out string? OrderingProviderId, out string? OrderingProviderFamily, out string? OrderingProviderGiven, out TherapyModality Modality, out string TherapyCompletionMethod, out BloodPumpSettings BloodPump, out DialysateFluidSettings? Dialysate, out UltrafiltrationSettings Ultrafiltration)
+    public SubstitutionFluidSettings? SubstitutionFluid { get; init; }
+
+    /// <summary>
+    /// Modality ↔ channel consistency check: HD expects dialysate and no substitution fluid;
+    /// HF requires substitution fluid (dialysate optional — primarily convective, so absent
+    /// or minimal is fine); HDF requires both. Returns human-readable warnings instead of
+    /// throwing — the responder always answers the machine with the channels that exist,
+    /// and integrators surface the warnings through the channel ledger / logs.
+    /// </summary>
+    public IReadOnlyList<string> GetModalityConsistencyWarnings()
+    {
+        var warnings = new List<string>();
+        switch (Modality)
+        {
+            case TherapyModality.Hd:
+                if (Dialysate is null)
+                    warnings.Add("HD prescription has no dialysate fluid channel — diffusive therapy needs one.");
+                if (SubstitutionFluid is not null)
+                    warnings.Add("HD prescription carries a substitution fluid channel — substitution fluid belongs to HF/HDF.");
+                break;
+            case TherapyModality.Hf:
+                if (SubstitutionFluid is null)
+                    warnings.Add("HF prescription has no substitution fluid channel — the convective dose is undefined without one.");
+                break;
+            case TherapyModality.Hdf:
+                if (Dialysate is null)
+                    warnings.Add("HDF prescription has no dialysate fluid channel — HDF needs both dialysate and substitution fluid.");
+                if (SubstitutionFluid is null)
+                    warnings.Add("HDF prescription has no substitution fluid channel — HDF needs both dialysate and substitution fluid.");
+                break;
+            default:
+                break;
+        }
+        return warnings;
+    }
+
+    public void Deconstruct(out string MedicalRecordNumber, out string OrderNumber, out string? OrderingProviderId, out string? OrderingProviderFamily, out string? OrderingProviderGiven, out TherapyModality Modality, out string TherapyCompletionMethod, out BloodPumpSettings BloodPump, out DialysateFluidSettings? Dialysate, out UltrafiltrationSettings Ultrafiltration, out SubstitutionFluidSettings? SubstitutionFluid)
     {
         MedicalRecordNumber = this.MedicalRecordNumber;
         OrderNumber = this.OrderNumber;
@@ -155,5 +247,6 @@ public sealed record PrescriptionDocument
         BloodPump = this.BloodPump;
         Dialysate = this.Dialysate;
         Ultrafiltration = this.Ultrafiltration;
+        SubstitutionFluid = this.SubstitutionFluid;
     }
 }
