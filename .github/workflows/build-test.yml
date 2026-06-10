@@ -82,11 +82,20 @@ jobs:
 
       # One NUKE invocation. ShowVersion runs first as a fail-fast gate — it asserts GitVersion
       # could derive a version (so a broken git state fails up front, not as a silently
-      # mis-versioned package), then Restore → Compile runs once, then both Test (full suite
-      # incl. architecture gates) and Pack (NuGet packaging, stamped with the derived version).
+      # mis-versioned package), then Restore → Compile runs once, then Test (full suite incl.
+      # architecture gates, collecting per-project Cobertura coverage), CoverageReport
+      # (aggregates into artifacts/coverage; --min-coverage defaults to 0 = report-only until a
+      # baseline is ratcheted in), and Pack (NuGet packaging, stamped with the derived version).
       # Test failing stops the build before Pack.
-      - name: Show version + Test + Pack (Release) via NUKE
-        run: ./build.sh ShowVersion Test Pack --configuration Release
+      - name: Show version + Test + Coverage + Pack (Release) via NUKE
+        run: ./build.sh ShowVersion Test CoverageReport Pack --configuration Release
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f artifacts/coverage/SummaryGithub.md ]; then
+            cat artifacts/coverage/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload test results
         if: always()
@@ -94,6 +103,14 @@ jobs:
         with:
           name: test-results
           path: artifacts/test-results
+          if-no-files-found: warn
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: artifacts/coverage
           if-no-files-found: warn
 
       - name: Upload NuGet packages

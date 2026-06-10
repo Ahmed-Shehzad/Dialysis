@@ -1,3 +1,4 @@
+// Intentionally diverges from the shared copy (ehr/pdms/identity): mocks hie-web's own patientDirectoryApi backing module instead of @/features/ehr/api/ehrApi.
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PatientLabel } from "./patientDirectoryApi";
 

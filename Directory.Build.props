@@ -21,4 +21,13 @@
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
     <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all" />
   </ItemGroup>
+
+  <!--
+    Coverage collection: every test project (anything named *Tests*) gets coverlet.collector so
+    the NUKE Test target's "XPlat Code Coverage" data collector emits a Cobertura file per
+    project under artifacts/test-results; the CoverageReport target aggregates them.
+  -->
+  <ItemGroup Condition="$(MSBuildProjectName.Contains('Tests'))">
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

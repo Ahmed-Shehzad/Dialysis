@@ -26,6 +26,7 @@
       "enum": [
         "Clean",
         "Compile",
+        "CoverageReport",
         "InstallGitHooks",
         "Pack",
         "Publish",
@@ -34,6 +35,7 @@
         "PublishCompose",
         "PublishDeployArtifacts",
         "PublishKubernetes",
+        "PushImages",
         "Restore",
         "ShowVersion",
         "Test"
@@ -122,6 +124,11 @@
           "type": "string",
           "description": "Deployment environment for PublishCompose — one of dev / staging / prod. Default: prod"
         },
+        "MinCoverage": {
+          "type": "number",
+          "description": "Minimum line-coverage percentage CoverageReport enforces (0–100). Default 0 = report-only; ratchet upward once a baseline is established",
+          "format": "double"
+        },
         "NuGetApiKey": {
           "type": "string",
           "description": "NuGet API key for Publish",
@@ -130,6 +137,10 @@
         "NuGetSource": {
           "type": "string",
           "description": "NuGet feed Publish pushes to"
+        },
+        "Registry": {
+          "type": "string",
+          "description": "Container registry + repository prefix PushImages publishes to — e.g. mycompany.jfrog.io/dialysis-docker (a Docker repository on JFrog Artifactory / JFrog Container Registry) or ghcr.io/myorg. Authenticate first: `docker login <registry host>` (JFrog: username + identity token)"
         },
         "Version": {
           "type": "string",

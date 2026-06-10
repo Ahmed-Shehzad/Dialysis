@@ -27,6 +27,13 @@ spec:
             - name: "tcp"
               protocol: "TCP"
               containerPort: 5432
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
           volumeMounts:
             - name: "dialysis-postgres-smartconnect-data"
               mountPath: "/var/lib/postgresql/data"

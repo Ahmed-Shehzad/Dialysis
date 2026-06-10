@@ -1,0 +1,83 @@
+---
+# Prometheus alert rules for the per-module HTTP (RED) surface and the Transponder outbox
+# relay. Apply alongside the cluster's kube-prometheus-stack install:
+#   kubectl apply -n monitoring -f deploy/k8s/observability/alerts/module-overview.yaml
+#
+# HTTP metrics come from the OTel ASP.NET Core instrumentation every module host wires via
+# ModuleTelemetryExtensions (http.server.request.duration → http_server_request_duration_seconds
+# through the OTLP → Prometheus pipeline; the OTel resource service.name lands on the `job`
+# label). Outbox metrics come from TransponderOutboxMetrics ("Dialysis.Transponder.Outbox").
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dialysis-module-overview
+  labels:
+    app.kubernetes.io/name: dialysis
+    app.kubernetes.io/component: module-overview
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: dialysis.module-overview
+    interval: 30s
+    rules:
+    - alert: ModuleHighServerErrorRatio
+      # >5% of requests answering 5xx for 10 minutes is a slice bug or a dependency outage,
+      # not noise — the per-module readiness probes (Postgres/RabbitMQ) and the gateway access
+      # logs are the first places to look.
+      expr: |
+        (
+          sum by (job) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+          /
+          sum by (job) (rate(http_server_request_duration_seconds_count[5m]))
+        ) > 0.05
+      for: 10m
+      labels: { severity: critical, component: module-overview }
+      annotations:
+        summary: "{{ $labels.job }} is failing more than 5% of requests"
+        description: |
+          {{ $labels.job }} has answered more than 5% of HTTP requests with a 5xx for 10 minutes.
+          Check /health/ready (it now verifies Postgres + RabbitMQ), recent deploys, and the
+          module's exception logs.
+
+    - alert: ModuleHighP99Latency
+      # Clinical UIs sit on these APIs; a sustained p99 above 2s is user-visible chairside.
+      expr: |
+        histogram_quantile(0.99,
+          sum by (job, le) (rate(http_server_request_duration_seconds_bucket[5m]))
+        ) > 2
+      for: 10m
+      labels: { severity: warning, component: module-overview }
+      annotations:
+        summary: "{{ $labels.job }} p99 latency above 2s"
+        description: |
+          {{ $labels.job }} has had a p99 request latency above 2 seconds for 10 minutes.
+          Check DB tier saturation (PgBouncer pool waits), HPA replica count, and slow-query logs.
+
+    - alert: TransponderOutboxRelayLagging
+      # The oldest unprocessed outbox row is aging — integration events are not leaving the
+      # module. Either the relay isn't running, the broker is down, or a poison row is blocking
+      # the (ordered) batch head: the relay logs the failing row id on every retry.
+      expr: |
+        max by (context) (dialysis_transponder_outbox_oldest_pending_age_seconds) > 300
+      for: 10m
+      labels: { severity: critical, component: module-overview }
+      annotations:
+        summary: "Outbox relay lagging on {{ $labels.context }}"
+        description: |
+          The oldest unprocessed outbox row on {{ $labels.context }} has been pending for more
+          than 5 minutes. Cross-module flows (HIS→EHR billing, PDMS→HIE exchange, …) are stalled
+          for this module. Check the relay host's logs for the failing row id and RabbitMQ health.
+
+    - alert: TransponderOutboxPublishFailures
+      # Sustained publish failures with a healthy broker usually mean a serialization bug or a
+      # poison row at the batch head (the relay stops the batch on first failure by design).
+      expr: |
+        sum by (context) (rate(dialysis_transponder_outbox_failed_total[5m])) > 0
+      for: 15m
+      labels: { severity: warning, component: module-overview }
+      annotations:
+        summary: "Outbox publishes failing on {{ $labels.context }}"
+        description: |
+          {{ $labels.context }} has had outbox publish failures for 15 minutes. The relay retries
+          the same (oldest) row each poll, so a single poison row blocks everything behind it —
+          the error log carries the row id.

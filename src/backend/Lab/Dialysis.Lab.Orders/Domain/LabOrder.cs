@@ -68,10 +68,15 @@ public sealed class LabOrder : AggregateRoot<Guid>
             throw new DomainException("LabOrder requires the placing clinician.");
 
         var id = Guid.CreateVersion7();
+        // PlacerOrderNumber is unique-indexed (UX_LabOrders_PlacerOrderNumber) and capped at 32
+        // chars. A v7 GUID's first 12 hex chars are only the 48-bit millisecond timestamp — two
+        // orders placed in the same millisecond would collide — so pair the time-sortable prefix
+        // with the GUID's 64-bit random tail: "LAB-" + 12 timestamp + 16 random = 32 chars.
+        var hex = id.ToString("N").ToUpperInvariant();
         var order = new LabOrder(id)
         {
             PatientId = patientId,
-            PlacerOrderNumber = "LAB-" + id.ToString("N")[..12].ToUpperInvariant(),
+            PlacerOrderNumber = "LAB-" + hex[..12] + hex[^16..],
             Priority = priority,
             Specimen = string.IsNullOrWhiteSpace(specimen) ? null : specimen.Trim(),
             Status = LabOrderStatus.Placed,

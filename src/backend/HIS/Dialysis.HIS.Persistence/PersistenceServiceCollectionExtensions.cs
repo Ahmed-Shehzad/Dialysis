@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
 using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.DomainDrivenDesign.CompositionRoot;
@@ -13,6 +14,7 @@ using Dialysis.HIS.Operations.Domain.Services;
 using Dialysis.HIS.Operations.Ports;
 using Dialysis.HIS.PatientAccess.Ports;
 using Dialysis.HIS.PatientFlow.Ports;
+using Dialysis.HIS.Persistence.DataSubjectRights;
 using Dialysis.HIS.Persistence.Erasure;
 using Dialysis.HIS.Persistence.Repositories;
 using Dialysis.HIS.RaCapabilities.Ports;
@@ -59,6 +61,8 @@ public static class PersistenceServiceCollectionExtensions
             services.AddTransponderEfOutboxAndInbox<HisDbContext>();
             services.AddScoped<IPatientEraser,
                 HisPatientEraser>();
+            services.AddScoped<IModuleDataExtractor,
+                HisModuleDataExtractor>();
 
             services.AddScoped<IStaffRepository, EfStaffRepository>();
             services.AddScoped<IInventoryRepository, EfInventoryRepository>();

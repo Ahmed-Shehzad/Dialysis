@@ -25,13 +25,20 @@ spec:
             - name: "http"
               protocol: "TCP"
               containerPort: 9090
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
           imagePullPolicy: "IfNotPresent"
   selector:
     matchLabels:
       app.kubernetes.io/name: "{{ .Chart.Name }}"
       app.kubernetes.io/component: "gateway"
       app.kubernetes.io/instance: "{{ .Release.Name }}"
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 3
   strategy:
     rollingUpdate:

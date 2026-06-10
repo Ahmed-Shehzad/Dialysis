@@ -136,7 +136,7 @@ function buildGraph(
     nodes.push({
       id: filterIds[idx]!,
       position: { x: COLUMN_X.filter, y: idx * ROW_HEIGHT },
-      data: { label: <NodeBody kind={slot.kind} role="Route filter" /> },
+      data: { label: <NodeBody kind={slot.kind} stageRole="Route filter" /> },
       style: nodeStyle("#1e293b", selectedNodeId === filterIds[idx]),
     });
   });
@@ -146,7 +146,7 @@ function buildGraph(
     nodes.push({
       id: transformIds[idx]!,
       position: { x: COLUMN_X.transform, y: idx * ROW_HEIGHT },
-      data: { label: <NodeBody kind={slot.kind} role="Transform" /> },
+      data: { label: <NodeBody kind={slot.kind} stageRole="Transform" /> },
       style: nodeStyle("#1e293b", selectedNodeId === transformIds[idx]),
     });
   });
@@ -156,7 +156,7 @@ function buildGraph(
     nodes.push({
       id: outboundIds[idx]!,
       position: { x: COLUMN_X.outbound, y: idx * ROW_HEIGHT },
-      data: { label: <NodeBody kind={slot.kind} role="Outbound route" /> },
+      data: { label: <NodeBody kind={slot.kind} stageRole="Outbound route" /> },
       style: nodeStyle("#172033", selectedNodeId === outboundIds[idx]),
     });
   });
@@ -217,10 +217,12 @@ function makeEdge(id: string, source: string, target: string): Edge {
   };
 }
 
-function NodeBody({ kind, role }: { kind: string; role: string }): JSX.Element {
+// `stageRole`, not `role`: a `role` prop on a JSX element is reserved for ARIA roles
+// (jsx-a11y/aria-role), and these are pipeline-stage captions, not ARIA roles.
+function NodeBody({ kind, stageRole }: { kind: string; stageRole: string }): JSX.Element {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-wider text-slate-400">{role}</span>
+      <span className="text-[10px] uppercase tracking-wider text-slate-400">{stageRole}</span>
       <strong className="text-xs text-slate-100">{kind}</strong>
     </div>
   );

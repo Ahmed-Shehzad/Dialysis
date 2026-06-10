@@ -72,6 +72,12 @@ public static class ModuleTelemetryExtensions
                 {
                     m.AddAspNetCoreInstrumentation();
                     m.AddHttpClientInstrumentation();
+                    // Transponder outbox relay metrics (published/failed counters + oldest-pending-age
+                    // gauge) — registered centrally so every module that flips EnableOutboxRelay is
+                    // observable without per-host wiring; hosts without the relay just emit nothing.
+                    // String literal: Module.Hosting must not reference Transponder persistence — the
+                    // name is the stable contract (TransponderOutboxMetrics.MeterName).
+                    m.AddMeter("Dialysis.Transponder.Outbox");
                     foreach (var meter in options.AdditionalMeters)
                         m.AddMeter(meter);
 

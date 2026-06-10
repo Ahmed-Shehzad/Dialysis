@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { ThemeProvider } from "@/features/theme/ThemeProvider";
+import { ErrorBoundary } from "@/shared/ErrorBoundary";
 import { PatientContextProvider } from "@/shell/PatientContextProvider";
 
 const buildQueryClient = () =>
@@ -27,18 +28,20 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
   const [client] = useState(buildQueryClient);
 
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={client}>
-        <BrowserRouter
-          basename="/admin"
-          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        >
-          <AuthProvider>
-            <PatientContextProvider>{children}</PatientContextProvider>
-          </AuthProvider>
-        </BrowserRouter>
-        <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
-      </QueryClientProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <QueryClientProvider client={client}>
+          <BrowserRouter
+            basename="/admin"
+            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          >
+            <AuthProvider>
+              <PatientContextProvider>{children}</PatientContextProvider>
+            </AuthProvider>
+          </BrowserRouter>
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };

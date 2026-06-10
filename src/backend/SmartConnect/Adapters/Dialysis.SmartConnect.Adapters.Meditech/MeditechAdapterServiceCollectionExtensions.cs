@@ -15,7 +15,7 @@ public static class MeditechAdapterServiceCollectionExtensions
         {
             services.AddOptions<MeditechAdapterOptions>().Bind(meditechSection);
             services.AddVendorAdapterTokenAcquirer();
-            services.AddHttpClient("Meditech");
+            services.AddResilientVendorHttpClient("Meditech");
             services.AddSingleton<MeditechAuthProvider>();
             services.AddSingleton<IExternalEhrAuthProvider>(sp => sp.GetRequiredService<MeditechAuthProvider>());
             services.AddSingleton<MeditechFhirAdapter>();

@@ -1,9 +1,13 @@
+using Dialysis.BuildingBlocks.DataProtection.DataSubjectRights;
+using Dialysis.BuildingBlocks.DataProtection.Erasure;
 using Dialysis.BuildingBlocks.Fhir.Terminology;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.BuildingBlocks.Transponder.Persistence.EntityFrameworkCore;
 using Dialysis.Lab.Contracts.IntegrationEvents;
 using Dialysis.Lab.Orders.Consumers;
 using Dialysis.Lab.Persistence;
+using Dialysis.Lab.Persistence.DataSubjectRights;
+using Dialysis.Lab.Persistence.Erasure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +31,13 @@ public static class LaboratoryServiceCollectionExtensions
         _ = configuration;
 
         services.AddLabPersistence(configurePersistence);
+
+        // GDPR data-subject rights: the Art. 17 eraser soft-deletes the patient's lab orders;
+        // the Art. 15/20 extractor reads the same rows into the cross-module export bundle.
+        services.AddScoped<IPatientEraser,
+            LabPatientEraser>();
+        services.AddScoped<IModuleDataExtractor,
+            LabModuleDataExtractor>();
 
         // Governed terminology so the result consumer can validate/normalise observation codes
         // (LOINC panel + local→LOINC concept map) before recording them on the order.

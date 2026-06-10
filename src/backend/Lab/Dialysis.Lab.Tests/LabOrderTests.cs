@@ -17,6 +17,21 @@ public sealed class LabOrderTests
         LabOrder.Place(_patient, _tests, LabOrderPriority.Routine, "Serum", "dr.grey", DateTime.UtcNow);
 
     [Fact]
+    public void Place_Generates_Distinct_Order_Numbers_Within_The_Same_Millisecond()
+    {
+        // Regression: the number used to be derived from the v7 GUID's first 12 hex chars —
+        // exactly the millisecond timestamp — so same-millisecond orders collided on the
+        // unique index. It now appends the GUID's 64-bit random tail.
+        var now = DateTime.UtcNow;
+        var numbers = Enumerable.Range(0, 100)
+            .Select(_ => LabOrder.Place(_patient, _tests, LabOrderPriority.Routine, null, "dr.grey", now).PlacerOrderNumber)
+            .ToList();
+
+        numbers.ShouldAllBe(n => n.StartsWith("LAB-", StringComparison.Ordinal) && n.Length == 32);
+        numbers.Distinct().Count().ShouldBe(numbers.Count);
+    }
+
+    [Fact]
     public void Place_Creates_A_Placed_Order_And_Raises_The_Event()
     {
         var order = Place();

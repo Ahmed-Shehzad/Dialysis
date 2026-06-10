@@ -28,6 +28,7 @@ public sealed class ReportsController : ControllerBase
     private readonly IReportBlobStore _blobs;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _clock;
+    private readonly ILogger<ReportsController> _logger;
     /// <summary>
     /// Read-only HTTP surface for the SessionReport + ReportTemplate aggregates.
     /// <list type="bullet">
@@ -43,13 +44,15 @@ public sealed class ReportsController : ControllerBase
         IPdmsRepository<ReportTemplate, Guid> templates,
         IReportBlobStore blobs,
         IUnitOfWork unitOfWork,
-        TimeProvider clock)
+        TimeProvider clock,
+        ILogger<ReportsController> logger)
     {
         _reports = reports;
         _templates = templates;
         _blobs = blobs;
         _unitOfWork = unitOfWork;
         _clock = clock;
+        _logger = logger;
     }
     [HttpGet("sessions/{sessionId:guid}/reports")]
     [ProducesResponseType(typeof(IReadOnlyList<SessionReportDto>), StatusCodes.Status200OK)]
@@ -85,7 +88,14 @@ public sealed class ReportsController : ControllerBase
             return NotFound();
         var bytes = await _blobs.ReadAsync(report.StorageRef, cancellationToken).ConfigureAwait(false);
         if (bytes is null)
+        {
+            // The report row claims a generated artifact but the blob is gone — that's a storage
+            // integrity problem, not a routine miss, so leave a trace before the deliberate 404.
+            _logger.LogWarning(
+                "Report {ReportId} references storage ref {StorageRef} but the blob could not be read.",
+                reportId, report.StorageRef);
             return NotFound();
+        }
         return File(bytes, report.Format, $"{report.Kind.ToString().ToLowerInvariant()}-{report.SessionId:N}.pdf");
     }
 
@@ -146,7 +156,11 @@ public sealed class ReportsController : ControllerBase
             return NotFound();
         try
         { template.Publish(request.VersionNumber); }
-        catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Rejected publish of template {Slug} v{Version}: {Reason}", slug, request.VersionNumber, ex.Message);
+            return BadRequest(ex.Message);
+        }
         _templates.Update(template);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Ok(ReportTemplateDto.From(template));

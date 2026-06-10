@@ -10,9 +10,13 @@ namespace Dialysis.SmartConnect.Prescription;
 /// </summary>
 /// <remarks>
 /// Implemented to faithfully reproduce IG §5.4.2 (HD with basic constant-UF) and §5.4.4
-/// (no-prescription response). HF / HDF wire variants + UF profiles (linear /
-/// exponential / step per IG §5.3) are deliberately out of scope for this slice — the
-/// responder logs a TODO marker if asked to emit a non-HD modality.
+/// (no-prescription response). HF and HDF are expressed through channel presence, not a
+/// different frame shape: the dialysate fluid channel (<c>1.1.4</c>) is emitted when the
+/// prescription carries one (HD always, HDF always, HF rarely — convective therapy runs
+/// with absent or minimal dialysate) and the substitution/replacement fluid channel
+/// (<c>1.1.6</c>) is emitted for the convective modalities (HF, HDF). Every channel is an
+/// independent run of MDC-coded OBX observation rows — no monolithic per-modality payload.
+/// UF profiles (linear / exponential / step per IG §5.3) remain a future slice.
 /// </remarks>
 public static class Hl7V2RxResponseBuilder
 {
@@ -108,7 +112,9 @@ public static class Hl7V2RxResponseBuilder
         Obx(sb, ref setIdx, "ST", "158604^MDC_HDIALY_BLD_PUMP_MODE^MDC", "1.1.3.2",
             value: doc.BloodPump.PumpMode);
 
-        // Fluid channel (1.1.4) for HD. HF / HDF use different OBXs — emitted below if Dialysate is null.
+        // Dialysate fluid channel (1.1.4) — present for HD/HDF; HF is primarily convective,
+        // so this channel is usually absent (or minimal) there. Channel presence follows the
+        // document, never the modality switch.
         if (doc.Dialysate is { } fluid)
         {
             Obx(sb, ref setIdx, "ST", "70951^MDC_DEV_HDIALY_FLUID_CHAN^MDC", "1.1.4");
@@ -135,6 +141,25 @@ public static class Hl7V2RxResponseBuilder
         Obx(sb, ref setIdx, "NM", "159028^MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE^MDC", "1.1.5.3",
             value: doc.Ultrafiltration.TargetVolumeToRemoveMl.ToString(CultureInfo.InvariantCulture),
             units: "ml^ml^UCUM");
+
+        // Substitution / replacement fluid channel (1.1.6) — the convective leg of HF and HDF.
+        // Same observation-stream idiom as the other channels; the `0^…^MDC` code numbers
+        // follow this file's existing placeholder convention for metrics the IG excerpt does
+        // not number (cf. MDC_HDIALY_DIALYSATE_VOL_SETTING above).
+        if (doc.SubstitutionFluid is { } substitution)
+        {
+            Obx(sb, ref setIdx, "ST", "0^MDC_DEV_HDIALY_SUBST_FLUID_CHAN^MDC", "1.1.6");
+            Obx(sb, ref setIdx, "ST", "0^MDC_HDIALY_SUBST_DILUTION_MODE^MDC", "1.1.6.1",
+                value: substitution.DilutionMode);
+            Obx(sb, ref setIdx, "NM", "0^MDC_HDIALY_SUBST_FLOW_RATE_SETTING^MDC", "1.1.6.2",
+                value: substitution.FlowRateMlPerMin.ToString(CultureInfo.InvariantCulture),
+                units: "ml/min^ml/min^UCUM");
+            Obx(sb, ref setIdx, "NM", "0^MDC_HDIALY_SUBST_TARGET_VOL_SETTING^MDC", "1.1.6.3",
+                value: substitution.TargetVolumeMl.ToString(CultureInfo.InvariantCulture),
+                units: "ml^ml^UCUM");
+            Obx(sb, ref setIdx, "ST", "0^MDC_HDIALY_SUBST_FLUID_NAME^MDC", "1.1.6.4",
+                value: substitution.FluidName);
+        }
     }
 
     /// <summary>

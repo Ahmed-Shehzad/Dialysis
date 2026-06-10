@@ -7,7 +7,7 @@
 artifacts/
 
 ## NUKE build (runtime scratch; parameters.json + build.schema.json stay tracked)
-.nuke/temp/
+**/.nuke/temp/
 
 ## .NET / MSBuild
 *.user

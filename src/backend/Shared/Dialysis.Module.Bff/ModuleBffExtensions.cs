@@ -43,7 +43,7 @@ public static class ModuleBffExtensions
         builder.Services.Configure<BffSpaOptions>(config.GetSection(BffSpaOptions.SectionName));
         builder.Services.Configure<IdentityFederationOptions>(config.GetSection(IdentityFederationOptions.SectionName));
         builder.Services.AddSingleton<IIdentityProviderCatalog, ConfiguredIdentityProviderCatalog>();
-        builder.Services.AddHttpClient("keycloak");
+        builder.Services.AddResilientBffHttpClient("keycloak");
         builder.Services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
         builder.Services.AddSingleton(TimeProvider.System);
 
@@ -77,6 +77,7 @@ public static class ModuleBffExtensions
             .Configure<ITicketStore>((o, store) => o.SessionStore = store);
 
         var kc = config.GetSection(KeycloakBffOptions.SectionName).Get<KeycloakBffOptions>() ?? new KeycloakBffOptions();
+        KeycloakSecretGuard.EnsureProductionClientSecret(builder.Environment, kc.ClientSecret);
         var authority = kc.Authority?.Trim() ?? "";
         if (string.IsNullOrEmpty(authority))
             throw new InvalidOperationException(

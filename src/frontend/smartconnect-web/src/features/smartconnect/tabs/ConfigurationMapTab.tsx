@@ -59,9 +59,11 @@ export const ConfigurationMapTab = () => {
     <section className="space-y-4">
       <div className="flex flex-wrap items-end gap-2 text-xs">
         <div>
-          <label className="block text-slate-400">Scope</label>
+          <label htmlFor="configmap-scope" className="block text-slate-400">
+            Scope
+          </label>
           <select
-            aria-label="Scope"
+            id="configmap-scope"
             value={scope}
             onChange={(e) => setScope(e.target.value as VariableMapScopeValue)}
             className="mt-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
@@ -75,9 +77,11 @@ export const ConfigurationMapTab = () => {
         </div>
         {channelScope && (
           <div>
-            <label className="block text-slate-400">Flow</label>
+            <label htmlFor="configmap-flow" className="block text-slate-400">
+              Flow
+            </label>
             <select
-              aria-label="Flow"
+              id="configmap-flow"
               value={flowId}
               onChange={(e) => setFlowId(e.target.value)}
               className="mt-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"

@@ -101,6 +101,120 @@ public sealed class PrescriptionRoundTripTests
     }
 
     [Fact]
+    public void Builder_Emits_Hf_Prescription_As_Convective_Channels_Without_Dialysate()
+    {
+        // HF is primarily convective: no dialysate channel, substitution fluid required.
+        var query = new PrescriptionQuery("Q002", "PQ-HF-1", "555444222111");
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "555444222111",
+            OrderNumber: "A226678",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: TherapyModality.Hf,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(BloodFlowRateMlPerMin: 300, PumpMode: "2N"),
+            Dialysate: null,
+            Ultrafiltration: new UltrafiltrationSettings("CONST-WT", 900, 2500),
+            SubstitutionFluid: new SubstitutionFluidSettings(
+                DilutionMode: "POST",
+                FlowRateMlPerMin: 100,
+                TargetVolumeMl: 21000,
+                FluidName: "BIC-401"));
+
+        var response = Hl7V2RxResponseBuilder.Build(query, document, "RESP-HF-001", _fixedNow);
+
+        Assert.Contains("158598^MDC_HDIALY_MACH_TX_MODALITY^MDC|1.1.1.1|HF|", response);
+        // No dialysate fluid channel for convective-only therapy.
+        Assert.DoesNotContain("MDC_DEV_HDIALY_FLUID_CHAN", response);
+        Assert.DoesNotContain("|1.1.4|", response);
+        // Substitution channel rides as its own observation rows.
+        Assert.Contains("0^MDC_DEV_HDIALY_SUBST_FLUID_CHAN^MDC|1.1.6|", response);
+        Assert.Contains("0^MDC_HDIALY_SUBST_DILUTION_MODE^MDC|1.1.6.1|POST|", response);
+        Assert.Contains("0^MDC_HDIALY_SUBST_FLOW_RATE_SETTING^MDC|1.1.6.2|100|ml/min^ml/min^UCUM|", response);
+        Assert.Contains("0^MDC_HDIALY_SUBST_TARGET_VOL_SETTING^MDC|1.1.6.3|21000|ml^ml^UCUM|", response);
+        Assert.Contains("0^MDC_HDIALY_SUBST_FLUID_NAME^MDC|1.1.6.4|BIC-401|", response);
+        Assert.Empty(document.GetModalityConsistencyWarnings());
+    }
+
+    [Fact]
+    public void Builder_Emits_Hdf_Prescription_With_Both_Dialysate_And_Substitution_Channels()
+    {
+        // HDF is diffusive + convective: both channels required, both emitted independently.
+        var query = new PrescriptionQuery("Q003", "PQ-HDF-1", "555444222111");
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "555444222111",
+            OrderNumber: "A226679",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: TherapyModality.Hdf,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(BloodFlowRateMlPerMin: 350, PumpMode: "2N"),
+            Dialysate: new DialysateFluidSettings("CONST", 500, 120, "RFP-204"),
+            Ultrafiltration: new UltrafiltrationSettings("CONST-WT", 600, 2000),
+            SubstitutionFluid: new SubstitutionFluidSettings("PRE", 150, 18000, "BIC-401"));
+
+        var response = Hl7V2RxResponseBuilder.Build(query, document, "RESP-HDF-001", _fixedNow);
+
+        Assert.Contains("158598^MDC_HDIALY_MACH_TX_MODALITY^MDC|1.1.1.1|HDF|", response);
+        Assert.Contains("70951^MDC_DEV_HDIALY_FLUID_CHAN^MDC|1.1.4|", response);
+        Assert.Contains("16936008^MDC_HDIALY_DIALYSATE_FLOW_RATE_SETTING^MDC|1.1.4.2|500|ml/min^ml/min^UCUM|", response);
+        Assert.Contains("0^MDC_DEV_HDIALY_SUBST_FLUID_CHAN^MDC|1.1.6|", response);
+        Assert.Contains("0^MDC_HDIALY_SUBST_DILUTION_MODE^MDC|1.1.6.1|PRE|", response);
+        Assert.Empty(document.GetModalityConsistencyWarnings());
+    }
+
+    [Theory]
+    [InlineData(TherapyModality.Hd, false, true, "substitution fluid belongs to HF/HDF")]
+    [InlineData(TherapyModality.Hd, false, false, "no dialysate fluid channel")]
+    [InlineData(TherapyModality.Hf, false, false, "no substitution fluid channel")]
+    [InlineData(TherapyModality.Hdf, true, false, "no substitution fluid channel")]
+    [InlineData(TherapyModality.Hdf, false, true, "no dialysate fluid channel")]
+    public void Modality_Consistency_Warns_On_Channel_Mismatch(
+        TherapyModality modality, bool withDialysate, bool withSubstitution, string expectedFragment)
+    {
+        // Negated channel layout per modality → warning, never an exception: the responder
+        // still answers the machine with whatever observation streams exist.
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "MRN-1",
+            OrderNumber: "ORD-W",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: modality,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(300, "2N"),
+            Dialysate: withDialysate ? new DialysateFluidSettings("CONST", 500, 30, "RFP-200") : null,
+            Ultrafiltration: new UltrafiltrationSettings("CONST-WT", 350, 1500),
+            SubstitutionFluid: withSubstitution ? new SubstitutionFluidSettings("POST", 100, 20000, "BIC-401") : null);
+
+        var warnings = document.GetModalityConsistencyWarnings();
+
+        Assert.Contains(warnings, w => w.Contains(expectedFragment, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Hf_With_Minimal_Dialysate_Is_Consistent()
+    {
+        // "Dialysate absent or minimal" — HF may carry a minimal dialysate section without warning.
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "MRN-1",
+            OrderNumber: "ORD-HF-MIN",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: TherapyModality.Hf,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(300, "2N"),
+            Dialysate: new DialysateFluidSettings("CONST", 50, 5, "RFP-200"),
+            Ultrafiltration: new UltrafiltrationSettings("CONST-WT", 900, 2500),
+            SubstitutionFluid: new SubstitutionFluidSettings("POST", 100, 21000, "BIC-401"));
+
+        Assert.Empty(document.GetModalityConsistencyWarnings());
+    }
+
+    [Fact]
     public async Task Responder_End_To_End_Resolves_And_Builds_Async()
     {
         const string raw =

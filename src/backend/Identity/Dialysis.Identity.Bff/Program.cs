@@ -53,13 +53,15 @@ public class Program
         builder.Services.Configure<BffSpaOptions>(builder.Configuration.GetSection(BffSpaOptions.SectionName));
         builder.Services.Configure<IdentityFederationOptions>(builder.Configuration.GetSection(IdentityFederationOptions.SectionName));
         builder.Services.AddSingleton<IIdentityProviderCatalog, ConfiguredIdentityProviderCatalog>();
-        builder.Services.AddHttpClient("keycloak");
+        builder.Services.AddResilientBffHttpClient("keycloak");
         builder.Services.AddScoped<IHisAccessTokenProvider, HisAccessTokenProvider>();
         builder.Services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
         builder.Services.AddSingleton(TimeProvider.System);
 
         var kc = builder.Configuration.GetSection(KeycloakBffOptions.SectionName).Get<KeycloakBffOptions>()
                  ?? new KeycloakBffOptions();
+        Module.Bff.Configuration.KeycloakSecretGuard.EnsureProductionClientSecret(
+            builder.Environment, kc.ClientSecret, KeycloakBffOptions.SectionName);
         var authority = kc.Authority?.Trim() ?? "";
         if (string.IsNullOrEmpty(authority))
             throw new InvalidOperationException(

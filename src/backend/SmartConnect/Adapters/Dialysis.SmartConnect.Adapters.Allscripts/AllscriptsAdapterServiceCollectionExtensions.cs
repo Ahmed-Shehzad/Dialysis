@@ -16,7 +16,7 @@ public static class AllscriptsAdapterServiceCollectionExtensions
         {
             services.AddOptions<AllscriptsAdapterOptions>().Bind(allscriptsSection);
             services.AddVendorAdapterTokenAcquirer();
-            services.AddHttpClient("Allscripts");
+            services.AddResilientVendorHttpClient("Allscripts");
             services.AddSingleton<AllscriptsAuthProvider>();
             services.AddSingleton<IExternalEhrAuthProvider>(sp => sp.GetRequiredService<AllscriptsAuthProvider>());
             services.AddSingleton<AllscriptsFhirAdapter>();

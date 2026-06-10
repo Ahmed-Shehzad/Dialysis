@@ -25,6 +25,13 @@ spec:
             - name: "http"
               protocol: "TCP"
               containerPort: 5337
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+            requests:
+              cpu: "25m"
+              memory: "64Mi"
           imagePullPolicy: "IfNotPresent"
   selector:
     matchLabels:

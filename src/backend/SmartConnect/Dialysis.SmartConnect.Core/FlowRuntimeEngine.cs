@@ -1,10 +1,5 @@
-using System.Collections.Concurrent;
-using System.Collections.Immutable;
-using System.Text;
-using System.Text.Json;
 using Dialysis.SmartConnect.Alerts;
 using Dialysis.SmartConnect.Attachments;
-using Dialysis.SmartConnect.CodeTemplates;
 using Dialysis.SmartConnect.Endpoints;
 using Dialysis.SmartConnect.ExtendedPlugins;
 using Dialysis.SmartConnect.Persistence.EntityFrameworkCore;
@@ -16,20 +11,19 @@ namespace Dialysis.SmartConnect;
 
 /// <summary>
 /// Default <see cref="IFlowRuntime"/> that loads flow definitions, resolves plugins, and writes the <see cref="IMessageLedger"/>.
+/// Orchestration façade: source-side stages run through <see cref="SourceStageProcessor"/>, per-route outbound
+/// execution through <see cref="OutboundRouteExecutor"/>, ledger writes through <see cref="FlowLedgerWriter"/>,
+/// and alert publication through <see cref="FlowAlertPublisher"/>.
 /// </summary>
 public sealed class FlowRuntimeEngine : IFlowRuntime
 {
     private readonly IIntegrationFlowRepository _flows;
-    private readonly IMessageLedger _ledger;
-    private readonly IFlowPluginRegistry _plugins;
-    private readonly TimeProvider _time;
     private readonly IFlowExecutionContextAccessor? _contextAccessor;
     private readonly ChannelScriptExecutor? _scriptExecutor;
-    private readonly AttachmentExtractionPipeline? _attachmentExtraction;
-    private readonly AttachmentReattachmentService? _attachmentReattachment;
-    private readonly IAlertSink? _alertSink;
-    private readonly IServiceScopeFactory? _scopeFactory;
-    private readonly IEndpointResolver? _endpointResolver;
+    private readonly FlowLedgerWriter _ledgerWriter;
+    private readonly SourceStageProcessor _sourceStages;
+    private readonly OutboundRouteExecutor _routeExecutor;
+
     /// <summary>
     /// Default <see cref="IFlowRuntime"/> that loads flow definitions, resolves plugins, and writes the <see cref="IMessageLedger"/>.
     /// </summary>
@@ -46,16 +40,12 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
         IEndpointResolver? endpointResolver = null)
     {
         _flows = flows;
-        _ledger = ledger;
-        _plugins = plugins;
-        _time = time;
         _contextAccessor = contextAccessor;
         _scriptExecutor = scriptExecutor;
-        _attachmentExtraction = attachmentExtraction;
-        _attachmentReattachment = attachmentReattachment;
-        _alertSink = alertSink;
-        _scopeFactory = scopeFactory;
-        _endpointResolver = endpointResolver;
+        _ledgerWriter = new FlowLedgerWriter(ledger, time, scopeFactory);
+        var alertPublisher = new FlowAlertPublisher(alertSink, time, scopeFactory);
+        _sourceStages = new SourceStageProcessor(plugins, _ledgerWriter, scriptExecutor, attachmentExtraction);
+        _routeExecutor = new OutboundRouteExecutor(plugins, _ledgerWriter, alertPublisher, attachmentReattachment, endpointResolver);
     }
 
     /// <summary>
@@ -64,44 +54,9 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
     /// </summary>
     public const string SourceMapMetadataKey = "smartconnect.sourcemap.json";
 
-    /// <summary>
-    /// Per-route execution result reduced by the outbound loop. Captures whether the route was
-    /// attempted (DSF did not skip it), whether it failed, and the response payload (if any) for
-    /// the lowest-ordinal-first selection rule.
-    /// </summary>
-    private sealed record RouteOutcome
-    {
-        /// <summary>
-        /// Per-route execution result reduced by the outbound loop. Captures whether the route was
-        /// attempted (DSF did not skip it), whether it failed, and the response payload (if any) for
-        /// the lowest-ordinal-first selection rule.
-        /// </summary>
-        public RouteOutcome(int Ordinal, bool Attempted, bool Failed, string RouteName, byte[]? ResponsePayload)
-        {
-            this.Ordinal = Ordinal;
-            this.Attempted = Attempted;
-            this.Failed = Failed;
-            this.RouteName = RouteName;
-            this.ResponsePayload = ResponsePayload;
-        }
-        public int Ordinal { get; init; }
-        public bool Attempted { get; init; }
-        public bool Failed { get; init; }
-        public string RouteName { get; init; }
-        public byte[]? ResponsePayload { get; init; }
-        public void Deconstruct(out int Ordinal, out bool Attempted, out bool Failed, out string RouteName, out byte[]? ResponsePayload)
-        {
-            Ordinal = this.Ordinal;
-            Attempted = this.Attempted;
-            Failed = this.Failed;
-            RouteName = this.RouteName;
-            ResponsePayload = this.ResponsePayload;
-        }
-    }
-
     public async Task<FlowDispatchResult> DispatchAsync(IntegrationMessage message, CancellationToken cancellationToken)
     {
-        await AppendLedgerAsync(
+        await _ledgerWriter.AppendAsync(
             message,
             MessageLedgerStatus.Received,
             null,
@@ -124,7 +79,7 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
         }
 
         // Build per-dispatch variable-map context (Mirth Source/Channel/Connector/Response scopes).
-        var ctx = BuildFlowExecutionContext(message, flow);
+        var ctx = FlowExecutionContextFactory.Create(message, flow);
         var previousCtx = _contextAccessor?.Current;
         if (_contextAccessor is not null)
         {
@@ -150,60 +105,15 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
         FlowExecutionContext ctx,
         CancellationToken cancellationToken)
     {
-
-        // PreProcessor script
-        var workingMessage = message;
-        if (_scriptExecutor is not null && !string.IsNullOrWhiteSpace(flow.Pipeline.Scripts?.PreProcessorScript))
+        // Source-side half: PreProcessor script, attachment extraction, route filters, source transforms.
+        var (sourceMessage, shortCircuit) = await _sourceStages
+            .ProcessAsync(message, flow, ctx, cancellationToken).ConfigureAwait(false);
+        if (shortCircuit is not null)
         {
-            var preResult = await _scriptExecutor.RunPreProcessorAsync(
-                flow.Pipeline.Scripts!.PreProcessorScript!, workingMessage, cancellationToken).ConfigureAwait(false);
-            if (preResult.Dropped)
-            {
-                await AppendLedgerAsync(workingMessage, MessageLedgerStatus.RouteFilterDropped, null, "PreProcessor", null, cancellationToken).ConfigureAwait(false);
-                return new FlowDispatchResult { Succeeded = true, Error = null, OutboundRoutesAttempted = [] };
-            }
-
-            if (preResult.NewPayload is not null)
-            {
-                workingMessage = workingMessage.CloneWithPayload(preResult.NewPayload);
-            }
+            return shortCircuit;
         }
 
-        // Attachment Handler — runs once between PreProcessor and route filters. Extracts inline bulky
-        // content into the attachment store and rewrites the payload with ${ATTACH:<id>} tokens.
-        if (_attachmentExtraction is not null && flow.Pipeline.AttachmentHandler is not null)
-        {
-            var rewritten = await _attachmentExtraction
-                .RunAsync(workingMessage, flow.Pipeline.AttachmentHandler, cancellationToken).ConfigureAwait(false);
-            if (!rewritten.Equals(workingMessage.Payload))
-            {
-                workingMessage = workingMessage.CloneWithPayload(rewritten);
-            }
-        }
-
-        ctx.SetCurrentStageContext(CodeTemplateContext.SourceFilter);
-        var filterOutcome = await RunRouteFiltersAsync(flow, workingMessage, cancellationToken).ConfigureAwait(false);
-        if (filterOutcome is not null)
-        {
-            return filterOutcome;
-        }
-
-        // Source-side transform stages (Mirth source-connector transformer steps; used for Destination Set Filter).
-        ctx.SetCurrentStageContext(CodeTemplateContext.SourceTransformer);
-        foreach (var stageSlot in flow.Pipeline.SourceTransformStages)
-        {
-            var stage = _plugins.TryResolveTransformStage(stageSlot.Kind);
-            if (stage is null)
-            {
-                return Failure($"Source transform stage kind '{stageSlot.Kind}' is not registered.");
-            }
-
-            var workingForStage = string.IsNullOrWhiteSpace(stageSlot.ParametersJson)
-                ? workingMessage
-                : workingMessage.WithMetadata("smartconnect.transform.parameters", stageSlot.ParametersJson!);
-            workingMessage = await stage.TransformAsync(workingForStage, cancellationToken).ConfigureAwait(false);
-        }
-
+        var workingMessage = sourceMessage!;
         var allowedRouteNames = ParseDestinationSet(workingMessage);
         var routes = flow.Pipeline.OutboundRoutes;
         var sequential = flow.Pipeline.OutboundRoutesSequential;
@@ -216,7 +126,7 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
             for (var i = 0; i < routes.Count; i++)
             {
                 ctx.SetCurrentRouteOrdinal(i);
-                var outcome = await ExecuteRouteAsync(workingMessage, routes[i], i, allowedRouteNames, ctx, useScopedLedger: false, cancellationToken).ConfigureAwait(false);
+                var outcome = await _routeExecutor.ExecuteRouteAsync(workingMessage, routes[i], i, allowedRouteNames, ctx, useScopedLedger: false, cancellationToken).ConfigureAwait(false);
                 list.Add(outcome);
                 if (outcome.Failed)
                 {
@@ -242,7 +152,7 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
                 var ordinal = i;
                 var route = routes[i];
                 tasks[i] = Task.Run(
-                    () => ExecuteRouteAsync(workingMessage, route, ordinal, allowedRouteNames, ctx, useScopedLedger: true, cancellationToken),
+                    () => _routeExecutor.ExecuteRouteAsync(workingMessage, route, ordinal, allowedRouteNames, ctx, useScopedLedger: true, cancellationToken),
                     cancellationToken);
             }
             outcomes = await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -267,7 +177,7 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
             responsePayload ??= outcome.ResponsePayload;
         }
 
-        await AppendLedgerAsync(
+        await _ledgerWriter.AppendAsync(
             workingMessage,
             MessageLedgerStatus.Completed,
             null,
@@ -292,343 +202,8 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
         };
     }
 
-    private async Task<FlowDispatchResult?> RunRouteFiltersAsync(
-        IntegrationFlow flow,
-        IntegrationMessage message,
-        CancellationToken cancellationToken)
-    {
-        foreach (var slot in flow.Pipeline.RouteFilters)
-        {
-            var filter = _plugins.TryResolveRouteFilter(slot.Kind);
-            if (filter is null)
-            {
-                return Failure($"Route filter kind '{slot.Kind}' is not registered.");
-            }
-
-            var messageForFilter = string.IsNullOrWhiteSpace(slot.ParametersJson)
-                ? message
-                : message.WithMetadata("smartconnect.filter.parameters", slot.ParametersJson!);
-
-            var result = await filter.EvaluateAsync(messageForFilter, cancellationToken).ConfigureAwait(false);
-            if (result.Disposition != RouteFilterDisposition.Drop)
-            {
-                continue;
-            }
-
-            await AppendLedgerAsync(
-                message,
-                MessageLedgerStatus.RouteFilterDropped,
-                null,
-                slot.Kind,
-                null,
-                cancellationToken).ConfigureAwait(false);
-
-            return new FlowDispatchResult { Succeeded = true, Error = null, OutboundRoutesAttempted = [] };
-        }
-
-        return null;
-    }
-
-    private async Task<(IntegrationMessage? Message, string? ErrorDetail)> TryTransformForRouteAsync(
-        IntegrationMessage message,
-        OutboundRouteSlot route,
-        CancellationToken cancellationToken)
-    {
-        var working = message;
-        foreach (var stageSlot in route.TransformStages)
-        {
-            var stage = _plugins.TryResolveTransformStage(stageSlot.Kind);
-            if (stage is null)
-            {
-                return (null, $"Transform stage kind '{stageSlot.Kind}' is not registered.");
-            }
-
-            var workingForStage = string.IsNullOrWhiteSpace(stageSlot.ParametersJson)
-                ? working
-                : working.WithMetadata("smartconnect.transform.parameters", stageSlot.ParametersJson!);
-            working = await stage.TransformAsync(workingForStage, cancellationToken).ConfigureAwait(false);
-        }
-
-        return (working, null);
-    }
-
-    /// <summary>
-    /// Runs one outbound route: DSF skip check, adapter resolve, per-route transforms, attachment
-    /// re-attach, retry-with-backoff send, response transform, per-route ledger writes. Returns a
-    /// <see cref="RouteOutcome"/> the dispatch loop reduces into the final <see cref="FlowDispatchResult"/>.
-    ///
-    /// When <paramref name="useScopedLedger"/> is true (parallel mode), per-route ledger writes go
-    /// through a fresh <see cref="IServiceScope"/> so the engine's scoped DbContext is not shared
-    /// across worker tasks. Same pattern as <see cref="PublishAlert"/> — see PR #92.
-    /// </summary>
-    private async Task<RouteOutcome> ExecuteRouteAsync(
-        IntegrationMessage workingMessage,
-        OutboundRouteSlot route,
-        int ordinal,
-        HashSet<string>? allowedRouteNames,
-        FlowExecutionContext ctx,
-        bool useScopedLedger,
-        CancellationToken cancellationToken)
-    {
-        var resolvedRouteName = ResolveRouteName(route, ordinal);
-
-        // Destination Set Filter — skip routes the source transform excluded.
-        if (allowedRouteNames is not null && !allowedRouteNames.Contains(resolvedRouteName))
-        {
-            await WriteOutboundLedgerScopedAsync(
-                workingMessage,
-                ordinal,
-                MessageLedgerStatus.RouteFilterDropped,
-                $"Skipped by destination set filter (route '{resolvedRouteName}' not in allowed set).",
-                null,
-                useScopedLedger,
-                cancellationToken).ConfigureAwait(false);
-            return new RouteOutcome(ordinal, Attempted: false, Failed: false, resolvedRouteName, null);
-        }
-
-        var outbound = _plugins.TryResolveOutboundAdapter(route.OutboundAdapterKind);
-        if (outbound is null)
-        {
-            var detail = $"Outbound adapter kind '{route.OutboundAdapterKind}' is not registered.";
-            await WriteOutboundLedgerScopedAsync(
-                workingMessage,
-                ordinal,
-                MessageLedgerStatus.OutboundFailed,
-                detail,
-                null,
-                useScopedLedger,
-                cancellationToken).ConfigureAwait(false);
-            PublishAlert(workingMessage, AlertErrorType.OutboundFailure, detail, cancellationToken);
-            return new RouteOutcome(ordinal, Attempted: true, Failed: true, resolvedRouteName, null);
-        }
-
-        ctx.SetCurrentStageContext(CodeTemplateContext.DestinationTransformer);
-        var transformed = await TryTransformForRouteAsync(workingMessage, route, cancellationToken).ConfigureAwait(false);
-        if (transformed.ErrorDetail is not null)
-        {
-            await WriteOutboundLedgerScopedAsync(
-                workingMessage,
-                ordinal,
-                MessageLedgerStatus.OutboundFailed,
-                transformed.ErrorDetail,
-                null,
-                useScopedLedger,
-                cancellationToken).ConfigureAwait(false);
-            PublishAlert(workingMessage, AlertErrorType.TransformError, transformed.ErrorDetail, cancellationToken);
-            return new RouteOutcome(ordinal, Attempted: true, Failed: true, resolvedRouteName, null);
-        }
-
-        var toSend = transformed.Message!;
-        var resolvedParametersJson = route.OutboundParametersJson;
-        if (_endpointResolver is not null && !string.IsNullOrWhiteSpace(resolvedParametersJson))
-        {
-            resolvedParametersJson = await _endpointResolver
-                .ResolveParametersJsonAsync(resolvedParametersJson, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        if (!string.IsNullOrWhiteSpace(resolvedParametersJson))
-        {
-            toSend = toSend.WithMetadata("smartconnect.outbound.parameters", resolvedParametersJson!);
-        }
-
-        // Reattach Attachments — inflate ${ATTACH:<id>} tokens back to raw bytes if the route opted in.
-        if (route.ReattachAttachments && _attachmentReattachment is not null)
-        {
-            var inflated = await _attachmentReattachment
-                .InflateAsync(toSend.Payload, workingMessage.Id, cancellationToken).ConfigureAwait(false);
-            if (!inflated.Equals(toSend.Payload))
-            {
-                toSend = toSend.CloneWithPayload(inflated);
-            }
-        }
-
-        var maxAttempts = route.MaxAttempts < 1 ? 1 : route.MaxAttempts;
-        var sendSucceeded = false;
-        string? sendError = null;
-        OutboundSendResult lastSendResult = default;
-        for (var attempt = 1; attempt <= maxAttempts; attempt++)
-        {
-            lastSendResult = await outbound.SendAsync(toSend, ordinal, cancellationToken).ConfigureAwait(false);
-            if (lastSendResult.Succeeded)
-            {
-                sendSucceeded = true;
-                break;
-            }
-
-            sendError = lastSendResult.ErrorDetail ?? "Outbound send failed.";
-            if (attempt < maxAttempts)
-            {
-                var delayMs = 100 * Math.Pow(2, attempt - 1);
-                await Task.Delay(TimeSpan.FromMilliseconds(delayMs), cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        if (!sendSucceeded)
-        {
-            ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
-            {
-                ["status"] = "failure",
-                ["error"] = sendError,
-            };
-            await WriteOutboundLedgerScopedAsync(
-                workingMessage,
-                ordinal,
-                MessageLedgerStatus.OutboundFailed,
-                sendError,
-                toSend.Payload.ToArray(),
-                useScopedLedger,
-                cancellationToken).ConfigureAwait(false);
-            PublishAlert(workingMessage, AlertErrorType.OutboundFailure, sendError, cancellationToken);
-            return new RouteOutcome(ordinal, Attempted: true, Failed: true, resolvedRouteName, null);
-        }
-
-        ctx.ResponseMap[resolvedRouteName] = new Dictionary<string, object?>(StringComparer.Ordinal)
-        {
-            ["status"] = "success",
-            ["payload"] = lastSendResult.ResponsePayload is { Length: > 0 } bytes
-                ? Encoding.UTF8.GetString(bytes)
-                : null,
-        };
-        await WriteOutboundLedgerScopedAsync(
-            workingMessage,
-            ordinal,
-            MessageLedgerStatus.OutboundSent,
-            null,
-            toSend.Payload.ToArray(),
-            useScopedLedger,
-            cancellationToken).ConfigureAwait(false);
-
-        byte[]? routeResponsePayload = null;
-        if (lastSendResult.ResponsePayload is { Length: > 0 } rawResp && route.ResponseTransformStages.Count > 0)
-        {
-            ctx.SetCurrentStageContext(CodeTemplateContext.DestinationResponseTransformer);
-            var respMsg = workingMessage.CloneWithPayload(rawResp);
-            foreach (var stage in route.ResponseTransformStages)
-            {
-                var transformer = _plugins.TryResolveTransformStage(stage.Kind);
-                if (transformer is null)
-                    continue;
-                var tMsg = !string.IsNullOrWhiteSpace(stage.ParametersJson)
-                    ? respMsg.WithMetadata("smartconnect.transform.parameters", stage.ParametersJson!)
-                    : respMsg;
-                respMsg = await transformer.TransformAsync(tMsg, cancellationToken).ConfigureAwait(false);
-            }
-            routeResponsePayload = respMsg.Payload.ToArray();
-        }
-        else if (lastSendResult.ResponsePayload is { Length: > 0 } directResp)
-        {
-            routeResponsePayload = directResp;
-        }
-
-        return new RouteOutcome(ordinal, Attempted: true, Failed: false, resolvedRouteName, routeResponsePayload);
-    }
-
-    private Task AppendLedgerAsync(
-        IntegrationMessage message,
-        MessageLedgerStatus status,
-        int? outboundRouteOrdinal,
-        string? detail,
-        byte[]? snapshot,
-        CancellationToken cancellationToken) =>
-        _ledger.AppendAsync(
-            new MessageLedgerEntry
-            {
-                Id = Guid.CreateVersion7(),
-                FlowId = message.FlowId,
-                IntegrationMessageId = message.Id,
-                CorrelationId = message.CorrelationId,
-                Status = status,
-                OutboundRouteOrdinal = outboundRouteOrdinal,
-                Detail = detail,
-                PayloadSnapshot = snapshot,
-                Metadata = message.Metadata,
-                CreatedAtUtc = _time.GetUtcNow(),
-            },
-            cancellationToken);
-
-    /// <summary>
-    /// Like <see cref="WriteOutboundLedgerAsync"/> but opens a fresh DI scope and resolves the
-    /// ledger from it when <paramref name="useScopedLedger"/> is true and a <c>scopeFactory</c>
-    /// is wired. Used by parallel outbound dispatch so the engine's scoped DbContext is never
-    /// shared across worker tasks (the ChangeTracker race PR #92 fixed for alerts).
-    /// </summary>
-    private async Task WriteOutboundLedgerScopedAsync(
-        IntegrationMessage message,
-        int routeOrdinal,
-        MessageLedgerStatus status,
-        string? detail,
-        byte[]? snapshot,
-        bool useScopedLedger,
-        CancellationToken cancellationToken)
-    {
-        if (useScopedLedger && _scopeFactory is not null)
-        {
-            await using var scope = _scopeFactory.CreateAsyncScope();
-            var scopedLedger = scope.ServiceProvider.GetService<IMessageLedger>() ?? _ledger;
-            await scopedLedger.AppendAsync(
-                new MessageLedgerEntry
-                {
-                    Id = Guid.CreateVersion7(),
-                    FlowId = message.FlowId,
-                    IntegrationMessageId = message.Id,
-                    CorrelationId = message.CorrelationId,
-                    Status = status,
-                    OutboundRouteOrdinal = routeOrdinal,
-                    Detail = detail,
-                    PayloadSnapshot = snapshot,
-                    Metadata = message.Metadata,
-                    CreatedAtUtc = _time.GetUtcNow(),
-                },
-                cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        await AppendLedgerAsync(message, status, routeOrdinal, detail, snapshot, cancellationToken).ConfigureAwait(false);
-    }
-
     private static FlowDispatchResult Failure(string error) =>
         new() { Succeeded = false, Error = error, OutboundRoutesAttempted = [] };
-
-    private void PublishAlert(IntegrationMessage message, AlertErrorType errorType, string? errorDetail, CancellationToken cancellationToken)
-    {
-        if (_alertSink is null)
-            return;
-        var trigger = new AlertTrigger
-        {
-            FlowId = message.FlowId,
-            MessageId = message.Id,
-            CorrelationId = message.CorrelationId,
-            ErrorType = errorType,
-            ErrorDetail = errorDetail,
-            OccurredAtUtc = _time.GetUtcNow(),
-        };
-        // Fire-and-forget: alerts must never block the dispatch path. When a scope factory is
-        // available, the background task runs the alert sink in a fresh DI scope so its EF
-        // bookkeeping (alert-event store, rule repository) gets its own DbContext — sharing the
-        // dispatcher's scoped DbContext would race with the in-flight ledger save and surface as
-        // "Collection was modified during enumeration" inside ChangeTracker.DetectChanges.
-        //
-        // Fallback to the captured singleton-style alertSink when no scope factory is wired (legacy
-        // tests that compose the runtime by hand without a DI container). The legacy path remains
-        // safe only when the consumer doesn't share a DbContext between threads.
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                if (_scopeFactory is not null)
-                {
-                    await using var scope = _scopeFactory.CreateAsyncScope();
-                    var scopedSink = scope.ServiceProvider.GetService<IAlertSink>() ?? _alertSink;
-                    await scopedSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    await _alertSink.PublishAsync(trigger, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            catch { /* swallowed: alert engine logs internally */ }
-        }, cancellationToken);
-    }
 
     private static HashSet<string>? ParseDestinationSet(IntegrationMessage message)
     {
@@ -641,115 +216,5 @@ public sealed class FlowRuntimeEngine : IFlowRuntime
         foreach (var name in csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             result.Add(name);
         return result;
-    }
-
-    private static string ResolveRouteName(OutboundRouteSlot route, int index)
-    {
-        if (!string.IsNullOrWhiteSpace(route.OutboundParametersJson))
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(route.OutboundParametersJson!);
-                if (doc.RootElement.ValueKind == JsonValueKind.Object &&
-                    doc.RootElement.TryGetProperty("routeName", out var nameEl) &&
-                    nameEl.ValueKind == JsonValueKind.String)
-                {
-                    var named = nameEl.GetString();
-                    if (!string.IsNullOrWhiteSpace(named))
-                        return named;
-                }
-            }
-            catch (JsonException)
-            {
-                // Fall through to the index-based fallback.
-            }
-        }
-
-        return $"route-{index}";
-    }
-
-    private static FlowExecutionContext BuildFlowExecutionContext(IntegrationMessage message, IntegrationFlow flow)
-    {
-        var sourceMap = ParseSourceMap(message);
-        var connectorMaps = new ConcurrentDictionary<string, object?>[flow.Pipeline.OutboundRoutes.Count];
-        for (var i = 0; i < connectorMaps.Length; i++)
-        {
-            connectorMaps[i] = new ConcurrentDictionary<string, object?>(StringComparer.Ordinal);
-        }
-
-        return new FlowExecutionContext
-        {
-            MessageId = message.Id,
-            FlowId = message.FlowId,
-            SourceMap = sourceMap,
-            ConnectorMaps = connectorMaps,
-        };
-    }
-
-    private static IReadOnlyDictionary<string, object?> ParseSourceMap(IntegrationMessage message)
-    {
-        if (!message.Metadata.TryGetValue(SourceMapMetadataKey, out var json) || string.IsNullOrWhiteSpace(json))
-        {
-            return ImmutableDictionary<string, object?>.Empty;
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                return ImmutableDictionary<string, object?>.Empty;
-            }
-
-            var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
-            foreach (var prop in doc.RootElement.EnumerateObject())
-            {
-                dict[prop.Name] = JsonElementToObject(prop.Value);
-            }
-
-            return dict;
-        }
-        catch (JsonException)
-        {
-            return ImmutableDictionary<string, object?>.Empty;
-        }
-    }
-
-    private static object? JsonElementToObject(JsonElement el)
-    {
-        switch (el.ValueKind)
-        {
-            case JsonValueKind.String:
-                return el.GetString();
-            case JsonValueKind.Number:
-                return el.TryGetInt64(out var l) ? (object)l : el.GetDouble();
-            case JsonValueKind.True:
-                return true;
-            case JsonValueKind.False:
-                return false;
-            case JsonValueKind.Null:
-            case JsonValueKind.Undefined:
-                return null;
-            case JsonValueKind.Object:
-            {
-                var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
-                foreach (var p in el.EnumerateObject())
-                {
-                    dict[p.Name] = JsonElementToObject(p.Value);
-                }
-                return dict;
-            }
-            case JsonValueKind.Array:
-            {
-                var list = new List<object?>();
-                foreach (var item in el.EnumerateArray())
-                {
-                    list.Add(JsonElementToObject(item));
-                }
-                return list;
-            }
-            default:
-                return null;
-        }
     }
 }

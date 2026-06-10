@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { configureApiClient } from "@/lib/api/apiClient";
 import { tokenStore, decodeJwt, isExpired } from "@/lib/auth/token";
-import { fetchCurrentUser, type AuthenticatedUser } from "../api/authApi";
+import { CONTEXT_PREFIX, fetchCurrentUser, type AuthenticatedUser } from "../api/authApi";
 
 type AuthState = {
   user: AuthenticatedUser | null;
@@ -64,15 +64,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Stash the Keycloak access token the BFF returned so the apiClient interceptor
         // (configured above) forwards it as Bearer on every gateway-routed API call.
         // tokenStore.set(null) clears any stale token if the BFF didn't return one.
-        // Diagnostic: log presence + length so 401s on /api/* can be triaged in DevTools
-        // without inspecting the /identity/user payload manually.
-        const tokenLen = current.accessToken?.length ?? 0;
-        console.info(
-          "[auth] /identity/user returned",
-          tokenLen > 0
-            ? "accessToken (length=" + tokenLen + ") — apiClient will send Bearer"
-            : "NO accessToken — gateway will 401 on /api/*. Check BFF SaveTokens + GetTokenAsync.",
-        );
+        // Dev-only diagnostic: log presence + length so 401s on /api/* can be triaged in
+        // DevTools without inspecting the /identity/user payload manually. The hard-timeout
+        // and missing-token warns stay unconditional — they only fire on failure paths.
+        if (import.meta.env.DEV) {
+          const tokenLen = current.accessToken?.length ?? 0;
+          console.info(
+            "[auth] /identity/user returned",
+            tokenLen > 0
+              ? "accessToken (length=" + tokenLen + ") — apiClient will send Bearer"
+              : "NO accessToken — gateway will 401 on /api/*. Check BFF SaveTokens + GetTokenAsync.",
+          );
+        }
         tokenStore.set(current.accessToken ?? null);
         setUser(current);
         setStatus("authenticated");
@@ -81,7 +84,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (cancelled) return;
         cancelled = true;
         globalThis.clearTimeout(hardTimeout);
-        console.info("[auth] /identity/user returned non-success — treating as anonymous", err);
+        if (import.meta.env.DEV) {
+          console.info("[auth] /identity/user returned non-success — treating as anonymous", err);
+        }
         setUser(null);
         setStatus("anonymous");
       });
@@ -98,21 +103,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       status,
       signIn: (provider?: string) => {
         // Build an absolute URL on the gateway origin (or current origin as fallback).
-        // Using location.assign + console.log so we can verify in DevTools exactly which
-        // URL the browser is navigating to — "the page just refreshes" usually means the
-        // navigation target is wrong, not that the click did nothing.
+        // Using location.assign + a dev-only console.info so we can verify in DevTools
+        // exactly which URL the browser is navigating to — "the page just refreshes" usually
+        // means the navigation target is wrong, not that the click did nothing.
         const apiBase = (import.meta.env.VITE_API_BASE_URL ?? globalThis.location.origin).replace(
           /\/$/,
           "",
         );
-        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + "/his/");
+        const returnUrlParam = "returnUrl=" + encodeURIComponent(apiBase + CONTEXT_PREFIX + "/");
         const providerParam = provider ? "&provider=" + encodeURIComponent(provider) : "";
-        const target = apiBase + "/his/identity/login?" + returnUrlParam + providerParam;
-        console.info(
-          "[auth] signIn → navigating to",
-          target,
-          provider ? `(provider=${provider})` : "",
-        );
+        const target =
+          apiBase + CONTEXT_PREFIX + "/identity/login?" + returnUrlParam + providerParam;
+        if (import.meta.env.DEV) {
+          console.info(
+            "[auth] signIn → navigating to",
+            target,
+            provider ? `(provider=${provider})` : "",
+          );
+        }
         globalThis.location.assign(target);
       },
       signOut: () => {
@@ -122,8 +130,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           "",
         );
         const target =
-          apiBase + "/his/identity/logout?returnUrl=" + encodeURIComponent(apiBase + "/his/");
-        console.info("[auth] signOut → navigating to", target);
+          apiBase +
+          CONTEXT_PREFIX +
+          "/identity/logout?returnUrl=" +
+          encodeURIComponent(apiBase + CONTEXT_PREFIX + "/");
+        if (import.meta.env.DEV) {
+          console.info("[auth] signOut → navigating to", target);
+        }
         globalThis.location.assign(target);
       },
       getAccessToken,

@@ -1,5 +1,11 @@
 import { apiClient } from "@/lib/api/apiClient";
 
+// Context prefix (e.g. "/his") derived from the Vite `base` (`/{ctx}/`, set per app in
+// vite.config.ts). It is the same in dev and prod because each SPA is served under its
+// context prefix via the Gateway — deriving it here keeps this file byte-identical
+// across all seven apps.
+export const CONTEXT_PREFIX = import.meta.env.BASE_URL.replace(/\/+$/, "");
+
 export type AuthenticatedUser = {
   username: string;
   email?: string;
@@ -27,7 +33,7 @@ export const fetchCurrentUser = async (): Promise<AuthenticatedUser> => {
     permissions?: string[];
     claims?: Record<string, unknown>;
     accessToken?: string;
-  }>("/his/identity/user", { timeout: AUTH_PROBE_TIMEOUT_MS });
+  }>(`${CONTEXT_PREFIX}/identity/user`, { timeout: AUTH_PROBE_TIMEOUT_MS });
   const data = response.data ?? {};
   return {
     username: data.name ?? "unknown",
@@ -44,12 +50,17 @@ const currentOrigin = (): string => globalThis.window?.location?.origin ?? "";
 const buildReturnTarget = (returnPath: string): string => currentOrigin() + returnPath;
 
 export const buildLoginUrl = (returnPath = "/", provider?: string): string => {
-  const url = "/his/identity/login?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
+  const url =
+    CONTEXT_PREFIX +
+    "/identity/login?returnUrl=" +
+    encodeURIComponent(buildReturnTarget(returnPath));
   return provider ? url + "&provider=" + encodeURIComponent(provider) : url;
 };
 
 export const buildLogoutUrl = (returnPath = "/"): string =>
-  "/his/identity/logout?returnUrl=" + encodeURIComponent(buildReturnTarget(returnPath));
+  CONTEXT_PREFIX +
+  "/identity/logout?returnUrl=" +
+  encodeURIComponent(buildReturnTarget(returnPath));
 
 export type IdentityProvider = {
   alias: string;
@@ -63,7 +74,7 @@ export type IdentityProvider = {
 export const fetchIdentityProviders = async (): Promise<IdentityProvider[]> => {
   try {
     const response = await apiClient.get<{ providers?: IdentityProvider[] }>(
-      "/his/identity/providers",
+      `${CONTEXT_PREFIX}/identity/providers`,
       {
         timeout: AUTH_PROBE_TIMEOUT_MS,
       },
