@@ -88,7 +88,7 @@ public sealed class OutboxRelayAdvisoryLockTests
         {
             // Locked: several poll intervals pass and the row must stay pending.
             await Task.Delay(500);
-            Assert.Null(await ReadProcessedAtAsync(rowId));
+            Assert.Null(await Read_Processed_At_Async(rowId));
 
             // Lock released → the relay's next tick wins the lock and drains the row.
             await using (var release = new NpgsqlCommand(
@@ -102,7 +102,7 @@ public sealed class OutboxRelayAdvisoryLockTests
             while (processedAt is null && DateTime.UtcNow < deadline)
             {
                 await Task.Delay(100);
-                processedAt = await ReadProcessedAtAsync(rowId);
+                processedAt = await Read_Processed_At_Async(rowId);
             }
             Assert.NotNull(processedAt);
         }
@@ -112,7 +112,7 @@ public sealed class OutboxRelayAdvisoryLockTests
         }
     }
 
-    private async Task<DateTime?> ReadProcessedAtAsync(Guid rowId)
+    private async Task<DateTime?> Read_Processed_At_Async(Guid rowId)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HisDbContext>();
