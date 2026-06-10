@@ -131,6 +131,45 @@ jobs:
             printf '%s' "$body" | jq -r "$filter" 2>/dev/null
           }
 
+          # wait_ready <label> <url> — poll <url> with the bearer until its API answers behind the
+          # gateway (any non-5xx, non-timeout status), up to ~2 min. The warm-up above gates on EHR
+          # patient volume only; the heavier contexts come up later on a cold runner — HIE loads the
+          # US Core profiles and migrates six schemas, and the portal path (HIS PatientAccess via the
+          # portal BFF) is one of the last to bind — so they can still 502 at assert time even though
+          # EHR is warm. A 502/503/504 means YARP couldn't reach a still-booting destination; once the
+          # API answers (2xx, or even 401/403) it's up. Returns 0 when ready, 1 (with a warning) on
+          # timeout so the assertion still runs and reports the real status.
+          wait_ready() {
+            local label="$1" url="$2" code
+            for _ in $(seq 1 40); do
+              code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
+                -H "Authorization: Bearer ${TOKEN}" "$url")
+              if [ "${code:0:1}" != "5" ] && [ "$code" != "000" ]; then
+                echo "[$label] API ready (HTTP $code)."
+                return 0
+              fi
+              sleep 3
+            done
+            echo "::warning::[$label] still returning HTTP $code after ~2 min; asserting anyway."
+            return 1
+          }
+
+          # post_retry <outfile> <url> [curl args…] — POST with the bearer, retrying while the gateway
+          # returns 5xx (destination still warming on a cold boot). Echoes the final HTTP code. Pairs
+          # with wait_ready for the HIE seed, whose single-shot POSTs previously made one cold-boot 502
+          # fatal even though the resource would have ingested moments later.
+          post_retry() {
+            local out="$1" url="$2"; shift 2
+            local code
+            for _ in $(seq 1 20); do
+              code=$(curl -sS -o "$out" -w '%{http_code}' \
+                -X POST -H "Authorization: Bearer ${TOKEN}" "$@" "$url")
+              [ "${code:0:1}" = "5" ] || break
+              sleep 3
+            done
+            printf '%s' "$code"
+          }
+
           # Warm-up: wait until the simulator has produced a healthy patient cohort, so the per-patient
           # completeness scans below (resulted labs / completed imaging / portal discovery) have
           # material. Gating on EHR patient volume is cheap and reliable — unlike HIE's outbound
@@ -216,13 +255,14 @@ jobs:
           # partner (exactly what the simulator's MPI seed does), then confirm it lands on the inbound
           # board. Self-contained → a firm HIE liveness assertion rather than a timing gamble.
           hie_partner="smoke-partner"
-          cons_code=$(curl -sS -o /tmp/hie_consent.out -w '%{http_code}' \
-            -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
-            "${BASE_URL}/hie/api/v1.0/hie/consents" \
+          # Gate on HIE being up before seeding — on a cold runner it boots after EHR (the warm-up's
+          # only gate), so the seed POSTs below would otherwise hit a 502.
+          wait_ready "hie" "${BASE_URL}/hie/api/v1.0/hie/ops/inbound"
+          cons_code=$(post_retry /tmp/hie_consent.out "${BASE_URL}/hie/api/v1.0/hie/consents" \
+            -H "Content-Type: application/json" \
             -d "{\"patientId\":\"00000000-0000-0000-0000-000000000000\",\"partnerId\":\"${hie_partner}\",\"scope\":\"patient.demographics\",\"direction\":\"Inbound\",\"effectiveFromUtc\":\"2020-01-01T00:00:00Z\"}")
-          bundle_code=$(curl -sS -o /tmp/hie_bundle.out -w '%{http_code}' \
-            -X POST -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -H "X-HIE-Partner: ${hie_partner}" \
-            "${BASE_URL}/hie/api/v1.0/fhir/Bundle" \
+          bundle_code=$(post_retry /tmp/hie_bundle.out "${BASE_URL}/hie/api/v1.0/fhir/Bundle" \
+            -H "Content-Type: application/json" -H "X-HIE-Partner: ${hie_partner}" \
             -d '{"resourceType":"Patient","id":"smoke-hie-1","identifier":[{"system":"http://terminology.hl7.org/CodeSystem/v2-0203","value":"SMOKE-HIE-1"}],"name":[{"family":"Smoketest","given":["Hie"]}],"gender":"female","birthDate":"1980-01-01"}')
           echo "[hie] seed: consent HTTP ${cons_code}, inbound bundle HTTP ${bundle_code}"
           hie_ok=0
@@ -311,6 +351,9 @@ jobs:
           # envelope → .data is the id array) lists patients with portal-relevant data. Take the first
           # and confirm its portal-summary loads — proves the portal context is both populated and
           # discoverable without a patient claim (the discovery the SPA's selector now uses).
+          # Gate on the portal path (HIS PatientAccess via the portal BFF) being up first — it binds
+          # late, and a 502 here would otherwise parse to an empty `.data` and read as "no patients".
+          wait_ready "portal" "${BASE_URL}/portal/api/v1.0/patient-access/patients?take=1"
           portal_pid=$(curl -sS -H "Authorization: Bearer ${TOKEN}" \
             "${BASE_URL}/portal/api/v1.0/patient-access/patients?take=25" | jq -r '.data[0] // empty' 2>/dev/null)
           if [ -z "$portal_pid" ] || [ "$portal_pid" = "null" ]; then
