@@ -67,6 +67,11 @@ public static class DelimitedTextStreaming
     {
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentNullException.ThrowIfNull(options);
+        return EnumerateRecordsCore(reader, options);
+    }
+
+    private static IEnumerable<string[]> EnumerateRecordsCore(StreamReader reader, Options options)
+    {
         while (reader.ReadLine() is { } rawLine)
         {
             if (options.SkipBlankLines && string.IsNullOrWhiteSpace(rawLine))
@@ -110,7 +115,11 @@ public static class DelimitedTextStreaming
                 if (c == '"' && i + 1 < line.Length && line[i + 1] == '"')
                 {
                     current.Append('"');
+                    // Consume the second quote of the "" escape pair — the standard
+                    // CSV lookahead-skip, so the index advance inside the body is deliberate.
+#pragma warning disable S127
                     i++;
+#pragma warning restore S127
                     continue;
                 }
                 if (c == '"')

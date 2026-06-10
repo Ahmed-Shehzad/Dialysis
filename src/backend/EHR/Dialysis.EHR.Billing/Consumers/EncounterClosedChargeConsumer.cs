@@ -79,11 +79,12 @@ public sealed class EncounterClosedChargeConsumer : IConsumer<EncounterClosedInt
             {
                 billed = await _fees.LookupAsync(cpt, ct).ConfigureAwait(false);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // No fee-schedule row for this CPT — don't poison the message; the encounter shows up
                 // on the lost-charge worklist until a fee is configured and the event is replayed.
                 _logger.LogWarning(
+                    ex,
                     "No fee-schedule entry for CPT {CptCode} on encounter {EncounterId}; skipping that line.",
                     cpt, message.EncounterId);
                 continue;

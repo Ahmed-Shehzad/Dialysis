@@ -92,7 +92,7 @@ public static class IterableResolver
         }
 
         // Iterate over the repeats of a specific field in the first matching segment.
-        var match = segments.FirstOrDefault(s =>
+        var match = Array.Find(segments, s =>
             s.StartsWith(segName + fieldSep, StringComparison.OrdinalIgnoreCase));
         if (match is null)
             return [];

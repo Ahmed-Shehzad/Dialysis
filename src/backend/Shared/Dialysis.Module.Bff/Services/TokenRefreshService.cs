@@ -141,6 +141,7 @@ public sealed class TokenRefreshService : ITokenRefreshService
         }
         catch (InvalidOperationException)
         {
+            // No sign-out handler registered (unit-test harness) — RejectPrincipal already did the work.
         }
     }
 

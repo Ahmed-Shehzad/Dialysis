@@ -50,7 +50,7 @@ public sealed class QualityMeasureEvaluator : IQualityMeasureEvaluator
             // A measure with no condition filter applies to everyone; otherwise the patient must carry
             // one of the listed problems for it to apply.
             if (measure.AppliesToAnyIcd10.Count > 0
-                && !measure.AppliesToAnyIcd10.Any(c => problemCodes.Contains(c.Trim())))
+                && !measure.AppliesToAnyIcd10.Exists(c => problemCodes.Contains(c.Trim())))
                 continue;
 
             var months = Math.Max(1, measure.WithinMonths);

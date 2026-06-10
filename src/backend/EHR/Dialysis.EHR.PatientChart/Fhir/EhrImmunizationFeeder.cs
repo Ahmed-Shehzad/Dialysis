@@ -26,12 +26,16 @@ public sealed class EhrImmunizationFeeder : INdjsonResourceFeeder<FhirImmunizati
     /// (<c>_since</c>) export filter.
     /// </summary>
     public EhrImmunizationFeeder(IImmunizationRepository immunizations) => _immunizations = immunizations;
-    public async IAsyncEnumerable<FhirImmunization> StreamAsync(
+    public IAsyncEnumerable<FhirImmunization> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<FhirImmunization> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var immunization in _immunizations.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(immunization);

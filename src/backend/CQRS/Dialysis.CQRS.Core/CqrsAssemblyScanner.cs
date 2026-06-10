@@ -103,7 +103,7 @@ internal static class CqrsAssemblyScanner
         if (!type.IsClass || type.IsAbstract)
             return false;
 
-        return type.GetInterfaces().Any(static iface =>
+        return Array.Exists(type.GetInterfaces(), static iface =>
             iface.IsGenericType &&
             iface.GetGenericTypeDefinition() == typeof(IValidator<>) &&
             IsCqrsMessageType(iface.GenericTypeArguments[0]));

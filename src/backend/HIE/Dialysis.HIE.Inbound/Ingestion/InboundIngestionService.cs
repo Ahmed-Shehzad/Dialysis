@@ -213,7 +213,7 @@ public sealed class InboundIngestionService
         if (!string.IsNullOrWhiteSpace(patient.BirthDate) && DateOnly.TryParse(patient.BirthDate, out var parsedDob))
             dob = parsedDob;
         var mrn = patient.Identifier
-            .FirstOrDefault(i => string.Equals(i.System, Core.Coding.CodeSystems.MrnIdentifier, StringComparison.Ordinal))?.Value;
+            .Find(i => string.Equals(i.System, Core.Coding.CodeSystems.MrnIdentifier, StringComparison.Ordinal))?.Value;
 
         var entry = new PatientIndexEntry(
             partnerId,

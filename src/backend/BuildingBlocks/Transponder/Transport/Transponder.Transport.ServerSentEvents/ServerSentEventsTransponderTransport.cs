@@ -59,7 +59,7 @@ public sealed class ServerSentEventsTransponderTransport : ITransponderTransport
         var dto = ToDto(message);
         using var request = new HttpRequestMessage(HttpMethod.Post, o.PublishPath.TrimStart('/'));
         request.Content = JsonContent.Create(dto, options: _jsonOptions);
-        await ApplyAuthAsync(request, cancellationToken).ConfigureAwait(false);
+        await ApplyAuthAsync(request).ConfigureAwait(false);
 
         using var response = await http.SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
@@ -75,7 +75,7 @@ public sealed class ServerSentEventsTransponderTransport : ITransponderTransport
         var o = _options.Value;
 
         using var request = new HttpRequestMessage(HttpMethod.Get, o.SubscribePath.TrimStart('/'));
-        await ApplyAuthAsync(request, cancellationToken).ConfigureAwait(false);
+        await ApplyAuthAsync(request).ConfigureAwait(false);
 
         using var response = await http
             .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
@@ -138,7 +138,7 @@ public sealed class ServerSentEventsTransponderTransport : ITransponderTransport
         }
     }
 
-    private async Task ApplyAuthAsync(HttpRequestMessage request, CancellationToken _)
+    private async Task ApplyAuthAsync(HttpRequestMessage request)
     {
         var provider = _options.Value.AccessTokenProvider;
         if (provider is null)

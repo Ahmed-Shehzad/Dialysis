@@ -16,7 +16,7 @@ public sealed class UpdateQualityWorkflowTaskStatusCommandValidator : AbstractVa
             .WithMessage("TaskId must be set.");
 
         RuleFor(static c => c.NewStatusCode, nameof(UpdateQualityWorkflowTaskStatusCommand.NewStatusCode))
-            .Must(static (_, code) => !string.IsNullOrWhiteSpace(code) && _allowed.Any(a => string.Equals(a, code.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .Must(static (_, code) => !string.IsNullOrWhiteSpace(code) && Array.Exists(_allowed, a => string.Equals(a, code.Trim(), StringComparison.OrdinalIgnoreCase)))
             .WithMessage($"NewStatusCode must be one of: {string.Join(", ", _allowed)}.");
     }
 }

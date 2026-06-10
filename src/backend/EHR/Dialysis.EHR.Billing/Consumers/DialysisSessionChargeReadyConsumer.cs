@@ -84,7 +84,7 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
         var breakdown = DialysisTariff.Compute(
             message.Modality, message.DurationMinutes, message.AchievedUfVolumeLiters);
         var billed = new Money(breakdown.Total, breakdown.CurrencyCode);
-        var diagnosisPointers = DialysisDiagnosisDefaults.PointersFor(message.Modality);
+        var diagnosisPointers = DialysisDiagnosisDefaults.PointersFor();
 
         var chargeId = Guid.CreateVersion7();
         var charge = Charge.Capture(
@@ -145,15 +145,8 @@ public interface ICptFeeSchedule
 /// </summary>
 internal static class DialysisDiagnosisDefaults
 {
-    public static IReadOnlyList<string> PointersFor(string modality) => modality switch
-    {
-        // ESRD requiring chronic dialysis — the universal anchor diagnosis for HD claims.
-        var m when m.Equals("HD", StringComparison.OrdinalIgnoreCase) => ["N18.6"],
-        var m when m.Contains("haemo", StringComparison.OrdinalIgnoreCase) => ["N18.6"],
-        var m when m.Contains("hemo", StringComparison.OrdinalIgnoreCase) => ["N18.6"],
-        // Peritoneal dialysis encounter; same anchor diagnosis applies.
-        var m when m.Equals("PD", StringComparison.OrdinalIgnoreCase) => ["N18.6"],
-        var m when m.Contains("peritoneal", StringComparison.OrdinalIgnoreCase) => ["N18.6"],
-        _ => ["N18.6"],
-    };
+    // Every modality today (HD, PD, and their spelling variants) anchors to the same ESRD
+    // diagnosis — ICD-10 N18.6, "end-stage renal disease requiring chronic dialysis".
+    // Reintroduce a modality switch here when a modality needs a different pointer set.
+    public static IReadOnlyList<string> PointersFor() => ["N18.6"];
 }

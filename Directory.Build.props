@@ -12,7 +12,13 @@
     "async methods must end with Async" rule fires at build time everywhere.
     The .editorconfig pins VSTHRD200 to error severity — keep them in sync.
   -->
+  <!--
+    SonarAnalyzer.CSharp is the same rule engine a SonarQube server scan runs;
+    referencing it solution-wide makes the .editorconfig Sonar profile execute
+    on every compile instead of only during `tools/sonarqube/scan.sh`.
+  -->
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="all" />
   </ItemGroup>
 </Project>

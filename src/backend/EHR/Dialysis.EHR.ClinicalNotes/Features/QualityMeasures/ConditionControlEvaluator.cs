@@ -55,7 +55,7 @@ public sealed class ConditionControlEvaluator : IConditionControlEvaluator
         {
             var problems = await _problems.ListByPatientAsync(patientId, false, cancellationToken).ConfigureAwait(false);
             var codes = problems.Select(p => p.Condition.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (!rule.AppliesToAnyIcd10.Any(c => codes.Contains(c.Trim())))
+            if (!rule.AppliesToAnyIcd10.Exists(c => codes.Contains(c.Trim())))
                 return new PatientControlStatus(PatientControlOutcome.NotApplicable, null);
         }
 

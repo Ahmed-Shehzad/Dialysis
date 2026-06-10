@@ -74,7 +74,7 @@ public sealed class Encounter : AggregateRoot<Guid>
     public Diagnosis AttachDiagnosis(string icd10Code, DiagnosisRank rank, string? display, DateTime recordedAtUtc)
     {
         EnsureMutable();
-        if (rank == DiagnosisRank.Primary && _diagnoses.Any(d => d.Rank == DiagnosisRank.Primary))
+        if (rank == DiagnosisRank.Primary && _diagnoses.Exists(d => d.Rank == DiagnosisRank.Primary))
             throw new InvalidOperationException("Encounter already has a primary diagnosis.");
         var diagnosis = Diagnosis.Record(Guid.CreateVersion7(), Id, icd10Code, rank, display, recordedAtUtc);
         _diagnoses.Add(diagnosis);

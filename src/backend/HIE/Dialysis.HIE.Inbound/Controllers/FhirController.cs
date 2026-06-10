@@ -63,7 +63,7 @@ public sealed class FhirController : ControllerBase
         }
 
         var outcome = await _ingestion.IngestAsync(partnerId, resource, purposeOfUse, cancellationToken).ConfigureAwait(false);
-        var status = outcome.Issue.Any(i => i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal)
+        var status = outcome.Issue.Exists(i => i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal)
             ? StatusCodes.Status422UnprocessableEntity
             : StatusCodes.Status200OK;
         return FhirResult(StatusCode(status), outcome);

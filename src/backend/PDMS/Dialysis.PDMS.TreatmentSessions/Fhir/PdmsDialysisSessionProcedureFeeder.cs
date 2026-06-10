@@ -25,12 +25,16 @@ public sealed class PdmsDialysisSessionProcedureFeeder : INdjsonResourceFeeder<P
     private const string HemodialysisSnomed = "302497006";
     private const string SnomedSystem = "http://snomed.info/sct";
 
-    public async IAsyncEnumerable<Procedure> StreamAsync(
+    public IAsyncEnumerable<Procedure> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<Procedure> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var session in _sessions.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(session);

@@ -43,7 +43,10 @@ public sealed class GrpcTransponderTransport : ITransponderTransport
             var httpHandler = new SocketsHttpHandler { EnableMultipleHttp2Connections = true };
             if (o.ForDevelopmentOnlyDisableCertificateValidation)
             {
+                // Deliberate dev-only escape hatch; the option name carries the warning.
+#pragma warning disable S4830
                 httpHandler.SslOptions.RemoteCertificateValidationCallback = static (_, _, _, _) => true;
+#pragma warning restore S4830
             }
 
             _channel = GrpcChannel.ForAddress(

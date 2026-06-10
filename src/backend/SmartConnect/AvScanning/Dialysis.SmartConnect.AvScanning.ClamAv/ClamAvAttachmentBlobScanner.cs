@@ -58,9 +58,9 @@ public sealed class ClamAvAttachmentBlobScanner : IAttachmentBlobScanner
             _logger.LogWarning(ex, "ClamAV scanner unreachable at {Host}:{Port}", _options.Host, _options.Port);
             return AttachmentScanResult.ScannerUnavailable;
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("ClamAV scan timed out after {Timeout}", _options.Timeout);
+            _logger.LogWarning(ex, "ClamAV scan timed out after {Timeout}", _options.Timeout);
             return AttachmentScanResult.ScannerUnavailable;
         }
     }

@@ -48,8 +48,8 @@ public sealed class Edi837PClaimWriter
         WriteBillingProvider2000A(sb, context);
         WriteSubscriber2000B(sb, context);
         WriteClaim2300(sb, context);
-        var serviceLineCount = WriteServiceLines2400(sb, context);
-        WriteSe(sb, context, serviceLineCount);
+        WriteServiceLines2400(sb, context);
+        WriteSe(sb, context);
         WriteGe(sb, context);
         WriteIea(sb, context);
         return Encoding.ASCII.GetBytes(sb.ToString());
@@ -137,7 +137,7 @@ public sealed class Edi837PClaimWriter
         }
     }
 
-    private static int WriteServiceLines2400(StringBuilder sb, Edi837ClaimContext ctx)
+    private static void WriteServiceLines2400(StringBuilder sb, Edi837ClaimContext ctx)
     {
         var lineNumber = 0;
         foreach (var charge in ctx.Charges)
@@ -152,10 +152,9 @@ public sealed class Edi837PClaimWriter
             sb.Append($"SV1*HC{CompositeSeparator}{charge.CptCode}*{amount}*UN*1***1{SegmentTerminator}");
             sb.Append($"DTP*472*D8*{ctx.ServicePeriodEndUtc:yyyyMMdd}{SegmentTerminator}");
         }
-        return lineNumber;
     }
 
-    private static void WriteSe(StringBuilder sb, Edi837ClaimContext ctx, int serviceLineCount)
+    private static void WriteSe(StringBuilder sb, Edi837ClaimContext ctx)
     {
         // SE01 = number of segments in the transaction set including ST and SE. We
         // count by re-scanning the buffer rather than trusting hand-maintained counts —

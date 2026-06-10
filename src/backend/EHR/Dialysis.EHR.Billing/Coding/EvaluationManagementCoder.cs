@@ -44,7 +44,7 @@ public sealed class EvaluationManagementCoder : IEvaluationManagementCoder
     public int? LevelOf(string cptCode)
     {
         var cpt = cptCode?.Trim() ?? string.Empty;
-        var rule = _options.Levels.FirstOrDefault(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
+        var rule = _options.Levels.Find(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
         return rule?.Level;
     }
 
@@ -54,7 +54,7 @@ public sealed class EvaluationManagementCoder : IEvaluationManagementCoder
         if (cpt.Length == 0)
             return false;
         if (_options.EmCptCodes.Count > 0)
-            return _options.EmCptCodes.Any(c => c.Trim().Equals(cpt, StringComparison.OrdinalIgnoreCase));
-        return _options.Levels.Any(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
+            return _options.EmCptCodes.Exists(c => c.Trim().Equals(cpt, StringComparison.OrdinalIgnoreCase));
+        return _options.Levels.Exists(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
     }
 }

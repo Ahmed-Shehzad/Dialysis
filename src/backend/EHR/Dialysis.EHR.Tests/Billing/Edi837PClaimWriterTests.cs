@@ -42,7 +42,6 @@ public sealed class Edi837PClaimWriterTests
     [Fact]
     public void Se_Segment_Reports_Correct_Transaction_Set_Length()
     {
-        var writer = new Edi837PClaimWriter();
         var ctx = SampleContext();
 
         var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));
@@ -60,7 +59,6 @@ public sealed class Edi837PClaimWriterTests
     [Fact]
     public void Claim_Total_Amount_Renders_With_Two_Decimal_Places()
     {
-        var writer = new Edi837PClaimWriter();
         var ctx = SampleContext();
 
         var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));
@@ -72,7 +70,6 @@ public sealed class Edi837PClaimWriterTests
     [Fact]
     public void Diagnosis_Codes_Render_In_Hi_Segment_With_Abk_Then_Abf()
     {
-        var writer = new Edi837PClaimWriter();
         var ctx = SampleContext() with { DiagnosisCodes = ["N18.6", "I12.9"] };
 
         var text = Encoding.ASCII.GetString(Edi837PClaimWriter.Write(ctx));

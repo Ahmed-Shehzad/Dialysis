@@ -23,12 +23,16 @@ public sealed class HisPatientStubFeeder : INdjsonResourceFeeder<Patient>
     /// joins inside the NDJSON output work without round-tripping to EHR mid-export.
     /// </summary>
     public HisPatientStubFeeder(IAdmissionRepository admissions) => _admissions = admissions;
-    public async IAsyncEnumerable<Patient> StreamAsync(
+    public IAsyncEnumerable<Patient> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<Patient> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var patientId in _admissions.StreamDistinctPatientIdsAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new Patient

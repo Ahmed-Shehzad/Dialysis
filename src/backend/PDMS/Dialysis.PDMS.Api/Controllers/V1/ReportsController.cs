@@ -20,6 +20,7 @@ namespace Dialysis.PDMS.Api.Controllers.V1;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}")]
 public sealed class ReportsController : ControllerBase
 {
     private readonly IPdmsRepository<SessionReport, Guid> _reports;
@@ -50,7 +51,7 @@ public sealed class ReportsController : ControllerBase
         _unitOfWork = unitOfWork;
         _clock = clock;
     }
-    [HttpGet("api/v{version:apiVersion}/sessions/{sessionId:guid}/reports")]
+    [HttpGet("sessions/{sessionId:guid}/reports")]
     [ProducesResponseType(typeof(IReadOnlyList<SessionReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListForSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
@@ -63,7 +64,7 @@ public sealed class ReportsController : ControllerBase
         return Ok(rows);
     }
 
-    [HttpGet("api/v{version:apiVersion}/reports/{reportId:guid}")]
+    [HttpGet("reports/{reportId:guid}")]
     [ProducesResponseType(typeof(SessionReportDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAsync(Guid reportId, CancellationToken cancellationToken)
@@ -74,7 +75,7 @@ public sealed class ReportsController : ControllerBase
         return Ok(SessionReportDto.From(report));
     }
 
-    [HttpGet("api/v{version:apiVersion}/reports/{reportId:guid}/content")]
+    [HttpGet("reports/{reportId:guid}/content")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DownloadAsync(Guid reportId, CancellationToken cancellationToken)
@@ -88,7 +89,7 @@ public sealed class ReportsController : ControllerBase
         return File(bytes, report.Format, $"{report.Kind.ToString().ToLowerInvariant()}-{report.SessionId:N}.pdf");
     }
 
-    [HttpGet("api/v{version:apiVersion}/reporting/templates")]
+    [HttpGet("reporting/templates")]
     [ProducesResponseType(typeof(IReadOnlyList<ReportTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListTemplatesAsync(
         [FromQuery] string? kind = null,
@@ -101,7 +102,7 @@ public sealed class ReportsController : ControllerBase
         return Ok(filtered.Select(ReportTemplateDto.From).ToArray());
     }
 
-    [HttpPost("api/v{version:apiVersion}/reporting/templates")]
+    [HttpPost("reporting/templates")]
     [ProducesResponseType(typeof(ReportTemplateDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AppendVersionAsync(
@@ -130,7 +131,7 @@ public sealed class ReportsController : ControllerBase
         return Created($"/api/v1.0/reporting/templates/{template.Slug}", ReportTemplateDto.From(template));
     }
 
-    [HttpPost("api/v{version:apiVersion}/reporting/templates/{slug}/publish")]
+    [HttpPost("reporting/templates/{slug}/publish")]
     [ProducesResponseType(typeof(ReportTemplateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

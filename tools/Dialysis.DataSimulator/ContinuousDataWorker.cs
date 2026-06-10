@@ -175,12 +175,12 @@ public sealed class ContinuousDataWorker : BackgroundService
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            _logger.LogDebug("Patient already exists (MRN {Mrn}); skipping journey.", patient.MedicalRecordNumber);
+            _logger.LogDebug(ex, "Patient already exists (MRN {Mrn}); skipping journey.", patient.MedicalRecordNumber);
             return;
         }
         catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
-            _logger.LogWarning("Patient registration failed (MRN {Mrn}): {Message}; continuing.", patient.MedicalRecordNumber, ex.Message);
+            _logger.LogWarning(ex, "Patient registration failed (MRN {Mrn}); continuing.", patient.MedicalRecordNumber);
             return;
         }
 
@@ -211,7 +211,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             }
             catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
-                _logger.LogDebug("Chair {Chair} not assigned (likely occupied): {Message}", chair, ex.Message);
+                _logger.LogDebug(ex, "Chair {Chair} not assigned (likely occupied).", chair);
             }
         }).ConfigureAwait(false);
         await TryAsync("his.medication-order", () => _his.PlaceMedicationOrderAsync(patientId, cancellationToken)).ConfigureAwait(false);
@@ -428,7 +428,11 @@ public sealed class ContinuousDataWorker : BackgroundService
         using var rsa = RSA.Create(2048);
         var request = new CertificateRequest($"CN={commonName}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(3));
+        // Not a credential: throwaway passphrase for a self-signed PFX generated in-memory
+        // for the demo TEFCA partner; the cert never leaves the simulator run.
+#pragma warning disable S2068
         const string pfxPassword = "simulator-dev-pfx";
+#pragma warning restore S2068
         var pem = certificate.ExportCertificatePem();
         var pfx = certificate.Export(X509ContentType.Pfx, pfxPassword);
         return (pem, Convert.ToBase64String(pfx), pfxPassword);
@@ -482,7 +486,7 @@ public sealed class ContinuousDataWorker : BackgroundService
             }
             catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
-                _logger.LogInformation("Admin-seed probe not ready (attempt {Attempt}/20): {Message}; retrying.", attempt, ex.Message);
+                _logger.LogInformation(ex, "Admin-seed probe not ready (attempt {Attempt}/20); retrying.", attempt);
                 try { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false); }
                 catch (OperationCanceledException) { return; }
             }
@@ -675,7 +679,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         }
         catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
-            _logger.LogWarning("Journey step {Step} failed: {Message}", step, ex.Message);
+            _logger.LogWarning(ex, "Journey step {Step} failed.", step);
         }
     }
 
@@ -688,7 +692,7 @@ public sealed class ContinuousDataWorker : BackgroundService
         }
         catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
         {
-            _logger.LogWarning("Journey step {Step} failed: {Message}", step, ex.Message);
+            _logger.LogWarning(ex, "Journey step {Step} failed.", step);
             return null;
         }
     }

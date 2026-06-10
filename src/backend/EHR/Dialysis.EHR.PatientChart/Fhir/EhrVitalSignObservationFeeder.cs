@@ -19,12 +19,16 @@ public sealed class EhrVitalSignObservationFeeder : INdjsonResourceFeeder<Observ
     /// UCUM-coded <c>Quantity</c>.
     /// </summary>
     public EhrVitalSignObservationFeeder(IVitalSignRepository readings) => _readings = readings;
-    public async IAsyncEnumerable<Observation> StreamAsync(
+    public IAsyncEnumerable<Observation> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<Observation> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var reading in _readings.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new Observation

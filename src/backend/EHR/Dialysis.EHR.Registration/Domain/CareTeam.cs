@@ -72,7 +72,7 @@ public sealed class CareTeam : AggregateRoot<Guid>
     public CareTeamMember AddMember(Guid memberId, Guid providerId, CareTeamRole role, bool isPrimary)
     {
         if (providerId == Guid.Empty) throw new ArgumentException("Provider required.", nameof(providerId));
-        if (_members.Any(m => m.ProviderId == providerId))
+        if (_members.Exists(m => m.ProviderId == providerId))
             throw new InvalidOperationException("Provider is already on this care team.");
 
         if (isPrimary)
@@ -85,14 +85,14 @@ public sealed class CareTeam : AggregateRoot<Guid>
 
     public void RemoveMember(Guid providerId)
     {
-        var member = _members.FirstOrDefault(m => m.ProviderId == providerId)
+        var member = _members.Find(m => m.ProviderId == providerId)
             ?? throw new InvalidOperationException("Provider is not on this care team.");
         _members.Remove(member);
     }
 
     public void SetPrimary(Guid providerId)
     {
-        var target = _members.FirstOrDefault(m => m.ProviderId == providerId)
+        var target = _members.Find(m => m.ProviderId == providerId)
             ?? throw new InvalidOperationException("Provider is not on this care team.");
         DemotePrimaries();
         target.SetPrimary(true);

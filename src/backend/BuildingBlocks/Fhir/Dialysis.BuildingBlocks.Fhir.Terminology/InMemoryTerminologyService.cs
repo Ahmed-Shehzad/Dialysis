@@ -36,7 +36,7 @@ public sealed class InMemoryTerminologyService : ITerminologyService
         var parameters = new Parameters();
         if (_codeSystems.TryGetValue(system, out var cs))
         {
-            var concept = cs.Concept.FirstOrDefault(c => string.Equals(c.Code, code, StringComparison.Ordinal));
+            var concept = cs.Concept.Find(c => string.Equals(c.Code, code, StringComparison.Ordinal));
             if (concept is not null)
             {
                 parameters.Add("name", new FhirString(cs.Name));
@@ -52,9 +52,9 @@ public sealed class InMemoryTerminologyService : ITerminologyService
         var valid = false;
         if (_valueSets.TryGetValue(valueSetUrl, out var vs))
         {
-            valid = vs.Compose?.Include.Any(i =>
+            valid = vs.Compose?.Include.Exists(i =>
                 (system is null || string.Equals(i.System, system, StringComparison.Ordinal)) &&
-                i.Concept.Any(c => string.Equals(c.Code, code, StringComparison.Ordinal))) == true;
+                i.Concept.Exists(c => string.Equals(c.Code, code, StringComparison.Ordinal))) == true;
         }
         result.Add("result", new FhirBoolean(valid));
         return new ValueTask<Parameters>(result);

@@ -18,7 +18,6 @@ public sealed class EfExportJobStore<TDbContext> : IExportJobStore
     /// their <c>OnModelCreating</c> override to enable this store.
     /// </summary>
     public EfExportJobStore(TDbContext db) => _db = db;
-    private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<ExportJob> CreateAsync(ExportJob job, CancellationToken cancellationToken)
     {
@@ -49,7 +48,7 @@ public sealed class EfExportJobStore<TDbContext> : IExportJobStore
         record.Status = job.Status;
         record.CompletedAt = job.CompletedAt;
         record.Error = job.Error;
-        record.OutputsJson = JsonSerializer.Serialize(job.Outputs, _json);
+        record.OutputsJson = JsonSerializer.Serialize(job.Outputs, EfExportJobStoreJson.Options);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -74,14 +73,14 @@ public sealed class EfExportJobStore<TDbContext> : IExportJobStore
         CreatedAt = job.CreatedAt,
         CompletedAt = job.CompletedAt,
         Error = job.Error,
-        OutputsJson = JsonSerializer.Serialize(job.Outputs, _json),
+        OutputsJson = JsonSerializer.Serialize(job.Outputs, EfExportJobStoreJson.Options),
     };
 
     private static ExportJob ToDomain(ExportJobRecord record)
     {
         var outputs = string.IsNullOrEmpty(record.OutputsJson)
             ? []
-            : JsonSerializer.Deserialize<List<ExportJobOutput>>(record.OutputsJson, _json) ?? [];
+            : JsonSerializer.Deserialize<List<ExportJobOutput>>(record.OutputsJson, EfExportJobStoreJson.Options) ?? [];
         var types = string.IsNullOrEmpty(record.ResourceTypesCsv)
             ? []
             : (IReadOnlyList<string>)record.ResourceTypesCsv.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -99,4 +98,10 @@ public sealed class EfExportJobStore<TDbContext> : IExportJobStore
             Outputs: outputs,
             Error: record.Error);
     }
+}
+
+// Non-generic holder so the options instance is shared across every closed generic store type.
+file static class EfExportJobStoreJson
+{
+    internal static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
 }

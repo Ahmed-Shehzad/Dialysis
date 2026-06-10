@@ -202,7 +202,7 @@ public sealed class FhirArtifactVerifier : IFhirArtifactVerifier
 
     private static FhirArtifactVerification Finalize(OperationOutcome outcome)
     {
-        var isValid = !outcome.Issue.Any(i =>
+        var isValid = !outcome.Issue.Exists(i =>
             i.Severity is OperationOutcome.IssueSeverity.Error or OperationOutcome.IssueSeverity.Fatal);
         return new FhirArtifactVerification(isValid, outcome);
     }

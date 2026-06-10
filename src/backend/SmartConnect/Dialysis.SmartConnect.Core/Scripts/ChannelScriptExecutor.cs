@@ -69,7 +69,7 @@ public sealed class ChannelScriptExecutor
             await BindCodeTemplatesAsync(engine, message.FlowId, CodeTemplateContext.ChannelPreprocessor, cancellationToken).ConfigureAwait(false);
             AttachmentJsBinder.Bind(engine, _attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
 
-            var result = engine.Evaluate(script);
+            var result = await engine.EvaluateAsync(script, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             await PersistBackAsync(bound, message.FlowId, cancellationToken).ConfigureAwait(false);
 
@@ -88,9 +88,9 @@ public sealed class ChannelScriptExecutor
 
             return PreProcessorResult.PassThrough();
         }
-        catch (TimeoutException)
+        catch (TimeoutException ex)
         {
-            _logger.LogWarning("PreProcessor script timed out for flow {FlowId}.", message.FlowId);
+            _logger.LogWarning(ex, "PreProcessor script timed out for flow {FlowId}.", message.FlowId);
             return PreProcessorResult.PassThrough();
         }
         catch (Exception ex)
@@ -136,7 +136,7 @@ public sealed class ChannelScriptExecutor
             await BindCodeTemplatesAsync(engine, message.FlowId, CodeTemplateContext.ChannelPostprocessor, cancellationToken).ConfigureAwait(false);
             AttachmentJsBinder.Bind(engine, _attachmentStore, message.FlowId, message.Id, "application/octet-stream", cancellationToken);
 
-            engine.Execute(script);
+            await engine.ExecuteAsync(script, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             await PersistBackAsync(bound, message.FlowId, cancellationToken).ConfigureAwait(false);
         }

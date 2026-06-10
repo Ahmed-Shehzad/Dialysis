@@ -77,7 +77,7 @@ public sealed class JavaScriptAttachmentHandler : IAttachmentHandler
         }));
 
         // Evaluate and prefer the script's explicit return; else read back the (possibly reassigned) global "msg".
-        var result = engine.Evaluate(script);
+        var result = await engine.EvaluateAsync(script, cancellationToken: cancellationToken).ConfigureAwait(false);
         string rewritten;
         if (!result.IsUndefined() && !result.IsNull())
         {
@@ -132,7 +132,7 @@ public sealed class JavaScriptAttachmentHandler : IAttachmentHandler
                 return el.GetString();
             }
         }
-        catch (JsonException) { }
+        catch (JsonException) { /* malformed properties JSON → no script configured */ }
         return null;
     }
 

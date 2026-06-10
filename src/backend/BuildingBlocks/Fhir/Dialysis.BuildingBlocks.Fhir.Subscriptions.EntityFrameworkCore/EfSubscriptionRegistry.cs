@@ -20,7 +20,6 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
     /// component replaces the in-memory default.
     /// </summary>
     public EfSubscriptionRegistry(TDbContext db) => _db = db;
-    private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
     public async ValueTask<FhirSubscriptionRegistration> RegisterAsync(FhirSubscriptionRegistration registration, CancellationToken cancellationToken)
     {
@@ -108,7 +107,7 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
         ChannelType = registration.ChannelType,
         ChannelEndpoint = registration.ChannelEndpoint,
         ChannelHeader = registration.ChannelHeader,
-        FilterParametersJson = JsonSerializer.Serialize(registration.FilterParameters, _json),
+        FilterParametersJson = JsonSerializer.Serialize(registration.FilterParameters, EfSubscriptionRegistryJson.Options),
         Status = registration.Status,
         ConsecutiveFailures = registration.ConsecutiveFailures,
         CreatedAt = DateTimeOffset.UtcNow,
@@ -120,7 +119,7 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
         record.ChannelType = registration.ChannelType;
         record.ChannelEndpoint = registration.ChannelEndpoint;
         record.ChannelHeader = registration.ChannelHeader;
-        record.FilterParametersJson = JsonSerializer.Serialize(registration.FilterParameters, _json);
+        record.FilterParametersJson = JsonSerializer.Serialize(registration.FilterParameters, EfSubscriptionRegistryJson.Options);
         record.Status = registration.Status;
         record.ConsecutiveFailures = registration.ConsecutiveFailures;
     }
@@ -129,7 +128,7 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
     {
         var filters = string.IsNullOrEmpty(record.FilterParametersJson)
             ? new Dictionary<string, string>(StringComparer.Ordinal)
-            : JsonSerializer.Deserialize<Dictionary<string, string>>(record.FilterParametersJson, _json)
+            : JsonSerializer.Deserialize<Dictionary<string, string>>(record.FilterParametersJson, EfSubscriptionRegistryJson.Options)
                 ?? new Dictionary<string, string>(StringComparer.Ordinal);
         return new FhirSubscriptionRegistration(
             Id: record.Id,
@@ -141,4 +140,10 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
             Status: record.Status,
             ConsecutiveFailures: record.ConsecutiveFailures);
     }
+}
+
+// Non-generic holder so the options instance is shared across every closed generic store type.
+file static class EfSubscriptionRegistryJson
+{
+    internal static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
 }

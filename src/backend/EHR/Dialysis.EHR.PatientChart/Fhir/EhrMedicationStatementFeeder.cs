@@ -26,12 +26,16 @@ public sealed class EhrMedicationStatementFeeder : INdjsonResourceFeeder<FhirMed
     /// incremental (<c>_since</c>) export filter.
     /// </summary>
     public EhrMedicationStatementFeeder(IMedicationStatementRepository statements) => _statements = statements;
-    public async IAsyncEnumerable<FhirMedicationStatement> StreamAsync(
+    public IAsyncEnumerable<FhirMedicationStatement> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<FhirMedicationStatement> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var statement in _statements.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(statement);

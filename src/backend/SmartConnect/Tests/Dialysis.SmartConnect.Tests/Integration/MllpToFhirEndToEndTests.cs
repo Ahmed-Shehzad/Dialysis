@@ -43,7 +43,7 @@ public sealed class MllpToFhirEndToEndTests
         await using var sp = await Build_Async(addVerifyFilters: true);
         var capture = sp.GetRequiredService<CapturingOutboundAdapter>();
 
-        await Seedflow_Async(sp, capture);
+        await Seedflow_Async(sp);
         await Dispatch_Async(sp, hl7);
 
         var captured = capture.Sent.Single();
@@ -57,7 +57,7 @@ public sealed class MllpToFhirEndToEndTests
     {
         await using var sp = await Build_Async(addVerifyFilters: true);
         var capture = sp.GetRequiredService<CapturingOutboundAdapter>();
-        await Seedflow_Async(sp, capture);
+        await Seedflow_Async(sp);
 
         await Dispatch_Async(sp, "not an hl7 message");
 
@@ -80,7 +80,7 @@ public sealed class MllpToFhirEndToEndTests
         return sp;
     }
 
-    private static async Task Seedflow_Async(ServiceProvider sp, CapturingOutboundAdapter capture)
+    private static async Task Seedflow_Async(ServiceProvider sp)
     {
         await using var scope = sp.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<SmartConnectDbContext>();

@@ -89,7 +89,7 @@ internal static class CdaSectionEmitters
         {
             var admin = new XElement(_hl7 + "substanceAdministration",
                 new XAttribute("moodCode", "EVN"),
-                CdaEmitting.EffectiveTimePoint("effectiveTime", i.Occurrence as DataType),
+                CdaEmitting.EffectiveTimePoint("effectiveTime", i.Occurrence),
                 new XElement(_hl7 + "consumable",
                     new XElement(_hl7 + "manufacturedProduct",
                         new XElement(_hl7 + "manufacturedMaterial",

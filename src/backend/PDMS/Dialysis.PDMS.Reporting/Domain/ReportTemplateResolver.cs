@@ -37,7 +37,7 @@ public static class ReportTemplateResolver
         if (normalized is not null)
         {
             // 1. exact (kind, language) match.
-            var exact = published.FirstOrDefault(t => t.LanguageCode == normalized);
+            var exact = published.Find(t => t.LanguageCode == normalized);
             if (exact is not null) return exact;
 
             // 2. primary subtag match (de-de → de).
@@ -45,12 +45,12 @@ public static class ReportTemplateResolver
             if (dash > 0)
             {
                 var primary = normalized[..dash];
-                var bySubtag = published.FirstOrDefault(t => t.LanguageCode == primary);
+                var bySubtag = published.Find(t => t.LanguageCode == primary);
                 if (bySubtag is not null) return bySubtag;
             }
         }
 
         // 3. language-neutral default.
-        return published.FirstOrDefault(t => t.LanguageCode is null);
+        return published.Find(t => t.LanguageCode is null);
     }
 }

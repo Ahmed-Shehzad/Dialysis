@@ -73,7 +73,7 @@ public static class PipelineValidation
             }
         }
 
-        if (flow.Dependencies.Any(d => d == flow.Id))
+        if (flow.Dependencies.Exists(d => d == flow.Id))
         {
             throw new InvalidOperationException("A flow cannot list itself as a dependency.");
         }

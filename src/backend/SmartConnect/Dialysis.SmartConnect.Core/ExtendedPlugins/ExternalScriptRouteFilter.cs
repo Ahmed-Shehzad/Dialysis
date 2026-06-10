@@ -86,13 +86,17 @@ public sealed class ExternalScriptRouteFilter : IRouteFilter
         await BindCodeTemplatesAsync(engine, message.FlowId, cancellationToken).ConfigureAwait(false);
         BindAddAttachment(engine, message, cancellationToken);
 
-        var result = engine.Evaluate(script).ToObject();
+        var result = (await engine.EvaluateAsync(script, cancellationToken: cancellationToken).ConfigureAwait(false)).ToObject();
         var truthy = result switch
         {
             bool b => b,
             int i => i != 0,
             long l => l != 0,
+            // JS truthiness is an exact-zero test by definition (0 and NaN are falsy),
+            // so an epsilon range would be wrong here.
+#pragma warning disable S1244
             double d => d < 0 || d > 0,
+#pragma warning restore S1244
             string s => !string.IsNullOrEmpty(s),
             null => false,
             _ => true,

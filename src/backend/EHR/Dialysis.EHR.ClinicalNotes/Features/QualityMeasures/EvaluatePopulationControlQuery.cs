@@ -58,7 +58,7 @@ public sealed class EvaluatePopulationControlQueryHandler
     public async Task<PopulationControlResult> HandleAsync(
         EvaluatePopulationControlQuery request, CancellationToken cancellationToken)
     {
-        var rule = _options.Measures.FirstOrDefault(m => m.Id.Equals(request.MeasureId, StringComparison.OrdinalIgnoreCase))
+        var rule = _options.Measures.Find(m => m.Id.Equals(request.MeasureId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Control measure '{request.MeasureId}' is not configured.");
 
         var take = Math.Clamp(request.Take, 1, MaxCohort);
