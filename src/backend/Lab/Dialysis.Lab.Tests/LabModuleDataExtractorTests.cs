@@ -36,10 +36,10 @@ public sealed class LabModuleDataExtractorTests
         var otherPatient = Guid.CreateVersion7();
         var now = DateTime.UtcNow;
 
-        var mine = await New_Order_Async(patientId, now);
+        var mine = New_Order(patientId, now);
         db.LabOrders.Add(mine);
-        db.LabOrders.Add(await New_Order_Async(patientId, now));
-        db.LabOrders.Add(await New_Order_Async(otherPatient, now));
+        db.LabOrders.Add(New_Order(patientId, now));
+        db.LabOrders.Add(New_Order(otherPatient, now));
         await db.SaveChangesAsync(CancellationToken.None);
 
         var sut = new LabModuleDataExtractor(db);
@@ -66,7 +66,7 @@ public sealed class LabModuleDataExtractorTests
         var db = scope.ServiceProvider.GetRequiredService<LabDbContext>();
         var patientId = Guid.CreateVersion7();
 
-        db.LabOrders.Add(await New_Order_Async(patientId, DateTime.UtcNow));
+        db.LabOrders.Add(New_Order(patientId, DateTime.UtcNow));
         await db.SaveChangesAsync(CancellationToken.None);
 
         var eraser = new LabPatientEraser(db, TimeProvider.System, NullLogger<LabPatientEraser>.Instance);
@@ -91,7 +91,7 @@ public sealed class LabModuleDataExtractorTests
         resources.ShouldBeEmpty();
     }
 
-    private static async Task<LabOrder> New_Order_Async(Guid patientId, DateTime nowUtc)
+    private static LabOrder New_Order(Guid patientId, DateTime nowUtc)
     {
         // Fresh LabTestItem instances per order: the items are EF-owned entities tracked by
         // reference, so a shared instance would silently re-parent to the last order added.
@@ -101,9 +101,6 @@ public sealed class LabModuleDataExtractorTests
             LabOrderPriority.Routine, "Serum", "dr.house", nowUtc);
         // The seeded aggregate raised LabOrderPlacedIntegrationEvent; tests persist state only.
         order.ClearIntegrationEvents();
-        // PlacerOrderNumber derives from the v7 id's millisecond-timestamp prefix, so two orders
-        // placed in the same millisecond collide on the unique index — space the seeds out.
-        await Task.Delay(2);
         return order;
     }
 }
