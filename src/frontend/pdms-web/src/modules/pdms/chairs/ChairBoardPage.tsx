@@ -15,14 +15,15 @@ const formatElapsed = (iso: string): string => {
   return `${hours}h ${remaining}m`;
 };
 
+const chairTone = (elapsed: number): string => {
+  if (elapsed > 240) return "border-rose-700/70 bg-rose-950/40 text-rose-100";
+  if (elapsed > 60) return "border-amber-700/70 bg-amber-950/30 text-amber-100";
+  return "border-emerald-700/70 bg-emerald-950/40 text-emerald-100";
+};
+
 const ChairTile = ({ assignment }: { assignment: ChairAssignment }) => {
   const elapsed = minutesSince(assignment.placedAtUtc);
-  const tone =
-    elapsed > 240
-      ? "border-rose-700/70 bg-rose-950/40 text-rose-100"
-      : elapsed > 60
-        ? "border-amber-700/70 bg-amber-950/30 text-amber-100"
-        : "border-emerald-700/70 bg-emerald-950/40 text-emerald-100";
+  const tone = chairTone(elapsed);
 
   const { name, isLoading: nameLoading } = usePatientName(assignment.patientId);
 

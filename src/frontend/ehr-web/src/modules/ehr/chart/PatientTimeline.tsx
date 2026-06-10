@@ -33,6 +33,94 @@ const KIND_META: Record<TimelineKind, { label: string; dot: string; chip: string
 
 const ALL_KINDS = Object.keys(KIND_META) as TimelineKind[];
 
+type NoteRow = Awaited<ReturnType<typeof fetchPatientNotes>>[number];
+type LabRow = Awaited<ReturnType<typeof fetchPatientLabResults>>[number];
+type ReferralRow = Awaited<ReturnType<typeof fetchReferrals>>[number];
+type HospitalRow = Awaited<ReturnType<typeof fetchPatientHospitalEvents>>[number];
+type ChartData = Awaited<ReturnType<typeof fetchPatientChart>>;
+type InsightsData = Awaited<ReturnType<typeof fetchPatientInsights>>;
+
+const noteEntries = (rows: NoteRow[]): TimelineEntry[] =>
+  rows.map((n) => ({
+    id: `note-${n.id}`,
+    when: n.signedAtUtc ?? n.createdAtUtc,
+    kind: "Note",
+    title: n.assessment?.trim() || "Clinical note",
+    detail: n.subjective?.trim() || undefined,
+    source: "EHR",
+  }));
+
+const labEntries = (rows: LabRow[]): TimelineEntry[] =>
+  rows.map((l) => {
+    const unit = l.unitCode ? ` ${l.unitCode}` : "";
+    const abnormal = l.abnormalFlag !== 1;
+    return {
+      id: `lab-${l.id}`,
+      when: l.observedAtUtc,
+      kind: "Lab",
+      title: `${l.loincCode} — ${l.valueText}${unit}`,
+      detail: abnormal ? `Flag: ${labAbnormalFlagLabel(l.abnormalFlag)}` : undefined,
+      source: "EHR",
+    };
+  });
+
+const referralEntries = (rows: ReferralRow[]): TimelineEntry[] =>
+  rows.map((r) => ({
+    id: `ref-${r.id}`,
+    when: r.requestedAtUtc,
+    kind: "Referral",
+    title: `Referral → ${r.destinationPartnerId}`,
+    detail: r.referralReason ?? undefined,
+    source: "EHR",
+  }));
+
+const hospitalEventTitle = (external: boolean, kind: HospitalRow["kind"]): string => {
+  if (external) return "Seen at outside org";
+  return kind === "Admitted" ? "Admitted" : "Discharged";
+};
+
+const hospitalEntries = (rows: HospitalRow[]): TimelineEntry[] =>
+  rows.map((h) => {
+    const external = h.kind === "ExternalEncounter";
+    return {
+      id: `hosp-${h.id}`,
+      when: h.occurredAtUtc,
+      kind: external ? "External" : "Hospital",
+      title: hospitalEventTitle(external, h.kind),
+      detail: h.detail ?? undefined,
+      source: h.source,
+    };
+  });
+
+const chartEntries = (chartData: ChartData | undefined): TimelineEntry[] => {
+  if (!chartData) return [];
+  return [...chartData.medications, ...chartData.immunizations].map((item) => ({
+    id: `chart-${item.id}`,
+    when: item.recordedAtUtc,
+    kind: "Chart",
+    title: `${item.kind}: ${item.display}`,
+    detail: item.value ?? undefined,
+    source: "EHR",
+  }));
+};
+
+const insightEntries = (insights: InsightsData | undefined): TimelineEntry[] => {
+  const out: TimelineEntry[] = [];
+  for (const i of insights?.recent ?? []) {
+    if (!i.date) continue;
+    const suffix = i.display ? `: ${i.display}` : "";
+    out.push({
+      id: `hie-${i.resourceType}-${i.date}-${i.display ?? ""}`,
+      when: i.date,
+      kind: "External",
+      title: `${i.resourceType}${suffix}`,
+      detail: undefined,
+      source: i.sourceOrganization,
+    });
+  }
+  return out;
+};
+
 /**
  * A single chronological feed merging the chart's otherwise-fragmented sections — notes, lab
  * results, referrals, internal hospital events, outside-org encounters (HIE), and dated chart
@@ -67,85 +155,20 @@ export const PatientTimeline = ({ patientId }: { patientId: string }) => {
     retry: false,
   });
 
-  const entries = useMemo<TimelineEntry[]>(() => {
-    const out: TimelineEntry[] = [];
-
-    for (const n of notes.data ?? []) {
-      out.push({
-        id: `note-${n.id}`,
-        when: n.signedAtUtc ?? n.createdAtUtc,
-        kind: "Note",
-        title: n.assessment?.trim() || "Clinical note",
-        detail: n.subjective?.trim() || undefined,
-        source: "EHR",
-      });
-    }
-
-    for (const l of labs.data ?? []) {
-      const abnormal = l.abnormalFlag !== 1;
-      out.push({
-        id: `lab-${l.id}`,
-        when: l.observedAtUtc,
-        kind: "Lab",
-        title: `${l.loincCode} — ${l.valueText}${l.unitCode ? ` ${l.unitCode}` : ""}`,
-        detail: abnormal ? `Flag: ${labAbnormalFlagLabel(l.abnormalFlag)}` : undefined,
-        source: "EHR",
-      });
-    }
-
-    for (const r of referrals.data ?? []) {
-      out.push({
-        id: `ref-${r.id}`,
-        when: r.requestedAtUtc,
-        kind: "Referral",
-        title: `Referral → ${r.destinationPartnerId}`,
-        detail: r.referralReason ?? undefined,
-        source: "EHR",
-      });
-    }
-
-    for (const h of hospital.data ?? []) {
-      const external = h.kind === "ExternalEncounter";
-      out.push({
-        id: `hosp-${h.id}`,
-        when: h.occurredAtUtc,
-        kind: external ? "External" : "Hospital",
-        title: external ? "Seen at outside org" : h.kind === "Admitted" ? "Admitted" : "Discharged",
-        detail: h.detail ?? undefined,
-        source: h.source,
-      });
-    }
-
-    const chartData = chart.data;
-    if (chartData) {
-      for (const item of [...chartData.medications, ...chartData.immunizations]) {
-        out.push({
-          id: `chart-${item.id}`,
-          when: item.recordedAtUtc,
-          kind: "Chart",
-          title: `${item.kind}: ${item.display}`,
-          detail: item.value ?? undefined,
-          source: "EHR",
-        });
-      }
-    }
-
-    for (const i of insights.data?.recent ?? []) {
-      if (!i.date) continue;
-      out.push({
-        id: `hie-${i.resourceType}-${i.date}-${i.display ?? ""}`,
-        when: i.date,
-        kind: "External",
-        title: `${i.resourceType}${i.display ? `: ${i.display}` : ""}`,
-        detail: undefined,
-        source: i.sourceOrganization,
-      });
-    }
-
-    return out
-      .filter((e) => !Number.isNaN(Date.parse(e.when)))
-      .sort((a, b) => Date.parse(b.when) - Date.parse(a.when));
-  }, [notes.data, labs.data, referrals.data, hospital.data, chart.data, insights.data]);
+  const entries = useMemo<TimelineEntry[]>(
+    () =>
+      [
+        ...noteEntries(notes.data ?? []),
+        ...labEntries(labs.data ?? []),
+        ...referralEntries(referrals.data ?? []),
+        ...hospitalEntries(hospital.data ?? []),
+        ...chartEntries(chart.data),
+        ...insightEntries(insights.data),
+      ]
+        .filter((e) => !Number.isNaN(Date.parse(e.when)))
+        .sort((a, b) => Date.parse(b.when) - Date.parse(a.when)),
+    [notes.data, labs.data, referrals.data, hospital.data, chart.data, insights.data],
+  );
 
   const visible = entries.filter((e) => active.has(e.kind));
   const loading =

@@ -12,6 +12,12 @@ type Props = {
  * clustered. When sequential, they cascade. Operators use this to confirm the parallel
  * outbound guarantee live on the wire instead of relying on the integration test alone.
  */
+const concurrencyVerdict = (spread: number): { label: string; className: string } => {
+  if (spread < 100) return { label: "parallel", className: "text-emerald-300" };
+  if (spread < 500) return { label: "tight", className: "text-amber-300" };
+  return { label: "sequential", className: "text-rose-300" };
+};
+
 export const OutboundConcurrencyTimeline = ({ entries }: Props) => {
   const outbound = entries.filter(
     (e) => e.outboundRouteOrdinal !== null && e.outboundRouteOrdinal !== undefined,
@@ -35,12 +41,7 @@ export const OutboundConcurrencyTimeline = ({ entries }: Props) => {
   );
 
   const spreadLabel = `${spread} ms across ${outbound.length} route${outbound.length === 1 ? "" : "s"}`;
-  const verdict =
-    spread < 100
-      ? { label: "parallel", className: "text-emerald-300" }
-      : spread < 500
-        ? { label: "tight", className: "text-amber-300" }
-        : { label: "sequential", className: "text-rose-300" };
+  const verdict = concurrencyVerdict(spread);
 
   return (
     <div className="space-y-2">

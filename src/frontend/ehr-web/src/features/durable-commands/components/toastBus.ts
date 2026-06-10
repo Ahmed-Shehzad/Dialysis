@@ -37,7 +37,7 @@ export interface NotifyInput {
 }
 
 export const notify = ({ kind, message, ttlMs = 4_000 }: NotifyInput): string => {
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   _toasts = [..._toasts, { id, kind, message, createdAt: Date.now() }];
   _emit();
   if (ttlMs > 0) {

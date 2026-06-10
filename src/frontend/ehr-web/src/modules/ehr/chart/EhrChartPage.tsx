@@ -53,10 +53,20 @@ const VitalTile = ({ label, value, unit }: { label: string; value?: string; unit
 
 const splitValueUnit = (raw: string | null | undefined): { value?: string; unit?: string } => {
   if (!raw) return {};
-  // Most chart values arrive as "120 mmHg", "72.4 kg", "37.1 °C". Split on the first space.
-  const m = raw.trim().match(/^([\d./-]+)\s*(.*)$/);
-  if (!m) return { value: raw };
-  return { value: m[1], unit: m[2] || undefined };
+  // Most chart values arrive as "120 mmHg", "72.4 kg", "37.1 °C". Match only the leading numeric run
+  // with a single anchored pattern (no trailing `.*`, so no super-linear backtracking), then treat
+  // whatever follows as the unit.
+  const trimmed = raw.trim();
+  const leadingNumber = /^[\d./-]+/.exec(trimmed);
+  if (!leadingNumber) return { value: raw };
+  const value = leadingNumber[0];
+  const unit = trimmed.slice(value.length).trim();
+  return { value, unit: unit || undefined };
+};
+
+const consentDirectionLabel = (direction: number | string): string => {
+  if (typeof direction !== "number") return direction;
+  return direction === 1 ? "Inbound" : "Outbound";
 };
 
 const findVital = (vitals: readonly ChartItem[], matcher: RegExp): ChartItem | undefined =>
@@ -404,11 +414,7 @@ export const EhrChartPage = () => {
                     <span className="col-span-4 text-slate-300">{c.partnerId}</span>
                     <span className="col-span-3 text-slate-300">{c.scope}</span>
                     <span className="col-span-2 text-xs uppercase text-slate-400">
-                      {typeof c.direction === "number"
-                        ? c.direction === 1
-                          ? "Inbound"
-                          : "Outbound"
-                        : c.direction}
+                      {consentDirectionLabel(c.direction)}
                     </span>
                     <span className="col-span-3 text-xs text-slate-400">
                       effective {new Date(c.effectiveFromUtc).toLocaleDateString()}

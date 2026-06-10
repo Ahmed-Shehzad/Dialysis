@@ -61,15 +61,10 @@ const TRANSFORM_STAGE_KINDS = [
   "javascript",
 ] as const;
 
-const newGuid = (): string => {
-  // Browser-side GUID for the flow id — matches the backend's expectation that callers can supply
-  // an id. crypto.randomUUID() is available in every browser we ship to.
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  // Fallback for older test runners.
-  return "00000000-0000-4000-8000-" + Math.random().toString(16).slice(2, 14).padEnd(12, "0");
-};
+const newGuid = (): string =>
+  // Browser-side GUID for the flow id — matches the backend's expectation that callers can supply an
+  // id. crypto.randomUUID() is available in every browser and Node test runner we ship to.
+  crypto.randomUUID();
 
 export const NewChannelDialog = ({ onClose }: Props) => {
   const queryClient = useQueryClient();

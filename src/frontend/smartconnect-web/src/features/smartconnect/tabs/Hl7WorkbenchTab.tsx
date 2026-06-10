@@ -395,15 +395,15 @@ const DispatchResult = ({
   );
 };
 
+const ackToneClass = (tone: ParsedAck["tone"]): string => {
+  if (tone === "accept") return "border-emerald-700/60 bg-emerald-950/30 text-emerald-200";
+  if (tone === "error") return "border-amber-700/60 bg-amber-950/30 text-amber-200";
+  if (tone === "reject") return "border-rose-700/60 bg-rose-950/30 text-rose-200";
+  return "border-slate-700/60 bg-slate-900/40 text-slate-200";
+};
+
 const AckPanel = ({ ack }: { ack: ParsedAck }) => {
-  const toneClass =
-    ack.tone === "accept"
-      ? "border-emerald-700/60 bg-emerald-950/30 text-emerald-200"
-      : ack.tone === "error"
-        ? "border-amber-700/60 bg-amber-950/30 text-amber-200"
-        : ack.tone === "reject"
-          ? "border-rose-700/60 bg-rose-950/30 text-rose-200"
-          : "border-slate-700/60 bg-slate-900/40 text-slate-200";
+  const toneClass = ackToneClass(ack.tone);
   return (
     <div className={`rounded border p-2 ${toneClass}`}>
       <p className="text-[11px] font-semibold">

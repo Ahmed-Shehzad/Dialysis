@@ -13,6 +13,12 @@ const ACTION_LABEL: Record<QueueStatus, string> = {
   "in-treatment": "Open chart",
 };
 
+const STATUS_LABEL: Record<QueueStatus, string> = {
+  expected: "Expected",
+  waiting: "Waiting",
+  "in-treatment": "In treatment",
+};
+
 const formatTime = (iso: string): string => {
   try {
     return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -69,11 +75,7 @@ export const QueueCard = ({ entry, onAction }: QueueCardProps) => {
         <span
           className={`flex-none rounded-full border px-2 py-0.5 text-xs ${STATUS_STYLES[entry.status]}`}
         >
-          {entry.status === "in-treatment"
-            ? "In treatment"
-            : entry.status === "waiting"
-              ? "Waiting"
-              : "Expected"}
+          {STATUS_LABEL[entry.status]}
         </span>
       </header>
 

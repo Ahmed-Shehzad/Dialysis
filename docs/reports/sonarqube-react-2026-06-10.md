@@ -5,6 +5,30 @@
 **Files analyzed:** 491 source files (`src/**/*.{ts,tsx,js,jsx}`)
 **Engine:** SonarJS `eslint-plugin-sonarjs` v4.0.3 (the same analyzer SonarQube/SonarCloud uses for JS/TS), recommended rule set (269 rules)
 
+## Remediation applied (2026-06-10)
+
+The actionable smells from this scan have been fixed. **114 → 58 findings.** All 56 genuinely-fixable
+issues were resolved; the 58 that remain are intentional or false-positive (see below) and were left
+by design.
+
+| Rule | Before | After | Action |
+|---|--:|--:|---|
+| `pseudo-random` | 8 | 0 | `Math.random()` id generation → `crypto.randomUUID()` |
+| `no-nested-conditional` | 19 | 0 | nested ternaries → `if`-chain helpers / `Record` lookup maps |
+| `no-nested-functions` | 9 | 0 | hoisted batched loader callbacks into module-level helpers |
+| `redundant-type-aliases` | 9 | 2 | `ModulePermission` → branded type (×7); 2 SmartConnect domain aliases kept |
+| `cognitive-complexity` | 5 | 0 | extracted timeline mappers; de-nested the PdfViewer JS-toggle label |
+| `no-redundant-boolean` | 4 | 0 | dropped the redundant `&& true` |
+| `no-nested-template-literals` | 3 | 0 | extracted the inner interpolation into a local |
+| `slow-regex` | 1 | 0 | anchored leading-number match, no trailing `.*` (no backtracking) |
+| `void-use` | 50 | 50 | **kept** — intentional fire-and-forget; removing `void` would trip the apps' own `@typescript-eslint/no-floating-promises` and leave bare floating promises |
+| `no-clear-text-protocols` | 6 | 6 | **kept** — FHIR canonical *system URIs* (`http://hl7.org/...`, RxNorm/NDC/ATC); they are identifiers, not endpoints, and must stay literal |
+
+The duplicated cross-cutting files (`toastBus.ts`, `shell/types.ts`, `PdfViewerDrawer.tsx`,
+`patientLoader.ts`) were fixed once and re-synced byte-for-byte across every copy, so the
+duplication-multiplier worked in our favour. **Verified:** all seven SPAs pass `npm run typecheck`,
+`npm run lint` (`--max-warnings=0`), and `npm run test:unit` after the changes.
+
 ## How this was run (and why)
 
 The repo's normal SonarQube path (`tools/sonarqube/scan.sh`) targets the **.NET solution** against the **Aspire-hosted SonarQube server** (`http://localhost:9000`, dev-only). That server is **not running in this environment**, the `dotnet-sonarscanner` CLI is not installed, and the SonarCloud MCP server needs a `SONARQUBE_TOKEN` that isn't configured here — so a server-backed dashboard scan of the SPAs wasn't possible.

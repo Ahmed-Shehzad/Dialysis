@@ -55,40 +55,43 @@ export const ChairsideAlarmStrip = () => {
         Active alarms — verify before any action
       </p>
       <ul className="flex flex-wrap gap-2">
-        {alarms.map((a) => (
-          <li
-            key={a.id}
-            title={`Code ${a.alarmCode}${a.alarmPhase ? ` · ${a.alarmPhase}` : ""}`}
-            className={`flex items-center gap-2 rounded-md border-2 px-3 py-1.5 text-sm ${STATE_TONE[a.state]} ${
-              a.state === "present" && !a.acknowledgedUtc ? "animate-pulse" : ""
-            }`}
-          >
-            <span className="font-medium">{machineLabel(a)}</span>
-            <span className="text-xs uppercase tracking-wide opacity-80">
-              {a.alarmSource ?? `Code ${a.alarmCode}`}
-            </span>
-            <span className="rounded-full bg-black/30 px-2 py-0.5 text-xs">
-              {STATE_LABEL[a.state]}
-            </span>
-            {a.acknowledgedUtc ? (
-              <span
-                className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs text-emerald-200"
-                title={`Acknowledged by ${a.acknowledgedBy ?? "—"}`}
-              >
-                Ack ✓
+        {alarms.map((a) => {
+          const phase = a.alarmPhase ? ` · ${a.alarmPhase}` : "";
+          return (
+            <li
+              key={a.id}
+              title={`Code ${a.alarmCode}${phase}`}
+              className={`flex items-center gap-2 rounded-md border-2 px-3 py-1.5 text-sm ${STATE_TONE[a.state]} ${
+                a.state === "present" && !a.acknowledgedUtc ? "animate-pulse" : ""
+              }`}
+            >
+              <span className="font-medium">{machineLabel(a)}</span>
+              <span className="text-xs uppercase tracking-wide opacity-80">
+                {a.alarmSource ?? `Code ${a.alarmCode}`}
               </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => ack.mutate(a.id)}
-                disabled={ack.isPending}
-                className="rounded-md border border-rose-300/60 bg-rose-900/30 px-2 py-0.5 text-xs font-medium text-rose-100 transition hover:bg-rose-900/70 disabled:opacity-50"
-              >
-                Acknowledge
-              </button>
-            )}
-          </li>
-        ))}
+              <span className="rounded-full bg-black/30 px-2 py-0.5 text-xs">
+                {STATE_LABEL[a.state]}
+              </span>
+              {a.acknowledgedUtc ? (
+                <span
+                  className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs text-emerald-200"
+                  title={`Acknowledged by ${a.acknowledgedBy ?? "—"}`}
+                >
+                  Ack ✓
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => ack.mutate(a.id)}
+                  disabled={ack.isPending}
+                  className="rounded-md border border-rose-300/60 bg-rose-900/30 px-2 py-0.5 text-xs font-medium text-rose-100 transition hover:bg-rose-900/70 disabled:opacity-50"
+                >
+                  Acknowledge
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
       {ack.error && (
         <p role="alert" className="text-xs text-rose-300">

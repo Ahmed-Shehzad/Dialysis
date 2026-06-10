@@ -166,11 +166,10 @@ const VersionDrawer = ({
                       disabled={publish.isPending}
                       className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:border-slate-500 disabled:opacity-50"
                     >
-                      {publish.isPending
-                        ? "Publishing…"
-                        : isPublishedRecent(template, v.versionNumber)
-                          ? "Roll back"
-                          : "Publish"}
+                      {publishButtonLabel(
+                        publish.isPending,
+                        isPublishedRecent(template, v.versionNumber),
+                      )}
                     </button>
                   )}
                 </div>
@@ -301,6 +300,11 @@ const NewTemplateDrawer = ({
 // The published version stays "Roll back" labelled when the user has clicked into an
 // older version with the intention of reverting; surfacing the same button consistently
 // avoids two distinct buttons that perform the same backend operation.
+const publishButtonLabel = (isPending: boolean, isPublished: boolean): string => {
+  if (isPending) return "Publishing…";
+  return isPublished ? "Roll back" : "Publish";
+};
+
 const isPublishedRecent = (template: ReportTemplate, versionNumber: number): boolean =>
   template.publishedVersionNumber !== null &&
   template.publishedVersionNumber !== undefined &&
