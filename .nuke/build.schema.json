@@ -34,6 +34,7 @@
         "PublishCompose",
         "PublishDeployArtifacts",
         "PublishKubernetes",
+        "PushImages",
         "Restore",
         "ShowVersion",
         "Test"
@@ -130,6 +131,10 @@
         "NuGetSource": {
           "type": "string",
           "description": "NuGet feed Publish pushes to"
+        },
+        "Registry": {
+          "type": "string",
+          "description": "Container registry + repository prefix PushImages publishes to — e.g. mycompany.jfrog.io/dialysis-docker (a Docker repository on JFrog Artifactory / JFrog Container Registry) or ghcr.io/myorg. Authenticate first: `docker login <registry host>` (JFrog: username + identity token)"
         },
         "Version": {
           "type": "string",
