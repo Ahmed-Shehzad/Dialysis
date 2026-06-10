@@ -217,3 +217,13 @@ Operators manage channels through the **operator shell** (`/api/v1/admin/*`): fl
 ## 7. Why no patient eraser
 
 SmartConnect ships **no `IPatientEraser` and no `IModuleDataExtractor`** — it routes and transforms messages and owns no patient master record. Patient identifiers appear only transiently inside `IntegrationMessage.Payload`, ledger `PayloadSnapshot`, attachments, and DICOM index rows. That derived data-at-rest is governed by storage-limitation, not per-patient erasure: the `DataPrunerHostedService` (time-based, `SmartConnect:DataPruner:RetentionDays`, with `/api/v1/admin/pruner` controls) bounds retention, and right-to-erasure is delegated to the patient-owning modules (HIS / EHR / PDMS / HIE).
+
+---
+
+## 8. References
+
+- Riech KP, Ulrich H, Ingenerf J, Andersen B. *Mapping of medical device data from ISO/IEEE
+  11073-10207 to HL7 FHIR.* MIBE. 2021;17. DOI: 10.3205/mibe000222 — the adopted methodology
+  for crossing the device-side (11073/MDC) ↔ clinical-exchange (FHIR) boundary; see
+  [docs/interoperability/ieee11073-to-fhir-mapping.md](../../../docs/interoperability/ieee11073-to-fhir-mapping.md)
+  for how it maps onto this module's containment model and where the implementation seams are.

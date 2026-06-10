@@ -151,7 +151,9 @@ public sealed record SubstitutionFluidSettings
 /// OBX hierarchy of IG §5.4.2) — HF and HDF are expressed through which channels are
 /// present (HF: substitution fluid, dialysate absent/minimal; HDF: dialysate + substitution
 /// fluid), not through per-modality payload shapes. FHIR remains the clinical-system
-/// exchange boundary (HIE); this model serves the device-side HL7v2 / 11073 family only.
+/// exchange boundary (HIE); this model serves the device-side HL7v2 / 11073 family only —
+/// the adopted 11073→FHIR mapping methodology (Riech et al. 2021, DOI 10.3205/mibe000222)
+/// is documented in <c>docs/interoperability/ieee11073-to-fhir-mapping.md</c>.
 /// Profile-driven UF (linear / exponential / step per IG §5.3) is still a future slice.
 /// </summary>
 public sealed record PrescriptionDocument
