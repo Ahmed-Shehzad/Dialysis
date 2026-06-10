@@ -60,6 +60,8 @@ public class Program
 
         var kc = builder.Configuration.GetSection(KeycloakBffOptions.SectionName).Get<KeycloakBffOptions>()
                  ?? new KeycloakBffOptions();
+        Module.Bff.Configuration.KeycloakSecretGuard.EnsureProductionClientSecret(
+            builder.Environment, kc.ClientSecret, KeycloakBffOptions.SectionName);
         var authority = kc.Authority?.Trim() ?? "";
         if (string.IsNullOrEmpty(authority))
             throw new InvalidOperationException(

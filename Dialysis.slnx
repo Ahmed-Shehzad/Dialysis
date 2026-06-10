@@ -204,6 +204,7 @@
     <Project Path="src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj" />
     <Project Path="src/backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj" />
+    <Project Path="src/backend/PatientPortal/Dialysis.PatientPortal.Tests/Dialysis.PatientPortal.Tests.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Xds/Dialysis.HIE.Xds.csproj" />
     <Project Path="src/backend/HIE/Dialysis.HIE.Tests/Dialysis.HIE.Tests.csproj" />
   </Folder>
