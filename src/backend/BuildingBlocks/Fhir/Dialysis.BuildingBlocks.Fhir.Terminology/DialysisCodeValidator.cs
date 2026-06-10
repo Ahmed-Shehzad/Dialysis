@@ -36,7 +36,7 @@ public sealed class DialysisCodeValidator : IDialysisCodeValidator
         string valueSetUrl, string code, string? system, CancellationToken cancellationToken)
     {
         var result = await _catalog.Service.ValidateCodeAsync(valueSetUrl, code, system, cancellationToken).ConfigureAwait(false);
-        var isValid = result.Parameter.FirstOrDefault(p => p.Name == "result")?.Value is FhirBoolean { Value: true };
+        var isValid = result.Parameter.Find(p => p.Name == "result")?.Value is FhirBoolean { Value: true };
         if (!isValid)
         {
             return new CodeValidationResult(false, null);
@@ -47,7 +47,7 @@ public sealed class DialysisCodeValidator : IDialysisCodeValidator
         if (!string.IsNullOrWhiteSpace(system))
         {
             var lookup = await _catalog.Service.LookupAsync(system, code, cancellationToken).ConfigureAwait(false);
-            display = (lookup.Parameter.FirstOrDefault(p => p.Name == "display")?.Value as FhirString)?.Value;
+            display = (lookup.Parameter.Find(p => p.Name == "display")?.Value as FhirString)?.Value;
         }
 
         return new CodeValidationResult(true, display);
@@ -58,8 +58,8 @@ public sealed class DialysisCodeValidator : IDialysisCodeValidator
         string conceptMapUrl, string sourceSystem, string sourceCode, CancellationToken cancellationToken)
     {
         var result = await _catalog.Service.TranslateAsync(conceptMapUrl, sourceSystem, sourceCode, cancellationToken).ConfigureAwait(false);
-        var match = result.Parameter.FirstOrDefault(p => p.Name == "match");
-        if (match?.Part.FirstOrDefault(p => p.Name == "concept")?.Value is not Coding concept || concept.Code is null || concept.System is null)
+        var match = result.Parameter.Find(p => p.Name == "match");
+        if (match?.Part.Find(p => p.Name == "concept")?.Value is not Coding concept || concept.Code is null || concept.System is null)
         {
             return null;
         }

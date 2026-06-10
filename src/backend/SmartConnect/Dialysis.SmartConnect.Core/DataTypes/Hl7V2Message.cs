@@ -65,9 +65,10 @@ public sealed partial class Hl7V2Message : ParsedMessage
             var fields = line.Split(fieldSep);
             var segName = fields[0];
 
-            // For MSH, field[1] is the encoding chars (special)
+            // Field 1 carries the encoding chars for MSH and ordinary data elsewhere;
+            // either way parsing starts right after the segment name.
             var fieldList = new List<string[][]>();
-            var startIndex = segName == "MSH" ? 1 : 1;
+            const int startIndex = 1;
             for (var i = startIndex; i < fields.Length; i++)
             {
                 // Split repeats
@@ -99,7 +100,7 @@ public sealed partial class Hl7V2Message : ParsedMessage
             return null;
         }
 
-        var seg = _segments.FirstOrDefault(s =>
+        var seg = _segments.Find(s =>
             string.Equals(s.Name, segName, StringComparison.OrdinalIgnoreCase));
         if (seg is null)
         {
@@ -160,7 +161,7 @@ public sealed partial class Hl7V2Message : ParsedMessage
             return 0;
         }
 
-        var seg = _segments.FirstOrDefault(s =>
+        var seg = _segments.Find(s =>
             string.Equals(s.Name, segName, StringComparison.OrdinalIgnoreCase));
         if (seg is null)
         {
@@ -214,7 +215,7 @@ public sealed partial class Hl7V2Message : ParsedMessage
             return this;
         }
 
-        var seg = _segments.FirstOrDefault(s =>
+        var seg = _segments.Find(s =>
             string.Equals(s.Name, segName, StringComparison.OrdinalIgnoreCase));
         if (seg is null)
         {

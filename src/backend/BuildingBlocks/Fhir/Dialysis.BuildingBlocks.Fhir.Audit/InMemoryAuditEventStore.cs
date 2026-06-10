@@ -21,7 +21,9 @@ public sealed class InMemoryAuditEventStore : IAuditEventStore
     {
         _events.Enqueue(auditEvent);
         while (_events.Count > _capacity && _events.TryDequeue(out _))
-        { }
+        {
+            // Trimming happens in the loop condition itself.
+        }
         return ValueTask.CompletedTask;
     }
 

@@ -62,7 +62,7 @@ public sealed class ClinicalDecisionSupportEvaluator : IClinicalDecisionSupportE
             // A rule with no condition filter applies to everyone; otherwise the patient must carry one
             // of the listed problems for it to apply.
             if (rule.AppliesToAnyIcd10.Count > 0
-                && !rule.AppliesToAnyIcd10.Any(c => problemCodes.Contains(c.Trim())))
+                && !rule.AppliesToAnyIcd10.Exists(c => problemCodes.Contains(c.Trim())))
                 continue;
 
             var fired = rule.TriggerKind switch
@@ -114,7 +114,7 @@ public sealed class ClinicalDecisionSupportEvaluator : IClinicalDecisionSupportE
             return false;
         var meds = await _medications.ListByPatientAsync(patientId, true, cancellationToken).ConfigureAwait(false);
         var prefixes = rule.MedicationCodePrefixAny.Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
-        var hasClass = meds.Any(m => prefixes.Any(p =>
+        var hasClass = meds.Any(m => prefixes.Exists(p =>
             m.Medication.Code.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
         return !hasClass;
     }

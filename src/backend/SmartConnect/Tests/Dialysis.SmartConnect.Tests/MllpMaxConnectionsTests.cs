@@ -37,7 +37,7 @@ public sealed class MllpMaxConnectionsTests
             TimeProvider.System,
             NullLogger<MllpInboundHostedService>.Instance);
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var listenerTask = hosted.StartAsync(cts.Token);
         await listenerTask;
         // Generous bind wait — CI runners under contention occasionally need >300 ms before the
@@ -135,7 +135,7 @@ public sealed class MllpMaxConnectionsTests
             ReadOnlyMemory<byte> payload,
             PayloadFormat format,
             string? correlationId,
-            IReadOnlyDictionary<string, string>? metadata,
+            IReadOnlyDictionary<string, string>? metadata = null,
             DateTimeOffset? receivedAtUtc = null) => new()
             {
                 Id = Guid.NewGuid(),

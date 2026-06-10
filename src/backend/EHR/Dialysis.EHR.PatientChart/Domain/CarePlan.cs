@@ -102,7 +102,7 @@ public sealed class CarePlan : AggregateRoot<Guid>
 
     public void UpdateGoalStatus(Guid goalId, CarePlanGoalStatus status)
     {
-        var goal = _goals.FirstOrDefault(g => g.Id == goalId)
+        var goal = _goals.Find(g => g.Id == goalId)
             ?? throw new InvalidOperationException("Goal not found on this care plan.");
         goal.SetStatus(status);
     }

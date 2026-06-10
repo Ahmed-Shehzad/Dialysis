@@ -123,11 +123,14 @@ jobs:
         with: { dotnet-version: '10.0.x' }
       - name: Start Aspire stack
         run: |
-          # Skip the dev data dashboards (pgAdmin / valkey-admin) and the continuous data simulator
-          # — ZAP only needs the gateway, and a leaner stack comes up faster/more reliably on a
-          # cold runner.
+          # Skip the dev data dashboards (pgAdmin / valkey-admin), the continuous data simulator,
+          # AND SonarQube (~700 MB image, ~2 GB RAM — it lives on :9000, not behind the gateway,
+          # so it adds nothing to the scanned surface). ZAP only needs the gateway, and the ZAP
+          # JVM shares the runner with the whole stack — leaving SonarQube on has starved it to
+          # death mid-scan ("Failed to access summary file", exit 3) on cold runners.
           Dialysis__EnableDevDashboards=false \
           Dialysis__EnableDataSimulator=false \
+          Dialysis__EnableSonarQube=false \
             dotnet run --project src/aspire/Dialysis.AppHost --no-launch-profile -- --no-dashboard > /tmp/aspire.log 2>&1 &
           echo $! > /tmp/aspire.pid
           # Readiness probe: wait for the gateway on :9090 to accept a connection. The stack is

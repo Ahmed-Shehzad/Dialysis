@@ -22,12 +22,16 @@ public sealed class EhrAllergyIntoleranceFeeder : INdjsonResourceFeeder<AllergyI
     /// drives <c>Meta.lastUpdated</c> and the incremental (<c>_since</c>) export filter.
     /// </summary>
     public EhrAllergyIntoleranceFeeder(IAllergyRepository allergies) => _allergies = allergies;
-    public async IAsyncEnumerable<AllergyIntolerance> StreamAsync(
+    public IAsyncEnumerable<AllergyIntolerance> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<AllergyIntolerance> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var allergy in _allergies.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new AllergyIntolerance

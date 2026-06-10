@@ -58,7 +58,7 @@ public sealed class SubmitClaimCommandHandler : ICommandHandler<SubmitClaimComma
                 .ConfigureAwait(false);
             advisories.AddRange(result.Advisories);
         }
-        var hasBlocking = advisories.Any(a => a.Severity == ChargeAdvisorySeverity.Blocking);
+        var hasBlocking = advisories.Exists(a => a.Severity == ChargeAdvisorySeverity.Blocking);
         if (hasBlocking && !(request.AcknowledgeAdvisories && !string.IsNullOrWhiteSpace(request.OverrideReason)))
             throw new ChargeEditBlockedException(advisories);
         if (hasBlocking && request.AcknowledgeAdvisories)

@@ -48,7 +48,7 @@ public sealed class FileReaderSourceMapTests
         }
         finally
         {
-            try { Directory.Delete(dir, recursive: true); } catch { }
+            try { Directory.Delete(dir, recursive: true); } catch { /* best-effort temp cleanup */ }
         }
     }
 

@@ -86,7 +86,6 @@ public sealed class PdfEditorTests
     {
         var renderer = new QuestPdfDocumentRenderer();
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
-        var editor = new PdfEditor();
         var totalPages = PdfEditor.CountPages(a);
 
         Should.Throw<InvalidOperationException>(() => PdfEditor.RemovePages(a, [.. Enumerable.Range(1, totalPages)]));
@@ -97,7 +96,6 @@ public sealed class PdfEditorTests
     {
         var renderer = new QuestPdfDocumentRenderer();
         var a = await renderer.RenderAsync(Doc("A"), CancellationToken.None);
-        var editor = new PdfEditor();
 
         Should.Throw<ArgumentOutOfRangeException>(() => PdfEditor.ExtractPages(a, [99]));
     }

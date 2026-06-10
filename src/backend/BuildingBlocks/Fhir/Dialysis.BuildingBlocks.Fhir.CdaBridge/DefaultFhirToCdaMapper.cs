@@ -152,5 +152,5 @@ public sealed class DefaultFhirToCdaMapper : IFhirToCdaMapper
     }
 
     private static bool HasCategory(Observation observation, string code) =>
-        observation.Category.Any(c => c.Coding.Any(coding => coding.Code == code));
+        observation.Category.Exists(c => c.Coding.Exists(coding => coding.Code == code));
 }

@@ -41,7 +41,11 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRootMarker
 
     public override int GetHashCode() => base.GetHashCode();
 
+    // Aggregates compare by identity (the Entity base equates on Id), which is exactly the
+    // value-like semantic S3875 asks operator== overloads to have.
+#pragma warning disable S3875
     public static bool operator ==(AggregateRoot<TId>? left, AggregateRoot<TId>? right) => Equals(left, right);
+#pragma warning restore S3875
 
     public static bool operator !=(AggregateRoot<TId>? left, AggregateRoot<TId>? right) => !Equals(left, right);
 }

@@ -90,6 +90,8 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
             return document.AcroForm;
 
         // Create + attach via the internal ctor; AcroForm has no public constructor.
+        // The accessibility bypass is the documented PDFsharp workaround, not a security risk.
+#pragma warning disable S3011
         var form = (PdfAcroForm?)Activator.CreateInstance(
             typeof(PdfAcroForm),
             BindingFlags.Instance | BindingFlags.NonPublic,
@@ -97,6 +99,7 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
             args: [document],
             culture: null)
             ?? throw new InvalidOperationException("PDFsharp could not construct a PdfAcroForm.");
+#pragma warning restore S3011
         document.Internals.AddObject(form);
         catalog["/AcroForm"] = form.Reference;
         return form;
@@ -108,7 +111,7 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
         {
             TextFormField text => (PdfAcroField)BuildTextField(document, text),
             CheckBoxFormField checkBox => BuildCheckBoxField(document, checkBox),
-            SignatureFormField sig => BuildSignatureField(document, sig),
+            SignatureFormField => BuildSignatureField(document),
             ChoiceFormField choice => BuildChoiceField(document, choice),
             _ => throw new NotSupportedException($"AcroForm field type '{spec.GetType().Name}' is not yet supported."),
         };
@@ -192,7 +195,7 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
         return null;
     }
 
-    private static PdfSignatureField BuildSignatureField(PdfDocument document, SignatureFormField _)
+    private static PdfSignatureField BuildSignatureField(PdfDocument document)
         => NewField<PdfSignatureField>(document);
 
     private static PdfChoiceField BuildChoiceField(PdfDocument document, ChoiceFormField spec)
@@ -212,6 +215,8 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
 
     private static T NewField<T>(PdfDocument document) where T : PdfAcroField
     {
+        // Same PDFsharp workaround as above: field ctors are internal by library design.
+#pragma warning disable S3011
         var instance = (T?)Activator.CreateInstance(
             typeof(T),
             BindingFlags.Instance | BindingFlags.NonPublic,
@@ -219,6 +224,7 @@ public sealed class PdfSharpAcroFormProcessor : IAcroFormProcessor
             args: [document],
             culture: null)
             ?? throw new InvalidOperationException($"PDFsharp could not construct a {typeof(T).Name}.");
+#pragma warning restore S3011
         document.Internals.AddObject(instance);
         return instance;
     }

@@ -19,12 +19,16 @@ public sealed class HisAdmissionEncounterFeeder : INdjsonResourceFeeder<Encounte
     /// of discharge/admit timestamps.
     /// </summary>
     public HisAdmissionEncounterFeeder(IAdmissionRepository admissions) => _admissions = admissions;
-    public async IAsyncEnumerable<Encounter> StreamAsync(
+    public IAsyncEnumerable<Encounter> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<Encounter> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var admission in _admissions.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return new Encounter

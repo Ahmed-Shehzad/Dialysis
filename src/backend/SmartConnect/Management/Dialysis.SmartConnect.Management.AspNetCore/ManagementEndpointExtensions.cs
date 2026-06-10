@@ -365,7 +365,7 @@ public static class ManagementEndpointExtensions
                         // Authorise via the channel: the blob must be referenced by one of the flow's
                         // declared attachments. Anything else would let operators read every blob in
                         // the store by guessing ids.
-                        var attRef = flow.Attachments.FirstOrDefault(a =>
+                        var attRef = flow.Attachments.Find(a =>
                             a.StorageRef is not null && a.StorageRef.Id == blobId);
                         if (attRef is null)
                         {

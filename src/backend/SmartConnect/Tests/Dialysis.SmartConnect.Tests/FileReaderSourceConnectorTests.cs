@@ -30,7 +30,7 @@ public sealed class FileReaderSourceConnectorTests : IDisposable
             Guid flowId,
             ReadOnlyMemory<byte> payload,
             PayloadFormat format,
-            string? correlationId = null,
+            string? correlationId,
             IReadOnlyDictionary<string, string>? metadata = null,
             DateTimeOffset? receivedAtUtc = null) =>
             new()

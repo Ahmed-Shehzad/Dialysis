@@ -31,6 +31,10 @@ internal sealed class TransponderRoutingSlipContinueConsumer : IConsumer<Transpo
     }
     private static readonly string _sagaKind = TransponderRoutingSlipPersistenceKind.SagaKind;
 
+    // The gotos below all jump forward to the DispatchPending epilogue — publish whatever was
+    // queued, then leave. A flag-plus-nested-if rewrite of this saga step machine would bury
+    // that control flow; the jump target is single and forward-only, so goto stays.
+#pragma warning disable S907
     public async Task HandleAsync(ConsumeContext<TransponderRoutingSlipContinue> context)
     {
         var slipId = context.Message.SlipId;
@@ -208,6 +212,7 @@ internal sealed class TransponderRoutingSlipContinueConsumer : IConsumer<Transpo
                 .ConfigureAwait(false);
         }
     }
+#pragma warning restore S907
 
     private async Task PublishExecuteFaultAndCompensationAsync(
         string trackingNumber,

@@ -25,12 +25,16 @@ public sealed class EhrPatientFhirFeeder : INdjsonResourceFeeder<FhirPatient>
     /// primary address.
     /// </summary>
     public EhrPatientFhirFeeder(IPatientRepository patients) => _patients = patients;
-    public async IAsyncEnumerable<FhirPatient> StreamAsync(
+    public IAsyncEnumerable<FhirPatient> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<FhirPatient> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var patient in _patients.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(patient);

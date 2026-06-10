@@ -48,7 +48,7 @@ public sealed class MllpRealSocketEndToEndTests
             TimeProvider.System,
             NullLogger<MllpInboundHostedService>.Instance);
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         await hosted.StartAsync(cts.Token);
         await Task.Delay(500); // bind settle
 
@@ -101,7 +101,7 @@ public sealed class MllpRealSocketEndToEndTests
             TimeProvider.System,
             NullLogger<MllpInboundHostedService>.Instance);
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         await hosted.StartAsync(cts.Token);
         await Task.Delay(500);
 
@@ -196,7 +196,7 @@ public sealed class MllpRealSocketEndToEndTests
             ReadOnlyMemory<byte> payload,
             PayloadFormat format,
             string? correlationId,
-            IReadOnlyDictionary<string, string>? metadata,
+            IReadOnlyDictionary<string, string>? metadata = null,
             DateTimeOffset? receivedAtUtc = null) => new()
             {
                 Id = Guid.NewGuid(),

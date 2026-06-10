@@ -324,7 +324,7 @@ dotnet_diagnostic.IDE1006.severity = none          # Naming rule violation — c
 ###############################
 # Test project relaxations
 ###############################
-[**/{Tests,*.Tests,*.Tests.*}/**/*.cs]
+[{tests/**.cs,**/Tests/**.cs,**/*.Tests/**.cs,**/*.Tests.*/**.cs}]
 dotnet_diagnostic.CA1707.severity = none           # underscores in test method names are idiomatic
 dotnet_diagnostic.CA1822.severity = none           # member can be static — fine in tests
 dotnet_diagnostic.CA1812.severity = none           # internal class never instantiated — xUnit handles it
@@ -426,7 +426,6 @@ dotnet_diagnostic.S6608.severity = warning         # Prefer indexing for first/l
 dotnet_diagnostic.S6610.severity = warning         # "StartsWith/EndsWith(char)" overload
 dotnet_diagnostic.S6618.severity = warning         # "string.Create" over expensive concatenation
 dotnet_diagnostic.S6781.severity = error           # JWT secrets should not be hard-coded
-dotnet_diagnostic.S6964.severity = warning         # ASP.NET model-bound props should be validated
 dotnet_diagnostic.S6966.severity = warning         # Awaitable methods should be used with "await"
 
 # --- Style / maintainability — enforce ---
@@ -455,9 +454,13 @@ dotnet_diagnostic.S1192.severity = none            # String literals duplicated 
 dotnet_diagnostic.S1199.severity = none            # Nested code blocks
 dotnet_diagnostic.S1200.severity = none            # Class coupling — too noisy in composition roots
 dotnet_diagnostic.S1309.severity = none            # SuppressMessage attributes
+dotnet_diagnostic.S2094.severity = none            # Empty classes — module marker types (HandlerAssemblies anchors) are intentional
+dotnet_diagnostic.S2139.severity = suggestion      # Log-and-rethrow — transport consumer loops do this deliberately so hosts crash visibly
 dotnet_diagnostic.S2325.severity = suggestion      # Static methods — handlers/DI consumers fire this falsely
 dotnet_diagnostic.S2629.severity = none            # Logging templates should not use string interpolation — Serilog/OTel handle
+dotnet_diagnostic.S3220.severity = none            # params-overload ambiguity — OpenXml's Append(params) builder pattern trips this by design
 dotnet_diagnostic.S3358.severity = none            # Nested ternaries
+dotnet_diagnostic.S3459.severity = none            # Unassigned auto-properties — JSON/config-bound property bags are assigned by the serializer
 dotnet_diagnostic.S3604.severity = none            # Member initializer values should not be redundant
 dotnet_diagnostic.S3776.severity = suggestion      # Cognitive complexity — flag but don't block
 dotnet_diagnostic.S3881.severity = suggestion      # "IDisposable" should be implemented correctly
@@ -467,11 +470,13 @@ dotnet_diagnostic.S6354.severity = suggestion      # Use DateTimeOffset over Dat
 dotnet_diagnostic.S6580.severity = none            # IFormatProvider on parse — too noisy
 dotnet_diagnostic.S6610.severity = suggestion      # char overload — keep gentle
 dotnet_diagnostic.S6932.severity = none            # Use model binding (controller-action style preference)
+dotnet_diagnostic.S6960.severity = suggestion      # Controller splitting — controllers group per workflow surface deliberately
+dotnet_diagnostic.S6964.severity = suggestion      # Under-posting guards — the Verifier pipeline owns request validation, keep visible only
 
 ###############################
 # Sonar relaxations in test projects
 ###############################
-[**/{Tests,*.Tests,*.Tests.*}/**/*.cs]
+[{tests/**.cs,**/Tests/**.cs,**/*.Tests/**.cs,**/*.Tests.*/**.cs}]
 dotnet_diagnostic.S1607.severity = none            # Ignored tests
 dotnet_diagnostic.S2699.severity = none            # Tests should include assertions (FluentAssertions/Shouldly trip it)
 dotnet_diagnostic.S3415.severity = none            # Assertion argument order — false positives with custom helpers
@@ -483,6 +488,7 @@ dotnet_diagnostic.S2925.severity = none            # Thread.Sleep in tests — s
 dotnet_diagnostic.S3358.severity = none
 dotnet_diagnostic.S3878.severity = none            # Arrays should not be created for params
 dotnet_diagnostic.S4144.severity = none            # Methods should not have identical implementations (test parametrization)
+dotnet_diagnostic.S3885.severity = none            # "Assembly.Load" preferred — architecture tests load module assemblies from disk by path on purpose
 
 ###############################
 # Generated / migration files
@@ -496,3 +502,4 @@ dotnet_analyzer_diagnostic.category-sonar.severity = none
 [**/obj/**.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.category-sonar.severity = none
+

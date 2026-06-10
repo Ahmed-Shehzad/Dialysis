@@ -92,7 +92,8 @@ public sealed class DicomCStoreProvider : DicomService, IDicomServiceProvider, I
     private static bool IsAetAccepted(string callingAet, string allowList)
     {
         if (string.IsNullOrWhiteSpace(allowList) || allowList == "*") return true;
-        return allowList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Any(aet => string.Equals(aet, callingAet, StringComparison.OrdinalIgnoreCase));
+        return Array.Exists(
+            allowList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+            aet => string.Equals(aet, callingAet, StringComparison.OrdinalIgnoreCase));
     }
 }

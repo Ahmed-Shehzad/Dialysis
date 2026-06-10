@@ -8,6 +8,7 @@ namespace Dialysis.HIS.Api.Controllers;
 /// <summary>Host probe; not versioned so load balancers stay stable.</summary>
 [ApiController]
 [ApiVersionNeutral]
+[Route("health")]
 public sealed class HealthController : ControllerBase
 {
     private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions;
@@ -17,7 +18,7 @@ public sealed class HealthController : ControllerBase
     private string DefaultApiVersionUrlSegment =>
         _apiVersioningOptions.Value.DefaultApiVersion.ToString();
 
-    [HttpGet("/health")]
+    [HttpGet]
     [ProducesResponseType(typeof(ResourceEnvelope<HealthStatusDto>), StatusCodes.Status200OK)]
     public IActionResult Get()
     {

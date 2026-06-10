@@ -20,12 +20,16 @@ public sealed class EhrCarePlanFeeder : INdjsonResourceFeeder<FhirCarePlan>
     private readonly ICarePlanRepository _carePlans;
     public EhrCarePlanFeeder(ICarePlanRepository carePlans) => _carePlans = carePlans;
 
-    public async IAsyncEnumerable<FhirCarePlan> StreamAsync(
+    public IAsyncEnumerable<FhirCarePlan> StreamAsync(ExportJob job, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        return StreamCoreAsync(job, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<FhirCarePlan> StreamCoreAsync(
         ExportJob job,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(job);
-
         await foreach (var plan in _carePlans.StreamAllAsync(job.Since, cancellationToken).ConfigureAwait(false))
         {
             yield return Project(plan);

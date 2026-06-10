@@ -50,7 +50,7 @@ public sealed class ConceptCatalogValidatorHostedService : IHostedService
                     .ConfigureAwait(false);
 
                 var display = parameters.Parameter
-                    .FirstOrDefault(p => string.Equals(p.Name, "display", StringComparison.Ordinal))
+                    .Find(p => string.Equals(p.Name, "display", StringComparison.Ordinal))
                     ?.Value as FhirString;
 
                 if (display?.Value is { Length: > 0 } authoritativeDisplay)

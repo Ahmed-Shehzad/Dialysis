@@ -60,7 +60,7 @@ public sealed class ReportTemplate : AggregateRoot<Guid>
     /// <summary>Switches the published version to <paramref name="versionNumber"/>. Rollbacks use the same operation.</summary>
     public void Publish(int versionNumber)
     {
-        if (_versions.All(v => v.VersionNumber != versionNumber))
+        if (_versions.TrueForAll(v => v.VersionNumber != versionNumber))
             throw new InvalidOperationException($"Version {versionNumber} does not exist on template {Slug}.");
         PublishedVersionNumber = versionNumber;
     }
@@ -68,7 +68,7 @@ public sealed class ReportTemplate : AggregateRoot<Guid>
     /// <summary>Returns the currently published body, or <c>null</c> if no version has been published yet.</summary>
     public string? GetPublishedBody() => PublishedVersionNumber is null
         ? null
-        : _versions.FirstOrDefault(v => v.VersionNumber == PublishedVersionNumber.Value)?.BodyMarkdown;
+        : _versions.Find(v => v.VersionNumber == PublishedVersionNumber.Value)?.BodyMarkdown;
 }
 
 public sealed record ReportTemplateVersion

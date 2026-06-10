@@ -149,7 +149,7 @@ public sealed class ExternalPatientInsightsBuilder
     private static bool ConceptsMatch(CodeableConcept a, CodeableConcept b)
     {
         var bCodes = b.Coding.Where(c => !string.IsNullOrWhiteSpace(c.Code)).Select(c => c.Code!).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (a.Coding.Any(c => !string.IsNullOrWhiteSpace(c.Code) && bCodes.Contains(c.Code!)))
+        if (a.Coding.Exists(c => !string.IsNullOrWhiteSpace(c.Code) && bCodes.Contains(c.Code!)))
             return true;
         var ad = ConceptDisplay(a);
         var bd = ConceptDisplay(b);

@@ -31,6 +31,6 @@ internal static class CodeTemplateJsBinder
             sb.AppendLine();
         }
 
-        engine.Execute(sb.ToString());
+        await engine.ExecuteAsync(sb.ToString(), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 }

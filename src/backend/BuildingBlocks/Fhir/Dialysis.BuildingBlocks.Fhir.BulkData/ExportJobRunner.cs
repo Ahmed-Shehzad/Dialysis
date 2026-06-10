@@ -61,7 +61,6 @@ public sealed class ExportJobRunner
         var services = scope.ServiceProvider;
         var store = services.GetRequiredService<IExportJobStore>();
         var storage = services.GetRequiredService<IBulkDataStorage>();
-        var serializer = services.GetRequiredService<FhirJsonSerializerProvider>();
 
         var job = await store.GetAsync(jobId, cancellationToken).ConfigureAwait(false);
         if (job is null || job.Status == ExportJobStatus.Cancelled)
@@ -95,7 +94,7 @@ public sealed class ExportJobRunner
                 continue;
             }
 
-            var count = await WriteNdjsonAsync(services, storage, serializer, binding, inProgress, transform, cancellationToken).ConfigureAwait(false);
+            var count = await WriteNdjsonAsync(services, storage, binding, inProgress, transform, cancellationToken).ConfigureAwait(false);
             outputs.Add(new ExportJobOutput(resourceType, storage.BuildOutputUrl(jobId, resourceType), count));
         }
 
@@ -138,7 +137,6 @@ public sealed class ExportJobRunner
     private static async Task<long> WriteNdjsonAsync(
         IServiceProvider services,
         IBulkDataStorage storage,
-        FhirJsonSerializerProvider serializer,
         INdjsonFeederBinding binding,
         ExportJob job,
         Func<Resource, Resource>? transform,

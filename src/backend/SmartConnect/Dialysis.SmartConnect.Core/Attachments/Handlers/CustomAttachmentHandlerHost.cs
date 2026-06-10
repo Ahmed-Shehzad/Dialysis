@@ -54,7 +54,7 @@ public sealed class CustomAttachmentHandlerHost : IAttachmentHandler
                 return el.GetString();
             }
         }
-        catch (System.Text.Json.JsonException) { }
+        catch (System.Text.Json.JsonException) { /* malformed properties JSON → no custom kind */ }
         return null;
     }
 }

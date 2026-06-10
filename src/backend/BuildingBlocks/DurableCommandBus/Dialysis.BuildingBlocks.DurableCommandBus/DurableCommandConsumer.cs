@@ -24,11 +24,6 @@ namespace Dialysis.BuildingBlocks.DurableCommandBus;
 public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandEnvelope>
     where TContext : DbContext
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
-
     private readonly IDurableCommandCatalog _catalog;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<DurableCommandBusOptions> _options;
@@ -175,7 +170,7 @@ public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandE
             {
                 exceptionType = ex.GetType().FullName,
                 message = ex.Message,
-            }, _jsonOptions);
+            }, DurableCommandConsumerJson.Options);
             await failureLedger.MarkFailedAsync(envelope.CommandId, failureJson, _consumerInstanceId, ct).ConfigureAwait(false);
             await failureDb.SaveChangesAsync(ct).ConfigureAwait(false);
         }
@@ -186,4 +181,13 @@ public sealed class DurableCommandConsumer<TContext> : IConsumer<DurableCommandE
                 envelope.CommandId, envelope.CommandTypeKey);
         }
     }
+}
+
+// Non-generic holder so the options instance is shared across every closed DurableCommandConsumer<T>.
+file static class DurableCommandConsumerJson
+{
+    internal static readonly JsonSerializerOptions Options = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
 }

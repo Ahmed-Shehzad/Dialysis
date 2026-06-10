@@ -72,7 +72,7 @@ public sealed class JavascriptTransformStage : ITransformStage
         await BindCodeTemplatesAsync(engine, message.FlowId, cancellationToken).ConfigureAwait(false);
         BindAddAttachment(engine, message, cancellationToken);
 
-        var result = engine.Evaluate(script).ToObject();
+        var result = (await engine.EvaluateAsync(script, cancellationToken: cancellationToken).ConfigureAwait(false)).ToObject();
         var str = result?.ToString() ?? "";
         return message.CloneWithPayload(Encoding.UTF8.GetBytes(str), PayloadFormat.Utf8Text);
     }

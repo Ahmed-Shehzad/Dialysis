@@ -38,7 +38,7 @@ public sealed class ChargeEditChecker : IChargeEditChecker
 
         var advisories = new List<ChargeAdvisory>();
 
-        var freqRule = _options.FrequencyLimits.FirstOrDefault(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
+        var freqRule = _options.FrequencyLimits.Find(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
         if (freqRule is not null && freqRule.MaxOccurrences > 0)
         {
             var window = freqRule.WindowDays is > 0 ? freqRule.WindowDays.Value : _options.FrequencyWindowDays;
@@ -56,13 +56,13 @@ public sealed class ChargeEditChecker : IChargeEditChecker
             }
         }
 
-        var covRule = _options.CoverageRules.FirstOrDefault(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
+        var covRule = _options.CoverageRules.Find(r => r.CptCode.Equals(cpt, StringComparison.OrdinalIgnoreCase));
         if (covRule is not null && covRule.RequiredAnyIcd10.Count > 0)
         {
             var pointers = (diagnosisPointerIcd10Codes ?? [])
                 .Select(d => d?.Trim() ?? string.Empty)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (!covRule.RequiredAnyIcd10.Any(req => pointers.Contains(req.Trim())))
+            if (!covRule.RequiredAnyIcd10.Exists(req => pointers.Contains(req.Trim())))
             {
                 advisories.Add(new ChargeAdvisory(
                     ChargeAdvisoryCategory.MissingRequiredDiagnosis,
@@ -77,7 +77,7 @@ public sealed class ChargeEditChecker : IChargeEditChecker
         // Beneficiary Notice before billing. Surfaced as a distinct blocking advisory. (Evaluated on the
         // coverage/frequency edits only — before the advisory under-coding opportunity is added below.)
         if (advisories.Count > 0 && !string.IsNullOrWhiteSpace(payerCode)
-            && _options.MedicarePayerCodes.Any(p => p.Trim().Equals(payerCode!.Trim(), StringComparison.OrdinalIgnoreCase)))
+            && _options.MedicarePayerCodes.Exists(p => p.Trim().Equals(payerCode!.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
             advisories.Add(new ChargeAdvisory(
                 ChargeAdvisoryCategory.AbnRequired,

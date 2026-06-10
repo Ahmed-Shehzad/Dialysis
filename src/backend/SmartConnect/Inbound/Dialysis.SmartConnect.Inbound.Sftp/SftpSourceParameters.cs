@@ -56,7 +56,7 @@ public sealed class SftpSourceParameters
         string Require(string key) =>
             raw.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v)
                 ? v
-                : throw new ArgumentException($"SFTP source connector parameter '{key}' is required.", nameof(raw));
+                : throw new ArgumentException($"SFTP source connector parameter '{key}' is required.");
 
         string? Optional(string key) =>
             raw.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v) ? v : null;

@@ -51,7 +51,6 @@ public static class FhirAuthoringEndpoints
     private static async Task AuthorProfileAsync(HttpContext context)
     {
         var authoring = context.RequestServices.GetRequiredService<IFhirArtifactAuthoringService>();
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         var ct = context.RequestAborted;
 
         FhirProfileSpec? spec;
@@ -63,14 +62,14 @@ public static class FhirAuthoringEndpoints
         }
         catch (JsonException ex)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest,
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest,
                 $"Request body is not a valid FhirProfileSpec: {ex.Message}").ConfigureAwait(false);
             return;
         }
 
         if (spec is null)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest,
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest,
                 "Request body is empty.").ConfigureAwait(false);
             return;
         }
@@ -79,13 +78,13 @@ public static class FhirAuthoringEndpoints
         {
             var result = await authoring.AuthorProfileAsync(spec, ct).ConfigureAwait(false);
             var bundle = Wrap(result.Verification.Outcome, result.Profile);
-            await WriteBundleAsync(context, serializer, bundle,
+            await WriteBundleAsync(context, bundle,
                 result.Published ? StatusCodes.Status201Created : StatusCodes.Status422UnprocessableEntity)
                 .ConfigureAwait(false);
         }
         catch (ArgumentException ex)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest, ex.Message)
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest, ex.Message)
                 .ConfigureAwait(false);
         }
     }
@@ -93,7 +92,6 @@ public static class FhirAuthoringEndpoints
     private static async Task AuthorGuideAsync(HttpContext context)
     {
         var authoring = context.RequestServices.GetRequiredService<IFhirArtifactAuthoringService>();
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         var ct = context.RequestAborted;
 
         FhirImplementationGuideSpec? spec;
@@ -105,14 +103,14 @@ public static class FhirAuthoringEndpoints
         }
         catch (JsonException ex)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest,
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest,
                 $"Request body is not a valid FhirImplementationGuideSpec: {ex.Message}").ConfigureAwait(false);
             return;
         }
 
         if (spec is null)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest,
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest,
                 "Request body is empty.").ConfigureAwait(false);
             return;
         }
@@ -123,13 +121,13 @@ public static class FhirAuthoringEndpoints
             var bundle = Wrap(result.Verification.Outcome, result.Guide);
             foreach (var profile in result.Profiles)
                 bundle.Entry.Add(new Bundle.EntryComponent { Resource = profile });
-            await WriteBundleAsync(context, serializer, bundle,
+            await WriteBundleAsync(context, bundle,
                 result.Published ? StatusCodes.Status201Created : StatusCodes.Status422UnprocessableEntity)
                 .ConfigureAwait(false);
         }
         catch (ArgumentException ex)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest, ex.Message)
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest, ex.Message)
                 .ConfigureAwait(false);
         }
     }
@@ -137,7 +135,6 @@ public static class FhirAuthoringEndpoints
     private static async Task LoadPackageAsync(HttpContext context)
     {
         var loader = context.RequestServices.GetRequiredService<IFhirPackageLoader>();
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         var ct = context.RequestAborted;
 
         try
@@ -163,13 +160,13 @@ public static class FhirAuthoringEndpoints
             }
 
             await WriteResourceAsync(
-                context, serializer, outcome,
+                context, outcome,
                 result.Loaded > 0 ? StatusCodes.Status200OK : StatusCodes.Status422UnprocessableEntity)
                 .ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or ArgumentException)
         {
-            await WriteOutcomeAsync(context, serializer, StatusCodes.Status400BadRequest,
+            await WriteOutcomeAsync(context, StatusCodes.Status400BadRequest,
                 $"Could not read FHIR package tarball: {ex.Message}").ConfigureAwait(false);
         }
     }
@@ -177,18 +174,16 @@ public static class FhirAuthoringEndpoints
     private static Task ListProfilesAsync(HttpContext context)
     {
         var registry = context.RequestServices.GetRequiredService<IFhirConformanceRegistry>();
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         var bundle = new Bundle { Type = Bundle.BundleType.Searchset };
         foreach (var sd in registry.Profiles)
             bundle.Entry.Add(new Bundle.EntryComponent { Resource = sd });
         bundle.Total = registry.Profiles.Count;
-        return WriteBundleAsync(context, serializer, bundle, StatusCodes.Status200OK);
+        return WriteBundleAsync(context, bundle, StatusCodes.Status200OK);
     }
 
     private static Task ReadProfileAsync(HttpContext context)
     {
         var registry = context.RequestServices.GetRequiredService<IFhirConformanceRegistry>();
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         var id = (string?)context.Request.RouteValues["id"];
 
         var match = registry.Profiles.FirstOrDefault(p =>
@@ -197,22 +192,21 @@ public static class FhirAuthoringEndpoints
 
         if (match is null)
         {
-            return WriteOutcomeAsync(context, serializer, StatusCodes.Status404NotFound,
+            return WriteOutcomeAsync(context, StatusCodes.Status404NotFound,
                 $"No authored StructureDefinition matches '{id}'.");
         }
 
-        return WriteResourceAsync(context, serializer, match, StatusCodes.Status200OK);
+        return WriteResourceAsync(context, match, StatusCodes.Status200OK);
     }
 
     private static Task ListGuidesAsync(HttpContext context)
     {
         var registry = context.RequestServices.GetRequiredService<IFhirConformanceRegistry>();
-        var serializer = context.RequestServices.GetRequiredService<FhirJsonSerializerProvider>();
         var bundle = new Bundle { Type = Bundle.BundleType.Searchset };
         foreach (var ig in registry.ImplementationGuides)
             bundle.Entry.Add(new Bundle.EntryComponent { Resource = ig });
         bundle.Total = registry.ImplementationGuides.Count;
-        return WriteBundleAsync(context, serializer, bundle, StatusCodes.Status200OK);
+        return WriteBundleAsync(context, bundle, StatusCodes.Status200OK);
     }
 
     private static Bundle Wrap(OperationOutcome outcome, Resource artifact)
@@ -224,11 +218,11 @@ public static class FhirAuthoringEndpoints
     }
 
     private static Task WriteBundleAsync(
-        HttpContext context, FhirJsonSerializerProvider serializer, Bundle bundle, int status)
-        => WriteResourceAsync(context, serializer, bundle, status);
+        HttpContext context, Bundle bundle, int status)
+        => WriteResourceAsync(context, bundle, status);
 
     private static async Task WriteResourceAsync(
-        HttpContext context, FhirJsonSerializerProvider serializer, Resource resource, int status)
+        HttpContext context, Resource resource, int status)
     {
         context.Response.StatusCode = status;
         context.Response.ContentType = FhirContentTypes.Json + "; charset=utf-8";
@@ -237,7 +231,7 @@ public static class FhirAuthoringEndpoints
     }
 
     private static Task WriteOutcomeAsync(
-        HttpContext context, FhirJsonSerializerProvider serializer, int status, string message)
+        HttpContext context, int status, string message)
     {
         var outcome = new OperationOutcome();
         outcome.Issue.Add(new OperationOutcome.IssueComponent
@@ -246,6 +240,6 @@ public static class FhirAuthoringEndpoints
             Code = OperationOutcome.IssueType.Invalid,
             Diagnostics = message,
         });
-        return WriteResourceAsync(context, serializer, outcome, status);
+        return WriteResourceAsync(context, outcome, status);
     }
 }

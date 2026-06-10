@@ -150,7 +150,7 @@ public sealed class SftpSourceConnector : ISourceConnector
         try
         {
             using var ms = new MemoryStream();
-            client.DownloadFile(entry.FullName, ms);
+            await client.DownloadFileAsync(entry.FullName, ms, cancellationToken).ConfigureAwait(false);
             bytes = ms.ToArray();
         }
         catch (Exception ex)

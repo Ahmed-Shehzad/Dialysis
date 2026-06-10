@@ -18,5 +18,5 @@ public sealed class LawfulBasisRegistry : ILawfulBasisRegistry
     public IReadOnlyList<ProcessingActivity> Activities => _activities;
 
     public bool IsAuthorised(LawfulBasis basis, DataCategory categories) =>
-        _activities.Any(a => a.Basis == basis && (a.Categories & categories) == categories);
+        Array.Exists(_activities, a => a.Basis == basis && (a.Categories & categories) == categories);
 }

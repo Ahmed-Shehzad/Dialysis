@@ -16,9 +16,9 @@ public sealed class QhinPartner
     private readonly List<QhinTrustAnchor> _trustAnchors = [];
     // Not readonly: EF rehydrates this via a value-converted scalar column (whole-list assignment),
     // which the analyzer can't see — so IDE0044 is suppressed here, not a missed readonly.
-#pragma warning disable IDE0044 // Add readonly modifier
+#pragma warning disable IDE0044, S2933 // Add readonly modifier
     private List<string> _allowedPurposes = [];
-#pragma warning restore IDE0044
+#pragma warning restore IDE0044, S2933
 
     public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -150,7 +150,7 @@ public sealed class QhinPartner
     public void AttachTrustAnchor(QhinTrustAnchor anchor)
     {
         ArgumentNullException.ThrowIfNull(anchor);
-        if (_trustAnchors.Any(a => a.Thumbprint == anchor.Thumbprint))
+        if (_trustAnchors.Exists(a => a.Thumbprint == anchor.Thumbprint))
             throw new InvalidOperationException(
                 $"Trust anchor with thumbprint '{anchor.Thumbprint}' is already attached.");
         _trustAnchors.Add(anchor);
@@ -158,7 +158,7 @@ public sealed class QhinPartner
 
     public void RevokeTrustAnchor(Guid anchorId, DateTime now)
     {
-        var anchor = _trustAnchors.FirstOrDefault(a => a.Id == anchorId)
+        var anchor = _trustAnchors.Find(a => a.Id == anchorId)
             ?? throw new InvalidOperationException($"Trust anchor '{anchorId}' is not attached to this partner.");
         anchor.Revoke(now);
     }

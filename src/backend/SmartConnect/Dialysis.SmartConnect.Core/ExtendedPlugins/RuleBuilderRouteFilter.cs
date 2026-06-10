@@ -61,7 +61,7 @@ public sealed class RuleBuilderRouteFilter : IRouteFilter
         if (results.Count == 0)
             return Task.FromResult(RouteFilterResult.Allow());
 
-        var pass = matchAll ? results.All(x => x) : results.Any(x => x);
+        var pass = matchAll ? results.TrueForAll(x => x) : results.Exists(x => x);
         return Task.FromResult(pass ? RouteFilterResult.Allow() : RouteFilterResult.Drop());
     }
 }

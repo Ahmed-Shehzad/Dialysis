@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.Extensions.Logging;
@@ -79,13 +80,13 @@ public sealed class HttpFhirTerminologyService : ITerminologyService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(valueSetUrl);
 
-        var query = $"ValueSet/$expand?url={Uri.EscapeDataString(valueSetUrl)}";
+        var query = new StringBuilder($"ValueSet/$expand?url={Uri.EscapeDataString(valueSetUrl)}");
         foreach (var pair in filters)
         {
-            query += $"&{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}";
+            query.Append($"&{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}");
         }
 
-        return await GetFhirAsync<ValueSet>(query, cancellationToken).ConfigureAwait(false)
+        return await GetFhirAsync<ValueSet>(query.ToString(), cancellationToken).ConfigureAwait(false)
             ?? new ValueSet { Url = valueSetUrl };
     }
 
