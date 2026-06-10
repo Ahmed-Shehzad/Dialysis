@@ -132,7 +132,8 @@ public sealed class DeleteRetentionPolicyCommandHandler : ICommandHandler<Delete
     public async Task<Unit> HandleAsync(DeleteRetentionPolicyCommand request, CancellationToken cancellationToken)
     {
         var existing = await _repository.FindByKindAsync(request.Kind, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return Unit.Value;
+        if (existing is null)
+            return Unit.Value;
         _repository.Remove(existing);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

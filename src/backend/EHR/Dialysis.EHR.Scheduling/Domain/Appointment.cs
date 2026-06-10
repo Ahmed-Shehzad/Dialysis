@@ -43,11 +43,16 @@ public sealed class Appointment : AggregateRoot<Guid>
         string encounterClassCode,
         string? visitReason)
     {
-        if (patientId == Guid.Empty) throw new DomainException("Patient required.");
-        if (providerId == Guid.Empty) throw new DomainException("Provider required.");
-        if (endUtc <= startUtc) throw new DomainException("End must follow start.");
-        if (startUtc < DateTime.UtcNow.AddMinutes(-5)) throw new DomainException("Cannot book an appointment in the past.");
-        if (string.IsNullOrWhiteSpace(encounterClassCode)) throw new DomainException("Encounter class code required.");
+        if (patientId == Guid.Empty)
+            throw new DomainException("Patient required.");
+        if (providerId == Guid.Empty)
+            throw new DomainException("Provider required.");
+        if (endUtc <= startUtc)
+            throw new DomainException("End must follow start.");
+        if (startUtc < DateTime.UtcNow.AddMinutes(-5))
+            throw new DomainException("Cannot book an appointment in the past.");
+        if (string.IsNullOrWhiteSpace(encounterClassCode))
+            throw new DomainException("Encounter class code required.");
 
         var appointment = new Appointment(id)
         {
@@ -79,7 +84,8 @@ public sealed class Appointment : AggregateRoot<Guid>
     {
         if (Status != AppointmentStatus.Scheduled)
             throw new DomainException($"Cannot reschedule appointment in status {Status}.");
-        if (newEndUtc <= newStartUtc) throw new DomainException("End must follow start.");
+        if (newEndUtc <= newStartUtc)
+            throw new DomainException("End must follow start.");
 
         StartUtc = newStartUtc;
         EndUtc = newEndUtc;
@@ -98,7 +104,8 @@ public sealed class Appointment : AggregateRoot<Guid>
     {
         if (Status is AppointmentStatus.Cancelled or AppointmentStatus.Completed)
             throw new DomainException($"Cannot cancel appointment in status {Status}.");
-        if (string.IsNullOrWhiteSpace(reasonCode)) throw new DomainException("Cancellation reason required.");
+        if (string.IsNullOrWhiteSpace(reasonCode))
+            throw new DomainException("Cancellation reason required.");
 
         Status = AppointmentStatus.Cancelled;
         CancellationReasonCode = reasonCode.Trim();

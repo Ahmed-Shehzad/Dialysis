@@ -26,21 +26,26 @@ internal static class CdaParsing
     /// </summary>
     public static CodeableConcept? ParseCodeableConcept(XElement? coded)
     {
-        if (IsNull(coded)) return null;
+        if (IsNull(coded))
+            return null;
 
         var concept = new CodeableConcept();
         var primary = ParseCoding(coded!);
-        if (primary is not null) concept.Coding.Add(primary);
+        if (primary is not null)
+            concept.Coding.Add(primary);
 
         foreach (var translation in coded!.Elements(_hl7 + "translation"))
         {
             var translationCoding = ParseCoding(translation);
-            if (translationCoding is not null) concept.Coding.Add(translationCoding);
+            if (translationCoding is not null)
+                concept.Coding.Add(translationCoding);
         }
 
         var originalText = coded.Element(_hl7 + "originalText")?.Value?.Trim();
-        if (!string.IsNullOrEmpty(originalText)) concept.Text = originalText;
-        else if (!string.IsNullOrEmpty(primary?.Display)) concept.Text = primary.Display;
+        if (!string.IsNullOrEmpty(originalText))
+            concept.Text = originalText;
+        else if (!string.IsNullOrEmpty(primary?.Display))
+            concept.Text = primary.Display;
 
         return concept.Coding.Count == 0 && string.IsNullOrEmpty(concept.Text) ? null : concept;
     }
@@ -50,7 +55,8 @@ internal static class CdaParsing
         var code = coded.Attribute("code")?.Value;
         var system = coded.Attribute("codeSystem")?.Value;
         var display = coded.Attribute("displayName")?.Value;
-        if (string.IsNullOrWhiteSpace(code)) return null;
+        if (string.IsNullOrWhiteSpace(code))
+            return null;
         return new Coding(CdaConstants.OidToUri(system), code, display);
     }
 
@@ -64,7 +70,8 @@ internal static class CdaParsing
     /// </summary>
     public static Quantity? ParseQuantity(XElement? value)
     {
-        if (IsNull(value)) return null;
+        if (IsNull(value))
+            return null;
         var raw = value!.Attribute("value")?.Value;
         if (!decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
             return null;
@@ -79,14 +86,18 @@ internal static class CdaParsing
     /// </summary>
     public static string? ParseTimestamp(string? ts)
     {
-        if (string.IsNullOrWhiteSpace(ts) || ts.Length < 4) return null;
+        if (string.IsNullOrWhiteSpace(ts) || ts.Length < 4)
+            return null;
         var span = ts.AsSpan();
         var year = span[..4].ToString();
-        if (span.Length < 6) return year;
+        if (span.Length < 6)
+            return year;
         var month = span.Slice(4, 2).ToString();
-        if (span.Length < 8) return $"{year}-{month}";
+        if (span.Length < 8)
+            return $"{year}-{month}";
         var day = span.Slice(6, 2).ToString();
-        if (span.Length < 14) return $"{year}-{month}-{day}";
+        if (span.Length < 14)
+            return $"{year}-{month}-{day}";
         var hour = span.Slice(8, 2).ToString();
         var minute = span.Slice(10, 2).ToString();
         var second = span.Slice(12, 2).ToString();
@@ -97,7 +108,8 @@ internal static class CdaParsing
     private static string ParseZone(string ts)
     {
         var plus = ts.IndexOfAny(['+', '-'], 14 <= ts.Length ? 14 : ts.Length - 1);
-        if (plus < 0 || plus + 5 > ts.Length) return "+00:00";
+        if (plus < 0 || plus + 5 > ts.Length)
+            return "+00:00";
         var sign = ts[plus];
         var hh = ts.Substring(plus + 1, 2);
         var mm = ts.Substring(plus + 3, 2);
@@ -107,9 +119,11 @@ internal static class CdaParsing
     /// <summary>Reads the effective instant of an entry — point <c>value</c> or interval <c>low</c>.</summary>
     public static string? ParseEffectiveInstant(XElement? effectiveTime)
     {
-        if (IsNull(effectiveTime)) return null;
+        if (IsNull(effectiveTime))
+            return null;
         var pointValue = effectiveTime!.Attribute("value")?.Value;
-        if (!string.IsNullOrWhiteSpace(pointValue)) return ParseTimestamp(pointValue);
+        if (!string.IsNullOrWhiteSpace(pointValue))
+            return ParseTimestamp(pointValue);
         var low = effectiveTime.Element(_hl7 + "low")?.Attribute("value")?.Value;
         return ParseTimestamp(low);
     }
@@ -117,10 +131,12 @@ internal static class CdaParsing
     /// <summary>Reads an effective interval (<c>low</c>/<c>high</c>) as a FHIR <see cref="Period"/>.</summary>
     public static Period? ParseEffectivePeriod(XElement? effectiveTime)
     {
-        if (IsNull(effectiveTime)) return null;
+        if (IsNull(effectiveTime))
+            return null;
         var low = ParseTimestamp(effectiveTime!.Element(_hl7 + "low")?.Attribute("value")?.Value);
         var high = ParseTimestamp(effectiveTime.Element(_hl7 + "high")?.Attribute("value")?.Value);
-        if (low is null && high is null) return null;
+        if (low is null && high is null)
+            return null;
         return new Period { StartElement = low is null ? null : new FhirDateTime(low), EndElement = high is null ? null : new FhirDateTime(high) };
     }
 }

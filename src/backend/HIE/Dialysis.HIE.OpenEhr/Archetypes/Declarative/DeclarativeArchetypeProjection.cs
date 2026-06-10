@@ -47,7 +47,8 @@ public sealed class DeclarativeArchetypeProjection<TResource> : IArchetypeProjec
         foreach (var mapping in _definition.Fields)
         {
             var value = ResourcePath.Evaluate(resource, mapping.Path);
-            if (value is null) continue;
+            if (value is null)
+                continue;
             fields[mapping.Key] = value;
         }
         var payload = new Dictionary<string, object?>(StringComparer.Ordinal)

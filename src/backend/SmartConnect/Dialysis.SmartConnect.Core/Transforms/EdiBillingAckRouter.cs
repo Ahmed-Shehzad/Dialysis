@@ -40,10 +40,12 @@ public sealed class EdiBillingAckRouter : ITransformStage
     {
         ArgumentNullException.ThrowIfNull(message);
         var bytes = message.Payload;
-        if (bytes.IsEmpty) return message;
+        if (bytes.IsEmpty)
+            return message;
 
         var ackKind = ClassifyAckKind(bytes.Span);
-        if (ackKind is null) return message;
+        if (ackKind is null)
+            return message;
 
         var receivedAt = message.ReceivedAtUtc.UtcDateTime;
         var trace = message.Metadata.TryGetValue("source-trace", out var t) ? t : null;
@@ -66,20 +68,25 @@ public sealed class EdiBillingAckRouter : ITransformStage
     /// </summary>
     private static EdiAckKind? ClassifyAckKind(ReadOnlySpan<byte> bytes)
     {
-        if (bytes.Length < 110) return null;
+        if (bytes.Length < 110)
+            return null;
         var text = Encoding.ASCII.GetString(bytes);
-        if (!text.StartsWith("ISA", StringComparison.Ordinal)) return null;
+        if (!text.StartsWith("ISA", StringComparison.Ordinal))
+            return null;
         var elementSeparator = text[3];
         var segmentTerminator = text[105];
 
         // Walk segments until we find ST.
         var stIndex = text.IndexOf("ST" + elementSeparator, StringComparison.Ordinal);
-        if (stIndex < 0) return null;
+        if (stIndex < 0)
+            return null;
         var endOfSt = text.IndexOf(segmentTerminator, stIndex);
-        if (endOfSt < 0) return null;
+        if (endOfSt < 0)
+            return null;
         var segment = text[stIndex..endOfSt];
         var parts = segment.Split(elementSeparator);
-        if (parts.Length < 2) return null;
+        if (parts.Length < 2)
+            return null;
         return parts[1] switch
         {
             "999" => EdiAckKind.FunctionalAck999,

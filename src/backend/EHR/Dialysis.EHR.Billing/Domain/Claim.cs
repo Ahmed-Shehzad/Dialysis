@@ -62,8 +62,10 @@ public sealed class Claim : AggregateRoot<Guid>
         string claimFormatCode,
         IReadOnlyList<Charge> charges)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (payerId == Guid.Empty) throw new ArgumentException("Payer required.", nameof(payerId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (payerId == Guid.Empty)
+            throw new ArgumentException("Payer required.", nameof(payerId));
         ArgumentException.ThrowIfNullOrWhiteSpace(payerCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(claimFormatCode);
         if (charges is null || charges.Count == 0)
@@ -132,7 +134,8 @@ public sealed class Claim : AggregateRoot<Guid>
     {
         ArgumentNullException.ThrowIfNull(ack);
         _acknowledgements.Add(ack);
-        if (Status == ClaimStatus.Cancelled) return;
+        if (Status == ClaimStatus.Cancelled)
+            return;
 
         switch (ack.Verdict)
         {

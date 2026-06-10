@@ -41,7 +41,8 @@ public sealed class ProblemListItem : AggregateRoot<Guid>
         string? notes = null)
     {
         ArgumentNullException.ThrowIfNull(condition);
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient id required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient id required.", nameof(patientId));
 
         return new ProblemListItem(id)
         {
@@ -55,8 +56,10 @@ public sealed class ProblemListItem : AggregateRoot<Guid>
 
     public void Resolve(DateOnly resolvedDate)
     {
-        if (Status == ProblemStatus.Resolved) return;
-        if (resolvedDate < OnsetDate) throw new InvalidOperationException("Resolved date cannot precede onset.");
+        if (Status == ProblemStatus.Resolved)
+            return;
+        if (resolvedDate < OnsetDate)
+            throw new InvalidOperationException("Resolved date cannot precede onset.");
         Status = ProblemStatus.Resolved;
         ResolvedDate = resolvedDate;
     }

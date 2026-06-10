@@ -35,7 +35,8 @@ public sealed class ClamAvAttachmentBlobScannerTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        if (!_e2EEnabled) return;
+        if (!_e2EEnabled)
+            return;
         _clamav = new ContainerBuilder(ClamAvImage)
             .WithPortBinding(ClamdPort, assignRandomHostPort: true)
             // clamd takes ~30s to load signatures on first start; clamdscan --ping returns 0 once
@@ -54,7 +55,8 @@ public sealed class ClamAvAttachmentBlobScannerTests : IAsyncLifetime
     [Fact]
     public async Task Clean_Payload_Returns_Clean_Verdict_Async()
     {
-        if (!_e2EEnabled) return;
+        if (!_e2EEnabled)
+            return;
         var scanner = BuildScanner();
         var bytes = Encoding.UTF8.GetBytes("a perfectly innocent dialysis treatment summary");
 
@@ -66,7 +68,8 @@ public sealed class ClamAvAttachmentBlobScannerTests : IAsyncLifetime
     [Fact]
     public async Task Eicar_Signature_Returns_Infected_Verdict_Async()
     {
-        if (!_e2EEnabled) return;
+        if (!_e2EEnabled)
+            return;
         var scanner = BuildScanner();
         var bytes = Encoding.ASCII.GetBytes(EicarSignature);
 

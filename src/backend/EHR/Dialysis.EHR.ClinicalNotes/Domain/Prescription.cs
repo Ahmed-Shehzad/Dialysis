@@ -74,17 +74,22 @@ public sealed class Prescription : AggregateRoot<Guid>
         string? overrideReason = null,
         string? overriddenBy = null)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (encounterId == Guid.Empty) throw new ArgumentException("Encounter required.", nameof(encounterId));
-        if (prescribingProviderId == Guid.Empty) throw new ArgumentException("Prescriber required.", nameof(prescribingProviderId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (encounterId == Guid.Empty)
+            throw new ArgumentException("Encounter required.", nameof(encounterId));
+        if (prescribingProviderId == Guid.Empty)
+            throw new ArgumentException("Prescriber required.", nameof(prescribingProviderId));
         ArgumentException.ThrowIfNullOrWhiteSpace(medicationRxnormCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(medicationDisplay);
         ArgumentException.ThrowIfNullOrWhiteSpace(doseText);
         ArgumentException.ThrowIfNullOrWhiteSpace(frequencyText);
         ArgumentException.ThrowIfNullOrWhiteSpace(pharmacyNcpdpId);
         ArgumentException.ThrowIfNullOrWhiteSpace(transmissionFormat);
-        if (quantityDispensed <= 0) throw new ArgumentOutOfRangeException(nameof(quantityDispensed));
-        if (refillsAuthorized < 0) throw new ArgumentOutOfRangeException(nameof(refillsAuthorized));
+        if (quantityDispensed <= 0)
+            throw new ArgumentOutOfRangeException(nameof(quantityDispensed));
+        if (refillsAuthorized < 0)
+            throw new ArgumentOutOfRangeException(nameof(refillsAuthorized));
 
         var rx = new Prescription(id)
         {
@@ -146,7 +151,8 @@ public sealed class Prescription : AggregateRoot<Guid>
 
     public void RecordPharmacyAcknowledgement()
     {
-        if (Status != PrescriptionStatus.Active) return;
+        if (Status != PrescriptionStatus.Active)
+            return;
         Status = PrescriptionStatus.AcknowledgedByPharmacy;
     }
 }

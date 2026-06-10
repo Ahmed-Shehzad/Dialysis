@@ -57,7 +57,8 @@ public sealed class FlowRuntimeEngineAlertSinkTests
         while (DateTime.UtcNow < deadline)
         {
             events = await store.GetRecentAsync(10, CancellationToken.None);
-            if (events.Count > 0) break;
+            if (events.Count > 0)
+                break;
             await Task.Delay(50);
         }
 

@@ -55,14 +55,18 @@ public sealed class AlertEngine : IAlertSink
             return;
         }
 
-        if (enabled.Count == 0) return;
+        if (enabled.Count == 0)
+            return;
 
         var nowUtc = _time.GetUtcNow();
         foreach (var rule in enabled)
         {
-            if (!Scopes(rule, trigger)) continue;
-            if (!MatchesAnyPattern(rule, trigger)) continue;
-            if (IsThrottled(rule, trigger, nowUtc)) continue;
+            if (!Scopes(rule, trigger))
+                continue;
+            if (!MatchesAnyPattern(rule, trigger))
+                continue;
+            if (IsThrottled(rule, trigger, nowUtc))
+                continue;
 
             await FireAsync(rule, trigger, nowUtc, cancellationToken).ConfigureAwait(false);
         }
@@ -116,22 +120,26 @@ public sealed class AlertEngine : IAlertSink
 
     private static bool Scopes(AlertRule rule, AlertTrigger trigger)
     {
-        if (rule.EnabledFlowIds is null || rule.EnabledFlowIds.Count == 0) return true;
+        if (rule.EnabledFlowIds is null || rule.EnabledFlowIds.Count == 0)
+            return true;
         return trigger.FlowId != Guid.Empty && rule.EnabledFlowIds.Contains(trigger.FlowId);
     }
 
     private static bool MatchesAnyPattern(AlertRule rule, AlertTrigger trigger)
     {
-        if (rule.ErrorPatterns.Count == 0) return true;
+        if (rule.ErrorPatterns.Count == 0)
+            return true;
         foreach (var p in rule.ErrorPatterns)
         {
-            if (p.ErrorType != AlertErrorType.Any && p.ErrorType != trigger.ErrorType) continue;
+            if (p.ErrorType != AlertErrorType.Any && p.ErrorType != trigger.ErrorType)
+                continue;
             if (!string.IsNullOrEmpty(p.Regex))
             {
                 var detail = trigger.ErrorDetail ?? string.Empty;
                 try
                 {
-                    if (!Regex.IsMatch(detail, p.Regex, RegexOptions.CultureInvariant, _regexTimeout)) continue;
+                    if (!Regex.IsMatch(detail, p.Regex, RegexOptions.CultureInvariant, _regexTimeout))
+                        continue;
                 }
                 catch (RegexMatchTimeoutException)
                 {
@@ -150,7 +158,8 @@ public sealed class AlertEngine : IAlertSink
     private bool IsThrottled(AlertRule rule, AlertTrigger trigger, DateTimeOffset nowUtc)
     {
         var window = rule.ThrottleWindow ?? _defaultThrottleWindow;
-        if (window <= TimeSpan.Zero) return false;
+        if (window <= TimeSpan.Zero)
+            return false;
 
         var key = (rule.Id, trigger.FlowId, trigger.ErrorType);
         if (_lastFiredUtc.TryGetValue(key, out var last) && nowUtc - last < window)

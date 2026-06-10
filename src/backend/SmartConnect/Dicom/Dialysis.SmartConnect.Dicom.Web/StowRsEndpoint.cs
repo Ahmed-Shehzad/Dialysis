@@ -87,7 +87,8 @@ public static class StowRsEndpoint
     private static bool IsDicomPart(MultipartSection section)
     {
         var part = section.ContentType;
-        if (string.IsNullOrEmpty(part)) return false;
+        if (string.IsNullOrEmpty(part))
+            return false;
         return part.StartsWith("application/dicom", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -41,7 +41,8 @@ public sealed class PharmacyTransmission : AggregateRoot<Guid>
         string transmissionFormat,
         string payloadDigest)
     {
-        if (prescriptionId == Guid.Empty) throw new ArgumentException("Prescription required.", nameof(prescriptionId));
+        if (prescriptionId == Guid.Empty)
+            throw new ArgumentException("Prescription required.", nameof(prescriptionId));
         ArgumentException.ThrowIfNullOrWhiteSpace(pharmacyNcpdpId);
         ArgumentException.ThrowIfNullOrWhiteSpace(transmissionFormat);
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadDigest);

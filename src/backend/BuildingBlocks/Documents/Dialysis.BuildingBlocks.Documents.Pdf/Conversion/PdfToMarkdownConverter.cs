@@ -30,7 +30,8 @@ public sealed class PdfToMarkdownConverter : IPdfToMarkdownConverter
         for (var p = 0; p < extracted.Pages.Count; p++)
         {
             var page = extracted.Pages[p];
-            if (p > 0) sb.AppendLine().AppendLine("---").AppendLine();
+            if (p > 0)
+                sb.AppendLine().AppendLine("---").AppendLine();
             foreach (var line in page.Lines)
             {
                 if (line.HeadingLevel is int level)

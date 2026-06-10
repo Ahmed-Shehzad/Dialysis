@@ -43,7 +43,8 @@ public sealed class Remittance : AggregateRoot<Guid>
         AdjudicationStatus adjudicationStatus,
         DateTime receivedAtUtc)
     {
-        if (claimId == Guid.Empty) throw new ArgumentException("Claim required.", nameof(claimId));
+        if (claimId == Guid.Empty)
+            throw new ArgumentException("Claim required.", nameof(claimId));
         ArgumentException.ThrowIfNullOrWhiteSpace(payerCode);
         ArgumentNullException.ThrowIfNull(paidAmount);
         ArgumentNullException.ThrowIfNull(adjustmentAmount);

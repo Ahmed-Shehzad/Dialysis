@@ -88,21 +88,21 @@ public sealed class IvPumpsController : ControllerBase
         switch (reading.Kind)
         {
             case IvPumpReadingKind.Start when infusion is null:
-                {
-                    var fresh = new IvPumpInfusion(
-                        id: Guid.CreateVersion7(),
-                        sessionId: sessionId,
-                        chairId: chairId,
-                        pumpDeviceId: reading.PumpDeviceId,
-                        vendorCode: reading.VendorCode,
-                        medication: reading.MedicationCode is null ? null
-                            : new MedicationCoding(reading.MedicationCodeSystem!, reading.MedicationCode, reading.MedicationCode),
-                        programmedRateMlPerHour: reading.ProgrammedRateMlPerHour ?? 0m,
-                        programmedVolumeMl: reading.ProgrammedVolumeMl ?? 0m,
-                        startedAtUtc: reading.CapturedAtUtc);
-                    await _infusions.AddAsync(fresh, cancellationToken).ConfigureAwait(false);
-                    break;
-                }
+            {
+                var fresh = new IvPumpInfusion(
+                    id: Guid.CreateVersion7(),
+                    sessionId: sessionId,
+                    chairId: chairId,
+                    pumpDeviceId: reading.PumpDeviceId,
+                    vendorCode: reading.VendorCode,
+                    medication: reading.MedicationCode is null ? null
+                        : new MedicationCoding(reading.MedicationCodeSystem!, reading.MedicationCode, reading.MedicationCode),
+                    programmedRateMlPerHour: reading.ProgrammedRateMlPerHour ?? 0m,
+                    programmedVolumeMl: reading.ProgrammedVolumeMl ?? 0m,
+                    startedAtUtc: reading.CapturedAtUtc);
+                await _infusions.AddAsync(fresh, cancellationToken).ConfigureAwait(false);
+                break;
+            }
             case IvPumpReadingKind.Progress when infusion is not null:
                 infusion.RecordReading(reading.ActualRateMlPerHour ?? 0m, reading.InfusedVolumeMl ?? 0m);
                 _infusions.Update(infusion);

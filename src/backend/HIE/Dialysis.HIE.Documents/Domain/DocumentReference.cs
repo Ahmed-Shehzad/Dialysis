@@ -63,7 +63,8 @@ public sealed class DocumentReference
         ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
         ArgumentException.ThrowIfNullOrWhiteSpace(storageRef);
         ArgumentException.ThrowIfNullOrWhiteSpace(contentHash);
-        if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
+        if (size < 0)
+            throw new ArgumentOutOfRangeException(nameof(size));
 
         Id = id == Guid.Empty ? Guid.CreateVersion7() : id;
         PatientId = patientId;
@@ -88,7 +89,8 @@ public sealed class DocumentReference
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(storageRef);
         ArgumentException.ThrowIfNullOrWhiteSpace(contentHash);
-        if (size < 0) throw new ArgumentOutOfRangeException(nameof(size));
+        if (size < 0)
+            throw new ArgumentOutOfRangeException(nameof(size));
         if (Status != DocumentReferenceStatus.Current)
             throw new InvalidOperationException($"Cannot revise a {Status} document.");
 
@@ -102,7 +104,8 @@ public sealed class DocumentReference
     /// <summary>Soft-delete — sets status to <see cref="DocumentReferenceStatus.EnteredInError"/>.</summary>
     public void EnterInError()
     {
-        if (Status == DocumentReferenceStatus.EnteredInError) return;
+        if (Status == DocumentReferenceStatus.EnteredInError)
+            return;
         Status = DocumentReferenceStatus.EnteredInError;
     }
 

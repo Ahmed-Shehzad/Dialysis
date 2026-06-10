@@ -124,8 +124,10 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
 
     private static void ScrubObservation(Observation observation, DeIdentificationRules rules)
     {
-        if (rules.RemoveNotes) observation.Note.Clear();
-        if (rules.RemoveDirectIdentifiers) observation.Identifier.Clear();
+        if (rules.RemoveNotes)
+            observation.Note.Clear();
+        if (rules.RemoveDirectIdentifiers)
+            observation.Identifier.Clear();
         if (rules.GeneralizeDatesToYear && observation.Effective is FhirDateTime { Value: not null } effective)
         {
             observation.Effective = new FhirDateTime(GeneralizeToYear(effective.Value));
@@ -135,7 +137,8 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
     private static void ScrubEncounter(Encounter encounter, DeIdentificationRules rules)
     {
         encounter.ReasonCode.Clear();
-        if (rules.RemoveDirectIdentifiers) encounter.Identifier.Clear();
+        if (rules.RemoveDirectIdentifiers)
+            encounter.Identifier.Clear();
         if (rules.GeneralizeDatesToYear && encounter.Period is not null)
         {
             if (encounter.Period.Start is { Length: >= 4 } start)
@@ -147,8 +150,10 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
 
     private static void ScrubAllergyIntolerance(AllergyIntolerance allergy, DeIdentificationRules rules)
     {
-        if (rules.RemoveNotes) allergy.Note.Clear();
-        if (rules.RemoveDirectIdentifiers) allergy.Identifier.Clear();
+        if (rules.RemoveNotes)
+            allergy.Note.Clear();
+        if (rules.RemoveDirectIdentifiers)
+            allergy.Identifier.Clear();
         if (rules.GeneralizeDatesToYear)
         {
             if (allergy.RecordedDate is { Length: >= 4 } recorded)
@@ -160,8 +165,10 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
 
     private static void ScrubImmunization(Immunization immunization, DeIdentificationRules rules)
     {
-        if (rules.RemoveNotes) immunization.Note.Clear();
-        if (rules.RemoveDirectIdentifiers) immunization.Identifier.Clear();
+        if (rules.RemoveNotes)
+            immunization.Note.Clear();
+        if (rules.RemoveDirectIdentifiers)
+            immunization.Identifier.Clear();
         if (rules.GeneralizeDatesToYear && immunization.Occurrence is FhirDateTime { Value: not null } occurrence)
         {
             immunization.Occurrence = new FhirDateTime(GeneralizeToYear(occurrence.Value));
@@ -170,8 +177,10 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
 
     private static void ScrubMedicationStatement(MedicationStatement medicationStatement, DeIdentificationRules rules)
     {
-        if (rules.RemoveNotes) medicationStatement.Note.Clear();
-        if (rules.RemoveDirectIdentifiers) medicationStatement.Identifier.Clear();
+        if (rules.RemoveNotes)
+            medicationStatement.Note.Clear();
+        if (rules.RemoveDirectIdentifiers)
+            medicationStatement.Identifier.Clear();
         if (rules.GeneralizeDatesToYear && medicationStatement.Effective is FhirDateTime { Value: not null } effective)
         {
             medicationStatement.Effective = new FhirDateTime(GeneralizeToYear(effective.Value));
@@ -180,8 +189,10 @@ public sealed class SafeHarborDeIdentifier : IFhirDeIdentifier
 
     private static void ScrubProcedure(Procedure procedure, DeIdentificationRules rules)
     {
-        if (rules.RemoveNotes) procedure.Note.Clear();
-        if (rules.RemoveDirectIdentifiers) procedure.Identifier.Clear();
+        if (rules.RemoveNotes)
+            procedure.Note.Clear();
+        if (rules.RemoveDirectIdentifiers)
+            procedure.Identifier.Clear();
         if (rules.GeneralizeDatesToYear && procedure.Performed is FhirDateTime { Value: not null } performed)
         {
             procedure.Performed = new FhirDateTime(GeneralizeToYear(performed.Value));

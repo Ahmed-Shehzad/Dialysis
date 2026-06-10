@@ -93,7 +93,7 @@ public class Program
         // real fix is upstream (make Aspire's PrepareDeploymentTargetsAsync idempotent).
         void DedupeDeploymentTargets(string environmentName)
         {
-        #pragma warning disable ASPIREPIPELINES001
+#pragma warning disable ASPIREPIPELINES001
             builder.Pipeline.AddStep(
                 "dialysis-dedupe-deployment-targets-" + environmentName,
                 ctx =>
@@ -112,7 +112,7 @@ public class Program
                 },
                 "prepare-deployment-targets-" + environmentName,
                 "before-start");
-        #pragma warning restore ASPIREPIPELINES001
+#pragma warning restore ASPIREPIPELINES001
         }
 
         if (isComposePublish)

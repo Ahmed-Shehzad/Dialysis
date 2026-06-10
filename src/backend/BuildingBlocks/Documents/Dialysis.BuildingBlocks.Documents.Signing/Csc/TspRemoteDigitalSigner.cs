@@ -36,7 +36,8 @@ public sealed class TspRemoteDigitalSigner : IDigitalSigner
 
     public async Task<int> GetSignatureSizeAsync()
     {
-        if (_cachedSize is { } size) return size;
+        if (_cachedSize is { } size)
+            return size;
         size = await _remote.EstimateSignatureContainerSizeAsync(_credentialId, CancellationToken.None).ConfigureAwait(false);
         _cachedSize = size;
         return size;

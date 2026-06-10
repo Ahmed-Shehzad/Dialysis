@@ -43,9 +43,11 @@ public sealed class Payment : AggregateRoot<Guid>
         DateTime postedAtUtc,
         string? externalReference = null)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
         ArgumentNullException.ThrowIfNull(amount);
-        if (amount.Amount <= 0) throw new ArgumentException("Payment amount must be positive.", nameof(amount));
+        if (amount.Amount <= 0)
+            throw new ArgumentException("Payment amount must be positive.", nameof(amount));
 
         var payment = new Payment(id)
         {

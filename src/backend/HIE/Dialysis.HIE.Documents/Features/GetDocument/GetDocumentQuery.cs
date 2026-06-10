@@ -161,7 +161,8 @@ public sealed class GetDocumentQueryHandler : IQueryHandler<GetDocumentQuery, Do
     public async Task<DocumentDetail?> HandleAsync(GetDocumentQuery request, CancellationToken cancellationToken)
     {
         var doc = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (doc is null) return null;
+        if (doc is null)
+            return null;
         return new DocumentDetail(
             doc.Id,
             doc.PatientId,

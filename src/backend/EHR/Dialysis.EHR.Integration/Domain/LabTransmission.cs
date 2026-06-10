@@ -38,7 +38,8 @@ public sealed class LabTransmission : AggregateRoot<Guid>
         string transmissionFormat,
         string payloadDigest)
     {
-        if (labOrderId == Guid.Empty) throw new ArgumentException("Lab order required.", nameof(labOrderId));
+        if (labOrderId == Guid.Empty)
+            throw new ArgumentException("Lab order required.", nameof(labOrderId));
         ArgumentException.ThrowIfNullOrWhiteSpace(labFacilityCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(transmissionFormat);
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadDigest);

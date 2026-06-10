@@ -53,7 +53,8 @@ public sealed class InventoryController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
         var item = await _inventory.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-        if (item is null) return NotFound();
+        if (item is null)
+            return NotFound();
         item.Receive(request.Units, request.Reason);
         _inventory.Update(item);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -70,7 +71,8 @@ public sealed class InventoryController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
         var item = await _inventory.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
-        if (item is null) return NotFound();
+        if (item is null)
+            return NotFound();
         item.Adjust(request.NewOnHandUnits, request.Reason);
         _inventory.Update(item);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

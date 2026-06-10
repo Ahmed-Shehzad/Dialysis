@@ -57,7 +57,8 @@ public sealed class PermissionedRequestTests
 
     private static IEnumerable<Type> SafeGetTypes(Assembly a)
     {
-        try { return a.GetTypes(); }
+        try
+        { return a.GetTypes(); }
         catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t is not null)!; }
     }
 }

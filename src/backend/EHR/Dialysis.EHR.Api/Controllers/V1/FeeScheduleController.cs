@@ -89,7 +89,8 @@ public sealed class FeeScheduleController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
         var entry = await _entries.GetAsync(id, cancellationToken).ConfigureAwait(false);
-        if (entry is null) return NotFound();
+        if (entry is null)
+            return NotFound();
 
         try
         {
@@ -114,7 +115,8 @@ public sealed class FeeScheduleController : ControllerBase
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var entry = await _entries.GetAsync(id, cancellationToken).ConfigureAwait(false);
-        if (entry is null) return NotFound();
+        if (entry is null)
+            return NotFound();
         _entries.Remove(entry);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return NoContent();

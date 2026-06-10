@@ -60,7 +60,8 @@ public sealed class QhinPartnersController : ControllerBase
     {
         var detail = await _cqrs.SendQueryAsync<GetQhinPartnerQuery, QhinPartnerDetail?>(
             new GetQhinPartnerQuery(id), cancellationToken).ConfigureAwait(false);
-        if (detail is null) return NotFound();
+        if (detail is null)
+            return NotFound();
         return Ok(new ResourceEnvelope<QhinPartnerDetail>(detail, [new LinkDto("self", Self(), "GET")]));
     }
 

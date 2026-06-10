@@ -81,12 +81,14 @@ public sealed class ApnsSenderTests
     private static bool VerifyJwt(string jwt, ECDsa key)
     {
         var parts = jwt.Split('.');
-        if (parts.Length != 3) return false;
+        if (parts.Length != 3)
+            return false;
 
         var signingInput = $"{parts[0]}.{parts[1]}";
         var signature = Base64UrlDecode(parts[2]);
         var verified = key.VerifyData(Encoding.UTF8.GetBytes(signingInput), signature, HashAlgorithmName.SHA256);
-        if (!verified) return false;
+        if (!verified)
+            return false;
 
         // Header carries `kid` matching the configured key id; payload carries `iss`.
         using var header = JsonDocument.Parse(Base64UrlDecode(parts[0]));
@@ -102,8 +104,12 @@ public sealed class ApnsSenderTests
         var p = s.Replace('-', '+').Replace('_', '/');
         switch (p.Length % 4)
         {
-            case 2: p += "=="; break;
-            case 3: p += "="; break;
+            case 2:
+                p += "==";
+                break;
+            case 3:
+                p += "=";
+                break;
         }
         return Convert.FromBase64String(p);
     }

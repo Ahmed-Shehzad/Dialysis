@@ -393,7 +393,8 @@ public sealed class FileReaderSourceConnector : ISourceConnector
         var records = new List<byte[]>();
         while (reader.ReadLine() is { } line)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
             records.Add(Encoding.UTF8.GetBytes(line));
         }
         return records.Count == 0 ? [bytes] : records;

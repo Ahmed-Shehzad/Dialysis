@@ -66,8 +66,10 @@ public class Program
                 : s => s.AddTransponderRabbitMq(o =>
                 {
                     o.ConnectionUri = rabbitUri;
-                    if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
-                    if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue))
+                        o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange))
+                        o.ExchangeName = rabbitExchange;
                 }));
 
         // HIPAA Security Rule scaffolding — see src/backend/HIS/README.md for the rationale.

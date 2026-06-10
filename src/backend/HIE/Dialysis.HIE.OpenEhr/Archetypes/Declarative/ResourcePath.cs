@@ -31,12 +31,14 @@ public static class ResourcePath
     public static object? Evaluate(object? source, string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        if (source is null) return null;
+        if (source is null)
+            return null;
 
         object? current = source;
         foreach (var segment in path.Split('.', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (current is null) return null;
+            if (current is null)
+                return null;
             // When the running value is a list (produced by an earlier `[?]`), each segment
             // applies element-wise and the result is flattened — turning `Interpretation[?].Coding[?].Code`
             // into a flat string list rather than a list-of-lists.
@@ -45,11 +47,14 @@ public static class ResourcePath
                 var mapped = new List<object?>(elements.Count);
                 foreach (var element in elements)
                 {
-                    if (element is null) continue;
+                    if (element is null)
+                        continue;
                     var step = ApplySegment(element, segment);
                     if (step is IReadOnlyList<object?> sublist)
                     {
-                        foreach (var sub in sublist) if (sub is not null) mapped.Add(sub);
+                        foreach (var sub in sublist)
+                            if (sub is not null)
+                                mapped.Add(sub);
                     }
                     else if (step is not null)
                     {
@@ -72,9 +77,11 @@ public static class ResourcePath
         if (op is { Kind: SegmentOpKind.Cast } castOp)
         {
             var property = ResolveProperty(current.GetType(), propertyName);
-            if (property is null) return null;
+            if (property is null)
+                return null;
             var value = property.GetValue(current);
-            if (value is null) return null;
+            if (value is null)
+                return null;
             var typeName = castOp.Argument;
             return value.GetType().Name == typeName ? value : null;
         }
@@ -82,7 +89,8 @@ public static class ResourcePath
         // Wildcard expansion — if we're already on a list and the segment is `[?]`, the previous
         // pipeline already produced a list; here we need to flatten one more level.
         var resolved = ResolveProperty(current.GetType(), propertyName);
-        if (resolved is null) return null;
+        if (resolved is null)
+            return null;
         var raw = resolved.GetValue(current);
 
         return op switch
@@ -96,7 +104,8 @@ public static class ResourcePath
 
     private static object? GetIndexed(object? collection, int index)
     {
-        if (collection is null) return null;
+        if (collection is null)
+            return null;
         if (collection is IList list)
         {
             return index >= 0 && index < list.Count ? list[index] : null;
@@ -106,7 +115,8 @@ public static class ResourcePath
             var i = 0;
             foreach (var item in enumerable)
             {
-                if (i++ == index) return item;
+                if (i++ == index)
+                    return item;
             }
         }
         return null;
@@ -114,11 +124,13 @@ public static class ResourcePath
 
     private static IReadOnlyList<object?> ExpandWildcard(object? collection)
     {
-        if (collection is null) return [];
+        if (collection is null)
+            return [];
         if (collection is IEnumerable enumerable and not string)
         {
             var result = new List<object?>();
-            foreach (var item in enumerable) result.Add(item);
+            foreach (var item in enumerable)
+                result.Add(item);
             return result;
         }
         return [collection];
@@ -131,10 +143,12 @@ public static class ResourcePath
         if (bracketIndex >= 0)
         {
             var closing = segment.IndexOf(']', bracketIndex);
-            if (closing < 0) throw new FormatException($"Unterminated bracket in '{segment}'.");
+            if (closing < 0)
+                throw new FormatException($"Unterminated bracket in '{segment}'.");
             var name = segment[..bracketIndex];
             var token = segment.Substring(bracketIndex + 1, closing - bracketIndex - 1);
-            if (token == "?") return (name, new SegmentOp(SegmentOpKind.Wildcard, 0, null));
+            if (token == "?")
+                return (name, new SegmentOp(SegmentOpKind.Wildcard, 0, null));
             if (int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var idx))
             {
                 return (name, new SegmentOp(SegmentOpKind.Index, idx, null));
@@ -163,19 +177,23 @@ public static class ResourcePath
     /// </summary>
     private static object? NormalizeLeaf(object? value)
     {
-        if (value is null) return null;
+        if (value is null)
+            return null;
         if (value is IReadOnlyList<object?> list)
         {
-            if (list.Count == 0) return null;
+            if (list.Count == 0)
+                return null;
             var normalized = new List<object?>(list.Count);
             foreach (var element in list)
             {
                 var normalizedElement = NormalizeLeaf(element);
-                if (normalizedElement is not null) normalized.Add(normalizedElement);
+                if (normalizedElement is not null)
+                    normalized.Add(normalizedElement);
             }
             return normalized.Count == 0 ? null : normalized;
         }
-        if (value is Enum) return value.ToString();
+        if (value is Enum)
+            return value.ToString();
         return value;
     }
 

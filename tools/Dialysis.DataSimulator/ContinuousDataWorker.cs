@@ -490,7 +490,8 @@ public sealed class ContinuousDataWorker : BackgroundService
             catch (Exception ex) when (!CancellationClassifier.IsHostStopping(ex, _stoppingToken))
             {
                 _logger.LogInformation(ex, "Admin-seed probe not ready (attempt {Attempt}/20); retrying.", attempt);
-                try { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false); }
+                try
+                { await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false); }
                 catch (OperationCanceledException) { return; }
             }
         }

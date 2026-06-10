@@ -82,7 +82,8 @@ public sealed class DirectPartnerEndpointTests
         }
         finally
         {
-            if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, recursive: true);
         }
     }
 

@@ -21,7 +21,8 @@ internal static class CodeTemplateJsBinder
         var templates = await repository
             .GetLinkedTemplatesForFlowAsync(flowId, context, cancellationToken)
             .ConfigureAwait(false);
-        if (templates.Count == 0) return;
+        if (templates.Count == 0)
+            return;
 
         var sb = new StringBuilder(2048);
         foreach (var t in templates)

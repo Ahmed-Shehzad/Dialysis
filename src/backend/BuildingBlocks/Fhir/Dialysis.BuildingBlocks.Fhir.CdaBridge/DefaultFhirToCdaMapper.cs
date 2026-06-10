@@ -34,7 +34,8 @@ public sealed class DefaultFhirToCdaMapper : IFhirToCdaMapper
             new XElement(_hl7 + "effectiveTime",
                 new XAttribute("value", DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss"))));
 
-        if (patient is not null) document.Add(RecordTarget(patient));
+        if (patient is not null)
+            document.Add(RecordTarget(patient));
         document.Add(StructuredBody(resources, patient?.Id ?? "unknown"));
 
         return new XDocument(new XDeclaration("1.0", "UTF-8", null), document).ToString();
@@ -74,14 +75,21 @@ public sealed class DefaultFhirToCdaMapper : IFhirToCdaMapper
     private static void AddAddress(XElement patientRole, Patient patient)
     {
         var address = patient.Address.FirstOrDefault();
-        if (address is null) return;
+        if (address is null)
+            return;
         var addr = new XElement(_hl7 + "addr");
-        foreach (var line in address.Line) addr.Add(new XElement(_hl7 + "streetAddressLine", line));
-        if (!string.IsNullOrEmpty(address.City)) addr.Add(new XElement(_hl7 + "city", address.City));
-        if (!string.IsNullOrEmpty(address.State)) addr.Add(new XElement(_hl7 + "state", address.State));
-        if (!string.IsNullOrEmpty(address.PostalCode)) addr.Add(new XElement(_hl7 + "postalCode", address.PostalCode));
-        if (!string.IsNullOrEmpty(address.Country)) addr.Add(new XElement(_hl7 + "country", address.Country));
-        if (addr.HasElements) patientRole.Add(addr);
+        foreach (var line in address.Line)
+            addr.Add(new XElement(_hl7 + "streetAddressLine", line));
+        if (!string.IsNullOrEmpty(address.City))
+            addr.Add(new XElement(_hl7 + "city", address.City));
+        if (!string.IsNullOrEmpty(address.State))
+            addr.Add(new XElement(_hl7 + "state", address.State));
+        if (!string.IsNullOrEmpty(address.PostalCode))
+            addr.Add(new XElement(_hl7 + "postalCode", address.PostalCode));
+        if (!string.IsNullOrEmpty(address.Country))
+            addr.Add(new XElement(_hl7 + "country", address.Country));
+        if (addr.HasElements)
+            patientRole.Add(addr);
     }
 
     private static XElement PatientElement(Patient patient)
@@ -92,10 +100,14 @@ public sealed class DefaultFhirToCdaMapper : IFhirToCdaMapper
         if (name is not null)
         {
             var nameElement = new XElement(_hl7 + "name");
-            foreach (var prefix in name.Prefix) nameElement.Add(new XElement(_hl7 + "prefix", prefix));
-            foreach (var given in name.Given) nameElement.Add(new XElement(_hl7 + "given", given));
-            if (!string.IsNullOrEmpty(name.Family)) nameElement.Add(new XElement(_hl7 + "family", name.Family));
-            foreach (var suffix in name.Suffix) nameElement.Add(new XElement(_hl7 + "suffix", suffix));
+            foreach (var prefix in name.Prefix)
+                nameElement.Add(new XElement(_hl7 + "prefix", prefix));
+            foreach (var given in name.Given)
+                nameElement.Add(new XElement(_hl7 + "given", given));
+            if (!string.IsNullOrEmpty(name.Family))
+                nameElement.Add(new XElement(_hl7 + "family", name.Family));
+            foreach (var suffix in name.Suffix)
+                nameElement.Add(new XElement(_hl7 + "suffix", suffix));
             patientElement.Add(nameElement);
         }
 
@@ -124,13 +136,16 @@ public sealed class DefaultFhirToCdaMapper : IFhirToCdaMapper
         var body = new XElement(_hl7 + "structuredBody");
 
         var conditions = resources.OfType<Condition>().ToList();
-        if (conditions.Count > 0) body.Add(CdaSectionEmitters.Problems(conditions));
+        if (conditions.Count > 0)
+            body.Add(CdaSectionEmitters.Problems(conditions));
 
         var allergies = resources.OfType<AllergyIntolerance>().ToList();
-        if (allergies.Count > 0) body.Add(CdaSectionEmitters.Allergies(allergies));
+        if (allergies.Count > 0)
+            body.Add(CdaSectionEmitters.Allergies(allergies));
 
         var medications = resources.OfType<MedicationStatement>().ToList();
-        if (medications.Count > 0) body.Add(CdaSectionEmitters.Medications(medications));
+        if (medications.Count > 0)
+            body.Add(CdaSectionEmitters.Medications(medications));
 
         var observations = resources.OfType<Observation>().ToList();
         var labs = observations.Where(o => HasCategory(o, "laboratory")).ToList();
@@ -146,7 +161,8 @@ public sealed class DefaultFhirToCdaMapper : IFhirToCdaMapper
                 vitals, CdaConstants.VitalSignsTemplateId, CdaConstants.VitalSignsSectionLoinc, "Vital Signs"));
 
         var immunizations = resources.OfType<Immunization>().ToList();
-        if (immunizations.Count > 0) body.Add(CdaSectionEmitters.Immunizations(immunizations));
+        if (immunizations.Count > 0)
+            body.Add(CdaSectionEmitters.Immunizations(immunizations));
 
         return new XElement(_hl7 + "component", body);
     }

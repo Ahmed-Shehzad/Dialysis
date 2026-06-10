@@ -114,7 +114,8 @@ public sealed class BuiltInCodeTemplatesSeeder : IHostedService
     private static string? ExtractLeadingJsDoc(string code)
     {
         var trimmed = code.TrimStart();
-        if (!trimmed.StartsWith("/**", StringComparison.Ordinal)) return null;
+        if (!trimmed.StartsWith("/**", StringComparison.Ordinal))
+            return null;
         var end = trimmed.IndexOf("*/", StringComparison.Ordinal);
         return end > 0 ? trimmed[..(end + 2)] : null;
     }

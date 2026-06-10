@@ -164,7 +164,8 @@ public static class VerifyHl7Core
         {
             var ai = i < a.Length && int.TryParse(a[i], out var av) ? av : 0;
             var mi = i < m.Length && int.TryParse(m[i], out var mv) ? mv : 0;
-            if (ai != mi) return ai > mi;
+            if (ai != mi)
+                return ai > mi;
         }
         return true;
     }

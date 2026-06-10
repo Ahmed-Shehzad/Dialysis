@@ -56,7 +56,8 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
     {
         var record = await _db.Set<SubscriptionRecord>()
             .FirstOrDefaultAsync(r => r.Id == subscriptionId, cancellationToken).ConfigureAwait(false);
-        if (record is null) return;
+        if (record is null)
+            return;
         _db.Set<SubscriptionRecord>().Remove(record);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -65,7 +66,8 @@ public sealed class EfSubscriptionRegistry<TDbContext> : ISubscriptionRegistry, 
     {
         var record = await _db.Set<SubscriptionRecord>()
             .FirstOrDefaultAsync(r => r.Id == subscriptionId, cancellationToken).ConfigureAwait(false);
-        if (record is null) return;
+        if (record is null)
+            return;
         record.Status = status;
         record.ConsecutiveFailures = consecutiveFailures;
         if (status == SubscriptionStatus.Active && consecutiveFailures == 0)

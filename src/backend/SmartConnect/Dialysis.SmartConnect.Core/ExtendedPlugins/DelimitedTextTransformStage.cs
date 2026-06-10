@@ -105,8 +105,10 @@ public sealed class DelimitedTextTransformStage : ITransformStage
         {
             using (var writer = new Utf8JsonWriter(output))
             {
-                if (header is not null) WriteRowObject(writer, header, row);
-                else WriteRowArray(writer, row);
+                if (header is not null)
+                    WriteRowObject(writer, header, row);
+                else
+                    WriteRowArray(writer, row);
             }
             output.WriteByte((byte)'\n');
         }
@@ -188,7 +190,8 @@ public sealed class DelimitedTextTransformStage : ITransformStage
 
     private static bool ReadBoolean(JsonElement root, string property, bool defaultValue)
     {
-        if (!root.TryGetProperty(property, out var prop)) return defaultValue;
+        if (!root.TryGetProperty(property, out var prop))
+            return defaultValue;
         return prop.ValueKind switch
         {
             JsonValueKind.True => true,

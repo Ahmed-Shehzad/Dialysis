@@ -177,7 +177,9 @@ public sealed class TcpOutboundAdapter : IOutboundAdapter, IDisposable
 
         public void Reset()
         {
-            try { Client?.Close(); } catch { /* best effort */ }
+            try
+            { Client?.Close(); }
+            catch { /* best effort */ }
             Client?.Dispose();
             Client = null;
         }

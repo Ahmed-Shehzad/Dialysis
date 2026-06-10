@@ -55,8 +55,10 @@ public sealed class TreatmentAlarm : AggregateRoot<Guid>
         string? alarmPhase,
         DateTime observedAtUtc)
     {
-        if (machineId == Guid.Empty) throw new ArgumentException("Machine required.", nameof(machineId));
-        if (alarmCode <= 0) throw new ArgumentOutOfRangeException(nameof(alarmCode));
+        if (machineId == Guid.Empty)
+            throw new ArgumentException("Machine required.", nameof(machineId));
+        if (alarmCode <= 0)
+            throw new ArgumentOutOfRangeException(nameof(alarmCode));
 
         return new TreatmentAlarm(id)
         {
@@ -99,7 +101,8 @@ public sealed class TreatmentAlarm : AggregateRoot<Guid>
     public void Acknowledge(DateTime acknowledgedAtUtc, string acknowledgedBy)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(acknowledgedBy);
-        if (AcknowledgedUtc.HasValue) return;
+        if (AcknowledgedUtc.HasValue)
+            return;
         AcknowledgedUtc = acknowledgedAtUtc;
         AcknowledgedBy = acknowledgedBy.Trim();
     }

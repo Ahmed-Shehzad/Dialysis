@@ -15,19 +15,22 @@ public sealed class InMemoryTerminologyService : ITerminologyService
 
     public InMemoryTerminologyService Register(CodeSystem cs)
     {
-        if (cs.Url is not null) _codeSystems[cs.Url] = cs;
+        if (cs.Url is not null)
+            _codeSystems[cs.Url] = cs;
         return this;
     }
 
     public InMemoryTerminologyService Register(ValueSet vs)
     {
-        if (vs.Url is not null) _valueSets[vs.Url] = vs;
+        if (vs.Url is not null)
+            _valueSets[vs.Url] = vs;
         return this;
     }
 
     public InMemoryTerminologyService Register(ConceptMap map)
     {
-        if (map.Url is not null) _conceptMaps[map.Url] = map;
+        if (map.Url is not null)
+            _conceptMaps[map.Url] = map;
         return this;
     }
 

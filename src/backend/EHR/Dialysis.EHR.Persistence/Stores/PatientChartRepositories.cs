@@ -64,7 +64,8 @@ public sealed class ProblemListRepository : IProblemListRepository
     public async Task<IReadOnlyList<ProblemListItem>> ListByPatientAsync(Guid patientId, bool activeOnly, CancellationToken cancellationToken = default)
     {
         var q = _db.ProblemListItems.Where(p => p.PatientId == patientId);
-        if (activeOnly) q = q.Where(p => p.Status == ProblemStatus.Active);
+        if (activeOnly)
+            q = q.Where(p => p.Status == ProblemStatus.Active);
         return await q.ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -126,7 +127,8 @@ public sealed class MedicationStatementRepository : IMedicationStatementReposito
     public async Task<IReadOnlyList<MedicationStatement>> ListByPatientAsync(Guid patientId, bool activeOnly, CancellationToken cancellationToken = default)
     {
         var q = _db.MedicationStatements.Where(m => m.PatientId == patientId);
-        if (activeOnly) q = q.Where(m => m.Status == MedicationStatementStatus.Active);
+        if (activeOnly)
+            q = q.Where(m => m.Status == MedicationStatementStatus.Active);
         return await q.ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -44,7 +44,8 @@ public sealed class PatientDirectoryEntry : AggregateRoot<Guid>
         Guid patientId, string medicalRecordNumber, string givenName, string familyName,
         DateOnly? dateOfBirth, DateTime updatedAtUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient id required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient id required.", nameof(patientId));
         var entry = new PatientDirectoryEntry(patientId);
         entry.Apply(medicalRecordNumber, givenName, familyName, dateOfBirth, updatedAtUtc);
         return entry;

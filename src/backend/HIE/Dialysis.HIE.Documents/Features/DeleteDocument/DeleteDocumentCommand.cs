@@ -30,7 +30,8 @@ public sealed class DeleteDocumentCommandHandler : ICommandHandler<DeleteDocumen
     public async Task<Unit> HandleAsync(DeleteDocumentCommand request, CancellationToken cancellationToken)
     {
         var document = await _repository.FindAsync(request.DocumentId, cancellationToken).ConfigureAwait(false);
-        if (document is null) return Unit.Value;
+        if (document is null)
+            return Unit.Value;
         document.EnterInError();
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
-using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Identity.Bff.Configuration;
 using Dialysis.Identity.Bff.Federation;
 using Dialysis.Identity.Bff.Services;
@@ -26,12 +25,6 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
-
-        // Transponder Hangfire scheduler — PostgreSQL-backed (the AppHost injects ConnectionStrings:Hangfire).
-        // This BFF wires it directly because it uses bespoke OIDC rather than the shared AddModuleBff scaffolding.
-        var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
-        if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
-            builder.Services.AddTransponderHangfire(hangfireConnectionString);
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddMemoryCache();
@@ -177,33 +170,10 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for the Identity BFF).
-        app.UseModuleHangfireDashboard("identity BFF");
-
         app.MapGet(BffRoutes.Root, () => Results.Text(
             $"Dialysis Identity BFF — GET {BffRoutes.Login} to sign in, GET {BffRoutes.User} for claims, "
             + $"{BffRoutes.Base}/his/... to proxy to HIS when ReverseProxy is configured.",
             "text/plain"));
-
-        static string ResolveReturnUrl(string? requested, BffSpaOptions spa)
-        {
-            if (string.IsNullOrWhiteSpace(requested))
-                return spa.DefaultReturnUrl;
-            // Relative paths are always safe.
-            if (Uri.IsWellFormedUriString(requested, UriKind.Relative))
-                return requested;
-            if (!Uri.TryCreate(requested, UriKind.Absolute, out _))
-                return spa.DefaultReturnUrl;
-            foreach (var allowed in spa.AllowedReturnUrlPrefixes)
-            {
-                if (!string.IsNullOrWhiteSpace(allowed)
-                    && requested.StartsWith(allowed, StringComparison.OrdinalIgnoreCase))
-                {
-                    return requested;
-                }
-            }
-            return spa.DefaultReturnUrl;
-        }
 
         app.MapGet(BffRoutes.Login, (
             string? returnUrl,
@@ -279,48 +249,59 @@ public class Program
             });
         });
 
-        static string[] ExtractPermissions(IEnumerable<string> rawValues)
-        {
-            var output = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var raw in rawValues)
-            {
-                if (string.IsNullOrWhiteSpace(raw))
-                    continue;
-                var trimmed = raw.AsSpan().Trim();
-                // Each claim value is either a JSON array literal (`["a","b"]`) when the mapper is
-                // jsonType=JSON, or a single scalar string when scope mappers add one permission per
-                // claim. Detect the array shape and parse it; otherwise treat the value as a single
-                // permission. Malformed JSON falls through to the scalar path so a misconfigured
-                // upstream IdP can't poison the principal.
-                if (trimmed.Length >= 2 && trimmed[0] == '[' && trimmed[^1] == ']')
-                {
-                    try
-                    {
-                        using var doc = JsonDocument.Parse(raw);
-                        if (doc.RootElement.ValueKind == JsonValueKind.Array)
-                        {
-                            foreach (var element in doc.RootElement.EnumerateArray())
-                            {
-                                var value = element.GetString();
-                                if (!string.IsNullOrWhiteSpace(value))
-                                    output.Add(value);
-                            }
-                            continue;
-                        }
-                    }
-                    catch (JsonException)
-                    {
-                        // fall through to scalar handling
-                    }
-                }
-                output.Add(raw);
-            }
-            return [.. output];
-        }
-
         if (enableHisProxy)
             app.MapReverseProxy();
 
         await app.RunAsync().ConfigureAwait(false);
+    }
+    private static string[] ExtractPermissions(IEnumerable<string> rawValues)
+    {
+        var output = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var raw in rawValues)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                continue;
+            var trimmed = raw.AsSpan().Trim();
+            // Each claim value is either a JSON array literal (`["a","b"]`) when the mapper is
+            // jsonType=JSON, or a single scalar string when scope mappers add one permission per
+            // claim. Detect the array shape and parse it; otherwise treat the value as a single
+            // permission. Malformed JSON falls through to the scalar path so a misconfigured
+            // upstream IdP can't poison the principal.
+            if (trimmed.Length >= 2 && trimmed[0] == '[' && trimmed[^1] == ']')
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(raw);
+                    if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var element in doc.RootElement.EnumerateArray())
+                        {
+                            var value = element.GetString();
+                            if (!string.IsNullOrWhiteSpace(value))
+                                output.Add(value);
+                        }
+                        continue;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // fall through to scalar handling
+                }
+            }
+            output.Add(raw);
+        }
+        return [.. output];
+    }
+    private static string ResolveReturnUrl(string? requested, BffSpaOptions spa)
+    {
+        if (string.IsNullOrWhiteSpace(requested))
+            return spa.DefaultReturnUrl;
+        // Relative paths are always safe.
+        if (Uri.IsWellFormedUriString(requested, UriKind.Relative))
+            return requested;
+        if (!Uri.TryCreate(requested, UriKind.Absolute, out _))
+            return spa.DefaultReturnUrl;
+        return spa.AllowedReturnUrlPrefixes.Any(allowed => !string.IsNullOrWhiteSpace(allowed)
+                                                           && requested.StartsWith(allowed, StringComparison.OrdinalIgnoreCase)) ? requested : spa.DefaultReturnUrl;
     }
 }

@@ -137,7 +137,8 @@ public sealed class SetAuthoredTerminologyStatusCommandHandler
     {
         ArgumentNullException.ThrowIfNull(request);
         var existing = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return Unit.Value;
+        if (existing is null)
+            return Unit.Value;
         existing.SetStatus(request.Status, _clock.GetUtcNow().UtcDateTime, request.UpdatedBy);
         await _repository.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;
@@ -161,7 +162,8 @@ public sealed class DeleteAuthoredTerminologyCommandHandler : ICommandHandler<De
     {
         ArgumentNullException.ThrowIfNull(request);
         var existing = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return Unit.Value;
+        if (existing is null)
+            return Unit.Value;
         _repository.Remove(existing);
         await _repository.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

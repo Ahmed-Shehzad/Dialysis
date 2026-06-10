@@ -19,7 +19,8 @@ public sealed class AdmitPatientCommandValidator : AbstractValidator<AdmitPatien
 
     private static bool TryParse(string? value)
     {
-        try { _ = new WardCode(value!); return true; }
+        try
+        { _ = new WardCode(value!); return true; }
         catch (DomainException) { return false; }
     }
 }

@@ -28,7 +28,8 @@ public sealed class ExportJobRunnerDeIdentificationTests : IAsyncLifetime
 
     public Task DisposeAsync()
     {
-        try { Directory.Delete(_root, recursive: true); }
+        try
+        { Directory.Delete(_root, recursive: true); }
         catch { /* best-effort */ }
         return Task.CompletedTask;
     }

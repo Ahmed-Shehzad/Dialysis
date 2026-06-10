@@ -68,7 +68,8 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         SessionPrescription prescription,
         VascularAccess access)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
         ArgumentNullException.ThrowIfNull(prescription);
         ArgumentNullException.ThrowIfNull(access);
         if (scheduledStartUtc < DateTime.UtcNow.AddHours(-1))
@@ -174,7 +175,8 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         if (PausedAtUtc is { } pausedAt)
         {
             var openPause = abortedAtUtc - pausedAt;
-            if (openPause > TimeSpan.Zero) AccumulatedPausedDuration += openPause;
+            if (openPause > TimeSpan.Zero)
+                AccumulatedPausedDuration += openPause;
             PausedAtUtc = null;
         }
         ActualEndUtc = abortedAtUtc;
@@ -196,7 +198,8 @@ public sealed class DialysisSession : AggregateRoot<Guid>
     /// </summary>
     public void BindMachine(Guid machineId)
     {
-        if (machineId == Guid.Empty) throw new ArgumentException("Machine required.", nameof(machineId));
+        if (machineId == Guid.Empty)
+            throw new ArgumentException("Machine required.", nameof(machineId));
         if (MachineId.HasValue && MachineId.Value != machineId)
             throw new InvalidOperationException("Session is already bound to a different machine.");
         MachineId = machineId;
@@ -262,7 +265,8 @@ public sealed class DialysisSession : AggregateRoot<Guid>
         if (PausedAtUtc is { } pausedAt)
         {
             var span = resumedAtUtc - pausedAt;
-            if (span > TimeSpan.Zero) AccumulatedPausedDuration += span;
+            if (span > TimeSpan.Zero)
+                AccumulatedPausedDuration += span;
             PausedAtUtc = null;
         }
         Status = DialysisSessionStatus.InProgress;
@@ -276,7 +280,8 @@ public sealed class DialysisSession : AggregateRoot<Guid>
     /// </summary>
     public int UsageMinutesAsOf(DateTime asOfUtc)
     {
-        if (!ActualStartUtc.HasValue) return 0;
+        if (!ActualStartUtc.HasValue)
+            return 0;
         var reference = ActualEndUtc ?? PausedAtUtc ?? asOfUtc;
         var usage = reference - ActualStartUtc.Value - AccumulatedPausedDuration;
         return (int)Math.Max(0, Math.Round(usage.TotalMinutes));

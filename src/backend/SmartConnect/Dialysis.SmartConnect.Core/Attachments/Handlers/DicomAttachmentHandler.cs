@@ -44,9 +44,11 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
         var attachments = new List<Attachment>(tags.Count);
         foreach (var tag in tags)
         {
-            if (!dicom.Dataset.Contains(tag)) continue;
+            if (!dicom.Dataset.Contains(tag))
+                continue;
             var bytes = TryGetBytes(dicom.Dataset, tag);
-            if (bytes is null || bytes.Length == 0) continue;
+            if (bytes is null || bytes.Length == 0)
+                continue;
 
             var id = Guid.CreateVersion7();
             attachments.Add(new Attachment
@@ -109,15 +111,18 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
                 if (doc.RootElement.TryGetProperty("mimeType", out var m) && m.ValueKind == JsonValueKind.String)
                 {
                     var s = m.GetString();
-                    if (!string.IsNullOrWhiteSpace(s)) mime = s;
+                    if (!string.IsNullOrWhiteSpace(s))
+                        mime = s;
                 }
                 if (doc.RootElement.TryGetProperty("extractTags", out var arr) && arr.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var el in arr.EnumerateArray())
                     {
-                        if (el.ValueKind != JsonValueKind.String) continue;
+                        if (el.ValueKind != JsonValueKind.String)
+                            continue;
                         var raw = el.GetString();
-                        if (TryParseTag(raw, out var tag)) tags.Add(tag);
+                        if (TryParseTag(raw, out var tag))
+                            tags.Add(tag);
                     }
                 }
             }
@@ -127,18 +132,23 @@ public sealed class DicomAttachmentHandler : IAttachmentHandler
             }
         }
 
-        if (tags.Count == 0) tags.Add(_defaultPixelData);
+        if (tags.Count == 0)
+            tags.Add(_defaultPixelData);
         return (tags, mime);
     }
 
     private static bool TryParseTag(string? raw, out DicomTag tag)
     {
         tag = null!;
-        if (string.IsNullOrWhiteSpace(raw)) return false;
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
         var parts = raw.Replace("(", "").Replace(")", "").Split(',');
-        if (parts.Length != 2) return false;
-        if (!ushort.TryParse(parts[0].Trim(), NumberStyles.HexNumber, null, out var group)) return false;
-        if (!ushort.TryParse(parts[1].Trim(), NumberStyles.HexNumber, null, out var element)) return false;
+        if (parts.Length != 2)
+            return false;
+        if (!ushort.TryParse(parts[0].Trim(), NumberStyles.HexNumber, null, out var group))
+            return false;
+        if (!ushort.TryParse(parts[1].Trim(), NumberStyles.HexNumber, null, out var element))
+            return false;
         tag = new DicomTag(group, element);
         return true;
     }

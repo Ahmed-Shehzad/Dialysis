@@ -132,7 +132,8 @@ public sealed class S3BulkDataStorage : IBulkDataStorage, IDisposable
 
         private async Task UploadAsync()
         {
-            if (_uploaded) return;
+            if (_uploaded)
+                return;
             _uploaded = true;
             await _file.FlushAsync().ConfigureAwait(false);
             _file.Position = 0;
@@ -149,7 +150,8 @@ public sealed class S3BulkDataStorage : IBulkDataStorage, IDisposable
 
         private void TryDeleteTemp()
         {
-            try { File.Delete(_tempPath); }
+            try
+            { File.Delete(_tempPath); }
             catch { /* best-effort temp cleanup */ }
         }
     }

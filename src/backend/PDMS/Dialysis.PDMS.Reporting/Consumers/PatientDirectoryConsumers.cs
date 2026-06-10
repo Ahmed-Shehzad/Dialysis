@@ -108,7 +108,8 @@ public sealed class PatientsMergedDirectoryConsumer : IConsumer<PatientsMergedIn
     {
         var superseded = await _directory.GetByIdAsync(context.Message.SupersededPatientId, context.CancellationToken)
             .ConfigureAwait(false);
-        if (superseded is null) return;
+        if (superseded is null)
+            return;
 
         _directory.Remove(superseded);
         await _unitOfWork.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);

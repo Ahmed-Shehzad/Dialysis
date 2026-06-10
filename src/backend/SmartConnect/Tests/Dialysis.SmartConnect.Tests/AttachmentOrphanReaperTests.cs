@@ -95,7 +95,8 @@ public sealed class AttachmentOrphanReaperTests
         var remaining = 0;
         foreach (var id in ids)
         {
-            if (await fx.Blobs.ReadAsync(id, CancellationToken.None) is not null) remaining++;
+            if (await fx.Blobs.ReadAsync(id, CancellationToken.None) is not null)
+                remaining++;
         }
         Assert.Equal(3, remaining); // 5 candidates, cap of 2 deletions
     }
@@ -143,7 +144,8 @@ public sealed class AttachmentOrphanReaperTests
             await _sp.DisposeAsync();
             try
             {
-                if (Directory.Exists(RootPath)) Directory.Delete(RootPath, recursive: true);
+                if (Directory.Exists(RootPath))
+                    Directory.Delete(RootPath, recursive: true);
             }
             catch (IOException) { /* best effort */ }
         }

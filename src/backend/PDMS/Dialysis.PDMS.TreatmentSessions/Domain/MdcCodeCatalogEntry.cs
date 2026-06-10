@@ -38,7 +38,8 @@ public sealed class MdcCodeCatalogEntry : Entity<long>
 
     public static MdcCodeCatalogEntry Define(long code, string displayName, MdcCodeCategory category, string? units, bool isVendorSpecific)
     {
-        if (code <= 0) throw new ArgumentOutOfRangeException(nameof(code));
+        if (code <= 0)
+            throw new ArgumentOutOfRangeException(nameof(code));
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
         return new MdcCodeCatalogEntry(code)

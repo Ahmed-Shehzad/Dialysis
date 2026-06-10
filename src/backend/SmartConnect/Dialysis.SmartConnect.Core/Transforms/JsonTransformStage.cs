@@ -52,7 +52,8 @@ public sealed class JsonTransformStage : ITransformStage
             foreach (var (key, valueNode) in mappings)
             {
                 var path = valueNode?.GetValue<string>();
-                if (path is null) continue;
+                if (path is null)
+                    continue;
                 var extracted = EvaluateSimplePath(root, path);
                 output[key] = extracted?.DeepClone();
             }
@@ -74,7 +75,8 @@ public sealed class JsonTransformStage : ITransformStage
         JsonNode? current = root;
         foreach (var segment in segments)
         {
-            if (current is null) return null;
+            if (current is null)
+                return null;
 
             // Array index: segment like "items[0]"
             var bracketIdx = segment.IndexOf('[');

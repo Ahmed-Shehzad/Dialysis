@@ -29,7 +29,8 @@ public sealed class OutboundDispatcherHostedService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var interval = _options.Value.TickInterval;
-        if (interval <= TimeSpan.Zero) interval = TimeSpan.FromSeconds(10);
+        if (interval <= TimeSpan.Zero)
+            interval = TimeSpan.FromSeconds(10);
 
         while (!stoppingToken.IsCancellationRequested)
         {

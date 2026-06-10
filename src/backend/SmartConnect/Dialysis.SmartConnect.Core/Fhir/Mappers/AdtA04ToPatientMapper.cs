@@ -30,8 +30,10 @@ public sealed class AdtA04ToPatientMapper : IFhirV2MessageMapper<Patient>
         if (!string.IsNullOrEmpty(family) || !string.IsNullOrEmpty(given))
         {
             var name = new HumanName { Family = family };
-            if (!string.IsNullOrEmpty(given)) name.GivenElement.Add(new FhirString(given));
-            if (!string.IsNullOrEmpty(middle)) name.GivenElement.Add(new FhirString(middle));
+            if (!string.IsNullOrEmpty(given))
+                name.GivenElement.Add(new FhirString(given));
+            if (!string.IsNullOrEmpty(middle))
+                name.GivenElement.Add(new FhirString(middle));
             patient.Name.Add(name);
         }
 

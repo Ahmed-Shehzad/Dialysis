@@ -44,7 +44,8 @@ public sealed class RegexAttachmentHandler : IAttachmentHandler
         foreach (Match m in matches)
         {
             var capture = m.Groups.Count > 1 && m.Groups[1].Success ? m.Groups[1] : (Capture)m;
-            if (capture.Index < cursor) continue;
+            if (capture.Index < cursor)
+                continue;
 
             sb.Append(payloadText, cursor, capture.Index - cursor);
             var id = Guid.CreateVersion7();
@@ -79,7 +80,8 @@ public sealed class RegexAttachmentHandler : IAttachmentHandler
         var pattern = string.Empty;
         var options = RegexOptions.CultureInvariant | RegexOptions.Compiled;
 
-        if (string.IsNullOrWhiteSpace(ctx.PropertiesJson)) return (pattern, mime, options);
+        if (string.IsNullOrWhiteSpace(ctx.PropertiesJson))
+            return (pattern, mime, options);
 
         try
         {
@@ -91,7 +93,8 @@ public sealed class RegexAttachmentHandler : IAttachmentHandler
             if (doc.RootElement.TryGetProperty("mimeType", out var m) && m.ValueKind == JsonValueKind.String)
             {
                 var s = m.GetString();
-                if (!string.IsNullOrWhiteSpace(s)) mime = s;
+                if (!string.IsNullOrWhiteSpace(s))
+                    mime = s;
             }
             if (doc.RootElement.TryGetProperty("regexOptions", out var o) && o.ValueKind == JsonValueKind.String)
             {

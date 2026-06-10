@@ -65,7 +65,8 @@ public sealed class DefaultXdsFhirBridge : IXdsToFhirMapper, IFhirToXdsMapper
 
     private static string? ExtractId(string? reference)
     {
-        if (string.IsNullOrEmpty(reference)) return null;
+        if (string.IsNullOrEmpty(reference))
+            return null;
         var slash = reference.IndexOf('/');
         return slash > 0 && slash + 1 < reference.Length ? reference[(slash + 1)..] : null;
     }

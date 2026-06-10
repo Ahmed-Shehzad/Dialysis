@@ -66,7 +66,8 @@ public sealed class DocumentsController : ControllerBase
     {
         var detail = await _cqrs.SendQueryAsync<GetDocumentQuery, DocumentDetail?>(new GetDocumentQuery(id), cancellationToken)
             .ConfigureAwait(false);
-        if (detail is null) return NotFound();
+        if (detail is null)
+            return NotFound();
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
         var binaryHref = self + "/binary";
         return Ok(new ResourceEnvelope<DocumentDetail>(
@@ -97,7 +98,8 @@ public sealed class DocumentsController : ControllerBase
     {
         var preview = await _cqrs.SendQueryAsync<GetDocumentPreviewQuery, DocumentPreview?>(
             new GetDocumentPreviewQuery(id), cancellationToken).ConfigureAwait(false);
-        if (preview is null) return NotFound();
+        if (preview is null)
+            return NotFound();
         var self = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}";
         return Ok(new ResourceEnvelope<DocumentPreview>(preview, [new LinkDto("self", self, "GET")]));
     }
@@ -110,7 +112,8 @@ public sealed class DocumentsController : ControllerBase
     {
         var binary = await _cqrs.SendQueryAsync<GetDocumentBinaryQuery, DocumentBinary?>(
             new GetDocumentBinaryQuery(id), cancellationToken).ConfigureAwait(false);
-        if (binary is null) return NotFound();
+        if (binary is null)
+            return NotFound();
         return File(binary.Bytes, binary.MimeType);
     }
 

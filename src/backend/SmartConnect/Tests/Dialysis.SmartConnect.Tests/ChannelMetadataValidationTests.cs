@@ -73,13 +73,13 @@ public sealed class ChannelMetadataValidationTests
         IReadOnlyList<string>? dataTypes = null,
         IReadOnlyList<Guid>? dependencies = null,
         IReadOnlyList<ChannelAttachmentReference>? attachments = null) => new()
-    {
-        Id = id ?? Guid.NewGuid(),
-        Name = "test-flow",
-        RuntimeState = FlowRuntimeState.Stopped,
-        Pipeline = new IntegrationFlowPipelineDefinition(),
-        DataTypes = [.. (dataTypes ?? [])],
-        Dependencies = [.. (dependencies ?? [])],
-        Attachments = [.. (attachments ?? [])],
-    };
+        {
+            Id = id ?? Guid.NewGuid(),
+            Name = "test-flow",
+            RuntimeState = FlowRuntimeState.Stopped,
+            Pipeline = new IntegrationFlowPipelineDefinition(),
+            DataTypes = [.. (dataTypes ?? [])],
+            Dependencies = [.. (dependencies ?? [])],
+            Attachments = [.. (attachments ?? [])],
+        };
 }

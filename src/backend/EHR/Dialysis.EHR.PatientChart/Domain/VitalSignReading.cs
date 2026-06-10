@@ -39,7 +39,8 @@ public sealed class VitalSignReading : AggregateRoot<Guid>
     {
         ArgumentNullException.ThrowIfNull(observationType);
         ArgumentException.ThrowIfNullOrWhiteSpace(unitCode);
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient id required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient id required.", nameof(patientId));
 
         return new VitalSignReading(id)
         {

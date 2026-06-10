@@ -110,7 +110,8 @@ public sealed class MedicationAdministrationRecord : AggregateRoot<Guid>
     /// <summary>Closes the MAR. No new entries permitted after close.</summary>
     public void Close(DateTime closedAtUtc)
     {
-        if (Status == MarStatus.Closed) return;
+        if (Status == MarStatus.Closed)
+            return;
         Status = MarStatus.Closed;
         ClosedAtUtc = closedAtUtc;
     }

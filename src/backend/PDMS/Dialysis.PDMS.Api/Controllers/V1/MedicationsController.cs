@@ -56,7 +56,8 @@ public sealed class MedicationsController : ControllerBase
     public async Task<IActionResult> ListAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         var mar = await FindMarForSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
-        if (mar is null) return Ok(Array.Empty<MedicationEntryDto>());
+        if (mar is null)
+            return Ok(Array.Empty<MedicationEntryDto>());
         var rows = mar.Entries.Select(MedicationEntryDto.From).ToArray();
         return Ok(rows);
     }
@@ -140,7 +141,8 @@ public sealed class MedicationsController : ControllerBase
     private async Task<MedicationAdministrationRecord> GetOrCreateMarAsync(Guid sessionId, Guid patientId, CancellationToken cancellationToken)
     {
         var existing = await FindMarForSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
-        if (existing is not null) return existing;
+        if (existing is not null)
+            return existing;
 
         var fresh = new MedicationAdministrationRecord(
             id: Guid.CreateVersion7(),

@@ -8,23 +8,23 @@ namespace Dialysis.SmartConnect.Tests;
 
 public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<SmartConnectApiFactory>
 {
-  private readonly SmartConnectApiFactory _factory;
+    private readonly SmartConnectApiFactory _factory;
 
-  public CodeTemplateLibraryEndpointTests(SmartConnectApiFactory factory) => _factory = factory;
+    public CodeTemplateLibraryEndpointTests(SmartConnectApiFactory factory) => _factory = factory;
 
-  [Fact]
-  public async Task Post_Then_Get_Round_Trips_Library_Async()
-  {
-    using var client = _factory.CreateClient();
-
-    var libraryId = Guid.CreateVersion7();
-    var payload = new
+    [Fact]
+    public async Task Post_Then_Get_Round_Trips_Library_Async()
     {
-      id = libraryId,
-      name = "ApiTestLib",
-      linkedFlowIds = Array.Empty<Guid>(),
-      templates = new[]
+        using var client = _factory.CreateClient();
+
+        var libraryId = Guid.CreateVersion7();
+        var payload = new
         {
+            id = libraryId,
+            name = "ApiTestLib",
+            linkedFlowIds = Array.Empty<Guid>(),
+            templates = new[]
+            {
                 new
                 {
                     id = Guid.Empty,
@@ -34,44 +34,44 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<SmartConnec
                     contexts = new[] { CodeTemplateContext.SourceTransformer },
                 },
             },
-    };
+        };
 
-    var postResp = await client.PostAsJsonAsync("/api/v1/admin/code-template-libraries", payload);
-    Assert.Equal(HttpStatusCode.Created, postResp.StatusCode);
+        var postResp = await client.PostAsJsonAsync("/api/v1/admin/code-template-libraries", payload);
+        Assert.Equal(HttpStatusCode.Created, postResp.StatusCode);
 
-    var getResp = await client.GetAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
-    Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
-    var json = await getResp.Content.ReadAsStringAsync();
-    Assert.Contains("addOne", json);
-    Assert.Contains("ApiTestLib", json);
-  }
+        var getResp = await client.GetAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
+        Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
+        var json = await getResp.Content.ReadAsStringAsync();
+        Assert.Contains("addOne", json);
+        Assert.Contains("ApiTestLib", json);
+    }
 
-  [Fact]
-  public async Task Delete_Returns_No_Content_And_Makes_Get_404_Async()
-  {
-    using var client = _factory.CreateClient();
-
-    var libraryId = Guid.CreateVersion7();
-    var payload = new
+    [Fact]
+    public async Task Delete_Returns_No_Content_And_Makes_Get_404_Async()
     {
-      id = libraryId,
-      name = "ToDelete",
-      templates = Array.Empty<object>(),
-    };
-    await client.PostAsJsonAsync("/api/v1/admin/code-template-libraries", payload);
+        using var client = _factory.CreateClient();
 
-    var delResp = await client.DeleteAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
-    Assert.Equal(HttpStatusCode.NoContent, delResp.StatusCode);
+        var libraryId = Guid.CreateVersion7();
+        var payload = new
+        {
+            id = libraryId,
+            name = "ToDelete",
+            templates = Array.Empty<object>(),
+        };
+        await client.PostAsJsonAsync("/api/v1/admin/code-template-libraries", payload);
 
-    var getResp = await client.GetAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
-    Assert.Equal(HttpStatusCode.NotFound, getResp.StatusCode);
-  }
+        var delResp = await client.DeleteAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
+        Assert.Equal(HttpStatusCode.NoContent, delResp.StatusCode);
 
-  [Fact]
-  public async Task Mirth_Xml_Import_Creates_Library_Async()
-  {
-    using var client = _factory.CreateClient();
-    const string xml = """
+        var getResp = await client.GetAsync($"/api/v1/admin/code-template-libraries/{libraryId}");
+        Assert.Equal(HttpStatusCode.NotFound, getResp.StatusCode);
+    }
+
+    [Fact]
+    public async Task Mirth_Xml_Import_Creates_Library_Async()
+    {
+        using var client = _factory.CreateClient();
+        const string xml = """
         <list>
           <codeTemplateLibrary>
             <id>77777777-7777-4777-8777-777777777777</id>
@@ -92,16 +92,16 @@ public sealed class CodeTemplateLibraryEndpointTests : IClassFixture<SmartConnec
         </list>
         """;
 
-    using var importContent = new StringContent(xml, Encoding.UTF8, "application/Xml");
-    var importResp = await client.PostAsync(
-        "/api/v1/admin/code-template-libraries/import-mirth-Xml",
-        importContent);
-    Assert.Equal(HttpStatusCode.OK, importResp.StatusCode);
+        using var importContent = new StringContent(xml, Encoding.UTF8, "application/Xml");
+        var importResp = await client.PostAsync(
+            "/api/v1/admin/code-template-libraries/import-mirth-Xml",
+            importContent);
+        Assert.Equal(HttpStatusCode.OK, importResp.StatusCode);
 
-    var getResp = await client.GetAsync("/api/v1/admin/code-template-libraries/77777777-7777-4777-8777-777777777777");
-    Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
-    var json = await getResp.Content.ReadAsStringAsync();
-    Assert.Contains("ImportedFromMirth", json);
-    Assert.Contains("xmlImported", json);
-  }
+        var getResp = await client.GetAsync("/api/v1/admin/code-template-libraries/77777777-7777-4777-8777-777777777777");
+        Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
+        var json = await getResp.Content.ReadAsStringAsync();
+        Assert.Contains("ImportedFromMirth", json);
+        Assert.Contains("xmlImported", json);
+    }
 }

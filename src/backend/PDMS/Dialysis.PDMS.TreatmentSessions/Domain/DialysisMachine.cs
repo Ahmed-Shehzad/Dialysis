@@ -49,7 +49,8 @@ public sealed class DialysisMachine : AggregateRoot<Guid>
 
     public void BindToSession(Guid sessionId)
     {
-        if (sessionId == Guid.Empty) throw new ArgumentException("Session required.", nameof(sessionId));
+        if (sessionId == Guid.Empty)
+            throw new ArgumentException("Session required.", nameof(sessionId));
         CurrentSessionId = sessionId;
     }
 

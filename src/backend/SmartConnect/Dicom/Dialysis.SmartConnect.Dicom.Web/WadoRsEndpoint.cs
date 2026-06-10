@@ -66,7 +66,8 @@ public static class WadoRsEndpoint
         foreach (var m in metadata)
         {
             var bytes = await blobs.ReadAsync(m.BlobId, cancellationToken).ConfigureAwait(false);
-            if (bytes is not null) parts.Add(bytes.Value);
+            if (bytes is not null)
+                parts.Add(bytes.Value);
         }
         return BuildMultipartResponse(parts);
     }

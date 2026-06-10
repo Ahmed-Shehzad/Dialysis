@@ -10,7 +10,8 @@ public sealed class EvaluationManagementCoderTests
     private static EvaluationManagementCoder Coder(params EmLevelRule[] levels)
     {
         var options = new EmCodingOptions();
-        foreach (var l in levels) options.Levels.Add(l);
+        foreach (var l in levels)
+            options.Levels.Add(l);
         return new EvaluationManagementCoder(Options.Create(options));
     }
 

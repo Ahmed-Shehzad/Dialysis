@@ -58,8 +58,10 @@ internal static class CdaConstants
     /// <summary>Maps a FHIR system URI back to a CDA codeSystem OID, unwrapping <c>urn:oid:</c> forms.</summary>
     public static string UriToOid(string? uri)
     {
-        if (string.IsNullOrWhiteSpace(uri)) return string.Empty;
-        if (_uriToOid.TryGetValue(uri, out var oid)) return oid;
+        if (string.IsNullOrWhiteSpace(uri))
+            return string.Empty;
+        if (_uriToOid.TryGetValue(uri, out var oid))
+            return oid;
         return uri.StartsWith("urn:oid:", StringComparison.Ordinal) ? uri["urn:oid:".Length..] : uri;
     }
 }

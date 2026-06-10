@@ -26,7 +26,15 @@ public static class SecurityHeadersMiddleware
                 headers.Append(
                     "Permissions-Policy",
                     "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-                headers.Append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+                // API responses get a locked-down CSP (no inline, no remote origins). The Hangfire
+                // dashboard is an HTML admin UI served from this same host: it links its own /hangfire/*
+                // CSS + JS and uses inline <style>/<script> blocks, so the API's default-src 'none'
+                // renders it completely unstyled. Scope a self + unsafe-inline policy to that path only.
+                headers.Append(
+                    "Content-Security-Policy",
+                    context.Request.Path.StartsWithSegments("/hangfire")
+                        ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'"
+                        : "default-src 'none'; frame-ancestors 'none'");
                 headers.Append("Cross-Origin-Opener-Policy", "same-origin");
                 headers.Append("Cross-Origin-Resource-Policy", "same-site");
                 await next.Invoke().ConfigureAwait(false);

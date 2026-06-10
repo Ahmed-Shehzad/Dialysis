@@ -40,7 +40,8 @@ public static class ModuleTelemetryExtensions
             // resource attribute, giving the prod dashboards a per-region slice for
             // free in active-passive deployments.
             var region = Environment.GetEnvironmentVariable("DIALYSIS_REGION");
-            if (string.IsNullOrWhiteSpace(region)) region = "local";
+            if (string.IsNullOrWhiteSpace(region))
+                region = "local";
 
             services.AddOpenTelemetry()
                 .ConfigureResource(r =>

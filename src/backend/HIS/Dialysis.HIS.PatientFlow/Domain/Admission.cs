@@ -17,7 +17,8 @@ public sealed class Admission : AggregateRoot<Guid>
 
     public static Admission Admit(Guid patientId, WardCode ward, DateTime nowUtc)
     {
-        if (patientId == Guid.Empty) throw new DomainException("PatientId cannot be empty.");
+        if (patientId == Guid.Empty)
+            throw new DomainException("PatientId cannot be empty.");
         ArgumentNullException.ThrowIfNull(ward);
 
         var admission = new Admission(Guid.CreateVersion7())
@@ -41,7 +42,8 @@ public sealed class Admission : AggregateRoot<Guid>
 
     public void Discharge(DateTime nowUtc)
     {
-        if (DischargedAtUtc is not null) throw new DomainException("Admission already discharged.");
+        if (DischargedAtUtc is not null)
+            throw new DomainException("Admission already discharged.");
         DischargedAtUtc = nowUtc;
 
         RaiseIntegrationEvent(new PatientDischargedIntegrationEvent(

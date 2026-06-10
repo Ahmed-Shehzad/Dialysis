@@ -107,7 +107,8 @@ public sealed class IvPumpInfusion : AggregateRoot<Guid>
     /// <summary>Infusion completed normally — programmed volume delivered.</summary>
     public void Complete(decimal finalInfusedVolumeMl, DateTime endedAtUtc)
     {
-        if (Status == IvPumpStatus.Completed) return;
+        if (Status == IvPumpStatus.Completed)
+            return;
         InfusedVolumeMl = finalInfusedVolumeMl;
         Status = IvPumpStatus.Completed;
         EndedAtUtc = endedAtUtc;

@@ -86,7 +86,8 @@ public sealed class HieDbContextDesignTimeFactory : IDesignTimeDbContextFactory<
     {
         foreach (var start in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
         {
-            if (string.IsNullOrWhiteSpace(start)) continue;
+            if (string.IsNullOrWhiteSpace(start))
+                continue;
 
             var dir = Path.GetFullPath(start);
             for (var depth = 0; depth < 14 && !string.IsNullOrEmpty(dir); depth++)

@@ -27,7 +27,8 @@ public sealed class ExternalPatientInsightsBuilder
         foreach (var row in rows)
         {
             Resource resource;
-            try { resource = _parser.Deserialize<Resource>(row.FhirJson); }
+            try
+            { resource = _parser.Deserialize<Resource>(row.FhirJson); }
             catch { continue; }
             if (string.Equals(SubjectId(resource), patientReference, StringComparison.Ordinal))
                 matched.Add((row, resource));

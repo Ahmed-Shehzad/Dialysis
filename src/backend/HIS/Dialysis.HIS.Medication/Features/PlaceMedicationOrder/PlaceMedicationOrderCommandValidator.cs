@@ -23,13 +23,15 @@ public sealed class PlaceMedicationOrderCommandValidator : AbstractValidator<Pla
 
     private static bool TryParseDrug(string? value)
     {
-        try { _ = new DrugCode(value!); return true; }
+        try
+        { _ = new DrugCode(value!); return true; }
         catch (DomainException) { return false; }
     }
 
     private static bool TryParseDosage(string? value)
     {
-        try { _ = new Dosage(value!); return true; }
+        try
+        { _ = new Dosage(value!); return true; }
         catch (DomainException) { return false; }
     }
 }

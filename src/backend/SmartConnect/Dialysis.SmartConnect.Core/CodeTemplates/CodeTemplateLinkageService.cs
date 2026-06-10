@@ -40,7 +40,8 @@ public sealed class CodeTemplateLinkageService
         foreach (var flowId in added)
         {
             var flow = await _flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
-            if (flow is null) continue;
+            if (flow is null)
+                continue;
             if (!flow.Pipeline.LinkedLibraryIds.Contains(libraryId))
             {
                 flow.Pipeline.LinkedLibraryIds.Add(libraryId);
@@ -51,7 +52,8 @@ public sealed class CodeTemplateLinkageService
         foreach (var flowId in removed)
         {
             var flow = await _flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
-            if (flow is null) continue;
+            if (flow is null)
+                continue;
             if (flow.Pipeline.LinkedLibraryIds.Remove(libraryId))
             {
                 await _flows.UpdateAsync(flow, cancellationToken).ConfigureAwait(false);
@@ -77,7 +79,8 @@ public sealed class CodeTemplateLinkageService
         foreach (var libraryId in added)
         {
             var lib = await _libraries.GetByIdAsync(libraryId, cancellationToken).ConfigureAwait(false);
-            if (lib is null) continue;
+            if (lib is null)
+                continue;
             if (!lib.LinkedFlowIds.Contains(flowId))
             {
                 var updated = new CodeTemplateLibrary
@@ -98,7 +101,8 @@ public sealed class CodeTemplateLinkageService
         foreach (var libraryId in removed)
         {
             var lib = await _libraries.GetByIdAsync(libraryId, cancellationToken).ConfigureAwait(false);
-            if (lib is null) continue;
+            if (lib is null)
+                continue;
             if (lib.LinkedFlowIds.Contains(flowId))
             {
                 var newLinked = lib.LinkedFlowIds.Where(f => f != flowId).ToList();
@@ -128,10 +132,12 @@ public sealed class CodeTemplateLinkageService
     {
         var allLibs = await _libraries.GetAllAsync(cancellationToken).ConfigureAwait(false);
         var autoLinkLibs = allLibs.Where(l => l.AutoLinkNewFlows).ToList();
-        if (autoLinkLibs.Count == 0) return;
+        if (autoLinkLibs.Count == 0)
+            return;
 
         var flow = await _flows.GetByIdAsync(flowId, cancellationToken).ConfigureAwait(false);
-        if (flow is null) return;
+        if (flow is null)
+            return;
 
         var added = new List<Guid>();
         foreach (var lib in autoLinkLibs)

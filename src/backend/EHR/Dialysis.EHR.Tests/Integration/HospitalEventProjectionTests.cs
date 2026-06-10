@@ -105,7 +105,8 @@ public sealed class HospitalEventProjectionTests
         public Task<bool> MarkFollowedUpAsync(Guid id, DateTime nowUtc, CancellationToken cancellationToken = default)
         {
             var row = Rows.FirstOrDefault(r => r.Id == id);
-            if (row is null) return Task.FromResult(false);
+            if (row is null)
+                return Task.FromResult(false);
             row.FollowedUp = true;
             row.FollowedUpAtUtc = nowUtc;
             return Task.FromResult(true);

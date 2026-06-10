@@ -117,13 +117,15 @@ public sealed class JavaScriptAttachmentHandler : IAttachmentHandler
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
         var repo = _services.GetService<ICodeTemplateLibraryRepository>();
-        if (repo is null) return;
+        if (repo is null)
+            return;
         await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, CodeTemplateContext.AttachmentHandler, ct).ConfigureAwait(false);
     }
 
     private static string? ExtractScript(string? propertiesJson)
     {
-        if (string.IsNullOrWhiteSpace(propertiesJson)) return null;
+        if (string.IsNullOrWhiteSpace(propertiesJson))
+            return null;
         try
         {
             using var doc = JsonDocument.Parse(propertiesJson);

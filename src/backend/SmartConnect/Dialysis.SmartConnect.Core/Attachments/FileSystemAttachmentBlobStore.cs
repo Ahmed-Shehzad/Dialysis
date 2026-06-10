@@ -45,7 +45,8 @@ public sealed class FileSystemAttachmentBlobStore : IAttachmentBlobStore
     public async Task<ReadOnlyMemory<byte>?> ReadAsync(Guid attachmentId, CancellationToken cancellationToken)
     {
         var path = ResolvePath(attachmentId);
-        if (!File.Exists(path)) return null;
+        if (!File.Exists(path))
+            return null;
         var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
         return new ReadOnlyMemory<byte>(bytes);
     }
@@ -54,25 +55,29 @@ public sealed class FileSystemAttachmentBlobStore : IAttachmentBlobStore
     {
         cancellationToken.ThrowIfCancellationRequested();
         var path = ResolvePath(attachmentId);
-        if (File.Exists(path)) File.Delete(path);
+        if (File.Exists(path))
+            File.Delete(path);
         return Task.CompletedTask;
     }
 
     public async IAsyncEnumerable<BlobMetadata> EnumerateAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        if (!Directory.Exists(_rootPath)) yield break;
+        if (!Directory.Exists(_rootPath))
+            yield break;
 
         foreach (var file in Directory.EnumerateFiles(_rootPath, "*" + Extension, SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var name = Path.GetFileNameWithoutExtension(file);
-            if (!Guid.TryParse(name, out var id)) continue;
+            if (!Guid.TryParse(name, out var id))
+                continue;
             FileInfo info;
             try
             {
                 info = new FileInfo(file);
-                if (!info.Exists) continue;
+                if (!info.Exists)
+                    continue;
             }
             catch (FileNotFoundException)
             {

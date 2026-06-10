@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
-using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Module.Bff.Configuration;
 using Dialysis.Module.Bff.Federation;
 using Dialysis.Module.Bff.Services;
@@ -228,12 +227,6 @@ public static class ModuleBffExtensions
                 });
         }
 
-        // Transponder Hangfire scheduler — PostgreSQL-backed background scheduling. The AppHost injects
-        // ConnectionStrings:Hangfire (the corresponding module database); it is absent in tests.
-        var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
-        if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
-            builder.Services.AddTransponderHangfire(hangfireConnectionString);
-
         return builder;
     }
 
@@ -246,9 +239,6 @@ public static class ModuleBffExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
-
-        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for this BFF).
-        app.UseModuleHangfireDashboard($"{module.Slug} BFF");
 
         app.MapGet(routes.Root, () => Results.Text(
             $"Dialysis {module.Slug} BFF — GET {routes.Login} to sign in, GET {routes.User} for claims.",

@@ -20,7 +20,8 @@ public sealed class ChairOccupancyProjection
     public void Place(Guid patientId, string chair, DateTime placedAtUtc)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(chair);
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
 
         _byChair[chair.Trim()] = new ChairAssignmentSnapshot(chair.Trim(), patientId, placedAtUtc);
     }

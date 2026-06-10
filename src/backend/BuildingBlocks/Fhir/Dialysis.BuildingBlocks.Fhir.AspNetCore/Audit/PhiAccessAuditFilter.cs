@@ -61,7 +61,8 @@ public sealed class PhiAccessAuditFilter : IAsyncActionFilter
     {
         var executed = await next().ConfigureAwait(false);
         var attribute = FindAttribute(executed);
-        if (attribute is null) return;
+        if (attribute is null)
+            return;
 
         try
         {
@@ -148,7 +149,8 @@ public sealed class PhiAccessAuditFilter : IAsyncActionFilter
 
     private static string? ResolveRouteValue(IDictionary<string, object?> values, string key)
     {
-        if (!values.TryGetValue(key, out var raw) || raw is null) return null;
+        if (!values.TryGetValue(key, out var raw) || raw is null)
+            return null;
         var s = raw.ToString();
         return string.IsNullOrWhiteSpace(s) ? null : s;
     }

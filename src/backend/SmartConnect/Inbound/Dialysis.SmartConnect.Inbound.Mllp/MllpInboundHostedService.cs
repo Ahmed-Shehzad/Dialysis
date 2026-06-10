@@ -101,7 +101,9 @@ public sealed class MllpInboundHostedService : BackgroundService
                         "SmartConnect MLLP inbound rejecting connection from {Endpoint}: MaxConnections={Max} reached.",
                         client.Client.RemoteEndPoint,
                         max);
-                    try { client.Close(); } catch { /* best-effort */ }
+                    try
+                    { client.Close(); }
+                    catch { /* best-effort */ }
                     continue;
                 }
 
@@ -235,10 +237,12 @@ public sealed class MllpInboundHostedService : BackgroundService
     private static Dictionary<string, object?> ParseHl7Msh(byte[] payload)
     {
         var map = new Dictionary<string, object?>(StringComparer.Ordinal);
-        if (payload.Length < 4) return map;
+        if (payload.Length < 4)
+            return map;
 
         var text = Encoding.UTF8.GetString(payload);
-        if (!text.StartsWith("MSH", StringComparison.Ordinal)) return map;
+        if (!text.StartsWith("MSH", StringComparison.Ordinal))
+            return map;
 
         var segEnd = text.IndexOfAny(['\r', '\n']);
         var mshSegment = segEnd > 0 ? text[..segEnd] : text;

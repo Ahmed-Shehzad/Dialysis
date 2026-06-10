@@ -146,7 +146,8 @@ public sealed class CareSummaryAssembler
         foreach (var bundle in bundles)
         {
             var key = $"{bundle.ResourceType}/{bundle.LogicalId}";
-            if (!seen.Add(key)) continue;
+            if (!seen.Add(key))
+                continue;
             try
             {
                 resources.Add(_parser.Deserialize<Resource>(bundle.FhirJson));

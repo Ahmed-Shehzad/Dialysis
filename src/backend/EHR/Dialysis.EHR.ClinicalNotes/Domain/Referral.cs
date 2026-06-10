@@ -37,8 +37,10 @@ public sealed class Referral : AggregateRoot<Guid>
         string? referralReason,
         DateTime requestedAtUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (referringProviderId == Guid.Empty) throw new ArgumentException("Referring provider required.", nameof(referringProviderId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (referringProviderId == Guid.Empty)
+            throw new ArgumentException("Referring provider required.", nameof(referringProviderId));
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPartnerId);
 
         var referral = new Referral(id)

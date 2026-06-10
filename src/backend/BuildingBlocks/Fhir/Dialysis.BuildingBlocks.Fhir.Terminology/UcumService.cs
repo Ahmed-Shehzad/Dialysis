@@ -20,7 +20,8 @@ public sealed class UcumService : IUcumService
 
     public bool TryParseUnit(string unitExpression)
     {
-        if (string.IsNullOrWhiteSpace(unitExpression)) return false;
+        if (string.IsNullOrWhiteSpace(unitExpression))
+            return false;
         try
         {
             _ = Units.Metric(unitExpression);
@@ -35,7 +36,8 @@ public sealed class UcumService : IUcumService
     public bool TryCanonicalize(decimal value, string unit, out CanonicalQuantity canonical)
     {
         canonical = default!;
-        if (string.IsNullOrWhiteSpace(unit)) return false;
+        if (string.IsNullOrWhiteSpace(unit))
+            return false;
         try
         {
             var quantity = Units.Quantity(value.ToString(CultureInfo.InvariantCulture), unit);
@@ -52,10 +54,14 @@ public sealed class UcumService : IUcumService
     public bool TryConvert(decimal value, string fromUnit, string toUnit, out decimal converted)
     {
         converted = default;
-        if (!TryCanonicalize(value, fromUnit, out var sourceCanonical)) return false;
-        if (!TryCanonicalize(1m, toUnit, out var targetCanonical)) return false;
-        if (sourceCanonical.CanonicalUnit != targetCanonical.CanonicalUnit) return false;
-        if (targetCanonical.Value == 0m) return false;
+        if (!TryCanonicalize(value, fromUnit, out var sourceCanonical))
+            return false;
+        if (!TryCanonicalize(1m, toUnit, out var targetCanonical))
+            return false;
+        if (sourceCanonical.CanonicalUnit != targetCanonical.CanonicalUnit)
+            return false;
+        if (targetCanonical.Value == 0m)
+            return false;
         converted = sourceCanonical.Value / targetCanonical.Value;
         return true;
     }
@@ -63,9 +69,12 @@ public sealed class UcumService : IUcumService
     public bool TryCompare(decimal value1, string unit1, decimal value2, string unit2, out int comparison)
     {
         comparison = 0;
-        if (!TryCanonicalize(value1, unit1, out var a)) return false;
-        if (!TryCanonicalize(value2, unit2, out var b)) return false;
-        if (a.CanonicalUnit != b.CanonicalUnit) return false;
+        if (!TryCanonicalize(value1, unit1, out var a))
+            return false;
+        if (!TryCanonicalize(value2, unit2, out var b))
+            return false;
+        if (a.CanonicalUnit != b.CanonicalUnit)
+            return false;
         comparison = a.Value.CompareTo(b.Value);
         return true;
     }

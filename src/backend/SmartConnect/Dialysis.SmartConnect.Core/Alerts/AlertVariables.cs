@@ -13,7 +13,8 @@ public static class AlertVariables
 
     public static string Render(string? template, AlertEvent evt, AlertRule rule)
     {
-        if (string.IsNullOrEmpty(template)) return string.Empty;
+        if (string.IsNullOrEmpty(template))
+            return string.Empty;
         return _tokenRegex.Replace(template, m => Lookup(m.Groups["name"].Value, evt, rule) ?? m.Value);
     }
 

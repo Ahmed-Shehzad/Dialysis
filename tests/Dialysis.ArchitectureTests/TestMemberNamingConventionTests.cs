@@ -210,9 +210,12 @@ public sealed class TestMemberNamingConventionTests
     {
         foreach (var segment in path.Split(Path.DirectorySeparatorChar))
         {
-            if (segment.Equals("Tests", StringComparison.Ordinal)) return true;
-            if (segment.EndsWith(".Tests", StringComparison.Ordinal)) return true;
-            if (segment.Contains(".Tests.", StringComparison.Ordinal)) return true;
+            if (segment.Equals("Tests", StringComparison.Ordinal))
+                return true;
+            if (segment.EndsWith(".Tests", StringComparison.Ordinal))
+                return true;
+            if (segment.Contains(".Tests.", StringComparison.Ordinal))
+                return true;
         }
         return false;
     }

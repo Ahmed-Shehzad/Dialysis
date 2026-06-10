@@ -39,7 +39,8 @@ public sealed class InsurerTransmission : AggregateRoot<Guid>
         string externalControlNumber,
         string payloadDigest)
     {
-        if (claimId == Guid.Empty) throw new ArgumentException("Claim required.", nameof(claimId));
+        if (claimId == Guid.Empty)
+            throw new ArgumentException("Claim required.", nameof(claimId));
         ArgumentException.ThrowIfNullOrWhiteSpace(payerCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(claimFormatCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(externalControlNumber);

@@ -113,7 +113,8 @@ public sealed class CscV2Client
     {
         const string cacheKey = "documents-signing:csc:access-token";
         var cached = await _cache.GetStringAsync(cacheKey, cancellationToken).ConfigureAwait(false);
-        if (!string.IsNullOrEmpty(cached)) return cached;
+        if (!string.IsNullOrEmpty(cached))
+            return cached;
 
         if (string.IsNullOrWhiteSpace(_options.ClientCredentialsTokenUri) ||
             string.IsNullOrWhiteSpace(_options.ClientId) ||

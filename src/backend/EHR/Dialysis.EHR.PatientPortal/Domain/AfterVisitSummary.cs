@@ -102,7 +102,8 @@ public sealed class AfterVisitSummary : AggregateRoot<Guid>
         Guid authoringProviderId,
         string narrative)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
         ArgumentException.ThrowIfNullOrWhiteSpace(narrative);
 
         return new AfterVisitSummary(id)

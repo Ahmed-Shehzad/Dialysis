@@ -110,7 +110,8 @@ public static class QidoRsEndpoint
 
     private static (DateTimeOffset? From, DateTimeOffset? To) ParseDateRange(string? range)
     {
-        if (string.IsNullOrEmpty(range)) return (null, null);
+        if (string.IsNullOrEmpty(range))
+            return (null, null);
 
         // DICOM date range syntax: "YYYYMMDD-YYYYMMDD", "YYYYMMDD-" (open right), "-YYYYMMDD"
         // (open left), or "YYYYMMDD" (single day).

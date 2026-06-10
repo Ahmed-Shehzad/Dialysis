@@ -42,7 +42,8 @@ public sealed class MedicationInventoryItem : AggregateRoot<Guid>
     /// <summary>Operator received <paramref name="units"/> more stock.</summary>
     public void Receive(int units, string reason)
     {
-        if (units <= 0) throw new ArgumentOutOfRangeException(nameof(units));
+        if (units <= 0)
+            throw new ArgumentOutOfRangeException(nameof(units));
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
         OnHandUnits += units;
     }
@@ -54,7 +55,8 @@ public sealed class MedicationInventoryItem : AggregateRoot<Guid>
     /// </summary>
     public int Deduct(int units, string reason)
     {
-        if (units <= 0) throw new ArgumentOutOfRangeException(nameof(units));
+        if (units <= 0)
+            throw new ArgumentOutOfRangeException(nameof(units));
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
         OnHandUnits -= units;
         if (OnHandUnits <= Threshold)
@@ -76,7 +78,8 @@ public sealed class MedicationInventoryItem : AggregateRoot<Guid>
     /// <summary>Operator performed a physical count and adjusted the system to match.</summary>
     public void Adjust(int newOnHand, string reason)
     {
-        if (newOnHand < 0) throw new ArgumentOutOfRangeException(nameof(newOnHand));
+        if (newOnHand < 0)
+            throw new ArgumentOutOfRangeException(nameof(newOnHand));
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
         OnHandUnits = newOnHand;
     }

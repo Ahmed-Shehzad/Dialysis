@@ -52,9 +52,12 @@ public sealed class ClinicalNote : AggregateRoot<Guid>
         string assessment,
         string plan)
     {
-        if (encounterId == Guid.Empty) throw new ArgumentException("Encounter required.", nameof(encounterId));
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (authoringProviderId == Guid.Empty) throw new ArgumentException("Author required.", nameof(authoringProviderId));
+        if (encounterId == Guid.Empty)
+            throw new ArgumentException("Encounter required.", nameof(encounterId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (authoringProviderId == Guid.Empty)
+            throw new ArgumentException("Author required.", nameof(authoringProviderId));
 
         return new ClinicalNote(id)
         {
@@ -81,8 +84,10 @@ public sealed class ClinicalNote : AggregateRoot<Guid>
 
     public void Sign(Guid signingProviderId, DateTime signedAtUtc)
     {
-        if (signingProviderId == Guid.Empty) throw new ArgumentException("Signer required.", nameof(signingProviderId));
-        if (Status == ClinicalNoteStatus.Signed) return;
+        if (signingProviderId == Guid.Empty)
+            throw new ArgumentException("Signer required.", nameof(signingProviderId));
+        if (Status == ClinicalNoteStatus.Signed)
+            return;
         if (Status == ClinicalNoteStatus.EnteredInError)
             throw new InvalidOperationException("Cannot sign a note marked as entered-in-error.");
         if (string.IsNullOrWhiteSpace(Assessment))

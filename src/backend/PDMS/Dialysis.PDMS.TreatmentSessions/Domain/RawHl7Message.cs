@@ -57,7 +57,8 @@ public sealed class RawHl7Message : Entity<Guid>
         byte[] payload)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
-        if (messageType.Length > 16) throw new ArgumentException("Message type too long.", nameof(messageType));
+        if (messageType.Length > 16)
+            throw new ArgumentException("Message type too long.", nameof(messageType));
         ArgumentException.ThrowIfNullOrWhiteSpace(messageControlId);
         if (messageControlId.Length > 50)
             throw new ArgumentException("Message control id exceeds the rev4 extended limit of 50.", nameof(messageControlId));

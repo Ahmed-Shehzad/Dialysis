@@ -92,7 +92,8 @@ public sealed class AlarmDispatch : AggregateRoot<Guid>
     public void Acknowledge(string clinicianSub, DateTime atUtc)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(clinicianSub);
-        if (Status is AlarmDispatchStatus.Acknowledged or AlarmDispatchStatus.Exhausted) return;
+        if (Status is AlarmDispatchStatus.Acknowledged or AlarmDispatchStatus.Exhausted)
+            return;
         AcknowledgedBySub = clinicianSub;
         Status = AlarmDispatchStatus.Acknowledged;
         ResolvedAtUtc = atUtc;

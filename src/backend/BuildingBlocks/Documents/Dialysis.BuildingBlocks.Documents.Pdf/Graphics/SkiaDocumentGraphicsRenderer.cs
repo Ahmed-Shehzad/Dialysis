@@ -24,7 +24,8 @@ public sealed class SkiaDocumentGraphicsRenderer : IDocumentGraphicsRenderer
     {
         ArgumentNullException.ThrowIfNull(spec);
         ArgumentException.ThrowIfNullOrWhiteSpace(spec.Payload);
-        if (spec.PixelSize <= 0) throw new ArgumentOutOfRangeException(nameof(spec), "PixelSize must be positive.");
+        if (spec.PixelSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(spec), "PixelSize must be positive.");
 
         var hints = new Dictionary<EncodeHintType, object>
         {
@@ -132,8 +133,10 @@ public sealed class SkiaDocumentGraphicsRenderer : IDocumentGraphicsRenderer
     // Premultiply against the BGRA buffer the SKBitmap expects (SKAlphaType.Premul).
     private static (byte b, byte g, byte r, byte a) ToBgraPremul(GraphicsColor c)
     {
-        if (c.A == 255) return (c.B, c.G, c.R, 255);
-        if (c.A == 0) return (0, 0, 0, 0);
+        if (c.A == 255)
+            return (c.B, c.G, c.R, 255);
+        if (c.A == 0)
+            return (0, 0, 0, 0);
         var b = (byte)(c.B * c.A / 255);
         var g = (byte)(c.G * c.A / 255);
         var r = (byte)(c.R * c.A / 255);

@@ -53,7 +53,8 @@ public sealed class Allergy : AggregateRoot<Guid>
         DateOnly? onsetDate = null)
     {
         ArgumentNullException.ThrowIfNull(allergen);
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient id required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient id required.", nameof(patientId));
 
         return new Allergy(id)
         {

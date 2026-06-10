@@ -45,9 +45,11 @@ public sealed class GetDocumentBinaryQueryHandler : IQueryHandler<GetDocumentBin
     public async Task<DocumentBinary?> HandleAsync(GetDocumentBinaryQuery request, CancellationToken cancellationToken)
     {
         var document = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (document is null) return null;
+        if (document is null)
+            return null;
         var bytes = await _blobs.ReadAsync(document.StorageRef, cancellationToken).ConfigureAwait(false);
-        if (bytes is null) return null;
+        if (bytes is null)
+            return null;
         return new DocumentBinary(document.MimeType, bytes);
     }
 }

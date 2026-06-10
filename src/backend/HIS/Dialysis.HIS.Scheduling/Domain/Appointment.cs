@@ -18,8 +18,10 @@ public sealed class Appointment : AggregateRoot<Guid>
 
     public static Appointment Book(Guid patientId, Guid providerId, AppointmentSlot slot, DateTime nowUtc)
     {
-        if (patientId == Guid.Empty) throw new DomainException("PatientId cannot be empty.");
-        if (providerId == Guid.Empty) throw new DomainException("ProviderId cannot be empty.");
+        if (patientId == Guid.Empty)
+            throw new DomainException("PatientId cannot be empty.");
+        if (providerId == Guid.Empty)
+            throw new DomainException("ProviderId cannot be empty.");
         ArgumentNullException.ThrowIfNull(slot);
 
         var appt = new Appointment(Guid.CreateVersion7())
@@ -46,7 +48,8 @@ public sealed class Appointment : AggregateRoot<Guid>
 
     public void Cancel(DateTime nowUtc)
     {
-        if (StatusCode == "Cancelled") throw new DomainException("Appointment is already cancelled.");
+        if (StatusCode == "Cancelled")
+            throw new DomainException("Appointment is already cancelled.");
         StatusCode = "Cancelled";
     }
 }

@@ -43,8 +43,10 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
         DateTime earliestPreferredUtc,
         DateTime latestPreferredUtc)
     {
-        if (patientId == Guid.Empty) throw new DomainException("Patient required.");
-        if (string.IsNullOrWhiteSpace(reasonText)) throw new DomainException("Reason required.");
+        if (patientId == Guid.Empty)
+            throw new DomainException("Patient required.");
+        if (string.IsNullOrWhiteSpace(reasonText))
+            throw new DomainException("Reason required.");
         if (latestPreferredUtc <= earliestPreferredUtc)
             throw new DomainException("Latest preferred must be after earliest preferred.");
         if (earliestPreferredUtc < DateTime.UtcNow.AddDays(-1))
@@ -86,7 +88,8 @@ public sealed class PortalAppointmentRequest : AggregateRoot<Guid>
     {
         if (Status != PortalAppointmentRequestStatus.Pending)
             throw new DomainException($"Cannot decline a request in status {Status}.");
-        if (string.IsNullOrWhiteSpace(staffNote)) throw new DomainException("Staff note required.");
+        if (string.IsNullOrWhiteSpace(staffNote))
+            throw new DomainException("Staff note required.");
         Status = PortalAppointmentRequestStatus.Declined;
         StaffNote = staffNote.Trim();
         RaiseResolved(approved: false);

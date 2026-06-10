@@ -1,6 +1,6 @@
 using Hl7.Fhir.Model;
-using FhirStatus = Hl7.Fhir.Model.DocumentReferenceStatus;
 using DomainStatus = Dialysis.HIE.Documents.Domain.DocumentReferenceStatus;
+using FhirStatus = Hl7.Fhir.Model.DocumentReferenceStatus;
 
 namespace Dialysis.HIE.Documents.Fhir;
 
@@ -51,7 +51,8 @@ public static class DocumentReferenceMapper
 
     private static byte[]? HexToBytes(string hex)
     {
-        if (string.IsNullOrWhiteSpace(hex)) return null;
+        if (string.IsNullOrWhiteSpace(hex))
+            return null;
         try
         {
             return Convert.FromHexString(hex);

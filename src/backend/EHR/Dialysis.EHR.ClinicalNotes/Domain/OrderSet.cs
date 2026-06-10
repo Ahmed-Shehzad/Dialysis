@@ -65,8 +65,10 @@ public sealed class OrderSetLine : Entity<Guid>
         ArgumentException.ThrowIfNullOrWhiteSpace(doseText);
         ArgumentException.ThrowIfNullOrWhiteSpace(frequencyText);
         ArgumentException.ThrowIfNullOrWhiteSpace(pharmacyNcpdpId);
-        if (quantityDispensed <= 0) throw new ArgumentOutOfRangeException(nameof(quantityDispensed));
-        if (refillsAuthorized < 0) throw new ArgumentOutOfRangeException(nameof(refillsAuthorized));
+        if (quantityDispensed <= 0)
+            throw new ArgumentOutOfRangeException(nameof(quantityDispensed));
+        if (refillsAuthorized < 0)
+            throw new ArgumentOutOfRangeException(nameof(refillsAuthorized));
         return new OrderSetLine(id, orderSetId, OrderSetLineKind.Medication)
         {
             MedicationRxnormCode = rxnorm.Trim(),

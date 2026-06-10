@@ -204,11 +204,11 @@ public sealed class FileReaderSplitTests
     private static FileReaderParameters Build_Parameters(
         FileReaderSplitMode splitMode,
         string? splitPattern = null) => new()
-    {
-        Directory = "/tmp",
-        SplitMode = splitMode,
-        SplitPattern = splitPattern,
-    };
+        {
+            Directory = "/tmp",
+            SplitMode = splitMode,
+            SplitPattern = splitPattern,
+        };
 
     private static FileReaderParameters Build_Delimited_Parameters(string delimiter, bool hasHeaderRow) => new()
     {

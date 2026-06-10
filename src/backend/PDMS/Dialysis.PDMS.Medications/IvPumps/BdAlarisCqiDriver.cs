@@ -110,8 +110,10 @@ public sealed class BdAlarisCqiDriver : IIvPumpDriver
 
     private static decimal? ReadDecimal(JsonElement parent, string property)
     {
-        if (parent.ValueKind != JsonValueKind.Object) return null;
-        if (!parent.TryGetProperty(property, out var prop)) return null;
+        if (parent.ValueKind != JsonValueKind.Object)
+            return null;
+        if (!parent.TryGetProperty(property, out var prop))
+            return null;
         return prop.ValueKind switch
         {
             JsonValueKind.Number => prop.GetDecimal(),

@@ -170,7 +170,8 @@ public sealed class ChannelScriptExecutor
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CodeTemplateContext context, CancellationToken ct)
     {
-        if (_codeTemplateRepository is null) return;
+        if (_codeTemplateRepository is null)
+            return;
         await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, _codeTemplateRepository, flowId, context, ct).ConfigureAwait(false);
     }
 

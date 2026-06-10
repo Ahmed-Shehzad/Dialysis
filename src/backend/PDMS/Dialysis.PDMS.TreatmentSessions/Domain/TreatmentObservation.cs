@@ -55,9 +55,12 @@ public sealed class TreatmentObservation : Entity<Guid>
         int[]? profileTimesSeconds,
         Guid sourceMessageId)
     {
-        if (sessionId == Guid.Empty) throw new ArgumentException("Session required.", nameof(sessionId));
-        if (machineId == Guid.Empty) throw new ArgumentException("Machine required.", nameof(machineId));
-        if (mdcCode <= 0) throw new ArgumentOutOfRangeException(nameof(mdcCode), "MDC code must be positive.");
+        if (sessionId == Guid.Empty)
+            throw new ArgumentException("Session required.", nameof(sessionId));
+        if (machineId == Guid.Empty)
+            throw new ArgumentException("Machine required.", nameof(machineId));
+        if (mdcCode <= 0)
+            throw new ArgumentOutOfRangeException(nameof(mdcCode), "MDC code must be positive.");
         ArgumentException.ThrowIfNullOrWhiteSpace(containmentPath);
         if (containmentPath.Length > 64)
             throw new ArgumentException("Containment path too long.", nameof(containmentPath));

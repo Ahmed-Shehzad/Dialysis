@@ -45,7 +45,8 @@ public sealed class SessionReportContextBuilder : ISessionReportContextBuilder
     public async Task<SessionReportContext?> BuildAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         var session = await _sessions.GetAsync(sessionId, cancellationToken).ConfigureAwait(false);
-        if (session is null) return null;
+        if (session is null)
+            return null;
 
         var startedAt = session.ActualStartUtc ?? session.ScheduledStartUtc;
         var completedAt = session.ActualEndUtc ?? startedAt;

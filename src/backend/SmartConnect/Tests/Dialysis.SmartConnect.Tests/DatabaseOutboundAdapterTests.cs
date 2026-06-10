@@ -172,7 +172,7 @@ public sealed class DatabaseOutboundAdapterTests
     {
         public List<RecordingCommand> Commands { get; } = [];
 
-        public int OpenedTimes ;
+        public int OpenedTimes;
 
         [AllowNull]
         public override string ConnectionString { get; set; } = "fake";
@@ -292,7 +292,8 @@ public sealed class DatabaseOutboundAdapterTests
 
         public override void AddRange(Array values)
         {
-            foreach (var v in values) _items.Add((DbParameter)v);
+            foreach (var v in values)
+                _items.Add((DbParameter)v);
         }
 
         public override void Clear() => _items.Clear();
@@ -311,7 +312,8 @@ public sealed class DatabaseOutboundAdapterTests
         {
             for (var i = 0; i < _items.Count; i++)
             {
-                if (string.Equals(_items[i].ParameterName, parameterName, StringComparison.Ordinal)) return i;
+                if (string.Equals(_items[i].ParameterName, parameterName, StringComparison.Ordinal))
+                    return i;
             }
             return -1;
         }
@@ -325,7 +327,8 @@ public sealed class DatabaseOutboundAdapterTests
         public override void RemoveAt(string parameterName)
         {
             var i = IndexOf(parameterName);
-            if (i >= 0) _items.RemoveAt(i);
+            if (i >= 0)
+                _items.RemoveAt(i);
         }
 
         protected override DbParameter GetParameter(int index) => _items[index];

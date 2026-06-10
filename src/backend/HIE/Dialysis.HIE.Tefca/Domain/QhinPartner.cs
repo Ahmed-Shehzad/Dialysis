@@ -101,7 +101,8 @@ public sealed class QhinPartner
     public void TransitionStatus(QhinPartnerStatus next, DateTime now, string updatedBy)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(updatedBy);
-        if (Status == next) return;
+        if (Status == next)
+            return;
         if (next == QhinPartnerStatus.Active && _trustAnchors.Count == 0)
             throw new InvalidOperationException("Cannot activate a QHIN partner without at least one trust anchor.");
         if (next == QhinPartnerStatus.Active && MtlsCertThumbprint is null)

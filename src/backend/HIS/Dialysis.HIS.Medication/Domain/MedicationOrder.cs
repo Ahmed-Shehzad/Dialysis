@@ -18,7 +18,8 @@ public sealed class MedicationOrder : AggregateRoot<Guid>
 
     public static MedicationOrder Place(Guid patientId, DrugCode drugCode, Dosage dosage, DateTime nowUtc)
     {
-        if (patientId == Guid.Empty) throw new DomainException("PatientId cannot be empty.");
+        if (patientId == Guid.Empty)
+            throw new DomainException("PatientId cannot be empty.");
         ArgumentNullException.ThrowIfNull(drugCode);
         ArgumentNullException.ThrowIfNull(dosage);
 

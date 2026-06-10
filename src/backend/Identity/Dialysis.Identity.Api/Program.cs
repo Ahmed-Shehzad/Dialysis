@@ -53,8 +53,10 @@ public class Program
                 : s => s.AddTransponderRabbitMq(o =>
                 {
                     o.ConnectionUri = rabbitUri;
-                    if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
-                    if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue))
+                        o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange))
+                        o.ExchangeName = rabbitExchange;
                 }));
 
         var app = builder.Build();

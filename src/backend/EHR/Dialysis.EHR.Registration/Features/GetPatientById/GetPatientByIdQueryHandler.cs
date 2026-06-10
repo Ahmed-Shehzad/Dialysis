@@ -12,7 +12,8 @@ public sealed class GetPatientByIdQueryHandler : IQueryHandler<GetPatientByIdQue
         CancellationToken cancellationToken)
     {
         var patient = await _patients.GetAsync(request.PatientId, cancellationToken).ConfigureAwait(false);
-        if (patient is null) return null;
+        if (patient is null)
+            return null;
         return new PatientDetailDto(
             patient.Id,
             patient.MedicalRecordNumber,

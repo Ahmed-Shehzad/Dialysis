@@ -96,7 +96,8 @@ public sealed class JavascriptTransformStageMapsTests
         var sp = services.BuildServiceProvider();
 
         var maps = new ConcurrentDictionary<string, object?>[routeCount];
-        for (var i = 0; i < routeCount; i++) maps[i] = new ConcurrentDictionary<string, object?>();
+        for (var i = 0; i < routeCount; i++)
+            maps[i] = new ConcurrentDictionary<string, object?>();
         var ctx = new FlowExecutionContext
         {
             SourceMap = sourceMap ?? new Dictionary<string, object?>(),

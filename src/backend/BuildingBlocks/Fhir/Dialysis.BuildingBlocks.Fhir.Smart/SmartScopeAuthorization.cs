@@ -41,10 +41,12 @@ public sealed class SmartScopeAuthorizationHandler : AuthorizationHandler<SmartS
             return true;
         // Wildcard support: "patient/*.read" satisfies "patient/Patient.read".
         var sep = required.IndexOf('/');
-        if (sep <= 0) return false;
+        if (sep <= 0)
+            return false;
         var prefix = required[..sep];
         var dot = required.IndexOf('.', sep);
-        if (dot <= 0) return false;
+        if (dot <= 0)
+            return false;
         var action = required[dot..];
         return actual == $"{prefix}/*{action}";
     }

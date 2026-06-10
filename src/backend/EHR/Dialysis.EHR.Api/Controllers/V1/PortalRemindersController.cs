@@ -30,7 +30,8 @@ public sealed class PortalRemindersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMineAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        if (!_portalAccess.CanActAs(User, patientId)) return Forbid();
+        if (!_portalAccess.CanActAs(User, patientId))
+            return Forbid();
         var reminders = await _gateway.SendQueryAsync<GetPatientRemindersQuery, IReadOnlyList<PatientReminderDto>>(
             new GetPatientRemindersQuery(patientId), cancellationToken).ConfigureAwait(false);
         return Ok(reminders);

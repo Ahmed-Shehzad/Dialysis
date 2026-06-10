@@ -65,13 +65,15 @@ public sealed class CareTeam : AggregateRoot<Guid>
 
     public static CareTeam Create(Guid id, Guid patientId, DateTime nowUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
         return new CareTeam(id) { PatientId = patientId, CreatedAtUtc = nowUtc };
     }
 
     public CareTeamMember AddMember(Guid memberId, Guid providerId, CareTeamRole role, bool isPrimary)
     {
-        if (providerId == Guid.Empty) throw new ArgumentException("Provider required.", nameof(providerId));
+        if (providerId == Guid.Empty)
+            throw new ArgumentException("Provider required.", nameof(providerId));
         if (_members.Exists(m => m.ProviderId == providerId))
             throw new InvalidOperationException("Provider is already on this care team.");
 

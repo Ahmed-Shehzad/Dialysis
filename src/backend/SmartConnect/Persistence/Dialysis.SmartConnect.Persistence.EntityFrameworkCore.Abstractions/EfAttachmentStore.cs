@@ -109,7 +109,8 @@ public sealed class EfAttachmentStore : IAttachmentStore
     {
         var entity = await _db.Attachments.AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken).ConfigureAwait(false);
-        if (entity is null) return null;
+        if (entity is null)
+            return null;
 
         var bytes = _blobs.StoresBytesInRow
             ? (entity.Data is null ? ReadOnlyMemory<byte>.Empty : new ReadOnlyMemory<byte>(entity.Data))
@@ -123,7 +124,8 @@ public sealed class EfAttachmentStore : IAttachmentStore
             .Where(a => a.MessageId == messageId)
             .OrderBy(a => a.CreatedUtc)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (entities.Count == 0) return [];
+        if (entities.Count == 0)
+            return [];
 
         var result = new List<Attachment>(entities.Count);
         if (_blobs.StoresBytesInRow)
@@ -158,7 +160,8 @@ public sealed class EfAttachmentStore : IAttachmentStore
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var entity = await _db.Attachments.FirstOrDefaultAsync(a => a.Id == id, cancellationToken).ConfigureAwait(false);
-        if (entity is null) return;
+        if (entity is null)
+            return;
         _db.Attachments.Remove(entity);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await _blobs.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
@@ -167,7 +170,8 @@ public sealed class EfAttachmentStore : IAttachmentStore
     public async Task DeleteForMessageAsync(Guid messageId, CancellationToken cancellationToken)
     {
         var entities = await _db.Attachments.Where(a => a.MessageId == messageId).ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (entities.Count == 0) return;
+        if (entities.Count == 0)
+            return;
         _db.Attachments.RemoveRange(entities);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         foreach (var e in entities)
@@ -179,7 +183,8 @@ public sealed class EfAttachmentStore : IAttachmentStore
     public async Task<int> DeleteOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken)
     {
         var entities = await _db.Attachments.Where(a => a.CreatedUtc < cutoffUtc).ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (entities.Count == 0) return 0;
+        if (entities.Count == 0)
+            return 0;
         _db.Attachments.RemoveRange(entities);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         foreach (var e in entities)

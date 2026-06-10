@@ -73,8 +73,10 @@ public sealed class CarePlan : AggregateRoot<Guid>
 
     public static CarePlan Create(Guid id, Guid patientId, string title, Guid authoredByProviderId, DateTime nowUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (authoredByProviderId == Guid.Empty) throw new ArgumentException("Authoring provider required.", nameof(authoredByProviderId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (authoredByProviderId == Guid.Empty)
+            throw new ArgumentException("Authoring provider required.", nameof(authoredByProviderId));
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
         return new CarePlan(id)

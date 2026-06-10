@@ -27,7 +27,8 @@ public sealed class ConsentGate : IConsentGate
         var consent = await _repository
             .FindActiveAsync(patientId, partnerId, scope, ConsentDirection.Outbound, now, purpose, cancellationToken)
             .ConfigureAwait(false);
-        if (consent is not null) return true;
+        if (consent is not null)
+            return true;
 
         var bidirectional = await _repository
             .FindActiveAsync(patientId, partnerId, scope, ConsentDirection.Bidirectional, now, purpose, cancellationToken)
@@ -41,7 +42,8 @@ public sealed class ConsentGate : IConsentGate
         var consent = await _repository
             .FindActiveByExternalReferenceAsync(externalPatientReference, partnerId, scope, ConsentDirection.Inbound, now, purpose, cancellationToken)
             .ConfigureAwait(false);
-        if (consent is not null) return true;
+        if (consent is not null)
+            return true;
 
         var bidirectional = await _repository
             .FindActiveByExternalReferenceAsync(externalPatientReference, partnerId, scope, ConsentDirection.Bidirectional, now, purpose, cancellationToken)

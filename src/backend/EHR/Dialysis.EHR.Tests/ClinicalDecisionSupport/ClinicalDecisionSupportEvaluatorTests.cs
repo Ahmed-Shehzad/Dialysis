@@ -44,8 +44,12 @@ public sealed class ClinicalDecisionSupportEvaluatorTests
         var patient = Guid.NewGuid();
         var options = With(new CdsRule
         {
-            Id = "ASTHMA-SPIRO", Title = "Asthma: order spirometry", AppliesToAnyIcd10 = { "J45.909" },
-            TriggerKind = CdsTriggerKind.MissingLabWithinMonths, ExpectedLoinc = "19868-9", WithinMonths = 12,
+            Id = "ASTHMA-SPIRO",
+            Title = "Asthma: order spirometry",
+            AppliesToAnyIcd10 = { "J45.909" },
+            TriggerKind = CdsTriggerKind.MissingLabWithinMonths,
+            ExpectedLoinc = "19868-9",
+            WithinMonths = 12,
         });
 
         var recs = await Evaluator(options, [Problem(patient, "J45.909")]).EvaluateAsync(patient, CancellationToken.None);
@@ -59,9 +63,14 @@ public sealed class ClinicalDecisionSupportEvaluatorTests
         var patient = Guid.NewGuid();
         var options = With(new CdsRule
         {
-            Id = "HTN-BP", Title = "Hypertension: BP above target", AppliesToAnyIcd10 = { "I10" },
-            TriggerKind = CdsTriggerKind.AbnormalVitalThreshold, VitalLoinc = "8480-6",
-            Comparator = ClinicalComparator.GreaterThan, ThresholdValue = 140m, VitalWithinDays = 180,
+            Id = "HTN-BP",
+            Title = "Hypertension: BP above target",
+            AppliesToAnyIcd10 = { "I10" },
+            TriggerKind = CdsTriggerKind.AbnormalVitalThreshold,
+            VitalLoinc = "8480-6",
+            Comparator = ClinicalComparator.GreaterThan,
+            ThresholdValue = 140m,
+            VitalWithinDays = 180,
         });
         var bp = VitalSignReading.Record(Guid.NewGuid(), patient, new Coding(LoincSystem, "8480-6", "Systolic BP"),
             152m, "mm[Hg]", _nowUtc.AddDays(-3));
@@ -77,9 +86,13 @@ public sealed class ClinicalDecisionSupportEvaluatorTests
         var patient = Guid.NewGuid();
         var options = With(new CdsRule
         {
-            Id = "HTN-BP", Title = "Hypertension: BP above target", AppliesToAnyIcd10 = { "I10" },
-            TriggerKind = CdsTriggerKind.AbnormalVitalThreshold, VitalLoinc = "8480-6",
-            Comparator = ClinicalComparator.GreaterThan, ThresholdValue = 140m,
+            Id = "HTN-BP",
+            Title = "Hypertension: BP above target",
+            AppliesToAnyIcd10 = { "I10" },
+            TriggerKind = CdsTriggerKind.AbnormalVitalThreshold,
+            VitalLoinc = "8480-6",
+            Comparator = ClinicalComparator.GreaterThan,
+            ThresholdValue = 140m,
         });
         var bp = VitalSignReading.Record(Guid.NewGuid(), patient, new Coding(LoincSystem, "8480-6", "Systolic BP"),
             128m, "mm[Hg]", _nowUtc.AddDays(-3));
@@ -95,8 +108,11 @@ public sealed class ClinicalDecisionSupportEvaluatorTests
         var patient = Guid.NewGuid();
         var options = With(new CdsRule
         {
-            Id = "ASTHMA-CTRL", Title = "Asthma: ensure controller medication", AppliesToAnyIcd10 = { "J45.909" },
-            TriggerKind = CdsTriggerKind.ConditionWithoutMedicationClass, MedicationCodePrefixAny = { "INH-CORT" },
+            Id = "ASTHMA-CTRL",
+            Title = "Asthma: ensure controller medication",
+            AppliesToAnyIcd10 = { "J45.909" },
+            TriggerKind = CdsTriggerKind.ConditionWithoutMedicationClass,
+            MedicationCodePrefixAny = { "INH-CORT" },
         });
         var reliever = MedicationStatement.Record(Guid.NewGuid(), patient,
             new Coding("http://www.nlm.nih.gov/research/umls/rxnorm", "ALBUTEROL", "Albuterol"), "2 puffs", "PRN", new DateOnly(2026, 1, 1));
@@ -112,9 +128,13 @@ public sealed class ClinicalDecisionSupportEvaluatorTests
         var patient = Guid.NewGuid();
         var options = With(new CdsRule
         {
-            Id = "HTN-BP", Title = "BP above target", AppliesToAnyIcd10 = { "I10" },
-            TriggerKind = CdsTriggerKind.AbnormalVitalThreshold, VitalLoinc = "8480-6",
-            Comparator = ClinicalComparator.GreaterThan, ThresholdValue = 140m,
+            Id = "HTN-BP",
+            Title = "BP above target",
+            AppliesToAnyIcd10 = { "I10" },
+            TriggerKind = CdsTriggerKind.AbnormalVitalThreshold,
+            VitalLoinc = "8480-6",
+            Comparator = ClinicalComparator.GreaterThan,
+            ThresholdValue = 140m,
         });
         var bp = VitalSignReading.Record(Guid.NewGuid(), patient, new Coding(LoincSystem, "8480-6"), 160m, "mm[Hg]", _nowUtc.AddDays(-1));
 

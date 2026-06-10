@@ -48,7 +48,8 @@ public sealed class ClinicianNotificationDispatcher : IClinicianNotificationDisp
                 try
                 {
                     lastResult = await sender.SendAsync(request, cancellationToken).ConfigureAwait(false);
-                    if (lastResult.Delivered) break;
+                    if (lastResult.Delivered)
+                        break;
                     _logger.LogWarning(
                         "Clinician notification provider {Sender} reported failure on channel {Channel}: {Reason}",
                         sender.GetType().Name, request.Channel, lastResult.FailureReason);

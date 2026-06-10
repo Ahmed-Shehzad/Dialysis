@@ -40,7 +40,8 @@ public sealed class Pcd04NormalisedDriver : IIvPumpDriver
         foreach (var segment in segments)
         {
             var fields = segment.Split('|');
-            if (fields.Length == 0) continue;
+            if (fields.Length == 0)
+                continue;
 
             switch (fields[0])
             {
@@ -61,12 +62,14 @@ public sealed class Pcd04NormalisedDriver : IIvPumpDriver
                 case "PRT":
                     // PRT-10 carries the device id in PCD-04 (Participation segment).
                     // fields[0]=segment name, fields[N]=PRT-N → device id at index 10.
-                    if (fields.Length > 10) deviceId = fields[10];
+                    if (fields.Length > 10)
+                        deviceId = fields[10];
                     break;
 
                 case "OBX":
                     // OBX-3 = observation identifier (LOINC); OBX-5 = value. fields[0]=segment name.
-                    if (fields.Length < 6) break;
+                    if (fields.Length < 6)
+                        break;
                     var idParts = fields[3].Split('^');
                     var code = idParts.Length > 0 ? idParts[0] : string.Empty;
                     if (!decimal.TryParse(fields[5], NumberStyles.Number,
@@ -76,10 +79,18 @@ public sealed class Pcd04NormalisedDriver : IIvPumpDriver
                     }
                     switch (code)
                     {
-                        case "69869-3": actualRate = val; break;
-                        case "69870-1": infusedVolume = val; break;
-                        case "69871-9": programmedRate = val; break;
-                        case "69872-7": programmedVolume = val; break;
+                        case "69869-3":
+                            actualRate = val;
+                            break;
+                        case "69870-1":
+                            infusedVolume = val;
+                            break;
+                        case "69871-9":
+                            programmedRate = val;
+                            break;
+                        case "69872-7":
+                            programmedVolume = val;
+                            break;
                     }
                     break;
 

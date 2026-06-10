@@ -23,9 +23,14 @@ public sealed class PopulationControlTests
 
     private static readonly ControlRule _bpRule = new()
     {
-        Id = "HTN-BP", Title = "Hypertension: BP controlled", AppliesToAnyIcd10 = { "I10" },
-        Kind = ControlKind.Vital, Code = "8480-6", Comparator = ClinicalComparator.LessThan,
-        TargetValue = 140m, WithinDays = 180,
+        Id = "HTN-BP",
+        Title = "Hypertension: BP controlled",
+        AppliesToAnyIcd10 = { "I10" },
+        Kind = ControlKind.Vital,
+        Code = "8480-6",
+        Comparator = ClinicalComparator.LessThan,
+        TargetValue = 140m,
+        WithinDays = 180,
     };
 
     private static ProblemListItem Problem(Guid patientId, string icd10) =>

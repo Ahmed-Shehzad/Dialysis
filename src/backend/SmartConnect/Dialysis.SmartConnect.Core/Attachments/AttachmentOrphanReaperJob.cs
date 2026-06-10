@@ -58,17 +58,21 @@ public sealed class AttachmentOrphanReaperJob
 
         await foreach (var blob in blobs.EnumerateAsync(cancellationToken).ConfigureAwait(false))
         {
-            if (blob.CreatedUtc >= cutoff) continue;
+            if (blob.CreatedUtc >= cutoff)
+                continue;
             candidates.Add(blob);
-            if (candidates.Count >= collectionLimit) break;
+            if (candidates.Count >= collectionLimit)
+                break;
         }
 
-        if (candidates.Count == 0) return;
+        if (candidates.Count == 0)
+            return;
 
         var deletionsTotal = 0;
         foreach (var batch in candidates.Chunk(BatchSize))
         {
-            if (deletionsTotal >= _options.MaxDeletionsPerSweep) break;
+            if (deletionsTotal >= _options.MaxDeletionsPerSweep)
+                break;
             var ids = batch.Select(c => c.Id).ToList();
             var existing = await db.Attachments.AsNoTracking()
                 .Where(a => ids.Contains(a.Id))
@@ -76,8 +80,10 @@ public sealed class AttachmentOrphanReaperJob
                 .ToHashSetAsync(cancellationToken).ConfigureAwait(false);
             foreach (var blob in batch)
             {
-                if (existing.Contains(blob.Id)) continue;
-                if (deletionsTotal >= _options.MaxDeletionsPerSweep) break;
+                if (existing.Contains(blob.Id))
+                    continue;
+                if (deletionsTotal >= _options.MaxDeletionsPerSweep)
+                    break;
                 await blobs.DeleteAsync(blob.Id, cancellationToken).ConfigureAwait(false);
                 deletionsTotal++;
             }

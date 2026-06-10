@@ -50,7 +50,8 @@ public sealed class Immunization : AggregateRoot<Guid>
         Guid? administeringProviderId = null)
     {
         ArgumentNullException.ThrowIfNull(vaccine);
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient id required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient id required.", nameof(patientId));
 
         return new Immunization(id)
         {

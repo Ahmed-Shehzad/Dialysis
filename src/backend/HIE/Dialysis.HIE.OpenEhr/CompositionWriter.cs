@@ -35,7 +35,8 @@ public sealed class CompositionWriter
         where TResource : Resource
     {
         var projection = (IArchetypeProjection<TResource>?)_services.GetService(typeof(IArchetypeProjection<TResource>));
-        if (projection is null) return;
+        if (projection is null)
+            return;
 
         await WriteWithProjectionAsync(patientId, resource, projection, composer, cancellationToken).ConfigureAwait(false);
     }

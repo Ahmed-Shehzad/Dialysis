@@ -36,7 +36,8 @@ public sealed class TerminologyCatalogLoader : IHostedService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetService<IAuthoredTerminologyRepository>();
-        if (repository is null) return; // authoring not wired on this host
+        if (repository is null)
+            return; // authoring not wired on this host
 
         IReadOnlyList<AuthoredTerminologyResource> active;
         try

@@ -56,7 +56,8 @@ public sealed class MedicationStatement : AggregateRoot<Guid>
         ArgumentNullException.ThrowIfNull(medication);
         ArgumentException.ThrowIfNullOrWhiteSpace(doseText);
         ArgumentException.ThrowIfNullOrWhiteSpace(frequencyText);
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient id required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient id required.", nameof(patientId));
 
         return new MedicationStatement(id)
         {

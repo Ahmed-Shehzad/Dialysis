@@ -104,14 +104,16 @@ public sealed class GetDocumentPreviewQueryHandler : IQueryHandler<GetDocumentPr
     public async Task<DocumentPreview?> HandleAsync(GetDocumentPreviewQuery request, CancellationToken cancellationToken)
     {
         var document = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (document is null) return null;
+        if (document is null)
+            return null;
 
         var mime = document.MimeType;
         if (string.Equals(mime, "application/pdf", StringComparison.OrdinalIgnoreCase))
             return new DocumentPreview(DocumentPreviewFormat.Pdf, Content: null, MimeType: mime, RootElement: null, DocumentTypeName: null);
 
         var bytes = await _blobs.ReadAsync(document.StorageRef, cancellationToken).ConfigureAwait(false);
-        if (bytes is null) return null;
+        if (bytes is null)
+            return null;
 
         if (_xmlMimeTypes.Contains(mime))
             return BuildXmlPreview(bytes, mime);

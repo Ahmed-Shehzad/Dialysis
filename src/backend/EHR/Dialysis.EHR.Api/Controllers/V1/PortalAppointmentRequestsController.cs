@@ -40,7 +40,8 @@ public sealed class PortalAppointmentRequestsController : ControllerBase
         Guid patientId, [FromBody] RequestBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
 
         Guid id;
         try
@@ -63,7 +64,8 @@ public sealed class PortalAppointmentRequestsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ListMineAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         var rows = await _gateway.SendQueryAsync<ListMyAppointmentRequestsQuery, IReadOnlyList<AppointmentRequestView>>(
             new ListMyAppointmentRequestsQuery(patientId), cancellationToken).ConfigureAwait(false);
         return Ok(rows);
@@ -75,7 +77,8 @@ public sealed class PortalAppointmentRequestsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CancelAsync(Guid patientId, Guid requestId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         try
         {
             await _gateway.SendCommandAsync<CancelAppointmentRequestCommand, Unit>(

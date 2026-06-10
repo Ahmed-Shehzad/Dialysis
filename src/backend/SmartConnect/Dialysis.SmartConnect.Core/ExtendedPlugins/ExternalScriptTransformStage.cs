@@ -80,7 +80,8 @@ public sealed class ExternalScriptTransformStage : ITransformStage
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (_services is null) return;
+        if (_services is null)
+            return;
         var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
 
@@ -99,9 +100,11 @@ public sealed class ExternalScriptTransformStage : ITransformStage
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        if (_services is null) return;
+        if (_services is null)
+            return;
         var repo = _services.GetService<ICodeTemplateLibraryRepository>();
-        if (repo is null) return;
+        if (repo is null)
+            return;
         var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var context = accessor?.Current?.CurrentStageContext ?? CodeTemplateContext.SourceTransformer;
         await CodeTemplateJsBinder.PrependLinkedTemplatesAsync(engine, repo, flowId, context, ct).ConfigureAwait(false);

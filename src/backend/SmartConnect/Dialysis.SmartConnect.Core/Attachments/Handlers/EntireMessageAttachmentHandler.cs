@@ -53,7 +53,8 @@ public sealed class EntireMessageAttachmentHandler : IAttachmentHandler
                 if (doc.RootElement.TryGetProperty("mimeType", out var el) && el.ValueKind == JsonValueKind.String)
                 {
                     var m = el.GetString();
-                    if (!string.IsNullOrWhiteSpace(m)) return m;
+                    if (!string.IsNullOrWhiteSpace(m))
+                        return m;
                 }
             }
             catch (JsonException)

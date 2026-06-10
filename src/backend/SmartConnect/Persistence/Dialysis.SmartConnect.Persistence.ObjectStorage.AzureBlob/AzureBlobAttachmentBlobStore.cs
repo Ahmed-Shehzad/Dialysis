@@ -87,11 +87,13 @@ public sealed class AzureBlobAttachmentBlobStore : IAttachmentBlobStore
             .ConfigureAwait(false))
         {
             var name = item.Name;
-            if (string.IsNullOrEmpty(name)) continue;
+            if (string.IsNullOrEmpty(name))
+                continue;
             var trimmed = name.StartsWith(_prefix, StringComparison.Ordinal)
                 ? name[_prefix.Length..]
                 : name;
-            if (!Guid.TryParse(trimmed, out var id)) continue;
+            if (!Guid.TryParse(trimmed, out var id))
+                continue;
             var created = item.Properties.CreatedOn ?? item.Properties.LastModified ?? DateTimeOffset.UtcNow;
             yield return new BlobMetadata(id, created, item.Properties.ContentLength ?? 0);
         }
@@ -101,7 +103,8 @@ public sealed class AzureBlobAttachmentBlobStore : IAttachmentBlobStore
 
     private static string NormalisePrefix(string raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
         return raw.EndsWith('/') ? raw : raw + "/";
     }
 

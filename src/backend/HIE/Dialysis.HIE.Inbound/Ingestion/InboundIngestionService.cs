@@ -79,7 +79,8 @@ public sealed class InboundIngestionService
         {
             foreach (var entry in bundle.Entry)
             {
-                if (entry.Resource is null) continue;
+                if (entry.Resource is null)
+                    continue;
                 await IngestSingleAsync(partnerId, entry.Resource, purpose, outcome, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -151,55 +152,57 @@ public sealed class InboundIngestionService
                     encounter.ReasonCode.FirstOrDefault()?.Coding.FirstOrDefault()?.Code), cancellationToken).ConfigureAwait(false);
                 break;
             case Observation observation:
+            {
+                var loinc = observation.Code?.Coding.FirstOrDefault()?.Code ?? "unknown";
+                var display = observation.Code?.Coding.FirstOrDefault()?.Display ?? observation.Code?.Text ?? string.Empty;
+                string? valueQuantity = null;
+                string? unit = null;
+                if (observation.Value is Quantity q)
                 {
-                    var loinc = observation.Code?.Coding.FirstOrDefault()?.Code ?? "unknown";
-                    var display = observation.Code?.Coding.FirstOrDefault()?.Display ?? observation.Code?.Text ?? string.Empty;
-                    string? valueQuantity = null;
-                    string? unit = null;
-                    if (observation.Value is Quantity q)
-                    {
-                        valueQuantity = q.Value?.ToString(CultureInfo.InvariantCulture);
-                        unit = q.Unit;
-                    }
-                    else if (observation.Value is FhirString fs)
-                    {
-                        valueQuantity = fs.Value;
-                    }
-                    var observed = observation.Effective is FhirDateTime fdt && DateTime.TryParse(fdt.Value, out var ts) ? ts : (DateTime?)null;
-                    await EmitAsync(new ExternalLabResultIngestedIntegrationEvent(
-                        Guid.NewGuid(),
-                        _timeProvider.GetUtcNow().UtcDateTime,
-                        SchemaVersion: 1,
-                        partnerId,
-                        logicalId,
-                        observation.Subject?.Reference,
-                        loinc,
-                        display,
-                        valueQuantity,
-                        unit,
-                        observed), cancellationToken).ConfigureAwait(false);
-                    break;
+                    valueQuantity = q.Value?.ToString(CultureInfo.InvariantCulture);
+                    unit = q.Unit;
                 }
+                else if (observation.Value is FhirString fs)
+                {
+                    valueQuantity = fs.Value;
+                }
+                var observed = observation.Effective is FhirDateTime fdt && DateTime.TryParse(fdt.Value, out var ts) ? ts : (DateTime?)null;
+                await EmitAsync(new ExternalLabResultIngestedIntegrationEvent(
+                    Guid.NewGuid(),
+                    _timeProvider.GetUtcNow().UtcDateTime,
+                    SchemaVersion: 1,
+                    partnerId,
+                    logicalId,
+                    observation.Subject?.Reference,
+                    loinc,
+                    display,
+                    valueQuantity,
+                    unit,
+                    observed), cancellationToken).ConfigureAwait(false);
+                break;
+            }
             case Procedure procedure:
+            {
+                DateTime? start = null, end = null;
+                if (procedure.Performed is Period p)
                 {
-                    DateTime? start = null, end = null;
-                    if (procedure.Performed is Period p)
-                    {
-                        if (p.StartElement is { } ps && DateTime.TryParse(ps.Value, out var pSt)) start = pSt;
-                        if (p.EndElement is { } pe && DateTime.TryParse(pe.Value, out var pEn)) end = pEn;
-                    }
-                    await EmitAsync(new ExternalDialysisSessionIngestedIntegrationEvent(
-                        Guid.NewGuid(),
-                        _timeProvider.GetUtcNow().UtcDateTime,
-                        SchemaVersion: 1,
-                        partnerId,
-                        logicalId,
-                        procedure.Subject?.Reference,
-                        start,
-                        end,
-                        procedure.Outcome?.Coding.FirstOrDefault()?.Code), cancellationToken).ConfigureAwait(false);
-                    break;
+                    if (p.StartElement is { } ps && DateTime.TryParse(ps.Value, out var pSt))
+                        start = pSt;
+                    if (p.EndElement is { } pe && DateTime.TryParse(pe.Value, out var pEn))
+                        end = pEn;
                 }
+                await EmitAsync(new ExternalDialysisSessionIngestedIntegrationEvent(
+                    Guid.NewGuid(),
+                    _timeProvider.GetUtcNow().UtcDateTime,
+                    SchemaVersion: 1,
+                    partnerId,
+                    logicalId,
+                    procedure.Subject?.Reference,
+                    start,
+                    end,
+                    procedure.Outcome?.Coding.FirstOrDefault()?.Code), cancellationToken).ConfigureAwait(false);
+                break;
+            }
             default:
                 _logger.LogDebug("No inbound projection implemented for {ResourceType}", resource.TypeName);
                 break;
@@ -293,7 +296,8 @@ public sealed class InboundIngestionService
 
     private async Task EmitAsync<T>(T evt, CancellationToken cancellationToken)
     {
-        if (_transponderOutbox is null) return;
+        if (_transponderOutbox is null)
+            return;
         var json = JsonSerializer.Serialize(evt);
         var envelope = new TransponderOutboxEnvelope(typeof(T).AssemblyQualifiedName!, json);
         await _transponderOutbox.EnqueueAsync(envelope, cancellationToken).ConfigureAwait(false);

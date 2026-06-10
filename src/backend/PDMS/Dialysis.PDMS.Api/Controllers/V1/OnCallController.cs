@@ -102,7 +102,8 @@ public sealed class OnCallController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(request);
         OnCallRotation rotation;
-        try { rotation = BuildRotation(Guid.CreateVersion7(), request); }
+        try
+        { rotation = BuildRotation(Guid.CreateVersion7(), request); }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
         await _rotations.AddAsync(rotation, cancellationToken).ConfigureAwait(false);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

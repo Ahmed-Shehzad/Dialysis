@@ -41,7 +41,8 @@ public sealed class PortalMessagesController : ControllerBase
         Guid patientId, [FromBody] SendMessageRequest body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
 
         var id = await _gateway.SendCommandAsync<SendSecureMessageCommand, Guid>(
             new SendSecureMessageCommand(
@@ -57,7 +58,8 @@ public sealed class PortalMessagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ListMyThreadsAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         var threads = await _gateway.SendQueryAsync<ListMessageThreadsForPatientQuery, IReadOnlyList<MessageThreadView>>(
             new ListMessageThreadsForPatientQuery(patientId), cancellationToken).ConfigureAwait(false);
         return Ok(threads);
@@ -69,11 +71,13 @@ public sealed class PortalMessagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyThreadAsync(Guid patientId, Guid threadId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         var messages = await _gateway.SendQueryAsync<ListThreadMessagesQuery, IReadOnlyList<SecureMessageView>>(
             new ListThreadMessagesQuery(threadId), cancellationToken).ConfigureAwait(false);
         // Guard against probing another patient's thread by id.
-        if (messages.Any(m => m.PatientId != patientId)) return Forbid();
+        if (messages.Any(m => m.PatientId != patientId))
+            return Forbid();
         return Ok(messages);
     }
 
@@ -83,7 +87,8 @@ public sealed class PortalMessagesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> MarkReadAsync(Guid patientId, Guid messageId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         await _gateway.SendCommandAsync<MarkMessageReadCommand, Unit>(
             new MarkMessageReadCommand(messageId), cancellationToken).ConfigureAwait(false);
         return NoContent();

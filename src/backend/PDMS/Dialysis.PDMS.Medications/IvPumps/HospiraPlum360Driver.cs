@@ -81,7 +81,8 @@ public sealed class HospiraPlum360Driver : IIvPumpDriver
 
     private static decimal? ReadDecimal(JsonElement parent, string property)
     {
-        if (!parent.TryGetProperty(property, out var prop)) return null;
+        if (!parent.TryGetProperty(property, out var prop))
+            return null;
         return prop.ValueKind == JsonValueKind.Number ? prop.GetDecimal() : null;
     }
 }

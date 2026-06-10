@@ -65,7 +65,8 @@ public sealed class AfterVisitSummariesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ListMineAsync(Guid patientId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         var rows = await _gateway.SendQueryAsync<ListMyAfterVisitSummariesQuery, IReadOnlyList<AfterVisitSummaryView>>(
             new ListMyAfterVisitSummariesQuery(patientId), cancellationToken).ConfigureAwait(false);
         return Ok(rows);
@@ -78,11 +79,14 @@ public sealed class AfterVisitSummariesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMineAsync(Guid patientId, Guid summaryId, CancellationToken cancellationToken)
     {
-        if (!IsSelf(patientId)) return Forbid();
+        if (!IsSelf(patientId))
+            return Forbid();
         var view = await _gateway.SendQueryAsync<GetAfterVisitSummaryByIdQuery, AfterVisitSummaryView?>(
             new GetAfterVisitSummaryByIdQuery(summaryId), cancellationToken).ConfigureAwait(false);
-        if (view is null) return NotFound();
-        if (view.PatientId != patientId) return Forbid();
+        if (view is null)
+            return NotFound();
+        if (view.PatientId != patientId)
+            return Forbid();
         return Ok(view);
     }
 

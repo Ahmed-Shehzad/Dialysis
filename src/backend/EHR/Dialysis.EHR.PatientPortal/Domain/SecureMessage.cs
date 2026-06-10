@@ -45,7 +45,8 @@ public sealed class SecureMessage : AggregateRoot<Guid>
         string body,
         DateTime sentAtUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
         ArgumentException.ThrowIfNullOrWhiteSpace(subject);
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
 
@@ -88,8 +89,10 @@ public sealed class SecureMessage : AggregateRoot<Guid>
         string body,
         DateTime sentAtUtc)
     {
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
-        if (threadId == Guid.Empty) throw new ArgumentException("Reply requires the original thread.", nameof(threadId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
+        if (threadId == Guid.Empty)
+            throw new ArgumentException("Reply requires the original thread.", nameof(threadId));
         ArgumentException.ThrowIfNullOrWhiteSpace(subject);
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
 
@@ -118,7 +121,8 @@ public sealed class SecureMessage : AggregateRoot<Guid>
 
     public void MarkRead(DateTime readAtUtc)
     {
-        if (ReadAtUtc.HasValue) return;
+        if (ReadAtUtc.HasValue)
+            return;
         ReadAtUtc = readAtUtc;
     }
 }

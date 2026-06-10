@@ -57,7 +57,8 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
         foreach (var section in root.Descendants(_hl7 + "section"))
         {
             var loinc = section.Element(_hl7 + "code")?.Attribute("code")?.Value;
-            if (string.IsNullOrEmpty(loinc)) continue;
+            if (string.IsNullOrEmpty(loinc))
+                continue;
 
             var resources = loinc switch
             {
@@ -88,7 +89,8 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
                 sectionEntry.Entry.Add(new ResourceReference($"{resource.TypeName}/{resource.Id}"));
                 anyMapped = true;
             }
-            if (anyMapped) sectionRefs.Add(sectionEntry);
+            if (anyMapped)
+                sectionRefs.Add(sectionEntry);
         }
     }
 
@@ -114,10 +116,12 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
     {
         foreach (var id in patientRole?.Elements(_hl7 + "id") ?? [])
         {
-            if (CdaParsing.IsNull(id)) continue;
+            if (CdaParsing.IsNull(id))
+                continue;
             var rootOid = id.Attribute("root")?.Value;
             var extension = id.Attribute("extension")?.Value;
-            if (string.IsNullOrEmpty(extension)) continue;
+            if (string.IsNullOrEmpty(extension))
+                continue;
             patient.Identifier.Add(new Identifier(CdaConstants.OidToUri(rootOid), extension));
         }
         if (patient.Identifier.Count > 0)
@@ -127,18 +131,23 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
     private static void MapPatientName(XElement? patientElement, Patient patient)
     {
         var nameElement = patientElement?.Element(_hl7 + "name");
-        if (nameElement is null) return;
+        if (nameElement is null)
+            return;
 
         var family = nameElement.Element(_hl7 + "family")?.Value;
         var givens = nameElement.Elements(_hl7 + "given").Select(g => g.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
         var prefix = nameElement.Element(_hl7 + "prefix")?.Value;
         var suffix = nameElement.Element(_hl7 + "suffix")?.Value;
-        if (string.IsNullOrEmpty(family) && givens.Count == 0) return;
+        if (string.IsNullOrEmpty(family) && givens.Count == 0)
+            return;
 
         var humanName = new HumanName { Family = family };
-        foreach (var given in givens) humanName.GivenElement.Add(new FhirString(given));
-        if (!string.IsNullOrEmpty(prefix)) humanName.PrefixElement.Add(new FhirString(prefix));
-        if (!string.IsNullOrEmpty(suffix)) humanName.SuffixElement.Add(new FhirString(suffix));
+        foreach (var given in givens)
+            humanName.GivenElement.Add(new FhirString(given));
+        if (!string.IsNullOrEmpty(prefix))
+            humanName.PrefixElement.Add(new FhirString(prefix));
+        if (!string.IsNullOrEmpty(suffix))
+            humanName.SuffixElement.Add(new FhirString(suffix));
         patient.Name.Add(humanName);
     }
 
@@ -155,7 +164,8 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
 
         var birthTime = patientElement?.Element(_hl7 + "birthTime")?.Attribute("value")?.Value;
         var birthDate = CdaParsing.ParseTimestamp(birthTime);
-        if (birthDate is not null) patient.BirthDate = birthDate.Length >= 10 ? birthDate[..10] : birthDate;
+        if (birthDate is not null)
+            patient.BirthDate = birthDate.Length >= 10 ? birthDate[..10] : birthDate;
     }
 
     private static void MapPatientTelecom(XElement? patientRole, Patient patient)
@@ -163,7 +173,8 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
         foreach (var telecom in patientRole?.Elements(_hl7 + "telecom") ?? [])
         {
             var value = telecom.Attribute("value")?.Value;
-            if (string.IsNullOrWhiteSpace(value)) continue;
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
             var system = value.StartsWith("tel:", StringComparison.OrdinalIgnoreCase)
                 ? ContactPoint.ContactPointSystem.Phone
                 : value.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase)
@@ -178,7 +189,8 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
     private static void MapPatientAddress(XElement? patientRole, Patient patient)
     {
         var addr = patientRole?.Element(_hl7 + "addr");
-        if (CdaParsing.IsNull(addr)) return;
+        if (CdaParsing.IsNull(addr))
+            return;
 
         var address = new Address
         {
@@ -188,10 +200,12 @@ public sealed class DefaultCdaToFhirMapper : ICdaToFhirMapper
             Country = addr.Element(_hl7 + "country")?.Value,
         };
         foreach (var line in addr.Elements(_hl7 + "streetAddressLine"))
-            if (!string.IsNullOrWhiteSpace(line.Value)) address.LineElement.Add(new FhirString(line.Value));
+            if (!string.IsNullOrWhiteSpace(line.Value))
+                address.LineElement.Add(new FhirString(line.Value));
         var hasContent = address.LineElement.Count > 0 || !string.IsNullOrEmpty(address.City)
             || !string.IsNullOrEmpty(address.State) || !string.IsNullOrEmpty(address.PostalCode);
-        if (hasContent) patient.Address.Add(address);
+        if (hasContent)
+            patient.Address.Add(address);
     }
 
     private static Composition ExtractComposition(

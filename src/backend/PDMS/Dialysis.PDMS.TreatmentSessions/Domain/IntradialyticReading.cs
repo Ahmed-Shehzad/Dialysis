@@ -46,10 +46,14 @@ public sealed class IntradialyticReading : Entity<Guid>
         decimal conductivityMsPerCm,
         string? notes = null)
     {
-        if (sessionId == Guid.Empty) throw new ArgumentException("Session required.", nameof(sessionId));
-        if (systolic is < 40 or > 260) throw new ArgumentOutOfRangeException(nameof(systolic));
-        if (diastolic is < 20 or > 180) throw new ArgumentOutOfRangeException(nameof(diastolic));
-        if (heartRateBpm is < 20 or > 250) throw new ArgumentOutOfRangeException(nameof(heartRateBpm));
+        if (sessionId == Guid.Empty)
+            throw new ArgumentException("Session required.", nameof(sessionId));
+        if (systolic is < 40 or > 260)
+            throw new ArgumentOutOfRangeException(nameof(systolic));
+        if (diastolic is < 20 or > 180)
+            throw new ArgumentOutOfRangeException(nameof(diastolic));
+        if (heartRateBpm is < 20 or > 250)
+            throw new ArgumentOutOfRangeException(nameof(heartRateBpm));
 
         return new IntradialyticReading(id)
         {

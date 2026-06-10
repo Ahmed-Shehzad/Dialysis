@@ -77,8 +77,10 @@ public sealed class DicomIngestionServiceTests
             { DicomTag.StudyInstanceUID, studyUid },
             { DicomTag.SeriesInstanceUID, seriesUid },
         };
-        if (patientId is not null) ds.Add(DicomTag.PatientID, patientId);
-        if (modality is not null) ds.Add(DicomTag.Modality, modality);
+        if (patientId is not null)
+            ds.Add(DicomTag.PatientID, patientId);
+        if (modality is not null)
+            ds.Add(DicomTag.Modality, modality);
         return new DicomFile(ds);
     }
 

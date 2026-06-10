@@ -72,7 +72,8 @@ public sealed class PatientsController : ControllerBase
     {
         ArgumentNullException.ThrowIfNull(body);
         var ids = (body.Ids ?? []).Where(id => id != Guid.Empty).Distinct().ToArray();
-        if (ids.Length == 0) return Ok(Array.Empty<PatientLabelDto>());
+        if (ids.Length == 0)
+            return Ok(Array.Empty<PatientLabelDto>());
         if (ids.Length > MaxBatchSize)
             return BadRequest(new { error = $"At most {MaxBatchSize} ids per request." });
 

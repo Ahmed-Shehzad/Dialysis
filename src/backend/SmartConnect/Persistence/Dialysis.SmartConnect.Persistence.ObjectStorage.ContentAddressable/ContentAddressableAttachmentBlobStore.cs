@@ -91,7 +91,8 @@ public sealed class ContentAddressableAttachmentBlobStore : IAttachmentBlobStore
 
         var refRow = await db.CasBlobRefs
             .FirstOrDefaultAsync(r => r.AttachmentId == attachmentId, cancellationToken).ConfigureAwait(false);
-        if (refRow is null) return;
+        if (refRow is null)
+            return;
 
         var hash = refRow.ContentHash;
         db.CasBlobRefs.Remove(refRow);

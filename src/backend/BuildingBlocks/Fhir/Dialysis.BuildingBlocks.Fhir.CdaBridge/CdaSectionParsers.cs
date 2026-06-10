@@ -25,7 +25,8 @@ internal static class CdaSectionParsers
             .Descendants(_hl7 + "observation"))
         {
             var code = CdaParsing.ParseCodeableConcept(observation.Element(_hl7 + "value"));
-            if (code is null) continue;
+            if (code is null)
+                continue;
 
             var condition = new Condition
             {
@@ -36,7 +37,8 @@ internal static class CdaSectionParsers
                     "http://terminology.hl7.org/CodeSystem/condition-clinical", "active"),
             };
             var onset = CdaParsing.ParseEffectiveInstant(observation.Element(_hl7 + "effectiveTime"));
-            if (onset is not null) condition.Onset = new FhirDateTime(onset);
+            if (onset is not null)
+                condition.Onset = new FhirDateTime(onset);
             yield return condition;
         }
     }
@@ -54,7 +56,8 @@ internal static class CdaSectionParsers
                 .Elements(_hl7 + "code")
                 .FirstOrDefault();
             var code = CdaParsing.ParseCodeableConcept(substance);
-            if (code is null) continue;
+            if (code is null)
+                continue;
 
             var allergy = new AllergyIntolerance
             {
@@ -65,7 +68,8 @@ internal static class CdaSectionParsers
                     "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "active"),
             };
             var onset = CdaParsing.ParseEffectiveInstant(observation.Element(_hl7 + "effectiveTime"));
-            if (onset is not null) allergy.Onset = new FhirDateTime(onset);
+            if (onset is not null)
+                allergy.Onset = new FhirDateTime(onset);
             yield return allergy;
         }
     }
@@ -82,7 +86,8 @@ internal static class CdaSectionParsers
                 .Elements(_hl7 + "code")
                 .FirstOrDefault();
             var code = CdaParsing.ParseCodeableConcept(material);
-            if (code is null) continue;
+            if (code is null)
+                continue;
 
             var statement = new MedicationStatement
             {
@@ -92,7 +97,8 @@ internal static class CdaSectionParsers
                 Medication = code,
             };
             var period = CdaParsing.ParseEffectivePeriod(admin.Element(_hl7 + "effectiveTime"));
-            if (period is not null) statement.Effective = period;
+            if (period is not null)
+                statement.Effective = period;
             yield return statement;
         }
     }
@@ -110,7 +116,8 @@ internal static class CdaSectionParsers
             .Elements(_hl7 + "observation"))
         {
             var code = CdaParsing.ParseCodeableConcept(observation.Element(_hl7 + "code"));
-            if (code is null) continue;
+            if (code is null)
+                continue;
 
             var result = new Observation
             {
@@ -126,14 +133,16 @@ internal static class CdaSectionParsers
             };
             AssignObservationValue(observation.Element(_hl7 + "value"), result);
             var when = CdaParsing.ParseEffectiveInstant(observation.Element(_hl7 + "effectiveTime"));
-            if (when is not null) result.Effective = new FhirDateTime(when);
+            if (when is not null)
+                result.Effective = new FhirDateTime(when);
             yield return result;
         }
     }
 
     private static void AssignObservationValue(XElement? value, Observation result)
     {
-        if (CdaParsing.IsNull(value)) return;
+        if (CdaParsing.IsNull(value))
+            return;
         var type = CdaParsing.ValueType(value!);
         switch (type)
         {
@@ -145,7 +154,8 @@ internal static class CdaSectionParsers
                 break;
             default:
                 var text = value!.Attribute("value")?.Value ?? value.Value?.Trim();
-                if (!string.IsNullOrEmpty(text)) result.Value = new FhirString(text);
+                if (!string.IsNullOrEmpty(text))
+                    result.Value = new FhirString(text);
                 break;
         }
     }
@@ -162,7 +172,8 @@ internal static class CdaSectionParsers
                 .Elements(_hl7 + "code")
                 .FirstOrDefault();
             var vaccine = CdaParsing.ParseCodeableConcept(material);
-            if (vaccine is null) continue;
+            if (vaccine is null)
+                continue;
 
             var notGiven = string.Equals(
                 admin.Attribute("negationInd")?.Value, "true", StringComparison.OrdinalIgnoreCase);
@@ -184,7 +195,8 @@ internal static class CdaSectionParsers
                 .Descendants(_hl7 + "manufacturedMaterial")
                 .Elements(_hl7 + "lotNumberText")
                 .FirstOrDefault()?.Value;
-            if (!string.IsNullOrWhiteSpace(lot)) immunization.LotNumber = lot;
+            if (!string.IsNullOrWhiteSpace(lot))
+                immunization.LotNumber = lot;
             yield return immunization;
         }
     }

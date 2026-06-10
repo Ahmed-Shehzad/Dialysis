@@ -190,7 +190,8 @@ public sealed class GetQhinPartnerQueryHandler : IQueryHandler<GetQhinPartnerQue
     public async Task<QhinPartnerDetail?> HandleAsync(GetQhinPartnerQuery request, CancellationToken cancellationToken)
     {
         var partner = await _repository.FindAsync(request.Id, cancellationToken).ConfigureAwait(false);
-        if (partner is null) return null;
+        if (partner is null)
+            return null;
         return new QhinPartnerDetail(
             partner.Id, partner.Name, partner.FhirBaseUrl, partner.IasEndpoint,
             partner.Status, partner.MtlsCertThumbprint, partner.CreatedAtUtc, partner.UpdatedAtUtc, partner.UpdatedBy,

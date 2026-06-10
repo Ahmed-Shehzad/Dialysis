@@ -13,7 +13,8 @@ public sealed class GetPatientsByIdsQueryHandler
         GetPatientsByIdsQuery request,
         CancellationToken cancellationToken)
     {
-        if (request.PatientIds.Count == 0) return [];
+        if (request.PatientIds.Count == 0)
+            return [];
         var patients = await _patients.GetByIdsAsync(request.PatientIds, cancellationToken).ConfigureAwait(false);
         return
         [

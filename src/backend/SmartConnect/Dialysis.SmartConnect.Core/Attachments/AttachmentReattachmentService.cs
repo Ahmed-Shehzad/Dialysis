@@ -28,15 +28,18 @@ public sealed class AttachmentReattachmentService
         }
 
         var tokens = AttachmentReference.Scan(text).ToList();
-        if (tokens.Count == 0) return payload;
+        if (tokens.Count == 0)
+            return payload;
 
         // Resolve all referenced attachments up front; missing ones leave their tokens intact.
         var resolved = new Dictionary<Guid, Attachment>(tokens.Count);
         foreach (var (_, _, id) in tokens)
         {
-            if (resolved.ContainsKey(id)) continue;
+            if (resolved.ContainsKey(id))
+                continue;
             var att = await _store.GetAsync(id, cancellationToken).ConfigureAwait(false);
-            if (att is not null) resolved[id] = att;
+            if (att is not null)
+                resolved[id] = att;
         }
 
         // Single-pass rebuild: copy non-token text verbatim; for each matched token whose attachment exists,
@@ -47,7 +50,8 @@ public sealed class AttachmentReattachmentService
 
         foreach (var (start, length, id) in tokens)
         {
-            if (!resolved.TryGetValue(id, out var att)) continue;
+            if (!resolved.TryGetValue(id, out var att))
+                continue;
 
             if (start > cursor)
             {

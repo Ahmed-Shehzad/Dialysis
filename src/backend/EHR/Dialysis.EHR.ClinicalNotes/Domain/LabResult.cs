@@ -49,8 +49,10 @@ public sealed class LabResult : AggregateRoot<Guid>
         string? unitCode = null,
         string? referenceRangeText = null)
     {
-        if (labOrderId == Guid.Empty) throw new ArgumentException("Order required.", nameof(labOrderId));
-        if (patientId == Guid.Empty) throw new ArgumentException("Patient required.", nameof(patientId));
+        if (labOrderId == Guid.Empty)
+            throw new ArgumentException("Order required.", nameof(labOrderId));
+        if (patientId == Guid.Empty)
+            throw new ArgumentException("Patient required.", nameof(patientId));
         ArgumentException.ThrowIfNullOrWhiteSpace(loincCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(valueText);
 

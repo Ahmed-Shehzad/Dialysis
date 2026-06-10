@@ -24,7 +24,8 @@ public sealed class EfEndpointRepository : IEndpointRepository
     public async Task AddAsync(EndpointEntity entity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
-        if (entity.Id == Guid.Empty) entity.Id = Guid.CreateVersion7();
+        if (entity.Id == Guid.Empty)
+            entity.Id = Guid.CreateVersion7();
         var now = _time.GetUtcNow();
         entity.CreatedAtUtc = now;
         entity.UpdatedAtUtc = now;
@@ -43,7 +44,8 @@ public sealed class EfEndpointRepository : IEndpointRepository
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var existing = await _db.Endpoints.FirstOrDefaultAsync(e => e.Id == id, cancellationToken).ConfigureAwait(false);
-        if (existing is null) return false;
+        if (existing is null)
+            return false;
         _db.Endpoints.Remove(existing);
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;

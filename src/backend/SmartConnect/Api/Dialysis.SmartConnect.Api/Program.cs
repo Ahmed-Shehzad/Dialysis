@@ -89,8 +89,10 @@ public class Program
                 o =>
                 {
                     o.ConnectionUri = rabbitUri;
-                    if (!string.IsNullOrWhiteSpace(rabbitQueue)) o.QueueName = rabbitQueue;
-                    if (!string.IsNullOrWhiteSpace(rabbitExchange)) o.ExchangeName = rabbitExchange;
+                    if (!string.IsNullOrWhiteSpace(rabbitQueue))
+                        o.QueueName = rabbitQueue;
+                    if (!string.IsNullOrWhiteSpace(rabbitExchange))
+                        o.ExchangeName = rabbitExchange;
                 },
                 sub => sub.Listen<SmartConnectRoutedPayloadIntegrationEvent>());
         }

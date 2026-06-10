@@ -77,7 +77,8 @@ public sealed class OutboundBundle
     /// </summary>
     public void MarkForRetry(DateTime asOfUtc)
     {
-        if (Status == OutboundBundleStatus.Delivered) return;
+        if (Status == OutboundBundleStatus.Delivered)
+            return;
         Status = OutboundBundleStatus.Pending;
         NextAttemptAtUtc = asOfUtc;
     }

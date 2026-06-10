@@ -107,7 +107,8 @@ public sealed class ExternalScriptRouteFilter : IRouteFilter
 
     private async Task BindVariableMapsAsync(Engine engine, IntegrationMessage message, CancellationToken ct)
     {
-        if (_services is null) return;
+        if (_services is null)
+            return;
         var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var ctx = accessor?.Current ?? new FlowExecutionContext();
 
@@ -126,9 +127,11 @@ public sealed class ExternalScriptRouteFilter : IRouteFilter
 
     private async Task BindCodeTemplatesAsync(Engine engine, Guid flowId, CancellationToken ct)
     {
-        if (_services is null) return;
+        if (_services is null)
+            return;
         var repo = _services.GetService<ICodeTemplateLibraryRepository>();
-        if (repo is null) return;
+        if (repo is null)
+            return;
         var accessor = _services.GetService<IFlowExecutionContextAccessor>();
         var current = accessor?.Current?.CurrentStageContext;
         var context = current == CodeTemplateContext.DestinationFilter

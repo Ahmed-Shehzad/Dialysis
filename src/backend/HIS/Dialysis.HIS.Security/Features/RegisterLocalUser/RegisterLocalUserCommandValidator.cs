@@ -19,7 +19,8 @@ public sealed class RegisterLocalUserCommandValidator : AbstractValidator<Regist
 
     private static bool TryParse(string? value)
     {
-        try { _ = new LoginName(value!); return true; }
+        try
+        { _ = new LoginName(value!); return true; }
         catch (DomainException) { return false; }
     }
 }

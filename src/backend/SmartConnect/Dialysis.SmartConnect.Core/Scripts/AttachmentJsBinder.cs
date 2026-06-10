@@ -32,7 +32,8 @@ internal static class AttachmentJsBinder
         {
             var bytes = JsValueToBytes(data);
             var mime = type.IsUndefined() || type.IsNull() ? defaultMimeType : type.AsString();
-            if (string.IsNullOrWhiteSpace(mime)) mime = "application/octet-stream";
+            if (string.IsNullOrWhiteSpace(mime))
+                mime = "application/octet-stream";
 
             var attachment = new Attachment
             {
@@ -52,7 +53,8 @@ internal static class AttachmentJsBinder
 
     private static byte[] JsValueToBytes(JsValue value)
     {
-        if (value.IsString()) return Encoding.UTF8.GetBytes(value.AsString());
+        if (value.IsString())
+            return Encoding.UTF8.GetBytes(value.AsString());
         if (value.IsArray())
         {
             var arr = value.AsArray();
@@ -65,7 +67,8 @@ internal static class AttachmentJsBinder
             }
             return bytes;
         }
-        if (value.IsObject()) return Encoding.UTF8.GetBytes(value.ToString());
+        if (value.IsObject())
+            return Encoding.UTF8.GetBytes(value.ToString());
         throw new ArgumentException("addAttachment expects a string or byte-array data argument.");
     }
 }

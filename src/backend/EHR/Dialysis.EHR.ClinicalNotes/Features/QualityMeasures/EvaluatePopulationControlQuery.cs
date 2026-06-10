@@ -76,9 +76,15 @@ public sealed class EvaluatePopulationControlQueryHandler
 
             switch (status.Outcome)
             {
-                case PatientControlOutcome.Controlled: controlled++; break;
-                case PatientControlOutcome.Uncontrolled: uncontrolled++; break;
-                default: noData++; break;
+                case PatientControlOutcome.Controlled:
+                    controlled++;
+                    break;
+                case PatientControlOutcome.Uncontrolled:
+                    uncontrolled++;
+                    break;
+                default:
+                    noData++;
+                    break;
             }
 
             breakdown.Add(new PatientControlBreakdown(

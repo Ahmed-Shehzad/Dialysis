@@ -47,14 +47,16 @@ public sealed class EfAuditEventStore<TDbContext> : IAuditEventStore
 
     private static string? ExtractResourceType(string? reference)
     {
-        if (string.IsNullOrEmpty(reference)) return null;
+        if (string.IsNullOrEmpty(reference))
+            return null;
         var slash = reference.IndexOf('/');
         return slash > 0 ? reference[..slash] : null;
     }
 
     private static string? ExtractResourceId(string? reference)
     {
-        if (string.IsNullOrEmpty(reference)) return null;
+        if (string.IsNullOrEmpty(reference))
+            return null;
         var slash = reference.IndexOf('/');
         return slash > 0 && slash + 1 < reference.Length ? reference[(slash + 1)..] : null;
     }

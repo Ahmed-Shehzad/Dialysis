@@ -55,7 +55,8 @@ public sealed class QhinTrustAnchor
 
     public void Revoke(DateTime now)
     {
-        if (Status == TrustAnchorStatus.Revoked) return;
+        if (Status == TrustAnchorStatus.Revoked)
+            return;
         Status = TrustAnchorStatus.Revoked;
         RevokedAtUtc = now;
     }

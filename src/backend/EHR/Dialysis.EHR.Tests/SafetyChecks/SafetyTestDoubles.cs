@@ -44,7 +44,8 @@ internal sealed class FakeAllergyRepository : IAllergyRepository
     public async IAsyncEnumerable<Allergy> StreamAllAsync(DateTimeOffset? since,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var a in _items) { yield return a; }
+        foreach (var a in _items)
+        { yield return a; }
         await Task.CompletedTask.ConfigureAwait(false);
     }
     public void Add(Allergy allergy) => _items.Add(allergy);
@@ -63,7 +64,8 @@ internal sealed class FakeMedicationStatementRepository : IMedicationStatementRe
     public async IAsyncEnumerable<MedicationStatement> StreamAllAsync(DateTimeOffset? since,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var m in _items) { yield return m; }
+        foreach (var m in _items)
+        { yield return m; }
         await Task.CompletedTask.ConfigureAwait(false);
     }
     public void Add(MedicationStatement statement) => _items.Add(statement);

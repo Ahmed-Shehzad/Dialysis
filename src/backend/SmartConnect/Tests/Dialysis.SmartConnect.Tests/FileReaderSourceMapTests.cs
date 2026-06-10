@@ -49,7 +49,9 @@ public sealed class FileReaderSourceMapTests
         }
         finally
         {
-            try { Directory.Delete(dir, recursive: true); } catch { /* best-effort temp cleanup */ }
+            try
+            { Directory.Delete(dir, recursive: true); }
+            catch { /* best-effort temp cleanup */ }
         }
     }
 
@@ -66,7 +68,8 @@ public sealed class FileReaderSourceMapTests
             var meta = ImmutableDictionary<string, string>.Empty;
             if (metadata is not null)
             {
-                foreach (var kv in metadata) meta = meta.SetItem(kv.Key, kv.Value);
+                foreach (var kv in metadata)
+                    meta = meta.SetItem(kv.Key, kv.Value);
             }
 
             return new IntegrationMessage

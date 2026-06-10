@@ -28,7 +28,8 @@ public static class ReportTemplateResolver
         var published = candidates
             .Where(t => t.Kind == kind && t.PublishedVersionNumber is not null)
             .ToList();
-        if (published.Count == 0) return null;
+        if (published.Count == 0)
+            return null;
 
         var normalized = string.IsNullOrWhiteSpace(preferredLanguageCode)
             ? null
@@ -38,7 +39,8 @@ public static class ReportTemplateResolver
         {
             // 1. exact (kind, language) match.
             var exact = published.Find(t => t.LanguageCode == normalized);
-            if (exact is not null) return exact;
+            if (exact is not null)
+                return exact;
 
             // 2. primary subtag match (de-de → de).
             var dash = normalized.IndexOf('-', StringComparison.Ordinal);
@@ -46,7 +48,8 @@ public static class ReportTemplateResolver
             {
                 var primary = normalized[..dash];
                 var bySubtag = published.Find(t => t.LanguageCode == primary);
-                if (bySubtag is not null) return bySubtag;
+                if (bySubtag is not null)
+                    return bySubtag;
             }
         }
 

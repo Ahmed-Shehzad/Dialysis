@@ -21,7 +21,8 @@ public sealed class DataTableComponent : IComponent
         {
             table.ColumnsDefinition(columns =>
             {
-                foreach (var _ in Headers) columns.RelativeColumn();
+                foreach (var _ in Headers)
+                    columns.RelativeColumn();
             });
             table.Header(header =>
             {

@@ -46,7 +46,8 @@ public sealed class CustomAttachmentHandlerHost : IAttachmentHandler
 
     private static string? ExtractCustomKindSuffix(string? propertiesJson)
     {
-        if (string.IsNullOrWhiteSpace(propertiesJson)) return null;
+        if (string.IsNullOrWhiteSpace(propertiesJson))
+            return null;
         try
         {
             using var doc = JsonDocument.Parse(propertiesJson);

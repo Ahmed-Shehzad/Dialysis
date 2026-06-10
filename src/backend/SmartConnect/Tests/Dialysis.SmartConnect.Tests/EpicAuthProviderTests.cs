@@ -89,7 +89,9 @@ public sealed class EpicAuthProviderTests
 
         public void Dispose()
         {
-            try { File.Delete(Path); } catch { /* best effort */ }
+            try
+            { File.Delete(Path); }
+            catch { /* best effort */ }
         }
     }
 }
