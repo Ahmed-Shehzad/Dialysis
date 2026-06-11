@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { fetchFlow, updateFlow } from "@/features/smartconnect/api/flows";
 import {
   CHANNEL_TEMPLATES,

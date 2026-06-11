@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchActiveSessions } from "@/features/sessions/api/sessionsApi";
 import { useSessionReadings } from "@/features/sessions/hooks/useSessionReadings";

@@ -1,4 +1,4 @@
-import { Route } from "react-router-dom";
+import { Route } from "react-router";
 import { lazyPage } from "@/shared/lazyPage";
 import type { ModuleManifest } from "@/shell/types";
 

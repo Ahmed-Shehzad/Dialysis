@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { searchEhrPatientsPage, type PatientSearchFilters } from "@/features/ehr/api/ehrApi";
 import { ModuleHeader } from "@/shell/ModuleHeader";

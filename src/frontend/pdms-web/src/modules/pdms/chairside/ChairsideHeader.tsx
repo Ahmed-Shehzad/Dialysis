@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import type { DialysisSessionSummary } from "@/features/sessions/api/sessionsApi";
 import { StatusBadge, type Status as RealtimeStatus } from "@/components/ui/StatusBadge";
 import { usePatientContext } from "@/shell/PatientContextProvider";

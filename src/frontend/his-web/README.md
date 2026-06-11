@@ -19,7 +19,7 @@ The HIS (Hospital Information System) browser app: **patient access, scheduling,
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**. Routing via `react-router-dom` with `BrowserRouter basename="/his"`. Realtime via `@microsoft/signalr`; charts via `echarts`; PDF via `pdfjs-dist`.
+React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**. Routing via `react-router` with `BrowserRouter basename="/his"`. Realtime via `@microsoft/signalr`; charts via `echarts`; PDF via `pdfjs-dist`.
 
 ```bash
 npm run dev        # Vite :5331 (predev runs npm install)
