@@ -20,7 +20,7 @@
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/admin"`.
+React 18 + Vite 8 + TypeScript 6 + TanStack Query 5, **npm** (Node ≥ 20.19); `react-router` v7 with `BrowserRouter basename="/admin"`; Tailwind CSS 4 (CSS-first, no `tailwind.config.js`).
 
 ```bash
 npm run dev        # Vite :5336

@@ -19,7 +19,7 @@ The operator API it drives is `/smartconnect/api/v1/admin/*` (see the module's o
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/smartconnect"`. Pipeline graphs via `@xyflow/react`.
+React 18 + Vite 8 + TypeScript 6 + TanStack Query 5, **npm** (Node ≥ 20.19); `react-router` v7 with `BrowserRouter basename="/smartconnect"`; Tailwind CSS 4 (CSS-first, no `tailwind.config.js`). Pipeline graphs via `@xyflow/react`.
 
 ```bash
 npm run dev        # Vite :5334

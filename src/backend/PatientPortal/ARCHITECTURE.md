@@ -9,6 +9,20 @@
 
 Generated from current code. See the root [README](../../README.md) for the system picture.
 
+## Context
+
+```mermaid
+flowchart LR
+    SPA([patient-portal-web SPA /portal]):::ui -->|cookie session| BFF[PatientPortal BFF]
+    BFF -->|bearer-forward YARP /portal/api/*| APIs[EHR / PDMS / HIS / HIE APIs<br/>patient-claim filtered]
+
+    EHR[EHR PatientPortal slice] -->|"PatientPortalSecureMessageReceived,<br/>PatientPortalAppointmentResolved,<br/>AfterVisitSummaryPublished"| Bus{{ITransponderBus}}
+    Bus -->|"queue bff-portal (consume-only,<br/>no DbContext / outbox)"| BFF
+    BFF -->|"PHI-light BffNotification -><br/>SignalR NotificationsHub /portal/events,<br/>group patient:{id}"| SPA
+
+    classDef ui fill:#dbeafe,stroke:#3b82f6
+```
+
 ## What the host does
 
 - **`AddModuleBff()` / `MapModuleBff()`** (from `Shared/Dialysis.Module.Bff`): OIDC against

@@ -8,7 +8,7 @@ The EHR (Electronic Health Record) browser app: the **patient record, orders, no
 | Standalone dev port (Vite)     | `5332`                                                                                                                                                              |
 | Backing BFF                    | `Dialysis.EHR.Bff` (`ehr-bff`, port `5302`)                                                                                                                         |
 | BFF aggregations               | HIE, Lab, SmartConnect (DICOM)                                                                                                                                      |
-| Real-time push                 | **Yes** — `LabResultReceived`, `PatientAdmitted/Discharged`, `PatientPortalSecureMessageSent`, `PatientPortalAppointmentRequested` → chart toasts via `/ehr/events` |
+| Real-time push                 | **Yes** — `useBffNotifications` on `/ehr/events`; the BFF pushes PHI-light notifications (lab results, admissions, portal messages/requests) rendered as generic type-driven toasts |
 
 ## What it does
 
@@ -21,7 +21,7 @@ Route definitions live in `EHR_ROUTES` and are kept in lockstep with the nav by 
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/ehr"`. Imaging via `pdfjs-dist` + DICOM; charts via `echarts`.
+React 18 + Vite 8 + TypeScript 6 + TanStack Query 5, **npm** (Node ≥ 20.19); `react-router` v7 with `BrowserRouter basename="/ehr"`; Tailwind CSS 4 (CSS-first, no `tailwind.config.js`). Imaging via `pdfjs-dist` + DICOM; charts via `echarts`.
 
 ```bash
 npm run dev        # Vite :5332

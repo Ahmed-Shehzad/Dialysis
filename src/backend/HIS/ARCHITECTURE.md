@@ -32,15 +32,17 @@ flowchart LR
     Slices --> DB[(Postgres - HisDbContext<br/>schema-per-slice)]
     Slices -->|integration events| OB[(Transponder outbox)]
     OB -->|RabbitMQ| Bus{{ITransponderBus}}
-    Bus --> EHR[EHR]
-    Bus --> PDMS[PDMS]
-    Bus --> HIE[HIE]
+    Bus -->|"PatientAdmitted / PatientDischarged,<br/>PatientCheckedIn / WalkInRegistered,<br/>BillingExportJobQueued"| EHR[EHR]
+    Bus -->|PatientPlacedInChair| PDMS[PDMS]
+    Bus -->|"PatientAdmitted (self-consumed)"| SELF["FHIR subscription broadcaster + BFF toast"]
+    EHR -->|"BillingExportJobCompleted / Failed"| OPS2[Operations consumers]
+    OPS2 --> DB
 
     classDef ui fill:#dbeafe,stroke:#3b82f6
     classDef ext fill:#fef3c7,stroke:#d97706
 ```
 
-HIS publishes operational facts (patient admitted, checked in, placed in chair, appointment booked, medication ordered, billing-export queued); EHR mirrors HIS-originated patients and files claims, PDMS reacts to chair placement.
+HIS publishes operational facts (patient admitted, checked in, placed in chair, appointment booked, medication ordered, billing-export queued); EHR mirrors HIS-originated patients and files claims, PDMS reacts to chair placement. The one **inbound** edge is EHR's billing-export outcome pair (`BillingExportJobCompleted`/`Failed`), which flips the matching `BillingExportJob` out of `Queued`.
 
 ---
 
@@ -64,7 +66,23 @@ HIS publishes operational facts (patient admitted, checked in, placed in chair, 
 | `Dialysis.HIS.Bff` | Per-context BFF (OIDC cookie + YARP) with event-driven push. |
 | `Dialysis.HIS.Tests` | xUnit + `WebApplicationFactory`. |
 
-Slices follow Evans' **Responsibility Layers**; each owns its commands/queries/handlers/aggregates and a Postgres schema (`his_patientflow`, `his_scheduling`, `his_medication`, `his_operations`, `his_security`, `his_integration`, `his_data`, `his_ra`).
+Slices follow Evans' **Responsibility Layers**; each owns its commands/queries/handlers/aggregates and a Postgres schema — **10 module schemas total** (8 slice schemas + `his_durablecommands` + `transponder`), plus the FHIR building-block tables (`fhir_audit`, `fhir_subscriptions`, `fhir_export`) on the same `HisDbContext`:
+
+```mermaid
+flowchart TB
+    PF["PatientFlow<br/>Admission (PatientQueueEntry is in-memory)"] --> S1[(his_patientflow)]
+    SCH[Scheduling<br/>Appointment] --> S2[(his_scheduling)]
+    MED[Medication<br/>MedicationOrder] --> S3[(his_medication)]
+    OPS["Operations<br/>StaffMember, InventoryItem,<br/>BillingExportJob + Audit"] --> S4[(his_operations)]
+    SEC[Security<br/>LocalUser] --> S5[(his_security)]
+    INT["Integration<br/>Device, DeviceReadingRecord"] --> S6[(his_integration)]
+    DS["DataServices<br/>DataImportJob, patient search,<br/>manager dashboard"] --> S7[(his_data)]
+    RA["RaCapabilities<br/>13 reference-architecture<br/>projection tables"] --> S8[(his_ra)]
+    DC[Durable-command ledger] --> S9[(his_durablecommands)]
+    OB[Transponder outbox / inbox / saga] --> S10[(transponder)]
+```
+
+(The query-only `PatientAccess` slice owns no schema — it reads across the others.)
 
 ---
 
@@ -174,7 +192,7 @@ erDiagram
 | `MedicationOrderPlacedIntegrationEvent` | `MedicationOrder.Place` |
 | `BillingExportJobQueuedIntegrationEvent` | `BillingExportJob.Queue` — consumed by `Dialysis.EHR.Billing` to file the claim |
 
-**Consumed:** HIS takes no external events into its own domain. Its only consumers fan out *its own* `PatientAdmittedIntegrationEvent` — `PatientAdmittedSubscriptionBroadcaster` (maps to a FHIR `Encounter`, broadcasts to FHIR Subscriptions) and the BFF's `PatientAdmittedNotificationConsumer` (SignalR toast). One **in-process domain event**, `BillingExportJobQueuedDomainEvent`, writes the `BillingExportJobAudit` row inside the same `SaveChanges`.
+**Consumed:** HIS consumes one external event pair — EHR's **`BillingExportJobCompletedIntegrationEvent`** and **`BillingExportJobFailedIntegrationEvent`** (Operations slice, `BillingExportJobCompletedConsumer`/`BillingExportJobFailedConsumer`), which flip the matching `BillingExportJob` from `Queued` to `Completed`/`Failed`; both are idempotent (a job no longer `Queued` is left untouched). Its remaining consumers fan out *its own* `PatientAdmittedIntegrationEvent` — `PatientAdmittedSubscriptionBroadcaster` (maps to a FHIR `Encounter`, broadcasts to FHIR Subscriptions) and the BFF's `PatientAdmittedNotificationConsumer` (SignalR toast). One **in-process domain event**, `BillingExportJobQueuedDomainEvent`, writes the `BillingExportJobAudit` row inside the same `SaveChanges`.
 
 ---
 
@@ -190,7 +208,7 @@ sequenceDiagram
     participant Dev as Device / gateway
     participant Api as DeviceIntegrationController
     participant Bus as IDurableCommandBus - RabbitMQ
-    participant Con as DurableCommandConsumer&lt;HisDbContext&gt;
+    participant Con as DurableCommandConsumer (HisDbContext)
     participant H as IngestDeviceReadingCommandHandler
     participant DB as HisDbContext
 
@@ -238,7 +256,9 @@ sequenceDiagram
     H->>DB: SaveChanges (state + outbox + audit, one tx)
     DB-->>H: domain event handler writes BillingExportJobAudit
     OB-->>EHR: relay BillingExportJobQueuedIntegrationEvent (RabbitMQ)
-    EHR->>EHR: file the actual claim
+    EHR->>EHR: file the actual claim(s) for the export period
+    EHR-->>Agg: BillingExportJobCompleted / BillingExportJobFailed (RabbitMQ)
+    Note over Agg: BillingExportJobCompletedConsumer / FailedConsumer<br/>flip the job Queued -> Completed / Failed (idempotent)
 ```
 
 ---
@@ -265,4 +285,6 @@ Permissions are the closed `HisPermissions` set (20 strings, e.g. `his.operation
 
 ## 7. Compliance
 
-`HisPatientEraser : IPatientEraser` implements GDPR Art. 17: it **soft-deletes** the Audit-tracked aggregates (`Appointment`, `Admission`, `MedicationOrder` via `ExecuteUpdateAsync`) and **hard-deletes** the plain telemetry/RA rows (`DeviceReadingRecord`, `RaPatientAlert`, `RaWaitlistEntry`, `RaSpecialistEncounterRecord`, `RaEhrDocumentExchangeRecord`, `RaClinicalDecisionSupportEvaluation` via `ExecuteDeleteAsync`), returning per-type counts. The Art. 17 pipeline is orchestrated centrally — see [HIE](../HIE/ARCHITECTURE.md) for the approve-and-execute flow and the `IErasureRequestStore`.
+`HisPatientEraser : IPatientEraser` implements GDPR Art. 17: it **soft-deletes** the Audit-tracked aggregates (`Appointment`, `Admission`, `MedicationOrder` via `ExecuteUpdateAsync`) and **hard-deletes** the plain telemetry/RA rows (`DeviceReadingRecord`, `RaPatientAlert`, `RaWaitlistEntry`, `RaSpecialistEncounterRecord`, `RaEhrDocumentExchangeRecord`, `RaClinicalDecisionSupportEvaluation` via `ExecuteDeleteAsync`), returning per-type counts.
+
+`HisModuleDataExtractor : IModuleDataExtractor` (Art. 15/20 export) mirrors that scope — `Appointment`/`Admission`/`MedicationOrder`, plus `DeviceReadingRecord` and the five RA row types — into the shared camelCase JSON bundle. The Art. 17 pipeline is orchestrated centrally — see [HIE](../HIE/ARCHITECTURE.md) for the approve-and-execute flow and the `IErasureRequestStore`.

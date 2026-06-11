@@ -8,7 +8,7 @@ The HIS (Hospital Information System) browser app: **patient access, scheduling,
 | Standalone dev port (Vite)     | `5331`                                                                                           |
 | Backing BFF                    | `Dialysis.HIS.Bff` (`his-bff`, port `5301`)                                                      |
 | BFF aggregations               | SmartConnect DICOMweb                                                                            |
-| Real-time push                 | **Yes** — consumes `PatientAdmittedIntegrationEvent` → live today-board toasts via `/his/events` |
+| Real-time push                 | **Yes** — `useBffNotifications` on `/his/events`; the BFF pushes PHI-light notifications (e.g. patient admitted) rendered as generic type-driven toasts |
 
 ## What it does
 
@@ -19,7 +19,7 @@ The HIS (Hospital Information System) browser app: **patient access, scheduling,
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**. Routing via `react-router` with `BrowserRouter basename="/his"`. Realtime via `@microsoft/signalr`; charts via `echarts`; PDF via `pdfjs-dist`.
+React 18 + Vite 8 + TypeScript 6 + TanStack Query 5, **npm** (Node ≥ 20.19). Routing via `react-router` v7 with `BrowserRouter basename="/his"`; styling via Tailwind CSS 4 (CSS-first `@theme` in `src/styles/index.css`, no `tailwind.config.js`). Realtime via `@microsoft/signalr`; charts via `echarts`; PDF via `pdfjs-dist`.
 
 ```bash
 npm run dev        # Vite :5331 (predev runs npm install)

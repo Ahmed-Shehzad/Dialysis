@@ -30,9 +30,16 @@ flowchart LR
     Layers --> DB[(Postgres - EhrDbContext<br/>schema-per-slice)]
     Layers --> OB[(Transponder outbox)]
     OB -->|RabbitMQ| Bus{{ITransponderBus}}
-    Bus <--> HIS[HIS]
-    Bus <--> PDMS[PDMS]
-    Bus --> HIE[HIE]
+
+    Bus -->|"PatientRegistered / DemographicsUpdated / PatientsMerged,<br/>EncounterOpened / EncounterClosed, ClinicalNoteSigned,<br/>LabOrderPlaced, LabResultReceived, ReferralRequested,<br/>*ProjectedAsOpenEhr, DialysisInvoiceReady"| HIE[HIE]
+    Bus -->|"PatientRegistered / DemographicsUpdated /<br/>PatientsMerged (directory trio)"| PDMS[PDMS]
+    Bus -->|"BillingExportJobCompleted / Failed"| HIS[HIS]
+    Bus -->|"PatientPortalSecureMessageReceived,<br/>PatientPortalAppointmentResolved,<br/>AfterVisitSummaryPublished"| Portal[PatientPortal BFF]
+
+    HIS -->|"PatientAdmitted / PatientDischarged,<br/>PatientCheckedIn / WalkInRegistered,<br/>BillingExportJobQueued"| INTG
+    PDMS -->|"DialysisSessionChargeReady,<br/>IntradialyticAdverseEvent"| INTG
+    HIE -->|ExternalEncounterIngested| INTG
+
     INTG -->|NCPDP / lab / 837| Partners([Pharmacy / Lab / Payers]):::ext
 
     classDef ui fill:#dbeafe,stroke:#3b82f6
@@ -62,6 +69,43 @@ flowchart LR
 | `Dialysis.EHR.Tests` | xUnit + `WebApplicationFactory` (Testcontainers Postgres). |
 
 Provider selection for the live module is by **connection-string presence**: when `ConnectionStrings:Ehr` is set the host calls `UseNpgsql`; otherwise EF runs in-memory. Per-slice schemas: `ehr_registration`, `ehr_chart`, `ehr_scheduling`, `ehr_clinical`, `ehr_portal`, `ehr_billing`, `ehr_integration`, plus `ehr_durablecommands` and `transponder`.
+
+### 2.1 Slice → aggregate → schema map
+
+```mermaid
+flowchart TB
+    subgraph REG [Registration]
+        P[Patient SoR + Provider + CareTeam]
+    end
+    subgraph CHART [PatientChart]
+        CH[Allergy, ProblemListItem, VitalSignReading,<br/>Immunization, MedicationStatement, CarePlan]
+    end
+    subgraph CLIN [ClinicalNotes]
+        EN[Encounter, ClinicalNote, Prescription,<br/>LabOrder/Result, ImagingOrder, Referral, OrderSet]
+    end
+    subgraph SCHED [Scheduling]
+        AP[Appointment, ProviderAvailabilityWindow]
+    end
+    subgraph PORTAL [PatientPortal]
+        PM[SecureMessage, PortalAppointmentRequest,<br/>AfterVisitSummary]
+    end
+    subgraph BILL [Billing]
+        BC[Charge, Claim, Remittance, Payment,<br/>Payer, CptFeeScheduleEntry]
+    end
+    subgraph INTG [Integration]
+        TX[Pharmacy/Lab/Insurer transmissions,<br/>HospitalEvent, AdverseEventRecord]
+    end
+
+    P --> S1[(ehr_registration)]
+    CH --> S2[(ehr_chart)]
+    EN --> S3[(ehr_clinical)]
+    AP --> S4[(ehr_scheduling)]
+    PM --> S5[(ehr_portal)]
+    BC --> S6[(ehr_billing)]
+    TX --> S7[(ehr_integration)]
+    DC[Durable-command ledger] --> S8[(ehr_durablecommands)]
+    OB[Transponder outbox / inbox / saga] --> S9[(transponder)]
+```
 
 ---
 
@@ -195,6 +239,7 @@ erDiagram
         guid PatientId
         guid EncounterId "soft"
         string CptCode
+        string RevenueCode "nullable - 4-digit, e.g. 0821; mandatory per line on institutional claims"
         decimal BilledAmount "Money VO"
         int Status
         guid AssignedClaimId "nullable"
@@ -206,6 +251,8 @@ erDiagram
         string PayerCode
         decimal BilledTotal "Money VO"
         string ExternalControlNumber "unique filtered"
+        string ClaimFormatCode "EhrClaimFormats - X12-837P/X12-837I/CMS-1500/UB-04"
+        json Institutional "InstitutionalClaimDetails VO - nullable"
         int Status
         datetime SubmittedAtUtc "nullable"
     }
@@ -231,20 +278,29 @@ erDiagram
     }
 ```
 
-Billing also holds `CptFeeScheduleEntry` (per CPT + payer), `ChargeIdempotencyMarker` (composite PK `(SessionId, CptCode)`), and the `BillableEncounter` read model. The **PatientPortal** slice (schema `ehr_portal`) owns `SecureMessage` (threaded), `PortalAppointmentRequest`, and `AfterVisitSummary` (with FK-cascade child instructions/follow-ups/resource-links). The **Integration** slice owns outbound transmission aggregates (`PharmacyTransmission`, `LabTransmission`, `InsurerTransmission`) and the `HospitalEvent` / `AdverseEventRecord` surveillance read models.
+Billing also holds `CptFeeScheduleEntry` (per CPT + payer), `ChargeIdempotencyMarker` (composite PK `(SessionId, CptCode)`), and the `BillableEncounter` read model.
+
+### 3.3 Institutional claims (837I / UB-04)
+
+The claim pipeline is format-routed via `Claim.ClaimFormatCode` against the `EhrClaimFormats` catalog — `X12-837P`, `X12-837I`, `CMS-1500`, `UB-04` — with `Claim.IsInstitutionalFormat(...)` deciding the institutional path:
+
+- **`InstitutionalClaimDetails`** (value object on `Claim.Institutional`, required for institutional formats and rejected on professional ones): `TypeOfBill` (e.g. `"0721"`), `StatementFrom`/`StatementTo`, `AdmissionDateUtc` + admission `TypeCode`, and `PrincipalProcedureCode` + `OtherProcedureCodes` (ICD-10-PCS).
+- **`Charge.RevenueCode`** — a 4-digit revenue code (e.g. `"0821"`), mandatory on every line of an institutional claim.
+- **`Edi837IClaimWriter`** emits X12 5010 **X223A2**: the TOB composite, `DTP*434` statement period, `DTP*435` + `CL1` admission, `HI` ABK/ABF diagnosis and BBR/BBQ procedure segments, and `SV2` revenue-coded service lines. It shares `Edi837SegmentWriter` with `Edi837PClaimWriter`, so 837P byte output is unchanged.
+- `SubmitClaimCommand` carries an optional `Institutional` payload; `ClaimSubmittedIntegrationEvent` carries the `ClaimFormatCode`. Covered by `SubmitInstitutionalClaimTests` and `Edi837IClaimWriterTests`. The **PatientPortal** slice (schema `ehr_portal`) owns `SecureMessage` (threaded), `PortalAppointmentRequest`, and `AfterVisitSummary` (with FK-cascade child instructions/follow-ups/resource-links). The **Integration** slice owns outbound transmission aggregates (`PharmacyTransmission`, `LabTransmission`, `InsurerTransmission`) and the `HospitalEvent` / `AdverseEventRecord` surveillance read models.
 
 ---
 
 ## 4. Integration events
 
-**Published** (selected — full set in `Dialysis.EHR.Contracts/Integration/`):
+**Published** — 35 event types in `Dialysis.EHR.Contracts/Integration/` (selected below). `PrescriptionOrdered` and `LabOrderPlaced` are at schema **v2** (they added `OverrideReason`/`OverriddenBy`); `ClaimSubmitted` carries the `ClaimFormatCode`.
 
 | Area | Events |
 |---|---|
 | Registration | `PatientRegistered`, `PatientDemographicsUpdated`, `PatientsMerged` |
 | Scheduling | `AppointmentBooked`, `AppointmentRescheduled`, `AppointmentCancelled`, `AppointmentCheckedIn` |
 | Clinical | `EncounterOpened`, `EncounterClosed`, `ClinicalNoteSigned`, `PrescriptionOrdered` (v2), `LabOrderPlaced` (v2), `LabResultReceived`, `ImagingOrderPlaced`, `ReferralRequested` |
-| Billing | `ChargeCaptured`, `ClaimSubmitted`, `RemittanceReceived`, `PaymentPosted`, `EdiAcknowledgementReceived`, `DialysisInvoiceReady` |
+| Billing | `ChargeCaptured`, `ClaimSubmitted`, `RemittanceReceived`, `PaymentPosted`, `EdiAcknowledgementReceived`, `BillingExportJobCompleted`/`Failed` (→ HIS Operations), `DialysisInvoiceReady` |
 | Portal | `PatientPortalSecureMessageSent/Received`, `PatientPortalAppointmentRequested/Resolved`, `AfterVisitSummaryPublished` |
 | OpenEHR | `ChartVitalSignProjectedAsOpenEhr`, `LabResultProjectedAsOpenEhr` |
 
@@ -260,6 +316,7 @@ Billing also holds `CptFeeScheduleEntry` (per CPT + payer), `ChargeIdempotencyMa
 | `IntradialyticAdverseEvent` (PDMS) | adverse-event surveillance read model |
 | `PatientAdmitted` / `PatientDischarged` (HIS) | hospital-event follow-up worklist |
 | `PatientCheckedIn` / `WalkInRegistered` (HIS) | mirror HIS-originated patients into EHR |
+| `BillingExportJobQueued` (HIS) | `BillingExportJobQueuedConsumer` files the claims for the export period, then publishes `BillingExportJobCompleted`/`Failed` back to HIS |
 | `ExternalEncounterIngested` (HIE) | unmatched external-encounter worklist |
 
 ---
@@ -320,12 +377,14 @@ sequenceDiagram
 
 ## 6. API surface
 
-Controllers under `api/v1.0/...`: `clinical` (patients, encounters, notes, lab/imaging/prescription orders, referrals, quality-gaps, recommendations), `patients`, `patient-chart`, `care-plans`/`care-team`/`care-coordination`, `order-sets`, `population`, `billing` (+ `fee-schedule`, worklists), `safety/surveillance`, and the **portal** surface (`portal/messages`, `portal/appointment-requests`, `after-visit-summaries`, `portal/reminders`). FHIR endpoints under `/fhir/...` (SMART config, bulk-data export, subscriptions) are opt-in by flag. The host also maps EU data-protection routes, durable-command status, and HIPAA safeguards.
+**15 controllers** under `api/v1.0/...`: `clinical` (patients, encounters, notes, lab/imaging/prescription orders, referrals, quality-gaps, recommendations), `patients`, `patient-chart`, `care-plans`/`care-team`/`care-coordination`, `order-sets`, `population`, `billing` (+ `fee-schedule`, worklists), `safety/surveillance`, and the **portal** surface (`portal/messages`, `portal/appointment-requests`, `after-visit-summaries`, `portal/reminders`). Billing **writes** (capture charge, submit claim, record remittance, post payment) are CQRS commands; `BillingController` is the read side. FHIR endpoints under `/fhir/...` (SMART config, bulk-data export, subscriptions) are opt-in by flag. The host also maps EU data-protection routes, durable-command status, and HIPAA safeguards.
 
-`RecordVitalSign` and `RecordAllergy` are **durable-command-bus** opt-ins (same id-from-CommandId pattern as PDMS/HIS). Portal self-access is gated by the caller's patient claim (`his_patient_id` / `sub`).
+`RecordVitalSign` and `RecordAllergy` are **durable-command-bus** opt-ins (flags `Ehr:DurableCommands:RecordVitalSign:Enabled` / `Ehr:DurableCommands:RecordAllergy:Enabled`, same id-from-CommandId pattern as PDMS/HIS). Portal self-access is gated by the caller's patient claim (`his_patient_id` / `sub`).
 
 ---
 
 ## 7. Compliance
 
-`EhrPatientEraser : IPatientEraser` (GDPR Art. 17) **soft-deletes** 15 patient-linked aggregate sets via `ExecuteUpdateAsync` (Allergy, ProblemListItem, VitalSignReading, Immunization, MedicationStatement, Appointment, PortalAppointmentRequest, SecureMessage, Encounter, ClinicalNote, Prescription, LabOrder, LabResult, Charge, Claim, Payment), then the **Patient root last**, returning per-category counts; idempotent. RoPA/HIPAA surfaces are wired via `AddEuDataProtection("ehr", …)` and `AddHipaaCompliance`. The approve-and-execute Art. 17 orchestration lives in [HIE](../HIE/ARCHITECTURE.md).
+`EhrPatientEraser : IPatientEraser` (GDPR Art. 17) **soft-deletes** 16 patient-linked aggregate sets via `ExecuteUpdateAsync` (Allergy, ProblemListItem, VitalSignReading, Immunization, MedicationStatement, Appointment, PortalAppointmentRequest, SecureMessage, Encounter, ClinicalNote, Prescription, LabOrder, LabResult, Charge, Claim, Payment), then the **Patient root last** — 17 categories total, returning per-category counts; idempotent.
+
+`EhrModuleDataExtractor : IModuleDataExtractor` (Art. 15/20 export) mirrors that scope across **17 resource types including the Patient root**, emitting the shared camelCase JSON bundle; both are registered Scoped in `AddEhrPersistence`. RoPA/HIPAA surfaces are wired via `AddEuDataProtection("ehr", …)` and `AddHipaaCompliance`. The approve-and-execute Art. 17 orchestration lives in [HIE](../HIE/ARCHITECTURE.md).
