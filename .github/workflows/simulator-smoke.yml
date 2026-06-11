@@ -391,6 +391,24 @@ jobs:
             exit 1
           fi
           echo "All seven BFF contexts + the S14/S15/S16/S17 completeness loops returned data."
+      - name: Diagnostics (only on failure)
+        if: failure()
+        run: |
+          # The AppHost console carries only lifecycle banners (resource logs flow through DCP, not
+          # stdout), so the aspire.log tail alone can't explain a 502. Capture the layers directly:
+          echo '===== listening sockets (which hosts are actually alive, and where) ====='
+          sudo ss -ltnp || ss -ltn || true
+          echo '===== direct BFF probes (pinned ports — connection-refused vs HTTP answer) ====='
+          for p in 5275 5301 5302 5303 5304 5305 5306 5307; do
+            code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://localhost:${p}/" || echo 'CONN-FAIL')
+            echo "  :${p} -> ${code}"
+          done
+          echo '===== verbose sample of one failing gateway hop ====='
+          curl -sv -m 10 "http://localhost:9090/his/api/v1.0/patient-flow/todays-queue" -o /dev/null 2>&1 | tail -n 25 || true
+          echo '===== infrastructure containers ====='
+          docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
+          echo '===== AppHost log (full — lifecycle only) ====='
+          cat /tmp/aspire.log || true
       - name: Stop Aspire stack
         if: always()
         run: kill "$(cat /tmp/aspire.pid)" || true
