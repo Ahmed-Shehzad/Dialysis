@@ -119,7 +119,13 @@ The pattern in the verdicts: signals win where the code *derives and reports* st
 (candidates 1–2), and lose where the code *guards* state (4–5). That distinction — state
 plane vs. data plane — is the whole adoption rule.
 
-## 5. Recommended pilot (architect's choice; design only, not yet implemented)
+## 5. Recommended pilot (architect's choice)
+
+> **Status update (2026-06-11):** following the decision to counter the library risks by
+> building first-party, this section is implemented as
+> `src/backend/BuildingBlocks/Transponder/Reactive/Transponder.Reactive.Signals` (zero
+> external dependencies, observer seam in `Transponder.Abstractions/Diagnostics/`), with the
+> §5.3 concurrency spike suite green — see that project's README.
 
 ### 5.1 Shape
 

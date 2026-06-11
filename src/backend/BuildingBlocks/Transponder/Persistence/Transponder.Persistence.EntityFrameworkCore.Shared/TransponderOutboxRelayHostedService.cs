@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Diagnostics;
 using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,17 +32,20 @@ public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundSe
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptions<TransponderOutboxRelayOptions> _options;
     private readonly ILogger<TransponderOutboxRelayHostedService<TContext>> _logger;
+    private readonly ITransponderStateObserver _stateObserver;
     /// <summary>
     /// Polls unprocessed outbox rows and publishes them through <see cref="ITransponderBus"/>.
     /// Multi-replica safe on PostgreSQL via a per-database advisory lock; see the class docs.
     /// </summary>
     public TransponderOutboxRelayHostedService(IServiceScopeFactory scopeFactory,
         IOptions<TransponderOutboxRelayOptions> options,
-        ILogger<TransponderOutboxRelayHostedService<TContext>> logger)
+        ILogger<TransponderOutboxRelayHostedService<TContext>> logger,
+        ITransponderStateObserver? stateObserver = null)
     {
         _scopeFactory = scopeFactory;
         _options = options;
         _logger = logger;
+        _stateObserver = stateObserver ?? NullTransponderStateObserver.Instance;
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -71,6 +75,8 @@ public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundSe
                         if (!acquired)
                         {
                             await db.Database.CloseConnectionAsync().ConfigureAwait(false);
+                            _stateObserver.OnOutboxRelayTick(new TransponderOutboxRelayObservation(
+                                typeof(TContext).Name, IsLeader: false, BatchSize: 0, TimeSpan.Zero, LastError: null));
                             await Task.Delay(opts.IdlePollInterval, stoppingToken).ConfigureAwait(false);
                             continue;
                         }
@@ -86,9 +92,10 @@ public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundSe
                             .ConfigureAwait(false);
 
                         // Lag gauge from the batch head (ordered by CreatedAtUtc) — zero extra queries.
-                        TransponderOutboxMetrics.RecordOldestPendingAge(
-                            typeof(TContext).Name,
-                            batch.Count == 0 ? TimeSpan.Zero : DateTime.UtcNow - batch[0].CreatedAtUtc);
+                        var oldestPendingAge = batch.Count == 0 ? TimeSpan.Zero : DateTime.UtcNow - batch[0].CreatedAtUtc;
+                        TransponderOutboxMetrics.RecordOldestPendingAge(typeof(TContext).Name, oldestPendingAge);
+                        _stateObserver.OnOutboxRelayTick(new TransponderOutboxRelayObservation(
+                            typeof(TContext).Name, IsLeader: true, batch.Count, oldestPendingAge, LastError: null));
 
                         foreach (var row in batch)
                         {
@@ -105,6 +112,9 @@ public sealed class TransponderOutboxRelayHostedService<TContext> : BackgroundSe
                             catch (Exception ex)
                             {
                                 TransponderOutboxMetrics.RecordFailure(typeof(TContext).Name);
+                                // Exception type name only — never payloads or PHI.
+                                _stateObserver.OnOutboxRelayTick(new TransponderOutboxRelayObservation(
+                                    typeof(TContext).Name, IsLeader: true, batch.Count, oldestPendingAge, ex.GetType().Name));
                                 _logger.LogError(
                                     ex,
                                     "Transponder outbox relay failed for row {OutboxId}; will retry on next poll.",
