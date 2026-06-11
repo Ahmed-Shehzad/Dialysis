@@ -15,7 +15,11 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [status, setStatus] = useState<AuthState["status"]>("idle");
+  // Starts in "loading" because the mount effect below immediately probes /identity/user;
+  // initializing here (instead of setStatus("loading") inside the effect) avoids a
+  // synchronous setState in an effect body (react-hooks/set-state-in-effect) and one
+  // cascading render. "idle" stays in the union for consumers that branch on it.
+  const [status, setStatus] = useState<AuthState["status"]>("loading");
 
   const getAccessToken = () => {
     const token = tokenStore.get();
@@ -42,7 +46,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let cancelled = false;
-    setStatus("loading");
 
     const hardTimeout = globalThis.setTimeout(() => {
       if (cancelled) return;

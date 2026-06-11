@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPolicies,
@@ -43,7 +43,9 @@ export const OnCallPoliciesPage = () => {
         </div>
       )}
 
-      {policy && <PolicyEditor policy={policy} onApplied={invalidate} />}
+      {/* Keyed by policy id: a different policy remounts the editor with fresh local
+          state, replacing the old "sync props into state in an effect" pattern. */}
+      {policy && <PolicyEditor key={policy.id} policy={policy} onApplied={invalidate} />}
     </div>
   );
 };
@@ -64,17 +66,8 @@ const PolicyEditor = ({
     policy.informationalPrimaryWindowSeconds,
   );
   const [quietHours, setQuietHours] = useState(policy.quietHoursSuppressNonCritical);
-
-  // Keep local state in sync if the parent refetches with a different policy id.
-  useEffect(() => {
-    setName(policy.name);
-    setCriticalPrimary(policy.criticalPrimaryWindowSeconds);
-    setCriticalBackup(policy.criticalBackupWindowSeconds);
-    setWarningPrimary(policy.warningPrimaryWindowSeconds);
-    setWarningBackup(policy.warningBackupWindowSeconds);
-    setInformationalPrimary(policy.informationalPrimaryWindowSeconds);
-    setQuietHours(policy.quietHoursSuppressNonCritical);
-  }, [policy]);
+  // A different policy id remounts this editor via the `key` at the call site, so the
+  // useState initializers above are the only props→state sync point (no sync effect).
 
   const mutation = useMutation({
     mutationFn: () =>

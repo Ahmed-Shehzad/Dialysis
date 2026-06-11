@@ -21,10 +21,22 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
   const connectionRef = useRef<HubConnection | null>(null);
   const [readings, setReadings] = useState<VitalsReading[]>([]);
   const [cost, setCost] = useState<SessionCost | null>(null);
-  const [status, setStatus] = useState<ConnectionStatus>("idle");
+  // Connection lifecycle events are recorded against the session they belong to; the
+  // *displayed* status is derived: no session → "idle", a session with no recorded event
+  // yet → "connecting" (the effect below starts the connection as soon as it runs). This
+  // replaces the old synchronous setStatus("connecting") inside the effect body
+  // (react-hooks/set-state-in-effect).
+  const [lastEvent, setLastEvent] = useState<{ id: string; status: ConnectionStatus } | null>(null);
+  const status: ConnectionStatus = !sessionId
+    ? "idle"
+    : lastEvent?.id === sessionId
+      ? lastEvent.status
+      : "connecting";
 
   useEffect(() => {
     if (!sessionId) return undefined;
+
+    const setStatus = (next: ConnectionStatus) => setLastEvent({ id: sessionId, status: next });
 
     let cancelled = false;
     const connection = buildHubConnection({
@@ -53,7 +65,6 @@ export const useVitalsStream = (sessionId: string | undefined): UseVitalsStreamR
     connection.onreconnected(() => setStatus("connected"));
     connection.onclose(() => setStatus("disconnected"));
 
-    setStatus("connecting");
     // Keep the start promise so cleanup can await it before stopping. Calling stop() while the
     // negotiate request is still in flight throws "The connection was stopped during negotiation"
     // — which React 18 StrictMode triggers on every mount via its immediate mount→unmount→mount.

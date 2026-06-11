@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   scheduleSession,
@@ -58,31 +58,32 @@ const initialForm = (defaultPatientId?: string): FormState => ({
   accessEstablishedOn: defaultAccessDate(),
 });
 
+// Gate component: the dialog content only mounts while the dialog is open, so all form
+// state initializes fresh on every open via plain useState initializers — replacing the
+// old "reset state in an effect when `open` flips" pattern (react-hooks/set-state-in-effect).
 export const ScheduleSessionDialog = ({
   open,
   onClose,
   defaultPatientId,
 }: ScheduleSessionDialogProps) => {
+  if (!open) return null;
+  return <ScheduleSessionDialogContent onClose={onClose} defaultPatientId={defaultPatientId} />;
+};
+
+const ScheduleSessionDialogContent = ({
+  onClose,
+  defaultPatientId,
+}: Omit<ScheduleSessionDialogProps, "open">) => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(() => initialForm(defaultPatientId));
   const [localStart, setLocalStart] = useState(defaultStart());
   const [patientQuery, setPatientQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<EhrPatient | null>(null);
 
-  // Reset form state each time the dialog opens.
-  useEffect(() => {
-    if (open) {
-      setForm(initialForm(defaultPatientId));
-      setLocalStart(defaultStart());
-      setPatientQuery("");
-      setSelectedPatient(null);
-    }
-  }, [open, defaultPatientId]);
-
   const patientsQuery = useQuery({
     queryKey: ["ehr", "patients", "picker", patientQuery],
     queryFn: () => searchEhrPatients(patientQuery || undefined, 20),
-    enabled: open && !selectedPatient,
+    enabled: !selectedPatient,
     placeholderData: keepPreviousData,
   });
 
@@ -106,8 +107,6 @@ export const ScheduleSessionDialog = ({
       !mutation.isPending
     );
   }, [form, mutation.isPending]);
-
-  if (!open) return null;
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));

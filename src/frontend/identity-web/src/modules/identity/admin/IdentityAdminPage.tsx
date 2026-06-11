@@ -34,9 +34,13 @@ const renderClaimValue = (value: unknown): string => {
 export const IdentityAdminPage = () => {
   const { user, status, signOut } = useAuth();
 
+  // Capture the token into a plain binding first: the React Compiler cannot preserve a
+  // useMemo whose dependency is an optional-chained member expression
+  // (react-hooks/preserve-manual-memoization), but a captured local works.
+  const accessToken = user?.accessToken;
   const tokenClaims = useMemo<JwtClaims | null>(
-    () => (user?.accessToken ? decodeJwt(user.accessToken) : null),
-    [user?.accessToken],
+    () => (accessToken ? decodeJwt(accessToken) : null),
+    [accessToken],
   );
 
   const expiry = formatExpiry(tokenClaims);

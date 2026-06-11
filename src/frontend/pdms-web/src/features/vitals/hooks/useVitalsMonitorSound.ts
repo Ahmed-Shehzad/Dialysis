@@ -53,8 +53,12 @@ export const useVitalsMonitorSound = ({
 
   // Hold the latest control state in a ref so the per-reading effect can read it without depending
   // on it (we only want that effect to fire when a *new reading* arrives, not on severity flips).
+  // The ref is written in an effect (not during render — react-hooks/refs); it is declared before
+  // the per-reading effect below, so it always syncs first within the same commit.
   const stateRef = useRef({ enabled, active, severity });
-  stateRef.current = { enabled, active, severity };
+  useEffect(() => {
+    stateRef.current = { enabled, active, severity };
+  }, [enabled, active, severity]);
 
   const toggle = useCallback(() => {
     setEnabled((prev) => {

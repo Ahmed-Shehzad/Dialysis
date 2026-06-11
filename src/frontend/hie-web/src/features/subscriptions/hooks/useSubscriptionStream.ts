@@ -39,24 +39,33 @@ export const useSubscriptionStream = (
 ): UseSubscriptionStreamResult => {
   const { getAccessToken } = useAuth();
   const [notifications, setNotifications] = useState<SubscriptionNotification[]>([]);
-  const [status, setStatus] = useState<StreamStatus>("idle");
+  // Connection events are recorded against the stream they belong to; the *displayed*
+  // status is derived: no stream → "idle", invalid id → "disconnected" (fail closed —
+  // never open an EventSource for an unvalidated id), a stream with no recorded event
+  // yet → "connecting" (the effect below opens the EventSource as soon as it runs).
+  // This replaces the old synchronous setStatus(...) calls inside the effect body
+  // (react-hooks/set-state-in-effect).
+  const [lastEvent, setLastEvent] = useState<{ key: string; status: StreamStatus } | null>(null);
   const seqRef = useRef(0);
 
+  const streamKey = module && subscriptionId ? `${module}:${subscriptionId}` : null;
+  const status: StreamStatus = !streamKey
+    ? "idle"
+    : !isValidSubscriptionId(subscriptionId!)
+      ? "disconnected"
+      : lastEvent?.key === streamKey
+        ? lastEvent.status
+        : "connecting";
+
   useEffect(() => {
-    if (!module || !subscriptionId) {
-      setStatus("idle");
+    if (!module || !subscriptionId || !isValidSubscriptionId(subscriptionId)) {
       return undefined;
     }
 
-    if (!isValidSubscriptionId(subscriptionId)) {
-      // Never open an EventSource for an unvalidated id — fail closed instead of
-      // writing unsanitized input into the SSE URL.
-      setStatus("disconnected");
-      return undefined;
-    }
+    const key = `${module}:${subscriptionId}`;
+    const setStatus = (next: StreamStatus) => setLastEvent({ key, status: next });
 
     let closed = false;
-    setStatus("connecting");
     const source = new EventSource(subscriptionSseUrl(module, subscriptionId, getAccessToken()), {
       withCredentials: true,
     });
@@ -94,7 +103,9 @@ export const useSubscriptionStream = (
     return () => {
       closed = true;
       source.close();
-      setStatus("idle");
+      // Forget the recorded event so a future stream (or a remount of the same one)
+      // derives "connecting" again instead of showing a stale status.
+      setLastEvent(null);
     };
   }, [module, subscriptionId, getAccessToken]);
 
