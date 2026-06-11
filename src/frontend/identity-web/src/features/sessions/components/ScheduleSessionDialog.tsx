@@ -123,7 +123,7 @@ const ScheduleSessionDialogContent = ({
 
   const labelClass = "block text-xs uppercase tracking-wide text-slate-400";
   const inputClass =
-    "mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-clinic-500 focus:outline-none";
+    "mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-clinic-500 focus:outline-hidden";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

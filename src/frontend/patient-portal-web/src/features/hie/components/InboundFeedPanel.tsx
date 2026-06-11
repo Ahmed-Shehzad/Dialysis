@@ -45,7 +45,7 @@ export const InboundFeedPanel = () => {
             value={partnerFilter}
             onChange={(e) => setPartnerFilter(e.target.value)}
             placeholder="all"
-            className="w-40 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 font-mono text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+            className="w-40 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 font-mono text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
           />
         </label>
       </header>

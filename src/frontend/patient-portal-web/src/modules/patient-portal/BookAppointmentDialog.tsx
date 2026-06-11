@@ -121,7 +121,7 @@ export const BookAppointmentDialog = ({ patientId, onClose }: BookAppointmentDia
                 min={todayPlusDaysIso(0)}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-clinic-500 focus:outline-none"
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-clinic-500 focus:outline-hidden"
               />
             </label>
             <label className="block text-sm">
@@ -131,7 +131,7 @@ export const BookAppointmentDialog = ({ patientId, onClose }: BookAppointmentDia
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-clinic-500 focus:outline-none"
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-clinic-500 focus:outline-hidden"
               />
             </label>
           </div>
@@ -141,7 +141,7 @@ export const BookAppointmentDialog = ({ patientId, onClose }: BookAppointmentDia
             <select
               value={durationMin}
               onChange={(e) => setDurationMin(Number.parseInt(e.target.value, 10))}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-clinic-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-clinic-500 focus:outline-hidden"
             >
               <option value={15}>15 minutes</option>
               <option value={30}>30 minutes</option>

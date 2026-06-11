@@ -114,7 +114,7 @@ export const AddNoteDialog = ({ patientId, onClose }: AddNoteDialogProps) => {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Patient reports…"
-              className="w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-none"
+              className="w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-hidden"
             />
           </label>
 

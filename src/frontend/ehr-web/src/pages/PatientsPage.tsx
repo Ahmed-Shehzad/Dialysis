@@ -62,7 +62,7 @@ const statusBadge = (status: string) => {
 };
 
 const inputClass =
-  "w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-clinic-500 focus:outline-none";
+  "w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-clinic-500 focus:outline-hidden";
 const labelClass = "block text-[10px] uppercase tracking-wide text-slate-400";
 
 export const PatientsPage = () => {

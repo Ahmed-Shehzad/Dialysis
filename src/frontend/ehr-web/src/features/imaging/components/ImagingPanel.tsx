@@ -87,7 +87,7 @@ export const ImagingPanel = ({ patientId }: { patientId: string }) => {
             value={studyIndex}
             onChange={(e) => setStudyIndex(Number(e.target.value))}
             aria-label="Imaging study"
-            className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+            className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
           >
             {COMMON_IMAGING_STUDIES.map((s, i) => (
               <option key={s.label} value={i}>

@@ -55,7 +55,7 @@ export const CommunityHealthRecordPanel = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="external patient id"
-            className="w-56 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 font-mono text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+            className="w-56 rounded-md border border-slate-700 bg-slate-950 px-2 py-1 font-mono text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
           />
         </label>
         <button

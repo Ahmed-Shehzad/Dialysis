@@ -138,7 +138,7 @@ export const PatientPortalPage = () => {
               value={manualId}
               onChange={(e) => setTypedId(e.target.value)}
               aria-label="Patient with portal data"
-              className="w-full rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+              className="w-full rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-hidden"
             >
               {accessibleIds.map((id) => (
                 <option key={id} value={id}>
@@ -154,7 +154,7 @@ export const PatientPortalPage = () => {
               onChange={(e) => setTypedId(e.target.value)}
               placeholder="Patient Guid…"
               aria-label="Patient id"
-              className="flex-1 rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+              className="flex-1 rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-hidden"
             />
           </div>
         </section>

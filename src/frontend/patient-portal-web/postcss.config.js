@@ -1,10 +1,12 @@
-import tailwindcss from "tailwindcss";
-import autoprefixer from "autoprefixer";
-
 /**
+ * Tailwind v4 runs through the dedicated Vite plugin (`@tailwindcss/vite`, see
+ * vite.config.ts), which also owns vendor prefixing via Lightning CSS — so the
+ * old `tailwindcss` / `autoprefixer` PostCSS plugins are gone. Vite still applies
+ * this PostCSS config to the CSS after the Tailwind plugin (it runs `pre`), which
+ * keeps the local fix-up below working against the generated preflight.
+ *
  * Tailwind's preflight emits only `-webkit-text-size-adjust`; standards-following browsers
  * ignore the prefixed form, so pair it with `text-size-adjust` inside the same rule.
- * Runs after autoprefixer so the cloned declaration isn't re-expanded.
  */
 const textSizeAdjustStandard = {
   postcssPlugin: "text-size-adjust-standard",
@@ -19,5 +21,5 @@ const textSizeAdjustStandard = {
 };
 
 export default {
-  plugins: [tailwindcss, autoprefixer, textSizeAdjustStandard],
+  plugins: [textSizeAdjustStandard],
 };

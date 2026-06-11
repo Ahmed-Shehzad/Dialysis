@@ -107,7 +107,7 @@ export const CheckInDialog = ({ entry, onClose }: CheckInDialogProps) => {
               required
               value={arrival}
               onChange={(e) => setArrival(e.target.value)}
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-hidden"
             />
           </label>
 
