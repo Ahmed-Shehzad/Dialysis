@@ -1,0 +1,24 @@
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "admin-bff-config"
+  labels:
+    app.kubernetes.io/name: "{{ .Chart.Name }}"
+    app.kubernetes.io/component: "admin-bff"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+data:
+  OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "{{ .Values.config.admin_bff.OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY }}"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "{{ .Values.config.admin_bff.ASPNETCORE_FORWARDEDHEADERS_ENABLED }}"
+  ASPNETCORE_URLS: "{{ .Values.config.admin_bff.ASPNETCORE_URLS }}"
+  Bff__Keycloak__Authority: "{{ .Values.config.admin_bff.Bff__Keycloak__Authority }}"
+  Bff__Module__ModuleApiAddress: "{{ .Values.config.admin_bff.Bff__Module__ModuleApiAddress }}"
+  ConnectionStrings__rabbitmq: "{{ .Values.config.admin_bff.rabbitmq_connection }}"
+  ConnectionStrings__valkey: "{{ .Values.config.admin_bff.valkey_connection }}"
+  Bff__Events__RabbitMq__ConnectionUri: "{{ .Values.config.admin_bff.rabbitmq_connection }}"
+  Bff__Events__SignalR__BackplaneConnectionString: "{{ .Values.config.admin_bff.valkey_connection }}"
+  ConnectionStrings__Hangfire: "{{ .Values.config.admin_bff.hangfire_hie_connection }}"
+  Bff__Module__Aggregations__0__Address: "{{ .Values.config.admin_bff.Bff__Module__Aggregations__0__Address }}"
+  Bff__Module__Aggregations__1__Address: "{{ .Values.config.admin_bff.Bff__Module__Aggregations__1__Address }}"
+  Bff__Module__Aggregations__2__Address: "{{ .Values.config.admin_bff.Bff__Module__Aggregations__2__Address }}"
+  Bff__Module__Aggregations__3__Address: "{{ .Values.config.admin_bff.Bff__Module__Aggregations__3__Address }}"

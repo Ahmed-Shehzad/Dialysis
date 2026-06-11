@@ -1,8 +1,10 @@
-# Deployment-artifact drift gate. The compose projects (deploy/compose/<env>/) and Helm charts
-# (deploy/charts/dialysis-<env>/) are GENERATED from the Aspire AppHost — there is no hand-curated
-# overlay. This job regenerates all three environments for both publishers and fails if the result
-# differs from what's committed, enforcing CLAUDE.md's "commit the regenerated artifacts alongside
-# the AppHost edit so the three env shapes stay in lockstep" rule mechanically instead of by memory.
+# Deployment-artifact drift gate. The compose projects (deploy/compose/<env>/), the full-stack Helm
+# charts (deploy/charts/dialysis-<env>/), and the per-unit prod Helm charts
+# (deploy/charts/units/prod/dialysis-<unit>/, driven by DIALYSIS_DEPLOY_UNIT) are GENERATED from the
+# Aspire AppHost — there is no hand-curated overlay. This job regenerates all three environments for
+# both publishers plus all nine deployment units and fails if the result differs from what's
+# committed, enforcing CLAUDE.md's "commit the regenerated artifacts alongside the AppHost edit so
+# the env shapes stay in lockstep" rule mechanically instead of by memory.
 #
 # Same pattern as docs-regulatory.yml's pdf-source-of-truth job: regenerate from source, then
 # `git diff --exit-code`. `--deploy false` means the Aspire publishers never touch a Docker daemon,
@@ -59,25 +61,29 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
 
-      # Compose + Helm charts for dev / staging / prod, regenerated from the AppHost in one target.
+      # Compose + Helm charts for dev / staging / prod AND the nine per-unit prod charts
+      # (deploy/charts/units/prod/), regenerated from the AppHost in one target.
       - name: Regenerate deploy artifacts from the AppHost
         run: ./build.sh PublishDeployArtifacts --configuration Release
 
+      # The diff covers everything under deploy/ — compose projects, the full-stack charts, and
+      # deploy/charts/units/ — so a stale or hand-edited unit chart fails the gate the same way
+      # a stale compose file does.
       - name: Fail if deploy/ drifted from the AppHost
         run: |
           if ! git diff --quiet -- deploy/ || [ -n "$(git status --porcelain -- deploy/)" ]; then
-            echo "::error::deploy/ artifacts are out of sync with the Aspire AppHost."
+            echo "::error::deploy/ artifacts (compose, full-stack charts, and/or unit charts under deploy/charts/units/) are out of sync with the Aspire AppHost."
             echo "Regenerate them and commit the result alongside your AppHost change:"
             echo "    ./build.sh PublishDeployArtifacts && git add deploy/"
             echo "----------------------------- drift -----------------------------"

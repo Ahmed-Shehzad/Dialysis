@@ -32,9 +32,11 @@
         "Publish",
         "PublishAllCompose",
         "PublishAllKubernetes",
+        "PublishAllKubernetesUnits",
         "PublishCompose",
         "PublishDeployArtifacts",
         "PublishKubernetes",
+        "PublishKubernetesUnit",
         "PushImages",
         "Restore",
         "ShowVersion",
@@ -141,6 +143,10 @@
         "Registry": {
           "type": "string",
           "description": "Container registry + repository prefix PushImages publishes to — e.g. mycompany.jfrog.io/dialysis-docker (a Docker repository on JFrog Artifactory / JFrog Container Registry) or ghcr.io/myorg. Authenticate first: `docker login <registry host>` (JFrog: username + identity token)"
+        },
+        "Unit": {
+          "type": "string",
+          "description": "Deployment unit for PublishKubernetesUnit — one of his / ehr / pdms / smartconnect / hie / lab / identity / portal / platform. See src/aspire/Dialysis.AppHost/DeploymentUnit.cs for what each unit contains"
         },
         "Version": {
           "type": "string",

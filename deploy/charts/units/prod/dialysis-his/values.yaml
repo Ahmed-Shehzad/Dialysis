@@ -1,0 +1,67 @@
+parameters:
+  his_api:
+    port_http: 8080
+    his_api_image: "his-api:latest"
+  his_bff:
+    his_bff_image: "his-bff:latest"
+  his_web:
+    his_web_image: "his-web:latest"
+secrets:
+  postgres_his:
+    postgres_his_password: ""
+  his_api:
+    ConnectionStrings__His: ""
+    postgres_his_password: ""
+    HIS_URI: ""
+    ConnectionStrings__Hangfire: ""
+    HANGFIRE_URI: ""
+  his_bff:
+    his_bff_client_secret: ""
+    ConnectionStrings__Hangfire: ""
+    postgres_his_password: ""
+    HANGFIRE_URI: ""
+config:
+  postgres_his:
+    POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+    POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    POSTGRES_USER: "postgres"
+  his_api:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    HTTP_PORTS: ""
+    HIS_HOST: "postgres-his-service"
+    HIS_PORT: "5432"
+    HIS_USERNAME: "postgres"
+    HIS_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-his-service:5432/dialysis_his"
+    HIS_DATABASENAME: "dialysis_his"
+    HANGFIRE_HOST: "postgres-his-service"
+    HANGFIRE_PORT: "5432"
+    HANGFIRE_USERNAME: "postgres"
+    HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-his-service:5432/dialysis_his"
+    HANGFIRE_DATABASENAME: "dialysis_his"
+    rabbitmq_connection: "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+    valkey_connection: "valkey-service:6379,password=CHANGE-ME"
+    His__Transponder__EnableOutboxRelay: "true"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    His__Authentication__Audience: "account"
+    His__Fhir__Enabled: "true"
+  his_bff:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    ASPNETCORE_URLS: "http://+:5301"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    Bff__Module__ModuleApiAddress: ""
+    rabbitmq_connection: "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+    valkey_connection: "valkey-service:6379,password=CHANGE-ME"
+    HANGFIRE_HOST: "postgres-his-service"
+    HANGFIRE_PORT: "5432"
+    HANGFIRE_USERNAME: "postgres"
+    HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-his-service:5432/dialysis_his"
+    HANGFIRE_DATABASENAME: "dialysis_his"
+    Bff__Module__Aggregations__0__Address: "http://smartconnect-api-service:8080"
+  his_web:
+    NODE_ENV: "production"
+    BROWSER: "none"
+    VITE_GATEWAY_URL: "http://gateway-service:9090"
+    VITE_API_BASE_URL: "http://gateway-service:9090"
+    PORT: "5331"

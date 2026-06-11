@@ -1,0 +1,74 @@
+parameters:
+  smartconnect_api:
+    port_http: 8080
+    smartconnect_api_image: "smartconnect-api:latest"
+  smartconnect_bff:
+    smartconnect_bff_image: "smartconnect-bff:latest"
+  smartconnect_web:
+    smartconnect_web_image: "smartconnect-web:latest"
+secrets:
+  postgres_smartconnect:
+    postgres_smartconnect_password: ""
+  smartconnect_api:
+    ConnectionStrings__SmartConnect: ""
+    postgres_smartconnect_password: ""
+    SMARTCONNECT_URI: ""
+    ConnectionStrings__Hangfire: ""
+    HANGFIRE_URI: ""
+  smartconnect_bff:
+    smartconnect_bff_client_secret: ""
+    ConnectionStrings__Hangfire: ""
+    postgres_smartconnect_password: ""
+    HANGFIRE_URI: ""
+config:
+  postgres_smartconnect:
+    POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+    POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    POSTGRES_USER: "postgres"
+  smartconnect_api:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    HTTP_PORTS: ""
+    SMARTCONNECT_HOST: "postgres-smartconnect-service"
+    SMARTCONNECT_PORT: "5432"
+    SMARTCONNECT_USERNAME: "postgres"
+    SMARTCONNECT_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-smartconnect-service:5432/dialysis_smartconnect"
+    SMARTCONNECT_DATABASENAME: "dialysis_smartconnect"
+    HANGFIRE_HOST: "postgres-smartconnect-service"
+    HANGFIRE_PORT: "5432"
+    HANGFIRE_USERNAME: "postgres"
+    HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-smartconnect-service:5432/dialysis_smartconnect"
+    HANGFIRE_DATABASENAME: "dialysis_smartconnect"
+    rabbitmq_connection: "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+    valkey_connection: "valkey-service:6379,password=CHANGE-ME"
+    SmartConnect__Transponder__EnableOutboxRelay: "true"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    SmartConnect__Authentication__Audience: "account"
+    SmartConnect__SourceConnectors__0__Name: "Hl7Mllp"
+    SmartConnect__SourceConnectors__0__Kind: "mllp"
+    SmartConnect__SourceConnectors__0__DefaultFlowId: "b1d10001-0001-4000-8000-000000000001"
+    SmartConnect__SourceConnectors__0__Parameters__Port: "2575"
+    SmartConnect__SourceConnectors__1__Name: "LocalDrop"
+    SmartConnect__SourceConnectors__1__Kind: "file-reader"
+    SmartConnect__SourceConnectors__1__DefaultFlowId: "b1d10001-0001-4000-8000-000000000001"
+    SmartConnect__SourceConnectors__1__Parameters__Directory: "./tmp/smartconnect/drop"
+    SmartConnect__SourceConnectors__1__Parameters__Pattern: "*.hl7"
+  smartconnect_bff:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    ASPNETCORE_URLS: "http://+:5304"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    Bff__Module__ModuleApiAddress: ""
+    rabbitmq_connection: "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+    valkey_connection: "valkey-service:6379,password=CHANGE-ME"
+    HANGFIRE_HOST: "postgres-smartconnect-service"
+    HANGFIRE_PORT: "5432"
+    HANGFIRE_USERNAME: "postgres"
+    HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-smartconnect-service:5432/dialysis_smartconnect"
+    HANGFIRE_DATABASENAME: "dialysis_smartconnect"
+  smartconnect_web:
+    NODE_ENV: "production"
+    BROWSER: "none"
+    VITE_GATEWAY_URL: "http://gateway-service:9090"
+    VITE_API_BASE_URL: "http://gateway-service:9090"
+    PORT: "5334"

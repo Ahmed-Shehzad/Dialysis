@@ -123,3 +123,6 @@ node_modules/
 ## fixed — so it stays an untracked byproduct, excluded from the deploy-artifacts drift gate.
 deploy/compose/*/aspire-manifest.json
 deploy/charts/*/aspire-manifest.json
+# Unit charts emit the same publisher by-product; its content is not deterministic
+# between runs, so the drift gate must never see it.
+deploy/charts/units/*/*/aspire-manifest.json

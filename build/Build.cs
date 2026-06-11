@@ -80,7 +80,16 @@ class Build : NukeBuild
                "Authenticate first: `docker login <registry host>` (JFrog: username + identity token).")]
     readonly string Registry;
 
+    [Parameter("Deployment unit for PublishKubernetesUnit — one of his / ehr / pdms / smartconnect / hie / lab / identity / portal / platform. " +
+               "See src/aspire/Dialysis.AppHost/DeploymentUnit.cs for what each unit contains.")]
+    readonly string Unit;
+
     static readonly string[] AllComposeEnvironments = ["dev", "staging", "prod"];
+
+    // Must stay in lockstep with DeploymentUnit.All in the AppHost (install order: platform first,
+    // then identity, then the bounded contexts).
+    static readonly string[] AllDeploymentUnits =
+        ["platform", "identity", "his", "ehr", "pdms", "smartconnect", "hie", "lab", "portal"];
 
     AbsolutePath SolutionFile => RootDirectory / "Dialysis.slnx";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
@@ -91,6 +100,8 @@ class Build : NukeBuild
     AbsolutePath ComposeOutputDirectoryFor(string env) => ComposeRootDirectory / env;
     AbsolutePath HelmChartsRootDirectory => RootDirectory / "deploy" / "charts";
     AbsolutePath HelmChartOutputDirectoryFor(string env) => HelmChartsRootDirectory / ("dialysis-" + env);
+    AbsolutePath UnitHelmChartOutputDirectoryFor(string env, string unit) =>
+        HelmChartsRootDirectory / "units" / env / ("dialysis-" + unit);
 
     Target Clean => _ => _
         .Description("Removes every bin/obj under src + tests and empties the artifacts directory.")
@@ -414,9 +425,36 @@ class Build : NukeBuild
             }
         });
 
+    Target PublishKubernetesUnit => _ => _
+        .Description("Regenerates ONE deployment unit's Helm chart from the Aspire AppHost (`--publisher k8s` + DIALYSIS_DEPLOY_UNIT). Pick the unit with --unit his|ehr|pdms|smartconnect|hie|lab|identity|portal|platform and the shape with --environment (default prod). Output: deploy/charts/units/<environment>/dialysis-<unit>/ — an independently installable chart that interoperates with its sibling units inside the dialysis-<environment> namespace.")
+        .Requires(() => Unit)
+        .Executes(() => PublishKubernetesUnitFor(Environment, Unit));
+
+    Target PublishAllKubernetesUnits => _ => _
+        .Description("Fans PublishKubernetesUnit out across all nine deployment units — PROD ONLY by design: independently deployable units are a production-ops concern (dev = the Aspire F5 loop, staging = the full-stack chart), so only deploy/charts/units/prod/ is generated and drift-gated. Run before committing any AppHost change so the unit charts stay in lockstep.")
+        .Executes(() =>
+        {
+            foreach (var unit in AllDeploymentUnits)
+            {
+                PublishKubernetesUnitFor("prod", unit);
+            }
+        });
+
+    void PublishKubernetesUnitFor(string environment, string unit)
+    {
+        if (Array.IndexOf(AllDeploymentUnits, unit) < 0)
+        {
+            throw new ArgumentException(
+                $"Unsupported --unit '{unit}'. Expected one of: {string.Join(", ", AllDeploymentUnits)}.");
+        }
+        RunAspirePublisher("k8s", environment, UnitHelmChartOutputDirectoryFor(environment, unit),
+            sentinel: "Chart.yaml",
+            extraEnvironment: new Dictionary<string, string> { ["DIALYSIS_DEPLOY_UNIT"] = unit });
+    }
+
     Target PublishDeployArtifacts => _ => _
-        .Description("Regenerates EVERY deployment artifact in one shot — compose projects and Helm charts for all three environments (dev / staging / prod) — from the Aspire AppHost. Run this after any AppHost change, then commit deploy/. The deploy-artifacts CI gate fails the PR if these drift from the AppHost.")
-        .DependsOn(PublishAllCompose, PublishAllKubernetes);
+        .Description("Regenerates EVERY deployment artifact in one shot — compose projects and Helm charts for all three environments (dev / staging / prod) plus the nine per-unit prod Helm charts — from the Aspire AppHost. Run this after any AppHost change, then commit deploy/. The deploy-artifacts CI gate fails the PR if these drift from the AppHost.")
+        .DependsOn(PublishAllCompose, PublishAllKubernetes, PublishAllKubernetesUnits);
 
     Target PushImages => _ => _
         .Description("Builds every repo-built deployment image (module APIs, BFFs, gateway, SPAs) and pushes it to --registry " +

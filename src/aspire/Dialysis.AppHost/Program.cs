@@ -17,6 +17,7 @@ using System.Globalization;
 using Aspire.Hosting.Docker.Resources.ComposeNodes;
 using Aspire.Hosting.Docker.Resources.ServiceNodes;
 using Aspire.Hosting.Kubernetes;
+using Aspire.Hosting.Pipelines;
 using Projects;
 
 namespace Dialysis.AppHost;
@@ -43,6 +44,56 @@ public class Program
         var publisherName = builder.ExecutionContext.PublisherName;
         var isComposePublish = publishing && string.Equals(publisherName, "compose", StringComparison.OrdinalIgnoreCase);
         var isKubernetesPublish = publishing && string.Equals(publisherName, "k8s", StringComparison.OrdinalIgnoreCase);
+
+        // --- Deployment unit (per-unit Kubernetes publishing) ----------------------
+        // DIALYSIS_DEPLOY_UNIT (see DeploymentUnit) carves the topology into independently
+        // deployable bounded-context units — k8s publish mode ONLY. The dev F5 loop never reads
+        // the variable (deployUnit stays null in run mode), and when it is unset every include
+        // flag below is true and every external stand-in branch is dead code, so the classic
+        // full-stack artifacts are byte-identical to the pre-unit shape (CI drift-gated).
+        string? deployUnit = null;
+        if (publishing)
+        {
+            deployUnit = DeploymentUnit.NormalizeOrThrow(builder.Configuration[DeploymentUnit.EnvVarName]);
+            if (deployUnit is not null && !isKubernetesPublish)
+            {
+                throw new InvalidOperationException(
+                    $"{DeploymentUnit.EnvVarName}={deployUnit} is only supported by the k8s publisher " +
+                    "(per-unit Helm charts under deploy/charts/units/). The compose publisher always " +
+                    "renders the full topology — unset the variable.");
+            }
+        }
+        var includeSharedInfra = DeploymentUnit.IncludesSharedInfra(deployUnit);
+        var includeKeycloak = DeploymentUnit.IncludesKeycloak(deployUnit);
+        var includeGateway = DeploymentUnit.IncludesGateway(deployUnit);
+        var includeHis = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.His);
+        var includeEhr = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.Ehr);
+        var includePdms = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.Pdms);
+        var includeSmartConnect = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.SmartConnect);
+        var includeHie = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.Hie);
+        var includeLab = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.Lab);
+        var includeIdentityContext = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.Identity);
+        var includePortalContext = DeploymentUnit.IncludesContext(deployUnit, DeploymentUnit.Portal);
+
+        // Unit charts cannot build images in-cluster — every workload image must come from a
+        // registry. Registering one here does two jobs: (a) it satisfies the k8s publisher's
+        // push-prereq pipeline step, which otherwise cancels small unit graphs before the chart
+        // is written, and (b) it registry-qualifies the image defaults in the unit chart's
+        // values.yaml. DIALYSIS_IMAGE_REGISTRY (the PushImages flow) overrides the endpoint at
+        // publish time; the committed default is a deliberately fake hostname so nobody can pull
+        // an unvetted image by accident — operators set the real registry via values.yaml or by
+        // regenerating with the env var. Gated to unit publishes only, so the full-stack
+        // artifacts stay byte-identical.
+        if (deployUnit is not null)
+        {
+            var unitRegistryEndpoint =
+                builder.Configuration[ContainerRegistryPublishExtensions.RegistryEnvVar]
+                ?? "registry.dialysis.invalid";
+#pragma warning disable ASPIRECOMPUTE003 // Evaluation-only API: the registry resource is the only
+            // way to satisfy push-prereq today; revisit on the next Aspire upgrade.
+            builder.AddContainerRegistry("unit-registry", unitRegistryEndpoint);
+#pragma warning restore ASPIRECOMPUTE003
+        }
 
         // --- Deployment publisher -------------------------------------------------
         // `dotnet run --project src/aspire/Dialysis.AppHost --publisher compose --output-path deploy/compose/<env>`
@@ -175,16 +226,90 @@ public class Program
                 .WithDashboard(false)
                 .WithHelm(helm =>
                 {
-                    helm.WithChartName("dialysis-" + deployEnv);
+                    // Unit publishing renames chart + release per unit but keeps the SAME namespace
+                    // as the full chart so units interoperate over stable in-cluster Service DNS
+                    // (Aspire names Services "<resource>-service", release-name-free).
+                    helm.WithChartName(deployUnit is null
+                        ? "dialysis-" + deployEnv
+                        : "dialysis-unit-" + deployUnit);
                     helm.WithChartVersion("0.1.0");
-                    helm.WithChartDescription(
-                        $"Dialysis modular monolith ({deployEnv}) — every module API, the BFF, the gateway, " +
-                        "the SPA, plus per-module Postgres, RabbitMQ, Valkey, Keycloak. Generated from the " +
-                        "Aspire AppHost; do not hand-edit the manifests, re-run the NUKE PublishKubernetes target.");
+                    helm.WithChartDescription(deployUnit is null
+                        ? $"Dialysis modular monolith ({deployEnv}) — every module API, the BFF, the gateway, " +
+                          "the SPA, plus per-module Postgres, RabbitMQ, Valkey, Keycloak. Generated from the " +
+                          "Aspire AppHost; do not hand-edit the manifests, re-run the NUKE PublishKubernetes target."
+                        : $"Dialysis '{deployUnit}' deployment unit ({deployEnv}) — independently deployable bounded-context " +
+                          "slice of the platform; cross-unit dependencies are external connection strings / config " +
+                          "values pointing at sibling unit releases in the same namespace. Generated from the Aspire " +
+                          "AppHost; do not hand-edit the manifests, re-run the NUKE PublishKubernetesUnit target.");
                     helm.WithNamespace("dialysis-" + deployEnv);
-                    helm.WithReleaseName("dialysis");
+                    helm.WithReleaseName(deployUnit is null ? "dialysis" : "dialysis-" + deployUnit);
                 });
             DedupeDeploymentTargets("k8s");
+        }
+
+        // Unit publishes generate the chart and NOTHING else. The 13.4-preview pipeline schedules
+        // build/push/deploy/runtime-check steps even with `--deploy false`, and on the small unit
+        // graphs their failures (no Docker daemon, no live cluster) cancel the DAG before the
+        // chart-writing step runs — the full graph only survives by winning that race. Neutering
+        // the actions (rather than removing the steps) keeps the DAG shape intact while making
+        // chart generation deterministic and dependency-free (no Docker, no helm, no cluster) for
+        // both local regeneration and the deploy-artifacts CI drift gate. Full-stack publishes are
+        // untouched (deployUnit is null there), preserving byte-stability.
+        if (isKubernetesPublish && deployUnit is not null && k8SEnv is not null)
+        {
+#pragma warning disable ASPIREPIPELINES001 // Evaluation-only pipeline API: the only deterministic
+            // way to stop preview-publisher build/push/deploy steps from cancelling unit chart
+            // generation; revisit on the next Aspire upgrade alongside ASPIRECOMPUTE003 above.
+            k8SEnv.WithAnnotation(new PipelineConfigurationAnnotation(context =>
+            {
+                // Allowlist, not blocklist: the preview HelmDeploymentEngine keeps growing
+                // per-resource build/push/deploy/summary steps (several contact a live cluster and
+                // hang without one), so units keep ONLY the chart-generation chain and drop
+                // everything else.
+                var keep = new HashSet<string>(StringComparer.Ordinal)
+                {
+                    WellKnownPipelineSteps.BeforeStart,
+                    WellKnownPipelineSteps.ProcessParameters,
+                    WellKnownPipelineSteps.PublishPrereq,
+                    WellKnownPipelineSteps.Publish,
+                    WellKnownPipelineSteps.Diagnostics,
+                    "publish-manifest",
+                    "publish-k8s",
+                    "validate-build-only-container-references",
+                    "validate-kubernetes",
+                    "validate-compute-environments",
+                    "prepare-deployment-targets-k8s",
+                    "dialysis-dedupe-deployment-targets-k8s",
+                };
+
+                var removed = context.Steps
+                    .Where(step => !keep.Contains(step.Name))
+                    .Select(step => step.Name)
+                    .ToHashSet(StringComparer.Ordinal);
+                // Steps is init-only and handed to callbacks as a ReadOnlyCollection wrapping the
+                // resolver's own mutable List (Aspire 13.4 preview). Unwrapping that list is the
+                // only mutation vector the API leaves; the cast + field name are asserted loudly so
+                // the next Aspire upgrade can't silently change semantics underneath us.
+#pragma warning disable S3011 // Deliberate accessibility bypass: see the comment above — the
+                // preview API exposes no mutation surface, and the failure mode is a loud throw.
+                if (context.Steps is not System.Collections.ObjectModel.ReadOnlyCollection<PipelineStep> wrapper
+                    || typeof(System.Collections.ObjectModel.ReadOnlyCollection<PipelineStep>)
+                        .GetField("list", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.GetValue(wrapper) is not List<PipelineStep> steps)
+#pragma warning restore S3011
+                {
+                    throw new InvalidOperationException(
+                        $"PipelineConfigurationContext.Steps is no longer a ReadOnlyCollection over List<PipelineStep> (got {context.Steps.GetType().FullName}); revisit the unit-publish pipeline pruning after the Aspire upgrade.");
+                }
+                steps.RemoveAll(step => removed.Contains(step.Name));
+                foreach (var step in steps)
+                {
+                    step.DependsOnSteps.RemoveAll(removed.Contains);
+                    step.RequiredBySteps.RemoveAll(removed.Contains);
+                }
+                return Task.CompletedTask;
+            }));
+#pragma warning restore ASPIREPIPELINES001
         }
 
         // --- Constants -------------------------------------------------------------
@@ -206,13 +331,40 @@ public class Program
         const int gatewayPort = 9090;
 
         // --- Shared infrastructure -------------------------------------------------
+        // In the full topology (and the platform unit) RabbitMQ + Valkey are in-model containers;
+        // in every other unit they become external connection-string stand-ins (Aspire surfaces
+        // each as a secret the operator points at the platform unit's in-cluster Services). The
+        // broker-typed variables stay around so run-mode WaitFor / publish-time decoration only
+        // touch the in-model resources; consumers reference the connection-string-typed aliases,
+        // which fit both shapes.
+        IResourceBuilder<RabbitMQServerResource>? rabbitBroker = null;
+        IResourceBuilder<ValkeyResource>? valkeyBroker = null;
+        IResourceBuilder<IResourceWithConnectionString> rabbit;
+        IResourceBuilder<IResourceWithConnectionString> valkey;
+        if (includeSharedInfra)
+        {
+            rabbitBroker = builder.AddRabbitMQ("rabbitmq")
+                .WithManagementPlugin()
+                .WithLifetime(ContainerLifetime.Persistent);
+            rabbit = rabbitBroker;
 
-        var rabbit = builder.AddRabbitMQ("rabbitmq")
-            .WithManagementPlugin()
-            .WithLifetime(ContainerLifetime.Persistent);
-
-        var valkey = builder.AddValkey("valkey")
-            .WithLifetime(ContainerLifetime.Persistent);
+            valkeyBroker = builder.AddValkey("valkey")
+                .WithLifetime(ContainerLifetime.Persistent);
+            valkey = valkeyBroker;
+        }
+        else
+        {
+            // Parameter-backed with resolvable in-cluster defaults: a bare AddConnectionString
+            // never resolves at publish time and the k8s pipeline then waits forever before the
+            // chart-writing step. publishValueAsDefault lands the default in the unit chart's
+            // values, where operators override host/credentials per cluster.
+            var rabbitConnection = builder.AddParameter(
+                "rabbitmq-connection", DeploymentUnit.RabbitMqConnectionDefault, publishValueAsDefault: true);
+            var valkeyConnection = builder.AddParameter(
+                "valkey-connection", DeploymentUnit.ValkeyConnectionDefault, publishValueAsDefault: true);
+            rabbit = builder.AddConnectionString("rabbitmq", ReferenceExpression.Create($"{rabbitConnection.Resource}"));
+            valkey = builder.AddConnectionString("valkey", ReferenceExpression.Create($"{valkeyConnection.Resource}"));
+        }
 
         // Aspire.Hosting.Keycloak has no stable 13.2.x release matching the rest of the bundle, so
         // we provision Keycloak via a generic container resource. The realm import volume + dev-friendly
@@ -222,32 +374,48 @@ public class Program
         // `.WaitFor(keycloak)` actually block until the realm is imported and serving — otherwise
         // WaitFor returns the instant the container reports Running (process started), and consumers
         // like the BFF race ahead and hit IDX20803 (unable to obtain OIDC configuration).
-        var keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26.0")
-            .WithArgs("start-dev", "--import-realm")
-            .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
-            .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
-            .WithEnvironment("KC_DB", "dev-mem")
-            .WithEnvironment("KC_HEALTH_ENABLED", "true")
-            .WithEnvironment("KC_HTTP_ENABLED", "true")
-            .WithHttpEndpoint(port: keycloakHostPort, targetPort: keycloakContainerPort, name: "http")
-            .WithHttpHealthCheck(keycloakDiscoveryPath, statusCode: 200, endpointName: "http");
-        // Realm-import bind mount is only meaningful for run-time + compose: the k8s publisher
-        // rejects bind mounts (Aspire 13.4) and a production k8s deployment of Keycloak would
-        // import the realm via the operator's own ConfigMap or a sidecar init container instead.
-        // For k8s the chart ships Keycloak without the realm; operators wire `Authentication__Authority`
-        // per-cluster via Helm values.yaml.
-        if (!isKubernetesPublish)
+        IResourceBuilder<ContainerResource>? keycloak = null;
+        ReferenceExpression keycloakRealmUri;
+        if (includeKeycloak)
         {
-            keycloak.WithBindMount(keycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true);
-        }
-        // Deliberately NOT Persistent: --import-realm only imports if the realm doesn't
-        // already exist, so a long-lived container makes dialysis-realm.json edits invisible
-        // (redirect_uri / client / role changes silently ignored). With KC_DB=dev-mem the
-        // in-container state is ephemeral by design, so re-creating the container each run
-        // is cheap and keeps the realm in lockstep with the file.
+            keycloak = builder.AddContainer("keycloak", "quay.io/keycloak/keycloak", "26.0")
+                .WithArgs("start-dev", "--import-realm")
+                .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
+                .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
+                .WithEnvironment("KC_DB", "dev-mem")
+                .WithEnvironment("KC_HEALTH_ENABLED", "true")
+                .WithEnvironment("KC_HTTP_ENABLED", "true")
+                .WithHttpEndpoint(port: keycloakHostPort, targetPort: keycloakContainerPort, name: "http")
+                .WithHttpHealthCheck(keycloakDiscoveryPath, statusCode: 200, endpointName: "http");
+            // Realm-import bind mount is only meaningful for run-time + compose: the k8s publisher
+            // rejects bind mounts (Aspire 13.4) and a production k8s deployment of Keycloak would
+            // import the realm via the operator's own ConfigMap or a sidecar init container instead.
+            // For k8s the chart ships Keycloak without the realm; operators wire `Authentication__Authority`
+            // per-cluster via Helm values.yaml.
+            if (!isKubernetesPublish)
+            {
+                keycloak.WithBindMount(keycloakRealmImportPath, "/opt/keycloak/data/import", isReadOnly: true);
+            }
+            // Deliberately NOT Persistent: --import-realm only imports if the realm doesn't
+            // already exist, so a long-lived container makes dialysis-realm.json edits invisible
+            // (redirect_uri / client / role changes silently ignored). With KC_DB=dev-mem the
+            // in-container state is ephemeral by design, so re-creating the container each run
+            // is cheap and keeps the realm in lockstep with the file.
 
-        var keycloakRealmUri = ReferenceExpression.Create(
-            $"{keycloak.GetEndpoint("http")}/realms/{keycloakRealm}");
+            keycloakRealmUri = ReferenceExpression.Create(
+                $"{keycloak.GetEndpoint("http")}/realms/{keycloakRealm}");
+        }
+        else
+        {
+            // Unit publishing (non-identity units): Keycloak lives in the identity unit's release,
+            // so the realm authority becomes a plain config parameter with an in-cluster default
+            // pointing at that release's stable Service DNS. Operators override it in values.yaml
+            // when their cluster shape differs (e.g. an external IdP). publishValueAsDefault bakes
+            // the default into the published artifact (otherwise the chart value renders empty).
+            var keycloakAuthority = builder.AddParameter(
+                "keycloak-authority", DeploymentUnit.KeycloakAuthorityDefault, publishValueAsDefault: true);
+            keycloakRealmUri = ReferenceExpression.Create($"{keycloakAuthority.Resource}");
+        }
 
         // --- BFF OIDC client secrets ----------------------------------------------
         // Every per-context BFF (and the legacy identity BFF) is a CONFIDENTIAL Keycloak client, so
@@ -259,14 +427,17 @@ public class Program
         // means Aspire surfaces each as a generated `.env` entry (compose) / parameter value (k8s)
         // rather than baking the dev secret into the image, so a real deployment overrides it from a
         // secret store. See deploy/compose/README.md §"BFF client secrets".
-        var hisBffSecret = builder.AddParameter("his-bff-client-secret", "his-bff-dev-secret-change-me", secret: true);
-        var ehrBffSecret = builder.AddParameter("ehr-bff-client-secret", "ehr-bff-dev-secret-change-me", secret: true);
-        var pdmsBffSecret = builder.AddParameter("pdms-bff-client-secret", "pdms-bff-dev-secret-change-me", secret: true);
-        var smartConnectBffSecret = builder.AddParameter("smartconnect-bff-client-secret", "smartconnect-bff-dev-secret-change-me", secret: true);
-        var hieBffSecret = builder.AddParameter("hie-bff-client-secret", "hie-bff-dev-secret-change-me", secret: true);
-        var adminBffSecret = builder.AddParameter("admin-bff-client-secret", "admin-bff-dev-secret-change-me", secret: true);
-        var portalBffSecret = builder.AddParameter("portal-bff-client-secret", "portal-bff-dev-secret-change-me", secret: true);
-        var identityBffSecret = builder.AddParameter("identity-bff-client-secret", "bff-dev-secret-change-me", secret: true);
+        // Each secret is gated to the unit that consumes it so a unit chart's values.yaml carries
+        // only its own credentials; the full topology (deployUnit == null) registers all eight in
+        // the original order.
+        var hisBffSecret = includeHis ? builder.AddParameter("his-bff-client-secret", "his-bff-dev-secret-change-me", secret: true) : null;
+        var ehrBffSecret = includeEhr ? builder.AddParameter("ehr-bff-client-secret", "ehr-bff-dev-secret-change-me", secret: true) : null;
+        var pdmsBffSecret = includePdms ? builder.AddParameter("pdms-bff-client-secret", "pdms-bff-dev-secret-change-me", secret: true) : null;
+        var smartConnectBffSecret = includeSmartConnect ? builder.AddParameter("smartconnect-bff-client-secret", "smartconnect-bff-dev-secret-change-me", secret: true) : null;
+        var hieBffSecret = includeHie ? builder.AddParameter("hie-bff-client-secret", "hie-bff-dev-secret-change-me", secret: true) : null;
+        var adminBffSecret = includeIdentityContext ? builder.AddParameter("admin-bff-client-secret", "admin-bff-dev-secret-change-me", secret: true) : null;
+        var portalBffSecret = includePortalContext ? builder.AddParameter("portal-bff-client-secret", "portal-bff-dev-secret-change-me", secret: true) : null;
+        var identityBffSecret = includeIdentityContext ? builder.AddParameter("identity-bff-client-secret", "bff-dev-secret-change-me", secret: true) : null;
 
         // --- Per-module Postgres ---------------------------------------------------
 
@@ -290,19 +461,45 @@ public class Program
         // host-side port + healthcheck onto each one. The DB-wrapper builder (.AddDatabase) is what
         // downstream resources use for the connection string, but the host port mapping belongs on
         // the server resource.
-        var hisPgServer = Pg(builder, "postgres-his");
-        var ehrPgServer = Pg(builder, "postgres-ehr");
-        var pdmsPgServer = PgTimescale(builder, "postgres-pdms");
-        var smartconnectPgServer = Pg(builder, "postgres-smartconnect");
-        var hiePgServer = Pg(builder, "postgres-hie");
-        var labPgServer = Pg(builder, "postgres-lab");
+        var hisPgServer = includeHis ? Pg(builder, "postgres-his") : null;
+        var ehrPgServer = includeEhr ? Pg(builder, "postgres-ehr") : null;
+        var pdmsPgServer = includePdms ? PgTimescale(builder, "postgres-pdms") : null;
+        var smartconnectPgServer = includeSmartConnect ? Pg(builder, "postgres-smartconnect") : null;
+        var hiePgServer = includeHie ? Pg(builder, "postgres-hie") : null;
+        var labPgServer = includeLab ? Pg(builder, "postgres-lab") : null;
 
-        var hisDb = hisPgServer.AddDatabase("His", databaseName: "dialysis_his");
-        var ehrDb = ehrPgServer.AddDatabase("Ehr", databaseName: "dialysis_ehr");
-        var pdmsDb = pdmsPgServer.AddDatabase("Pdms", databaseName: "dialysis_pdms");
-        var smartconnectDb = smartconnectPgServer.AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
-        var hieDb = hiePgServer.AddDatabase("Hie", databaseName: "dialysis_hie");
-        var labDb = labPgServer.AddDatabase("Lab", databaseName: "dialysis_lab");
+        var hisDb = hisPgServer?.AddDatabase("His", databaseName: "dialysis_his");
+        var ehrDb = ehrPgServer?.AddDatabase("Ehr", databaseName: "dialysis_ehr");
+        var pdmsDb = pdmsPgServer?.AddDatabase("Pdms", databaseName: "dialysis_pdms");
+        var smartconnectDb = smartconnectPgServer?.AddDatabase("SmartConnect", databaseName: "dialysis_smartconnect");
+        var hieDb = hiePgServer?.AddDatabase("Hie", databaseName: "dialysis_hie");
+        var labDb = labPgServer?.AddDatabase("Lab", databaseName: "dialysis_lab");
+
+        // Cross-unit Hangfire storage stand-ins. The identity unit's two BFFs park their Hangfire
+        // schemas on the HIS / HIE module databases, and the portal BFF on HIS — databases owned
+        // by sibling units when publishing those units. Each becomes an external connection
+        // string (referenced under the consumer's usual "Hangfire" connection name) that the
+        // operator points at the owning unit's in-cluster Postgres Service.
+        IResourceBuilder<IResourceWithConnectionString>? hisHangfire = null;
+        if (deployUnit is DeploymentUnit.Identity or DeploymentUnit.Portal)
+        {
+            var hisHangfireConnection = builder.AddParameter(
+                "hangfire-his-connection",
+                DeploymentUnit.ModulePostgresConnectionDefault("postgres-his", "dialysis_his"),
+                publishValueAsDefault: true);
+            hisHangfire = builder.AddConnectionString(
+                "hangfire-his", ReferenceExpression.Create($"{hisHangfireConnection.Resource}"));
+        }
+        IResourceBuilder<IResourceWithConnectionString>? hieHangfire = null;
+        if (deployUnit is DeploymentUnit.Identity)
+        {
+            var hieHangfireConnection = builder.AddParameter(
+                "hangfire-hie-connection",
+                DeploymentUnit.ModulePostgresConnectionDefault("postgres-hie", "dialysis_hie"),
+                publishValueAsDefault: true);
+            hieHangfire = builder.AddConnectionString(
+                "hangfire-hie", ReferenceExpression.Create($"{hieHangfireConnection.Resource}"));
+        }
 
         // --- Dev data dashboards (Postgres / Valkey / RabbitMQ) --------------------
         //
@@ -317,12 +514,13 @@ public class Program
         {
             // PostgreSQL: a single shared pgAdmin that browses every module database. Calling WithPgAdmin on
             // each server registers it with the one pgAdmin container (Aspire de-dupes the admin resource).
-            hisPgServer.WithPgAdmin();
-            ehrPgServer.WithPgAdmin();
-            pdmsPgServer.WithPgAdmin();
-            smartconnectPgServer.WithPgAdmin();
-            hiePgServer.WithPgAdmin();
-            labPgServer.WithPgAdmin();
+            // Run mode only (deployUnit is always null here) — every server is in-model.
+            hisPgServer!.WithPgAdmin();
+            ehrPgServer!.WithPgAdmin();
+            pdmsPgServer!.WithPgAdmin();
+            smartconnectPgServer!.WithPgAdmin();
+            hiePgServer!.WithPgAdmin();
+            labPgServer!.WithPgAdmin();
 
             // Valkey: the official Valkey Admin web UI (https://valkey-admin.valkey.io). The Valkey hosting
             // package ships no UI helper, so add the container directly and point it at the broker by its DCP
@@ -334,7 +532,7 @@ public class Program
                 .WithEnvironment("VALKEY_PORT", "6379")
                 .WithEnvironment("VALKEY_TLS", "false")
                 .WithHttpEndpoint(targetPort: 8080, name: "http")
-                .WaitFor(valkey);
+                .WaitFor(valkeyBroker!);
         }
 
         // --- SonarQube (auto-start with the AppHost) ------------------------------
@@ -372,8 +570,10 @@ public class Program
         // ships it) but a RUN-mode launch can opt out with Dialysis:EnableSonarQube=false, so a weight-
         // sensitive run — e.g. the CI k6 load test — doesn't pay for an analyzer it never touches and the
         // gateway comes up well inside the readiness window.
-        var enableSonarQube = publishing ||
-            !string.Equals(builder.Configuration["Dialysis:EnableSonarQube"], "false", StringComparison.OrdinalIgnoreCase);
+        // SonarQube is a dev-time analyzer for the full stack — it is NEVER part of a deployment
+        // unit (deployUnit != null publishes skip it entirely).
+        var enableSonarQube = (publishing && deployUnit is null) ||
+            (!publishing && !string.Equals(builder.Configuration["Dialysis:EnableSonarQube"], "false", StringComparison.OrdinalIgnoreCase));
         IResourceBuilder<ContainerResource>? sonarqube = null;
         if (enableSonarQube)
         {
@@ -457,13 +657,13 @@ public class Program
         // Aspire-managed resources via WithEnvironment so a single F5 fully wires
         // everything without per-module appsettings overrides.
 
-        var hisApi = builder.AddProject<Dialysis_HIS_Api>("his-api")
+        var hisApi = !includeHis ? null : builder.AddProject<Dialysis_HIS_Api>("his-api")
             .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(hisDb).WaitFor(hisDb)
-            .WithReference(hisDb, connectionName: "Hangfire")
-            .WithReference(rabbit).WaitFor(rabbit)
-            .WithReference(valkey).WaitFor(valkey)
-            .WaitFor(keycloak)
+            .WithReference(hisDb!).WaitFor(hisDb!)
+            .WithReference(hisDb!, connectionName: "Hangfire")
+            .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+            .WithReference(valkey).WaitForIfPresent(valkeyBroker)
+            .WaitForIfPresent(keycloak)
             .WithEnvironment("His__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("His__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("His__DistributedCache__Valkey__ConnectionString", valkey)
@@ -471,39 +671,39 @@ public class Program
             .WithEnvironment("His__Authentication__Audience", "account")
             .WithEnvironment("His__Fhir__Enabled", "true");
 
-        var ehrApi = builder.AddProject<Dialysis_EHR_Api>("ehr-api")
+        var ehrApi = !includeEhr ? null : builder.AddProject<Dialysis_EHR_Api>("ehr-api")
             .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(ehrDb).WaitFor(ehrDb)
-            .WithReference(ehrDb, connectionName: "Hangfire")
-            .WithReference(rabbit).WaitFor(rabbit)
-            .WithReference(valkey).WaitFor(valkey)
-            .WaitFor(keycloak)
+            .WithReference(ehrDb!).WaitFor(ehrDb!)
+            .WithReference(ehrDb!, connectionName: "Hangfire")
+            .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+            .WithReference(valkey).WaitForIfPresent(valkeyBroker)
+            .WaitForIfPresent(keycloak)
             .WithEnvironment("Ehr__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("Ehr__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("Ehr__DistributedCache__Valkey__ConnectionString", valkey)
             .WithEnvironment("Ehr__Authentication__Authority", keycloakRealmUri)
             .WithEnvironment("Ehr__Authentication__Audience", "account");
 
-        var pdmsApi = builder.AddProject<Dialysis_PDMS_Api>("pdms-api")
+        var pdmsApi = !includePdms ? null : builder.AddProject<Dialysis_PDMS_Api>("pdms-api")
             .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(pdmsDb).WaitFor(pdmsDb)
-            .WithReference(pdmsDb, connectionName: "Hangfire")
-            .WithReference(rabbit).WaitFor(rabbit)
-            .WithReference(valkey).WaitFor(valkey)
-            .WaitFor(keycloak)
+            .WithReference(pdmsDb!).WaitFor(pdmsDb!)
+            .WithReference(pdmsDb!, connectionName: "Hangfire")
+            .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+            .WithReference(valkey).WaitForIfPresent(valkeyBroker)
+            .WaitForIfPresent(keycloak)
             .WithEnvironment("Pdms__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("Pdms__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("Pdms__DistributedCache__Valkey__ConnectionString", valkey)
             .WithEnvironment("Pdms__Authentication__Authority", keycloakRealmUri)
             .WithEnvironment("Pdms__Authentication__Audience", "account");
 
-        var smartConnectApi = builder.AddProject<Dialysis_SmartConnect_Api>("smartconnect-api")
+        var smartConnectApi = !includeSmartConnect ? null : builder.AddProject<Dialysis_SmartConnect_Api>("smartconnect-api")
             .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(smartconnectDb).WaitFor(smartconnectDb)
-            .WithReference(smartconnectDb, connectionName: "Hangfire")
-            .WithReference(rabbit).WaitFor(rabbit)
-            .WithReference(valkey).WaitFor(valkey)
-            .WaitFor(keycloak)
+            .WithReference(smartconnectDb!).WaitFor(smartconnectDb!)
+            .WithReference(smartconnectDb!, connectionName: "Hangfire")
+            .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+            .WithReference(valkey).WaitForIfPresent(valkeyBroker)
+            .WaitForIfPresent(keycloak)
             .WithEnvironment("SmartConnect__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("SmartConnect__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("SmartConnect__DistributedCache__Valkey__ConnectionString", valkey)
@@ -523,13 +723,13 @@ public class Program
             .WithEnvironment("SmartConnect__SourceConnectors__1__Parameters__Directory", "./tmp/smartconnect/drop")
             .WithEnvironment("SmartConnect__SourceConnectors__1__Parameters__Pattern", "*.hl7");
 
-        var hieApi = builder.AddProject<Dialysis_HIE_Api>("hie-api")
+        var hieApi = !includeHie ? null : builder.AddProject<Dialysis_HIE_Api>("hie-api")
             .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(hieDb).WaitFor(hieDb)
-            .WithReference(hieDb, connectionName: "Hangfire")
-            .WithReference(rabbit).WaitFor(rabbit)
-            .WithReference(valkey).WaitFor(valkey)
-            .WaitFor(keycloak)
+            .WithReference(hieDb!).WaitFor(hieDb!)
+            .WithReference(hieDb!, connectionName: "Hangfire")
+            .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+            .WithReference(valkey).WaitForIfPresent(valkeyBroker)
+            .WaitForIfPresent(keycloak)
             .WithEnvironment("Hie__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("Hie__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("Hie__DistributedCache__Valkey__ConnectionString", valkey)
@@ -540,13 +740,13 @@ public class Program
         // chart's Labs panel reaches it through the EHR BFF's _x/lab aggregation. It still needs its own
         // Postgres + the bus: it publishes LabOrderPlacedIntegrationEvent (SmartConnect transmits it to the
         // LIS) and consumes the bridged LabResultReceivedIntegrationEvent to record results on the order.
-        var labApi = builder.AddProject<Dialysis_Lab_Api>("lab-api")
+        var labApi = !includeLab ? null : builder.AddProject<Dialysis_Lab_Api>("lab-api")
             .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(labDb).WaitFor(labDb)
-            .WithReference(labDb, connectionName: "Hangfire")
-            .WithReference(rabbit).WaitFor(rabbit)
-            .WithReference(valkey).WaitFor(valkey)
-            .WaitFor(keycloak)
+            .WithReference(labDb!).WaitFor(labDb!)
+            .WithReference(labDb!, connectionName: "Hangfire")
+            .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+            .WithReference(valkey).WaitForIfPresent(valkeyBroker)
+            .WaitForIfPresent(keycloak)
             .WithEnvironment("Lab__Transponder__EnableOutboxRelay", "true")
             .WithEnvironment("Lab__Transponder__RabbitMq__ConnectionUri", rabbit)
             .WithEnvironment("Lab__DistributedCache__Valkey__ConnectionString", valkey)
@@ -561,67 +761,116 @@ public class Program
         // deployed environment the patient's own `his_patient_id` claim is the only authorization.
         if (!publishing)
         {
-            ehrApi.WithEnvironment("Ehr__Portal__AllowStaffImpersonation", "true");
-            hieApi.WithEnvironment("Hie__Portal__AllowStaffImpersonation", "true");
+            ehrApi!.WithEnvironment("Ehr__Portal__AllowStaffImpersonation", "true");
+            hieApi!.WithEnvironment("Hie__Portal__AllowStaffImpersonation", "true");
         }
 
-        var identityBff = builder.AddProject<Dialysis_Identity_Bff>("identity-bff")
-            .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" })
-            .WithReference(hisDb, connectionName: "Hangfire").WaitFor(hisDb)
+        IResourceBuilder<ProjectResource>? identityBff = null;
+        if (includeIdentityContext)
+        {
+            identityBff = builder.AddProject<Dialysis_Identity_Bff>("identity-bff")
+                .WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" });
+            // Hangfire storage rides on the HIS module database — in-model in the full topology,
+            // an external connection string when publishing the identity unit (HIS owns that DB).
+            if (hisDb is not null)
+            {
+                identityBff.WithReference(hisDb, connectionName: "Hangfire").WaitFor(hisDb);
+            }
+            else
+            {
+                identityBff.WithReference(hisHangfire!, connectionName: "Hangfire");
+            }
             // Pin the BFF to a deterministic host port. The dialysis-bff Keycloak client only
             // accepts redirect_uris under http://localhost:5275/* (and the gateway port). Letting
             // Aspire allocate randomly per session breaks the OIDC handshake. Mutate the existing
             // "http" endpoint that Aspire created from the project's launchSettings rather than
             // adding a new one (which collides on the endpoint name). ASPNETCORE_URLS is also
             // forced via env so the project binds the right port even if WithEndpoint metadata
-            // doesn't fully override launchSettings.
-            .WithEndpoint("http", e =>
-            {
-                e.Port = identityBffPort;
-                e.TargetPort = identityBffPort;
-                e.IsProxied = false;
-            })
-            .WithEnvironment("ASPNETCORE_URLS",
-                "http://localhost:" + identityBffPort.ToString(CultureInfo.InvariantCulture))
-            .WaitFor(keycloak)
-            .WaitFor(hisApi)
-            // BFF binds Keycloak under section "Identity:Keycloak" (KeycloakBffOptions.SectionName).
-            // appsettings.Development.json hardcodes Authority to localhost:8080 — env vars from
-            // Aspire override it via the IConfiguration provider chain (env > json).
-            .WithEnvironment("Identity__Keycloak__Authority", keycloakRealmUri)
-            // Confidential-client secret for the dialysis-bff Keycloak client (overridable per env).
-            .WithEnvironment("Identity__Keycloak__ClientSecret", identityBffSecret)
+            // doesn't fully override launchSettings. (Unit charts bind all interfaces instead —
+            // a localhost binding is unreachable from other pods.)
+            identityBff
+                .WithEndpoint("http", e =>
+                {
+                    e.Port = identityBffPort;
+                    e.TargetPort = identityBffPort;
+                    e.IsProxied = false;
+                })
+                .WithEnvironment("ASPNETCORE_URLS",
+                    (deployUnit is null ? "http://localhost:" : "http://+:") +
+                    identityBffPort.ToString(CultureInfo.InvariantCulture))
+                .WaitForIfPresent(keycloak)
+                .WaitForIfPresent(hisApi)
+                // BFF binds Keycloak under section "Identity:Keycloak" (KeycloakBffOptions.SectionName).
+                // appsettings.Development.json hardcodes Authority to localhost:8080 — env vars from
+                // Aspire override it via the IConfiguration provider chain (env > json).
+                .WithEnvironment("Identity__Keycloak__Authority", keycloakRealmUri)
+                // Confidential-client secret for the dialysis-bff Keycloak client (overridable per env).
+                .WithEnvironment("Identity__Keycloak__ClientSecret", identityBffSecret!);
             // BFF's YARP cluster "his" defaults to localhost:5288 in appsettings; redirect it to
             // the Aspire-allocated HIS endpoint so token-exchange + proxied API calls resolve.
-            .WithEnvironment("ReverseProxy__Clusters__his__Destinations__d1__Address", hisApi.GetEndpoint("http"));
-
-        var gateway = builder.AddProject<Dialysis_Module_Gateway>("gateway")
-            // Pin the gateway port too — it is the single browser-facing origin in dev:
-            //   /identity/* → BFF, /api/*, /fhir/*, /hubs/* → module APIs, /{**catch-all} → Vite SPA.
-            // Keeping all requests on the gateway origin avoids cross-origin cookie loss after the
-            // OIDC redirect (Keycloak sends the browser to the redirect_uri we registered, which
-            // must be on the same origin that hosts the SPA cookies).
-            .WithEndpoint("http", e =>
+            // In the identity unit HIS runs in a sibling release — default to its Service DNS.
+            if (hisApi is not null)
             {
-                e.Port = gatewayPort;
-                e.TargetPort = gatewayPort;
-                e.IsProxied = false;
-            })
-            .WithEnvironment("ASPNETCORE_URLS",
-                "http://localhost:" + gatewayPort.ToString(CultureInfo.InvariantCulture))
-            .WithReference(hisApi).WaitFor(hisApi)
-            .WithReference(ehrApi).WaitFor(ehrApi)
-            .WithReference(pdmsApi).WaitFor(pdmsApi)
-            .WithReference(smartConnectApi).WaitFor(smartConnectApi)
-            .WithReference(hieApi).WaitFor(hieApi)
-            .WithReference(identityBff).WaitFor(identityBff)
-            .WithEnvironment("Gateway__Authority", keycloakRealmUri)
-            .WithEnvironment("Gateway__Audience", "account")
-            .WithEnvironment("Gateway__RequireAuthentication", "true")
-            // Pin the YARP identity cluster destination to the pinned BFF port (default in appsettings
-            // already matches, but make it explicit so a future port change in one place doesn't desync).
-            .WithEnvironment("ReverseProxy__Clusters__identity__Destinations__d1__Address",
-                "http://localhost:" + identityBffPort.ToString(CultureInfo.InvariantCulture) + "/");
+                identityBff.WithEnvironment("ReverseProxy__Clusters__his__Destinations__d1__Address", hisApi.GetEndpoint("http"));
+            }
+            else
+            {
+                identityBff.WithEnvironment("ReverseProxy__Clusters__his__Destinations__d1__Address",
+                    DeploymentUnit.ModuleApiAddress("his-api") + "/");
+            }
+        }
+
+        IResourceBuilder<ProjectResource>? gateway = null;
+        if (includeGateway)
+        {
+            gateway = builder.AddProject<Dialysis_Module_Gateway>("gateway")
+                // Pin the gateway port too — it is the single browser-facing origin in dev:
+                //   /identity/* → BFF, /api/*, /fhir/*, /hubs/* → module APIs, /{**catch-all} → Vite SPA.
+                // Keeping all requests on the gateway origin avoids cross-origin cookie loss after the
+                // OIDC redirect (Keycloak sends the browser to the redirect_uri we registered, which
+                // must be on the same origin that hosts the SPA cookies).
+                .WithEndpoint("http", e =>
+                {
+                    e.Port = gatewayPort;
+                    e.TargetPort = gatewayPort;
+                    e.IsProxied = false;
+                })
+                .WithEnvironment("ASPNETCORE_URLS",
+                    (deployUnit is null ? "http://localhost:" : "http://+:") +
+                    gatewayPort.ToString(CultureInfo.InvariantCulture));
+            if (deployUnit is null)
+            {
+                gateway
+                    .WithReference(hisApi!).WaitFor(hisApi!)
+                    .WithReference(ehrApi!).WaitFor(ehrApi!)
+                    .WithReference(pdmsApi!).WaitFor(pdmsApi!)
+                    .WithReference(smartConnectApi!).WaitFor(smartConnectApi!)
+                    .WithReference(hieApi!).WaitFor(hieApi!)
+                    .WithReference(identityBff!).WaitFor(identityBff!);
+            }
+            gateway
+                .WithEnvironment("Gateway__Authority", keycloakRealmUri)
+                .WithEnvironment("Gateway__Audience", "account")
+                .WithEnvironment("Gateway__RequireAuthentication", "true");
+            if (deployUnit is null)
+            {
+                // Pin the YARP identity cluster destination to the pinned BFF port (default in appsettings
+                // already matches, but make it explicit so a future port change in one place doesn't desync).
+                gateway.WithEnvironment("ReverseProxy__Clusters__identity__Destinations__d1__Address",
+                    "http://localhost:" + identityBffPort.ToString(CultureInfo.InvariantCulture) + "/");
+            }
+            else
+            {
+                // Platform unit: every upstream lives in a sibling unit's release. Default every
+                // ReverseProxy cluster destination to that unit's stable in-cluster Service DNS —
+                // one config value per cluster, operator-overridable via the unit chart's values.yaml.
+                foreach (var (clusterId, address) in DeploymentUnit.GatewayClusterDefaults)
+                {
+                    gateway.WithEnvironment(
+                        $"ReverseProxy__Clusters__{clusterId}__Destinations__d1__Address", address);
+                }
+            }
+        }
 
         // The gateway is the browser-facing surface — only resource that ever crosses the cluster
         // boundary. `WithExternalHttpEndpoints` lets the k8s publisher route the Ingress to it; the
@@ -630,7 +879,7 @@ public class Program
         // gateway, so we deliberately don't mark them external.
         if (isKubernetesPublish)
         {
-            gateway.WithExternalHttpEndpoints();
+            gateway?.WithExternalHttpEndpoints();
         }
 
         // --- Frontend ------------------------------------------------------------
@@ -643,11 +892,15 @@ public class Program
         // /<ctx>/identity + /<ctx>/api + /<ctx>/hubs → <ctx>-bff (it attaches the session bearer and
         // proxies to the module API) and /<ctx>/* → <ctx>-web. BFF + web ports are pinned so the
         // gateway's static dev cluster addresses and the Keycloak redirect_uris stay in lockstep.
+        // `moduleApi` may be null when the BFF's primary module API lives in ANOTHER unit (the
+        // admin BFF fronts hie-api, the portal BFF fronts his-api); `externalModuleApiAddress`
+        // then supplies the sibling release's in-cluster Service DNS instead.
         IResourceBuilder<ProjectResource> AddContextBff(
             IResourceBuilder<ProjectResource> bff,
             int port,
-            IResourceBuilder<ProjectResource> moduleApi,
-            IResourceBuilder<ParameterResource> clientSecret)
+            IResourceBuilder<ProjectResource>? moduleApi,
+            IResourceBuilder<ParameterResource> clientSecret,
+            string? externalModuleApiAddress = null)
         {
             var configured = bff.WithEndpoint("http", e =>
                 {
@@ -656,18 +909,22 @@ public class Program
                     e.IsProxied = false;
                 })
                 .WithEnvironment("ASPNETCORE_URLS",
-                    "http://localhost:" + port.ToString(CultureInfo.InvariantCulture))
-                .WaitFor(keycloak)
-                .WaitFor(moduleApi)
+                    (deployUnit is null ? "http://localhost:" : "http://+:") +
+                    port.ToString(CultureInfo.InvariantCulture))
+                .WaitForIfPresent(keycloak)
+                .WaitForIfPresent(moduleApi)
                 .WithEnvironment("Bff__Keycloak__Authority", keycloakRealmUri)
                 // Confidential-client secret for this context's Keycloak client (overridable per env).
-                .WithEnvironment("Bff__Keycloak__ClientSecret", clientSecret)
-                .WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"))
+                .WithEnvironment("Bff__Keycloak__ClientSecret", clientSecret);
+            configured = moduleApi is not null
+                ? configured.WithEnvironment("Bff__Module__ModuleApiAddress", moduleApi.GetEndpoint("http"))
+                : configured.WithEnvironment("Bff__Module__ModuleApiAddress", externalModuleApiAddress!);
+            configured = configured
                 // Event-driven push: the BFF consumes integration events off RabbitMQ (its own bff-<slug>
                 // queue) and fans them to the SPA over SignalR, with Valkey as the cross-replica backplane.
                 // Consume-only — no DbContext/outbox. Harmless for BFFs that don't call AddModuleBffEvents.
-                .WithReference(rabbit).WaitFor(rabbit)
-                .WithReference(valkey).WaitFor(valkey)
+                .WithReference(rabbit).WaitForIfPresent(rabbitBroker)
+                .WithReference(valkey).WaitForIfPresent(valkeyBroker)
                 .WithEnvironment("Bff__Events__RabbitMq__ConnectionUri", rabbit)
                 .WithEnvironment("Bff__Events__SignalR__BackplaneConnectionString", valkey);
             configured.WithUrlForEndpoint("http", ep => new() { Url = "/hangfire", DisplayText = "Hangfire" });
@@ -680,60 +937,161 @@ public class Program
             return configured;
         }
 
-        var hisBff = AddContextBff(builder.AddProject<Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret)
-            .WithReference(hisDb, connectionName: "Hangfire")
-            .WaitFor(smartConnectApi)
-            // DICOMweb imaging viewer reachable from this context — /his/api/_x/dicom/dicom-web/* → SmartConnect.
-            .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"));
+        // For every BFF below: when `deployUnit` is null all cross-context aggregation targets are
+        // in-model (full topology — exact original call sequence); when publishing a unit, each
+        // cross-unit aggregation address defaults to the owning unit's in-cluster Service DNS
+        // (operator-overridable via the chart's values.yaml) and the WaitFor is skipped.
+        IResourceBuilder<ProjectResource>? hisBff = null;
+        if (includeHis)
+        {
+            hisBff = AddContextBff(builder.AddProject<Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret!)
+                .WithReference(hisDb!, connectionName: "Hangfire");
+            if (deployUnit is null)
+            {
+                hisBff.WaitFor(smartConnectApi!)
+                    // DICOMweb imaging viewer reachable from this context — /his/api/_x/dicom/dicom-web/* → SmartConnect.
+                    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi!.GetEndpoint("http"));
+            }
+            else
+            {
+                hisBff.WithEnvironment("Bff__Module__Aggregations__0__Address", DeploymentUnit.ModuleApiAddress("smartconnect-api"));
+            }
+        }
         // EHR aggregates HIE (consent on the chart) under /ehr/api/_x/hie/* and the headless Lab context
         // (the chart's Labs panel) under /ehr/api/_x/lab/*.
-        var ehrBff = AddContextBff(builder.AddProject<Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret)
-            .WithReference(ehrDb, connectionName: "Hangfire")
-            .WaitFor(hieApi).WaitFor(labApi).WaitFor(smartConnectApi)
-            .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi.GetEndpoint("http"))
-            // DICOMweb (imaging study preview card on the chart) — /ehr/api/_x/dicom/dicom-web/* → SmartConnect.
-            .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
+        IResourceBuilder<ProjectResource>? ehrBff = null;
+        if (includeEhr)
+        {
+            ehrBff = AddContextBff(builder.AddProject<Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret!)
+                .WithReference(ehrDb!, connectionName: "Hangfire");
+            if (deployUnit is null)
+            {
+                ehrBff.WaitFor(hieApi!).WaitFor(labApi!).WaitFor(smartConnectApi!)
+                    .WithEnvironment("Bff__Module__Aggregations__0__Address", hieApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", labApi!.GetEndpoint("http"))
+                    // DICOMweb (imaging study preview card on the chart) — /ehr/api/_x/dicom/dicom-web/* → SmartConnect.
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi!.GetEndpoint("http"));
+            }
+            else
+            {
+                ehrBff.WithEnvironment("Bff__Module__Aggregations__0__Address", DeploymentUnit.ModuleApiAddress("hie-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", DeploymentUnit.ModuleApiAddress("lab-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", DeploymentUnit.ModuleApiAddress("smartconnect-api"));
+            }
+        }
         // PDMS aggregates EHR (patient demographics) and HIE (documents) for the chairside view.
-        var pdmsBff = AddContextBff(builder.AddProject<Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret)
-            .WithReference(pdmsDb, connectionName: "Hangfire")
-            .WaitFor(ehrApi).WaitFor(hieApi).WaitFor(smartConnectApi)
-            .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi.GetEndpoint("http"))
-            // DICOMweb imaging viewer for the chairside view — /pdms/api/_x/dicom/dicom-web/* → SmartConnect.
-            .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi.GetEndpoint("http"));
-        var smartConnectBff = AddContextBff(builder.AddProject<Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret)
-            .WithReference(smartconnectDb, connectionName: "Hangfire");
-        var hieBff = AddContextBff(builder.AddProject<Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret)
-            .WithReference(hieDb, connectionName: "Hangfire")
-            .WaitFor(smartConnectApi)
-            .WaitFor(hisApi).WaitFor(ehrApi).WaitFor(pdmsApi)
-            // DICOMweb imaging viewer reachable from this context — /hie/api/_x/dicom/dicom-web/* → SmartConnect.
-            .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi.GetEndpoint("http"))
-            // FHIR R4 Subscription catalog + authoring: hie-web's Subscriptions / FHIR-authoring pages reach
-            // the per-host /fhir/* endpoints of HIS/EHR/PDMS through these aggregations (bearer-forwarded),
-            // e.g. /hie/api/_x/ehr/fhir/SubscriptionTopic → ehr-api /fhir/SubscriptionTopic.
-            .WithEnvironment("Bff__Module__Aggregations__1__Address", hisApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__2__Address", ehrApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__3__Address", pdmsApi.GetEndpoint("http"));
+        IResourceBuilder<ProjectResource>? pdmsBff = null;
+        if (includePdms)
+        {
+            pdmsBff = AddContextBff(builder.AddProject<Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret!)
+                .WithReference(pdmsDb!, connectionName: "Hangfire");
+            if (deployUnit is null)
+            {
+                pdmsBff.WaitFor(ehrApi!).WaitFor(hieApi!).WaitFor(smartConnectApi!)
+                    .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", hieApi!.GetEndpoint("http"))
+                    // DICOMweb imaging viewer for the chairside view — /pdms/api/_x/dicom/dicom-web/* → SmartConnect.
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", smartConnectApi!.GetEndpoint("http"));
+            }
+            else
+            {
+                pdmsBff.WithEnvironment("Bff__Module__Aggregations__0__Address", DeploymentUnit.ModuleApiAddress("ehr-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", DeploymentUnit.ModuleApiAddress("hie-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", DeploymentUnit.ModuleApiAddress("smartconnect-api"));
+            }
+        }
+        var smartConnectBff = !includeSmartConnect
+            ? null
+            : AddContextBff(builder.AddProject<Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret!)
+                .WithReference(smartconnectDb!, connectionName: "Hangfire");
+        IResourceBuilder<ProjectResource>? hieBff = null;
+        if (includeHie)
+        {
+            hieBff = AddContextBff(builder.AddProject<Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret!)
+                .WithReference(hieDb!, connectionName: "Hangfire");
+            if (deployUnit is null)
+            {
+                hieBff.WaitFor(smartConnectApi!)
+                    .WaitFor(hisApi!).WaitFor(ehrApi!).WaitFor(pdmsApi!)
+                    // DICOMweb imaging viewer reachable from this context — /hie/api/_x/dicom/dicom-web/* → SmartConnect.
+                    .WithEnvironment("Bff__Module__Aggregations__0__Address", smartConnectApi!.GetEndpoint("http"))
+                    // FHIR R4 Subscription catalog + authoring: hie-web's Subscriptions / FHIR-authoring pages reach
+                    // the per-host /fhir/* endpoints of HIS/EHR/PDMS through these aggregations (bearer-forwarded),
+                    // e.g. /hie/api/_x/ehr/fhir/SubscriptionTopic → ehr-api /fhir/SubscriptionTopic.
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", hisApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", ehrApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__3__Address", pdmsApi!.GetEndpoint("http"));
+            }
+            else
+            {
+                hieBff.WithEnvironment("Bff__Module__Aggregations__0__Address", DeploymentUnit.ModuleApiAddress("smartconnect-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", DeploymentUnit.ModuleApiAddress("his-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", DeploymentUnit.ModuleApiAddress("ehr-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__3__Address", DeploymentUnit.ModuleApiAddress("pdms-api"));
+            }
+        }
         // Admin console (identity-web) — data-protection / HIPAA live on the HIE host; aggregate his/ehr/pdms for the demo + sessions surfaces.
-        var adminBff = AddContextBff(builder.AddProject<Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret)
-            .WithReference(hieDb, connectionName: "Hangfire")
-            .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi)
-            .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi.GetEndpoint("http"))
-            // DICOMweb imaging viewer for the admin console — /admin/api/_x/dicom/dicom-web/* → SmartConnect.
-            .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
+        IResourceBuilder<ProjectResource>? adminBff = null;
+        if (includeIdentityContext)
+        {
+            adminBff = AddContextBff(builder.AddProject<Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret!,
+                externalModuleApiAddress: DeploymentUnit.ModuleApiAddress("hie-api"));
+            if (hieDb is not null)
+            {
+                adminBff.WithReference(hieDb, connectionName: "Hangfire");
+            }
+            else
+            {
+                adminBff.WithReference(hieHangfire!, connectionName: "Hangfire");
+            }
+            if (deployUnit is null)
+            {
+                adminBff.WaitFor(ehrApi!).WaitFor(pdmsApi!).WaitFor(smartConnectApi!)
+                    .WithEnvironment("Bff__Module__Aggregations__0__Address", hisApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", ehrApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", pdmsApi!.GetEndpoint("http"))
+                    // DICOMweb imaging viewer for the admin console — /admin/api/_x/dicom/dicom-web/* → SmartConnect.
+                    .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi!.GetEndpoint("http"));
+            }
+            else
+            {
+                adminBff.WithEnvironment("Bff__Module__Aggregations__0__Address", DeploymentUnit.ModuleApiAddress("his-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", DeploymentUnit.ModuleApiAddress("ehr-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", DeploymentUnit.ModuleApiAddress("pdms-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__3__Address", DeploymentUnit.ModuleApiAddress("smartconnect-api"));
+            }
+        }
         // Patient portal — primary HIS (appointments/admissions), aggregate EHR/PDMS/HIE for the patient-facing reads.
-        var portalBff = AddContextBff(builder.AddProject<Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret)
-            .WithReference(hisDb, connectionName: "Hangfire")
-            .WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(hieApi).WaitFor(smartConnectApi)
-            .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi.GetEndpoint("http"))
-            .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi.GetEndpoint("http"))
-            // DICOMweb imaging viewer for the patient portal — /portal/api/_x/dicom/dicom-web/* → SmartConnect.
-            .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi.GetEndpoint("http"));
+        IResourceBuilder<ProjectResource>? portalBff = null;
+        if (includePortalContext)
+        {
+            portalBff = AddContextBff(builder.AddProject<Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret!,
+                externalModuleApiAddress: DeploymentUnit.ModuleApiAddress("his-api"));
+            if (hisDb is not null)
+            {
+                portalBff.WithReference(hisDb, connectionName: "Hangfire");
+            }
+            else
+            {
+                portalBff.WithReference(hisHangfire!, connectionName: "Hangfire");
+            }
+            if (deployUnit is null)
+            {
+                portalBff.WaitFor(ehrApi!).WaitFor(pdmsApi!).WaitFor(hieApi!).WaitFor(smartConnectApi!)
+                    .WithEnvironment("Bff__Module__Aggregations__0__Address", ehrApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", pdmsApi!.GetEndpoint("http"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", hieApi!.GetEndpoint("http"))
+                    // DICOMweb imaging viewer for the patient portal — /portal/api/_x/dicom/dicom-web/* → SmartConnect.
+                    .WithEnvironment("Bff__Module__Aggregations__3__Address", smartConnectApi!.GetEndpoint("http"));
+            }
+            else
+            {
+                portalBff.WithEnvironment("Bff__Module__Aggregations__0__Address", DeploymentUnit.ModuleApiAddress("ehr-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__1__Address", DeploymentUnit.ModuleApiAddress("pdms-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__2__Address", DeploymentUnit.ModuleApiAddress("hie-api"))
+                    .WithEnvironment("Bff__Module__Aggregations__3__Address", DeploymentUnit.ModuleApiAddress("smartconnect-api"));
+            }
+        }
 
         // --- Continuous data simulator (dev-only) ---------------------------------
         // Standalone worker that mints a Keycloak service-account bearer (client_credentials on the
@@ -759,11 +1117,11 @@ public class Program
                 // all BFFs, and the gateway. (SonarQube is deliberately excluded: it's a dev-time analyzer,
                 // not part of the application runtime.) This prevents the connection-refused storm and the
                 // admin-seed-skipped behaviour seen when the simulator raced ahead of (e.g.) the PDMS host.
-                .WaitFor(keycloak).WaitFor(rabbit).WaitFor(valkey)
-                .WaitFor(hisApi).WaitFor(ehrApi).WaitFor(pdmsApi).WaitFor(smartConnectApi).WaitFor(hieApi).WaitFor(labApi)
-                .WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff)
-                .WaitFor(adminBff).WaitFor(portalBff)
-                .WaitFor(gateway)
+                .WaitFor(keycloak!).WaitFor(rabbitBroker!).WaitFor(valkeyBroker!)
+                .WaitFor(hisApi!).WaitFor(ehrApi!).WaitFor(pdmsApi!).WaitFor(smartConnectApi!).WaitFor(hieApi!).WaitFor(labApi!)
+                .WaitFor(hisBff!).WaitFor(ehrBff!).WaitFor(pdmsBff!).WaitFor(smartConnectBff!).WaitFor(hieBff!)
+                .WaitFor(adminBff!).WaitFor(portalBff!)
+                .WaitFor(gateway!)
                 // Authority is the realm base; the worker appends /protocol/openid-connect/token itself.
                 .WithEnvironment("DataSimulator__Auth__Authority", keycloakRealmUri)
                 .WithEnvironment("DataSimulator__Auth__ClientSecret", dataSimulatorSecret)
@@ -788,31 +1146,52 @@ public class Program
         var enableWebApps = publishing ||
             !string.Equals(builder.Configuration["Dialysis:EnableWebApps"], "false", StringComparison.OrdinalIgnoreCase);
 
-        IResourceBuilder<NodeAppResource>? AddContextWeb(string folder, int port) =>
-            enableWebApps
-                ? builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev")
-                    .WithReference(gateway).WaitFor(gateway)
+        IResourceBuilder<NodeAppResource>? AddContextWeb(string folder, int port)
+        {
+            if (!enableWebApps)
+            {
+                return null;
+            }
+            var web = builder.AddNpmApp(folder, $"../../frontend/{folder}", "dev");
+            if (gateway is not null)
+            {
+                web.WithReference(gateway).WaitFor(gateway)
                     .WithEnvironment("BROWSER", "none")
                     .WithEnvironment("VITE_GATEWAY_URL", gateway.GetEndpoint("http"))
-                    .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
-                    .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
-                    .PublishAsDockerFile()
-                : null;
+                    .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"));
+            }
+            else
+            {
+                // Unit publishing: the gateway lives in the platform unit. The VITE_* values are
+                // dev/build-time hints only (the published image is a static nginx bundle), so the
+                // stable in-cluster default is purely informational here.
+                web.WithEnvironment("BROWSER", "none")
+                    .WithEnvironment("VITE_GATEWAY_URL", DeploymentUnit.GatewayAddressDefault)
+                    .WithEnvironment("VITE_API_BASE_URL", DeploymentUnit.GatewayAddressDefault);
+            }
+            return web
+                .WithHttpEndpoint(env: "PORT", port: port, targetPort: port, isProxied: false)
+                .PublishAsDockerFile();
+        }
 
         // One React app per bounded context (folder name = Aspire resource; the app's own /<ctx> base
         // is set in its vite.config). The gateway reaches each on its pinned port.
-        var hisWeb = AddContextWeb("his-web", 5331);
-        var ehrWeb = AddContextWeb("ehr-web", 5332);
-        var pdmsWeb = AddContextWeb("pdms-web", 5333);
-        var smartConnectWeb = AddContextWeb("smartconnect-web", 5334);
-        var hieWeb = AddContextWeb("hie-web", 5335);
-        var identityWeb = AddContextWeb("identity-web", 5336); // served at /admin
-        var portalWeb = AddContextWeb("patient-portal-web", 5337); // served at /portal
+        var hisWeb = includeHis ? AddContextWeb("his-web", 5331) : null;
+        var ehrWeb = includeEhr ? AddContextWeb("ehr-web", 5332) : null;
+        var pdmsWeb = includePdms ? AddContextWeb("pdms-web", 5333) : null;
+        var smartConnectWeb = includeSmartConnect ? AddContextWeb("smartconnect-web", 5334) : null;
+        var hieWeb = includeHie ? AddContextWeb("hie-web", 5335) : null;
+        var identityWeb = includeIdentityContext ? AddContextWeb("identity-web", 5336) : null; // served at /admin
+        var portalWeb = includePortalContext ? AddContextWeb("patient-portal-web", 5337) : null; // served at /portal
 
         // Keep the per-context BFFs up before the gateway so the /<ctx>/* routes resolve on first hit.
-        gateway
-            .WaitFor(hisBff).WaitFor(ehrBff).WaitFor(pdmsBff).WaitFor(smartConnectBff).WaitFor(hieBff)
-            .WaitFor(adminBff).WaitFor(portalBff);
+        // (Full topology only — in the platform unit the BFFs live in sibling releases.)
+        if (deployUnit is null)
+        {
+            gateway!
+                .WaitFor(hisBff!).WaitFor(ehrBff!).WaitFor(pdmsBff!).WaitFor(smartConnectBff!).WaitFor(hieBff!)
+                .WaitFor(adminBff!).WaitFor(portalBff!);
+        }
 
         // --- Compose-publish decoration -------------------------------------------
         // Every overlay concern that used to live in `docker-compose.override.yaml` is applied
@@ -821,43 +1200,45 @@ public class Program
         // publisher's per-resource decoration is its own block further down.
         if (isComposePublish)
         {
-            hisApi.WithModuleDeployment(
+            // deployUnit is always null here (unit publishing is k8s-only; a unit + compose combo
+            // throws up front), so every resource below is in-model.
+            hisApi!.WithModuleDeployment(
                 projectRelativePath: "src/backend/HIS/Dialysis.HIS.Api/Dialysis.HIS.Api.csproj",
                 assemblyDllName: "Dialysis.HIS.Api.dll",
                 moduleConfigPrefix: "His",
                 hostPort: 5288,
                 environment: deployEnv);
-            ehrApi.WithModuleDeployment(
+            ehrApi!.WithModuleDeployment(
                 projectRelativePath: "src/backend/EHR/Dialysis.EHR.Api/Dialysis.EHR.Api.csproj",
                 assemblyDllName: "Dialysis.EHR.Api.dll",
                 moduleConfigPrefix: "Ehr",
                 hostPort: 5289,
                 environment: deployEnv);
-            pdmsApi.WithModuleDeployment(
+            pdmsApi!.WithModuleDeployment(
                 projectRelativePath: "src/backend/PDMS/Dialysis.PDMS.Api/Dialysis.PDMS.Api.csproj",
                 assemblyDllName: "Dialysis.PDMS.Api.dll",
                 moduleConfigPrefix: "Pdms",
                 hostPort: 5290,
                 environment: deployEnv);
-            smartConnectApi.WithModuleDeployment(
+            smartConnectApi!.WithModuleDeployment(
                 projectRelativePath: "src/backend/SmartConnect/Api/Dialysis.SmartConnect.Api/Dialysis.SmartConnect.Api.csproj",
                 assemblyDllName: "Dialysis.SmartConnect.Api.dll",
                 moduleConfigPrefix: "SmartConnect",
                 hostPort: 5291,
                 environment: deployEnv);
-            hieApi.WithModuleDeployment(
+            hieApi!.WithModuleDeployment(
                 projectRelativePath: "src/backend/HIE/Dialysis.HIE.Api/Dialysis.HIE.Api.csproj",
                 assemblyDllName: "Dialysis.HIE.Api.dll",
                 moduleConfigPrefix: "Hie",
                 hostPort: 5292,
                 environment: deployEnv);
-            labApi.WithModuleDeployment(
+            labApi!.WithModuleDeployment(
                 projectRelativePath: "src/backend/Lab/Dialysis.Lab.Api/Dialysis.Lab.Api.csproj",
                 assemblyDllName: "Dialysis.Lab.Api.dll",
                 moduleConfigPrefix: "Lab",
                 hostPort: 5293,
                 environment: deployEnv);
-            identityBff.WithBffDeployment(
+            identityBff!.WithBffDeployment(
                 "src/backend/Identity/Dialysis.Identity.Bff/Dialysis.Identity.Bff.csproj",
                 "Dialysis.Identity.Bff.dll", identityBffPort, deployEnv);
 
@@ -865,13 +1246,13 @@ public class Program
             // service name. (project, dll) varies per module — not derivable from a single pattern.
             (IResourceBuilder<ProjectResource> Bff, string Project, string Dll, int Port)[] contextBffs =
             [
-                (hisBff, "src/backend/HIS/Dialysis.HIS.Bff/Dialysis.HIS.Bff.csproj", "Dialysis.HIS.Bff.dll", 5301),
-                (ehrBff, "src/backend/EHR/Dialysis.EHR.Bff/Dialysis.EHR.Bff.csproj", "Dialysis.EHR.Bff.dll", 5302),
-                (pdmsBff, "src/backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj", "Dialysis.PDMS.Bff.dll", 5303),
-                (smartConnectBff, "src/backend/SmartConnect/Dialysis.SmartConnect.Bff/Dialysis.SmartConnect.Bff.csproj", "Dialysis.SmartConnect.Bff.dll", 5304),
-                (hieBff, "src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj", "Dialysis.HIE.Bff.dll", 5305),
-                (adminBff, "src/backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj", "Dialysis.Admin.Bff.dll", 5306),
-                (portalBff, "src/backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj", "Dialysis.PatientPortal.Bff.dll", 5307),
+                (hisBff!, "src/backend/HIS/Dialysis.HIS.Bff/Dialysis.HIS.Bff.csproj", "Dialysis.HIS.Bff.dll", 5301),
+                (ehrBff!, "src/backend/EHR/Dialysis.EHR.Bff/Dialysis.EHR.Bff.csproj", "Dialysis.EHR.Bff.dll", 5302),
+                (pdmsBff!, "src/backend/PDMS/Dialysis.PDMS.Bff/Dialysis.PDMS.Bff.csproj", "Dialysis.PDMS.Bff.dll", 5303),
+                (smartConnectBff!, "src/backend/SmartConnect/Dialysis.SmartConnect.Bff/Dialysis.SmartConnect.Bff.csproj", "Dialysis.SmartConnect.Bff.dll", 5304),
+                (hieBff!, "src/backend/HIE/Dialysis.HIE.Bff/Dialysis.HIE.Bff.csproj", "Dialysis.HIE.Bff.dll", 5305),
+                (adminBff!, "src/backend/Identity/Dialysis.Admin.Bff/Dialysis.Admin.Bff.csproj", "Dialysis.Admin.Bff.dll", 5306),
+                (portalBff!, "src/backend/PatientPortal/Dialysis.PatientPortal.Bff/Dialysis.PatientPortal.Bff.csproj", "Dialysis.PatientPortal.Bff.dll", 5307),
             ];
             foreach (var (bff, project, dll, port) in contextBffs)
             {
@@ -899,7 +1280,7 @@ public class Program
             // compose service hostname. Cluster ids match the gateway's appsettings.json; note the two
             // web clusters whose id differs from the resource/service name (admin-web→identity-web,
             // portal-web→patient-portal-web). Webs are nginx on :80; BFFs on their pinned port.
-            gateway.WithGatewayDeployment(gatewayPort, deployEnv,
+            gateway!.WithGatewayDeployment(gatewayPort, deployEnv,
             [
                 ("identity", "http://identity-bff:" + identityBffPort + "/"),
                 ("his-bff", "http://his-bff:5301/"),
@@ -919,16 +1300,16 @@ public class Program
                 ("keycloak", "http://keycloak:8080/"),
             ]);
 
-            hisPgServer.WithPublishedDatabasePort(hostPort: 5440, databaseName: "dialysis_his", environment: deployEnv);
-            smartconnectPgServer.WithPublishedDatabasePort(hostPort: 5441, databaseName: "dialysis_smartconnect", environment: deployEnv);
-            ehrPgServer.WithPublishedDatabasePort(hostPort: 5442, databaseName: "dialysis_ehr", environment: deployEnv);
-            pdmsPgServer.WithPublishedDatabasePort(hostPort: 5443, databaseName: "dialysis_pdms", environment: deployEnv);
-            hiePgServer.WithPublishedDatabasePort(hostPort: 5445, databaseName: "dialysis_hie", environment: deployEnv);
-            labPgServer.WithPublishedDatabasePort(hostPort: 5446, databaseName: "dialysis_lab", environment: deployEnv);
+            hisPgServer!.WithPublishedDatabasePort(hostPort: 5440, databaseName: "dialysis_his", environment: deployEnv);
+            smartconnectPgServer!.WithPublishedDatabasePort(hostPort: 5441, databaseName: "dialysis_smartconnect", environment: deployEnv);
+            ehrPgServer!.WithPublishedDatabasePort(hostPort: 5442, databaseName: "dialysis_ehr", environment: deployEnv);
+            pdmsPgServer!.WithPublishedDatabasePort(hostPort: 5443, databaseName: "dialysis_pdms", environment: deployEnv);
+            hiePgServer!.WithPublishedDatabasePort(hostPort: 5445, databaseName: "dialysis_hie", environment: deployEnv);
+            labPgServer!.WithPublishedDatabasePort(hostPort: 5446, databaseName: "dialysis_lab", environment: deployEnv);
 
-            rabbit.WithPublishedPorts((5672, 5672), (15672, 15672));
-            valkey.WithPublishedPorts((6379, 6379));
-            keycloak.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
+            rabbitBroker!.WithPublishedPorts((5672, 5672), (15672, 15672));
+            valkeyBroker!.WithPublishedPorts((6379, 6379));
+            keycloak!.WithPublishedPorts((keycloakHostPort, keycloakContainerPort));
             // Always non-null under the compose publisher (enableSonarQube is forced on when publishing).
             sonarqube?.WithPublishedPorts((9000, 9000));
         }
@@ -940,32 +1321,36 @@ public class Program
         // ingress; the gateway alone stays reachable from outside, for the Ingress controller).
         // All applied via PublishAsKubernetesService callbacks, so the dev F5 loop and the
         // compose publisher both bypass this block.
+        // In unit mode each null entry is a resource owned by another unit — its hardening is
+        // applied when THAT unit publishes, so the per-unit charts carry the same envelopes /
+        // replicas / PDBs as the full chart. The namespace-wide NetworkPolicies + the Ingress
+        // ride on the gateway and therefore remain platform-unit (and full-chart) concerns.
         if (isKubernetesPublish)
         {
             foreach (var api in new[] { hisApi, ehrApi, pdmsApi, smartConnectApi, hieApi, labApi })
             {
-                api.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.ModuleApi, deployEnv);
+                api?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.ModuleApi, deployEnv);
             }
-            identityBff.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Bff, deployEnv);
+            identityBff?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Bff, deployEnv);
             foreach (var bff in new[] { hisBff, ehrBff, pdmsBff, smartConnectBff, hieBff, adminBff, portalBff })
             {
-                bff.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Bff, deployEnv);
+                bff?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Bff, deployEnv);
             }
-            // enableWebApps is forced on under the publisher, so every web resource is non-null here.
-            foreach (var web in new[] { hisWeb!, ehrWeb!, pdmsWeb!, smartConnectWeb!, hieWeb!, identityWeb!, portalWeb! })
+            // enableWebApps is forced on under the publisher, so every *included* web resource is non-null here.
+            foreach (var web in new[] { hisWeb, ehrWeb, pdmsWeb, smartConnectWeb, hieWeb, identityWeb, portalWeb })
             {
-                web.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Web, deployEnv);
+                web?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Web, deployEnv);
             }
             gateway
-                .WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Gateway, deployEnv)
+                ?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Gateway, deployEnv)
                 .WithKubernetesNetworkPolicies();
             foreach (var pg in new[] { hisPgServer, smartconnectPgServer, ehrPgServer, pdmsPgServer, hiePgServer, labPgServer })
             {
-                pg.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Postgres, deployEnv);
+                pg?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Postgres, deployEnv);
             }
-            rabbit.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
-            valkey.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
-            keycloak.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
+            rabbitBroker?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
+            valkeyBroker?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
+            keycloak?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
             sonarqube?.WithKubernetesWorkloadHardening(KubernetesPublishExtensions.WorkloadTier.Infra, deployEnv);
         }
 
@@ -979,7 +1364,7 @@ public class Program
         // NGINX is the default ingress class — most portable; operators on EKS swap for `alb`, on
         // AKS for `azure-application-gateway`, on bare-metal can use Traefik. Override via
         // `helm install --set ingress.className=...`.
-        if (isKubernetesPublish && k8SEnv is not null)
+        if (isKubernetesPublish && k8SEnv is not null && gateway is not null)
         {
             k8SEnv.AddIngress("dialysis")
                 .WithIngressClass("nginx")

@@ -69,12 +69,12 @@ jobs:
           # fail and the packages fall back to an un-versioned default.
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
@@ -84,11 +84,15 @@ jobs:
       # could derive a version (so a broken git state fails up front, not as a silently
       # mis-versioned package), then Restore → Compile runs once, then Test (full suite incl.
       # architecture gates, collecting per-project Cobertura coverage), CoverageReport
-      # (aggregates into artifacts/coverage; --min-coverage defaults to 0 = report-only until a
-      # baseline is ratcheted in), and Pack (NuGet packaging, stamped with the derived version).
-      # Test failing stops the build before Pack.
+      # (aggregates into artifacts/coverage and enforces the line-coverage ratchet), and Pack
+      # (NuGet packaging, stamped with the derived version). Test failing stops the build
+      # before Pack.
+      #
+      # Coverage ratchet: the first instrumented run measured 75.0% line coverage; the gate
+      # sits a safety margin below so ordinary fluctuation never flakes CI while a real
+      # regression fails the PR. Raise the gate as coverage grows — never lower it.
       - name: Show version + Test + Coverage + Pack (Release) via NUKE
-        run: ./build.sh ShowVersion Test CoverageReport Pack --configuration Release
+        run: ./build.sh ShowVersion Test CoverageReport Pack --configuration Release --min-coverage 70
 
       - name: Coverage summary
         if: always()
@@ -143,7 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
 

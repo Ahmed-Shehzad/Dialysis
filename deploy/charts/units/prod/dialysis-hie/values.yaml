@@ -1,0 +1,69 @@
+parameters:
+  hie_api:
+    port_http: 8080
+    hie_api_image: "hie-api:latest"
+  hie_bff:
+    hie_bff_image: "hie-bff:latest"
+  hie_web:
+    hie_web_image: "hie-web:latest"
+secrets:
+  postgres_hie:
+    postgres_hie_password: ""
+  hie_api:
+    ConnectionStrings__Hie: ""
+    postgres_hie_password: ""
+    HIE_URI: ""
+    ConnectionStrings__Hangfire: ""
+    HANGFIRE_URI: ""
+  hie_bff:
+    hie_bff_client_secret: ""
+    ConnectionStrings__Hangfire: ""
+    postgres_hie_password: ""
+    HANGFIRE_URI: ""
+config:
+  postgres_hie:
+    POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+    POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    POSTGRES_USER: "postgres"
+  hie_api:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    HTTP_PORTS: ""
+    HIE_HOST: "postgres-hie-service"
+    HIE_PORT: "5432"
+    HIE_USERNAME: "postgres"
+    HIE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hie-service:5432/dialysis_hie"
+    HIE_DATABASENAME: "dialysis_hie"
+    HANGFIRE_HOST: "postgres-hie-service"
+    HANGFIRE_PORT: "5432"
+    HANGFIRE_USERNAME: "postgres"
+    HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hie-service:5432/dialysis_hie"
+    HANGFIRE_DATABASENAME: "dialysis_hie"
+    rabbitmq_connection: "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+    valkey_connection: "valkey-service:6379,password=CHANGE-ME"
+    Hie__Transponder__EnableOutboxRelay: "true"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    Hie__Authentication__Audience: "account"
+  hie_bff:
+    OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    ASPNETCORE_URLS: "http://+:5305"
+    keycloak_authority: "http://keycloak-service:8081/realms/dialysis"
+    Bff__Module__ModuleApiAddress: ""
+    rabbitmq_connection: "amqp://guest:CHANGE-ME@rabbitmq-service:5672"
+    valkey_connection: "valkey-service:6379,password=CHANGE-ME"
+    HANGFIRE_HOST: "postgres-hie-service"
+    HANGFIRE_PORT: "5432"
+    HANGFIRE_USERNAME: "postgres"
+    HANGFIRE_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres-hie-service:5432/dialysis_hie"
+    HANGFIRE_DATABASENAME: "dialysis_hie"
+    Bff__Module__Aggregations__0__Address: "http://smartconnect-api-service:8080"
+    Bff__Module__Aggregations__1__Address: "http://his-api-service:8080"
+    Bff__Module__Aggregations__2__Address: "http://ehr-api-service:8080"
+    Bff__Module__Aggregations__3__Address: "http://pdms-api-service:8080"
+  hie_web:
+    NODE_ENV: "production"
+    BROWSER: "none"
+    VITE_GATEWAY_URL: "http://gateway-service:9090"
+    VITE_API_BASE_URL: "http://gateway-service:9090"
+    PORT: "5335"

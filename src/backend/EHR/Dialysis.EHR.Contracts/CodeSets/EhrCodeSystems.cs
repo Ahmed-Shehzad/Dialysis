@@ -3,12 +3,39 @@ namespace Dialysis.EHR.Contracts.CodeSets;
 /// <summary>
 /// Stable identifiers for the standard clinical code systems referenced across the EHR.
 /// Used as <c>system</c> on coded value objects so payloads can carry FHIR-compatible Coding pairs.
+///
+/// The four primary US billing/coding systems divide the work as follows — together they
+/// translate every diagnosis, procedure, and service into standardized codes for records and
+/// claims:
+/// <list type="bullet">
+///   <item><see cref="Icd10Cm"/> — diagnoses (the "what's wrong"); carried on
+///     <c>Diagnosis.Icd10Code</c> and 837 claim diagnosis segments.</item>
+///   <item><see cref="Icd10Pcs"/> — inpatient/institutional procedures; relevant to the 837I /
+///     UB-04 institutional claim path (declared for that future slice; the platform currently
+///     ships the 837P professional writer).</item>
+///   <item><see cref="Cpt"/> — professional procedures/services (HCPCS Level I); carried on
+///     <c>Charge.CptCode</c>, <c>CptFeeScheduleEntry</c>, <c>PerformedProcedure</c>.</item>
+///   <item><see cref="Hcpcs"/> — HCPCS Level II: supplies, drugs (J-codes — EPO and other ESRD
+///     drugs bill here), DME. Shares the X12 <c>HC</c> qualifier with CPT, so Level II codes ride
+///     the same <c>CptCode</c> fields on the wire.</item>
+/// </list>
 /// </summary>
 public static class EhrCodeSystems
 {
+    /// <summary>ICD-10-CM — diagnosis coding (US clinical modification).</summary>
     public const string Icd10Cm = "http://hl7.org/fhir/sid/icd-10-cm";
-    public const string Icd10Pcs = "http://hl7.org/fhir/sid/icd-10";
+
+    /// <summary>
+    /// ICD-10-PCS — inpatient procedure coding. CMS's canonical FHIR system URI (the previous
+    /// value here, <c>http://hl7.org/fhir/sid/icd-10</c>, identifies the WHO ICD-10 diagnosis
+    /// system, not PCS).
+    /// </summary>
+    public const string Icd10Pcs = "http://www.cms.gov/Medicare/Coding/ICD10";
+
+    /// <summary>CPT (HCPCS Level I) — professional procedures and services.</summary>
     public const string Cpt = "http://www.ama-assn.org/go/cpt";
+
+    /// <summary>HCPCS Level II — supplies, drugs (J-codes), DME.</summary>
     public const string Hcpcs = "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets";
     public const string Loinc = "http://loinc.org";
     public const string SnomedCt = "http://snomed.info/sct";
