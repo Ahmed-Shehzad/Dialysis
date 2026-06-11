@@ -1,3 +1,4 @@
+using Dialysis.BuildingBlocks.Transponder.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -15,22 +16,27 @@ public sealed class RabbitMqTransponderTransport : ITransponderTransport
     private IConnection? _connection;
     private IChannel? _publishChannel;
     private IChannel? _consumeChannel;
+    private const string TransportName = "rabbitmq";
+
     private readonly IOptions<TransponderRabbitMqOptions> _options;
     private readonly RabbitMqSubscriptionRegistry _registry;
     private readonly IEnumerable<IConsumeRouteMetadata> _consumeRoutes;
     private readonly ILogger<RabbitMqTransponderTransport> _logger;
+    private readonly ITransponderStateObserver _stateObserver;
     /// <summary>
     /// RabbitMQ <see cref="ITransponderTransport"/> using separate publish and consumer channels.
     /// </summary>
     public RabbitMqTransponderTransport(IOptions<TransponderRabbitMqOptions> options,
         RabbitMqSubscriptionRegistry registry,
         IEnumerable<IConsumeRouteMetadata> consumeRoutes,
-        ILogger<RabbitMqTransponderTransport> logger)
+        ILogger<RabbitMqTransponderTransport> logger,
+        ITransponderStateObserver? stateObserver = null)
     {
         _options = options;
         _registry = registry;
         _consumeRoutes = consumeRoutes;
         _logger = logger;
+        _stateObserver = stateObserver ?? NullTransponderStateObserver.Instance;
     }
 
     public async ValueTask EnsureConnectedAsync(CancellationToken cancellationToken = default)
@@ -42,6 +48,7 @@ public sealed class RabbitMqTransponderTransport : ITransponderTransport
                 return;
 
             await DisposeCoreAsync().ConfigureAwait(false);
+            _stateObserver.OnTransportConnectionStateChanged(TransportName, TransponderTransportConnectionState.Connecting);
 
             var o = _options.Value;
             var factory = new ConnectionFactory { Uri = new Uri(o.ConnectionUri, UriKind.Absolute) };
@@ -79,6 +86,12 @@ public sealed class RabbitMqTransponderTransport : ITransponderTransport
                 "Transponder RabbitMQ connected; exchange {Exchange}, publisher confirms {Confirms}",
                 o.ExchangeName,
                 o.PublisherConfirmsEnabled);
+            _stateObserver.OnTransportConnectionStateChanged(TransportName, TransponderTransportConnectionState.Connected);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _stateObserver.OnTransportConnectionStateChanged(TransportName, TransponderTransportConnectionState.Faulted, ex);
+            throw;
         }
         finally
         {
@@ -285,6 +298,7 @@ public sealed class RabbitMqTransponderTransport : ITransponderTransport
         try
         {
             await DisposeCoreAsync().ConfigureAwait(false);
+            _stateObserver.OnTransportConnectionStateChanged(TransportName, TransponderTransportConnectionState.Disconnected);
         }
         finally
         {

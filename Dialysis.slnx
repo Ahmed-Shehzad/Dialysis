@@ -22,6 +22,7 @@
     <Project Path="src/backend/BuildingBlocks/Transponder/Transponder.Abstractions/Transponder.Abstractions.csproj" />
     <Project Path="src/backend/BuildingBlocks/Transponder/Transponder.Core/Transponder.Core.csproj" />
     <Project Path="src/backend/BuildingBlocks/Transponder/Tests/Dialysis.BuildingBlocks.Transponder.Tests/Dialysis.BuildingBlocks.Transponder.Tests.csproj" />
+    <Project Path="src/backend/BuildingBlocks/Transponder/Tests/Dialysis.BuildingBlocks.Transponder.Reactive.Signals.Tests/Dialysis.BuildingBlocks.Transponder.Reactive.Signals.Tests.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Transponder/Transport/">
     <Project Path="src/backend/BuildingBlocks/Transponder/Transport/Transponder.Transport.RabbitMq/Transponder.Transport.RabbitMq.csproj" />
@@ -35,6 +36,9 @@
   <Folder Name="/src/backend/BuildingBlocks/Transponder/Persistence/">
     <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Shared/Transponder.Persistence.EntityFrameworkCore.Shared.csproj" />
     <Project Path="src/backend/BuildingBlocks/Transponder/Persistence/Transponder.Persistence.EntityFrameworkCore.Postgresql/Transponder.Persistence.EntityFrameworkCore.Postgresql.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/BuildingBlocks/Transponder/Reactive/">
+    <Project Path="src/backend/BuildingBlocks/Transponder/Reactive/Transponder.Reactive.Signals/Transponder.Reactive.Signals.csproj" />
   </Folder>
   <Folder Name="/src/backend/BuildingBlocks/Transponder/Scheduling/">
     <Project Path="src/backend/BuildingBlocks/Transponder/Scheduling/Transponder.Scheduling.Hangfire/Transponder.Scheduling.Hangfire.csproj" />

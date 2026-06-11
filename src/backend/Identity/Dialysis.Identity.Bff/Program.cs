@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Identity.Bff.Configuration;
 using Dialysis.Identity.Bff.Federation;
 using Dialysis.Identity.Bff.Services;
@@ -25,6 +26,24 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
+
+        // Transponder Hangfire scheduler — PostgreSQL-backed (the AppHost injects ConnectionStrings:Hangfire,
+        // pointing at the HIS database). This BFF wires it directly because it uses bespoke OIDC rather
+        // than the shared AddModuleBff scaffolding. Schema is per-host so it never shares a job queue
+        // with the HIS API or the his/portal BFFs riding the same database.
+        var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
+        if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
+        {
+            builder.Services.AddTransponderHangfire(hangfireConnectionString, "hangfire_identity_bff");
+
+            // The BFF's owned recurring job: keep the Keycloak discovery document + JWKS warm and
+            // surface Keycloak outages as a red job on this host's own /hangfire dashboard.
+            builder.Services.AddTransient<KeycloakMetadataRefreshJob>();
+            builder.Services.AddHangfireRecurringJob<KeycloakMetadataRefreshJob>(
+                "identity-bff-keycloak-metadata-refresh",
+                job => job.RefreshAsync(CancellationToken.None),
+                "*/15 * * * *");
+        }
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddMemoryCache();
@@ -171,6 +190,9 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for the Identity BFF).
+        app.UseModuleHangfireDashboard("identity BFF");
 
         app.MapGet(BffRoutes.Root, () => Results.Text(
             $"Dialysis Identity BFF — GET {BffRoutes.Login} to sign in, GET {BffRoutes.User} for claims, "

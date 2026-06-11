@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Dialysis.BuildingBlocks.Transponder.Reactive.Signals</RootNamespace>
+    <AssemblyName>Transponder.Reactive.Signals</AssemblyName>
+    <Description>First-party server-grade reactive signals for Transponder: thread-safe Signal&lt;T&gt;, explicit-dependency computed signals, coalescing effects, message-to-state projections, and the bus-health diagnostics pilot. Zero external dependencies by design (see docs/reports/signals-transponder-audit-2026-06-11.md).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Transponder.Abstractions/Transponder.Abstractions.csproj" />
+    <ProjectReference Include="../../Transponder.Core/Transponder.Core.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Dialysis.BuildingBlocks.Transponder.Reactive.Signals.Tests" />
+  </ItemGroup>
+
+</Project>

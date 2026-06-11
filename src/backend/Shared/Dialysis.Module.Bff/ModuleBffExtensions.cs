@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Module.Bff.Configuration;
 using Dialysis.Module.Bff.Federation;
 using Dialysis.Module.Bff.Services;
@@ -228,6 +229,24 @@ public static class ModuleBffExtensions
                 });
         }
 
+        // Transponder Hangfire scheduler — PostgreSQL-backed background scheduling. The AppHost injects
+        // ConnectionStrings:Hangfire (the database of the module API this BFF fronts); it is absent in
+        // tests, where Hangfire is skipped. Schema is per-host (hangfire_<slug>_bff) so this BFF never
+        // shares a job queue with the API or other BFFs riding the same database.
+        var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
+        if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
+        {
+            builder.Services.AddTransponderHangfire(hangfireConnectionString, $"hangfire_{module.Slug}_bff");
+
+            // The BFF's owned recurring job: keep the Keycloak discovery document + JWKS warm and
+            // surface Keycloak outages as a red job on this host's own /hangfire dashboard.
+            builder.Services.AddTransient<KeycloakMetadataRefreshJob>();
+            builder.Services.AddHangfireRecurringJob<KeycloakMetadataRefreshJob>(
+                $"{module.Slug}-bff-keycloak-metadata-refresh",
+                job => job.RefreshAsync(CancellationToken.None),
+                "*/15 * * * *");
+        }
+
         return builder;
     }
 
@@ -240,6 +259,9 @@ public static class ModuleBffExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for this BFF).
+        app.UseModuleHangfireDashboard($"{module.Slug} BFF");
 
         app.MapGet(routes.Root, () => Results.Text(
             $"Dialysis {module.Slug} BFF — GET {routes.Login} to sign in, GET {routes.User} for claims.",

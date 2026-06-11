@@ -32,6 +32,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
+    <!-- Direct reference solely to lift transitive MessagePack (via SignalR.StackExchangeRedis)
+         past CVE-2026-48109; remove when the backplane package carries >= 2.5.301. -->
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
