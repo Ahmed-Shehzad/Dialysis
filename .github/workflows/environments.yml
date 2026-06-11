@@ -1,0 +1,58 @@
+# Deployment environments: dev / staging / production.
+#
+# Referencing `environment:` here is what CREATES the three environments under
+# Settings → Environments on first run (GitHub has no config-as-code for environments).
+# Each job validates the committed deploy artifacts for its environment — the compose shape
+# and the Helm charts the AppHost generated — so an environment-scoped run doubles as a
+# deployment-readiness gate. Protection rules (required reviewers on production, deployment
+# branch policies) and environment secrets are configured in the UI; once required reviewers
+# exist, runs targeting that environment pause for approval, which is the intended behaviour
+# for anything that later deploys for real.
+#
+# Environment → artifact folder: dev→dev, staging→staging, production→prod.
+name: environments
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/environments.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: environments-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: dev
+            folder: dev
+          - environment: staging
+            folder: staging
+          - environment: production
+            folder: prod
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate Docker Compose shape
+        working-directory: deploy/compose/${{ matrix.folder }}
+        run: docker compose -f docker-compose.yaml config --quiet
+
+      - name: Lint full-stack Helm chart
+        run: helm lint deploy/charts/dialysis-${{ matrix.folder }}
+
+      - name: Lint per-unit Helm charts (production only)
+        if: matrix.folder == 'prod'
+        run: |
+          for chart in deploy/charts/units/prod/*/; do
+            helm lint "$chart"
+          done
