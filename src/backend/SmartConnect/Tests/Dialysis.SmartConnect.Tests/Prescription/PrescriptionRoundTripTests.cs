@@ -215,6 +215,93 @@ public sealed class PrescriptionRoundTripTests
     }
 
     [Fact]
+    public void Builder_Emits_Profile_Driven_Uf_As_Per_Step_Observation_Rows()
+    {
+        // IG §5.3 profile-driven UF: shape row + one duration/rate observation pair per step,
+        // streamed like every other channel — never a monolithic profile payload.
+        var query = new PrescriptionQuery("Q004", "PQ-UF-1", "555444222111");
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "555444222111",
+            OrderNumber: "A226680",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: TherapyModality.Hd,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(300, "2N"),
+            Dialysate: new DialysateFluidSettings("CONST", 500, 120, "RFP-204"),
+            Ultrafiltration: new UltrafiltrationSettings(
+                UfMode: "PRO-WT",
+                UfRateMlPerHour: 800,
+                TargetVolumeToRemoveMl: 2400,
+                ProfileShape: "STEP",
+                Profile:
+                [
+                    new UltrafiltrationProfileStep(DurationMinutes: 60, UfRateMlPerHour: 1200),
+                    new UltrafiltrationProfileStep(DurationMinutes: 120, UfRateMlPerHour: 600),
+                ]));
+
+        var response = Hl7V2RxResponseBuilder.Build(query, document, "RESP-UF-001", _fixedNow);
+
+        Assert.Contains("158619^MDC_HDIALY_UF_MODE^MDC|1.1.5.1|PRO-WT|", response);
+        Assert.Contains("0^MDC_HDIALY_UF_PROFILE_SHAPE^MDC|1.1.5.4|STEP|", response);
+        Assert.Contains("0^MDC_HDIALY_UF_PROFILE_STEP_DURATION^MDC|1.1.5.5.1|60|min^min^UCUM|", response);
+        Assert.Contains("0^MDC_HDIALY_UF_PROFILE_STEP_RATE^MDC|1.1.5.6.1|1200|ml/h^ml/h^UCUM|", response);
+        Assert.Contains("0^MDC_HDIALY_UF_PROFILE_STEP_DURATION^MDC|1.1.5.5.2|120|min^min^UCUM|", response);
+        Assert.Contains("0^MDC_HDIALY_UF_PROFILE_STEP_RATE^MDC|1.1.5.6.2|600|ml/h^ml/h^UCUM|", response);
+        Assert.Empty(document.GetModalityConsistencyWarnings());
+    }
+
+    [Fact]
+    public void Constant_Uf_Mode_Emits_No_Profile_Rows()
+    {
+        var query = new PrescriptionQuery("Q005", "PQ-UF-2", "555444222111");
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "555444222111",
+            OrderNumber: "A226681",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: TherapyModality.Hd,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(250, "2N"),
+            Dialysate: new DialysateFluidSettings("CONST", 500, 30, "RFP-200"),
+            Ultrafiltration: new UltrafiltrationSettings("CONST-WT", 400, 1000));
+
+        var response = Hl7V2RxResponseBuilder.Build(query, document, "RESP-UF-002", _fixedNow);
+
+        Assert.DoesNotContain("MDC_HDIALY_UF_PROFILE", response);
+        Assert.Empty(document.GetModalityConsistencyWarnings());
+    }
+
+    [Theory]
+    [InlineData("PRO-WT", null, false, "no profile steps")]
+    [InlineData("PRO-WOT", "LINEAR", false, "no profile steps")]
+    [InlineData("PRO-WT", null, true, "no profile shape")]
+    [InlineData("CONST-WT", "STEP", true, "constant mode but the prescription carries profile data")]
+    public void Uf_Profile_Consistency_Warns_On_Mode_Profile_Mismatch(
+        string ufMode, string? shape, bool withSteps, string expectedFragment)
+    {
+        var document = new PrescriptionDocument(
+            MedicalRecordNumber: "MRN-1",
+            OrderNumber: "ORD-UF-W",
+            OrderingProviderId: null,
+            OrderingProviderFamily: null,
+            OrderingProviderGiven: null,
+            Modality: TherapyModality.Hd,
+            TherapyCompletionMethod: "UF",
+            BloodPump: new BloodPumpSettings(300, "2N"),
+            Dialysate: new DialysateFluidSettings("CONST", 500, 30, "RFP-200"),
+            Ultrafiltration: new UltrafiltrationSettings(
+                ufMode, 400, 1000, shape,
+                withSteps ? [new UltrafiltrationProfileStep(60, 800)] : null));
+
+        var warnings = document.GetModalityConsistencyWarnings();
+
+        Assert.Contains(warnings, w => w.Contains(expectedFragment, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Responder_End_To_End_Resolves_And_Builds_Async()
     {
         const string raw =
