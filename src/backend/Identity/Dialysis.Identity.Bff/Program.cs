@@ -35,6 +35,14 @@ public class Program
         if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
         {
             builder.Services.AddTransponderHangfire(hangfireConnectionString, "hangfire_identity_bff");
+
+            // The BFF's owned recurring job: keep the Keycloak discovery document + JWKS warm and
+            // surface Keycloak outages as a red job on this host's own /hangfire dashboard.
+            builder.Services.AddTransient<KeycloakMetadataRefreshJob>();
+            builder.Services.AddHangfireRecurringJob<KeycloakMetadataRefreshJob>(
+                "identity-bff-keycloak-metadata-refresh",
+                job => job.RefreshAsync(CancellationToken.None),
+                "*/15 * * * *");
         }
 
         builder.Services.AddHttpContextAccessor();

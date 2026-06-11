@@ -237,6 +237,14 @@ public static class ModuleBffExtensions
         if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
         {
             builder.Services.AddTransponderHangfire(hangfireConnectionString, $"hangfire_{module.Slug}_bff");
+
+            // The BFF's owned recurring job: keep the Keycloak discovery document + JWKS warm and
+            // surface Keycloak outages as a red job on this host's own /hangfire dashboard.
+            builder.Services.AddTransient<KeycloakMetadataRefreshJob>();
+            builder.Services.AddHangfireRecurringJob<KeycloakMetadataRefreshJob>(
+                $"{module.Slug}-bff-keycloak-metadata-refresh",
+                job => job.RefreshAsync(CancellationToken.None),
+                "*/15 * * * *");
         }
 
         return builder;
