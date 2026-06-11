@@ -2,12 +2,12 @@
 
 The EHR (Electronic Health Record) browser app: the **patient record, orders, notes and billing**. The richest feature surface in the platform. Backed by the **`Dialysis.EHR.Bff`** per-context BFF.
 
-|                                |                                                                                                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Context base / router basename | `/ehr`                                                                                                                                                              |
-| Standalone dev port (Vite)     | `5332`                                                                                                                                                              |
-| Backing BFF                    | `Dialysis.EHR.Bff` (`ehr-bff`, port `5302`)                                                                                                                         |
-| BFF aggregations               | HIE, Lab, SmartConnect (DICOM)                                                                                                                                      |
+|                                |                                                                                                                                                                                     |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context base / router basename | `/ehr`                                                                                                                                                                              |
+| Standalone dev port (Vite)     | `5332`                                                                                                                                                                              |
+| Backing BFF                    | `Dialysis.EHR.Bff` (`ehr-bff`, port `5302`)                                                                                                                                         |
+| BFF aggregations               | HIE, Lab, SmartConnect (DICOM)                                                                                                                                                      |
 | Real-time push                 | **Yes** — `useBffNotifications` on `/ehr/events`; the BFF pushes PHI-light notifications (lab results, admissions, portal messages/requests) rendered as generic type-driven toasts |
 
 ## What it does

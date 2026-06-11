@@ -895,6 +895,16 @@ public class Program
         // `moduleApi` may be null when the BFF's primary module API lives in ANOTHER unit (the
         // admin BFF fronts hie-api, the portal BFF fronts his-api); `externalModuleApiAddress`
         // then supplies the sibling release's in-cluster Service DNS instead.
+        //
+        // Run mode applies each BFF's Development launch profile (child processes don't inherit the
+        // AppHost's environment when it is started with --no-launch-profile, e.g. in CI, and an
+        // unset ASPNETCORE_ENVIRONMENT means Production — which trips KeycloakSecretGuard on the
+        // dev-realm placeholder secrets and kills the host). Publish mode excludes the profile so
+        // the generated compose/Helm artifacts stay exactly as ComposePublishExtensions shapes them.
+        IResourceBuilder<ProjectResource> AddBffProject<TProject>(string name)
+            where TProject : IProjectMetadata, new()
+            => builder.AddProject<TProject>(name, options => options.ExcludeLaunchProfile = publishing);
+
         IResourceBuilder<ProjectResource> AddContextBff(
             IResourceBuilder<ProjectResource> bff,
             int port,
@@ -944,7 +954,7 @@ public class Program
         IResourceBuilder<ProjectResource>? hisBff = null;
         if (includeHis)
         {
-            hisBff = AddContextBff(builder.AddProject<Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret!)
+            hisBff = AddContextBff(AddBffProject<Dialysis_HIS_Bff>("his-bff"), 5301, hisApi, hisBffSecret!)
                 .WithReference(hisDb!, connectionName: "Hangfire");
             if (deployUnit is null)
             {
@@ -962,7 +972,7 @@ public class Program
         IResourceBuilder<ProjectResource>? ehrBff = null;
         if (includeEhr)
         {
-            ehrBff = AddContextBff(builder.AddProject<Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret!)
+            ehrBff = AddContextBff(AddBffProject<Dialysis_EHR_Bff>("ehr-bff"), 5302, ehrApi, ehrBffSecret!)
                 .WithReference(ehrDb!, connectionName: "Hangfire");
             if (deployUnit is null)
             {
@@ -983,7 +993,7 @@ public class Program
         IResourceBuilder<ProjectResource>? pdmsBff = null;
         if (includePdms)
         {
-            pdmsBff = AddContextBff(builder.AddProject<Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret!)
+            pdmsBff = AddContextBff(AddBffProject<Dialysis_PDMS_Bff>("pdms-bff"), 5303, pdmsApi, pdmsBffSecret!)
                 .WithReference(pdmsDb!, connectionName: "Hangfire");
             if (deployUnit is null)
             {
@@ -1002,12 +1012,12 @@ public class Program
         }
         var smartConnectBff = !includeSmartConnect
             ? null
-            : AddContextBff(builder.AddProject<Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret!)
+            : AddContextBff(AddBffProject<Dialysis_SmartConnect_Bff>("smartconnect-bff"), 5304, smartConnectApi, smartConnectBffSecret!)
                 .WithReference(smartconnectDb!, connectionName: "Hangfire");
         IResourceBuilder<ProjectResource>? hieBff = null;
         if (includeHie)
         {
-            hieBff = AddContextBff(builder.AddProject<Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret!)
+            hieBff = AddContextBff(AddBffProject<Dialysis_HIE_Bff>("hie-bff"), 5305, hieApi, hieBffSecret!)
                 .WithReference(hieDb!, connectionName: "Hangfire");
             if (deployUnit is null)
             {
@@ -1034,7 +1044,7 @@ public class Program
         IResourceBuilder<ProjectResource>? adminBff = null;
         if (includeIdentityContext)
         {
-            adminBff = AddContextBff(builder.AddProject<Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret!,
+            adminBff = AddContextBff(AddBffProject<Dialysis_Admin_Bff>("admin-bff"), 5306, hieApi, adminBffSecret!,
                 externalModuleApiAddress: DeploymentUnit.ModuleApiAddress("hie-api"));
             if (hieDb is not null)
             {
@@ -1065,7 +1075,7 @@ public class Program
         IResourceBuilder<ProjectResource>? portalBff = null;
         if (includePortalContext)
         {
-            portalBff = AddContextBff(builder.AddProject<Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret!,
+            portalBff = AddContextBff(AddBffProject<Dialysis_PatientPortal_Bff>("portal-bff"), 5307, hisApi, portalBffSecret!,
                 externalModuleApiAddress: DeploymentUnit.ModuleApiAddress("his-api"));
             if (hisDb is not null)
             {

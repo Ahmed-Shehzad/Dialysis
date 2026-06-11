@@ -2,12 +2,12 @@
 
 The PDMS (Patient Data Management System) browser app: **live treatment, real-time vitals, and machine alarms** at the dialysis chair. Backed by the **`Dialysis.PDMS.Bff`** per-context BFF.
 
-|                                |                                                                                                             |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| Context base / router basename | `/pdms`                                                                                                     |
-| Standalone dev port (Vite)     | `5333`                                                                                                      |
-| Backing BFF                    | `Dialysis.PDMS.Bff` (`pdms-bff`, port `5303`)                                                               |
-| BFF aggregations               | EHR, HIE, SmartConnect (DICOM)                                                                              |
+|                                |                                                                                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Context base / router basename | `/pdms`                                                                                                                                                                        |
+| Standalone dev port (Vite)     | `5333`                                                                                                                                                                         |
+| Backing BFF                    | `Dialysis.PDMS.Bff` (`pdms-bff`, port `5303`)                                                                                                                                  |
+| BFF aggregations               | EHR, HIE, SmartConnect (DICOM)                                                                                                                                                 |
 | Real-time push                 | **Yes** — `useBffNotifications` on `/pdms/events`; the BFF pushes PHI-light notifications (e.g. intradialytic adverse events) rendered as generic type-driven **error** toasts |
 
 ## What it does
