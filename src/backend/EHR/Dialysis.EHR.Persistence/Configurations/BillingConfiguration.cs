@@ -47,6 +47,7 @@ internal static class BillingConfiguration
             b.Property(c => c.Status).HasConversion<int>().IsRequired();
             b.Property(c => c.OverrideReason).HasMaxLength(1000);
             b.Property(c => c.OverriddenBy).HasMaxLength(128);
+            b.Property(c => c.RevenueCode).HasMaxLength(4);
             b.Property<List<string>>("_diagnosisPointers")
                 .HasColumnName("DiagnosisPointerIcd10Codes")
                 .HasConversion(
@@ -69,6 +70,23 @@ internal static class BillingConfiguration
             b.Property(c => c.ExternalControlNumber).HasMaxLength(64);
             b.Property(c => c.Status).HasConversion<int>().IsRequired();
             b.OwnsOne(c => c.BilledTotal, MapMoney);
+            // Optional institutional (837I / UB-04) section, table-shared. TypeOfBill /
+            // statement dates are required on the owned type, which is how EF detects
+            // presence of the optional dependent.
+            b.OwnsOne(c => c.Institutional, i =>
+            {
+                i.Property(x => x.TypeOfBill).HasColumnName("InstitutionalTypeOfBill").HasMaxLength(4);
+                i.Property(x => x.StatementFromUtc).HasColumnName("InstitutionalStatementFromUtc");
+                i.Property(x => x.StatementToUtc).HasColumnName("InstitutionalStatementToUtc");
+                i.Property(x => x.AdmissionDateUtc).HasColumnName("InstitutionalAdmissionDateUtc");
+                i.Property(x => x.AdmissionTypeCode).HasColumnName("InstitutionalAdmissionTypeCode").HasMaxLength(2);
+                i.Property(x => x.PrincipalProcedureCode).HasColumnName("InstitutionalPrincipalProcedureCode").HasMaxLength(8);
+                i.Property<List<string>>("_otherProcedureCodes")
+                    .HasColumnName("InstitutionalOtherProcedureCodes")
+                    .HasConversion(
+                        v => string.Join(',', v ?? new List<string>()),
+                        v => v.Length == 0 ? new List<string>() : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+            });
             b.Property<List<Guid>>("_chargeIds")
                 .HasColumnName("ChargeIds")
                 .HasConversion(

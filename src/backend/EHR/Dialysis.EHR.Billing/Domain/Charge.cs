@@ -39,6 +39,13 @@ public sealed class Charge : AggregateRoot<Guid>
 
     public Guid? AssignedClaimId { get; private set; }
 
+    /// <summary>
+    /// UB-04 revenue code for the institutional (837I) service line, four digits including the
+    /// leading zero (e.g. <c>0821</c> = hemodialysis outpatient). Null on professional-only charges;
+    /// required on every charge assembled onto an institutional claim (837I SV2-01).
+    /// </summary>
+    public string? RevenueCode { get; private set; }
+
     /// <summary>Reason a biller overrode a blocking charge-review edit when capturing this charge; else null.</summary>
     public string? OverrideReason { get; private set; }
 
@@ -53,7 +60,8 @@ public sealed class Charge : AggregateRoot<Guid>
         IReadOnlyList<string> diagnosisPointerIcd10Codes,
         Money billedAmount,
         string? overrideReason = null,
-        string? overriddenBy = null)
+        string? overriddenBy = null,
+        string? revenueCode = null)
     {
         if (patientId == Guid.Empty)
             throw new ArgumentException("Patient required.", nameof(patientId));
@@ -66,6 +74,11 @@ public sealed class Charge : AggregateRoot<Guid>
         if (diagnosisPointerIcd10Codes is null || diagnosisPointerIcd10Codes.Count == 0)
             throw new ArgumentException("At least one diagnosis pointer is required.", nameof(diagnosisPointerIcd10Codes));
 
+        var trimmedRevenueCode = string.IsNullOrWhiteSpace(revenueCode) ? null : revenueCode.Trim();
+        if (trimmedRevenueCode is not null && (trimmedRevenueCode.Length != 4 || !trimmedRevenueCode.All(char.IsAsciiDigit)))
+            throw new ArgumentException(
+                "Revenue code must be four digits including the leading zero (e.g. '0821').", nameof(revenueCode));
+
         var charge = new Charge(id)
         {
             PatientId = patientId,
@@ -75,6 +88,7 @@ public sealed class Charge : AggregateRoot<Guid>
             Status = ChargeStatus.Captured,
             OverrideReason = string.IsNullOrWhiteSpace(overrideReason) ? null : overrideReason.Trim(),
             OverriddenBy = string.IsNullOrWhiteSpace(overriddenBy) ? null : overriddenBy.Trim(),
+            RevenueCode = trimmedRevenueCode,
         };
         charge._diagnosisPointers.AddRange(diagnosisPointerIcd10Codes.Select(c => c.Trim()).Where(static c => !string.IsNullOrEmpty(c)));
 

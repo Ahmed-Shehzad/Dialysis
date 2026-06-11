@@ -1,4 +1,5 @@
 using Dialysis.DomainDrivenDesign.Primitives;
+using Dialysis.EHR.Contracts.CodeSets;
 using Dialysis.EHR.Contracts.Integration;
 
 namespace Dialysis.EHR.Billing.Domain;
@@ -50,9 +51,20 @@ public sealed class Claim : AggregateRoot<Guid>
 
     public string? PayerClaimControlNumber { get; private set; }
 
+    /// <summary>
+    /// Institutional (837I / UB-04) section — type of bill, statement period, admission,
+    /// ICD-10-PCS procedures. Null on professional (837P) claims.
+    /// </summary>
+    public InstitutionalClaimDetails? Institutional { get; private set; }
+
     public IReadOnlyCollection<Guid> ChargeIds => _chargeIds;
 
     public IReadOnlyCollection<ClaimAcknowledgement> Acknowledgements => _acknowledgements;
+
+    /// <summary>True when the format code denotes an institutional claim (X12 837I or paper UB-04).</summary>
+    public static bool IsInstitutionalFormat(string claimFormatCode) =>
+        string.Equals(claimFormatCode?.Trim(), EhrClaimFormats.Edi837Institutional, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(claimFormatCode?.Trim(), EhrClaimFormats.Ub04, StringComparison.OrdinalIgnoreCase);
 
     public static Claim Assemble(
         Guid id,
@@ -60,7 +72,8 @@ public sealed class Claim : AggregateRoot<Guid>
         Guid payerId,
         string payerCode,
         string claimFormatCode,
-        IReadOnlyList<Charge> charges)
+        IReadOnlyList<Charge> charges,
+        InstitutionalClaimDetails? institutional = null)
     {
         if (patientId == Guid.Empty)
             throw new ArgumentException("Patient required.", nameof(patientId));
@@ -78,6 +91,18 @@ public sealed class Claim : AggregateRoot<Guid>
             throw new InvalidOperationException("Cannot mix currencies on a single claim.");
         var total = charges.Select(c => c.BilledAmount.Amount).Sum();
 
+        // Institutional (837I / UB-04) claims carry the UB-04 section and bill every line
+        // under a revenue code; professional (837P) claims never carry the section.
+        var institutionalFormat = IsInstitutionalFormat(claimFormatCode);
+        if (institutionalFormat && institutional is null)
+            throw new InvalidOperationException(
+                $"Claim format '{claimFormatCode.Trim()}' requires institutional details (type of bill, statement period).");
+        if (!institutionalFormat && institutional is not null)
+            throw new InvalidOperationException(
+                $"Institutional details are only valid on institutional claim formats, not '{claimFormatCode.Trim()}'.");
+        if (institutionalFormat && charges.Any(c => string.IsNullOrWhiteSpace(c.RevenueCode)))
+            throw new InvalidOperationException("Every charge on an institutional claim must carry a revenue code.");
+
         var claim = new Claim(id)
         {
             PatientId = patientId,
@@ -86,6 +111,7 @@ public sealed class Claim : AggregateRoot<Guid>
             ClaimFormatCode = claimFormatCode.Trim(),
             BilledTotal = new Money(total, currency),
             Status = ClaimStatus.Assembled,
+            Institutional = institutional,
         };
         claim._chargeIds.AddRange(charges.Select(c => c.Id));
         foreach (var c in charges)
