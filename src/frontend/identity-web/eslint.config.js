@@ -37,7 +37,10 @@ export default tseslint.config(
       },
     },
     settings: {
-      react: { version: "detect" },
+      // Pinned (not "detect"): eslint-plugin-react's detect path still calls the
+      // context.getFilename() API that ESLint 10 removed, crashing every react/* rule.
+      // All seven SPAs are on React 18.3, so pinning is both safe and faster.
+      react: { version: "18.3" },
     },
     plugins: {
       react,

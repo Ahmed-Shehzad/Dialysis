@@ -51,7 +51,9 @@ const AdmitPatientCard = () => {
 const BookAppointmentCard = () => {
   const [patientId, setPatientId] = useState("");
   const [providerId, setProviderId] = useState("");
-  const [start, setStart] = useState(
+  // Lazy initializer: Date.now() is impure, so it must not run on every render
+  // (react-hooks/purity) — only once when the state is first created.
+  const [start, setStart] = useState(() =>
     new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 16),
   );
   const [duration, setDuration] = useState(30);

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { type ReactNode, useState } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { ThemeProvider } from "@/features/theme/ThemeProvider";
 import { ErrorBoundary } from "@/shared/ErrorBoundary";
@@ -31,10 +31,7 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
     <ErrorBoundary>
       <ThemeProvider>
         <QueryClientProvider client={client}>
-          <BrowserRouter
-            basename="/his"
-            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-          >
+          <BrowserRouter basename="/his">
             <AuthProvider>
               <PatientContextProvider>{children}</PatientContextProvider>
             </AuthProvider>

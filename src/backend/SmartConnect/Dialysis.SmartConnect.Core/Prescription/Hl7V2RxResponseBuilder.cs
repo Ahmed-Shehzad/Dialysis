@@ -14,9 +14,10 @@ namespace Dialysis.SmartConnect.Prescription;
 /// different frame shape: the dialysate fluid channel (<c>1.1.4</c>) is emitted when the
 /// prescription carries one (HD always, HDF always, HF rarely — convective therapy runs
 /// with absent or minimal dialysate) and the substitution/replacement fluid channel
-/// (<c>1.1.6</c>) is emitted for the convective modalities (HF, HDF). Every channel is an
-/// independent run of MDC-coded OBX observation rows — no monolithic per-modality payload.
-/// UF profiles (linear / exponential / step per IG §5.3) remain a future slice.
+/// (<c>1.1.6</c>) is emitted for the convective modalities (HF, HDF). Profile-driven UF
+/// (linear / exponential / step per IG §5.3) streams as a shape row (<c>1.1.5.4</c>) plus one
+/// duration/rate observation pair per step (<c>1.1.5.5.n</c> / <c>1.1.5.6.n</c>). Every channel
+/// is an independent run of MDC-coded OBX observation rows — no monolithic per-modality payload.
 /// </remarks>
 public static class Hl7V2RxResponseBuilder
 {
@@ -130,8 +131,11 @@ public static class Hl7V2RxResponseBuilder
                 value: fluid.DialysateName);
         }
 
-        // UF channel (1.1.5). Profile-driven modes (PRO-WT / PRO-WOT) need OBX-13/14
-        // sub-children per IG §5.3; this slice only models the constant modes.
+        // UF channel (1.1.5). Constant modes carry the flat rate + target volume; the
+        // profile-driven modes (PRO-WT / PRO-WOT per IG §5.3) additionally stream the shape
+        // and one observation row pair per profile step — the same observation-stream idiom
+        // as every other channel (no monolithic profile payload). The `0^…^MDC` code numbers
+        // follow this file's placeholder convention for metrics the IG excerpt does not number.
         Obx(sb, ref setIdx, "ST", "70971^MDC_DEV_HDIALY_UF_CHAN^MDC", "1.1.5");
         Obx(sb, ref setIdx, "ST", "158619^MDC_HDIALY_UF_MODE^MDC", "1.1.5.1",
             value: doc.Ultrafiltration.UfMode);
@@ -141,6 +145,24 @@ public static class Hl7V2RxResponseBuilder
         Obx(sb, ref setIdx, "NM", "159028^MDC_HDIALY_UF_TARGET_VOL_TO_REMOVE^MDC", "1.1.5.3",
             value: doc.Ultrafiltration.TargetVolumeToRemoveMl.ToString(CultureInfo.InvariantCulture),
             units: "ml^ml^UCUM");
+        if (!string.IsNullOrWhiteSpace(doc.Ultrafiltration.ProfileShape))
+        {
+            Obx(sb, ref setIdx, "ST", "0^MDC_HDIALY_UF_PROFILE_SHAPE^MDC", "1.1.5.4",
+                value: doc.Ultrafiltration.ProfileShape);
+        }
+        if (doc.Ultrafiltration.Profile is { Count: > 0 } profile)
+        {
+            for (var step = 0; step < profile.Count; step++)
+            {
+                var ordinal = (step + 1).ToString(CultureInfo.InvariantCulture);
+                Obx(sb, ref setIdx, "NM", "0^MDC_HDIALY_UF_PROFILE_STEP_DURATION^MDC", "1.1.5.5." + ordinal,
+                    value: profile[step].DurationMinutes.ToString(CultureInfo.InvariantCulture),
+                    units: "min^min^UCUM");
+                Obx(sb, ref setIdx, "NM", "0^MDC_HDIALY_UF_PROFILE_STEP_RATE^MDC", "1.1.5.6." + ordinal,
+                    value: profile[step].UfRateMlPerHour.ToString(CultureInfo.InvariantCulture),
+                    units: "ml/h^ml/h^UCUM");
+            }
+        }
 
         // Substitution / replacement fluid channel (1.1.6) — the convective leg of HF and HDF.
         // Same observation-stream idiom as the other channels; the `0^…^MDC` code numbers

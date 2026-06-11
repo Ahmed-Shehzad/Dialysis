@@ -1,6 +1,85 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+
+/* Mirror the v3 `content` globs (index.html + src/**) exactly — `source(none)` turns
+   off auto-detection so e2e specs / tooling files never contribute stray utilities.
+   Paths are relative to this file. */
+@source "../../index.html";
+@source "../../src";
+
+/*
+ * Theme port of the old tailwind.config.js (Tailwind v4 is CSS-first).
+ *
+ * Theme-aware tokens resolve to CSS custom properties (set in :root /
+ * html.light below), so every existing `slate-*` / `clinic-50..300` utility
+ * flips with the dark/light toggle without touching a single component.
+ */
+@theme {
+  /* Neutral surface/text ramp — fully CSS-variable driven (dark default,
+     light = reversed ramp). Overrides Tailwind's built-in slate. */
+  --color-slate-50: rgb(var(--c-slate-50));
+  --color-slate-100: rgb(var(--c-slate-100));
+  --color-slate-200: rgb(var(--c-slate-200));
+  --color-slate-300: rgb(var(--c-slate-300));
+  --color-slate-400: rgb(var(--c-slate-400));
+  --color-slate-500: rgb(var(--c-slate-500));
+  --color-slate-600: rgb(var(--c-slate-600));
+  --color-slate-700: rgb(var(--c-slate-700));
+  --color-slate-800: rgb(var(--c-slate-800));
+  --color-slate-900: rgb(var(--c-slate-900));
+  --color-slate-950: rgb(var(--c-slate-950));
+
+  /* Brand accent — clinical green, anchored at shade 500 (#00a97a).
+     50–300 are text-only in the app and flip per theme (light mints on
+     dark; deep greens on light) for contrast; 400–900 are theme-agnostic
+     brand fills/borders. */
+  --color-clinic-50: rgb(var(--c-clinic-50));
+  --color-clinic-100: rgb(var(--c-clinic-100));
+  --color-clinic-200: rgb(var(--c-clinic-200));
+  --color-clinic-300: rgb(var(--c-clinic-300));
+  --color-clinic-400: #1cb78b;
+  --color-clinic-500: #00a97a;
+  --color-clinic-600: #00855f;
+  --color-clinic-700: #006e4f;
+  --color-clinic-800: #015941;
+  --color-clinic-900: #06432f;
+
+  --color-vitals-systolic: #ef4444;
+  --color-vitals-diastolic: #3b82f6;
+  --color-vitals-heart: #f59e0b;
+  --color-vitals-ufrate: #10b981;
+
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* v4 compat: v4 only applies `hover:` on devices that support hover
+   (`@media (hover: hover)`); chairside/tablet use relies on the v3 tap-to-hover
+   behavior, so restore the plain `:hover` variant (per the official upgrade guide). */
+@custom-variant hover (&:hover);
+
+/* v4 compat (verbatim from the official upgrade guide) — pin the v3 preflight
+   defaults that v4 changed, so the clinical UI doesn't subtly shift:
+   - default border color was gray-200, v4 uses currentColor;
+   - buttons had cursor: pointer, v4 uses cursor: default;
+   - placeholder text was gray-400, v4 uses currentColor at 50% opacity. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+}
 
 /*
  * Theme tokens. Default (:root) is the dark theme — values are the exact

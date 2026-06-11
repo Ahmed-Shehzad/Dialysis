@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchActiveSessions,
@@ -41,18 +41,17 @@ const formatDateTime = (iso: string | null | undefined) =>
 
 export const SessionsPage = () => {
   const [filter, setFilter] = useState<StatusFilter>("all");
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpenedInPage, setDialogOpenedInPage] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // The header "+ Schedule session" pill navigates to ?action=schedule (a shareable URL); open
-  // the dialog when that param is present rather than reaching into page state.
+  // The header "+ Schedule session" pill navigates to ?action=schedule (a shareable URL). The
+  // dialog's open state is *derived* from the URL param OR the in-page button — no effect
+  // syncing the param into state (react-hooks/set-state-in-effect).
   const scheduleRequested = searchParams.get("action") === "schedule";
-  useEffect(() => {
-    if (scheduleRequested) setDialogOpen(true);
-  }, [scheduleRequested]);
+  const dialogOpen = scheduleRequested || dialogOpenedInPage;
 
   const closeScheduleDialog = () => {
-    setDialogOpen(false);
+    setDialogOpenedInPage(false);
     if (scheduleRequested) {
       const next = new URLSearchParams(searchParams);
       next.delete("action");
@@ -127,7 +126,7 @@ export const SessionsPage = () => {
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => setDialogOpen(true)}
+          onClick={() => setDialogOpenedInPage(true)}
           className="rounded-md bg-clinic-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-clinic-700"
         >
           + Schedule session

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { humanizeError } from "@/lib/api/humanizeError";
 import { AssignChairDialog } from "./AssignChairDialog";
 import { CheckInDialog } from "./CheckInDialog";
@@ -40,17 +40,16 @@ export const HisTodayPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [checkInTarget, setCheckInTarget] = useState<QueueEntry | null>(null);
   const [assignChairTarget, setAssignChairTarget] = useState<QueueEntry | null>(null);
-  const [walkInOpen, setWalkInOpen] = useState(false);
+  const [walkInOpenedInPage, setWalkInOpenedInPage] = useState(false);
 
   // The header "+ Walk-in" pill navigates to ?action=walk-in (a shareable URL) rather than
-  // reaching into page state; open the dialog when that param is present.
+  // reaching into page state. The dialog's open state is *derived* from the URL param OR the
+  // in-page button — no effect syncing the param into state (react-hooks/set-state-in-effect).
   const walkInRequested = searchParams.get("action") === "walk-in";
-  useEffect(() => {
-    if (walkInRequested) setWalkInOpen(true);
-  }, [walkInRequested]);
+  const walkInOpen = walkInRequested || walkInOpenedInPage;
 
   const closeWalkIn = () => {
-    setWalkInOpen(false);
+    setWalkInOpenedInPage(false);
     if (walkInRequested) {
       const next = new URLSearchParams(searchParams);
       next.delete("action");
@@ -121,7 +120,7 @@ export const HisTodayPage = () => {
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => setWalkInOpen(true)}
+          onClick={() => setWalkInOpenedInPage(true)}
           className="rounded-md bg-clinic-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-clinic-500"
         >
           + Walk-in

@@ -69,6 +69,21 @@ public sealed class SubmitClaimCommandHandler : ICommandHandler<SubmitClaimComma
                 request.OverriddenBy ?? "biller", request.OverrideReason, request.PatientId, payer.PayerCode);
         }
 
+        // Institutional (837I / UB-04) submissions carry the UB-04 section; Claim.Assemble
+        // enforces format/section consistency and per-line revenue codes.
+        InstitutionalClaimDetails? institutional = null;
+        if (request.Institutional is { } inst)
+        {
+            institutional = InstitutionalClaimDetails.Create(
+                inst.TypeOfBill,
+                inst.StatementFromUtc,
+                inst.StatementToUtc,
+                inst.AdmissionDateUtc,
+                inst.AdmissionTypeCode,
+                inst.PrincipalProcedureCode,
+                inst.OtherProcedureCodes);
+        }
+
         var claimId = Guid.CreateVersion7();
         var claim = Claim.Assemble(
             claimId,
@@ -76,7 +91,8 @@ public sealed class SubmitClaimCommandHandler : ICommandHandler<SubmitClaimComma
             payer.Id,
             payer.PayerCode,
             request.ClaimFormatCode,
-            resolved);
+            resolved,
+            institutional);
         claim.Submit(GenerateControlNumber(_timeProvider.GetUtcNow().UtcDateTime), _timeProvider.GetUtcNow().UtcDateTime);
 
         _claims.Add(claim);

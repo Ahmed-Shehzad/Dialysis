@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
 // HIS context app. Served under the gateway's `/his/*`, so the Vite base and the proxy paths are
@@ -10,7 +11,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: "/his/",
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),

@@ -155,7 +155,7 @@ const RegisterDeviceForm = ({
           value={deviceId}
           onChange={(e) => setDeviceId(e.target.value)}
           placeholder="serial / gateway id"
-          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
         />
       </label>
       <label className="text-xs text-slate-300">
@@ -163,7 +163,7 @@ const RegisterDeviceForm = ({
         <select
           value={deviceTypeCode}
           onChange={(e) => setDeviceTypeCode(e.target.value)}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
         >
           <option value="">Select…</option>
           {typeOptions.map((t) => (
@@ -178,7 +178,7 @@ const RegisterDeviceForm = ({
         <input
           value={manufacturer}
           onChange={(e) => setManufacturer(e.target.value)}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
         />
       </label>
       <label className="text-xs text-slate-300">
@@ -186,7 +186,7 @@ const RegisterDeviceForm = ({
         <input
           value={model}
           onChange={(e) => setModel(e.target.value)}
-          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:border-clinic-500 focus:outline-none"
+          className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:border-clinic-500 focus:outline-hidden"
         />
       </label>
       <div className="flex items-end">

@@ -4,9 +4,9 @@
 // hatch (collapsed by default); both views read from the same authoritative pipeline state
 // so saving is unambiguous.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { fetchFlow, updateFlow } from "@/features/smartconnect/api/flows";
 import {
   CHANNEL_TEMPLATES,
@@ -50,23 +50,27 @@ export function ChannelEditorPage(): JSX.Element {
     enabled: Boolean(flowId),
   });
 
-  const [pipeline, setPipeline] = useState<IntegrationFlowPipelineDefinition | null>(null);
-  const [pipelineJsonDraft, setPipelineJsonDraft] = useState<string>("");
+  // Operator edits live here; until the first edit the server response shows through
+  // directly (derived below), replacing the old "seed state from the query in an effect"
+  // pattern (react-hooks/set-state-in-effect). Once `edits` is non-null, background
+  // refetches no longer clobber what the operator changed — same guarantee as before.
+  const [edits, setEdits] = useState<{
+    pipeline: IntegrationFlowPipelineDefinition | null;
+    draft: string;
+  } | null>(null);
   const [jsonParseError, setJsonParseError] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectedNode | null>(null);
 
-  // Seed local state once the server response lands. Subsequent background refetches don't
-  // clobber operator edits — the textarea / graph stay in sync via `pipelineJsonDraft`.
-  useEffect(() => {
-    if (flowQuery.data && pipeline === null) {
-      setPipeline(flowQuery.data.pipeline);
-      setPipelineJsonDraft(JSON.stringify(flowQuery.data.pipeline, null, 2));
-    }
-  }, [flowQuery.data, pipeline]);
+  const serverPipeline = flowQuery.data?.pipeline ?? null;
+  const pipeline = edits ? edits.pipeline : serverPipeline;
+  const pipelineJsonDraft = edits
+    ? edits.draft
+    : serverPipeline
+      ? JSON.stringify(serverPipeline, null, 2)
+      : "";
 
   const applyPipeline = (next: IntegrationFlowPipelineDefinition) => {
-    setPipeline(next);
-    setPipelineJsonDraft(JSON.stringify(next, null, 2));
+    setEdits({ pipeline: next, draft: JSON.stringify(next, null, 2) });
     setJsonParseError(null);
   };
 
@@ -254,13 +258,12 @@ export function ChannelEditorPage(): JSX.Element {
           value={pipelineJsonDraft}
           onChange={(e) => {
             const value = e.target.value;
-            setPipelineJsonDraft(value);
             try {
               const parsed = JSON.parse(value) as IntegrationFlowPipelineDefinition;
-              setPipeline(parsed);
+              setEdits({ pipeline: parsed, draft: value });
               setJsonParseError(null);
             } catch (err) {
-              setPipeline(null);
+              setEdits({ pipeline: null, draft: value });
               setJsonParseError((err as Error).message);
             }
           }}

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { NewChannelDialog } from "../components/NewChannelDialog";
 import {
   deleteFlow,
@@ -195,18 +195,18 @@ export const FlowsTab = () => {
   const groups = useQuery({ queryKey: ["smartconnect", "groups"], queryFn: fetchGroups });
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [stateFilter, setStateFilter] = useState<string>("");
-  const [newChannelOpen, setNewChannelOpen] = useState(false);
+  const [newChannelOpenedInPage, setNewChannelOpenedInPage] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // The Integrations page's "New channel" quick action lands here with ?action=new; open the
-  // dialog when that param is present (the ?tab=flows part is preserved).
+  // The Integrations page's "New channel" quick action lands here with ?action=new (the
+  // ?tab=flows part is preserved). The dialog's open state is *derived* from the URL param
+  // OR the in-page button — no effect syncing the param into state
+  // (react-hooks/set-state-in-effect).
   const newChannelRequested = searchParams.get("action") === "new";
-  useEffect(() => {
-    if (newChannelRequested) setNewChannelOpen(true);
-  }, [newChannelRequested]);
+  const newChannelOpen = newChannelRequested || newChannelOpenedInPage;
 
   const closeNewChannel = () => {
-    setNewChannelOpen(false);
+    setNewChannelOpenedInPage(false);
     if (newChannelRequested) {
       const next = new URLSearchParams(searchParams);
       next.delete("action");
@@ -262,7 +262,7 @@ export const FlowsTab = () => {
           <ImportFlowButton />
           <button
             type="button"
-            onClick={() => setNewChannelOpen(true)}
+            onClick={() => setNewChannelOpenedInPage(true)}
             className="rounded-md bg-clinic-600 px-3 py-1 text-xs font-medium text-white hover:bg-clinic-700"
           >
             + New channel

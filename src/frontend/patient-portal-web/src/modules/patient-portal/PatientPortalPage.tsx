@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { MyOutsideRecordsCard } from "@/features/hie/components/MyOutsideRecordsCard";
@@ -67,7 +67,7 @@ export const PatientPortalPage = () => {
   // must never be used to scope patient data. A real patient session carries `his_patient_id` and is
   // pinned to it; a staff/dev session (no such claim) falls through to the manual id box below.
   const claimPatientId = useMemo(() => claimAsString(user?.claims.his_patient_id), [user?.claims]);
-  const [manualId, setManualId] = useState(FALLBACK_DEMO_PATIENT_ID);
+  const [typedId, setTypedId] = useState(FALLBACK_DEMO_PATIENT_ID);
 
   // No patient claim (staff/dev session) → discover patients that have portal data so the demo loop
   // can be opened from a dropdown instead of pasting a Guid.
@@ -80,14 +80,11 @@ export const PatientPortalPage = () => {
 
   const accessibleIds = useMemo(() => accessiblePatients.data ?? [], [accessiblePatients.data]);
 
-  // Default the selection to the first discovered patient once the list arrives (only if the user
-  // hasn't already chosen / typed one).
-  useEffect(() => {
-    const firstDiscovered = accessibleIds[0];
-    if (!claimPatientId && manualId.trim().length === 0 && firstDiscovered) {
-      setManualId(firstDiscovered);
-    }
-  }, [claimPatientId, manualId, accessibleIds]);
+  // Default the selection to the first discovered patient when the user hasn't chosen / typed
+  // one — *derived* from the discovery query instead of synced into state via an effect
+  // (react-hooks/set-state-in-effect).
+  const manualId =
+    !claimPatientId && typedId.trim().length === 0 ? (accessibleIds[0] ?? typedId) : typedId;
 
   const patientId = claimPatientId ?? (manualId.trim().length > 0 ? manualId.trim() : null);
 
@@ -139,9 +136,9 @@ export const PatientPortalPage = () => {
           {accessibleIds.length > 0 && (
             <select
               value={manualId}
-              onChange={(e) => setManualId(e.target.value)}
+              onChange={(e) => setTypedId(e.target.value)}
               aria-label="Patient with portal data"
-              className="w-full rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+              className="w-full rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-hidden"
             >
               {accessibleIds.map((id) => (
                 <option key={id} value={id}>
@@ -154,10 +151,10 @@ export const PatientPortalPage = () => {
             <input
               type="text"
               value={manualId}
-              onChange={(e) => setManualId(e.target.value)}
+              onChange={(e) => setTypedId(e.target.value)}
               placeholder="Patient Guid…"
               aria-label="Patient id"
-              className="flex-1 rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+              className="flex-1 rounded-md border border-amber-700/70 bg-slate-950 px-3 py-1.5 font-mono text-xs text-slate-100 focus:border-amber-400 focus:outline-hidden"
             />
           </div>
         </section>

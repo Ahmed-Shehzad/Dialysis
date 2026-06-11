@@ -20,8 +20,11 @@ export const StudyViewerModal = ({
   instanceCount: number;
   onClose: () => void;
 }) => {
-  const [index, setIndex] = useState(0);
-  const [failed, setFailed] = useState(false);
+  const [rawIndex, setIndex] = useState(0);
+  // Failure is keyed to the URL that failed instead of a boolean reset by an effect:
+  // when the frame or study changes, renderedUrl changes and the derived `failed`
+  // clears itself — no setState-in-effect cascade (react-hooks/set-state-in-effect).
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const encodedStudy = encodeURIComponent(studyInstanceUid);
 
   const instances = useQuery({
@@ -32,21 +35,19 @@ export const StudyViewerModal = ({
 
   const list = instances.data ?? [];
   const count = list.length || instanceCount;
+  // Clamp during render (not via an effect): if the instance list is shorter than the
+  // stored position, show the last available frame.
+  const index = list.length > 0 ? Math.min(rawIndex, list.length - 1) : rawIndex;
   const current = list[index];
-
-  // Reset the per-frame error + clamp the index when the list or position changes.
-  useEffect(() => setFailed(false), [index, studyInstanceUid]);
-  useEffect(() => {
-    if (index > 0 && index >= list.length && list.length > 0) setIndex(list.length - 1);
-  }, [list.length, index]);
 
   const renderedUrl = current
     ? `${DICOM_BASE}/studies/${encodedStudy}/series/${encodeURIComponent(current.seriesInstanceUid)}/instances/${encodeURIComponent(current.sopInstanceUid)}/rendered`
     : `${DICOM_BASE}/studies/${encodedStudy}/rendered`;
+  const failed = failedUrl === renderedUrl;
 
   const canPage = count > 1;
   const go = (delta: number) =>
-    setIndex((i) => Math.min(Math.max(i + delta, 0), Math.max(count - 1, 0)));
+    setIndex(Math.min(Math.max(index + delta, 0), Math.max(count - 1, 0)));
 
   // Escape is the keyboard dismissal path (the backdrop click below is mouse-only).
   useEffect(() => {
@@ -103,7 +104,7 @@ export const StudyViewerModal = ({
               src={renderedUrl}
               alt={`DICOM frame ${index + 1}`}
               className="max-h-[72vh] w-auto"
-              onError={() => setFailed(true)}
+              onError={() => setFailedUrl(renderedUrl)}
             />
           )}
         </div>

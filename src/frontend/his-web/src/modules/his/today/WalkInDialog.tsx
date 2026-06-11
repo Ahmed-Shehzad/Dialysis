@@ -88,7 +88,7 @@ export const WalkInDialog = ({ onClose }: WalkInDialogProps) => {
               value={patientName}
               onChange={(e) => setPatientName(e.target.value)}
               placeholder="First Last"
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-hidden"
             />
           </label>
 
@@ -100,7 +100,7 @@ export const WalkInDialog = ({ onClose }: WalkInDialogProps) => {
               value={mrn}
               onChange={(e) => setMrn(e.target.value)}
               placeholder="MRN-…"
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:border-clinic-500 focus:outline-hidden"
             />
           </label>
 

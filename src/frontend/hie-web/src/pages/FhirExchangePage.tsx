@@ -62,7 +62,7 @@ const BundleIngestPanel = () => {
           value={bundle}
           onChange={(e) => setBundle(e.target.value)}
           rows={12}
-          className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100 placeholder-slate-500 focus:border-clinic-500 focus:outline-none"
+          className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100 placeholder-slate-500 focus:border-clinic-500 focus:outline-hidden"
         />
       </FormField>
       <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router";
 import { useAuth } from "@/features/auth/components/AuthProvider";
 import { ToastHost } from "@/features/durable-commands";
 import { useBffNotifications } from "@/features/notifications/useBffNotifications";

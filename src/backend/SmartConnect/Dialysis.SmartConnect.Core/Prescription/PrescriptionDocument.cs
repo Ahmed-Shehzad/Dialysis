@@ -80,31 +80,71 @@ public sealed record DialysateFluidSettings
 }
 
 /// <summary>
-/// UF (ultrafiltration) channel (containment <c>1.1.5</c>) — basic constant-weight
-/// mode. Profile-driven UF (linear / exponential / step per IG §5.3) is a future slice.
+/// One step of a profile-driven UF programme (IG §5.3): hold <see cref="UfRateMlPerHour"/>
+/// for <see cref="DurationMinutes"/>. For <c>LINEAR</c> / <c>EXP</c> shapes the steps are the
+/// anchor points the machine interpolates between; for <c>STEP</c> they are literal plateaus.
+/// </summary>
+public sealed record UltrafiltrationProfileStep
+{
+    /// <summary>
+    /// One step of a profile-driven UF programme (IG §5.3); see the type docs.
+    /// </summary>
+    public UltrafiltrationProfileStep(int DurationMinutes,
+        int UfRateMlPerHour)
+    {
+        this.DurationMinutes = DurationMinutes;
+        this.UfRateMlPerHour = UfRateMlPerHour;
+    }
+    public int DurationMinutes { get; init; }
+    public int UfRateMlPerHour { get; init; }
+    public void Deconstruct(out int DurationMinutes, out int UfRateMlPerHour)
+    {
+        DurationMinutes = this.DurationMinutes;
+        UfRateMlPerHour = this.UfRateMlPerHour;
+    }
+}
+
+/// <summary>
+/// UF (ultrafiltration) channel (containment <c>1.1.5</c>). Constant modes
+/// (<c>CONST-WT</c>/<c>CONST-WOT</c>) carry only the flat rate + target volume; profile-driven
+/// modes (<c>PRO-WT</c>/<c>PRO-WOT</c> per IG §5.3) additionally carry
+/// <see cref="ProfileShape"/> (<c>LINEAR</c>/<c>EXP</c>/<c>STEP</c>, protocol-neutral strings
+/// like the other mode fields) and the <see cref="Profile"/> steps — emitted on the wire as
+/// per-step observation rows, never a monolithic profile payload.
 /// </summary>
 public sealed record UltrafiltrationSettings
 {
     /// <summary>
-    /// UF (ultrafiltration) channel (containment <c>1.1.5</c>) — basic constant-weight
-    /// mode. Profile-driven UF (linear / exponential / step per IG §5.3) is a future slice.
+    /// UF (ultrafiltration) channel (containment <c>1.1.5</c>); see the type docs.
     /// </summary>
     public UltrafiltrationSettings(string UfMode,
         int UfRateMlPerHour,
-        int TargetVolumeToRemoveMl)
+        int TargetVolumeToRemoveMl,
+        string? ProfileShape = null,
+        IReadOnlyList<UltrafiltrationProfileStep>? Profile = null)
     {
         this.UfMode = UfMode;
         this.UfRateMlPerHour = UfRateMlPerHour;
         this.TargetVolumeToRemoveMl = TargetVolumeToRemoveMl;
+        this.ProfileShape = ProfileShape;
+        this.Profile = Profile;
     }
     public string UfMode { get; init; }
     public int UfRateMlPerHour { get; init; }
     public int TargetVolumeToRemoveMl { get; init; }
-    public void Deconstruct(out string UfMode, out int UfRateMlPerHour, out int TargetVolumeToRemoveMl)
+    public string? ProfileShape { get; init; }
+    public IReadOnlyList<UltrafiltrationProfileStep>? Profile { get; init; }
+
+    /// <summary><c>true</c> when <see cref="UfMode"/> is one of the profile-driven IG modes.</summary>
+    public bool IsProfileMode => UfMode.StartsWith("PRO", StringComparison.OrdinalIgnoreCase);
+
+    public void Deconstruct(out string UfMode, out int UfRateMlPerHour, out int TargetVolumeToRemoveMl, out string? ProfileShape, out IReadOnlyList<UltrafiltrationProfileStep>? Profile)
     {
         UfMode = this.UfMode;
         UfRateMlPerHour = this.UfRateMlPerHour;
         TargetVolumeToRemoveMl = this.TargetVolumeToRemoveMl;
+        ProfileShape = this.ProfileShape;
+        Profile = this.Profile;
     }
 }
 
@@ -154,7 +194,7 @@ public sealed record SubstitutionFluidSettings
 /// exchange boundary (HIE); this model serves the device-side HL7v2 / 11073 family only —
 /// the adopted 11073→FHIR mapping methodology (Riech et al. 2021, DOI 10.3205/mibe000222)
 /// is documented in <c>docs/interoperability/ieee11073-to-fhir-mapping.md</c>.
-/// Profile-driven UF (linear / exponential / step per IG §5.3) is still a future slice.
+/// Profile-driven UF (IG §5.3) rides on <see cref="UltrafiltrationSettings.Profile"/>.
 /// </summary>
 public sealed record PrescriptionDocument
 {
@@ -165,7 +205,7 @@ public sealed record PrescriptionDocument
     /// present (HF: substitution fluid, dialysate absent/minimal; HDF: dialysate + substitution
     /// fluid), not through per-modality payload shapes. FHIR remains the clinical-system
     /// exchange boundary (HIE); this model serves the device-side HL7v2 / 11073 family only.
-    /// Profile-driven UF (linear / exponential / step per IG §5.3) is still a future slice.
+    /// Profile-driven UF (IG §5.3) rides on <see cref="UltrafiltrationSettings.Profile"/>.
     /// </summary>
     public PrescriptionDocument(string MedicalRecordNumber,
         string OrderNumber,
@@ -206,9 +246,11 @@ public sealed record PrescriptionDocument
     /// <summary>
     /// Modality ↔ channel consistency check: HD expects dialysate and no substitution fluid;
     /// HF requires substitution fluid (dialysate optional — primarily convective, so absent
-    /// or minimal is fine); HDF requires both. Returns human-readable warnings instead of
-    /// throwing — the responder always answers the machine with the channels that exist,
-    /// and integrators surface the warnings through the channel ledger / logs.
+    /// or minimal is fine); HDF requires both. Also checks UF profile coherence (profile-driven
+    /// modes need steps + a shape; constant modes must not carry profile data). Returns
+    /// human-readable warnings instead of throwing — the responder always answers the machine
+    /// with the channels that exist, and integrators surface the warnings through the channel
+    /// ledger / logs.
     /// </summary>
     public IReadOnlyList<string> GetModalityConsistencyWarnings()
     {
@@ -233,6 +275,20 @@ public sealed record PrescriptionDocument
                 break;
             default:
                 break;
+        }
+
+        // UF profile consistency (IG §5.3) — same warn-don't-refuse contract as the
+        // modality/channel checks above.
+        if (Ultrafiltration.IsProfileMode)
+        {
+            if (Ultrafiltration.Profile is not { Count: > 0 })
+                warnings.Add($"UF mode {Ultrafiltration.UfMode} is profile-driven but the prescription carries no profile steps.");
+            if (string.IsNullOrWhiteSpace(Ultrafiltration.ProfileShape))
+                warnings.Add($"UF mode {Ultrafiltration.UfMode} is profile-driven but no profile shape (LINEAR/EXP/STEP) is set.");
+        }
+        else if (Ultrafiltration.Profile is { Count: > 0 } || !string.IsNullOrWhiteSpace(Ultrafiltration.ProfileShape))
+        {
+            warnings.Add($"UF mode {Ultrafiltration.UfMode} is a constant mode but the prescription carries profile data — profiles belong to PRO-WT/PRO-WOT.");
         }
         return warnings;
     }

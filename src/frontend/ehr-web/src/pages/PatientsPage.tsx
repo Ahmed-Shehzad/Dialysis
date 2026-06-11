@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { searchEhrPatientsPage, type PatientSearchFilters } from "@/features/ehr/api/ehrApi";
 import { ModuleHeader } from "@/shell/ModuleHeader";
@@ -62,20 +62,22 @@ const statusBadge = (status: string) => {
 };
 
 const inputClass =
-  "w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-clinic-500 focus:outline-none";
+  "w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-clinic-500 focus:outline-hidden";
 const labelClass = "block text-[10px] uppercase tracking-wide text-slate-400";
 
 export const PatientsPage = () => {
   const [form, setForm] = useState<FormFilters>(emptyFilters);
   const [pageSize, setPageSize] = useState(25);
-  const [pageIndex, setPageIndex] = useState(0);
+  // The stored page index is bound to the filters snapshot it was set under, so the
+  // *derived* index falls back to 0 whenever the filters change — replacing the old
+  // "reset page in an effect" pattern (react-hooks/set-state-in-effect).
+  const [page, setPage] = useState<{ filters: FormFilters; index: number } | null>(null);
 
   const debounced = useDebouncedValue(form, 300);
 
-  // Reset to first page whenever filters change.
-  useEffect(() => {
-    setPageIndex(0);
-  }, [debounced]);
+  const pageIndex = page !== null && page.filters === debounced ? page.index : 0;
+  const setPageIndex = (next: number | ((i: number) => number)) =>
+    setPage({ filters: debounced, index: typeof next === "function" ? next(pageIndex) : next });
 
   const skip = pageIndex * pageSize;
   const apiFilters = useMemo(

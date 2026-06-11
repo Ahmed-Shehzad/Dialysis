@@ -10,9 +10,9 @@ namespace Dialysis.EHR.Contracts.CodeSets;
 /// <list type="bullet">
 ///   <item><see cref="Icd10Cm"/> — diagnoses (the "what's wrong"); carried on
 ///     <c>Diagnosis.Icd10Code</c> and 837 claim diagnosis segments.</item>
-///   <item><see cref="Icd10Pcs"/> — inpatient/institutional procedures; relevant to the 837I /
-///     UB-04 institutional claim path (declared for that future slice; the platform currently
-///     ships the 837P professional writer).</item>
+///   <item><see cref="Icd10Pcs"/> — inpatient/institutional procedures; carried on the
+///     institutional claim's procedure entries and emitted by the 837I / UB-04 claim path
+///     (HI segments with <c>BBR</c>/<c>BBQ</c> qualifiers).</item>
 ///   <item><see cref="Cpt"/> — professional procedures/services (HCPCS Level I); carried on
 ///     <c>Charge.CptCode</c>, <c>CptFeeScheduleEntry</c>, <c>PerformedProcedure</c>.</item>
 ///   <item><see cref="Hcpcs"/> — HCPCS Level II: supplies, drugs (J-codes — EPO and other ESRD
