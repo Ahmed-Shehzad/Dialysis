@@ -2,12 +2,12 @@
 
 The HIS (Hospital Information System) browser app: **patient access, scheduling, and the receptionist "today" queue**. Backed by the **`Dialysis.HIS.Bff`** per-context BFF.
 
-|                                |                                                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Context base / router basename | `/his`                                                                                           |
-| Standalone dev port (Vite)     | `5331`                                                                                           |
-| Backing BFF                    | `Dialysis.HIS.Bff` (`his-bff`, port `5301`)                                                      |
-| BFF aggregations               | SmartConnect DICOMweb                                                                            |
+|                                |                                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context base / router basename | `/his`                                                                                                                                                  |
+| Standalone dev port (Vite)     | `5331`                                                                                                                                                  |
+| Backing BFF                    | `Dialysis.HIS.Bff` (`his-bff`, port `5301`)                                                                                                             |
+| BFF aggregations               | SmartConnect DICOMweb                                                                                                                                   |
 | Real-time push                 | **Yes** — `useBffNotifications` on `/his/events`; the BFF pushes PHI-light notifications (e.g. patient admitted) rendered as generic type-driven toasts |
 
 ## What it does
