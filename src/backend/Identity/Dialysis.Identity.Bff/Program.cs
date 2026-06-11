@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Dialysis.BuildingBlocks.DistributedCache.Valkey;
+using Dialysis.BuildingBlocks.Transponder.Hosting;
 using Dialysis.Identity.Bff.Configuration;
 using Dialysis.Identity.Bff.Federation;
 using Dialysis.Identity.Bff.Services;
@@ -25,6 +26,15 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
+
+        // Transponder Hangfire scheduler — PostgreSQL-backed (the AppHost injects ConnectionStrings:Hangfire).
+        // This BFF wires it directly because it uses bespoke OIDC rather than the shared AddModuleBff
+        // scaffolding. (Accidentally dropped by 9407dd4's formatting pass.)
+        var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
+        if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
+        {
+            builder.Services.AddTransponderHangfire(hangfireConnectionString);
+        }
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddMemoryCache();
@@ -171,6 +181,9 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Hangfire dashboard at /hangfire (no-op unless Hangfire is configured for the Identity BFF).
+        app.UseModuleHangfireDashboard("identity BFF");
 
         app.MapGet(BffRoutes.Root, () => Results.Text(
             $"Dialysis Identity BFF — GET {BffRoutes.Login} to sign in, GET {BffRoutes.User} for claims, "
