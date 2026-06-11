@@ -231,11 +231,12 @@ public static class ModuleBffExtensions
 
         // Transponder Hangfire scheduler — PostgreSQL-backed background scheduling. The AppHost injects
         // ConnectionStrings:Hangfire (the database of the module API this BFF fronts); it is absent in
-        // tests, where Hangfire is skipped. (Accidentally dropped by 9407dd4's formatting pass.)
+        // tests, where Hangfire is skipped. Schema is per-host (hangfire_<slug>_bff) so this BFF never
+        // shares a job queue with the API or other BFFs riding the same database.
         var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
         if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
         {
-            builder.Services.AddTransponderHangfire(hangfireConnectionString);
+            builder.Services.AddTransponderHangfire(hangfireConnectionString, $"hangfire_{module.Slug}_bff");
         }
 
         return builder;

@@ -73,18 +73,19 @@ in that commit.
 
 ## B. Structural gaps (need a design decision)
 
-### B1. Co-tenant Hangfire servers share one schema and one `default` queue per database
+### B1. Co-tenant Hangfire servers share one schema and one `default` queue per database — RESOLVED
 
-`AddTransponderHangfire` calls `AddHangfireServer()` with default options in **every** host.
-On the HIS database that is four competing workers (his-api, his-bff, identity-bff,
-portal-bff) polling the same `hangfire.jobqueue` — a job enqueued by the API can execute
-inside a BFF process. For `TransponderHangfirePublishJob` on a bus-less BFF that means a
-runtime failure + Hangfire retry until a capable worker picks it up: eventually correct, but
-nondeterministic placement and noisy retries. Options, in increasing isolation:
-(a) per-host queue names (`ServerOptions.Queues = [host-slug]`, scheduler enqueues to its
-own queue); (b) per-host `SchemaName`; (c) BFFs register Hangfire storage + dashboard but
-**no server** (they currently have no jobs of their own — the server is pure polling cost).
-Recommendation: (c) now, revisit (a) when a BFF first needs a recurring job.
+`AddTransponderHangfire` used to call `AddHangfireServer()` against one shared `hangfire`
+schema per database. On the HIS database that was four competing workers (his-api, his-bff,
+identity-bff, portal-bff) polling the same `hangfire.jobqueue` — a job enqueued by the API
+could execute inside a BFF process. **Resolved on this branch (decision: per-host schema,
+no dedicated Hangfire database):** every host passes its own schema name
+(`hangfire_<slug>_api` / `hangfire_<slug>_bff` / `hangfire_identity_bff`) into
+`AddTransponderHangfire`, so each host's server polls only its own schema's queue inside the
+module database it already uses. Same-host replicas still serialize first-boot schema
+install under the per-database advisory lock. Verified locally: two HIS-BFF replicas + the
+SmartConnect and Portal BFFs booting concurrently against one fresh database produce exactly
+the three expected schemas, all hosts healthy, no leaked locks.
 
 ### B2. No automated coverage of the two bug classes that broke smoke
 

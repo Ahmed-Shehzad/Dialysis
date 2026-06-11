@@ -156,10 +156,11 @@ public static class ModuleHostingServiceCollectionExtensions
 
             // Transponder Hangfire scheduler — PostgreSQL-backed background scheduling. The AppHost
             // injects ConnectionStrings:Hangfire (the host's module database); it is absent in tests,
-            // where Hangfire is skipped.
+            // where Hangfire is skipped. Schema is per-host (hangfire_<slug>_api) so the API never
+            // shares a job queue with the BFFs riding the same database.
             var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
             if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
-                builder.Services.AddTransponderHangfire(hangfireConnectionString);
+                builder.Services.AddTransponderHangfire(hangfireConnectionString, $"hangfire_{options.ModuleSlug}_api");
 
             return builder;
         }

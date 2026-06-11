@@ -27,13 +27,14 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
 
-        // Transponder Hangfire scheduler — PostgreSQL-backed (the AppHost injects ConnectionStrings:Hangfire).
-        // This BFF wires it directly because it uses bespoke OIDC rather than the shared AddModuleBff
-        // scaffolding. (Accidentally dropped by 9407dd4's formatting pass.)
+        // Transponder Hangfire scheduler — PostgreSQL-backed (the AppHost injects ConnectionStrings:Hangfire,
+        // pointing at the HIS database). This BFF wires it directly because it uses bespoke OIDC rather
+        // than the shared AddModuleBff scaffolding. Schema is per-host so it never shares a job queue
+        // with the HIS API or the his/portal BFFs riding the same database.
         var hangfireConnectionString = builder.Configuration.GetConnectionString("Hangfire");
         if (!string.IsNullOrWhiteSpace(hangfireConnectionString))
         {
-            builder.Services.AddTransponderHangfire(hangfireConnectionString);
+            builder.Services.AddTransponderHangfire(hangfireConnectionString, "hangfire_identity_bff");
         }
 
         builder.Services.AddHttpContextAccessor();
