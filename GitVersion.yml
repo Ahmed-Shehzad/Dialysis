@@ -6,23 +6,31 @@
 # Schema: GitVersion v6 (config version v3). Run `dotnet gitversion /showconfig` to see
 # the fully-merged effective configuration, or `./build.sh ShowVersion` for the numbers.
 #
-# ── Branching model: GitHub Flow ─────────────────────────────────────────────────────
-#   main                       the trunk; always releasable
-#   feature/*, feat/*, claude/*  short-lived branches that merge into main via pull request
+# ── Branching model: GitFlow release ladder ──────────────────────────────────────────
+#   develop                      integration trunk — alpha channel
+#   staging                      pre-production soak — beta channel
+#   main                         releasable; production deploys from here
+#   feature/*, feat/*, claude/*  short-lived branches that merge into develop via PR
 #
-# Releases are cut by tagging a commit on main as `vX.Y.Z` (the leading `v` is optional).
-# Between tags, GitVersion produces continuous-delivery versions automatically, so every
-# build is uniquely and monotonically versioned:
+# The ladder maps 1:1 onto the GitHub deployment environments (dev/staging/production)
+# and produces stage-labelled, monotonically sorting versions per channel:
 #
-#   main, just tagged v1.4.0      ->  1.4.0
-#   main, 3 commits after a tag   ->  1.4.1-ci.3            (+build metadata)
-#   feature/x or claude/x         ->  1.4.1-<branch>.5
-#   pull request #179             ->  1.4.1-PullRequest0179.5
+#   feature/x or claude/x         ->  1.5.0-<branch>.5
+#   develop, N commits ahead      ->  1.5.0-alpha.N
+#   staging, after promotion      ->  1.5.0-beta.N
+#   main, untagged                ->  1.5.0-ci.N
+#   main, tagged v1.5.0           ->  1.5.0          (the clean release)
+#   pull request #179             ->  1.5.0-PullRequest0179.5
 #
-# Until the first `vX.Y.Z` tag exists, `next-version` below seeds the base version.
+# alpha < beta < ci < (clean) sorts correctly under SemVer 2.0 precedence, so a binary's
+# version alone tells you which stage built it. Releases are cut by tagging a commit on
+# main as `vX.Y.Z` (leading `v` optional). Until the first tag exists, `next-version`
+# below seeds the base version.
 
-# Start from GitHub Flow's well-tested branch ruleset and override only what we need.
-workflow: GitHubFlow/v1
+# Start from GitFlow's well-tested branch ruleset (develop/release/hotfix semantics) and
+# override only what we need: our `staging` branch plays the role of GitFlow's release
+# branch, and `claude/*` branches version like features.
+workflow: GitFlow/v1
 
 # Base version used ONLY while the repo has no version tag. The first `vX.Y.Z` tag on
 # main supersedes this permanently — after that, the tag drives the version.
@@ -48,20 +56,38 @@ no-bump-message: '\+semver:\s?(none|skip)'
 
 branches:
   main:
-    # Each merge to the trunk bumps the patch by default; a `+semver: minor|major`
-    # footer (or an explicit tag) bumps higher.
+    # Untagged commits on main are pre-releases labelled `ci` (e.g. 1.5.0-ci.3) so they
+    # read as CI builds and sort below the eventual clean release. Tagging `vX.Y.Z`
+    # makes that commit the clean release — a tag always overrides this label.
     increment: Patch
-    # Untagged trunk commits are pre-releases labelled `ci` (e.g. 1.4.1-ci.3) so they read
-    # as CI builds and sort below the eventual clean release. Tagging `vX.Y.Z` on a commit
-    # makes that commit the clean release (1.4.0) — a tag always overrides this label.
     label: 'ci'
+    # Promotions arrive from staging (and hotfixes directly when needed).
+    source-branches: ['staging', 'hotfix']
+  develop:
+    # GitFlow default: alpha channel, minor increments (each cycle on develop works
+    # toward the next minor). Restated for in-repo discoverability.
+    increment: Minor
+    label: 'alpha'
+  staging:
+    # Our long-lived staging branch plays GitFlow's release-branch role: the beta soak
+    # for whatever develop promoted. No own increment — it carries the version it
+    # inherits from develop at promotion time.
+    regex: '^staging$'
+    label: 'beta'
+    increment: None
+    source-branches: ['develop', 'main']
+    # Lets develop's tracks-release-branches semantics see staging as the release lane,
+    # so develop versions ahead of what staging is soaking.
+    is-release-branch: true
   feature:
     # Broaden the stock feature regex so AI-authored `claude/*` branches version exactly
     # like a normal `feature/*` / `feat/*` branch: a pre-release labelled with the branch
-    # name, inheriting its base version from main. The `(?<BranchName>...)` named capture
-    # group is REQUIRED — the `label: {BranchName}` template (from GitHubFlow/v1) binds to
-    # it; without the group the placeholder renders literally as `{BranchName}`.
+    # name. The `(?<BranchName>...)` named capture group is REQUIRED — the
+    # `label: {BranchName}` template (from GitFlow/v1) binds to it; without the group the
+    # placeholder renders literally as `{BranchName}`.
     regex: '^(?:features?|feat|claude)[/-](?<BranchName>.+)'
+    # Features can branch off develop or main (hotfix-style work on a claude/* branch).
+    source-branches: ['develop', 'main', 'release', 'staging', 'hotfix', 'support']
 
 # No commits are excluded from version calculation.
 ignore:
