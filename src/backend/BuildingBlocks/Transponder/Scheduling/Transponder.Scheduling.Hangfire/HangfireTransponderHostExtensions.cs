@@ -59,13 +59,15 @@ public static class HangfireTransponderHostExtensions
 
     /// <summary>
     /// Runs <see cref="PostgreSqlObjectsInstaller"/> while holding a session advisory lock, retrying
-    /// briefly so a host that boots while the database is still being provisioned (CI cold start)
-    /// doesn't die on the first connection failure. The lock is released explicitly — returning a
-    /// pooled connection does not release session advisory locks.
+    /// so a host that boots while the database is still being provisioned (CI cold start) doesn't
+    /// die on the first connection failure. The acquire command waits indefinitely
+    /// (<c>CommandTimeout = 0</c>) — co-tenant hosts queue behind a slow first install instead of
+    /// tripping Npgsql's default 30 s timeout. The lock is released explicitly — returning a pooled
+    /// connection does not release session advisory locks.
     /// </summary>
     private static void PrepareSchemaSerialized(string connectionString)
     {
-        const int maxAttempts = 5;
+        const int maxAttempts = 8;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
@@ -74,6 +76,7 @@ public static class HangfireTransponderHostExtensions
                 connection.Open();
                 using (var acquire = new NpgsqlCommand($"SELECT pg_advisory_lock({SchemaInstallAdvisoryLockKey})", connection))
                 {
+                    acquire.CommandTimeout = 0;
                     acquire.ExecuteNonQuery();
                 }
 
