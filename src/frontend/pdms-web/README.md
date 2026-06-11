@@ -8,7 +8,7 @@ The PDMS (Patient Data Management System) browser app: **live treatment, real-ti
 | Standalone dev port (Vite)     | `5333`                                                                                                      |
 | Backing BFF                    | `Dialysis.PDMS.Bff` (`pdms-bff`, port `5303`)                                                               |
 | BFF aggregations               | EHR, HIE, SmartConnect (DICOM)                                                                              |
-| Real-time push                 | **Yes** — `IntradialyticAdverseEventIntegrationEvent` → chairside **alarm error** toasts via `/pdms/events` |
+| Real-time push                 | **Yes** — `useBffNotifications` on `/pdms/events`; the BFF pushes PHI-light notifications (e.g. intradialytic adverse events) rendered as generic type-driven **error** toasts |
 
 ## What it does
 
@@ -19,7 +19,7 @@ The PDMS (Patient Data Management System) browser app: **live treatment, real-ti
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/pdms"`. Realtime via `@microsoft/signalr`; charts via `echarts`/`d3`.
+React 18 + Vite 8 + TypeScript 6 + TanStack Query 5, **npm** (Node ≥ 20.19); `react-router` v7 with `BrowserRouter basename="/pdms"`; Tailwind CSS 4 (CSS-first, no `tailwind.config.js`). Realtime via `@microsoft/signalr`; charts via `echarts`/`d3`.
 
 ```bash
 npm run dev        # Vite :5333

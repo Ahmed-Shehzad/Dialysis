@@ -7,7 +7,7 @@ and clean up after it.
 
 | Script | Purpose |
 |---|---|
-| [`bootstrap.sh`](bootstrap.sh) | First-boot provisioning of the local SonarQube (project, quality profile, scanner token). Invoked by the AppHost's `sonarqube-bootstrap` container — you rarely run it by hand. |
+| [`bootstrap.sh`](bootstrap.sh) | First-boot provisioning of the local SonarQube (admin-credential rotation, the `dialysis` project, scanner token). Invoked by the AppHost's `sonarqube-bootstrap` container — you rarely run it by hand. |
 | [`scan.sh`](scan.sh) | Runs a **server-side analysis**: `sonarscanner begin` → build → coverage → `sonarscanner end`, uploading results to the dashboard. |
 | [`fix.sh`](fix.sh) | **Auto-fixes** the mechanically-fixable analyzer issues locally and clears the stale `.sonarqube/` artifact that causes phantom warnings. |
 
@@ -56,7 +56,7 @@ zero-change no-op. Preview exactly what it would touch with `--check`.
 | *(none)* | Clean + `dotnet format` at **`error`** severity + Release verify build. |
 | `--check` | **Report-only.** Runs `dotnet format --verify-no-changes`; exits non-zero if anything *would* change. Makes no edits — use it as a preview or a CI gate. |
 | `--severity warn` (or `info`) | **Widen the fix.** Also sweeps the `.editorconfig` style rules. ⚠️ `dotnet build` does **not** execute the name-simplification IDE analyzers (`IDE0001`–`IDE0003`, …), so this can rewrite **hundreds of files** even though the build is green. Preview with `--check` first. |
-| `--with-sonar` | Temporarily references `SonarAnalyzer.CSharp` solution-wide so its code-fix providers also run, then restores `Directory.Build.props`. (The analyzer is declared in `Directory.Packages.props` but not referenced, so it otherwise runs only server-side.) |
+| `--with-sonar` | Temporarily inserts a `SonarAnalyzer.CSharp` reference solution-wide so its code-fix providers also run, then restores `Directory.Build.props`. (Largely redundant today: `Directory.Build.props` already references the analyzer solution-wide, so its fixes run in every pass; the flag remains for checkouts without that reference.) |
 | `--no-verify` | Skip the Release verify build (faster; skips the safety check). |
 | `-h`, `--help` | Print the header/usage. |
 

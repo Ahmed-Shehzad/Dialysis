@@ -14,16 +14,15 @@ Generated from current code. See the root [README](../../../README.md) for the s
 
 ```mermaid
 flowchart LR
-    subgraph Internal [Internal modules]
-        EHR[EHR]
-        PDMS[PDMS]
-        HIS[HIS]
-    end
-    Internal -->|integration events| Bus{{ITransponderBus}}
+    EHR[EHR] -->|"PatientRegistered / DemographicsUpdated / PatientsMerged,<br/>EncounterOpened / EncounterClosed, ClinicalNoteSigned,<br/>LabOrderPlaced, LabResultReceived, ReferralRequested,<br/>DialysisInvoiceReady, ChartVitalSign- / LabResultProjectedAsOpenEhr"| Bus{{ITransponderBus}}
+    PDMS[PDMS] -->|"DialysisSessionStarted / Completed / Aborted,<br/>IntradialyticAdverseEvent, ClinicalDocumentProduced,<br/>HaemodialysisSessionProjectedAsOpenEhr"| Bus
+    SC[SmartConnect] -->|AttachmentRegistered| Bus
     Bus --> OUT[Outbound slice]
     OUT -->|FHIR map + consent + IAS JWT + retry| Partner([Partner FHIR / Direct endpoints]):::ext
-    Partner -->|POST /fhir/Bundle| IN[Inbound slice]
-    IN -->|External*Ingested events| Bus
+    Partner -->|"POST /fhir/Bundle, GET Patient/$match"| IN[Inbound slice]
+    IN -->|"ExternalPatientReferenceIngested, ExternalEncounterIngested,<br/>ExternalLabResultIngested, ExternalDialysisSessionIngested"| Bus
+    OUT -->|"FhirResourceDelivered / DeliveryFailed"| Bus
+    QRY[Query slice] -->|"PullPartnerRecords / PullPartnerDocuments /<br/>PullOutsideRecords (XCA, patient discovery)"| Partner
 
     OUT --> DB[(Postgres - HieDbContext)]
     IN --> DB
@@ -34,10 +33,24 @@ flowchart LR
     OpenEhr[openEHR projection] --> DB
 
     SPA([HIE / Admin SPA]):::ui --> BFF[HIE BFF] --> API[HIE API api/v1.0 + /fhir]
-    API --> OUT & IN & Consent & Docs & Tefca
+    API --> OUT & IN & Consent & Docs & Tefca & QRY
 
     classDef ui fill:#dbeafe,stroke:#3b82f6
     classDef ext fill:#fef3c7,stroke:#d97706
+```
+
+### Slice → schema map
+
+```mermaid
+flowchart TB
+    OUT2[Outbound - OutboundBundle queue] --> S1[(hie_outbound)]
+    IN2["Inbound - ReceivedResource, PatientIndexEntry,<br/>PatientLinkReview, Insights read"] --> S2[(hie_inbound)]
+    CON[Consent - ConsentRecord] --> S3[(hie_consent)]
+    DOC["Documents - DocumentReference, signatures,<br/>retention policies, ErasureRequests,<br/>RestrictionRequests"] --> S4[(hie_documents)]
+    TEF[Tefca - QhinPartner + trust anchors] --> S5[(hie_tefca)]
+    OE[OpenEhr - Composition] --> S6[(hie_openehr)]
+    TERM[Terminology - AuthoredTerminologyResource] --> S7[(hie_terminology)]
+    OB[Transponder outbox / inbox / saga] --> S8[(transponder)]
 ```
 
 ---
@@ -48,14 +61,14 @@ flowchart LR
 |---|---|
 | `Dialysis.HIE.Contracts` | `External*Ingested` + `FhirResourceDelivered/Failed` events, `HiePermissions`. |
 | `Dialysis.HIE.Outbound` | Consume upstream events → FHIR mappers → consent gate → `OutboundBundle` queue → `OutboundDispatcher` (Polly retry, HTTP/Direct partners, CCD assembly, public-health reporting). |
-| `Dialysis.HIE.Inbound` | `POST /fhir/Bundle`, `Patient/$match`; validate + consent-gate → persist `ReceivedResource` → MPI projection → emit typed `External*Ingested`. |
+| `Dialysis.HIE.Inbound` | `POST /fhir/Bundle`, `Patient/$match`; validate + consent-gate → persist `ReceivedResource` → MPI projection → emit typed `External*Ingested`. Also owns **Insights** (`PatientInsightsSummary` community health record assembled from received resources) and **MPI duplicate review** (`ListPendingPatientLinkReviewsQuery` / `ResolvePatientLinkReviewCommand`). |
 | `Dialysis.HIE.Consent` | `ConsentRecord` aggregate + `IConsentGate` (the cross-cutting outbound/inbound release-of-info query). |
 | `Dialysis.HIE.Documents` | `DocumentReference` index, preview/fill/sign (PAdES B/T/LT/LTA), JS-execution gate, retention pipeline, Art. 17 eraser. |
 | `Dialysis.HIE.Tefca` | `QhinPartner` + `QhinTrustAnchor`, IAS-JWT minting, PEM trust-anchor parsing. |
 | `Dialysis.HIE.Xds` | IHE XDS metadata model + FHIR↔XDS bridge (ports + mappers; no SOAP endpoints wired). |
 | `Dialysis.HIE.OpenEhr` | Versioned `Composition` + declarative archetype projection. |
 | `Dialysis.HIE.Query` | Partner pull/query (XCA, patient discovery) with Polly. |
-| `Dialysis.HIE.Persistence` | `HieDbContext`, migrations, 12 EF repositories, erasure/restriction stores. |
+| `Dialysis.HIE.Persistence` | `HieDbContext`, migrations, 12 EF repositories, erasure/restriction stores, the module-wide `HiePatientEraser` + `HieModuleDataExtractor`. |
 | `Dialysis.HIE.Composition` / `.Api` / `.Bff` / `.Tests` | Registration, ASP.NET host, per-context BFF, tests. |
 
 Schemas: `hie_outbound`, `hie_inbound`, `hie_consent`, `hie_openehr`, `hie_documents`, `hie_terminology`, `hie_tefca`, plus `transponder`. Migrations history `hie.__ef_migrations`.
@@ -167,7 +180,7 @@ erDiagram
     QHIN_PARTNER ||--o{ QHIN_TRUST_ANCHOR : "FK cascade"
 ```
 
-`OutboundBundle` has **three states** — `Pending → Delivered` (2xx) or `Pending → Failed` (after the retry budget); `Attempts` is a counter on the row, not a child table. A QHIN partner can only activate with **≥1 trust anchor and mTLS material**. `DocumentReference.Signatures` use `ValueGeneratedNever` ids so signing a document inserts (not updates) the signature row. Other persisted entities include `Composition` (openEHR, `hie_openehr`), `AuthoredTerminologyResource` (`hie_terminology`) and `RestrictionRequest` (Art. 18). The IHE XDS `DocumentEntry`/`SubmissionSet` are **transient records (ports only)** — not in `HieDbContext`.
+`OutboundBundle` has **three states** — `Pending → Delivered` (2xx) or `Pending → Failed` (after the retry budget), plus an operator **`MarkForRetry`** transition (`Failed → Pending`, via `RetryOutboundBundleCommand`) that requeues a dead bundle; `Attempts` is a counter on the row, not a child table. A QHIN partner can only activate with **≥1 trust anchor and mTLS material**. `DocumentReference.Signatures` use `ValueGeneratedNever` ids so signing a document inserts (not updates) the signature row. Other persisted entities include `Composition` (openEHR, `hie_openehr`), `AuthoredTerminologyResource` (`hie_terminology`) and `RestrictionRequest` (Art. 18). The IHE XDS `DocumentEntry`/`SubmissionSet` are **transient records (ports only)** — not in `HieDbContext`.
 
 ---
 
@@ -182,6 +195,7 @@ erDiagram
 | `LabOrderPlaced` | `ServiceRequest` |
 | `LabResultReceived` | `Observation` (+ public-health reportability) |
 | `DialysisSessionStarted/Completed/Aborted` | `Procedure` |
+| `IntradialyticAdverseEvent` (PDMS) | `AdverseEvent` (`IntradialyticAdverseEventConsumer`) |
 | `ClinicalNoteSigned` | `DocumentReference` |
 | `ReferralRequested` | Care-Summary CCD bundle |
 | `ClinicalDocumentProduced` / `DialysisInvoiceReady` | index a `DocumentReference` |
@@ -264,7 +278,7 @@ sequenceDiagram
     participant Sign as SignDocumentCommand
     participant Blob as IDocumentBlobStore
     participant DSR as DefaultDataSubjectRightsService
-    participant Er as HieDocumentsPatientEraser
+    participant Er as HiePatientEraser
 
     SPA->>Api: POST /documents/{id}/fill (AcroForm values)
     Api->>Acro: bake values into PDF bytes
@@ -272,17 +286,18 @@ sequenceDiagram
     Api->>Sign: PAdES B/T/LT/LTA -> DocumentReferenceSignature
     Note over DSR: GDPR Art. 17 (DPO-approved)
     DSR->>Er: EraseAsync(patientId)
-    Er->>Blob: DeleteAsync per Current document
+    Er->>Blob: HieDocumentsPatientEraser - DeleteAsync per Current document
     Er->>Api: MarkBlobPurged -> EnteredInError, StorageRef purged://erasure
+    Er->>Er: hard-delete Consents, OutboundBundles, Compositions<br/>(retain ErasureRequests / RestrictionRequests / PatientIndex)
     Er-->>DSR: PatientErasureResult -> ErasureRequest.ExecutionLogJson
 ```
 
-The scheduled-purge pipeline (`RetentionPurgerHostedService`, 24-hour tick, opt-in via `Documents:Retention:AutoPurge`) tombstones documents past their per-`Kind` `DocumentRetentionPolicy` — distinct from Art. 17 erasure.
+The scheduled-purge pipeline is now a persistent **daily Hangfire job** (`HieRetentionPurgeJob : IRetentionPurgeJob`, 03:00 UTC, registered only when `Documents:Retention:AutoPurge` is `true`) that walks every operator-defined per-`Kind` `DocumentRetentionPolicy` and tombstones expired documents — distinct from Art. 17 erasure.
 
 ---
 
 ## 6. API & compliance
 
-FHIR endpoints return native `application/fhir+json`; admin endpoints use the `ResourceEnvelope<T>`. Surfaces: inbound `fhir/Bundle` + `fhir/Patient/$match`; `documents` (list/preview/binary/upload/sign/fill/delete/javascript-execution) under `[PhiAccess]`; `documents/retention`; `terminology`; `tefca/partners` (trust-anchors, mTLS, IAS-JWT mint); consent/MPI/ops admin. `IConsentGate` is the cross-module release-of-info query; EU data-subject-rights routes are mounted via `MapEuDataProtectionRoutes()`.
+FHIR endpoints return native `application/fhir+json`; admin endpoints use the `ResourceEnvelope<T>`. Surfaces: inbound `fhir/Bundle` + `fhir/Patient/$match`; `documents` (list/preview/binary/upload/sign/fill/delete/javascript-execution) under `[PhiAccess]`; `documents/retention`; `terminology`; `tefca/partners` (trust-anchors, mTLS, IAS-JWT mint — `HmacIasJwtIssuer` claims include `tefca_role=qhin`); consent admin; **MPI steward** (`GET hie/admin/mpi/reviews` → `ListPendingPatientLinkReviewsQuery`, `POST .../reviews/{id}/resolve` → `ResolvePatientLinkReviewCommand`); and **ops insights** (`GET api/v1.0/hie/ops/insights/patient/{patientReference}` → `PatientInsightsSummary`, the community health record assembled from partner-received resources; also exposed patient-claim-filtered on the patient-access surface). `IConsentGate` is the cross-module release-of-info query; EU data-subject-rights routes are mounted via `MapEuDataProtectionRoutes()`.
 
-`HieDocumentsPatientEraser` (tombstone + blob purge) is one of four `IPatientEraser`s; the `DefaultDataSubjectRightsService` walks all registered erasers across modules and persists the per-module breakdown to `EfErasureRequestStore` (`hie_documents.ErasureRequests`) — the only EF-backed erasure store in the system. Permissions: the `HiePermissions` catalog plus finer `[PhiAccess]` strings on document actions.
+**Erasure is module-wide, not Documents-only:** the single registered `HiePatientEraser` (Persistence/Erasure) composes `HieDocumentsPatientEraser` (tombstone + blob purge) and then **hard-deletes** `hie_consent.Consents`, `hie_outbound.OutboundBundles` (the `FhirJson` carries PHI), and `hie_openehr.Compositions`, while **retaining** `ErasureRequests`/`RestrictionRequests` (the audit trail) and `PatientIndex`/`ReceivedResources` (external identifiers) — producing one `"hie"` entry in the erasure breakdown. `HieModuleDataExtractor : IModuleDataExtractor` (Art. 15/20) exports `DocumentReference` metadata (excluding `EnteredInError`), `Consent`, `OutboundBundle` (`FhirJson` verbatim), and `OpenEhrComposition`. The `DefaultDataSubjectRightsService` walks all registered erasers across modules and persists the per-module breakdown to `EfErasureRequestStore` (`hie_documents.ErasureRequests`) — the only EF-backed erasure store in the system. Permissions: the `HiePermissions` catalog plus finer `[PhiAccess]` strings on document actions.

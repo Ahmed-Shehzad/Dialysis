@@ -14,8 +14,9 @@ Generated from current code. See the root [README](../../../README.md) for the s
 flowchart LR
     Chair([Chairside SPA / kiosk]):::ui --> BFF[PDMS BFF]
     BFF -->|cookie - bearer YARP| API[PDMS API api/v1.0 + /hubs/vitals]
-    SC([SmartConnect machine telemetry]):::ext -->|integration events| Bus
-    HIS([HIS chair placement]):::ext -->|integration events| Bus
+    SC([SmartConnect]):::ext -->|"DialysisMachineTreatmentSnapshot,<br/>DialysisMachineAlarm"| Bus
+    HIS([HIS]):::ext -->|PatientPlacedInChair| Bus
+    EHRIN([EHR]):::ext -->|"PatientRegistered / DemographicsUpdated /<br/>PatientsMerged (directory trio)"| Bus
 
     API --> Slices
     subgraph Slices [PDMS slices]
@@ -25,11 +26,12 @@ flowchart LR
         REP[Reporting]
     end
 
-    Slices --> DB[(TimescaleDB - PdmsDbContext<br/>pdms_sessions / pdms_telemetry)]
+    Slices --> DB[(TimescaleDB - PdmsDbContext<br/>schema-per-slice)]
     Slices --> OB[(Transponder outbox)]
     OB --> Bus{{ITransponderBus}}
-    Bus --> EHR[EHR - charges / adverse events]
-    Bus --> HIE[HIE - openEHR / documents]
+    Bus -->|"DialysisSessionChargeReady,<br/>IntradialyticAdverseEvent"| EHR[EHR]
+    Bus -->|"DialysisSessionStarted / Completed / Aborted,<br/>HaemodialysisSessionProjectedAsOpenEhr,<br/>ClinicalDocumentProduced, IntradialyticAdverseEvent"| HIE[HIE]
+    Bus -->|"MedicationAdministered / Declined, IvPumpAlarmRaised,<br/>MedicationInventoryLow, SessionReportGenerated,<br/>DialysisSessionCompleted (self-consumed)"| SELF[PDMS self-consumers<br/>reporting, inventory, on-call]
     API -->|SignalR vitals + cost| Chair
 
     classDef ui fill:#dbeafe,stroke:#3b82f6
@@ -51,7 +53,7 @@ flowchart LR
 | `Dialysis.PDMS.Persistence` | Single `PdmsDbContext`, EF configs, repositories, migrations (incl. the Timescale hypertable), `PdmsPatientEraser`. |
 | `Dialysis.PDMS.Core.Persistence.{Abstractions,InMemory,Postgresql}` | Generic repository provider split (chosen via `Pdms:Persistence:Provider`). |
 | `Dialysis.PDMS.Composition` | `AddPatientDataManagementSystem(...)`. |
-| `Dialysis.PDMS.Api` | ASP.NET host: 7 controllers, `VitalsHub`, cost-broadcast hosted service, durable-command bus. |
+| `Dialysis.PDMS.Api` | ASP.NET host: **10 controllers** (Sessions, Alarms, Chairs, Medications, IvPumps, Inventory, OnCallRotations, EscalationPolicies, AlarmDispatches, Reports), `VitalsHub`, cost-broadcast hosted service, durable-command bus. |
 | `Dialysis.PDMS.Bff` | Per-context BFF with chairside event push. |
 | `Dialysis.PDMS.Tests` | xUnit across all slices. |
 
@@ -59,7 +61,21 @@ flowchart LR
 
 ## 3. Domain model (ERD)
 
-`DialysisSession` is the aggregate root; `IntradialyticReading` is its only EF child (real FK, cascade). Everything else is **session-keyed by a soft `SessionId`** (no enforced constraint). Session, MAR and SessionReport carry a **direct `PatientId`**. Telemetry entities live in schema `pdms_telemetry`; sessions and readings in `pdms_sessions`.
+`DialysisSession` is the aggregate root; `IntradialyticReading` is its only EF child (real FK, cascade). Everything else is **session-keyed by a soft `SessionId`** (no enforced constraint). Session, MAR and SessionReport carry a **direct `PatientId`**.
+
+### Slice → aggregate → schema map
+
+```mermaid
+flowchart TB
+    TS1[DialysisSession + IntradialyticReading hypertable] --> A[(pdms_sessions)]
+    TS2["DialysisMachine, TreatmentObservation,<br/>TreatmentAlarm, RawHl7Message,<br/>MdcCodeCatalogEntry"] --> B[(pdms_telemetry)]
+    MEDS["MedicationAdministrationRecord + entries,<br/>IvPumpInfusion, MedicationInventoryItem"] --> C[(pdms_medications)]
+    ONC["OnCallRotation, EscalationPolicy,<br/>AlarmDispatch + attempts"] --> D[(pdms_oncall)]
+    REP["SessionReport, ReportTemplate + versions"] --> E[(pdms_reporting)]
+    DIR["PatientDirectory projection<br/>(EHR directory trio consumer)"] --> F[(pdms_directory)]
+    DC[Durable-command ledger] --> G[(pdms_durablecommands)]
+    OB[Transponder outbox / inbox / saga] --> H[(pdms)]
+```
 
 ```mermaid
 erDiagram
@@ -165,7 +181,7 @@ sequenceDiagram
     participant Src as Device / chairside SPA
     participant Api as SessionsController
     participant Bus as IDurableCommandBus - RabbitMQ
-    participant Con as DurableCommandConsumer&lt;PdmsDbContext&gt;
+    participant Con as DurableCommandConsumer (PdmsDbContext)
     participant Led as command_ledger
     participant H as RecordReadingCommandHandler
     participant VB as IVitalsBroadcaster
@@ -246,7 +262,7 @@ sequenceDiagram
 
 ## 6. API surface
 
-`sessions` (schedule/start/pause/resume/complete/abort, readings, adverse-events, summaries — `GET` uses `?activeOnly`), `alarms` (active board, acknowledge, raise machine alarm), `chairs` (occupancy board), `sessions/{id}/medications` (MAR), `iv-pumps` (telemetry, infusions), `inventory`, `oncall` (rotations/policies/dispatches), `reports`/templates. Realtime: `VitalsHub` at `/hubs/vitals` emitting `"reading"` and `"cost"`. Permissions: the closed `PdmsPermissions` set.
+Ten controllers: `sessions` (schedule/start/pause/resume/complete/abort, readings, adverse-events, summaries — `GET` uses `?activeOnly`), `alarms` (active board, acknowledge, raise machine alarm), `chairs` (occupancy board), `sessions/{id}/medications` (MAR), `iv-pumps` (telemetry, infusions), `inventory`, the **`oncall` group split across three controllers** (`OnCallRotationsController`, `EscalationPoliciesController`, `AlarmDispatchesController`), and `reports`/templates. Realtime: `VitalsHub` at `/hubs/vitals` emitting `"reading"` and `"cost"`. Permissions: the closed `PdmsPermissions` set.
 
 ---
 
@@ -254,6 +270,8 @@ sequenceDiagram
 
 **Published:** `DialysisSessionStarted/Completed/Aborted`, `IntradialyticAdverseEvent`, `DialysisSessionChargeReady` (→ EHR billing), `HaemodialysisSessionProjectedAsOpenEhr` (→ HIE), `ClinicalDocumentProduced` (→ HIE Documents), plus slice events (`MedicationAdministered/Declined`, `IvPumpInfusionStarted/Completed`, `IvPumpAlarmRaised`, `MedicationInventoryLow`, `SessionReportGenerated`).
 
-**Consumed:** `DialysisMachineTreatmentSnapshot` / `DialysisMachineAlarm` (SmartConnect telemetry), `PatientPlacedInChair` (HIS → chair-occupancy projection), and several self-consumed events that drive reporting, inventory deduction, and on-call escalation.
+**Consumed:** `DialysisMachineTreatmentSnapshot` / `DialysisMachineAlarm` (SmartConnect telemetry), `PatientPlacedInChair` (HIS → chair-occupancy projection), the EHR **patient-directory trio** `PatientRegistered` / `PatientDemographicsUpdated` / `PatientsMerged` (→ the `pdms_directory.PatientDirectory` projection used by reporting), and several self-consumed events that drive reporting (`DialysisSessionCompleted`), inventory deduction (`MedicationAdministered`), and on-call escalation (`IvPumpAlarmRaised`).
 
-`PdmsPatientEraser : IPatientEraser` (GDPR Art. 17) projects the patient's session ids first, soft-deletes the session-keyed children (`IntradialyticReading`, `TreatmentObservation`, `TreatmentAlarm`, `IvPumpInfusion`, `AlarmDispatch`) and the sessions, then the direct patient-linked rows (`MedicationAdministrationRecord`, `SessionReport`) — all via `ExecuteUpdateAsync`. Bounded retention of telemetry is handled by the Timescale retention policy; the approve-and-execute orchestration lives in [HIE](../HIE/ARCHITECTURE.md).
+`PdmsPatientEraser : IPatientEraser` (GDPR Art. 17) projects the patient's session ids first, soft-deletes the session-keyed children (`IntradialyticReading`, `TreatmentObservation`, `TreatmentAlarm`, `IvPumpInfusion`, `AlarmDispatch`) and the sessions, then the direct patient-linked rows (`MedicationAdministrationRecord`, `SessionReport`) — all via `ExecuteUpdateAsync`.
+
+`PdmsModuleDataExtractor : IModuleDataExtractor` (Art. 15/20 export) emits **8 categories** — `DialysisSession`, `IntradialyticReading`, `TreatmentObservation`, `TreatmentAlarm`, `IvPumpInfusion`, `AlarmDispatch`, `MedicationAdministrationRecord`, `SessionReport` — in the shared camelCase JSON bundle. Bounded retention of telemetry is handled by the Timescale retention policy; the approve-and-execute orchestration lives in [HIE](../HIE/ARCHITECTURE.md).

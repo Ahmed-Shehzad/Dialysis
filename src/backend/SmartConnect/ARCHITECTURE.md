@@ -28,8 +28,10 @@ flowchart LR
     RT -->|transponder-bus adapter| Bus{{ITransponderBus}}
     RT -->|http / file / smtp / tcp / dicom| Dest([External destinations]):::ext
     Engine --> Ledger[(MessageLedger - append-only)]
-    Bus --> PDMS[PDMS telemetry / alarms]
-    Bus --> Lab[Lab bridge]
+    Bus -->|"SmartConnectRoutedPayload (RoutingHint e.g. ORU^R01),<br/>typed DialysisMachineTreatmentSnapshot / Alarm (forward-declared)"| PDMS[PDMS telemetry / alarms]
+    Bus -->|"SmartConnectRoutedPayload hint lab.result -><br/>LabResultBridgeConsumer -> LabResultReceived"| Lab[Lab]
+    Bus -->|AttachmentRegistered| HIE[HIE XDS registry]
+    MLLP -->|Hl7V2ClockSkewCorrected| Bus
 
     Op([Operator shell SPA]):::ui --> BFF[SmartConnect BFF] --> Admin[Operator API /api/v1/admin]
     Admin --> Engine
@@ -46,8 +48,8 @@ flowchart LR
 |---|---|
 | `Contracts/Dialysis.SmartConnect.Contracts` | Integration events + `SmartConnectPermissions`. **Only assembly other modules reference.** |
 | `Dialysis.SmartConnect.Core.Abstraction` | POCO runtime contracts: `IntegrationFlow`, `IntegrationMessage`, `MessageLedgerEntry`, `IFlowRuntime`, `ISourceConnector`, `IRouteFilter`, `ITransformStage`, `IOutboundAdapter`, `IFlowPluginRegistry`. |
-| `Dialysis.SmartConnect.Core` | `FlowRuntimeEngine`, plugin registry, the `Hl7V2ToFhirPipeline`, built-in plugins, JS script engine, code templates, time-sync, data pruner. |
-| `Persistence/...EntityFrameworkCore.{Abstractions,InMemory,Postgresql}` | `SmartConnectDbContext`, entities, repositories/stores; provider chosen at composition (InMemory at runtime today). |
+| `Dialysis.SmartConnect.Core` | `FlowRuntimeEngine` + its collaborators (`SourceStageProcessor`, `OutboundRouteExecutor`, `FlowLedgerWriter`, `FlowAlertPublisher`, `AttachmentExtractionPipeline`, `AttachmentReattachmentService`, `ChannelScriptExecutor`), plugin registry, the `Hl7V2ToFhirPipeline`, prescription wire (`Prescription/`), built-in plugins, code templates, time-sync, data pruner. |
+| `Persistence/...EntityFrameworkCore.{Abstractions,Postgresql}` | `SmartConnectDbContext`, entities, repositories/stores; the host requires `ConnectionStrings:SmartConnect` and registers `AddSmartConnectPersistenceForPostgresql` (there is no InMemory provider project). |
 | `Persistence/...ObjectStorage.{AzureBlob,S3,ContentAddressable,Replication}` | Attachment / DICOM blob backends. |
 | `Inbound/...{Mllp,TcpListener,FileReader,Sftp,DatabaseReader,Transponder,AspNetCore,Hosting}` | Source connectors / listeners. |
 | `Management/...Management.AspNetCore` | Operator/admin API (`/api/v1/admin/*`). |
@@ -69,17 +71,49 @@ flowchart LR
 5. **Outbound routes** (`IOutboundAdapter`) — Mirth destinations, run parallel or as a sequential chain. Each route: skip-check → per-route transforms → re-inflate attachments → retry with exponential backoff → response transforms → ledger write.
 6. **PostProcessor script**.
 
+The engine itself is **decomposed into focused collaborators**: `SourceStageProcessor` (steps 1–4: preprocessing, attachment extraction, route filters, source transforms), `OutboundRouteExecutor` (step 5: destination-set skip check, adapter invocation, per-route transforms, attachment re-inflation, retry, response transforms, ledger write), `FlowLedgerWriter` (ledger persistence), `FlowAlertPublisher` (alert-rule matching/raising), `AttachmentExtractionPipeline` / `AttachmentReattachmentService` (step 2 and its inverse), and `ChannelScriptExecutor` (pre/post-processor and per-stage scripts).
+
+```mermaid
+flowchart LR
+    MSG[IntegrationMessage] --> SSP[SourceStageProcessor]
+    subgraph SSP_steps [steps 1-4]
+        direction TB
+        PRE2[PreProcessor script] --> AEP[AttachmentExtractionPipeline] --> RF[Route filters] --> ST[Source transforms]
+    end
+    SSP --- SSP_steps
+    SSP --> ORE[OutboundRouteExecutor]
+    subgraph ORE_steps [per route]
+        direction TB
+        SKIP[destination-set skip] --> ADP2[IOutboundAdapter] --> RT2[reattach + retry + response transforms]
+    end
+    ORE --- ORE_steps
+    SSP --> CSE[ChannelScriptExecutor]
+    ORE --> CSE
+    SSP --> FLW[FlowLedgerWriter] --> LED[(smartconnect.MessageLedger)]
+    ORE --> FLW
+    ORE --> FAP[FlowAlertPublisher] --> AL[(smartconnect.AlertEvents)]
+```
+
 Registered plugin kinds include transforms (`hl7-to-fhir-pipeline`, `ncpdp-to-fhir`, `javascript`, `mapper-transform`, `xslt`, `verify-hl7`, `destinationSetFilter`, …), outbound adapters (`transponder-bus`, `http`, `file`, `smtp`, `tcp`, `dicom`, `channel-writer`, …), and route filters (`allow-all`, `javascript`, `rule-builder`).
 
-**`Hl7V2ToFhirPipeline`** (the `hl7-to-fhir-pipeline` transform) parses HL7 v2, reads the trigger from **`MSH-9.1^MSH-9.2`** (e.g. `ADT^A01`), and dispatches to every registered `IFhirV2MessageMapper` whose `TriggerEvent` matches, wrapping the results in a FHIR R4 `Bundle`. It is **fail-soft** — non-HL7 or unmatched input passes through unchanged. ~12 mappers cover ADT (Patient/Encounter), ORU (Observation), ORM (ServiceRequest), SIU (Appointment), MDM (DocumentReference), VXU (Immunization), DFT (ChargeItem).
+**`Hl7V2ToFhirPipeline`** (the `hl7-to-fhir-pipeline` transform) parses HL7 v2, reads the trigger from **`MSH-9.1^MSH-9.2`** (e.g. `ADT^A01`), and dispatches to every registered `IFhirV2MessageMapper` whose `TriggerEvent` matches, wrapping the results in a FHIR R4 `Bundle`. It is **fail-soft** — non-HL7 or unmatched input passes through unchanged. **13 production mappers**: ADT A01 ×2 (`AdtA01ToPatientMapper`, `AdtA01ToEncounterMapper`), ADT A04/A08/A40 (Patient), ORU R01/R30/R40 (Observation), ORM O01 (ServiceRequest), SIU S12 (Appointment), MDM T02 (DocumentReference), VXU V04 (Immunization), DFT P03 (ChargeItem).
 
 The **MLLP listener** (`MllpInboundHostedService`, dev port **2575**) decodes MLLP frames, shallow-parses MSH (sending app/facility, MSH-9 type, MSH-10 control id), runs a clock-skew probe (rewrites MSH-7 if drifted → `Hl7V2ClockSkewCorrectedIntegrationEvent`), and dispatches to the default flow.
+
+### 3.1 Prescription wire (HD / HF / HDF + UF profiles)
+
+`Dialysis.SmartConnect.Core/Prescription/` answers machine **prescription queries** over HL7 v2 (`Hl7V2RxQueryParser` → `IPrescriptionResolver` → `PrescriptionResponder` → `Hl7V2RxResponseBuilder`). The `PrescriptionDocument` models the full convective-therapy surface:
+
+- **`TherapyModality`** — `Hd` / `Hf` / `Hdf`.
+- **`SubstitutionFluidSettings`** (HF/HDF; encoded on wire channel **1.1.6**): `DilutionMode` (`PRE`/`POST`), `FlowRateMlPerMin`, `TargetVolumeMl`, `FluidName`.
+- **`UltrafiltrationSettings`** (channels **1.1.5.4–1.1.5.6.n**): `UfMode`, rate/target volume, optional `ProfileShape` (`LINEAR`/`EXP`/`STEP`) and a step list of `UltrafiltrationProfileStep(DurationMinutes, UfRateMlPerHour)`.
+- **`GetModalityConsistencyWarnings`** — *warn-don't-refuse*: a prescription whose settings disagree with its modality (e.g. HD with substitution fluid) is still answered, with warnings attached, never rejected.
 
 ---
 
 ## 4. Domain model (ERD)
 
-Persistence is **EF Core** (relational model), but the running module is wired to the EF Core **InMemory** provider (`AddSmartConnectPersistenceInMemory`); the Postgres provider + migrations (schema `smartconnect`) are shippable. The channel pipeline is JSON-projected onto the flow row. **There is no outbox/inbox/saga** on this context (unlike other modules) and no dedicated idempotency table — de-dup rides the bus `DeduplicationId` plus the ledger's `CorrelationId` / `MessageControlId`.
+Persistence is **EF Core on PostgreSQL** (schema `smartconnect`): the API host requires `ConnectionStrings:SmartConnect` and fails fast without it, registering `AddSmartConnectPersistenceForPostgresql` — there is **no InMemory provider project** (tests boot against a PostgreSQL Testcontainer). **13 persisted entities**, all in the ERD below. The channel pipeline is JSON-projected onto the flow row. **There is no outbox/inbox/saga** on this context (unlike other modules) and no dedicated idempotency table — de-dup rides the bus `DeduplicationId` plus the ledger's `CorrelationId` / `MessageControlId`.
 
 ```mermaid
 erDiagram
@@ -170,6 +204,16 @@ erDiagram
         string Key
         string Value
     }
+    AUDIT_EVENT {
+        guid Id PK
+        datetime Timestamp
+        int Category
+        int Level
+        guid FlowId "nullable"
+        string UserId "nullable"
+        string Summary
+        string AttributesJson
+    }
 ```
 
 ---
@@ -182,7 +226,7 @@ erDiagram
 - `AttachmentRegisteredIntegrationEvent` — attachment persisted (HIE XDS registry consumes, ITI-41).
 - `DialysisMachineTreatmentSnapshotIntegrationEvent` / `DialysisMachineAlarmIntegrationEvent` — typed PCD-01/PCD-04 contracts **defined here and consumed by PDMS**, but currently the live machine-telemetry path travels as the generic `SmartConnectRoutedPayloadIntegrationEvent`; the typed events are a forward-declared contract surface.
 
-**Consumed:** `SmartConnectRoutedPayloadIntegrationEvent` is consumed in-process by `LabResultBridgeConsumer`, which re-emits the Lab context's `LabResultReceivedIntegrationEvent`.
+**Consumed:** `SmartConnectRoutedPayloadIntegrationEvent` is consumed in-process by `LabResultBridgeConsumer` (hosted in the Api host), which bridges payloads with `RoutingHint = "lab.result"` (ORU^R01) into the Lab context's `LabResultReceivedIntegrationEvent`.
 
 ---
 
@@ -210,13 +254,13 @@ sequenceDiagram
     Eng->>Led: status OutboundSent, then Completed
 ```
 
-Operators manage channels through the **operator shell** (`/api/v1/admin/*`): flows CRUD + lifecycle (`start`/`stop`/`pause`, dependency cascade), a message browser with **reprocess-from-ledger**, connector discovery, alert rules, the configuration map, code-template libraries, and the data pruner. The shell SPA is served at `/` and reached in dev via the SmartConnect BFF.
+Operators manage channels through the **operator shell** (`/api/v1/admin/*`, mounted by `MapSmartConnectManagementRoutes`): flows CRUD + lifecycle (`start`/`stop`/`pause`, dependency cascade), a message browser with **reprocess-from-ledger**, connector discovery, alert rules, the configuration map, code-template libraries, and the data pruner. `ManagementEndpointExtensions` is split into **seven partials** by concern — `FlowCrud`, `FlowLifecycle`, `FlowImportExport`, `MessageBrowser`, `ChannelAttachmentBlobs`, `ConnectorSchemas`, `ScriptDebug` — alongside sibling endpoint extensions (alerts, attachments, code templates, configuration map, events, groups, ledger, pruner, workbench). The shell SPA is served at `/` and reached in dev via the SmartConnect BFF.
 
 ---
 
 ## 7. Why no patient eraser
 
-SmartConnect ships **no `IPatientEraser` and no `IModuleDataExtractor`** — it routes and transforms messages and owns no patient master record. Patient identifiers appear only transiently inside `IntegrationMessage.Payload`, ledger `PayloadSnapshot`, attachments, and DICOM index rows. That derived data-at-rest is governed by storage-limitation, not per-patient erasure: the `DataPrunerHostedService` (time-based, `SmartConnect:DataPruner:RetentionDays`, with `/api/v1/admin/pruner` controls) bounds retention, and right-to-erasure is delegated to the patient-owning modules (HIS / EHR / PDMS / HIE).
+SmartConnect ships **no `IPatientEraser` and no `IModuleDataExtractor`** — it routes and transforms messages and owns no patient master record. Patient identifiers appear only transiently inside `IntegrationMessage.Payload`, ledger `PayloadSnapshot`, attachments, and DICOM index rows. That derived data-at-rest is governed by storage-limitation, not per-patient erasure: the **`DataPrunerJob`** (a persistent Hangfire recurring job, daily at **01:00 UTC**, `SmartConnect:DataPruner:RetentionDays`, with `/api/v1/admin/pruner` controls) bounds retention, and right-to-erasure is delegated to the patient-owning modules (HIS / EHR / PDMS / HIE).
 
 ---
 

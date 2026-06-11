@@ -20,7 +20,7 @@ The HIE browser app: **FHIR partners, consent, subscriptions, documents and TEFC
 
 ## Stack & scripts
 
-React 18 + Vite 6 + TypeScript 5 + TanStack Query 5, **npm**; `BrowserRouter basename="/hie"`. PDF via `pdfjs-dist`/`react-pdf`.
+React 18 + Vite 8 + TypeScript 6 + TanStack Query 5, **npm** (Node ≥ 20.19); `react-router` v7 with `BrowserRouter basename="/hie"`; Tailwind CSS 4 (CSS-first, no `tailwind.config.js`). PDF via `pdfjs-dist`/`react-pdf`.
 
 ```bash
 npm run dev        # Vite :5335
