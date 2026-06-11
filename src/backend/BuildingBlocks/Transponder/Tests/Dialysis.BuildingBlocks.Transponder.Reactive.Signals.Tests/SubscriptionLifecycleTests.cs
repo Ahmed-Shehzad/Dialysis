@@ -51,14 +51,25 @@ public class SubscriptionLifecycleTests
         var weakEffect = await Create_And_Dispose_Effect_Async(source);
 
         // Forced collection is the point of this leak test: a disposed effect must be
-        // collectible, i.e. the source's subscriber list no longer pins it.
+        // collectible, i.e. the source's subscriber list no longer pins it. Retry a few
+        // rounds — lingering pump continuations may keep the instance reachable for a
+        // moment after DisposeAsync returns, which is not a leak.
+        var collected = false;
+        for (var round = 0; round < 10 && !collected; round++)
+        {
 #pragma warning disable S1215
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
 #pragma warning restore S1215
+            collected = !weakEffect.TryGetTarget(out _);
+            if (!collected)
+            {
+                await Task.Delay(10);
+            }
+        }
 
-        Assert.False(weakEffect.TryGetTarget(out _));
+        Assert.True(collected);
         Assert.Equal(0, source.SubscriberCount);
     }
 
@@ -66,6 +77,13 @@ public class SubscriptionLifecycleTests
     {
         var effect = new Effect([source], static () => { });
         await effect.DisposeAsync();
-        return new WeakReference<Effect>(effect);
+        var weakEffect = new WeakReference<Effect>(effect);
+        // Not useless: the hoisted local lives in this method's state-machine box, and that
+        // box IS the returned Task — clear the field so the awaiting caller cannot pin the
+        // effect and defeat the WeakReference collection assertion.
+#pragma warning disable S1854
+        effect = null!;
+#pragma warning restore S1854
+        return weakEffect;
     }
 }

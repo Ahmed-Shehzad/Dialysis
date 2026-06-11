@@ -16,6 +16,9 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
+    <!-- Direct reference solely to lift transitive MessagePack (via StreamJsonRpc) past
+         CVE-2026-48109; remove when the Aspire dependency chain carries >= 2.5.301. -->
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="Aspire.Hosting.Docker" />
     <!-- Aspire.Hosting.Kubernetes is still preview in 13.x (same release train as the GA
          Docker publisher); pinned to a specific preview build so a future preview bump is
