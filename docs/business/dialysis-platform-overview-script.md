@@ -6,7 +6,10 @@ knowledge assumed in the room. *Speaker notes* in italics cover timing, clicks, 
 questions. Total running time: roughly 12–15 minutes plus questions.
 
 > Open the deck in any browser. Navigate with `←`/`→`, press `F` for full screen. Slides 4
-> and 6 are interactive — click the highlighted items as the script indicates.
+> and 6 are interactive — click the highlighted items as the script indicates. Every slide
+> carries real haemodialysis photography (openly licensed, credited on the closing slide and
+> in `images/CREDITS.md`) — the corner photographs are ambience; don't narrate them unless a
+> slide's notes say otherwise.
 
 ---
 
