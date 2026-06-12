@@ -6,7 +6,10 @@ knowledge assumed in the room. *Speaker notes* in italics cover timing, clicks, 
 questions. Total running time: roughly 12–15 minutes plus questions.
 
 > Open the deck in any browser. Navigate with `←`/`→`, press `F` for full screen. Slides 4
-> and 6 are interactive — click the highlighted items as the script indicates.
+> and 6 are interactive — click the highlighted items as the script indicates. Every slide
+> carries real haemodialysis photography (openly licensed, credited on the closing slide and
+> in `images/CREDITS.md`) — the corner photographs are ambience; don't narrate them unless a
+> slide's notes say otherwise.
 
 ---
 
@@ -24,7 +27,8 @@ sentence from this session, let it be the one on this slide."
 
 *Speaker notes: pause two beats on the headline before advancing. The two pills under the
 title tell each audience what's in it for them — gesture at them if both roles are in the
-room.*
+room. The photograph on the right is a real patient in a treatment chair, machine alongside —
+the deck's subject matter is real from the first slide, not stock renders.*
 
 ---
 
@@ -58,10 +62,19 @@ the rest of the deck is the right column unpacked.*
 **Narration:**
 
 "Here's the whole product in one sentence: everything a dialysis clinic does in a day —
-booking, treating, recording, billing, and sharing — in a single, joined-up system. The best
-way to believe that sentence is to follow one patient through it. That's the next slide."
+booking, treating, recording, billing, and sharing — in a single, joined-up system.
 
-*Speaker notes: deliberately short — it's a breather slide. Advance within twenty seconds.*
+And before we go further, this is the world we're talking about — not abstractions. **The
+floor**: every numbered station on it is a treatment chair, and the chair is the clinic's
+unit of care, capacity, and revenue. **The treatment**: a four-hour session, two to three
+times a week, for every patient, indefinitely. **The people**: skilled nursing time, the
+scarcest resource in the room. Everything the platform does, it does for these three
+photographs. The best way to believe the sentence above them is to follow one patient
+through it — that's the next slide."
+
+*Speaker notes: the three photographs are real haemodialysis photography (openly licensed —
+credits on the closing slide). Gesture left to right: floor → treatment → people. Still a
+short slide — forty seconds, not twenty, now that the photos carry meaning.*
 
 ---
 
@@ -250,7 +263,10 @@ you paid. That's the product. I'm happy to replay the patient journey, dive into
 block, or talk numbers — wherever you'd like to go deeper. Thank you."
 
 *Speaker notes: the two buttons on this slide jump straight back to the journey (slide 4) or
-the start — use them for the Q&A rather than scrolling.*
+the start — use them for the Q&A rather than scrolling. The small line at the bottom credits
+the Wikimedia Commons photography (CC0 / CC BY / CC BY-SA / public domain); keep it on any
+exported or printed copy — the licenses require the attribution. Full details live in
+`images/CREDITS.md`.*
 
 ---
 

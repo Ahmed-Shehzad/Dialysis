@@ -33,7 +33,7 @@
   .slide h2{font-size:clamp(22px,3vw,40px);line-height:1.1;letter-spacing:-.4px;margin-bottom:18px}
   .slide p.lead{font-size:clamp(16px,1.7vw,22px);color:var(--ink-soft);line-height:1.5;max-width:50ch}
   .kicker{
-    display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;
+    display:inline-flex;align-self:flex-start;align-items:center;gap:8px;font-size:13px;font-weight:700;
     letter-spacing:.14em;text-transform:uppercase;color:var(--teal-deep);
     background:#e3f5f4;border:1px solid #c5ebe9;border-radius:999px;padding:7px 14px;margin-bottom:22px
   }
@@ -47,6 +47,27 @@
   .audience .pill span{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
   .brandbar{position:absolute;left:9vw;bottom:9vh;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px}
   .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--teal),var(--blue));display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:var(--shadow)}
+
+  /* ---------- Photography ---------- */
+  .title-photo{
+    position:absolute;right:7vw;top:50%;transform:translateY(-50%) rotate(1.5deg);
+    width:min(28vw,440px);border-radius:16px;border:6px solid #fff;box-shadow:var(--shadow);
+  }
+  .photo-strip{display:flex;gap:20px;margin-top:36px}
+  .photo-strip figure{flex:1;min-width:0}
+  .photo-strip img{
+    width:100%;height:clamp(140px,24vh,220px);object-fit:cover;border-radius:14px;
+    border:5px solid #fff;box-shadow:0 10px 28px rgba(15,34,51,.14);display:block
+  }
+  .photo-strip figcaption{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.4}
+  .credits{margin-top:18px;font-size:12px;color:var(--muted)}
+  .photo-chip{
+    position:absolute;top:5vh;right:4vw;width:min(16vw,240px);height:min(22vh,180px);
+    object-fit:cover;border-radius:14px;border:5px solid #fff;
+    box-shadow:0 12px 30px rgba(15,34,51,.18);transform:rotate(2deg);z-index:5
+  }
+  @media (max-width:1100px){.title-photo,.photo-chip{display:none}}
+  @media (max-width:760px){.photo-strip{flex-direction:column}}
 
   /* ---------- Generic helpers ---------- */
   .grid{display:grid;gap:18px}
@@ -195,12 +216,14 @@
         <div class="pill">For the Business Developer<span>What it does & where it’s headed</span></div>
       </div>
     </div>
+    <img class="title-photo" src="images/hemodialysis-treatment-chair.jpg" alt="A patient reclined in a dialysis treatment chair, connected to the machine beside it" />
     <div class="brandbar"><div class="logo">D</div> Dialysis Care Platform · Minimum Viable Product</div>
   </section>
 
   <!-- 2 · THE PROBLEM -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> The problem we set out to solve</span>
+    <img class="photo-chip" src="images/hemodialysis-patient-seated.jpg" alt="A dialysis patient seated with their belongings, access line taped" />
     <h2>Running a clinic today means juggling disconnected tools</h2>
     <div class="compare">
       <div class="col bad">
@@ -230,12 +253,18 @@
   <section class="slide">
     <span class="kicker"><span class="dot"></span> The solution, in one sentence</span>
     <h2 style="max-width:24ch">Everything a dialysis clinic does in a day — booking, treating, recording, billing, and sharing — in a single, joined‑up system.</h2>
-    <p class="lead">The next slide follows a real patient through the system. Click each stage to see what happens.</p>
+    <p class="lead">This is the world the platform runs: the chair, the floor, and the people at the machine. The next slide follows one patient through it — click each stage to see what happens.</p>
+    <div class="photo-strip">
+      <figure><img src="images/dialysis-unit-multi-chair.jpg" alt="A working dialysis floor with numbered treatment stations" /><figcaption><strong>The floor</strong> — every numbered station is a treatment chair: the unit of care, capacity, and revenue.</figcaption></figure>
+      <figure><img src="images/hemodialysis-vascular-access.jpg" alt="Close-up of the blood lines connecting a patient to the dialysis machine" /><figcaption><strong>The treatment</strong> — a four‑hour session, two to three times a week, for every patient.</figcaption></figure>
+      <figure><img src="images/hemodialysis-machine-nurse.jpg" alt="A nurse operating a haemodialysis machine" /><figcaption><strong>The people</strong> — skilled nursing time, the scarcest resource in the room.</figcaption></figure>
+    </div>
   </section>
 
   <!-- 4 · PATIENT JOURNEY (interactive) -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> Follow one patient</span>
+    <img class="photo-chip" src="images/hemodialysis-in-the-chair.jpg" alt="A patient reclined in the treatment chair during dialysis" />
     <h2>The patient journey — click any step</h2>
     <div class="journey" id="journey">
       <div class="step active" data-i="0"><span class="sn">1</span><span class="se">📅</span><span class="sl">Book &amp; Check‑in</span></div>
@@ -258,6 +287,7 @@
   <!-- 5 · MVP -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> What’s working today (the MVP)</span>
+    <img class="photo-chip" src="images/dialysis-ward-modern.jpg" alt="A modern dialysis ward in full operation" />
     <h2>A complete journey — already running end to end</h2>
     <div class="grid three">
       <div class="card"><span class="emoji">📅</span><h3>Book &amp; check in</h3><p>Schedule patients and start their visit; their details follow them across the whole system.</p></div>
@@ -272,6 +302,7 @@
   <!-- 6 · BUILDING BLOCKS (interactive) -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> The capabilities — in plain terms</span>
+    <img class="photo-chip" src="images/hemodialysis-how-it-works.png" alt="Illustration of the haemodialysis circuit — blood out, filtered, returned" />
     <h2>Six building blocks, one connected platform — click to explore</h2>
     <div class="modgrid" id="mods">
       <div class="mod" data-more="Scheduling, check‑in, staff rosters, and supplies. This is the engine room that keeps each clinic day moving.">
@@ -305,6 +336,7 @@
   <!-- 7 · FEATURE SPOTLIGHT -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> Feature spotlight</span>
+    <img class="photo-chip" src="images/dialysis-unit-multi-chair.jpg" alt="A dialysis floor with numbered treatment stations" />
     <h2>One click turns a month of care into submitted claims</h2>
     <div class="flow">
       <div class="node"><span class="ne">🖱️</span>Click “Run billing”</div>
@@ -325,6 +357,7 @@
   <!-- 8 · REAL-TIME & RELIABILITY -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> Always on, never lost</span>
+    <img class="photo-chip" src="images/hemodialysis-machine-screen.jpg" alt="A patient beside the dialysis machine, its live display showing the session" />
     <h2>Real‑time where it matters, dependable everywhere</h2>
     <div class="grid three">
       <div class="card"><span class="emoji">📈</span><h3>Live at the chair</h3><p>Treatment readings update on screen as they happen, so staff can act the moment something changes.</p></div>
@@ -336,6 +369,7 @@
   <!-- 9 · TRUST & COMPLIANCE -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> Built for healthcare trust</span>
+    <img class="photo-chip" src="images/hemodialysis-vascular-access.jpg" alt="Close-up of a patient's vascular access — the most personal data there is" />
     <h2>Privacy and compliance aren’t bolted on — they’re built in</h2>
     <div class="trust">
       <div class="t"><div class="ic">🔐</div><div><h3>Right people, right access</h3><p>Everyone signs in securely and only sees what their role allows.</p></div></div>
@@ -350,6 +384,7 @@
   <!-- 10 · BUILT TO GROW -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> An investment that lasts</span>
+    <img class="photo-chip" src="images/hemodialysis-machine-and-chair.jpg" alt="A new dialysis machine beside an empty treatment chair — capacity ready to add" />
     <h2>Built to grow without starting over</h2>
     <div class="grid three">
       <div class="card"><span class="emoji">🧩</span><h3>One system, not a patchwork</h3><p>All the pieces work together, so the business isn’t stitching tools together by hand.</p></div>
@@ -361,6 +396,7 @@
   <!-- 11 · BUSINESS VALUE -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> What it’s worth to the business</span>
+    <img class="photo-chip" src="images/hemodialysis-patient-resting.jpg" alt="A patient resting calmly during a dialysis session" />
     <h2>The outcomes that matter</h2>
     <div class="stats">
       <div class="stat"><div class="big">⏱️ Less</div><div class="cap">admin time spent re‑typing and chasing paperwork</div></div>
@@ -374,6 +410,7 @@
   <!-- 12 · ROADMAP -->
   <section class="slide">
     <span class="kicker"><span class="dot"></span> Where it goes next</span>
+    <img class="photo-chip" src="images/hemodialysis-machine-corridor.jpg" alt="A dialysis machine in a hospital corridor, ready to be wheeled to its next station" />
     <h2>A clear path forward</h2>
     <div class="road">
       <div class="lane now">
@@ -410,12 +447,14 @@
   <!-- 13 · CLOSING -->
   <section class="slide closing">
     <span class="kicker"><span class="dot"></span> In short</span>
+    <img class="photo-chip" src="images/hemodialysis-treatment-chair.jpg" alt="A patient in the treatment chair — where the platform's work begins and ends" />
     <h1>From check‑in to claim — one platform that runs the clinic, protects the patient, and gets you paid.</h1>
     <div class="cta">
       <a class="b1" href="#" onclick="goTo(3);return false;">↺ Replay the patient journey</a>
       <a class="b2" href="#" onclick="goTo(0);return false;">Back to start</a>
     </div>
     <div class="brandbar" style="position:static;margin-top:40px"><div class="logo">D</div> Thank you — happy to walk through any part in more detail.</div>
+    <div class="credits">Photography: Wikimedia Commons — Anna Frodesiak (CC0/PD) · Yahya (CC BY‑SA 4.0) · Senado Federal (CC BY 2.0) · Jackhsiao (PD) · BruceBlaus (CC BY 3.0) · Vitaliy Pospelov (CC BY‑SA 3.0) · Kevinhenry (CC BY‑SA 4.0). Details: images/CREDITS.md</div>
   </section>
 
 </div>
