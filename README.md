@@ -36,6 +36,18 @@ Plus an **Identity** layer for sign-in and a **web app per context** (front desk
 
 The modules never reach into each other's database. They cooperate by publishing **events** ("patient admitted", "session completed", "claim submitted") that the others react to — so each module can evolve, scale and fail independently.
 
+## What "a chair" means
+
+Dialysis vocabulary — and this platform — revolves around the **treatment chair**, so it's worth pinning down. Literally, it's the reclining chair a patient sits in for a haemodialysis session, paired with its dialysis machine: chair + machine + plumbing = one treatment station. When someone says "a 12-chair centre", they mean a clinic that can treat 12 patients simultaneously.
+
+Operationally, the chair is the unit everything else is measured in:
+
+- **Capacity.** A session runs roughly four hours, so one chair treats 2–3 patients per day; a centre's daily throughput is *chairs × shifts*. Because patients with end-stage renal disease typically need 2–3 sessions every week, indefinitely, demand per chair is steady and predictable.
+- **Revenue.** Clinics bill per session, and sessions happen in chairs — so **chair utilization** (sessions delivered ÷ sessions the chairs could deliver) is the metric a clinic owner watches most closely.
+- **Cost.** Each chair carries its machine, a share of the water-treatment plant, per-session consumables (dialyzer, blood lines, dialysate), and nursing time.
+
+The platform mirrors this: PDMS's plain-language identity is "the Treatment Chair" (live monitoring of every occupied chair), HIS assigns patients to chairs as part of the queue workflow, and the SaaS commercial model prices **per chair per month** — the subscription scales with the same unit the customer's own revenue does (see [docs/business/pakistan-market-strategy.md](docs/business/pakistan-market-strategy.md)).
+
 ---
 
 # Part 2 — Engineering architecture
