@@ -1,5 +1,6 @@
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.DomainDrivenDesign.Persistence;
+using Dialysis.HIS.Contracts.Messaging;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
 using Dialysis.EHR.Contracts.Integration;
@@ -30,6 +31,7 @@ public sealed class BillingExportJobQueuedConsumer : IConsumer<BillingExportJobQ
     private const int BatchScanLimit = 500;
 
     private readonly IClaimRepository _claims;
+    private readonly ITransponderOutbox _outbox;
     private readonly ITransponderBus _bus;
     private readonly TimeProvider _clock;
     private readonly IUnitOfWork _unitOfWork;
@@ -40,12 +42,14 @@ public sealed class BillingExportJobQueuedConsumer : IConsumer<BillingExportJobQ
     /// assembled claims as the EDI 837 batch, and reports the outcome back to HIS.
     /// </summary>
     public BillingExportJobQueuedConsumer(IClaimRepository claims,
+        ITransponderOutbox outbox,
         ITransponderBus bus,
         TimeProvider clock,
         IUnitOfWork unitOfWork,
         ILogger<BillingExportJobQueuedConsumer> logger)
     {
         _claims = claims;
+        _outbox = outbox;
         _bus = bus;
         _clock = clock;
         _unitOfWork = unitOfWork;
@@ -79,10 +83,11 @@ public sealed class BillingExportJobQueuedConsumer : IConsumer<BillingExportJobQ
                 .Where(c => string.Equals(c.BilledTotal.CurrencyCode, currency, StringComparison.OrdinalIgnoreCase))
                 .Sum(c => c.BilledTotal.Amount);
 
-            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            await _bus.PublishAsync(
-                new BillingExportJobCompletedIntegrationEvent(
+            // The batch outcome rides the transactional outbox: the claim submissions and the
+            // completed signal commit together, so HIS can never see submitted claims while its
+            // export job is stranded in Queued (or the reverse).
+            await _outbox.EnqueueAsync(
+                HisTransponderOutboxEnvelope.From(new BillingExportJobCompletedIntegrationEvent(
                     EventId: Guid.CreateVersion7(),
                     OccurredOn: nowUtc,
                     SchemaVersion: 1,
@@ -91,8 +96,10 @@ public sealed class BillingExportJobQueuedConsumer : IConsumer<BillingExportJobQ
                     ClaimCount: batch.Count,
                     BilledTotal: billedTotal,
                     CurrencyCode: currency,
-                    CompletedAtUtc: nowUtc),
+                    CompletedAtUtc: nowUtc)),
                 ct).ConfigureAwait(false);
+
+            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "Submitted billing export batch for job {JobId} payer {PayerCode}: {ClaimCount} claim(s), {BilledTotal} {Currency}.",
@@ -104,6 +111,9 @@ public sealed class BillingExportJobQueuedConsumer : IConsumer<BillingExportJobQ
                 "Failed to run billing export batch for job {JobId} payer {PayerCode}.",
                 message.JobId, payerCode);
 
+            // Deliberately published directly: the unit of work just failed/rolled back, so an
+            // outbox row would roll back with it — the failure signal must escape the dead
+            // transaction for HIS to move the job out of Queued.
             await _bus.PublishAsync(
                 new BillingExportJobFailedIntegrationEvent(
                     EventId: Guid.CreateVersion7(),

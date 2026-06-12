@@ -22,10 +22,18 @@ public static class LabPersistenceServiceCollectionExtensions
         services.AddOptions<TransponderPersistenceOptions>()
             .Configure(o => o.Schema = "transponder");
 
-        services.AddDbContext<LabDbContext>((_, options) => configure?.Invoke(options));
+        services.AddDbContext<LabDbContext>((sp, options) =>
+        {
+            configure?.Invoke(options);
+
+            var integrationEventOutbox = sp.GetService<IntegrationEventOutboxSaveChangesInterceptor>();
+            if (integrationEventOutbox is not null)
+                options.AddInterceptors(integrationEventOutbox);
+        });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<LabDbContext>());
         services.AddTransponderEfOutboxAndInbox<LabDbContext>();
+        services.AddModuleIntegrationEventOutbox();
         services.AddScoped<ILabOrderRepository, EfLabOrderRepository>();
 
         return services;

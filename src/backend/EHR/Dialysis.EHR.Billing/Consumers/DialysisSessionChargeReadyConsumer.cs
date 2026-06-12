@@ -3,6 +3,7 @@ using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.EHR.Billing.Domain;
 using Dialysis.EHR.Billing.Ports;
 using Dialysis.EHR.Contracts.Integration;
+using Dialysis.EHR.Contracts.Messaging;
 using Dialysis.Module.Contracts.Billing;
 using Dialysis.PDMS.Contracts.Integration;
 using Microsoft.Extensions.Logging;
@@ -29,7 +30,7 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
 {
     private readonly IChargeRepository _charges;
     private readonly IChargeIdempotencyStore _idempotency;
-    private readonly ITransponderBus _bus;
+    private readonly ITransponderOutbox _outbox;
     private readonly TimeProvider _clock;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<DialysisSessionChargeReadyConsumer> _logger;
@@ -52,14 +53,14 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
     /// </summary>
     public DialysisSessionChargeReadyConsumer(IChargeRepository charges,
         IChargeIdempotencyStore idempotency,
-        ITransponderBus bus,
+        ITransponderOutbox outbox,
         TimeProvider clock,
         IUnitOfWork unitOfWork,
         ILogger<DialysisSessionChargeReadyConsumer> logger)
     {
         _charges = charges;
         _idempotency = idempotency;
-        _bus = bus;
+        _outbox = outbox;
         _clock = clock;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -101,8 +102,11 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
         var issuedAt = _clock.GetUtcNow().UtcDateTime;
         var invoiceNumber =
             $"INV-{message.CompletedAtUtc:yyyyMMdd}-{message.SessionId.ToString("N")[..6].ToUpperInvariant()}";
-        await _bus.PublishAsync(
-            new DialysisInvoiceReadyIntegrationEvent(
+        // The invoice signal rides the transactional outbox: the charge row and the HIE
+        // document request commit together — an invoice can never be rendered for a charge
+        // that failed to capture, nor a charge captured without its invoice queued.
+        await _outbox.EnqueueAsync(
+            EhrTransponderOutboxEnvelope.From(new DialysisInvoiceReadyIntegrationEvent(
                 EventId: Guid.CreateVersion7(),
                 OccurredOn: issuedAt,
                 SchemaVersion: 1,
@@ -118,7 +122,7 @@ public sealed class DialysisSessionChargeReadyConsumer : IConsumer<DialysisSessi
                 CurrencyCode: breakdown.CurrencyCode,
                 Lines: breakdown.Lines
                     .Select(l => new InvoiceLineDto(l.Label, l.Quantity, l.Unit, l.UnitPrice, l.Amount))
-                    .ToList()),
+                    .ToList())),
             ct).ConfigureAwait(false);
 
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);

@@ -1,9 +1,7 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Contracts.CodeSets;
-using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.PDMS.TreatmentSessions.Ports;
 using Dialysis.PDMS.TreatmentSessions.Projections;
 
@@ -13,16 +11,13 @@ public sealed class CompleteSessionCommandHandler : ICommandHandler<CompleteSess
 {
     private readonly IDialysisSessionRepository _sessions;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITransponderBus _bus;
     private readonly TimeProvider _timeProvider;
     public CompleteSessionCommandHandler(IDialysisSessionRepository sessions,
         IUnitOfWork unitOfWork,
-        ITransponderBus bus,
         TimeProvider timeProvider)
     {
         _sessions = sessions;
         _unitOfWork = unitOfWork;
-        _bus = bus;
         _timeProvider = timeProvider;
     }
     public async Task<Unit> HandleAsync(CompleteSessionCommand request, CancellationToken cancellationToken)
@@ -31,19 +26,11 @@ public sealed class CompleteSessionCommandHandler : ICommandHandler<CompleteSess
             ?? throw new InvalidOperationException($"Session '{request.SessionId}' not found.");
         var completedAt = _timeProvider.GetUtcNow().UtcDateTime;
         session.Complete(completedAt, request.AchievedUfVolumeLiters);
-        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
+        // The aggregate raises the openEHR projection event; the SaveChanges interceptor drains it
+        // into the Transponder outbox atomically with the phase transition — no manual bus publishing.
         var projection = HaemodialysisSessionOpenEhrProjector.Project(session, HaemodialysisSessionPhase.Completed, completedAt);
-        await _bus.PublishAsync(new HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent(
-            EventId: Guid.CreateVersion7(),
-            OccurredOn: completedAt,
-            SchemaVersion: 1,
-            SessionId: session.Id,
-            PatientId: session.PatientId,
-            Phase: HaemodialysisSessionPhase.Completed,
-            ArchetypeId: projection.ArchetypeId,
-            CompositionJson: projection.CompositionJson,
-            PhaseAtUtc: completedAt), cancellationToken).ConfigureAwait(false);
+        session.RecordOpenEhrProjection(HaemodialysisSessionPhase.Completed, projection.ArchetypeId, projection.CompositionJson, completedAt);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return Unit.Value;
     }

@@ -39,10 +39,15 @@ public static class PersistenceServiceCollectionExtensions
                 var audit = sp.GetService<AuditSaveChangesInterceptor>();
                 if (audit is not null)
                     options.AddInterceptors(audit);
+
+                var integrationEventOutbox = sp.GetService<IntegrationEventOutboxSaveChangesInterceptor>();
+                if (integrationEventOutbox is not null)
+                    options.AddInterceptors(integrationEventOutbox);
             });
 
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<HieDbContext>());
             services.AddTransponderEfOutboxAndInbox<HieDbContext>();
+            services.AddModuleIntegrationEventOutbox();
 
             services.AddScoped<IOutboundBundleStore, EfOutboundBundleStore>();
             services.AddScoped<IReceivedResourceStore, EfReceivedResourceStore>();

@@ -1,33 +1,25 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
-using Dialysis.Identity.Contracts.Integration;
 using Dialysis.Identity.Provisioning.Ports;
 
 namespace Dialysis.Identity.Provisioning.Features.RevokeRoleFromUser;
 
-public sealed class RevokeRoleFromUserCommandHandler : ICommandHandler<RevokeRoleFromUserCommand>
+public sealed class RevokeRoleFromUserCommandHandler : ICommandHandler<RevokeRoleFromUserCommand, Unit>
 {
     private readonly IUserAccountRepository _users;
     private readonly IRoleDefinitionRepository _roles;
     private readonly IRoleAssignmentRepository _assignments;
-    private readonly ITransponderBus _bus;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly TimeProvider _timeProvider;
     public RevokeRoleFromUserCommandHandler(IUserAccountRepository users,
         IRoleDefinitionRepository roles,
         IRoleAssignmentRepository assignments,
-        ITransponderBus bus,
-        IUnitOfWork unitOfWork,
-        TimeProvider timeProvider)
+        IUnitOfWork unitOfWork)
     {
         _users = users;
         _roles = roles;
         _assignments = assignments;
-        _bus = bus;
         _unitOfWork = unitOfWork;
-        _timeProvider = timeProvider;
     }
     public async Task<Unit> HandleAsync(RevokeRoleFromUserCommand request, CancellationToken cancellationToken)
     {
@@ -42,15 +34,9 @@ public sealed class RevokeRoleFromUserCommandHandler : ICommandHandler<RevokeRol
 
         _assignments.Remove(assignment);
 
-        await _bus.PublishAsync(
-            new RoleRevokedIntegrationEvent(
-                EventId: Guid.CreateVersion7(),
-                OccurredOn: _timeProvider.GetUtcNow().UtcDateTime,
-                SchemaVersion: 1,
-                UserId: user.Id,
-                Subject: user.Subject,
-                RoleCode: role.Code),
-            cancellationToken).ConfigureAwait(false);
+        // The (tracked) user aggregate raises RoleRevoked; the SaveChanges interceptor drains it
+        // into the Transponder outbox atomically with the assignment removal.
+        user.RecordRoleRevoked(role.Code);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

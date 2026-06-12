@@ -1,7 +1,5 @@
-using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
-using Dialysis.HIS.Contracts.Messaging;
 using Dialysis.HIS.Operations.Domain;
 using Dialysis.HIS.Operations.Domain.Services;
 using Dialysis.HIS.Operations.Domain.ValueObjects;
@@ -13,16 +11,13 @@ public sealed class SubmitBillingExportJobCommandHandler : ICommandHandler<Submi
 {
     private readonly IBillingExportJobRepository _jobs;
     private readonly BillingExportEligibilityService _eligibility;
-    private readonly ITransponderOutbox _outbox;
     private readonly IUnitOfWork _unitOfWork;
     public SubmitBillingExportJobCommandHandler(IBillingExportJobRepository jobs,
         BillingExportEligibilityService eligibility,
-        ITransponderOutbox outbox,
         IUnitOfWork unitOfWork)
     {
         _jobs = jobs;
         _eligibility = eligibility;
-        _outbox = outbox;
         _unitOfWork = unitOfWork;
     }
     public async Task<Guid> HandleAsync(SubmitBillingExportJobCommand request, CancellationToken cancellationToken)
@@ -37,11 +32,6 @@ public sealed class SubmitBillingExportJobCommandHandler : ICommandHandler<Submi
 
         _jobs.Add(job);
 
-        foreach (var @event in job.IntegrationEvents)
-        {
-            await _outbox.EnqueueAsync(HisTransponderOutboxEnvelope.From(@event), cancellationToken).ConfigureAwait(false);
-        }
-        job.ClearIntegrationEvents();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return job.Id;

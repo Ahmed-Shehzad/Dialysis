@@ -55,10 +55,15 @@ public static class PersistenceServiceCollectionExtensions
                 var domainEvents = sp.GetService<DomainEventSaveChangesInterceptor>();
                 if (domainEvents is not null)
                     options.AddInterceptors(domainEvents);
+
+                var integrationEventOutbox = sp.GetService<IntegrationEventOutboxSaveChangesInterceptor>();
+                if (integrationEventOutbox is not null)
+                    options.AddInterceptors(integrationEventOutbox);
             });
 
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<HisDbContext>());
             services.AddTransponderEfOutboxAndInbox<HisDbContext>();
+            services.AddModuleIntegrationEventOutbox();
             services.AddScoped<IPatientEraser,
                 HisPatientEraser>();
             services.AddScoped<IModuleDataExtractor,
