@@ -1,4 +1,6 @@
+using System.Text;
 using Dialysis.BuildingBlocks.Transponder;
+using Dialysis.BuildingBlocks.Transponder.Serialization;
 using Dialysis.CQRS;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Persistence;
@@ -12,20 +14,23 @@ public sealed class RevokeRoleFromUserCommandHandler : ICommandHandler<RevokeRol
     private readonly IUserAccountRepository _users;
     private readonly IRoleDefinitionRepository _roles;
     private readonly IRoleAssignmentRepository _assignments;
-    private readonly ITransponderBus _bus;
+    private readonly ITransponderOutbox _outbox;
+    private readonly IMessageSerializer _serializer;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
     public RevokeRoleFromUserCommandHandler(IUserAccountRepository users,
         IRoleDefinitionRepository roles,
         IRoleAssignmentRepository assignments,
-        ITransponderBus bus,
+        ITransponderOutbox outbox,
+        IMessageSerializer serializer,
         IUnitOfWork unitOfWork,
         TimeProvider timeProvider)
     {
         _users = users;
         _roles = roles;
         _assignments = assignments;
-        _bus = bus;
+        _outbox = outbox;
+        _serializer = serializer;
         _unitOfWork = unitOfWork;
         _timeProvider = timeProvider;
     }
@@ -42,14 +47,20 @@ public sealed class RevokeRoleFromUserCommandHandler : ICommandHandler<RevokeRol
 
         _assignments.Remove(assignment);
 
-        await _bus.PublishAsync(
-            new RoleRevokedIntegrationEvent(
+        // Rides the transactional outbox: the account state change and the cross-context
+        // signal commit together in the SaveChanges below — never published manually.
+        var @event = new RoleRevokedIntegrationEvent(
                 EventId: Guid.CreateVersion7(),
                 OccurredOn: _timeProvider.GetUtcNow().UtcDateTime,
                 SchemaVersion: 1,
                 UserId: user.Id,
                 Subject: user.Subject,
-                RoleCode: role.Code),
+                RoleCode: role.Code);
+        var payload = _serializer.Serialize(@event);
+        await _outbox.EnqueueAsync(new TransponderOutboxEnvelope(
+            AssemblyQualifiedEventType: typeof(RoleRevokedIntegrationEvent).AssemblyQualifiedName!,
+            PayloadJson: Encoding.UTF8.GetString(payload.Span),
+            Id: @event.EventId),
             cancellationToken).ConfigureAwait(false);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

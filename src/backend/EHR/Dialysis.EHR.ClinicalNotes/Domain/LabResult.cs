@@ -1,4 +1,5 @@
 using Dialysis.DomainDrivenDesign.Primitives;
+using Dialysis.EHR.Contracts.Integration;
 
 namespace Dialysis.EHR.ClinicalNotes.Domain;
 
@@ -47,7 +48,8 @@ public sealed class LabResult : AggregateRoot<Guid>
         LabAbnormalFlag abnormalFlag,
         DateTime observedAtUtc,
         string? unitCode = null,
-        string? referenceRangeText = null)
+        string? referenceRangeText = null,
+        string abnormalFlagCode = "")
     {
         if (labOrderId == Guid.Empty)
             throw new ArgumentException("Order required.", nameof(labOrderId));
@@ -56,7 +58,7 @@ public sealed class LabResult : AggregateRoot<Guid>
         ArgumentException.ThrowIfNullOrWhiteSpace(loincCode);
         ArgumentException.ThrowIfNullOrWhiteSpace(valueText);
 
-        return new LabResult(id)
+        var result = new LabResult(id)
         {
             LabOrderId = labOrderId,
             PatientId = patientId,
@@ -67,5 +69,45 @@ public sealed class LabResult : AggregateRoot<Guid>
             AbnormalFlag = abnormalFlag,
             ObservedAtUtc = observedAtUtc,
         };
+
+        // Raised here, drained to the Transponder outbox by the SaveChanges interceptor in the
+        // same transaction as the row — never published manually from a handler. The event keeps
+        // the raw HL7 abnormal-flag code (table 0078) the wire delivered, not the mapped enum.
+        result.RaiseIntegrationEvent(new LabResultReceivedIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            LabResultId: id,
+            LabOrderId: labOrderId,
+            PatientId: patientId,
+            LoincCode: result.LoincCode,
+            ValueText: result.ValueText,
+            UnitCode: result.UnitCode,
+            ReferenceRangeText: result.ReferenceRangeText,
+            AbnormalFlag: abnormalFlagCode,
+            ObservedAtUtc: observedAtUtc));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Attaches the openEHR projection of this result, raising the projection integration event
+    /// alongside the aggregate so the outbox interceptor dispatches both atomically with the row.
+    /// </summary>
+    public void RecordOpenEhrProjection(string archetypeId, string compositionJson)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(archetypeId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(compositionJson);
+
+        RaiseIntegrationEvent(new LabResultProjectedAsOpenEhrIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            LabResultId: Id,
+            LabOrderId: LabOrderId,
+            PatientId: PatientId,
+            ArchetypeId: archetypeId,
+            CompositionJson: compositionJson,
+            ObservedAtUtc: ObservedAtUtc));
     }
 }

@@ -25,9 +25,9 @@ public sealed class BillingExportJobQueuedConsumerTests
         var aetnaB = AssembledClaim("AETNA", 150m);
         var medicare = AssembledClaim("MEDICARE", 999m);
         var claims = new StubClaimRepo(aetnaA, aetnaB, medicare);
-        var bus = new CapturingBus();
+        var outbox = new CapturingOutbox();
         var unitOfWork = new StubUnitOfWork();
-        var consumer = Consumer(claims, bus, unitOfWork);
+        var consumer = Consumer(claims, outbox, unitOfWork);
 
         var jobId = Guid.CreateVersion7();
         await consumer.HandleAsync(Context(NewEvent(jobId, "AETNA")));
@@ -39,7 +39,8 @@ public sealed class BillingExportJobQueuedConsumerTests
         medicare.Status.ShouldBe(ClaimStatus.Assembled);
         unitOfWork.Saved.ShouldBeTrue();
 
-        var completed = bus.Published.OfType<BillingExportJobCompletedIntegrationEvent>().ShouldHaveSingleItem();
+        // The batch outcome rides the transactional outbox, not the bus.
+        var completed = outbox.EventsOf<BillingExportJobCompletedIntegrationEvent>().ShouldHaveSingleItem();
         completed.JobId.ShouldBe(jobId);
         completed.PayerCode.ShouldBe("AETNA");
         completed.ClaimCount.ShouldBe(2);
@@ -51,19 +52,19 @@ public sealed class BillingExportJobQueuedConsumerTests
     public async Task Empty_Window_Completes_As_Zero_Claim_Batch_Async()
     {
         var claims = new StubClaimRepo(AssembledClaim("MEDICARE", 100m));
-        var bus = new CapturingBus();
-        var consumer = Consumer(claims, bus, new StubUnitOfWork());
+        var outbox = new CapturingOutbox();
+        var consumer = Consumer(claims, outbox, new StubUnitOfWork());
 
         await consumer.HandleAsync(Context(NewEvent(Guid.CreateVersion7(), "AETNA")));
 
-        var completed = bus.Published.OfType<BillingExportJobCompletedIntegrationEvent>().ShouldHaveSingleItem();
+        var completed = outbox.EventsOf<BillingExportJobCompletedIntegrationEvent>().ShouldHaveSingleItem();
         completed.ClaimCount.ShouldBe(0);
         completed.BilledTotal.ShouldBe(0m);
     }
 
     private static BillingExportJobQueuedConsumer Consumer(
-        IClaimRepository claims, ITransponderBus bus, IUnitOfWork unitOfWork) =>
-        new(claims, bus, TimeProvider.System, unitOfWork,
+        IClaimRepository claims, CapturingOutbox outbox, IUnitOfWork unitOfWork) =>
+        new(claims, outbox, new CapturingBus(), TimeProvider.System, unitOfWork,
             NullLogger<BillingExportJobQueuedConsumer>.Instance);
 
     private static Claim AssembledClaim(string payerCode, decimal amount)
@@ -85,6 +86,21 @@ public sealed class BillingExportJobQueuedConsumerTests
 
     private static ConsumeContext<BillingExportJobQueuedIntegrationEvent> Context(BillingExportJobQueuedIntegrationEvent message) =>
         new(message, CancellationToken.None, new CapturingBus());
+
+
+    private sealed class CapturingOutbox : ITransponderOutbox
+    {
+        public List<TransponderOutboxEnvelope> Enqueued { get; } = new();
+        public Task EnqueueAsync(TransponderOutboxEnvelope envelope, CancellationToken cancellationToken = default)
+        {
+            Enqueued.Add(envelope);
+            return Task.CompletedTask;
+        }
+
+        public IEnumerable<T> EventsOf<T>() => Enqueued
+            .Where(e => e.AssemblyQualifiedEventType.StartsWith(typeof(T).FullName!, StringComparison.Ordinal))
+            .Select(e => System.Text.Json.JsonSerializer.Deserialize<T>(e.PayloadJson)!);
+    }
 
     private sealed class CapturingBus : ITransponderBus
     {

@@ -24,10 +24,10 @@ public sealed class DialysisSessionChargeReadyConsumerTests
     public async Task First_Delivery_Captures_An_Itemised_Charge_And_Publishes_The_Invoice_Async()
     {
         var charges = new StubChargeRepo();
-        var bus = new CapturingBus();
+        var outbox = new CapturingOutbox();
         var unitOfWork = new StubUnitOfWork();
         var consumer = new DialysisSessionChargeReadyConsumer(
-            charges, new StubIdempotency(), bus, TimeProvider.System, unitOfWork,
+            charges, new StubIdempotency(), outbox, TimeProvider.System, unitOfWork,
             NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
 
         var expected = DialysisTariff.Compute("HD", 240, 2.5m);
@@ -38,7 +38,8 @@ public sealed class DialysisSessionChargeReadyConsumerTests
         charges.Added[0].BilledAmount.Amount.ShouldBe(expected.Total);
         unitOfWork.Saved.ShouldBeTrue();
 
-        var invoice = bus.Published.OfType<DialysisInvoiceReadyIntegrationEvent>().ShouldHaveSingleItem();
+        // The invoice signal rides the transactional outbox, not the bus.
+        var invoice = outbox.EventsOf<DialysisInvoiceReadyIntegrationEvent>().ShouldHaveSingleItem();
         invoice.Total.ShouldBe(expected.Total);
         invoice.Lines.Count.ShouldBe(expected.Lines.Count);
         invoice.ChargeId.ShouldBe(charges.Added[0].Id);
@@ -52,7 +53,7 @@ public sealed class DialysisSessionChargeReadyConsumerTests
         var sessionId = Guid.NewGuid();
         var charges = new StubChargeRepo();
         var consumer = new DialysisSessionChargeReadyConsumer(
-            charges, new StubIdempotency(), new CapturingBus(), TimeProvider.System, new StubUnitOfWork(),
+            charges, new StubIdempotency(), new CapturingOutbox(), TimeProvider.System, new StubUnitOfWork(),
             NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
 
         var first = NewEvent(sessionId: sessionId, modality: "HD", cpt: "90935");
@@ -68,7 +69,7 @@ public sealed class DialysisSessionChargeReadyConsumerTests
     {
         var charges = new StubChargeRepo();
         var consumer = new DialysisSessionChargeReadyConsumer(
-            charges, new StubIdempotency(), new CapturingBus(), TimeProvider.System, new StubUnitOfWork(),
+            charges, new StubIdempotency(), new CapturingOutbox(), TimeProvider.System, new StubUnitOfWork(),
             NullLogger<DialysisSessionChargeReadyConsumer>.Instance);
 
         foreach (var modality in new[] { "HD", "PD", "Haemodialysis", "Peritoneal" })
@@ -98,6 +99,21 @@ public sealed class DialysisSessionChargeReadyConsumerTests
 
     private static ConsumeContext<DialysisSessionChargeReadyIntegrationEvent> Context(DialysisSessionChargeReadyIntegrationEvent message) =>
         new(message, CancellationToken.None, new CapturingBus());
+
+
+    private sealed class CapturingOutbox : ITransponderOutbox
+    {
+        public List<TransponderOutboxEnvelope> Enqueued { get; } = new();
+        public Task EnqueueAsync(TransponderOutboxEnvelope envelope, CancellationToken cancellationToken = default)
+        {
+            Enqueued.Add(envelope);
+            return Task.CompletedTask;
+        }
+
+        public IEnumerable<T> EventsOf<T>() => Enqueued
+            .Where(e => e.AssemblyQualifiedEventType.StartsWith(typeof(T).FullName!, StringComparison.Ordinal))
+            .Select(e => System.Text.Json.JsonSerializer.Deserialize<T>(e.PayloadJson)!);
+    }
 
     private sealed class CapturingBus : ITransponderBus
     {

@@ -1,4 +1,5 @@
 using Dialysis.DomainDrivenDesign.Primitives;
+using Dialysis.EHR.Contracts.Integration;
 
 namespace Dialysis.EHR.PatientChart.Domain;
 
@@ -52,5 +53,27 @@ public sealed class VitalSignReading : AggregateRoot<Guid>
             ObservedAtUtc = observedAtUtc,
             RecordedByProviderId = recordedByProviderId,
         };
+    }
+
+    /// <summary>
+    /// Attaches the openEHR projection of this reading, raising the projection integration event
+    /// alongside the aggregate so the outbox interceptor dispatches it atomically with the row.
+    /// </summary>
+    public void RecordOpenEhrProjection(string archetypeId, string compositionJson)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(archetypeId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(compositionJson);
+
+        RaiseIntegrationEvent(new ChartVitalSignProjectedAsOpenEhrIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            VitalSignReadingId: Id,
+            PatientId: PatientId,
+            EncounterId: EncounterId,
+            RecordedByProviderId: RecordedByProviderId,
+            ArchetypeId: archetypeId,
+            CompositionJson: compositionJson,
+            ObservedAtUtc: ObservedAtUtc));
     }
 }

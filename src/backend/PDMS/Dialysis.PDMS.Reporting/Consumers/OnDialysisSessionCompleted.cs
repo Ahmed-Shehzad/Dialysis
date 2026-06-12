@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.DomainDrivenDesign.Persistence;
 using Dialysis.PDMS.Contracts.Integration;
+using Dialysis.PDMS.Contracts.Messaging;
 using Dialysis.PDMS.Reporting.Domain;
 using Dialysis.PDMS.Reporting.Generators;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,7 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
     private readonly IReportBlobStore _blobs;
     private readonly ISessionReportRepository _reports;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITransponderBus _bus;
+    private readonly ITransponderOutbox _outbox;
     private readonly TimeProvider _clock;
     private readonly ILogger<OnDialysisSessionCompleted> _logger;
     /// <summary>
@@ -45,7 +46,7 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
         IReportBlobStore blobs,
         ISessionReportRepository reports,
         IUnitOfWork unitOfWork,
-        ITransponderBus bus,
+        ITransponderOutbox outbox,
         TimeProvider clock,
         ILogger<OnDialysisSessionCompleted> logger)
     {
@@ -56,7 +57,7 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
         _blobs = blobs;
         _reports = reports;
         _unitOfWork = unitOfWork;
-        _bus = bus;
+        _outbox = outbox;
         _clock = clock;
         _logger = logger;
     }
@@ -128,7 +129,9 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
                 CompletedAtUtc: ctx.CompletedAtUtc,
                 CptCode: BillingDocumentGenerator.ResolveCptCode(ctx.Modality, evaluationCount: 1),
                 AchievedUfVolumeLiters: context.Message.AchievedUfVolumeLiters);
-            await _bus.PublishAsync(chargeReady, ct).ConfigureAwait(false);
+            // Rides the transactional outbox: the billing-document report row and the charge
+            // trigger commit together on the SaveChanges below.
+            await _outbox.EnqueueAsync(PdmsTransponderOutboxEnvelope.From(chargeReady), ct).ConfigureAwait(false);
         }
 
         await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -141,7 +144,6 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
         CancellationToken cancellationToken)
     {
         var report = new SessionReport(Guid.CreateVersion7(), ctx.SessionId, ctx.PatientId, kind);
-        var generated = false;
         var storageRef = string.Empty;
         var hash = string.Empty;
         try
@@ -150,8 +152,7 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
             hash = Convert.ToHexString(SHA256.HashData(bytes));
             storageRef = await _blobs.SaveAsync(report.Id, "application/pdf", bytes, cancellationToken)
                 .ConfigureAwait(false);
-            report.RecordGenerated(storageRef, hash, _clock.GetUtcNow().UtcDateTime);
-            generated = true;
+            report.RecordGenerated(storageRef, hash, _clock.GetUtcNow().UtcDateTime, ctx.PreferredLanguageCode);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
@@ -161,25 +162,5 @@ public sealed class OnDialysisSessionCompleted : IConsumer<DialysisSessionComple
         }
         await _reports.AddAsync(report, cancellationToken).ConfigureAwait(false);
 
-        if (generated)
-        {
-            // HIE Documents consumes this and indexes the report as a FHIR DocumentReference
-            // pointing at the same shared blob store, so the admin Documents view, ePA upload,
-            // and partner exchange resolve through one storage ref.
-            await _bus.PublishAsync(
-                new ClinicalDocumentProducedIntegrationEvent(
-                    EventId: Guid.CreateVersion7(),
-                    OccurredOn: _clock.GetUtcNow().UtcDateTime,
-                    SchemaVersion: 1,
-                    ReportId: report.Id,
-                    PatientId: ctx.PatientId,
-                    Kind: kind.ToString(),
-                    MimeType: "application/pdf",
-                    Title: $"{kind} — session {ctx.SessionId:N}",
-                    StorageRef: storageRef,
-                    ContentHash: hash,
-                    LanguageCode: ctx.PreferredLanguageCode),
-                cancellationToken).ConfigureAwait(false);
-        }
     }
 }

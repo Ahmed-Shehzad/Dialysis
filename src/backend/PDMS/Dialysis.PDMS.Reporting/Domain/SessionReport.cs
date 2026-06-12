@@ -1,4 +1,5 @@
 using Dialysis.DomainDrivenDesign.Primitives;
+using Dialysis.PDMS.Contracts.Integration;
 using Dialysis.PDMS.Reporting.Contracts;
 
 namespace Dialysis.PDMS.Reporting.Domain;
@@ -34,8 +35,13 @@ public sealed class SessionReport : AggregateRoot<Guid>
     public DateTime? DeliveredAtUtc { get; private set; }
     public string? FailureReason { get; private set; }
 
-    /// <summary>Records a successful generation; emits the readiness integration event.</summary>
-    public void RecordGenerated(string storageRef, string contentHash, DateTime generatedAtUtc)
+    /// <summary>
+    /// Records a successful generation; emits the readiness integration event plus the
+    /// cross-context <see cref="ClinicalDocumentProducedIntegrationEvent"/> (HIE Documents
+    /// indexes the report as a FHIR DocumentReference over the same blob ref). Both are
+    /// drained to the Transponder outbox atomically with the row on save.
+    /// </summary>
+    public void RecordGenerated(string storageRef, string contentHash, DateTime generatedAtUtc, string? languageCode = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(storageRef);
         ArgumentException.ThrowIfNullOrWhiteSpace(contentHash);
@@ -53,6 +59,18 @@ public sealed class SessionReport : AggregateRoot<Guid>
             ContentHash = contentHash,
             GeneratedAtUtc = generatedAtUtc,
         });
+        RaiseIntegrationEvent(new ClinicalDocumentProducedIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            ReportId: Id,
+            PatientId: PatientId,
+            Kind: Kind.ToString(),
+            MimeType: Format,
+            Title: $"{Kind} — session {SessionId:N}",
+            StorageRef: storageRef,
+            ContentHash: contentHash,
+            LanguageCode: languageCode));
     }
 
     /// <summary>Records a generation failure so the operator dashboard can show + retry.</summary>

@@ -26,7 +26,6 @@ public sealed class ProvisioningHandlerTests
     private readonly InMemoryRoleDefinitionRepository _roles = new();
     private readonly InMemoryRoleAssignmentRepository _assignments = new();
     private readonly RecordingTransponderOutbox _outbox = new();
-    private readonly RecordingTransponderBus _bus = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly FixedClock _clock = new(_now);
 
@@ -167,7 +166,7 @@ public sealed class ProvisioningHandlerTests
 
         await handler.HandleAsync(new RevokeRoleFromUserCommand(user.Id, "his.nurse"), CancellationToken.None);
 
-        _bus.Published.ShouldBeEmpty();
+        _outbox.Enqueued.ShouldBeEmpty();
         _unitOfWork.SaveCount.ShouldBe(0);
     }
 
@@ -182,10 +181,11 @@ public sealed class ProvisioningHandlerTests
         await handler.HandleAsync(new RevokeRoleFromUserCommand(user.Id, "his.nurse"), CancellationToken.None);
 
         _assignments.All.ShouldBeEmpty();
-        var revoked = _bus.Published.ShouldHaveSingleItem().ShouldBeOfType<RoleRevokedIntegrationEvent>();
-        revoked.UserId.ShouldBe(user.Id);
-        revoked.Subject.ShouldBe("keycloak|abc");
-        revoked.RoleCode.ShouldBe("his.nurse");
+        var revoked = _outbox.Enqueued.ShouldHaveSingleItem();
+        revoked.AssemblyQualifiedEventType.ShouldStartWith(typeof(RoleRevokedIntegrationEvent).FullName!);
+        revoked.PayloadJson.ShouldContain(user.Id.ToString());
+        revoked.PayloadJson.ShouldContain("keycloak|abc");
+        revoked.PayloadJson.ShouldContain("his.nurse");
         _unitOfWork.SaveCount.ShouldBe(1);
     }
 
@@ -193,25 +193,26 @@ public sealed class ProvisioningHandlerTests
     public async Task Deactivate_User_Flips_Status_And_Publishes_User_Deactivated_Async()
     {
         var user = SeedUser("keycloak|abc");
-        var handler = new DeactivateUserCommandHandler(_users, _bus, _unitOfWork, _clock);
+        var handler = new DeactivateUserCommandHandler(_users, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
 
         await handler.HandleAsync(new DeactivateUserCommand(user.Id), CancellationToken.None);
 
         _users.All.ShouldHaveSingleItem().Status.ShouldBe(UserAccountStatus.Deactivated);
-        var deactivated = _bus.Published.ShouldHaveSingleItem().ShouldBeOfType<UserDeactivatedIntegrationEvent>();
-        deactivated.UserId.ShouldBe(user.Id);
-        deactivated.Subject.ShouldBe("keycloak|abc");
+        var deactivated = _outbox.Enqueued.ShouldHaveSingleItem();
+        deactivated.AssemblyQualifiedEventType.ShouldStartWith(typeof(UserDeactivatedIntegrationEvent).FullName!);
+        deactivated.PayloadJson.ShouldContain(user.Id.ToString());
+        deactivated.PayloadJson.ShouldContain("keycloak|abc");
     }
 
     [Fact]
     public async Task Deactivate_User_Is_Idempotent_When_Already_Deactivated_Async()
     {
         var user = SeedUser("keycloak|abc", UserAccountStatus.Deactivated);
-        var handler = new DeactivateUserCommandHandler(_users, _bus, _unitOfWork, _clock);
+        var handler = new DeactivateUserCommandHandler(_users, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
 
         await handler.HandleAsync(new DeactivateUserCommand(user.Id), CancellationToken.None);
 
-        _bus.Published.ShouldBeEmpty();
+        _outbox.Enqueued.ShouldBeEmpty();
         _unitOfWork.SaveCount.ShouldBe(0);
     }
 
@@ -247,7 +248,7 @@ public sealed class ProvisioningHandlerTests
         new(_users, _roles, _assignments, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
 
     private RevokeRoleFromUserCommandHandler BuildRevokeHandler() =>
-        new(_users, _roles, _assignments, _bus, _unitOfWork, _clock);
+        new(_users, _roles, _assignments, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
 
     private UserAccount SeedUser(string subject, UserAccountStatus status = UserAccountStatus.Provisioned)
     {

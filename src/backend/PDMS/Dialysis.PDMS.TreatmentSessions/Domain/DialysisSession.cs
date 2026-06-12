@@ -1,4 +1,5 @@
 using Dialysis.DomainDrivenDesign.Primitives;
+using Dialysis.PDMS.Contracts.CodeSets;
 using Dialysis.PDMS.Contracts.Integration;
 
 namespace Dialysis.PDMS.TreatmentSessions.Domain;
@@ -190,6 +191,50 @@ public sealed class DialysisSession : AggregateRoot<Guid>
             PatientId: PatientId,
             AbortedAtUtc: abortedAtUtc,
             ReasonCode: AbortReasonCode));
+    }
+
+    /// <summary>
+    /// Attaches the openEHR projection of a phase transition, raising the projection integration
+    /// event alongside the aggregate so the outbox interceptor dispatches it atomically with the
+    /// session row — never published manually from a handler.
+    /// </summary>
+    public void RecordOpenEhrProjection(HaemodialysisSessionPhase phase, string archetypeId, string compositionJson, DateTime phaseAtUtc)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(archetypeId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(compositionJson);
+
+        RaiseIntegrationEvent(new HaemodialysisSessionProjectedAsOpenEhrIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            SessionId: Id,
+            PatientId: PatientId,
+            Phase: phase,
+            ArchetypeId: archetypeId,
+            CompositionJson: compositionJson,
+            PhaseAtUtc: phaseAtUtc));
+    }
+
+    /// <summary>
+    /// Records an intradialytic adverse event observed during this session. The integration event
+    /// is raised on the aggregate and drained to the outbox on save, so the chairside observation
+    /// and its cross-context signal commit together.
+    /// </summary>
+    public void RecordAdverseEvent(DateTime observedAtUtc, string eventKindCode, string severity, string? notes)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(eventKindCode);
+        ArgumentException.ThrowIfNullOrWhiteSpace(severity);
+
+        RaiseIntegrationEvent(new IntradialyticAdverseEventIntegrationEvent(
+            EventId: Guid.CreateVersion7(),
+            OccurredOn: DateTime.UtcNow,
+            SchemaVersion: 1,
+            SessionId: Id,
+            PatientId: PatientId,
+            ObservedAtUtc: observedAtUtc,
+            EventKindCode: eventKindCode.Trim(),
+            Severity: severity.Trim(),
+            Notes: notes));
     }
 
     /// <summary>
