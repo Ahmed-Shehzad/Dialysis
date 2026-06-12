@@ -23,10 +23,15 @@ public static class IdentityPersistenceServiceCollectionExtensions
                 var interceptor = sp.GetService<AuditSaveChangesInterceptor>();
                 if (interceptor is not null)
                     options.AddInterceptors(interceptor);
+
+                var integrationEventOutbox = sp.GetService<IntegrationEventOutboxSaveChangesInterceptor>();
+                if (integrationEventOutbox is not null)
+                    options.AddInterceptors(integrationEventOutbox);
             });
 
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<IdentityDbContext>());
             services.AddTransponderEfOutboxAndInbox<IdentityDbContext>();
+            services.AddModuleIntegrationEventOutbox();
 
             services.AddScoped<IUserAccountRepository, UserAccountRepository>();
             services.AddScoped<IRoleDefinitionRepository, RoleDefinitionRepository>();

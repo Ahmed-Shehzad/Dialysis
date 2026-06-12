@@ -25,14 +25,13 @@ public sealed class ProvisioningHandlerTests
     private readonly InMemoryUserAccountRepository _users = new();
     private readonly InMemoryRoleDefinitionRepository _roles = new();
     private readonly InMemoryRoleAssignmentRepository _assignments = new();
-    private readonly RecordingTransponderOutbox _outbox = new();
     private readonly CountingUnitOfWork _unitOfWork = new();
     private readonly FixedClock _clock = new(_now);
 
     [Fact]
     public async Task Provision_User_Creates_A_Provisioned_Account_And_Enqueues_User_Registered_Async()
     {
-        var handler = new ProvisionUserCommandHandler(_users, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
+        var handler = new ProvisionUserCommandHandler(_users, _unitOfWork);
 
         var id = await handler.HandleAsync(
             new ProvisionUserCommand("keycloak|abc", "Dr. Grey", "grey@example.com"),
@@ -42,9 +41,9 @@ public sealed class ProvisioningHandlerTests
         user.Id.ShouldBe(id);
         user.Status.ShouldBe(UserAccountStatus.Provisioned);
 
-        var envelope = _outbox.Enqueued.ShouldHaveSingleItem();
-        envelope.AssemblyQualifiedEventType.ShouldStartWith(typeof(UserRegisteredIntegrationEvent).FullName!);
-        envelope.PayloadJson.ShouldContain("keycloak|abc");
+        // Raised on the aggregate; the SaveChanges interceptor drains it to the outbox in prod.
+        var registered = user.IntegrationEvents.ShouldHaveSingleItem().ShouldBeOfType<UserRegisteredIntegrationEvent>();
+        registered.Subject.ShouldBe("keycloak|abc");
         _unitOfWork.SaveCount.ShouldBe(1);
     }
 
@@ -52,7 +51,7 @@ public sealed class ProvisioningHandlerTests
     public async Task Provision_User_Is_Idempotent_On_Subject_Async()
     {
         var existing = SeedUser("keycloak|abc");
-        var handler = new ProvisionUserCommandHandler(_users, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
+        var handler = new ProvisionUserCommandHandler(_users, _unitOfWork);
 
         var id = await handler.HandleAsync(
             new ProvisionUserCommand("keycloak|abc", "Different Name", null),
@@ -60,7 +59,7 @@ public sealed class ProvisioningHandlerTests
 
         id.ShouldBe(existing.Id);
         _users.All.ShouldHaveSingleItem();
-        _outbox.Enqueued.ShouldBeEmpty();
+        _users.All.SelectMany(u => u.IntegrationEvents).ShouldBeEmpty();
         _unitOfWork.SaveCount.ShouldBe(0);
     }
 
@@ -105,7 +104,7 @@ public sealed class ProvisioningHandlerTests
 
         ex.Message.ShouldContain("deactivated");
         _assignments.All.ShouldBeEmpty();
-        _outbox.Enqueued.ShouldBeEmpty();
+        _users.All.SelectMany(u => u.IntegrationEvents).ShouldBeEmpty();
     }
 
     [Fact]
@@ -132,7 +131,7 @@ public sealed class ProvisioningHandlerTests
         await handler.HandleAsync(new AssignRoleToUserCommand(user.Id, "his.nurse"), CancellationToken.None);
 
         _assignments.All.ShouldHaveSingleItem();
-        _outbox.Enqueued.ShouldBeEmpty();
+        _users.All.SelectMany(u => u.IntegrationEvents).ShouldBeEmpty();
         _unitOfWork.SaveCount.ShouldBe(0);
     }
 
@@ -149,11 +148,9 @@ public sealed class ProvisioningHandlerTests
         assignment.UserId.ShouldBe(user.Id);
         assignment.AssignedAtUtc.ShouldBe(_now.UtcDateTime);
 
-        var envelope = _outbox.Enqueued.ShouldHaveSingleItem();
-        envelope.AssemblyQualifiedEventType.ShouldStartWith(typeof(RoleAssignedIntegrationEvent).FullName!);
-        envelope.PayloadJson.ShouldContain("his.staff.assign");
-        envelope.PayloadJson.ShouldContain("his.inventory.move");
-        envelope.PayloadJson.ShouldContain("keycloak|abc");
+        var assigned = user.IntegrationEvents.ShouldHaveSingleItem().ShouldBeOfType<RoleAssignedIntegrationEvent>();
+        assigned.Subject.ShouldBe("keycloak|abc");
+        assigned.Permissions.ShouldBe(["his.staff.assign", "his.inventory.move"], ignoreOrder: true);
         _unitOfWork.SaveCount.ShouldBe(1);
     }
 
@@ -166,7 +163,7 @@ public sealed class ProvisioningHandlerTests
 
         await handler.HandleAsync(new RevokeRoleFromUserCommand(user.Id, "his.nurse"), CancellationToken.None);
 
-        _outbox.Enqueued.ShouldBeEmpty();
+        _users.All.SelectMany(u => u.IntegrationEvents).ShouldBeEmpty();
         _unitOfWork.SaveCount.ShouldBe(0);
     }
 
@@ -181,11 +178,10 @@ public sealed class ProvisioningHandlerTests
         await handler.HandleAsync(new RevokeRoleFromUserCommand(user.Id, "his.nurse"), CancellationToken.None);
 
         _assignments.All.ShouldBeEmpty();
-        var revoked = _outbox.Enqueued.ShouldHaveSingleItem();
-        revoked.AssemblyQualifiedEventType.ShouldStartWith(typeof(RoleRevokedIntegrationEvent).FullName!);
-        revoked.PayloadJson.ShouldContain(user.Id.ToString());
-        revoked.PayloadJson.ShouldContain("keycloak|abc");
-        revoked.PayloadJson.ShouldContain("his.nurse");
+        var revoked = user.IntegrationEvents.ShouldHaveSingleItem().ShouldBeOfType<RoleRevokedIntegrationEvent>();
+        revoked.UserId.ShouldBe(user.Id);
+        revoked.Subject.ShouldBe("keycloak|abc");
+        revoked.RoleCode.ShouldBe("his.nurse");
         _unitOfWork.SaveCount.ShouldBe(1);
     }
 
@@ -193,26 +189,25 @@ public sealed class ProvisioningHandlerTests
     public async Task Deactivate_User_Flips_Status_And_Publishes_User_Deactivated_Async()
     {
         var user = SeedUser("keycloak|abc");
-        var handler = new DeactivateUserCommandHandler(_users, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
+        var handler = new DeactivateUserCommandHandler(_users, _unitOfWork);
 
         await handler.HandleAsync(new DeactivateUserCommand(user.Id), CancellationToken.None);
 
         _users.All.ShouldHaveSingleItem().Status.ShouldBe(UserAccountStatus.Deactivated);
-        var deactivated = _outbox.Enqueued.ShouldHaveSingleItem();
-        deactivated.AssemblyQualifiedEventType.ShouldStartWith(typeof(UserDeactivatedIntegrationEvent).FullName!);
-        deactivated.PayloadJson.ShouldContain(user.Id.ToString());
-        deactivated.PayloadJson.ShouldContain("keycloak|abc");
+        var deactivated = user.IntegrationEvents.ShouldHaveSingleItem().ShouldBeOfType<UserDeactivatedIntegrationEvent>();
+        deactivated.UserId.ShouldBe(user.Id);
+        deactivated.Subject.ShouldBe("keycloak|abc");
     }
 
     [Fact]
     public async Task Deactivate_User_Is_Idempotent_When_Already_Deactivated_Async()
     {
         var user = SeedUser("keycloak|abc", UserAccountStatus.Deactivated);
-        var handler = new DeactivateUserCommandHandler(_users, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
+        var handler = new DeactivateUserCommandHandler(_users, _unitOfWork);
 
         await handler.HandleAsync(new DeactivateUserCommand(user.Id), CancellationToken.None);
 
-        _outbox.Enqueued.ShouldBeEmpty();
+        _users.All.SelectMany(u => u.IntegrationEvents).ShouldBeEmpty();
         _unitOfWork.SaveCount.ShouldBe(0);
     }
 
@@ -245,20 +240,18 @@ public sealed class ProvisioningHandlerTests
     }
 
     private AssignRoleToUserCommandHandler BuildAssignHandler() =>
-        new(_users, _roles, _assignments, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
+        new(_users, _roles, _assignments, _unitOfWork, _clock);
 
     private RevokeRoleFromUserCommandHandler BuildRevokeHandler() =>
-        new(_users, _roles, _assignments, _outbox, new JsonTestMessageSerializer(), _unitOfWork, _clock);
+        new(_users, _roles, _assignments, _unitOfWork);
 
     private UserAccount SeedUser(string subject, UserAccountStatus status = UserAccountStatus.Provisioned)
     {
-        var user = new UserAccount
-        {
-            Id = Guid.NewGuid(),
-            Subject = subject,
-            DisplayName = "Seeded User",
-            Status = status,
-        };
+        var user = UserAccount.Provision(Guid.NewGuid(), subject, "Seeded User", email: null);
+        if (status == UserAccountStatus.Deactivated)
+            user.Deactivate();
+        // Seeding is test arrangement, not behaviour under test — drop the lifecycle events.
+        user.ClearIntegrationEvents();
         _users.Add(user);
         return user;
     }

@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Dialysis.BuildingBlocks.Transponder;
 using Dialysis.CQRS.Commands;
 using Dialysis.DomainDrivenDesign.Exceptions;
 using Dialysis.DomainDrivenDesign.Persistence;
@@ -11,14 +9,11 @@ namespace Dialysis.EHR.Registration.Features.RegisterPatient;
 public sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPatientCommand, Guid>
 {
     private readonly IPatientRepository _patients;
-    private readonly ITransponderOutbox _outbox;
     private readonly IUnitOfWork _unitOfWork;
     public RegisterPatientCommandHandler(IPatientRepository patients,
-        ITransponderOutbox outbox,
         IUnitOfWork unitOfWork)
     {
         _patients = patients;
-        _outbox = outbox;
         _unitOfWork = unitOfWork;
     }
     public async Task<Guid> HandleAsync(RegisterPatientCommand request, CancellationToken cancellationToken)
@@ -38,17 +33,6 @@ public sealed class RegisterPatientCommandHandler : ICommandHandler<RegisterPati
 
         _patients.Add(patient);
 
-        foreach (var @event in patient.IntegrationEvents)
-        {
-            var eventType = @event.GetType();
-            var json = JsonSerializer.Serialize(@event, eventType);
-            await _outbox.EnqueueAsync(new TransponderOutboxEnvelope(
-                AssemblyQualifiedEventType: eventType.AssemblyQualifiedName ?? eventType.FullName!,
-                PayloadJson: json,
-                Id: @event.EventId),
-                cancellationToken).ConfigureAwait(false);
-        }
-        patient.ClearIntegrationEvents();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return id;

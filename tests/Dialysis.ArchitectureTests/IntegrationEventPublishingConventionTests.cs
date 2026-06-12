@@ -44,21 +44,11 @@ public sealed class IntegrationEventPublishingConventionTests
     [Fact]
     public void Command_handlers_and_consumers_must_not_inject_the_transponder_bus()
     {
-        var candidates = ModuleAssemblyLoader.LoadAll()
-            .Where(a => a.GetName().Name is { } n
-                && _dddModulePrefixes.Any(p => n.StartsWith(p, StringComparison.Ordinal))
-                && !n.Contains(".Bff", StringComparison.Ordinal))
-            .SelectMany(SafeGetTypes)
-            .Where(t => t is { IsClass: true, IsAbstract: false }
-                && (ImplementsOpenGeneric(t, "Dialysis.CQRS.Commands.ICommandHandler`")
-                    || ImplementsOpenGeneric(t, "Dialysis.BuildingBlocks.Transponder.IConsumer`")))
-            .ToList();
-
-        candidates.ShouldNotBeEmpty("Expected at least one command handler or consumer in the DDD modules.");
+        var candidates = LoadCandidates();
 
         var offenders = candidates
             .Where(t => !_allowedBusDependents.Contains(t.FullName))
-            .Where(InjectsTransponderBus)
+            .Where(t => InjectsParameterOfType(t, "Dialysis.BuildingBlocks.Transponder.ITransponderBus"))
             .Select(t => t.FullName!)
             .Order(StringComparer.Ordinal)
             .ToList();
@@ -70,10 +60,45 @@ public sealed class IntegrationEventPublishingConventionTests
             + string.Join("\n  - ", offenders));
     }
 
-    private static bool InjectsTransponderBus(Type t) =>
+    [Fact]
+    public void Command_handlers_must_not_enqueue_to_the_outbox_directly()
+    {
+        var offenders = LoadCandidates()
+            .Where(t => ImplementsOpenGeneric(t, "Dialysis.CQRS.Commands.ICommandHandler`"))
+            .Where(t => InjectsParameterOfType(t, "Dialysis.BuildingBlocks.Transponder.ITransponderOutbox"))
+            .Select(t => t.FullName!)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        offenders.ShouldBeEmpty(
+            "Command handlers must not hand-drain events into ITransponderOutbox — that is the interceptor's "
+            + "job. Raise the integration event on the aggregate (RaiseIntegrationEvent) and let the "
+            + "IntegrationEventOutboxSaveChangesInterceptor persist it in the same transaction. "
+            + "(Consumers emitting process signals with no natural aggregate may still use the outbox.) "
+            + "Offenders:\n  - "
+            + string.Join("\n  - ", offenders));
+    }
+
+    private static List<Type> LoadCandidates()
+    {
+        var candidates = ModuleAssemblyLoader.LoadAll()
+            .Where(a => a.GetName().Name is { } n
+                && _dddModulePrefixes.Any(p => n.StartsWith(p, StringComparison.Ordinal))
+                && !n.Contains(".Bff", StringComparison.Ordinal))
+            .SelectMany(SafeGetTypes)
+            .Where(t => t is { IsClass: true, IsAbstract: false }
+                && (ImplementsOpenGeneric(t, "Dialysis.CQRS.Commands.ICommandHandler`")
+                    || ImplementsOpenGeneric(t, "Dialysis.BuildingBlocks.Transponder.IConsumer`")))
+            .ToList();
+
+        candidates.ShouldNotBeEmpty("Expected at least one command handler or consumer in the DDD modules.");
+        return candidates;
+    }
+
+    private static bool InjectsParameterOfType(Type t, string parameterTypeFullName) =>
         t.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .Any(c => c.GetParameters()
-                .Any(p => p.ParameterType.FullName == "Dialysis.BuildingBlocks.Transponder.ITransponderBus"));
+                .Any(p => p.ParameterType.FullName == parameterTypeFullName));
 
     private static bool ImplementsOpenGeneric(Type t, string interfaceFullNamePrefix) =>
         t.GetInterfaces().Any(i =>
