@@ -1,96 +1,104 @@
 # How a Dialysis Clinic Makes Money — and Where We Fit
 
-*A business-development walkthrough of the clinic's operating and revenue process, told
-through six exhibits from the platform overview deck
-([`dialysis-platform-overview.html`](dialysis-platform-overview.html)). Companion pieces: the
-slide-by-slide presenter script in
-[`dialysis-platform-overview-script.md`](dialysis-platform-overview-script.md) and the market
-entry plan in [`pakistan-market-strategy.md`](pakistan-market-strategy.md). The
-treatment-chair vocabulary used throughout is defined in the
-[README, Part 1](../../README.md#what-a-chair-means).*
+*A business-development walkthrough of the clinic's operating and revenue process, illustrated
+with real haemodialysis photography (openly licensed — see
+[`images/CREDITS.md`](images/CREDITS.md)). Companion pieces: the pitch deck
+([`dialysis-platform-overview.html`](dialysis-platform-overview.html)) with its
+[presenter script](dialysis-platform-overview-script.md), and the market entry plan in
+[`pakistan-market-strategy.md`](pakistan-market-strategy.md). The treatment-chair vocabulary
+used throughout is defined in the [README, Part 1](../../README.md#what-a-chair-means).*
 
 ---
 
-## Exhibit A — The business process today: every hand-off leaks money
+## 1. The thing we monetize: a haemodialysis session
 
-![Exhibit A — the problem](deck-slides/slide-02.png)
+![How haemodialysis works — blood drawn from the arm, filtered through the dialyzer, returned](images/hemodialysis-how-it-works.png)
 
-A dialysis clinic is, financially, a simple machine: it sells treatment sessions. But look at
-how that machine is wired today. The front desk runs one system, the treatment floor another,
-billing a third, and record-sharing happens by fax. Every arrow between those boxes is a
-manual hand-off, and every manual hand-off is a leak: a session that never becomes a claim, a
-claim rejected for a re-typing error, a nurse-hour spent on paperwork instead of a patient.
+Strip the business to its physical core and it is this circuit: blood leaves the patient's
+arm, passes through an artificial kidney (the dialyzer), and returns cleaned. One pass of
+that circuit, sustained for **roughly four hours**, is a *session* — and the session is the
+clinic's product, the thing that gets scheduled, staffed, documented, and billed.
 
-The clinic's *clinical* process works. It's the *business* process around it that bleeds.
+What makes this a remarkable business: a patient with end-stage renal disease needs this
+**two to three times a week, indefinitely**. No other outpatient service has demand this
+recurring or this predictable. Every process gain — and every process leak — repeats with
+that same frequency.
 
-## Exhibit B — The operating cycle: a loop that runs 2–3× per patient, every week, forever
+## 2. The treatment chair: the station everything is measured in
 
-![Exhibit B — the patient journey](deck-slides/slide-04.png)
+![A patient reclined in a treatment chair, connected to the dialysis machine beside it](images/hemodialysis-treatment-chair.jpg)
 
-Drawn correctly, the business process is one loop: **book and check in → treat in the chair →
-record the care → bill the visit → share the record.** The part every clinic owner and
-investor should internalize: this loop is not occasional. A dialysis patient runs it **two to
-three times a week, indefinitely**. There is no other outpatient business with demand this
-recurring.
+This is what "a chair" means when clinic owners talk. The reclining chair, the machine beside
+it, the plumbing behind it — together one *treatment station*. Look at the machine's screen in
+the photo: blood-flow rate, pressures, ultrafiltration volume — the live telemetry our PDMS
+module watches across every occupied chair at once.
 
-That cuts both ways: any per-loop leak compounds brutally — and any per-loop saving compounds
-just as fast. Fix the loop once, and you've fixed it thousands of times a year.
+The chair is the clinic's
 
-## Exhibit C — The operating units: the Treatment Chair is the revenue engine
+- **capacity unit** — one chair, ~4 hours a session, 2–3 patients a day; throughput is
+  *chairs × shifts*;
+- **revenue unit** — sessions are billed, and sessions happen in chairs; the number an owner
+  watches is **chair utilization** (sessions delivered ÷ sessions the chairs could deliver);
+- **cost unit** — the machine, a share of the water-treatment plant, per-session consumables
+  (dialyzer, blood lines, dialysate), and nursing time.
 
-![Exhibit C — six building blocks](deck-slides/slide-06.png)
+Our ideology follows directly: **we price the way the customer earns** — per chair, per
+month. Our revenue line and theirs move together, and the buying decision becomes arithmetic,
+not faith.
 
-Six blocks, but the centre of gravity is the **Treatment Chair**. The chair is the clinic's
+## 3. The centre: chairs at scale, and the paper that runs them today
 
-- **capacity unit** — one chair, roughly four hours a session, two to three patients a day;
-  throughput is *chairs × shifts*;
-- **revenue unit** — sessions are billed, and sessions happen in chairs; the single number an
-  owner watches is **chair utilization** (sessions delivered ÷ sessions the chairs could
-  deliver);
-- **cost unit** — each chair carries its machine, a share of the water-treatment plant,
-  per-session consumables, and nursing time.
+![A working dialysis unit in South Asia — numbered stations, shared floor, machines beside every bed](images/dialysis-unit-multi-chair.jpg)
 
-Our ideology follows directly: **we price the way the customer earns.** The subscription is
-per chair per month, so our revenue line and theirs move together — and the buying decision
-becomes arithmetic, not faith.
+Multiply the station and you get the centre — numbered stations on a shared floor, each one a
+revenue-producing asset. This photograph (a kidney hospital's dialysis unit in South Asia) is
+exactly the operating reality the [Pakistan strategy](pakistan-market-strategy.md) targets:
+high patient volume, stretched staffing ratios, one nephrologist supervising many stations —
+and, almost everywhere, the schedule, the vitals, and the billing still living in paper
+registers and Excel. Every hand-off between that paper and the front desk, the floor, and the
+billing office is a leak: a session that never becomes an invoice, a re-typing error, a
+nurse-hour lost to paperwork (the
+[deck's problem slide](dialysis-platform-overview-script.md#slide-2--the-problem) draws this
+leak map).
 
-## Exhibit D — The cash conversion step: care becomes a claim in one click
+## 4. The session loop: where the money is made — and lost
 
-![Exhibit D — one-click billing](deck-slides/slide-07.png)
+![Close-up of the arteriovenous access — two needles, blood lines out and back](images/hemodialysis-vascular-access.jpg)
 
-This is the slide to lead owner demos with. At the end of a billing period, one click gathers
-every completed visit, assembles the claims — clinic and hospital formats both — submits
-them, and reports back exactly what went out. The before/after is the entire commercial
-argument: hours of manual assembly become minutes, missed items become caught items, and cash
-that arrived in weeks arrives in days.
+This close-up is the moment of delivery: the arteriovenous access, two needles, blood out and
+back. Around this clinical moment runs the *business* loop — **book and check in → treat in
+the chair → record the care → bill the visit → share the record** (the deck's
+[patient-journey slide](dialysis-platform-overview-script.md#slide-4--the-patient-journey-interactive)
+animates it). Because each patient runs the loop 100+ times a year, fixing the loop once
+fixes it thousands of times per centre per year. That compounding is the entire ROI argument:
+the platform carries the patient's data through every step so nothing is re-typed, nothing is
+missed, and a completed session becomes a submitted claim in one click — the cash-conversion
+step that attacks **days sales outstanding**, which for a thin-margin clinic is survival.
 
-The metric this exhibit attacks is **days sales outstanding** — and for a thin-margin clinic,
-DSO is survival. For the Pakistan motion, this same step re-skins as panel invoices, Sehat
-Sahulat claims, and donor reports; the Charge → Claim → Remittance lifecycle underneath does
-not change (gap G1 in the [market strategy](pakistan-market-strategy.md#3-product-gap-analysis-the-honest-list)).
+## 5. The people cost: nursing time at the machine
 
-## Exhibit E — Where it lands on the P&L
+![A head nurse operating a haemodialysis machine](images/hemodialysis-machine-nurse.jpg)
 
-![Exhibit E — outcomes](deck-slides/slide-11.png)
+The largest controllable cost per chair is the scarcest resource in the room: skilled
+nursing time. Every minute a nurse spends transcribing machine readings onto paper, chasing a
+chart, or assembling a billing batch is a minute not spent at a patient's side. The platform's
+clinical pitch and its cost pitch are the same pitch: machine telemetry records itself, alarms
+find the right person immediately, and documentation is a by-product of care rather than a
+second shift. **Less** admin per session, **safer** chairs, and an **audit-ready** record —
+three of the four headline outcomes — come from this one photograph's workflow.
 
-Four outcomes, each mapping to a line item:
+## 6. Where it lands on the P&L
 
 | Outcome | P&L line it moves |
 |---|---|
 | **Less** | Admin hours per session down → labour cost per session down |
-| **Faster** | Claims out sooner, fewer errors → working capital freed |
-| **Safer** | Live monitoring at the chair → clinical promise *and* liability shield |
-| **Audit-ready** | Compliance as a by-product of operating, not an annual fire drill → for charity networks, the donor-reporting feature nobody local offers |
+| **Faster** | Claims out sooner, fewer errors → working capital freed, DSO down |
+| **Safer** | Live monitoring at every chair → clinical promise *and* liability shield |
+| **Audit-ready** | Compliance as a by-product of operating → for charity networks, donor-grade reporting nobody local offers |
 
-## Exhibit F — The expansion story: their growth is our growth
-
-![Exhibit F — built to grow](deck-slides/slide-10.png)
-
-The customer grows in chairs, then in sites. The platform is packaged so each new clinic is a
-self-contained installation and each new chair is a subscription increment. That is the SaaS
-flywheel: **their expansion is our expansion**, with no re-sale needed — just a contract
-amendment. Land one anchor tenant, publish the chair-utilization gains, and let a small,
-well-networked nephrology community do the marketing.
+And the growth story writes itself in the same unit: the customer grows in chairs, then in
+sites; each new clinic is a self-contained installation, each new chair a subscription
+increment. **Their expansion is our expansion** — no re-sale, just a contract amendment.
 
 ---
 
@@ -98,4 +106,5 @@ well-networked nephrology community do the marketing.
 
 > **We don't sell software to clinics — we sell yield on chairs, priced per chair.**
 
-Everything in the exhibits above is that sentence, illustrated.
+Everything above — the circuit, the chair, the floor, the loop, the nurse — is that sentence,
+photographed.
