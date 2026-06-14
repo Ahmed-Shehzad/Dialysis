@@ -9,7 +9,7 @@
     "watch": "esbuild src/app.ts --bundle --outfile=../wwwroot/smartconnect/app.js --target=es2022 --sourcemap --loader:.css=css --watch"
   },
   "devDependencies": {
-    "esbuild": "0.25.0",
+    "esbuild": "0.28.1",
     "typescript": "5.7.2"
   }
 }
